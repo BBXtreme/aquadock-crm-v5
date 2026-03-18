@@ -2,12 +2,13 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import CompaniesTable from '@/components/tables/CompaniesTable'
+import { Building, Users, Trophy, DollarSign } from 'lucide-react'
 
 export default async function CompaniesPage() {
   // Fetch all companies
   const { data: companies, error } = await supabase
     .from('companies')
-    .select('id, firmenname, kundentyp, status, value, stadt, land, created_at')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -22,56 +23,55 @@ export default async function CompaniesPage() {
 
   return (
     <div className="p-6 lg:p-8 space-y-8">
-      <div>
-        <p className="text-sm text-muted-foreground">Home {'>'} Companies</p>
-        <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">Home {'>'} Companies</p>
+          <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+        </div>
+        <Button className="bg-[#24BACC] hover:bg-[#24BACC]/90">New Company</Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+            <Building className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalCompanies}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Leads</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{leads}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Won Deals</CardTitle>
+            <Trophy className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{won}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€{valueSum.toLocaleString()}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalCompanies}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Leads</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leads}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Won</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{won}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Value Sum</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">${valueSum.toLocaleString()}</div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Companies List</h2>
-            <Button>Quick Create</Button>
-          </div>
           <CompaniesTable companies={companies || []} />
         </CardContent>
       </Card>
