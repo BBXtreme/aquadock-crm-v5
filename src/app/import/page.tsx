@@ -25,6 +25,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, FileText, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 
 interface ParsedRow {
   [key: string]: string
@@ -163,6 +164,7 @@ export default function ImportPage() {
 
     setResults({ success: successCount, errors: errorCount, companyIds })
     setImporting(false)
+    toast.success(`${successCount} companies imported successfully!`)
   }
 
   return (

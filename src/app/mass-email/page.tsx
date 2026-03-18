@@ -28,6 +28,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs'
 import { Mail, Send, Eye, TestTube } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<any[]>([])
@@ -47,6 +48,7 @@ export default function MassEmailPage() {
 
       if (templatesError) {
         console.error('Error fetching templates:', templatesError)
+        toast.error('Failed to fetch email templates')
       } else {
         setTemplates(templatesData || [])
       }
@@ -59,6 +61,7 @@ export default function MassEmailPage() {
 
       if (historyError) {
         console.error('Error fetching history:', historyError)
+        toast.error('Failed to fetch send history')
       } else {
         setHistory(historyData || [])
       }
@@ -109,9 +112,10 @@ export default function MassEmailPage() {
           content: `Test email sent to test@example.com`,
         })
 
-      console.log('Test email sent successfully!')
+      toast.success('Test email sent successfully!')
     } catch (error) {
       console.error('Error sending test email:', error)
+      toast.error('Failed to send test email')
     } finally {
       setLoading(false)
     }
@@ -162,9 +166,10 @@ export default function MassEmailPage() {
           content: `Mass email sent to ${companies?.length || 0} recipients`,
         })
 
-      console.log(`Emails sent to ${companies?.length || 0} recipients!`)
+      toast.success(`Campaign queued for ${companies?.length || 0} recipients!`)
     } catch (error) {
       console.error('Error sending emails:', error)
+      toast.error('Failed to send mass email')
     } finally {
       setLoading(false)
     }

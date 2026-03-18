@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu, Home, Building, Users, Clock, Bell, Mail, Search, Sun, Moon, User, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Toaster } from 'sonner'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -152,6 +153,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <main className="flex-1 p-6 lg:p-8">
           {children}
         </main>
+        <Toaster richColors position="top-right" />
       </div>
     </div>
   )
