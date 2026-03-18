@@ -156,8 +156,6 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
-                  <DropdownMenuCheckboxItem
-                >
                   {column.id}
                 </DropdownMenuCheckboxItem>
               )
