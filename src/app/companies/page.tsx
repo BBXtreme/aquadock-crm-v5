@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import CompaniesTable from '@/components/tables/CompaniesTable'
 import { Building, Users, Trophy, DollarSign } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function CompaniesPage() {
   // Fetch all companies
@@ -28,7 +29,12 @@ export default async function CompaniesPage() {
           <p className="text-sm text-muted-foreground">Home {'>'} Companies</p>
           <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
         </div>
-        <Button>New Company</Button>
+        <div className="flex space-x-2">
+          <Link href="/import">
+            <Button variant="outline">Import CSV</Button>
+          </Link>
+          <Button>New Company</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
