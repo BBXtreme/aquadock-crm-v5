@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -9,20 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Bell, User, Settings, Sun, Moon } from 'lucide-react'
 
 export default function Header() {
-  const [theme, setTheme] = useState('light')
-
-  useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'light'
-    setTheme(saved)
-    document.documentElement.classList.toggle('dark', saved === 'dark')
-  }, [])
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-    localStorage.setItem('theme', newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-  }
+  const { theme, setTheme } = useTheme()
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
   return (
     <header className="flex items-center justify-between p-4 border-b shadow-sm">

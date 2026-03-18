@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useState, useEffect } from 'react'
+import { ThemeProvider } from 'next-themes'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -37,7 +38,6 @@ const navItems = [
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -46,19 +46,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
-    const saved = localStorage.getItem('theme') || 'light'
-    setTheme(saved)
-    document.documentElement.classList.toggle('dark', saved === 'dark')
-  }, [])
-
   const pathname = usePathname()
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(newTheme)
-    localStorage.setItem('theme', newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-  }
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -102,8 +90,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={toggleTheme}>
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <Button variant="ghost" onClick={() => {}}>
+          <Sun className="h-4 w-4" />
         </Button>
         <Button variant="ghost" className="relative">
           <Bell className="h-4 w-4" />
@@ -174,7 +162,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LayoutContent>{children}</LayoutContent>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LayoutContent>{children}</LayoutContent>
+        </ThemeProvider>
       </body>
     </html>
   );
