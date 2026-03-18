@@ -55,7 +55,11 @@ const columns: ColumnDef<Company, any>[] = [
   }),
   columnHelper.accessor('kundentyp', {
     header: 'Kundentyp',
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <Badge variant="outline" className="bg-[#24BACC] text-white">
+        {info.getValue()}
+      </Badge>
+    ),
   }),
   columnHelper.accessor('status', {
     header: 'Status',
