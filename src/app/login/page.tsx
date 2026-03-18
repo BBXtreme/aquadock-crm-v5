@@ -10,7 +10,12 @@ import { Button } from '@/components/ui/button'
 
 export default function LoginPage() {
   const [view, setView] = useState<'sign_in' | 'sign_up'>('sign_in')
+  const [redirectTo, setRedirectTo] = useState('')
   const router = useRouter()
+
+  useEffect(() => {
+    setRedirectTo(`${window.location.origin}/dashboard`)
+  }, [])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -68,7 +73,7 @@ export default function LoginPage() {
               },
             }}
             providers={[]}
-            redirectTo={`${window.location.origin}/dashboard`}
+            redirectTo={redirectTo}
             onlyThirdPartyProviders={false}
             magicLink={true}
             showLinks={false}
