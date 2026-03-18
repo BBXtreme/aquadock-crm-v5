@@ -14,7 +14,7 @@ export default async function Home() {
     <div className="p-6 lg:p-8 space-y-8">
       <div>
         <p className="text-sm text-muted-foreground">Home</p>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
       </div>
 
       <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
@@ -27,7 +27,7 @@ export default async function Home() {
               <CardContent>
                 <div className="text-2xl font-bold">42</div>
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-emerald-600">+12%</span> from last month
+                  <span className="text-primary">+12%</span> from last month
                 </p>
               </CardContent>
             </Card>
@@ -38,7 +38,7 @@ export default async function Home() {
               <CardContent>
                 <div className="text-2xl font-bold">128</div>
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-emerald-600">+8%</span> from last month
+                  <span className="text-primary">+8%</span> from last month
                 </p>
               </CardContent>
             </Card>
@@ -60,7 +60,7 @@ export default async function Home() {
               <CardContent>
                 <div className="text-2xl font-bold">23</div>
                 <p className="text-xs text-muted-foreground">
-                  <span className="text-amber-600">+20%</span> from last month
+                  <span className="text-primary">+20%</span> from last month
                 </p>
               </CardContent>
             </Card>

@@ -76,7 +76,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                   variant="ghost"
                   className={cn(
                     "w-full justify-start",
-                    pathname === item.href && "bg-accent"
+                    pathname === item.href && "bg-primary/10 text-primary"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -93,7 +93,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const header = (
     <header className="flex items-center justify-between p-4 border-b shadow-sm">
       <div className="flex items-center space-x-4">
-        <h1 className="text-lg font-semibold">AquaDock CRM</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">AquaDock CRM</h1>
       </div>
       <div className="flex-1 max-w-md mx-4">
         <div className="relative">
