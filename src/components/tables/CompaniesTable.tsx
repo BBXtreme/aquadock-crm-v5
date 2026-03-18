@@ -12,7 +12,7 @@ import {
   ColumnDef,
 } from '@tanstack/react-table'
 import { formatDistanceToNow } from 'date-fns'
-import { Eye, Edit, Trash } from 'lucide-react'
+import { Eye, Edit, Trash, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import Papa from 'papaparse'
 
 interface Company {
   id: string
@@ -134,6 +135,22 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
     onColumnVisibilityChange: setColumnVisibility,
   })
 
+  const handleExport = () => {
+    const data = table.getFilteredRowModel().rows.map(row => row.original)
+    const csv = Papa.unparse(data, {
+      fields: ['firmenname', 'kundentyp', 'status', 'value', 'stadt', 'land', 'created_at']
+    })
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `companies-export-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -143,27 +160,33 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
           onChange={(event) => setGlobalFilter(String(event.target.value))}
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Columns</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => {
-              return (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id}
-                </DropdownMenuCheckboxItem>
-              )
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex space-x-2">
+          <Button onClick={handleExport} className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Columns</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-      <div className="rounded-md border shadow-sm">
+      <div className="rounded-md border shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
