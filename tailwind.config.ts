@@ -3,14 +3,12 @@ import type { Config } from "tailwindcss";
 const config: Config = {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
+        sans: ["Geist Sans", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)", "monospace"],
       },
       colors: {
@@ -22,6 +20,7 @@ const config: Config = {
         primary: {
           DEFAULT: "#24BACC",
           dark: "#1E9CA6",
+          light: "#3CD8E5",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -36,10 +35,7 @@ const config: Config = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
+        accent: "#BA47C0",
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -80,6 +76,13 @@ const config: Config = {
           DEFAULT: "#6B7280",
           light: "#9CA3AF",
         },
+        marine: {
+          50: "#E6F7FA",
+          100: "#CCEFF5",
+          500: "#24BACC",
+          700: "#1A8A94",
+          900: "#0F5A62",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -96,7 +99,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 };
 
 export default config;
