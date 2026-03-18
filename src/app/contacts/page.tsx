@@ -11,6 +11,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Users, Star, Building } from 'lucide-react'
 import Link from 'next/link'
 
@@ -29,6 +36,9 @@ export default async function ContactsPage() {
   const totalContacts = contacts?.length || 0
   const primaryContacts = contacts?.filter(c => c.primary).length || 0
   const companiesWithContacts = new Set(contacts?.map(c => c.company_id)).size || 0
+
+  // Get unique companies for filter
+  const companies = Array.from(new Set(contacts?.map(c => c.companies?.firmenname).filter(Boolean)))
 
   return (
     <div className="container mx-auto p-6 lg:p-8 space-y-8">
@@ -73,7 +83,22 @@ export default async function ContactsPage() {
       <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardContent className="p-6">
           <div className="space-y-4">
-            <Input placeholder="Search contacts..." className="max-w-sm" />
+            <div className="flex space-x-4">
+              <Input placeholder="Search contacts..." className="max-w-sm" />
+              <Select>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by company" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  {companies.map((company) => (
+                    <SelectItem key={company} value={company}>
+                      {company}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
