@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Menu, Home, Building, Users, Clock, Bell, Mail, Search, Sun, Moon, User, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { GeistSans } from 'geist/font/sans'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
