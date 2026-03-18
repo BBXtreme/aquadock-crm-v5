@@ -1,24 +1,17 @@
 'use client'
 
-import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { Sun, Moon, Search, Bell, User, Settings } from 'lucide-react'
+import { Search, Bell, User, Settings } from 'lucide-react'
 
 export default function Header() {
-  const { theme, setTheme } = useTheme()
-  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
-
   return (
     <header className="flex items-center justify-between p-4 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <h1 className="text-lg font-semibold">AquaDock CRM</h1>
-        <Button variant="ghost" onClick={toggleTheme}>
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
       </div>
       <div className="flex-1 max-w-md mx-4">
         <div className="relative">
