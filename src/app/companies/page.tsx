@@ -21,48 +21,60 @@ export default async function CompaniesPage() {
   const valueSum = companies?.reduce((sum, c) => sum + (c.value || 0), 0) || 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Companies</h1>
-        <Button>Quick Create</Button>
+    <div className="p-6 lg:p-8 space-y-8">
+      <div>
+        <p className="text-sm text-muted-foreground">Home > Companies</p>
+        <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalCompanies}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{leads}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Won</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{won}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Value Sum</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${valueSum.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalCompanies}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Leads</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{leads}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Won</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{won}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Value Sum</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">${valueSum.toLocaleString()}</div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-      <CompaniesTable companies={companies || []} />
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Companies List</h2>
+            <Button>Quick Create</Button>
+          </div>
+          <CompaniesTable companies={companies || []} />
+        </CardContent>
+      </Card>
     </div>
   )
 }
