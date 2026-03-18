@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useState, useEffect } from 'react'
-import { ThemeProvider } from 'next-themes'
+import { ThemeProvider, useTheme } from 'next-themes'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -47,6 +47,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, [])
 
   const pathname = usePathname()
+  const { theme, setTheme } = useTheme()
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark')
 
   const sidebarContent = (
     <div className="flex flex-col h-full">
@@ -90,8 +92,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={() => {}}>
-          <Sun className="h-4 w-4" />
+        <Button variant="ghost" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
         <Button variant="ghost" className="relative">
           <Bell className="h-4 w-4" />
