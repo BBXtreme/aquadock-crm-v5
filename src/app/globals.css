@@ -34,17 +34,19 @@
 }
 
 :root {
+  --font-sans: 'Geist Sans', system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #24BACC;
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: 195 100% 45%;
+  --primary-foreground: 0 0% 100%;
   --secondary: #BA47C0;
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: 300 60% 55%;
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
@@ -75,13 +77,13 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #24BACC;
+  --primary: 195 100% 45%;
   --primary-foreground: oklch(0.205 0 0);
   --secondary: #BA47C0;
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: 300 60% 55%;
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -107,7 +109,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans leading-7;
+    font-family: var(--font-sans);
+    @apply antialiased bg-background text-foreground leading-7;
   }
   html {
     @apply font-sans;
