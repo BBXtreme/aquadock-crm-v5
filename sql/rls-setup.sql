@@ -17,26 +17,59 @@ ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE timeline ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can access their own companies" ON companies;
+DROP POLICY IF EXISTS "Users can access companies" ON companies;
+DROP POLICY IF EXISTS "Users can access contacts" ON contacts;
+DROP POLICY IF EXISTS "Users can access reminders" ON reminders;
+DROP POLICY IF EXISTS "Users can access timeline" ON timeline;
 
-DROP POLICY IF EXISTS "Users can access their own contacts" ON contacts;
+-- Create separate policies for companies table
+CREATE POLICY "Users can select their own companies" ON companies
+FOR SELECT USING (auth.uid() = user_id);
 
-DROP POLICY IF EXISTS "Users can access their own reminders" ON reminders;
+CREATE POLICY "Users can insert companies" ON companies
+FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
-DROP POLICY IF EXISTS "Users can access their own timeline" ON timeline;
+CREATE POLICY "Users can update their own companies" ON companies
+FOR UPDATE USING (auth.uid() = user_id);
 
--- Create policies for companies table (allow all authenticated users to access all data for demo purposes)
-CREATE POLICY "Users can access companies" ON companies
-FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Users can delete their own companies" ON companies
+FOR DELETE USING (auth.uid() = user_id);
 
--- Create policies for contacts table (allow all authenticated users to access all data for demo purposes)
-CREATE POLICY "Users can access contacts" ON contacts
-FOR ALL USING (auth.uid() IS NOT NULL);
+-- Create separate policies for contacts table
+CREATE POLICY "Users can select their own contacts" ON contacts
+FOR SELECT USING (auth.uid() = user_id);
 
--- Create policies for reminders table (allow all authenticated users to access all data for demo purposes)
-CREATE POLICY "Users can access reminders" ON reminders
-FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Users can insert contacts" ON contacts
+FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
--- Create policies for timeline table (allow all authenticated users to access all data for demo purposes)
-CREATE POLICY "Users can access timeline" ON timeline
-FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Users can update their own contacts" ON contacts
+FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own contacts" ON contacts
+FOR DELETE USING (auth.uid() = user_id);
+
+-- Create separate policies for reminders table
+CREATE POLICY "Users can select their own reminders" ON reminders
+FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert reminders" ON reminders
+FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can update their own reminders" ON reminders
+FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own reminders" ON reminders
+FOR DELETE USING (auth.uid() = user_id);
+
+-- Create separate policies for timeline table
+CREATE POLICY "Users can select their own timeline" ON timeline
+FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert timeline" ON timeline
+FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can update their own timeline" ON timeline
+FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own timeline" ON timeline
+FOR DELETE USING (auth.uid() = user_id);
