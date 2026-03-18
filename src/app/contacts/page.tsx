@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,27 +21,67 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Users, Star, Building } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Users, Star, Building, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function ContactsPage() {
-  // Fetch all contacts with company name
-  const { data: contacts, error } = await supabase
-    .from('contacts')
-    .select('*, companies(firmenname)')
-    .order('created_at', { ascending: false })
+export default function ContactsPage() {
+  const [contacts, setContacts] = useState<any[]>([])
+  const [companies, setCompanies] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  if (error) {
-    console.error('Error fetching contacts:', error)
+  const fetchData = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*, companies(firmenname)')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      setContacts(data || [])
+      setCompanies(Array.from(new Set(data?.map(c => c.companies?.firmenname).filter(Boolean))))
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch contacts')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Calculate metrics
-  const totalContacts = contacts?.length || 0
-  const primaryContacts = contacts?.filter(c => c.primary).length || 0
-  const companiesWithContacts = new Set(contacts?.map(c => c.company_id)).size || 0
+  useEffect(() => {
+    fetchData()
+  }, [])
 
-  // Get unique companies for filter
-  const companies = Array.from(new Set(contacts?.map(c => c.companies?.firmenname).filter(Boolean)))
+  const totalContacts = contacts.length
+  const primaryContacts = contacts.filter(c => c.primary).length
+  const companiesWithContacts = new Set(contacts.map(c => c.company_id)).size
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">Home {'>'} Contacts</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
+          </div>
+          <Button>New Contact</Button>
+        </div>
+        <Alert variant="destructive" className="border-red-500">
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button onClick={fetchData} variant="outline" className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto p-6 lg:p-8 space-y-8">
@@ -57,7 +100,11 @@ export default async function ContactsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalContacts}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{totalContacts}</div>
+            )}
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -66,7 +113,11 @@ export default async function ContactsPage() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{primaryContacts}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{primaryContacts}</div>
+            )}
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -75,7 +126,11 @@ export default async function ContactsPage() {
             <Building className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{companiesWithContacts}</div>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{companiesWithContacts}</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -99,44 +154,54 @@ export default async function ContactsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Vorname Nachname</TableHead>
-                    <TableHead>Firma</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefon</TableHead>
-                    <TableHead>Primary</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {contacts?.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell>{contact.vorname} {contact.nachname}</TableCell>
-                      <TableCell>
-                        <Link href={`/companies/${contact.company_id}`} className="text-blue-600 hover:underline">
-                          {contact.companies?.firmenname}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{contact.position}</TableCell>
-                      <TableCell>{contact.email}</TableCell>
-                      <TableCell>{contact.telefon}</TableCell>
-                      <TableCell>
-                        {contact.primary && <Badge className="bg-[#24BACC] text-white">Primary</Badge>}
-                      </TableCell>
-                    </TableRow>
-                  )) || (
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
-                        No results.
-                      </TableCell>
+                      <TableHead>Vorname Nachname</TableHead>
+                      <TableHead>Firma</TableHead>
+                      <TableHead>Position</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Telefon</TableHead>
+                      <TableHead>Primary</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {contacts.map((contact) => (
+                      <TableRow key={contact.id}>
+                        <TableCell>{contact.vorname} {contact.nachname}</TableCell>
+                        <TableCell>
+                          <Link href={`/companies/${contact.company_id}`} className="text-blue-600 hover:underline">
+                            {contact.companies?.firmenname}
+                          </Link>
+                        </TableCell>
+                        <TableCell>{contact.position}</TableCell>
+                        <TableCell>{contact.email}</TableCell>
+                        <TableCell>{contact.telefon}</TableCell>
+                        <TableCell>
+                          {contact.primary && <Badge className="bg-[#24BACC] text-white">Primary</Badge>}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!contacts.length && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          No results.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
