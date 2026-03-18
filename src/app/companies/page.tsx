@@ -23,7 +23,7 @@ export default async function CompaniesPage() {
   return (
     <div className="p-6 lg:p-8 space-y-8">
       <div>
-        <p className="text-sm text-muted-foreground">Home > Companies</p>
+        <p className="text-sm text-muted-foreground">Home {'>'} Companies</p>
         <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
       </div>
 
