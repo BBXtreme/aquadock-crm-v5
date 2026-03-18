@@ -97,9 +97,11 @@ const columns: ColumnDef<Company, any>[] = [
     header: 'Actions',
     cell: (info) => (
       <div className="flex space-x-2">
-        <Button variant="ghost" size="sm">
-          <Eye className="h-4 w-4" />
-        </Button>
+        <Link href={`/companies/${info.row.original.id}`}>
+          <Button variant="ghost" size="sm">
+            <Eye className="h-4 w-4" />
+          </Button>
+        </Link>
         <Link href={`/companies/${info.row.original.id}`}>
           <Button variant="ghost" size="sm">
             <Edit className="h-4 w-4" />
@@ -153,6 +155,8 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
                   className="capitalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  <DropdownMenuCheckboxItem
                 >
                   {column.id}
                 </DropdownMenuCheckboxItem>
