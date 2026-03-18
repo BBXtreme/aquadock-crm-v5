@@ -22,14 +22,14 @@ export default function SettingsPage() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+        const { data: { user }, error } = await supabase.auth.getUser()
         if (error) {
           setError(error.message)
-        } else if (session?.user) {
-          setUser(session.user)
-          setDisplayName(session.user.user_metadata?.display_name || '')
+        } else if (user) {
+          setUser(user)
+          setDisplayName(user.user_metadata?.display_name || '')
         } else {
-          setError('No user session found')
+          setError('No user found')
         }
       } catch (err) {
         setError('Failed to load user data')
