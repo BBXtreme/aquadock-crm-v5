@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 interface Company {
   id: string
@@ -94,14 +95,16 @@ const columns: ColumnDef<Company, any>[] = [
   columnHelper.display({
     id: 'actions',
     header: 'Actions',
-    cell: () => (
+    cell: (info) => (
       <div className="flex space-x-2">
         <Button variant="ghost" size="sm">
           <Eye className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm">
-          <Edit className="h-4 w-4" />
-        </Button>
+        <Link href={`/companies/${info.row.original.id}`}>
+          <Button variant="ghost" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </Link>
         <Button variant="ghost" size="sm">
           <Trash className="h-4 w-4" />
         </Button>
