@@ -67,17 +67,17 @@ export default async function CompanyDetailPage({
         <p className="text-sm text-muted-foreground">Home {'>'} Companies {'>'} {company.firmenname}</p>
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold tracking-tight">{company.firmenname}</h1>
-            <Badge variant={company.status === 'won' ? 'default' : 'secondary'}>
+            <h1 className="text-3xl font-semibold tracking-tight">{company.firmenname}</h1>
+            <Badge className={company.status === 'won' ? 'bg-emerald-500 text-white' : company.status === 'lost' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'}>
               {company.status}
             </Badge>
           </div>
-          <Button>Edit</Button>
+          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">Edit</Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
@@ -89,7 +89,7 @@ export default async function CompanyDetailPage({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Phone className="mr-2 h-5 w-5" />
@@ -102,7 +102,7 @@ export default async function CompanyDetailPage({
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Anchor className="mr-2 h-5 w-5" />
@@ -117,7 +117,7 @@ export default async function CompanyDetailPage({
         </Card>
       </div>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardHeader>
           <CardTitle>Linked Contacts</CardTitle>
         </CardHeader>
@@ -143,7 +143,7 @@ export default async function CompanyDetailPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Calendar className="mr-2 h-5 w-5" />
@@ -170,7 +170,7 @@ export default async function CompanyDetailPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Bell className="mr-2 h-5 w-5" />

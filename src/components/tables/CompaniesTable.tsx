@@ -30,6 +30,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { cn } from '@/lib/utils'
 
 interface Company {
   id: string
@@ -64,7 +65,11 @@ const columns: ColumnDef<Company, any>[] = [
   columnHelper.accessor('status', {
     header: 'Status',
     cell: (info) => (
-      <Badge variant={info.getValue() === 'won' ? 'default' : 'secondary'}>
+      <Badge className={cn(
+        info.getValue() === 'won' && 'bg-emerald-500 text-white',
+        info.getValue() === 'lost' && 'bg-rose-500 text-white',
+        info.getValue() === 'lead' && 'bg-amber-500 text-white'
+      )}>
         {info.getValue()}
       </Badge>
     ),

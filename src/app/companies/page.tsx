@@ -26,13 +26,13 @@ export default async function CompaniesPage() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Home {'>'} Companies</p>
-          <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
         </div>
-        <Button className="bg-[#24BACC] hover:bg-[#24BACC]/90">New Company</Button>
+        <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Company</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
@@ -41,7 +41,7 @@ export default async function CompaniesPage() {
             <div className="text-2xl font-bold">{totalCompanies}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Leads</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -50,7 +50,7 @@ export default async function CompaniesPage() {
             <div className="text-2xl font-bold">{leads}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Won Deals</CardTitle>
             <Trophy className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +59,7 @@ export default async function CompaniesPage() {
             <div className="text-2xl font-bold">{won}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Value</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -70,7 +70,7 @@ export default async function CompaniesPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardContent className="p-6">
           <CompaniesTable companies={companies || []} />
         </CardContent>

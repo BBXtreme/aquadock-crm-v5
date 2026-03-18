@@ -14,13 +14,13 @@ export default async function Home() {
     <div className="p-6 lg:p-8 space-y-8">
       <div>
         <p className="text-sm text-muted-foreground">Home</p>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
       </div>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
+            <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
               </CardHeader>
@@ -31,7 +31,7 @@ export default async function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
               </CardHeader>
@@ -42,7 +42,7 @@ export default async function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Open Reminders</CardTitle>
               </CardHeader>
@@ -53,7 +53,7 @@ export default async function Home() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Won Deals</CardTitle>
               </CardHeader>
@@ -68,7 +68,7 @@ export default async function Home() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold mb-2">Chart Placeholder</h3>
           <p className="text-muted-foreground">Placeholder for charts</p>
@@ -81,7 +81,7 @@ export default async function Home() {
           <ChevronDown className="h-4 w-4" />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-2">
-          <Card>
+          <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
             <CardHeader>
               <CardTitle>Supabase-Verbindung</CardTitle>
             </CardHeader>
