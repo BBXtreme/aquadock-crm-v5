@@ -26,11 +26,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AquaDock CRM",
-  description: "AquaDock CRM application",
-};
-
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
   { href: '/companies', label: 'Companies', icon: Building },
