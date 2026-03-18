@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import CompaniesTable from '@/components/tables/CompaniesTable'
 
 export default async function CompaniesPage() {
   // Fetch all companies
@@ -61,10 +62,7 @@ export default async function CompaniesPage() {
         </Card>
       </div>
 
-      <div className="bg-muted p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-2">Companies Table Placeholder</h3>
-        <p className="text-muted-foreground">Table implementation pending</p>
-      </div>
+      <CompaniesTable companies={companies || []} />
     </div>
   )
 }

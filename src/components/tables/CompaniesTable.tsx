@@ -1,0 +1,213 @@
+'use client'
+
+import { useState } from 'react'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  ColumnDef,
+} from '@tanstack/react-table'
+import { formatDistanceToNow } from 'date-fns'
+import { Eye, Edit, Trash } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+
+interface Company {
+  id: string
+  firmenname: string
+  kundentyp: string
+  status: string
+  value: number
+  stadt: string
+  land: string
+  created_at: string
+}
+
+interface CompaniesTableProps {
+  companies: Company[]
+}
+
+const columnHelper = createColumnHelper<Company>()
+
+const columns: ColumnDef<Company, any>[] = [
+  columnHelper.accessor('firmenname', {
+    header: 'Firmenname',
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor('kundentyp', {
+    header: 'Kundentyp',
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor('status', {
+    header: 'Status',
+    cell: (info) => (
+      <Badge variant={info.getValue() === 'won' ? 'default' : 'secondary'}>
+        {info.getValue()}
+      </Badge>
+    ),
+  }),
+  columnHelper.accessor('value', {
+    header: 'Value',
+    cell: (info) => `€${info.getValue()?.toLocaleString() || 0}`,
+  }),
+  columnHelper.accessor('stadt', {
+    header: 'Stadt',
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor('land', {
+    header: 'Land',
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor('created_at', {
+    header: 'Created',
+    cell: (info) => formatDistanceToNow(new Date(info.getValue()), { addSuffix: true }),
+  }),
+  columnHelper.display({
+    id: 'actions',
+    header: 'Actions',
+    cell: () => (
+      <div className="flex space-x-2">
+        <Button variant="ghost" size="sm">
+          <Eye className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm">
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm">
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
+    ),
+  }),
+]
+
+export default function CompaniesTable({ companies }: CompaniesTableProps) {
+  const [globalFilter, setGlobalFilter] = useState('')
+  const [columnVisibility, setColumnVisibility] = useState({})
+
+  const table = useReactTable({
+    data: companies,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    state: {
+      globalFilter,
+      columnVisibility,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+  })
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search companies..."
+          value={globalFilter ?? ''}
+          onChange={(event) => setGlobalFilter(String(event.target.value))}
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Columns</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table.getAllColumns().filter((column) => column.getCanHide()).map((column) => {
+              return (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{' '}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
