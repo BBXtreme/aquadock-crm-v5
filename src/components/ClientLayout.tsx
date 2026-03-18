@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -9,9 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Menu, Home, Building, Users, Clock, Bell, Mail, Search, Sun, Moon, User, Settings } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Menu, Home, Building, Users, Clock, Bell, Mail, Search, Sun, Moon, User, Settings, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Toaster } from 'sonner'
+import ErrorBoundary from './ErrorBoundary'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: Home },
@@ -26,10 +28,34 @@ interface ClientLayoutProps {
   children: React.ReactNode
 }
 
+const LoadingFallback = () => (
+  <div className="flex-1 p-6 lg:p-8 space-y-8">
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+      <Skeleton className="h-96 w-full" />
+    </div>
+  </div>
+)
+
+const AuthLoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="text-center space-y-4">
+      <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#24BACC]" />
+      <p className="text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+)
+
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [theme, setTheme] = useState('light')
+  const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -42,6 +68,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     const saved = localStorage.getItem('theme') || 'light'
     setTheme(saved)
     document.documentElement.classList.toggle('dark', saved === 'dark')
+  }, [])
+
+  useEffect(() => {
+    // Simulate auth check delay
+    const timer = setTimeout(() => setAuthLoading(false), 1000)
+    return () => clearTimeout(timer)
   }, [])
 
   const pathname = usePathname()
@@ -130,31 +162,39 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     </header>
   )
 
+  if (authLoading) {
+    return <AuthLoadingSpinner />
+  }
+
   return (
-    <div className="flex h-screen">
-      {isMobile ? (
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" className="fixed top-4 left-4 z-50">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64">
+    <ErrorBoundary>
+      <div className="flex h-screen">
+        {isMobile ? (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="fixed top-4 left-4 z-50">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64">
+              {sidebarContent}
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
             {sidebarContent}
-          </SheetContent>
-        </Sheet>
-      ) : (
-        <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
-          {sidebarContent}
-        </aside>
-      )}
-      <div className="flex-1 flex flex-col">
-        {header}
-        <main className="flex-1 p-6 lg:p-8">
-          {children}
-        </main>
-        <Toaster richColors position="top-right" />
+          </aside>
+        )}
+        <div className="flex-1 flex flex-col">
+          {header}
+          <Suspense fallback={<LoadingFallback />}>
+            <main className="flex-1 p-6 lg:p-8">
+              {children}
+            </main>
+          </Suspense>
+          <Toaster richColors position="top-right" />
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }
