@@ -172,7 +172,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-geist-sans leading-7`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased leading-7`}
       >
         <LayoutContent>{children}</LayoutContent>
       </body>
