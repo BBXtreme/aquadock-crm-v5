@@ -62,7 +62,7 @@ export default async function CompanyDetailPage({
   ]
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
+    <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div>
         <p className="text-sm text-muted-foreground">Home {'>'} Companies {'>'} {company.firmenname}</p>
         <div className="flex items-center justify-between mt-2">
@@ -72,12 +72,12 @@ export default async function CompanyDetailPage({
               {company.status}
             </Badge>
           </div>
-          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">Edit</Button>
+          <Button>Edit</Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
@@ -89,7 +89,7 @@ export default async function CompanyDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Phone className="mr-2 h-5 w-5" />
@@ -102,7 +102,7 @@ export default async function CompanyDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Anchor className="mr-2 h-5 w-5" />
@@ -117,7 +117,7 @@ export default async function CompanyDetailPage({
         </Card>
       </div>
 
-      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardHeader>
           <CardTitle>Linked Contacts</CardTitle>
         </CardHeader>
@@ -143,7 +143,7 @@ export default async function CompanyDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Calendar className="mr-2 h-5 w-5" />
@@ -170,7 +170,7 @@ export default async function CompanyDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardHeader>
           <CardTitle className="flex items-center">
             <Bell className="mr-2 h-5 w-5" />

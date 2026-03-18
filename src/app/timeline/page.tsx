@@ -29,13 +29,13 @@ export default async function TimelinePage() {
   const types = Array.from(new Set(timeline?.map(t => t.activity_type).filter(Boolean)))
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
+    <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Home {'>'} Timeline</p>
           <h1 className="text-3xl font-semibold tracking-tight">Timeline</h1>
         </div>
-        <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Timeline Entry</Button>
+        <Button>New Timeline Entry</Button>
       </div>
 
       <div className="flex space-x-4">
@@ -69,7 +69,7 @@ export default async function TimelinePage() {
 
       <div className="space-y-4">
         {timeline?.map((entry) => (
-          <Card key={entry.id} className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+          <Card key={entry.id} className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
@@ -89,7 +89,7 @@ export default async function TimelinePage() {
             </CardContent>
           </Card>
         )) || (
-          <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardContent className="p-6">
               <p className="text-center text-muted-foreground">No timeline entries found.</p>
             </CardContent>

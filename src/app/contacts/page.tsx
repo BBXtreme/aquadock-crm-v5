@@ -31,17 +31,17 @@ export default async function ContactsPage() {
   const companiesWithContacts = new Set(contacts?.map(c => c.company_id)).size || 0
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
+    <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Home {'>'} Contacts</p>
           <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
         </div>
-        <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Contact</Button>
+        <Button>New Contact</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Contacts</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -50,7 +50,7 @@ export default async function ContactsPage() {
             <div className="text-2xl font-bold">{totalContacts}</div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Primary Contacts</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +59,7 @@ export default async function ContactsPage() {
             <div className="text-2xl font-bold">{primaryContacts}</div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Companies with Contacts</CardTitle>
             <Building className="h-4 w-4 text-muted-foreground" />
@@ -70,7 +70,7 @@ export default async function ContactsPage() {
         </Card>
       </div>
 
-      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardContent className="p-6">
           <div className="space-y-4">
             <Input placeholder="Search contacts..." className="max-w-sm" />

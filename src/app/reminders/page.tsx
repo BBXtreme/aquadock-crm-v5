@@ -35,17 +35,17 @@ export default async function RemindersPage() {
   const highPriority = allReminders?.filter(r => r.status === 'open' && r.priority === 'high').length || 0
 
   return (
-    <div className="p-6 lg:p-8 space-y-8">
+    <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">Home {'>'} Reminders</p>
           <h1 className="text-3xl font-semibold tracking-tight">Reminders</h1>
         </div>
-        <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Reminder</Button>
+        <Button>New Reminder</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Reminders</CardTitle>
             <Bell className="h-4 w-4 text-muted-foreground" />
@@ -54,7 +54,7 @@ export default async function RemindersPage() {
             <div className="text-2xl font-bold">{openReminders}</div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overdue</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
@@ -63,7 +63,7 @@ export default async function RemindersPage() {
             <div className="text-2xl font-bold">{overdue}</div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">This Week</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -72,7 +72,7 @@ export default async function RemindersPage() {
             <div className="text-2xl font-bold">{thisWeek}</div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">High Priority</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +90,7 @@ export default async function RemindersPage() {
         <Button variant="outline">My Tasks</Button>
       </div>
 
-      <Card className="shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
+      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
         <CardContent className="p-6">
           <div className="rounded-md border">
             <Table>
