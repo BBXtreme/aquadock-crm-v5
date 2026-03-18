@@ -114,10 +114,12 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </DropdownMenuItem>
+            <Link href="/settings">
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+            </Link>
             <DropdownMenuItem>
               Sign out
             </DropdownMenuItem>
