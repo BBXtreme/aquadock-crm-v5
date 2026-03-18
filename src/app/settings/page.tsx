@@ -14,16 +14,27 @@ import { User, LogOut, Upload } from 'lucide-react'
 export default function SettingsPage() {
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user)
-        setDisplayName(user.user_metadata?.display_name || '')
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          setError(error.message)
+        } else if (session?.user) {
+          setUser(session.user)
+          setDisplayName(session.user.user_metadata?.display_name || '')
+        } else {
+          setError('No user session found')
+        }
+      } catch (err) {
+        setError('Failed to load user data')
+      } finally {
+        setLoading(false)
       }
     }
     getUser()
@@ -56,8 +67,28 @@ export default function SettingsPage() {
     router.push('/login')
   }
 
-  if (!user) {
+  if (loading) {
     return <div>Loading...</div>
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-6 lg:p-8">
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto p-6 lg:p-8">
+        <Alert>
+          <AlertDescription>No user data available. Please try logging in again.</AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   return (
