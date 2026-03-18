@@ -28,7 +28,6 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs'
 import { Mail, Send, Eye, TestTube } from 'lucide-react'
-import { toast } from 'sonner'
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<any[]>([])
@@ -110,10 +109,9 @@ export default function MassEmailPage() {
           content: `Test email sent to test@example.com`,
         })
 
-      toast.success('Test email sent successfully!')
+      console.log('Test email sent successfully!')
     } catch (error) {
       console.error('Error sending test email:', error)
-      toast.error('Failed to send test email')
     } finally {
       setLoading(false)
     }
@@ -164,10 +162,9 @@ export default function MassEmailPage() {
           content: `Mass email sent to ${companies?.length || 0} recipients`,
         })
 
-      toast.success(`Emails sent to ${companies?.length || 0} recipients!`)
+      console.log(`Emails sent to ${companies?.length || 0} recipients!`)
     } catch (error) {
       console.error('Error sending emails:', error)
-      toast.error('Failed to send emails')
     } finally {
       setLoading(false)
     }
