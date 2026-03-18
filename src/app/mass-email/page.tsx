@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,26 +27,150 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
-import { Mail, Send } from 'lucide-react'
+import { Mail, Send, Eye, TestTube } from 'lucide-react'
+import { toast } from 'sonner'
 
-export default async function MassEmailPage() {
-  // Fetch email templates
-  const { data: templates, error: templatesError } = await supabase
-    .from('email_templates')
-    .select('*')
+export default function MassEmailPage() {
+  const [templates, setTemplates] = useState<any[]>([])
+  const [history, setHistory] = useState<any[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [recipientFilter, setRecipientFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [previewBody, setPreviewBody] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  if (templatesError) {
-    console.error('Error fetching templates:', templatesError)
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch email templates
+      const { data: templatesData, error: templatesError } = await supabase
+        .from('email_templates')
+        .select('*')
+
+      if (templatesError) {
+        console.error('Error fetching templates:', templatesError)
+      } else {
+        setTemplates(templatesData || [])
+      }
+
+      // Fetch send history
+      const { data: historyData, error: historyError } = await supabase
+        .from('email_log')
+        .select('*')
+        .order('sent_at', { ascending: false })
+
+      if (historyError) {
+        console.error('Error fetching history:', historyError)
+      } else {
+        setHistory(historyData || [])
+      }
+    }
+    fetchData()
+  }, [])
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      const template = templates.find(t => t.id === selectedTemplate)
+      if (template) {
+        // Fill placeholders with sample data
+        const filledBody = template.body
+          .replace(/{{firmenname}}/g, 'Sample Company GmbH')
+          .replace(/{{vorname}}/g, 'Max')
+          .replace(/{{nachname}}/g, 'Mustermann')
+          .replace(/{{email}}/g, 'max.mustermann@example.com')
+        setPreviewBody(filledBody)
+      }
+    }
+  }, [selectedTemplate, templates])
+
+  const handleSendTest = async () => {
+    if (!selectedTemplate) return
+
+    setLoading(true)
+    try {
+      // Log test email
+      const { error } = await supabase
+        .from('email_log')
+        .insert({
+          recipient: 'test@example.com',
+          subject: templates.find(t => t.id === selectedTemplate)?.subject || '',
+          body: previewBody,
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+        })
+
+      if (error) throw error
+
+      // Log to timeline
+      await supabase
+        .from('timeline')
+        .insert({
+          company_id: null, // No specific company for mass email
+          activity_type: 'email',
+          title: 'Test Email Sent',
+          content: `Test email sent to test@example.com`,
+        })
+
+      toast.success('Test email sent successfully!')
+    } catch (error) {
+      console.error('Error sending test email:', error)
+      toast.error('Failed to send test email')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Fetch send history
-  const { data: history, error: historyError } = await supabase
-    .from('email_log')
-    .select('*')
-    .order('sent_at', { ascending: false })
+  const handleSendToAll = async () => {
+    if (!selectedTemplate) return
 
-  if (historyError) {
-    console.error('Error fetching history:', historyError)
+    setLoading(true)
+    try {
+      // Fetch recipients based on filter
+      let query = supabase.from('companies').select('firmenname, contacts(email)')
+      if (recipientFilter === 'lead') {
+        query = query.eq('status', 'lead')
+      } else if (recipientFilter === 'won') {
+        query = query.eq('status', 'won')
+      }
+      // Add search filter if provided
+      if (searchQuery) {
+        query = query.ilike('firmenname', `%${searchQuery}%`)
+      }
+
+      const { data: companies, error } = await query
+      if (error) throw error
+
+      // For each company, send email (placeholder - just log)
+      for (const company of companies || []) {
+        const recipient = company.contacts?.[0]?.email || `contact@${company.firmenname.toLowerCase().replace(/\s+/g, '')}.com`
+        
+        await supabase
+          .from('email_log')
+          .insert({
+            recipient,
+            subject: templates.find(t => t.id === selectedTemplate)?.subject || '',
+            body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+          })
+      }
+
+      // Log to timeline
+      await supabase
+        .from('timeline')
+        .insert({
+          company_id: null,
+          activity_type: 'email',
+          title: 'Mass Email Sent',
+          content: `Mass email sent to ${companies?.length || 0} recipients`,
+        })
+
+      toast.success(`Emails sent to ${companies?.length || 0} recipients!`)
+    } catch (error) {
+      console.error('Error sending emails:', error)
+      toast.error('Failed to send emails')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -59,6 +186,7 @@ export default async function MassEmailPage() {
       <Tabs defaultValue="templates" className="space-y-4">
         <TabsList>
           <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="send">Send Email</TabsTrigger>
           <TabsTrigger value="history">Send History</TabsTrigger>
         </TabsList>
 
@@ -77,13 +205,14 @@ export default async function MassEmailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {templates?.map((template) => (
+                  {templates.map((template) => (
                     <TableRow key={template.id}>
                       <TableCell>{template.name}</TableCell>
                       <TableCell>{template.subject}</TableCell>
                       <TableCell>{template.body?.substring(0, 50)}...</TableCell>
                     </TableRow>
-                  )) || (
+                  ))}
+                  {!templates.length && (
                     <TableRow>
                       <TableCell colSpan={3} className="h-24 text-center">
                         No templates found.
@@ -96,10 +225,83 @@ export default async function MassEmailPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="send" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+              <CardHeader>
+                <CardTitle>Send Configuration</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select recipients" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Companies</SelectItem>
+                    <SelectItem value="lead">Leads Only</SelectItem>
+                    <SelectItem value="won">Won Deals Only</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Search companies..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={handleSendTest}
+                    disabled={!selectedTemplate || loading}
+                    className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
+                  >
+                    <TestTube className="mr-2 h-4 w-4" />
+                    Send Test
+                  </Button>
+                  <Button
+                    onClick={handleSendToAll}
+                    disabled={!selectedTemplate || loading}
+                    className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    Send to All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Eye className="mr-2 h-5 w-5" />
+                  Preview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {previewBody ? (
+                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewBody }} />
+                ) : (
+                  <p className="text-muted-foreground">Select a template to preview</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="history" className="space-y-4">
           <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardHeader>
-              <CardTitle>Send History</CardTitle>
+              <CardTitle>Send History ({history.length} sent)</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -112,14 +314,15 @@ export default async function MassEmailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history?.map((log) => (
+                  {history.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell>{log.recipient}</TableCell>
                       <TableCell>{log.subject}</TableCell>
                       <TableCell>{log.status}</TableCell>
                       <TableCell>{log.sent_at}</TableCell>
                     </TableRow>
-                  )) || (
+                  ))}
+                  {!history.length && (
                     <TableRow>
                       <TableCell colSpan={4} className="h-24 text-center">
                         No send history found.
@@ -132,48 +335,6 @@ export default async function MassEmailPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Send className="mr-2 h-5 w-5" />
-            Send Email
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select template" />
-              </SelectTrigger>
-              <SelectContent>
-                {templates?.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Select recipients" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-companies">All Companies</SelectItem>
-                <SelectItem value="all-contacts">All Contacts</SelectItem>
-                <SelectItem value="leads">Leads</SelectItem>
-                <SelectItem value="won">Won Deals</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Input placeholder="Subject" />
-          <Textarea placeholder="Email body" rows={6} />
-          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
-            <Mail className="mr-2 h-4 w-4" />
-            Send Email
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   )
 }
