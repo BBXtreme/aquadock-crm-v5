@@ -68,7 +68,7 @@ export default async function CompanyDetailPage({
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-center space-x-4">
             <h1 className="text-3xl font-semibold tracking-tight">{company.firmenname}</h1>
-            <Badge className={company.status === 'won' ? 'bg-emerald-500 text-white' : company.status === 'lost' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'}>
+            <Badge className={company.status === 'won' ? 'bg-emerald-600 text-white' : company.status === 'lost' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white'}>
               {company.status}
             </Badge>
           </div>

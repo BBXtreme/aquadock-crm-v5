@@ -119,12 +119,12 @@ export default async function RemindersPage() {
                         {formatDistanceToNow(new Date(reminder.due_date), { addSuffix: true })}
                       </TableCell>
                       <TableCell>
-                        <Badge className={reminder.priority === 'high' ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white'}>
+                        <Badge className={reminder.priority === 'high' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white'}>
                           {reminder.priority}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={reminder.status === 'open' ? 'bg-emerald-500 text-white' : 'bg-zinc-500 text-white'}>
+                        <Badge className={reminder.status === 'open' ? 'bg-emerald-600 text-white' : 'bg-zinc-500 text-white'}>
                           {reminder.status}
                         </Badge>
                       </TableCell>
