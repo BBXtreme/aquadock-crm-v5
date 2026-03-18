@@ -111,17 +111,17 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+            <DropdownMenuItem className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
             <Link href="/settings">
-              <DropdownMenuItem>
+              <DropdownMenuItem className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
             </Link>
-            <DropdownMenuItem>
+            <DropdownMenuItem className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
