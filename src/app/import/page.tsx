@@ -156,8 +156,8 @@ export default function ImportPage() {
         }
 
         successCount++
-      } catch (error) {
-        console.error('Import error:', error)
+      } catch (error: any) {
+        console.error('Import error:', error?.message || error || 'Unknown error')
         errorCount++
       }
     }
@@ -246,7 +246,7 @@ export default function ImportPage() {
               <CardTitle>Preview (First 5 Rows)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
