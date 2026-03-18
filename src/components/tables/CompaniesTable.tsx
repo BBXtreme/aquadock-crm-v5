@@ -66,9 +66,10 @@ const columns: ColumnDef<Company, any>[] = [
     header: 'Status',
     cell: (info) => (
       <Badge className={cn(
-        info.getValue() === 'won' && 'bg-emerald-500 text-white',
-        info.getValue() === 'lost' && 'bg-rose-500 text-white',
-        info.getValue() === 'lead' && 'bg-amber-500 text-white'
+        info.getValue() === 'won' && 'bg-emerald-600 text-white',
+        info.getValue() === 'lost' && 'bg-rose-600 text-white',
+        info.getValue() === 'lead' && 'bg-amber-600 text-white',
+        !['won', 'lost', 'lead'].includes(info.getValue()) && 'bg-zinc-500 text-white'
       )}>
         {info.getValue()}
       </Badge>
@@ -157,7 +158,7 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
