@@ -1,20 +1,10 @@
-/* globals.css — Tailwind v4 + shadcn/ui (radix-nova) optimized */
-
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Theme variable mappings (required for Tailwind v4) */
+/* Tailwind v4 theme mapping */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -36,56 +26,38 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-heading: var(--font-sans);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
-/* Light mode (default) */
+/* Your custom colors (light mode) */
 :root {
-  --font-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, monospace;
-
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
-
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-
-  --primary: oklch(0.68 0.15 200);           /* example blue-ish primary */
+  --primary: oklch(0.68 0.15 200);
   --primary-foreground: oklch(1 0 0);
-
-  --secondary: oklch(0.75 0.18 310);         /* purple-ish */
+  --secondary: oklch(0.75 0.18 310);
   --secondary-foreground: oklch(1 0 0);
-
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-
   --accent: oklch(0.85 0.12 280);
   --accent-foreground: oklch(0.145 0 0);
-
   --destructive: oklch(0.577 0.245 27.325);
-
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.68 0.15 200);
@@ -94,7 +66,6 @@
   --sidebar-accent-foreground: oklch(0.145 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-
   --radius: 0.625rem;
 }
 
@@ -102,37 +73,22 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
-
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-
   --primary: oklch(0.68 0.15 200);
   --primary-foreground: oklch(1 0 0);
-
   --secondary: oklch(0.75 0.18 310);
   --secondary-foreground: oklch(1 0 0);
-
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-
   --accent: oklch(0.85 0.12 280);
   --accent-foreground: oklch(0.985 0 0);
-
   --destructive: oklch(0.704 0.191 22.216);
-
   --border: oklch(1 0 0 / 0.1);
   --input: oklch(1 0 0 / 0.15);
   --ring: oklch(0.556 0 0);
-
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.68 0.15 200);
@@ -143,25 +99,10 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* Base layer styles */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply antialiased leading-7 font-sans bg-background text-foreground;
-  }
-
-  html {
-    @apply font-sans;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
-  }
-
-  p {
-    @apply leading-6;
-  }
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground antialiased leading-7 font-sans; }
+  html { @apply font-sans; }
+  h1, h2, h3, h4, h5, h6 { @apply font-semibold tracking-tight; }
+  p { @apply leading-6; }
 }

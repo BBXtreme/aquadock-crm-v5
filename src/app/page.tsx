@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase'
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
@@ -6,57 +7,76 @@ import { formatDistanceToNow } from 'date-fns'
 import KPICards from '@/components/dashboard/KPICards'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import SalesPipelineFunnel from '@/components/dashboard/SalesPipelineFunnel'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
-export default async function Home() {
-  // Test-Abfrage: Versuche, eine Tabelle zu lesen (auch wenn sie noch nicht existiert)
-  const { data: companies, error, count } = await supabase
-    .from('companies') // ← ändere später zu deiner echten Tabelle
-    .select('*', { count: 'exact' })
-    .limit(5)
+export default function Home() {
+  const [companies, setCompanies] = useState<any[]>([])
+  const [timeline, setTimeline] = useState<any[]>([])
+  const [reminders, setReminders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch all companies for aggregations
-  const { data: allCompanies } = await supabase
-    .from('companies')
-    .select('*')
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Limited fetch for preview
+        const { data: compData, error: compError, count } = await supabase
+          .from('companies')
+          .select('*', { count: 'exact' })
+          .limit(5)
 
-  // Fetch recent timeline entries
-  const { data: timeline } = await supabase
-    .from('timeline')
-    .select('*, companies(firmenname)')
-    .order('created_at', { ascending: false })
-    .limit(10)
+        if (compError) throw compError
+        setCompanies(compData || [])
 
-  // Fetch reminders for KPI
-  const { data: reminders } = await supabase
-    .from('reminders')
-    .select('*')
+        // Full fetch for calculations
+        const { data: allComp } = await supabase.from('companies').select('*')
+        
+        const { data: timeData } = await supabase
+          .from('timeline')
+          .select('*, companies(firmenname)')
+          .order('created_at', { ascending: false })
+          .limit(10)
+        setTimeline(timeData || [])
 
-  // Calculate KPIs
-  const totalCompanies = allCompanies?.length || 0
-  const leads = allCompanies?.filter(c => c.status === 'lead').length || 0
-  const won = allCompanies?.filter(c => c.status === 'won').length || 0
-  const valueSum = allCompanies?.reduce((sum, c) => sum + (c.value || 0), 0) || 0
-  const wonValue = allCompanies?.filter(c => c.status === 'won').reduce((sum, c) => sum + (c.value || 0), 0) || 0
-  const openReminders = reminders?.filter(r => r.status === 'open').length || 0
+        const { data: remData } = await supabase.from('reminders').select('*')
+        setReminders(remData || [])
 
-  // New KPIs
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>
+  if (error) return <div className="p-8 text-red-500 text-center">Error: {error}</div>
+
+  // KPI calculations
+  const totalCompanies = companies.length
+  const leads = companies.filter(c => c.status === 'lead').length
+  const won = companies.filter(c => c.status === 'won').length
+  const valueSum = companies.reduce((sum, c) => sum + (Number(c.value) || 0), 0)
+  const wonValue = companies.filter(c => c.status === 'won').reduce((sum, c) => sum + (Number(c.value) || 0), 0)
+  const openReminders = reminders.filter(r => r.status === 'open').length
+
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const newCompaniesThisMonth = allCompanies?.filter(c => new Date(c.created_at) >= startOfMonth).length || 0
+  const newCompaniesThisMonth = companies.filter(c => new Date(c.created_at) >= startOfMonth).length
   const avgValue = totalCompanies > 0 ? valueSum / totalCompanies : 0
 
-  // Top Kundentyp
-  const kundentypCounts = allCompanies?.reduce<Record<string, number>>((acc, company) => {
+  const kundentypCounts = companies.reduce<Record<string, number>>((acc, company) => {
     const typ = company.kundentyp || 'sonstige'
     acc[typ] = (acc[typ] || 0) + 1
     return acc
-  }, {}) || {}
+  }, {})
 
-  // assumes counts are numbers
-  const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => Number(b[1]) - Number(a[1]))
+  const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => b[1] - a[1])
   const topKundentyp = sortedKundentyp[0]?.[0] || 'N/A'
 
-  // Companies by kundentyp for chart
   const companiesByKundentyp = Object.entries(kundentypCounts).map(([kundentyp, count]) => ({
     kundentyp,
     count
@@ -76,22 +96,24 @@ export default async function Home() {
     <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div>
         <p className="text-sm text-muted-foreground">Home</p>
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
       </div>
 
       <KPICards kpis={kpis} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-2">Companies by Kundentyp</h3>
-            <div className="h-64 bg-marine-50 dark:bg-marine-900 rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Bar chart placeholder</p>
-              <div className="ml-4 space-y-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Companies by Kundentyp</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 bg-muted/50 rounded-lg flex items-center justify-center">
+              <p className="text-muted-foreground">Bar chart placeholder (use Recharts or similar)</p>
+              <div className="ml-6 space-y-2">
                 {companiesByKundentyp.map((item) => (
-                  <div key={item.kundentyp} className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-marine-500 rounded"></div>
-                    <span className="text-sm">{item.kundentyp}: {item.count}</span>
+                  <div key={item.kundentyp} className="flex items-center space-x-3">
+                    <div className="w-4 h-4 bg-primary rounded-full" />
+                    <span className="text-sm font-medium">{item.kundentyp}: {item.count}</span>
                   </div>
                 ))}
               </div>
@@ -99,68 +121,67 @@ export default async function Home() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {timeline?.map((entry) => (
-                <div key={entry.id} className="flex items-start space-x-3 p-3 bg-marine-50 dark:bg-marine-900 rounded-lg">
-                  <div className="w-2 h-2 bg-marine-500 rounded-full mt-2"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{entry.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry.companies?.firmenname} • {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
-                    </p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {timeline.length > 0 ? (
+                timeline.map((entry) => (
+                  <div key={entry.id} className="flex items-start space-x-4 p-4 bg-muted/50 rounded-lg">
+                    <div className="w-3 h-3 bg-primary rounded-full mt-2 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">{entry.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {entry.companies?.firmenname || 'Unknown'} • {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )) || (
-                <p className="text-muted-foreground text-center">No recent activity</p>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No recent activity</p>
               )}
             </div>
           </CardContent>
         </Card>
-
-        <SalesPipelineFunnel
-          leads={680}
-          qualified={480}
-          proposal={210}
-          negotiation={120}
-          won={45}
-          changePercent={18.2}
-          changeTextColor="green"
-        />
       </div>
 
+      <SalesPipelineFunnel
+        leads={680}
+        qualified={480}
+        proposal={210}
+        negotiation={120}
+        won={45}
+        changePercent={18.2}
+        changeTextColor="green"
+      />
+
       <Collapsible>
-        <CollapsibleTrigger className="flex items-center space-x-2 text-sm font-medium">
-          <span>Debug Info</span>
-          <ChevronDown className="h-4 w-4" />
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="flex items-center gap-2">
+            <span>Debug Info</span>
+            <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+          </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2">
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <CollapsibleContent className="mt-4 space-y-4">
+          <Card>
             <CardHeader>
-              <CardTitle>Supabase-Verbindung</CardTitle>
+              <CardTitle>Supabase Connection Debug</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg overflow-auto text-sm">
+              <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm max-h-96">
                 {JSON.stringify(
                   {
                     status: error ? 'Error' : 'Connected',
-                    rowCount: count ?? 0,
-                    data: companies ?? [],
-                    error: error?.message ?? null,
-                    envUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing',
-                    envKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing'
+                    rowCount: companies.length,
+                    sampleData: companies.slice(0, 2),
+                    error: error ?? null,
                   },
                   null,
                   2
                 )}
               </pre>
-              <p className="mt-4 text-zinc-600 dark:text-zinc-400">
-                {error
-                  ? `Fehler: ${error.message} (Tabelle 'companies' existiert vielleicht noch nicht – normal beim Start)`
-                  : `Erfolg! ${count ?? 0} Zeilen gefunden.`}
-              </p>
             </CardContent>
           </Card>
         </CollapsibleContent>
