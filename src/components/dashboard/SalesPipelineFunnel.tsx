@@ -32,32 +32,74 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
   } = props
 
   const stages = [
-    { name: 'Leads', value: leads, clipPath: 'polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)' },
-    { name: 'Qualified', value: qualified, clipPath: 'polygon(5% 0%, 95% 0%, 85% 100%, 15% 100%)' },
-    { name: 'Proposal Sent', value: proposal, clipPath: 'polygon(10% 0%, 90% 0%, 80% 100%, 20% 100%)' },
-    { name: 'Negotiation', value: negotiation, clipPath: 'polygon(15% 0%, 85% 0%, 75% 100%, 25% 100%)' },
-    { name: 'Won', value: won, clipPath: 'polygon(20% 0%, 80% 0%, 70% 100%, 30% 100%)' },
+    {
+      name: 'Leads',
+      value: leads,
+      height: 'h-[140px] md:h-[140px]',
+      gradient: 'bg-gradient-to-b from-blue-50 to-blue-200 dark:from-slate-800 dark:to-slate-900',
+      clipPath: 'polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)',
+      numberSize: 'text-4xl lg:text-5xl md:text-3xl',
+      nameSize: 'text-lg lg:text-xl md:text-lg',
+    },
+    {
+      name: 'Qualified',
+      value: qualified,
+      height: 'h-[120px] md:h-[120px]',
+      gradient: 'bg-gradient-to-b from-blue-200 to-blue-400 dark:from-slate-800 dark:to-slate-900',
+      clipPath: 'polygon(5% 0%, 95% 0%, 85% 100%, 15% 100%)',
+      numberSize: 'text-4xl lg:text-5xl md:text-3xl',
+      nameSize: 'text-lg lg:text-xl md:text-lg',
+    },
+    {
+      name: 'Proposal Sent',
+      value: proposal,
+      height: 'h-[100px] md:h-[100px]',
+      gradient: 'bg-gradient-to-b from-blue-400 to-blue-600 dark:from-slate-800 dark:to-slate-900',
+      clipPath: 'polygon(10% 0%, 90% 0%, 80% 100%, 20% 100%)',
+      numberSize: 'text-4xl lg:text-5xl md:text-3xl',
+      nameSize: 'text-lg lg:text-xl md:text-lg',
+    },
+    {
+      name: 'Negotiation',
+      value: negotiation,
+      height: 'h-[80px] md:h-[80px]',
+      gradient: 'bg-gradient-to-b from-blue-600 to-blue-800 dark:from-slate-800 dark:to-slate-900',
+      clipPath: 'polygon(15% 0%, 85% 0%, 75% 100%, 25% 100%)',
+      numberSize: 'text-4xl lg:text-5xl md:text-3xl',
+      nameSize: 'text-lg lg:text-xl md:text-lg',
+    },
+    {
+      name: 'Won',
+      value: won,
+      height: 'h-[60px] md:h-[60px]',
+      gradient: 'bg-gradient-to-b from-blue-800 to-blue-900 dark:from-slate-800 dark:to-slate-900',
+      clipPath: 'polygon(20% 0%, 80% 0%, 70% 100%, 30% 100%)',
+      numberSize: 'text-4xl lg:text-5xl md:text-3xl',
+      nameSize: 'text-lg lg:text-xl md:text-lg',
+    },
   ]
 
-  const changeColor = changeTextColor === 'green' ? 'text-[#10B981]' : 'text-red-600'
+  const changeColor = changeTextColor === 'green' ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
 
   return (
     <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold">Sales Pipeline</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold text-foreground">Sales Pipeline</CardTitle>
       </CardHeader>
       <CardContent className="space-y-0">
-        <div className="relative flex flex-col space-y-0">
+        <div className="relative flex flex-col">
           {stages.map((stage, index) => (
-            <div
-              key={stage.name}
-              className="relative h-16 bg-gradient-to-b from-[#EFF6FF] to-[#1E40AF] dark:from-[#1E293B] dark:to-[#0F172A] text-white"
-              style={{ clipPath: stage.clipPath }}
-            >
-              <div className="absolute inset-0 flex items-center justify-between px-6">
-                <span className="text-4xl font-bold">{stage.value}</span>
-                <span className="text-lg font-medium text-gray-200">{stage.name}</span>
+            <div key={stage.name}>
+              <div
+                className={`${stage.height} ${stage.gradient} text-white flex justify-between items-center p-4 lg:p-6`}
+                style={{ clipPath: stage.clipPath }}
+              >
+                <span className={`${stage.numberSize} font-bold`}>{stage.value}</span>
+                <span className={`${stage.nameSize} font-medium text-white/90`}>{stage.name}</span>
               </div>
+              {index < stages.length - 1 && (
+                <div className="h-px bg-white/20 dark:bg-gray-600"></div>
+              )}
             </div>
           ))}
         </div>
