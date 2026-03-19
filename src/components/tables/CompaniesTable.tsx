@@ -137,9 +137,7 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
 
   const handleExport = () => {
     const data = table.getFilteredRowModel().rows.map(row => row.original)
-    const csv = Papa.unparse(data, {
-      fields: ['firmenname', 'kundentyp', 'status', 'value', 'stadt', 'land', 'created_at']
-    })
+    const csv = Papa.unparse(data)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
