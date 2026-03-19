@@ -77,7 +77,7 @@ export default async function Home() {
 
       <KPICards kpis={kpis} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-2">Companies by Kundentyp</h3>
