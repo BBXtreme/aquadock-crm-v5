@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 
 interface SalesPipelineFunnelProps {
   leads?: number
@@ -65,10 +65,8 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
 
   return (
     <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-      <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-foreground">Sales Pipeline</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-0">
+      <CardContent className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Sales Pipeline</h3>
         <div className="relative flex flex-col">
           {stages.map((stage, index) => (
             <div key={stage.name} className="flex items-center justify-center">
