@@ -1,3 +1,4 @@
+// Fixed: corrected radix-ui imports for Vercel build
 "use client"
 
 import * as React from "react"
