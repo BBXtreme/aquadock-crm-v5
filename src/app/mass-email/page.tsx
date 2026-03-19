@@ -21,13 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import { Mail, Send, Eye, TestTube } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Upload, FileText, CheckCircle, XCircle } from 'lucide-react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 
 export default function MassEmailPage() {
@@ -127,7 +123,7 @@ export default function MassEmailPage() {
     setLoading(true)
     try {
       // Fetch recipients based on filter
-      let query = supabase.from('companies').select('firmenname, contacts(email)')
+      let query = supabase.from('companies').select('firmenname')
       if (recipientFilter === 'lead') {
         query = query.eq('status', 'lead')
       } else if (recipientFilter === 'won') {
@@ -143,7 +139,7 @@ export default function MassEmailPage() {
 
       // For each company, send email (placeholder - just log)
       for (const company of companies || []) {
-        const recipient = company.contacts?.[0]?.email || `contact@${company.firmenname.toLowerCase().replace(/\s+/g, '')}.com`
+        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, '')}.com`
         
         await supabase
           .from('email_log')
