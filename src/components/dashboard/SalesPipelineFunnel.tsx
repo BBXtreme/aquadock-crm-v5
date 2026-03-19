@@ -77,11 +77,11 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
   ]
 
   return (
-    <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+    <Card className="bg-card border-border shadow-sm rounded-xl">
       <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-foreground">Sales Pipeline</CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight text-foreground text-center">Sales Pipeline</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-0">
+      <CardContent className="space-y-0 p-6">
         <div className="relative flex flex-col">
           {stages.map((stage, index) => (
             <div key={stage.name}>
@@ -89,16 +89,16 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
                 className={`${stage.height} ${stage.gradient} text-white flex flex-col items-center text-center md:flex-row md:justify-between md:items-center p-4 lg:p-6 hover:shadow-lg hover:shadow-white/50 transition-shadow duration-300`}
                 style={{ clipPath: stage.clipPath }}
               >
-                <span className={`${stage.numberSize} font-bold pl-4`}>{stage.value}</span>
-                <span className={`${stage.nameSize} font-medium text-white/90 pr-4`}>{stage.name}</span>
+                <span className={`${stage.numberSize} font-sans font-bold pl-4`}>{stage.value}</span>
+                <span className={`${stage.nameSize} font-sans font-medium text-white/90 pr-4`}>{stage.name}</span>
               </div>
               {index < stages.length - 1 && (
-                <div className="h-px bg-white/20 dark:bg-gray-600"></div>
+                <div className="h-px bg-white/20"></div>
               )}
             </div>
           ))}
         </div>
-        <p className="text-sm italic text-emerald-500 dark:text-emerald-400 text-center mt-4">
+        <p className="text-sm italic text-center mt-6 text-green-500 dark:text-green-400">
           Leads increased by {changePercent}% since last month.
         </p>
       </CardContent>
