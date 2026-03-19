@@ -27,7 +27,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
               <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-5xl font-bold">{kpi.value}</div>
+              <div className="text-3xl font-bold">{kpi.value}</div>
               <div className="flex items-center space-x-1 mt-1">
                 {isPositive ? (
                   <TrendingUp className={`h-4 w-4 ${arrowColor}`} />
