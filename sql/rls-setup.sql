@@ -17,10 +17,25 @@ ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE timeline ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can access companies" ON companies;
-DROP POLICY IF EXISTS "Users can access contacts" ON contacts;
-DROP POLICY IF EXISTS "Users can access reminders" ON reminders;
-DROP POLICY IF EXISTS "Users can access timeline" ON timeline;
+DROP POLICY IF EXISTS "Users can select their own companies" ON companies;
+DROP POLICY IF EXISTS "Users can insert companies" ON companies;
+DROP POLICY IF EXISTS "Users can update their own companies" ON companies;
+DROP POLICY IF EXISTS "Users can delete their own companies" ON companies;
+
+DROP POLICY IF EXISTS "Users can select their own contacts" ON contacts;
+DROP POLICY IF EXISTS "Users can insert contacts" ON contacts;
+DROP POLICY IF EXISTS "Users can update their own contacts" ON contacts;
+DROP POLICY IF EXISTS "Users can delete their own contacts" ON contacts;
+
+DROP POLICY IF EXISTS "Users can select their own reminders" ON reminders;
+DROP POLICY IF EXISTS "Users can insert reminders" ON reminders;
+DROP POLICY IF EXISTS "Users can update their own reminders" ON reminders;
+DROP POLICY IF EXISTS "Users can delete their own reminders" ON reminders;
+
+DROP POLICY IF EXISTS "Users can select their own timeline" ON timeline;
+DROP POLICY IF EXISTS "Users can insert timeline" ON timeline;
+DROP POLICY IF EXISTS "Users can update their own timeline" ON timeline;
+DROP POLICY IF EXISTS "Users can delete their own timeline" ON timeline;
 
 -- Create separate policies for companies table
 CREATE POLICY "Users can select their own companies" ON companies
