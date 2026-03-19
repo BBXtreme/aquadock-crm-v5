@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 interface SalesPipelineFunnelProps {
   leads?: number
@@ -86,11 +87,15 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
           {stages.map((stage, index) => (
             <div key={stage.name}>
               <div
-                className={`${stage.height} ${stage.gradient} text-white flex flex-col items-center text-center md:flex-row md:justify-between md:items-center p-4 lg:p-6 hover:shadow-lg hover:shadow-white/50 transition-shadow duration-300`}
+                className={cn(
+                  stage.height,
+                  stage.gradient,
+                  'text-white flex flex-col items-center text-center md:flex-row md:justify-between md:items-center p-4 lg:p-6 hover:scale-101 transition-transform'
+                )}
                 style={{ clipPath: stage.clipPath }}
               >
-                <span className={`${stage.numberSize} font-sans font-bold pl-4`}>{stage.value}</span>
-                <span className={`${stage.nameSize} font-sans font-medium text-white/90 pr-4`}>{stage.name}</span>
+                <span className={cn(stage.numberSize, 'font-sans font-bold pl-4')}>{stage.value}</span>
+                <span className={cn(stage.nameSize, 'font-sans font-medium text-white/90 pr-4')}>{stage.name}</span>
               </div>
               {index < stages.length - 1 && (
                 <div className="h-px bg-white/20"></div>
@@ -98,7 +103,7 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
             </div>
           ))}
         </div>
-        <p className="text-sm italic text-center mt-6 text-green-500 dark:text-green-400">
+        <p className="text-sm italic text-center mt-6 text-green-400">
           Leads increased by {changePercent}% since last month.
         </p>
       </CardContent>
