@@ -46,8 +46,9 @@ export default async function Home() {
   const avgValue = totalCompanies > 0 ? valueSum / totalCompanies : 0
 
   // Top Kundentyp
-  const kundentypCounts = allCompanies?.reduce((acc, c) => {
-    acc[String(c.kundentyp)] = (acc[String(c.kundentyp)] || 0) + 1
+  const kundentypCounts = allCompanies?.reduce((acc: Record<string, number>, c: any) => {
+    const key = String(c.kundentyp || 'Unknown')
+    acc[key] = (acc[key] || 0) + 1
     return acc
   }, {} as Record<string, number>) || {}
 
