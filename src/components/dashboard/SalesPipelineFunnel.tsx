@@ -66,7 +66,7 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
           {stages.map((stage, index) => (
             <div key={stage.name}>
               <div
-                className="h-20 bg-gradient-to-b from-blue-50 to-blue-800 dark:from-slate-800 dark:to-slate-900 text-white flex justify-between items-center p-4 lg:p-6"
+                className="h-20 bg-gradient-to-b from-blue-50 to-blue-800 text-white flex justify-between items-center p-4 lg:p-6"
                 style={{ clipPath: stage.clipPath }}
               >
                 <span className="text-4xl lg:text-5xl font-bold">{stage.value}</span>
@@ -78,7 +78,7 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
             </div>
           ))}
         </div>
-        <p className="text-sm italic text-green-500 dark:text-green-400 text-center mt-4">
+        <p className="text-sm italic text-green-500 text-center mt-4">
           Leads increased by {changePercent}% since last month.
         </p>
       </CardContent>
