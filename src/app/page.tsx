@@ -47,7 +47,7 @@ export default async function Home() {
 
   // Top Kundentyp
   const kundentypCounts = allCompanies?.reduce((acc, c) => {
-    acc[c.kundentyp] = (acc[c.kundentyp] || 0) + 1
+    acc[String(c.kundentyp)] = (acc[String(c.kundentyp)] || 0) + 1
     return acc
   }, {} as Record<string, number>) || {}
   const topKundentyp = Object.entries(kundentypCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'
