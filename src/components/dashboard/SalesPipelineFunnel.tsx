@@ -69,13 +69,13 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
         <h3 className="text-lg font-semibold mb-4">Sales Pipeline</h3>
         <div className="flex flex-col items-center">
           {stages.map((stage, index) => (
-            <div key={stage.name} className="flex items-center justify-center mb-2">
-              <span className="text-xs font-bold text-foreground mr-2">{stage.value}</span>
+            <div key={stage.name} className="flex items-center justify-center mb-1">
+              <span className="text-xs font-bold text-foreground mr-1">{stage.value}</span>
               <div
                 className={`${stage.height} ${stage.gradient} w-32`}
                 style={{ clipPath: stage.clipPath }}
               ></div>
-              <span className="text-xs font-medium text-foreground ml-2">{stage.name}</span>
+              <span className="text-xs font-medium text-foreground ml-1">{stage.name}</span>
             </div>
           ))}
         </div>
