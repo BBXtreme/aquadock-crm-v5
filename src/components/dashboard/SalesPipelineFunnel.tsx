@@ -6,7 +6,6 @@ interface SalesPipelineFunnelProps {
   proposal?: number
   negotiation?: number
   won?: number
-  changePercent?: number
 }
 
 const defaultProps: SalesPipelineFunnelProps = {
@@ -15,7 +14,6 @@ const defaultProps: SalesPipelineFunnelProps = {
   proposal: 210,
   negotiation: 120,
   won: 45,
-  changePercent: 18.2,
 }
 
 export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = defaultProps) {
@@ -25,7 +23,6 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
     proposal = 210,
     negotiation = 120,
     won = 45,
-    changePercent = 18.2,
   } = props
 
   const stages = [
@@ -78,9 +75,6 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
             </div>
           ))}
         </div>
-        <p className="text-sm italic text-green-500 text-center mt-4">
-          Leads increased by {changePercent}% since last month.
-        </p>
       </CardContent>
     </Card>
   )
