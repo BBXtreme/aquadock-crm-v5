@@ -5,6 +5,7 @@ import { ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import KPICards from '@/components/dashboard/KPICards'
 import { TrendingUp, TrendingDown } from 'lucide-react'
+import SalesPipelineFunnel from '@/components/dashboard/SalesPipelineFunnel'
 
 export default async function Home() {
   // Test-Abfrage: Versuche, eine Tabelle zu lesen (auch wenn sie noch nicht existiert)
@@ -76,7 +77,7 @@ export default async function Home() {
 
       <KPICards kpis={kpis} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-2">Companies by Kundentyp</h3>
@@ -114,6 +115,16 @@ export default async function Home() {
             </div>
           </CardContent>
         </Card>
+
+        <SalesPipelineFunnel
+          leads={680}
+          qualified={480}
+          proposal={210}
+          negotiation={120}
+          won={45}
+          changePercent={18.2}
+          changeTextColor="green"
+        />
       </div>
 
       <Collapsible>
