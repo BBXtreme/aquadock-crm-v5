@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import KPICards from '@/components/dashboard/KPICards'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 
 export default async function Home() {
   // Test-Abfrage: Versuche, eine Tabelle zu lesen (auch wenn sie noch nicht existiert)
@@ -23,11 +25,18 @@ export default async function Home() {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  // Fetch reminders for KPI
+  const { data: reminders } = await supabase
+    .from('reminders')
+    .select('*')
+
   // Calculate KPIs
   const totalCompanies = allCompanies?.length || 0
   const leads = allCompanies?.filter(c => c.status === 'lead').length || 0
   const won = allCompanies?.filter(c => c.status === 'won').length || 0
   const valueSum = allCompanies?.reduce((sum, c) => sum + (c.value || 0), 0) || 0
+  const wonValue = allCompanies?.filter(c => c.status === 'won').reduce((sum, c) => sum + (c.value || 0), 0) || 0
+  const openReminders = reminders?.filter(r => r.status === 'open').length || 0
 
   // New KPIs
   const now = new Date()
@@ -48,6 +57,13 @@ export default async function Home() {
     count
   }))
 
+  const kpis = [
+    { title: 'Total Companies', value: totalCompanies, changePercent: 12, subtitle: 'from last month' },
+    { title: 'Active Leads', value: leads, changePercent: 8, subtitle: 'from last month' },
+    { title: 'Open Reminders', value: openReminders, changePercent: -5, subtitle: 'from last month' },
+    { title: 'Total Value', value: `€${wonValue.toLocaleString()}`, changePercent: 20, subtitle: 'from last month' },
+  ]
+
   return (
     <div className="container mx-auto p-6 lg:p-8 space-y-8">
       <div>
@@ -61,10 +77,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCompanies}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">+12%</span> from last month
-            </p>
+            <div className="text-5xl font-bold">{totalCompanies}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+12%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">from last month</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -72,10 +90,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leads}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">+8%</span> from last month
-            </p>
+            <div className="text-5xl font-bold">{leads}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+8%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">from last month</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -83,10 +103,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Won Deals</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{won}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">+20%</span> from last month
-            </p>
+            <div className="text-5xl font-bold">{won}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+20%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">from last month</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -94,10 +116,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Total Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">€{valueSum.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-primary">+15%</span> from last month
-            </p>
+            <div className="text-5xl font-bold">€{valueSum.toLocaleString()}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+15%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">from last month</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -105,10 +129,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">New This Month</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{newCompaniesThisMonth}</div>
-            <p className="text-xs text-muted-foreground">
-              Companies added this month
-            </p>
+            <div className="text-5xl font-bold">{newCompaniesThisMonth}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+25%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">companies added</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -116,10 +142,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Avg Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">€{avgValue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Average deal value
-            </p>
+            <div className="text-5xl font-bold">€{avgValue.toLocaleString()}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+10%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">average deal value</p>
           </CardContent>
         </Card>
         <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
@@ -127,10 +155,12 @@ export default async function Home() {
             <CardTitle className="text-sm font-medium">Top Kundentyp</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{topKundentyp}</div>
-            <p className="text-xs text-muted-foreground">
-              Most common customer type
-            </p>
+            <div className="text-5xl font-bold">{topKundentyp}</div>
+            <div className="flex items-center space-x-1 mt-1">
+              <TrendingUp className="h-4 w-4 text-[#24BACC]" />
+              <span className="text-sm font-medium text-[#24BACC]">+5%</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">most common type</p>
           </CardContent>
         </Card>
       </div>
@@ -174,6 +204,8 @@ export default async function Home() {
           </CardContent>
         </Card>
       </div>
+
+      <KPICards kpis={kpis} />
 
       <Collapsible>
         <CollapsibleTrigger className="flex items-center space-x-2 text-sm font-medium">
