@@ -129,7 +129,42 @@ export default async function Home() {
           changePercent={18.2}
           changeTextColor="green"
         />
-      </CardContent>
+      </div>
+
+      <Collapsible>
+        <CollapsibleTrigger className="flex items-center space-x-2 text-sm font-medium">
+          <span>Debug Info</span>
+          <ChevronDown className="h-4 w-4" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-2">
+          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+            <CardHeader>
+              <CardTitle>Supabase-Verbindung</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="bg-zinc-100 dark:bg-zinc-800 p-4 rounded-lg overflow-auto text-sm">
+                {JSON.stringify(
+                  {
+                    status: error ? 'Error' : 'Connected',
+                    rowCount: count ?? 0,
+                    data: companies ?? [],
+                    error: error?.message ?? null,
+                    envUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing',
+                    envKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing'
+                  },
+                  null,
+                  2
+                )}
+              </pre>
+              <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+                {error
+                  ? `Fehler: ${error.message} (Tabelle 'companies' existiert vielleicht noch nicht – normal beim Start)`
+                  : `Erfolg! ${count ?? 0} Zeilen gefunden.`}
+              </p>
+            </CardContent>
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   )
 }
