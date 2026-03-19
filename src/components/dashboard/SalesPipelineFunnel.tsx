@@ -79,6 +79,7 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
             </div>
           ))}
         </div>
+        <p className="text-sm text-muted-foreground mt-4">Leads increased by 18.2% since last month.</p>
       </CardContent>
     </Card>
   )
