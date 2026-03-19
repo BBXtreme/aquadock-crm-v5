@@ -46,11 +46,11 @@ export default async function Home() {
   const avgValue = totalCompanies > 0 ? valueSum / totalCompanies : 0
 
   // Top Kundentyp
-  const kundentypCounts = allCompanies?.reduce((acc: Record<string, number>, c: any) => {
-    const key = String(c.kundentyp || 'Unknown')
-    acc[key] = (acc[key] || 0) + 1
+  const kundentypCounts = allCompanies?.reduce<Record<string, number>>((acc, company) => {
+    const typ = company.kundentyp || 'sonstige'
+    acc[typ] = (acc[typ] || 0) + 1
     return acc
-  }, {} as Record<string, number>) || {}
+  }, {})
 
   // assumes counts are numbers
   const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => Number(b[1]) - Number(a[1]))
