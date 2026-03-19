@@ -53,7 +53,7 @@ export default async function Home() {
   }, {} as Record<string, number>) || {}
 
   // assumes counts are numbers
-  const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => b[1] - a[1])
+  const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => Number(b[1]) - Number(a[1]))
   const topKundentyp = sortedKundentyp[0]?.[0] || 'N/A'
 
   // Companies by kundentyp for chart
