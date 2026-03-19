@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
 
 interface SalesPipelineFunnelProps {
   leads?: number
@@ -33,69 +32,45 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
     {
       name: 'Leads',
       value: leads,
-      height: 'h-[98px] md:h-[140px]',
-      gradient: 'bg-gradient-to-b from-blue-50 to-blue-100 dark:from-slate-800 dark:to-slate-900',
-      clipPath: 'polygon(0% 0%, 100% 0%, 85% 100%, 15% 100%)',
-      numberSize: 'text-3xl md:text-4xl lg:text-5xl',
-      nameSize: 'text-lg lg:text-xl md:text-lg',
+      clipPath: 'polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)',
     },
     {
       name: 'Qualified',
       value: qualified,
-      height: 'h-[84px] md:h-[120px]',
-      gradient: 'bg-gradient-to-b from-blue-100 to-blue-200 dark:from-slate-800 dark:to-slate-900',
-      clipPath: 'polygon(7.5% 0%, 92.5% 0%, 77.5% 100%, 22.5% 100%)',
-      numberSize: 'text-3xl md:text-4xl lg:text-5xl',
-      nameSize: 'text-lg lg:text-xl md:text-lg',
+      clipPath: 'polygon(5% 0%, 95% 0%, 85% 100%, 15% 100%)',
     },
     {
       name: 'Proposal Sent',
       value: proposal,
-      height: 'h-[70px] md:h-[100px]',
-      gradient: 'bg-gradient-to-b from-blue-200 to-blue-400 dark:from-slate-800 dark:to-slate-900',
-      clipPath: 'polygon(15% 0%, 85% 0%, 70% 100%, 30% 100%)',
-      numberSize: 'text-3xl md:text-4xl lg:text-5xl',
-      nameSize: 'text-lg lg:text-xl md:text-lg',
+      clipPath: 'polygon(10% 0%, 90% 0%, 80% 100%, 20% 100%)',
     },
     {
       name: 'Negotiation',
       value: negotiation,
-      height: 'h-[56px] md:h-[80px]',
-      gradient: 'bg-gradient-to-b from-blue-400 to-blue-600 dark:from-slate-800 dark:to-slate-900',
-      clipPath: 'polygon(22.5% 0%, 77.5% 0%, 62.5% 100%, 37.5% 100%)',
-      numberSize: 'text-3xl md:text-4xl lg:text-5xl',
-      nameSize: 'text-lg lg:text-xl md:text-lg',
+      clipPath: 'polygon(15% 0%, 85% 0%, 75% 100%, 25% 100%)',
     },
     {
       name: 'Won',
       value: won,
-      height: 'h-[42px] md:h-[60px]',
-      gradient: 'bg-gradient-to-b from-blue-600 to-blue-800 dark:from-slate-800 dark:to-slate-900',
-      clipPath: 'polygon(30% 0%, 70% 0%, 55% 100%, 45% 100%)',
-      numberSize: 'text-3xl md:text-4xl lg:text-5xl',
-      nameSize: 'text-lg lg:text-xl md:text-lg',
+      clipPath: 'polygon(20% 0%, 80% 0%, 70% 100%, 30% 100%)',
     },
   ]
 
   return (
     <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
       <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-foreground">Sales Pipeline</CardTitle>
+        <CardTitle className="text-center text-2xl font-bold text-foreground mb-4">Sales Pipeline</CardTitle>
       </CardHeader>
       <CardContent className="space-y-0">
         <div className="relative flex flex-col">
           {stages.map((stage, index) => (
             <div key={stage.name}>
               <div
-                className={cn(
-                  stage.height,
-                  stage.gradient,
-                  'text-white flex flex-col items-center text-center md:flex-row md:justify-between md:items-center p-4 lg:p-6 transition-transform hover:scale-101'
-                )}
+                className="h-20 bg-gradient-to-b from-blue-50 to-blue-800 dark:from-slate-800 dark:to-slate-900 text-white flex justify-between items-center p-4 lg:p-6"
                 style={{ clipPath: stage.clipPath }}
               >
-                <span className={cn(stage.numberSize, 'font-bold')}>{stage.value}</span>
-                <span className={cn(stage.nameSize, 'font-medium text-white/90')}>{stage.name}</span>
+                <span className="text-4xl lg:text-5xl font-bold">{stage.value}</span>
+                <span className="text-lg lg:text-xl font-medium text-white/90">{stage.name}</span>
               </div>
               {index < stages.length - 1 && (
                 <div className="h-px bg-white/20 dark:bg-gray-600"></div>
@@ -103,7 +78,7 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
             </div>
           ))}
         </div>
-        <p className="text-sm italic text-green-400 text-center mt-4">
+        <p className="text-sm italic text-green-500 dark:text-green-400 text-center mt-4">
           Leads increased by {changePercent}% since last month.
         </p>
       </CardContent>
