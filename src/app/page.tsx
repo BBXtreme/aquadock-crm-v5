@@ -50,7 +50,7 @@ export default async function Home() {
     const typ = company.kundentyp || 'sonstige'
     acc[typ] = (acc[typ] || 0) + 1
     return acc
-  }, {})
+  }, {}) || {}
 
   // assumes counts are numbers
   const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => Number(b[1]) - Number(a[1]))
