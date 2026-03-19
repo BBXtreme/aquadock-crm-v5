@@ -156,5 +156,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
   Select as Root,
-  SelectPrimitive.Portal as Portal,
 }
