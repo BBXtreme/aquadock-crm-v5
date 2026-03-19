@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Toaster } from 'sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import ErrorBoundary from './ErrorBoundary'
 
 const navItems = [
@@ -160,4 +161,91 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const header = (
     <header className="flex items-center justify-between px-6 py-4 border-b bg-card text-card-foreground shadow-sm">
       <div className="flex items-center space-x-4">
-        <h1 className="text-xl font-semibold tracking-tight">Aqua
+        <h1 className="text-xl font-semibold tracking-tight">AquaDock CRM</h1>
+      </div>
+      <div className="flex items-center space-x-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search..."
+            className="pl-10 w-64"
+          />
+        </div>
+        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/avatars/01.png" alt={user?.name || 'User'} />
+                <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
+  )
+
+  if (authLoading) {
+    return <AuthLoadingSpinner />
+  }
+
+  return (
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="flex">
+          {!isMobile && (
+            <aside
+              className={cn(
+                "bg-sidebar text-sidebar-foreground border-r transition-all duration-300",
+                isCollapsed ? "w-16" : "w-64"
+              )}
+            >
+              {sidebarContent}
+            </aside>
+          )}
+          <div className="flex-1 flex flex-col">
+            {header}
+            <main className="flex-1">
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  {children}
+                </Suspense>
+              </ErrorBoundary>
+            </main>
+          </div>
+        </div>
+        {isMobile && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="fixed bottom-4 right-4 z-50">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0">
+              {sidebarContent}
+            </SheetContent>
+          </Sheet>
+        )}
+      </div>
+      <Toaster />
+    </TooltipProvider>
+  )
+}
