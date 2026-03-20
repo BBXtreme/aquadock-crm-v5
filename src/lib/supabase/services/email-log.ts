@@ -1,0 +1,80 @@
+import { createServerSupabaseClient, handleSupabaseError } from "../client";
+import { EmailLog } from "../types";
+
+export async function getAllEmailLogs(): Promise<EmailLog[]> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("email_log")
+      .select("*")
+      .order("sent_at", { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    throw handleSupabaseError(error, "getAllEmailLogs");
+  }
+}
+
+export async function getEmailLogById(id: string): Promise<EmailLog | null> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("email_log")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw handleSupabaseError(error, "getEmailLogById");
+  }
+}
+
+export async function createEmailLog(emailLog: Omit<EmailLog, "id">): Promise<EmailLog> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("email_log")
+      .insert(emailLog)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw handleSupabaseError(error, "createEmailLog");
+  }
+}
+
+export async function updateEmailLog(id: string, updates: Partial<Omit<EmailLog, "id">>): Promise<EmailLog> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from("email_log")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    throw handleSupabaseError(error, "updateEmailLog");
+  }
+}
+
+export async function deleteEmailLog(id: string): Promise<void> {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { error } = await supabase
+      .from("email_log")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  } catch (error) {
+    throw handleSupabaseError(error, "deleteEmailLog");
+  }
+}
