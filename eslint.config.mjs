@@ -60,5 +60,17 @@ export default tseslint.config(
     settings: {
       react: { version: "detect" },
     },
+  },
+
+  // Supabase types override
+  {
+    name: "supabase/types",
+    files: [
+      "src/lib/supabase/database.types.ts",
+      "src/lib/supabase/types.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-empty-object-type": "off"
+    }
   }
 );
