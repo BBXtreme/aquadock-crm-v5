@@ -1,4 +1,4 @@
-import { createServerSupabaseClient, handleSupabaseError } from "../server";
+import { createServerSupabaseClient } from "../server";
 import type {
   TimelineEntry,
   TimelineEntryInsert,
