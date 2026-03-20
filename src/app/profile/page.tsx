@@ -105,7 +105,7 @@ export default function ProfilePage() {
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div>
-          <p className="text-sm text-muted-foreground">Home {">"} Profile</p>
+          <p className="text-sm text-muted-foreground">{"Home > Profile"}</p>
           <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
         </div>
 
