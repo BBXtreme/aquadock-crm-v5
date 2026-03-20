@@ -11,7 +11,6 @@ import {
   createColumnHelper,
   ColumnDef,
 } from "@tanstack/react-table";
-import { formatDistanceToNow } from "date-fns";
 import { Eye, Edit, Trash, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +33,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Papa from "papaparse";
 import { Company } from "@/lib/supabase/types";
+import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface CompaniesTableProps {
   companies: Company[];
@@ -45,13 +45,13 @@ const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue() ?? "—",
+    cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue() ?? "—"}
+        {safeDisplay(info.getValue())}
       </Badge>
     ),
   }) as ColumnDef<Company>,
@@ -76,22 +76,19 @@ const columns: ColumnDef<Company>[] = [
   }) as ColumnDef<Company>,
   columnHelper.accessor("value", {
     header: "Value",
-    cell: (info) => `€${Number(info.getValue() ?? 0).toLocaleString('de-DE')}`,
+    cell: (info) => formatCurrency(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.accessor("stadt", {
     header: "Stadt",
-    cell: (info) => info.getValue() ?? "—",
+    cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.accessor("land", {
     header: "Land",
-    cell: (info) => info.getValue() ?? "—",
+    cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.accessor("created_at", {
     header: "Created",
-    cell: (info) => {
-      const d = info.getValue();
-      return d ? formatDistanceToNow(new Date(d), { addSuffix: true }) : "—";
-    },
+    cell: (info) => formatDateDistance(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.display({
     id: "actions",
