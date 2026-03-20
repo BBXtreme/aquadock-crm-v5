@@ -12,24 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
 import {
   getEmailTemplates,
   getEmailLogs,
-  createEmailLog,
-  createTimelineEntry,
 } from "@/lib/supabase/services/email";
 import { getCompanies } from "@/lib/supabase/services/companies";
+import { createTimelineEntry } from "@/lib/supabase/services/timeline";
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
