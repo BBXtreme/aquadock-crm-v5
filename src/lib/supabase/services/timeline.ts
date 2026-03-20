@@ -9,9 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * Get all timeline entries with joined company data
  */
-export async function getTimeline(
-  client: SupabaseClient,
-): Promise<TimelineEntry[]> {
+export async function getTimeline(client: SupabaseClient): Promise<TimelineEntry[]> {
   const { data, error } = await client
     .from("timeline")
     .select("*, companies!company_id (firmenname)");
