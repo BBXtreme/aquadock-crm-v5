@@ -15,7 +15,7 @@ interface SupabaseDebugProps {
   rowCount: number;
   sampleData: Company[];
   error: string | null;
-  user: { id: string; email: string } | null;
+  user: { id: string; email: string | undefined } | null;
   statusSummary: { lead: number; won: number };
 }
 
