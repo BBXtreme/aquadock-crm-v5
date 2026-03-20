@@ -14,7 +14,7 @@ export async function getTimeline(
 ): Promise<TimelineEntry[]> {
   const { data, error } = await client
     .from("timeline")
-    .select("*, companies(firmenname)");
+    .select("*, companies!company_id (firmenname)");
   if (error) throw handleSupabaseError(error, "getTimeline");
   return (data ?? []) as TimelineEntry[];
 }
