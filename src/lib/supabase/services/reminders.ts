@@ -1,9 +1,5 @@
 import { handleSupabaseError } from "../utils";
-import type {
-  Reminder,
-  ReminderInsert,
-  ReminderUpdate,
-} from "../types";
+import type { Reminder, ReminderInsert, ReminderUpdate } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
