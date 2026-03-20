@@ -13,24 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Building, RefreshCw } from "lucide-react";
+import { Users, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
-import type { Contact } from "@/lib/supabase/database.types";
+import { Contact } from "@/lib/supabase/types";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [companyNames, setCompanyNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,11 +37,6 @@ export default function ContactsPage() {
       if (error) throw error;
 
       setContacts(data ?? []);
-
-      const uniqueNames = Array.from(
-        new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean))
-      ) as string[];
-      setCompanyNames(uniqueNames);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load contacts");
     } finally {
