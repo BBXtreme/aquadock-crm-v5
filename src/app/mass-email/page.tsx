@@ -23,7 +23,8 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
-import { getEmailTemplates, getEmailLogs, createEmailLog } from "@/lib/supabase/services/email";
+import { getEmailTemplates, getEmailLogs, createEmailLog, createTimelineEntry } from "@/lib/supabase/services/email";
+import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -81,12 +82,12 @@ export default function MassEmailPage() {
       }, supabase);
 
       // Log to timeline
-      await supabase.from("timeline").insert({
-        company_id: null, // No specific company for mass email
+      await createTimelineEntry({
+        company_id: null,
         activity_type: "email",
         title: "Test Email Sent",
         content: `Test email sent to test@example.com`,
-      });
+      }, supabase);
 
       toast.success("Test email sent successfully!");
     } catch (error) {
@@ -107,22 +108,22 @@ export default function MassEmailPage() {
       if (!template) return;
 
       // Fetch recipients based on filter
-      let query = supabase.from("companies").select("firmenname");
+      const companies = await getCompanies(supabase);
+      let filteredCompanies = companies;
       if (recipientFilter === "lead") {
-        query = query.eq("status", "lead");
+        filteredCompanies = companies.filter((c) => c.status === "lead");
       } else if (recipientFilter === "won") {
-        query = query.eq("status", "won");
+        filteredCompanies = companies.filter((c) => c.status === "won");
       }
       // Add search filter if provided
       if (searchQuery) {
-        query = query.ilike("firmenname", `%${searchQuery}%`);
+        filteredCompanies = filteredCompanies.filter((c) =>
+          c.firmenname.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
       }
 
-      const { data: companies, error } = await query;
-      if (error) throw error;
-
       // For each company, send email (placeholder - just log)
-      for (const company of companies || []) {
+      for (const company of filteredCompanies) {
         const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
 
         await createEmailLog({
@@ -135,15 +136,15 @@ export default function MassEmailPage() {
       }
 
       // Log to timeline
-      await supabase.from("timeline").insert({
+      await createTimelineEntry({
         company_id: null,
         activity_type: "email",
         title: "Mass Email Sent",
-        content: `Mass email sent to ${companies?.length || 0} recipients`,
-      });
+        content: `Mass email sent to ${filteredCompanies.length} recipients`,
+      }, supabase);
 
       toast.success(
-        `Campaign queued for ${companies?.length || 0} recipients!`,
+        `Campaign queued for ${filteredCompanies.length} recipients!`,
       );
     } catch (error) {
       console.error("Error sending emails:", error);

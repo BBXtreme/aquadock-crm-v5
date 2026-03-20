@@ -15,6 +15,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
+import { getTimeline } from "@/lib/supabase/services/timeline";
 
 export default function TimelinePage() {
   const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
