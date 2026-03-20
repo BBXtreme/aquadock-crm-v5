@@ -129,3 +129,9 @@
 
 - **2026-03-20**: Initial schema snapshot + types generation
 - **Next change**: Add new columns/tables → re-run `npx supabase gen types` & update this file
+
+## 8. Entity Relationship Overview (Text)
+
+companies (1) ───┬─── (N) contacts                 ├─── (N) reminders                 └─── (N) timeline (nullable) email_templates (1) ───┬─── (N) email_log (via template_name)
+
+![mermaid-diagram](/Users/marco/Downloads/mermaid-diagram.svg)
