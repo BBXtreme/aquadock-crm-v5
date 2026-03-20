@@ -36,7 +36,7 @@ export default function ProfilePage() {
         } else {
           setError("No user found");
         }
-      } catch (_error) {
+      } catch {
         setError("Failed to load user data");
       } finally {
         setLoading(false);
@@ -60,7 +60,7 @@ export default function ProfilePage() {
       } else {
         setMessage("Profile updated successfully!");
       }
-    } catch (_error) {
+    } catch {
       setMessage("An error occurred");
     } finally {
       setLoading(false);

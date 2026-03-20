@@ -38,8 +38,8 @@ export default function Home() {
           .order("created_at", { ascending: false })
           .limit(10);
         setTimeline(timeData || []);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }

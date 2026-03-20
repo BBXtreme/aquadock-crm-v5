@@ -35,8 +35,10 @@ export default function TimelinePage() {
         if (error) throw error;
 
         setTimeline(data || []);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch timeline");
+      } catch (err: unknown) {
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch timeline",
+        );
       } finally {
         setLoading(false);
       }

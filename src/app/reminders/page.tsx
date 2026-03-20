@@ -39,8 +39,10 @@ export default function RemindersPage() {
       if (error) throw error;
 
       setAllReminders(data || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch reminders");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch reminders",
+      );
     } finally {
       setLoading(false);
     }

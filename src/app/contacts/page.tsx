@@ -50,8 +50,8 @@ export default function ContactsPage() {
           new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean)),
         ),
       );
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch contacts");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch contacts");
     } finally {
       setLoading(false);
     }
