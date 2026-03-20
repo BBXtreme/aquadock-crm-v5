@@ -5,7 +5,7 @@ import * as React from "react";
 // Fixed Radix import
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 
-import { cn } from "@/lib/utils/utils";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 
@@ -59,7 +59,6 @@ function SheetContent({
 }) {
   return (
     <SheetPortal>
-      <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         data-side={side}
