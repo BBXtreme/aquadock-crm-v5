@@ -64,7 +64,10 @@ export async function updateCompany(
 /**
  * Delete a company
  */
-export async function deleteCompany(id: string, client: SupabaseClient): Promise<boolean> {
+export async function deleteCompany(
+  id: string,
+  client: SupabaseClient,
+): Promise<boolean> {
   const { error } = await client.from("companies").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
   return true;

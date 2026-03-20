@@ -12,7 +12,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /**
  * Get all email logs
  */
-export async function getEmailLogs(client: SupabaseClient): Promise<EmailLog[]> {
+export async function getEmailLogs(
+  client: SupabaseClient,
+): Promise<EmailLog[]> {
   const { data, error } = await client.from("email_log").select("*");
   if (error) throw handleSupabaseError(error, "getEmailLogs");
   return (data ?? []) as EmailLog[];
@@ -71,7 +73,10 @@ export async function updateEmailLog(
 /**
  * Delete an email log
  */
-export async function deleteEmailLog(id: string, client: SupabaseClient): Promise<void> {
+export async function deleteEmailLog(
+  id: string,
+  client: SupabaseClient,
+): Promise<void> {
   const { error } = await client.from("email_log").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteEmailLog");
 }
@@ -79,7 +84,9 @@ export async function deleteEmailLog(id: string, client: SupabaseClient): Promis
 /**
  * Get all email templates
  */
-export async function getEmailTemplates(client: SupabaseClient): Promise<EmailTemplate[]> {
+export async function getEmailTemplates(
+  client: SupabaseClient,
+): Promise<EmailTemplate[]> {
   const { data, error } = await client.from("email_templates").select("*");
   if (error) throw handleSupabaseError(error, "getEmailTemplates");
   return (data ?? []) as EmailTemplate[];
