@@ -4,11 +4,12 @@ import type {
   ReminderInsert,
   ReminderUpdate,
 } from "../database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Get all reminders with joined company data
  */
-export async function getReminders(client: any): Promise<Reminder[]> {
+export async function getReminders(client: SupabaseClient): Promise<Reminder[]> {
   const { data, error } = await client
     .from("reminders")
     .select("*, companies(firmenname)");
@@ -21,7 +22,7 @@ export async function getReminders(client: any): Promise<Reminder[]> {
  */
 export async function getReminderById(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<Reminder | null> {
   const { data, error } = await client
     .from("reminders")
@@ -37,7 +38,7 @@ export async function getReminderById(
  */
 export async function createReminder(
   reminder: ReminderInsert,
-  client: any,
+  client: SupabaseClient,
 ): Promise<Reminder> {
   const { data, error } = await client
     .from("reminders")
@@ -54,7 +55,7 @@ export async function createReminder(
 export async function updateReminder(
   id: string,
   updates: ReminderUpdate,
-  client: any,
+  client: SupabaseClient,
 ): Promise<Reminder> {
   const { data, error } = await client
     .from("reminders")
@@ -69,7 +70,7 @@ export async function updateReminder(
 /**
  * Delete a reminder
  */
-export async function deleteReminder(id: string, client: any): Promise<void> {
+export async function deleteReminder(id: string, client: SupabaseClient): Promise<void> {
   const { error } = await client.from("reminders").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteReminder");
 }
