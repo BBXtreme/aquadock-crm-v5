@@ -1,13 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import KPICards from "@/components/dashboard/KPICards";
 import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
@@ -17,12 +11,14 @@ import AppLayout from "@/components/layout/AppLayout";
 import { getCompanies } from "@/lib/supabase/services/companies";
 import { getTimeline } from "@/lib/supabase/services/timeline";
 import { Company, TimelineEntry } from "@/lib/supabase/types";
+import { debugQuery } from "@/lib/supabase/debug";
 
 export default function Home() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,6 +27,7 @@ export default function Home() {
         // Fetch all companies for consistent preview and calculations
         const companies = await getCompanies(supabase);
         setCompanies(companies);
+        debugQuery("Dashboard Companies", companies);
 
         const timeline = await getTimeline(supabase);
         setTimeline(timeline.slice(0, 10));
@@ -218,35 +215,36 @@ export default function Home() {
           changePercent={18.2}
         />
 
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <span>Debug Info</span>
-              <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Supabase Connection Debug</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm max-h-96">
-                  {JSON.stringify(
-                    {
-                      status: error ? "Error" : "Connected",
-                      rowCount: companies.length,
-                      sampleData: companies.slice(0, 2),
-                      error: error ?? null,
-                    },
-                    null,
-                    2,
-                  )}
-                </pre>
-              </CardContent>
-            </Card>
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => setDebugMode(!debugMode)}
+          >
+            {debugMode ? "Hide Debug" : "Show Debug"}
+          </Button>
+        </div>
+
+        {debugMode && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Supabase Connection Debug</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm max-h-96">
+                {JSON.stringify(
+                  {
+                    status: error ? "Error" : "Connected",
+                    rowCount: companies.length,
+                    sampleData: companies.slice(0, 2),
+                    error: error ?? null,
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );
