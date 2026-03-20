@@ -57,19 +57,22 @@ const columns: ColumnDef<Company>[] = [
   }),
   columnHelper.accessor("status", {
     header: "Status",
-    cell: (info) => (
-      <Badge
-        className={cn(
-          info.getValue() === "won" && "bg-emerald-600 text-white",
-          info.getValue() === "lost" && "bg-rose-600 text-white",
-          info.getValue() === "lead" && "bg-amber-600 text-white",
-          !["won", "lost", "lead"].includes(info.getValue()) &&
-            "bg-zinc-500 text-white",
-        )}
-      >
-        {String(info.getValue())}
-      </Badge>
-    ),
+    cell: (info) => {
+      const value = info.getValue() as string;
+      return (
+        <Badge
+          className={cn(
+            value === "won" && "bg-emerald-600 text-white",
+            value === "lost" && "bg-rose-600 text-white",
+            value === "lead" && "bg-amber-600 text-white",
+            !["won", "lost", "lead"].includes(value) &&
+              "bg-zinc-500 text-white",
+          )}
+        >
+          {value}
+        </Badge>
+      );
+    },
   }),
   columnHelper.accessor("value", {
     header: "Value",
