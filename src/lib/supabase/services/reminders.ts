@@ -29,7 +29,7 @@ export async function getReminderById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getReminderById");
-  return data as Reminder | null ?? null;
+  return (data as Reminder | null) ?? null;
 }
 
 /**

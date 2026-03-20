@@ -29,7 +29,7 @@ export async function getTimelineEntryById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getTimelineEntryById");
-  return data as TimelineEntry | null ?? null;
+  return (data as TimelineEntry | null) ?? null;
 }
 
 /**
