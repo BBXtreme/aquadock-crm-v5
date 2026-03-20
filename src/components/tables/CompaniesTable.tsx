@@ -73,7 +73,7 @@ const columns: ColumnDef<Company>[] = [
   }),
   columnHelper.accessor<number>((row) => row.value, {
     header: "Value",
-    cell: (info) => `€${info.getValue()?.toLocaleString() || 0}`,
+    cell: (info) => `€${info.getValue().toLocaleString() || 0}`,
   }),
   columnHelper.accessor<string>((row) => row.stadt, {
     header: "Stadt",
