@@ -44,10 +44,10 @@ export default function TimelinePage() {
 
   // Get unique companies and types for filters
   const companies = Array.from(
-    new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean)),
+    new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[]),
   );
   const types = Array.from(
-    new Set(timeline?.map((t) => t.activity_type).filter(Boolean)),
+    new Set(timeline?.map((t) => t.activity_type).filter(Boolean) as string[]),
   );
 
   if (error) {
@@ -57,7 +57,7 @@ export default function TimelinePage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                Home {">"} Timeline
+                {"Home > Timeline"}
               </p>
               <h1 className="text-3xl font-semibold tracking-tight">
                 Timeline
@@ -76,7 +76,7 @@ export default function TimelinePage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {">"} Timeline</p>
+            <p className="text-sm text-muted-foreground">{"Home > Timeline"}</p>
             <h1 className="text-3xl font-semibold tracking-tight">Timeline</h1>
           </div>
           <Button>New Timeline Entry</Button>
