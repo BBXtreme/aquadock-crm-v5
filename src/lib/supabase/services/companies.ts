@@ -1,7 +1,4 @@
-import {
-  createServerSupabaseClient,
-  handleSupabaseError,
-} from "../server";
+import { createServerSupabaseClient, handleSupabaseError } from "../server";
 import type { Company } from "../database.types";
 
 /**
