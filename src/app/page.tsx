@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import KPICards from "@/components/dashboard/KPICards";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -69,13 +68,6 @@ export default function Home() {
   const wonValue = companies
     .filter((c) => c.status === "won")
     .reduce((sum, c) => sum + (Number(c.value) || 0), 0);
-  const openReminders = reminders.filter((r) => r.status === "open").length;
-
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const newCompaniesThisMonth = companies.filter(
-    (c) => new Date(c.created_at) >= startOfMonth,
-  ).length;
   const avgValue = totalCompanies > 0 ? valueSum / totalCompanies : 0;
 
   const kundentypCounts = companies.reduce<Record<string, number>>(
@@ -222,7 +214,6 @@ export default function Home() {
           negotiation={120}
           won={45}
           changePercent={18.2}
-          changeTextColor="green"
         />
 
         <Collapsible>

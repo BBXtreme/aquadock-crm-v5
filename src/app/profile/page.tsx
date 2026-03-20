@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, LogOut, Upload } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function ProfilePage() {

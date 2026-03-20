@@ -12,21 +12,6 @@ import {
 } from "@/components/ui/table";
 import { MapPin, Phone, Mail, Anchor, Calendar, Bell } from "lucide-react";
 
-interface Company {
-  id: string;
-  firmenname: string;
-  kundentyp: string;
-  status: string;
-  value: number;
-  stadt: string;
-  land: string;
-  created_at: string;
-  wasserdistanz?: number;
-  wassertyp?: string;
-  lat?: number;
-  lon?: number;
-}
-
 export default async function CompanyDetailPage({
   params,
 }: {

@@ -1,14 +1,12 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface KPI {
   title: string;
   value: string | number;
   changePercent: number;
   subtitle: string;
-  trendColor?: string;
 }
 
 interface KPICardsProps {

@@ -9,7 +9,6 @@ interface SalesPipelineFunnelProps {
   negotiation?: number;
   won?: number;
   changePercent?: number;
-  changeTextColor?: "green" | "red";
 }
 
 const defaultProps: SalesPipelineFunnelProps = {
@@ -19,7 +18,6 @@ const defaultProps: SalesPipelineFunnelProps = {
   negotiation: 120,
   won: 45,
   changePercent: 18.2,
-  changeTextColor: "green",
 };
 
 export default function SalesPipelineFunnel(
@@ -32,7 +30,6 @@ export default function SalesPipelineFunnel(
     negotiation = 120,
     won = 45,
     changePercent = 18.2,
-    changeTextColor = "green",
   } = props;
 
   const stages = [
@@ -78,7 +75,7 @@ export default function SalesPipelineFunnel(
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-4">Sales Pipeline</h3>
         <div className="flex flex-col items-center">
-          {stages.map((stage, index) => (
+          {stages.map((stage) => (
             <div
               key={stage.name}
               className="flex items-center justify-center mb-1"

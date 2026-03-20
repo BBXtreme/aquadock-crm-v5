@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,10 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, CheckCircle, XCircle } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function MassEmailPage() {

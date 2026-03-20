@@ -5,8 +5,6 @@ import * as React from "react";
 // Fixed Radix import
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 
-import { cn } from "@/lib/utils";
-
 function Collapsible({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
