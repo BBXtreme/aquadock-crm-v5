@@ -30,7 +30,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils/utils";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Papa from "papaparse";
 import { Company } from "@/lib/supabase/types";
@@ -41,17 +41,17 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company, unknown>[] = [
+const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue() as string}
+        {info.getValue()}
       </Badge>
     ),
   }),
@@ -67,7 +67,7 @@ const columns: ColumnDef<Company, unknown>[] = [
             "bg-zinc-500 text-white",
         )}
       >
-        {info.getValue() as string}
+        {info.getValue()}
       </Badge>
     ),
   }),
@@ -77,11 +77,11 @@ const columns: ColumnDef<Company, unknown>[] = [
   }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("land", {
     header: "Land",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("created_at", {
     header: "Created",
