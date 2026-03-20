@@ -27,6 +27,7 @@ import { Users, Star, Building, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 import { Contact } from "@/lib/supabase/types";
+import { getContacts } from "@/lib/supabase/services/contacts";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -39,17 +40,11 @@ export default function ContactsPage() {
     setError("");
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*, companies(firmenname)")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setContacts((data as Contact[]) || []);
+      const contacts = await getContacts(supabase);
+      setContacts(contacts);
       setCompanies(
         Array.from(
-          new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean)),
+          new Set(contacts?.map((c) => c.companies?.firmenname).filter(Boolean)),
         ),
       );
     } catch (err: unknown) {

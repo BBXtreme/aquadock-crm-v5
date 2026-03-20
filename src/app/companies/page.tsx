@@ -11,6 +11,7 @@ import { Building, Users, Trophy, DollarSign, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 import { Company } from "@/lib/supabase/types";
+import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -22,14 +23,8 @@ export default function CompaniesPage() {
     setError("");
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setCompanies(data || []);
+      const companies = await getCompanies(supabase);
+      setCompanies(companies);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch companies",

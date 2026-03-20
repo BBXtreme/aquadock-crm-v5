@@ -23,6 +23,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
+import { getEmailTemplates, getEmailLogs, createEmailLog } from "@/lib/supabase/services/email";
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -37,29 +38,12 @@ export default function MassEmailPage() {
     const fetchData = async () => {
       // Fetch email templates
       const supabase = createClient();
-      const { data: templatesData, error: templatesError } = await supabase
-        .from("email_templates")
-        .select("*");
-
-      if (templatesError) {
-        console.error("Error fetching templates:", templatesError);
-        toast.error("Failed to fetch email templates");
-      } else {
-        setTemplates((templatesData as EmailTemplate[]) || []);
-      }
+      const templates = await getEmailTemplates(supabase);
+      setTemplates(templates);
 
       // Fetch send history
-      const { data: historyData, error: historyError } = await supabase
-        .from("email_log")
-        .select("*")
-        .order("sent_at", { ascending: false });
-
-      if (historyError) {
-        console.error("Error fetching history:", historyError);
-        toast.error("Failed to fetch send history");
-      } else {
-        setHistory(historyData as EmailLog[] || []);
-      }
+      const history = await getEmailLogs(supabase);
+      setHistory(history);
     };
     fetchData();
   }, []);
@@ -88,15 +72,13 @@ export default function MassEmailPage() {
       if (!template) return;
 
       // Log test email
-      const { error } = await supabase.from("email_log").insert({
+      await createEmailLog({
         recipient_email: "test@example.com",
         subject: template.subject,
         body: previewBody,
         status: "sent",
         sent_at: new Date().toISOString(),
-      });
-
-      if (error) throw error;
+      }, supabase);
 
       // Log to timeline
       await supabase.from("timeline").insert({
@@ -143,13 +125,13 @@ export default function MassEmailPage() {
       for (const company of companies || []) {
         const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
 
-        await supabase.from("email_log").insert({
+        await createEmailLog({
           recipient_email: recipient,
           subject: template.subject,
           body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
           status: "sent",
           sent_at: new Date().toISOString(),
-        });
+        }, supabase);
       }
 
       // Log to timeline

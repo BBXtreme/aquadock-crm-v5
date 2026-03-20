@@ -14,6 +14,7 @@ import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AppLayout from "@/components/layout/AppLayout";
+import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function Home() {
   const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
@@ -26,12 +27,8 @@ export default function Home() {
       try {
         const supabase = createClient();
         // Fetch all companies for consistent preview and calculations
-        const { data: compData, error: compError } = await supabase
-          .from("companies")
-          .select("*");
-
-        if (compError) throw compError;
-        setCompanies(compData || []);
+        const companies = await getCompanies(supabase);
+        setCompanies(companies);
 
         const { data: timeData } = await supabase
           .from("timeline")

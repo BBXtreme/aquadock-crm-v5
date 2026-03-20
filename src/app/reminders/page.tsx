@@ -19,6 +19,7 @@ import { Bell, AlertTriangle, Calendar, Star, RefreshCw } from "lucide-react";
 import { isAfter, isThisWeek, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
+import { getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [allReminders, setAllReminders] = useState<Record<string, unknown>[]>(
@@ -32,14 +33,8 @@ export default function RemindersPage() {
     setError("");
     try {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("reminders")
-        .select("*, companies(firmenname)")
-        .order("due_date", { ascending: true });
-
-      if (error) throw error;
-
-      setAllReminders(data || []);
+      const reminders = await getReminders(supabase);
+      setAllReminders(reminders);
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch reminders",

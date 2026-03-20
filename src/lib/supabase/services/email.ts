@@ -1,70 +1,60 @@
 import { createServerSupabaseClient } from '../client';
 import type { EmailLog, EmailLogInsert, EmailLogUpdate, EmailTemplate, EmailTemplateInsert, EmailTemplateUpdate } from '../database.types';
 
-export async function getEmailLogs(): Promise<EmailLog[]> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_log').select('*');
+export async function getEmailLogs(client = createServerSupabaseClient()): Promise<EmailLog[]> {
+  const { data, error } = await client.from('email_log').select('*');
   if (error) throw new Error(`Failed to fetch email logs: ${error.message}`);
   return data ?? [];
 }
 
-export async function getEmailLogById(id: string): Promise<EmailLog | null> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_log').select('*').eq('id', id).single();
+export async function getEmailLogById(id: string, client = createServerSupabaseClient()): Promise<EmailLog | null> {
+  const { data, error } = await client.from('email_log').select('*').eq('id', id).single();
   if (error) throw new Error(`Failed to fetch email log: ${error.message}`);
   return data ?? null;
 }
 
-export async function createEmailLog(emailLog: EmailLogInsert): Promise<EmailLog> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_log').insert(emailLog).select().single();
+export async function createEmailLog(emailLog: EmailLogInsert, client = createServerSupabaseClient()): Promise<EmailLog> {
+  const { data, error } = await client.from('email_log').insert(emailLog).select().single();
   if (error) throw new Error(`Failed to create email log: ${error.message}`);
   return data;
 }
 
-export async function updateEmailLog(id: string, updates: EmailLogUpdate): Promise<EmailLog> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_log').update(updates).eq('id', id).select().single();
+export async function updateEmailLog(id: string, updates: EmailLogUpdate, client = createServerSupabaseClient()): Promise<EmailLog> {
+  const { data, error } = await client.from('email_log').update(updates).eq('id', id).select().single();
   if (error) throw new Error(`Failed to update email log: ${error.message}`);
   return data;
 }
 
-export async function deleteEmailLog(id: string): Promise<void> {
-  const supabase = createServerSupabaseClient();
-  const { error } = await supabase.from('email_log').delete().eq('id', id);
+export async function deleteEmailLog(id: string, client = createServerSupabaseClient()): Promise<void> {
+  const { error } = await client.from('email_log').delete().eq('id', id);
   if (error) throw new Error(`Failed to delete email log: ${error.message}`);
 }
 
-export async function getEmailTemplates(): Promise<EmailTemplate[]> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_templates').select('*');
+export async function getEmailTemplates(client = createServerSupabaseClient()): Promise<EmailTemplate[]> {
+  const { data, error } = await client.from('email_templates').select('*');
   if (error) throw new Error(`Failed to fetch email templates: ${error.message}`);
   return data ?? [];
 }
 
-export async function getEmailTemplateById(id: string): Promise<EmailTemplate | null> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_templates').select('*').eq('id', id).single();
+export async function getEmailTemplateById(id: string, client = createServerSupabaseClient()): Promise<EmailTemplate | null> {
+  const { data, error } = await client.from('email_templates').select('*').eq('id', id).single();
   if (error) throw new Error(`Failed to fetch email template: ${error.message}`);
   return data ?? null;
 }
 
-export async function createEmailTemplate(template: EmailTemplateInsert): Promise<EmailTemplate> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_templates').insert(template).select().single();
+export async function createEmailTemplate(template: EmailTemplateInsert, client = createServerSupabaseClient()): Promise<EmailTemplate> {
+  const { data, error } = await client.from('email_templates').insert(template).select().single();
   if (error) throw new Error(`Failed to create email template: ${error.message}`);
   return data;
 }
 
-export async function updateEmailTemplate(id: string, updates: EmailTemplateUpdate): Promise<EmailTemplate> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase.from('email_templates').update(updates).eq('id', id).select().single();
+export async function updateEmailTemplate(id: string, updates: EmailTemplateUpdate, client = createServerSupabaseClient()): Promise<EmailTemplate> {
+  const { data, error } = await client.from('email_templates').update(updates).eq('id', id).select().single();
   if (error) throw new Error(`Failed to update email template: ${error.message}`);
   return data;
 }
 
-export async function deleteEmailTemplate(id: string): Promise<void> {
-  const supabase = createServerSupabaseClient();
-  const { error } = await supabase.from('email_templates').delete().eq('id', id);
+export async function deleteEmailTemplate(id: string, client = createServerSupabaseClient()): Promise<void> {
+  const { error } = await client.from('email_templates').delete().eq('id', id);
   if (error) throw new Error(`Failed to delete email template: ${error.message}`);
 }

@@ -11,18 +11,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MapPin, Phone, Mail, Anchor, Calendar, Bell } from "lucide-react";
+import { getCompanyById } from "@/lib/supabase/services/companies";
 
 export default async function CompanyDetailPage({
   params,
 }: {
   params: { id: string };
 }) {
-  const supabase = createServerSupabaseClient();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", params.id)
-    .single();
+  const company = await getCompanyById(params.id);
 
   if (!company) {
     return <div>Company not found</div>;
