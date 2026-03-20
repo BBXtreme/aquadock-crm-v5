@@ -57,3 +57,49 @@ You are now bound by these rules on **every single change**. Never break them. T
   - Dev server runs without warnings
 
 When the user says "follow standards" or "clean up", you must strictly follow this entire document.
+
+### 7. TanStack React Table v8 – TypeScript Column Gotcha
+
+**Problem**  
+Using `createColumnHelper<Row>()` + `const columns: ColumnDef<Row>[] = […]` often produces huge union / contravariant errors  
+(`AccessorKeyColumnDef<…, string>` not assignable to `ColumnDef<…, unknown>`).
+
+Rule
+Never commit a table without one of these annotations when you see unknown/string/accessorFn mismatch errors.
+Always prefer pattern 1 → 2 → 3.
+
+**Solution** — always use one of these patterns (ordered by preference):
+
+```ts
+// 1. Best – modern & clean (TS 4.9+)
+const columns = [
+  columnHelper.accessor("name", { … }),
+  columnHelper.accessor("value", { … }),
+  columnHelper.display({ id: "actions", … }),
+] satisfies ColumnDef<RowType>[];
+
+// 2. Explicit & reliable (zero inference issues)
+const columns: ColumnDef<RowType>[] = [
+  columnHelper.accessor("name",   { … }) as ColumnDef<RowType>,
+  columnHelper.accessor("value",  { … }) as ColumnDef<RowType>,
+  columnHelper.display({ … })     as ColumnDef<RowType>,
+  // cast every single column
+];
+
+// 3. Quick fallback (loses cell value typing – avoid if possible)
+const columns: ColumnDef<RowType, unknown>[] = [ … ];
+
+
+### Refined full documentation file → `docs/tanstack-react-table-v8-ts.md`
+
+```markdown
+# TanStack React Table v8 – TypeScript Patterns & Gotchas  
+AquaDock CRM – March 2026
+
+## The Classic Type Error
+
+```text
+Type 'AccessorKeyColumnDef<Company, string>' is not assignable to type 'ColumnDef<Company>'
+...
+Type 'unknown' is not assignable to type 'string'.
+(very long chain involving accessorFn, HeaderContext, footer, etc.)

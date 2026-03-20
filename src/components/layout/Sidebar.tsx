@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Home, Building, Users, Clock, Bell, Mail } from "lucide-react";
-import { cn } from "@/lib/utils/utils";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   isCollapsed: boolean;

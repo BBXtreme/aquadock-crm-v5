@@ -1,5 +1,7 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+See docs/tanstack-table-typescript.md for common TanStack Table typing patterns
+
 ## Getting Started
 
 First, run the development server:
