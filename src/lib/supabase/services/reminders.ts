@@ -3,7 +3,7 @@ import type {
   Reminder,
   ReminderInsert,
   ReminderUpdate,
-} from "../database.types";
+} from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
