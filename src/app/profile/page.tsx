@@ -1,75 +1,78 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { User, LogOut, Upload } from 'lucide-react'
-import AppLayout from '@/components/layout/AppLayout'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { User, LogOut, Upload } from "lucide-react";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null)
-  const [displayName, setDisplayName] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-  const router = useRouter()
+  const [user, setUser] = useState<any>(null);
+  const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const getUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser()
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
         if (error) {
-          setError(error.message)
+          setError(error.message);
         } else if (user) {
-          setUser(user)
-          setDisplayName(user.user_metadata?.display_name || '')
+          setUser(user);
+          setDisplayName(user.user_metadata?.display_name || "");
         } else {
-          setError('No user found')
+          setError("No user found");
         }
       } catch (err) {
-        setError('Failed to load user data')
+        setError("Failed to load user data");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    getUser()
-  }, [])
+    };
+    getUser();
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { display_name: displayName }
-      })
+        data: { display_name: displayName },
+      });
 
       if (error) {
-        setMessage(error.message)
+        setMessage(error.message);
       } else {
-        setMessage('Profile updated successfully!')
+        setMessage("Profile updated successfully!");
       }
     } catch (err) {
-      setMessage('An error occurred')
+      setMessage("An error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   if (loading) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
 
   if (error) {
@@ -79,24 +82,26 @@ export default function ProfilePage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   if (!user) {
     return (
       <div className="container mx-auto p-6 lg:p-8">
         <Alert>
-          <AlertDescription>No user data available. Please try logging in again.</AlertDescription>
+          <AlertDescription>
+            No user data available. Please try logging in again.
+          </AlertDescription>
         </Alert>
       </div>
-    )
+    );
   }
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div>
-          <p className="text-sm text-muted-foreground">Home {'>'} Profile</p>
+          <p className="text-sm text-muted-foreground">Home {">"} Profile</p>
           <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
         </div>
 
@@ -111,11 +116,21 @@ export default function ProfilePage() {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={user.user_metadata?.avatar_url || '/placeholder-avatar.jpg'} alt="Profile" />
-                  <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                  <AvatarImage
+                    src={
+                      user.user_metadata?.avatar_url ||
+                      "/placeholder-avatar.jpg"
+                    }
+                    alt="Profile"
+                  />
+                  <AvatarFallback>
+                    {user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-lg font-medium">{displayName || 'No display name'}</p>
+                  <p className="text-lg font-medium">
+                    {displayName || "No display name"}
+                  </p>
                   <p className="text-muted-foreground">{user.email}</p>
                 </div>
               </div>
@@ -146,14 +161,16 @@ export default function ProfilePage() {
                     accept="image/*"
                     disabled
                   />
-                  <p className="text-sm text-muted-foreground">Upload functionality placeholder</p>
+                  <p className="text-sm text-muted-foreground">
+                    Upload functionality placeholder
+                  </p>
                 </div>
                 <Button
                   type="submit"
                   className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
                   disabled={loading}
                 >
-                  {loading ? 'Updating...' : 'Update Profile'}
+                  {loading ? "Updating..." : "Update Profile"}
                 </Button>
               </form>
               {message && (
@@ -182,5 +199,5 @@ export default function ProfilePage() {
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }

@@ -1,16 +1,16 @@
 // Fixed: corrected radix-ui imports for Vercel build
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 // Fixed Radix import
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'
+import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Collapsible({
   ...props
 }: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />
+  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />;
 }
 
 function CollapsibleTrigger({
@@ -21,7 +21,7 @@ function CollapsibleTrigger({
       data-slot="collapsible-trigger"
       {...props}
     />
-  )
+  );
 }
 
 function CollapsibleContent({
@@ -32,7 +32,7 @@ function CollapsibleContent({
       data-slot="collapsible-content"
       {...props}
     />
-  )
+  );
 }
 
-export { Collapsible, CollapsibleTrigger, CollapsibleContent }
+export { Collapsible, CollapsibleTrigger, CollapsibleContent };

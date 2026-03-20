@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -20,167 +20,169 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Upload, FileText, CheckCircle, XCircle } from 'lucide-react'
-import Link from 'next/link'
-import { toast } from 'sonner'
-import AppLayout from '@/components/layout/AppLayout'
+} from "@/components/ui/table";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Upload, FileText, CheckCircle, XCircle } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function MassEmailPage() {
-  const [templates, setTemplates] = useState<any[]>([])
-  const [history, setHistory] = useState<any[]>([])
-  const [selectedTemplate, setSelectedTemplate] = useState('')
-  const [recipientFilter, setRecipientFilter] = useState('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [previewBody, setPreviewBody] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [recipientFilter, setRecipientFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [previewBody, setPreviewBody] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch email templates
       const { data: templatesData, error: templatesError } = await supabase
-        .from('email_templates')
-        .select('*')
+        .from("email_templates")
+        .select("*");
 
       if (templatesError) {
-        console.error('Error fetching templates:', templatesError)
-        toast.error('Failed to fetch email templates')
+        console.error("Error fetching templates:", templatesError);
+        toast.error("Failed to fetch email templates");
       } else {
-        setTemplates(templatesData || [])
+        setTemplates(templatesData || []);
       }
 
       // Fetch send history
       const { data: historyData, error: historyError } = await supabase
-        .from('email_log')
-        .select('*')
-        .order('sent_at', { ascending: false })
+        .from("email_log")
+        .select("*")
+        .order("sent_at", { ascending: false });
 
       if (historyError) {
-        console.error('Error fetching history:', historyError)
-        toast.error('Failed to fetch send history')
+        console.error("Error fetching history:", historyError);
+        toast.error("Failed to fetch send history");
       } else {
-        setHistory(historyData || [])
+        setHistory(historyData || []);
       }
-    }
-    fetchData()
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (selectedTemplate) {
-      const template = templates.find(t => t.id === selectedTemplate)
+      const template = templates.find((t) => t.id === selectedTemplate);
       if (template) {
         // Fill placeholders with sample data
         const filledBody = template.body
-          .replace(/{{firmenname}}/g, 'Sample Company GmbH')
-          .replace(/{{vorname}}/g, 'Max')
-          .replace(/{{nachname}}/g, 'Mustermann')
-          .replace(/{{email}}/g, 'max.mustermann@example.com')
-        setPreviewBody(filledBody)
+          .replace(/{{firmenname}}/g, "Sample Company GmbH")
+          .replace(/{{vorname}}/g, "Max")
+          .replace(/{{nachname}}/g, "Mustermann")
+          .replace(/{{email}}/g, "max.mustermann@example.com");
+        setPreviewBody(filledBody);
       }
     }
-  }, [selectedTemplate, templates])
+  }, [selectedTemplate, templates]);
 
   const handleSendTest = async () => {
-    if (!selectedTemplate) return
+    if (!selectedTemplate) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       // Log test email
-      const { error } = await supabase
-        .from('email_log')
-        .insert({
-          recipient: 'test@example.com',
-          subject: templates.find(t => t.id === selectedTemplate)?.subject || '',
-          body: previewBody,
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-        })
+      const { error } = await supabase.from("email_log").insert({
+        recipient: "test@example.com",
+        subject:
+          templates.find((t) => t.id === selectedTemplate)?.subject || "",
+        body: previewBody,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+      });
 
-      if (error) throw error
+      if (error) throw error;
 
       // Log to timeline
-      await supabase
-        .from('timeline')
-        .insert({
-          company_id: null, // No specific company for mass email
-          activity_type: 'email',
-          title: 'Test Email Sent',
-          content: `Test email sent to test@example.com`,
-        })
+      await supabase.from("timeline").insert({
+        company_id: null, // No specific company for mass email
+        activity_type: "email",
+        title: "Test Email Sent",
+        content: `Test email sent to test@example.com`,
+      });
 
-      toast.success('Test email sent successfully!')
+      toast.success("Test email sent successfully!");
     } catch (error) {
-      console.error('Error sending test email:', error)
-      toast.error('Failed to send test email')
+      console.error("Error sending test email:", error);
+      toast.error("Failed to send test email");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleSendToAll = async () => {
-    if (!selectedTemplate) return
+    if (!selectedTemplate) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
       // Fetch recipients based on filter
-      let query = supabase.from('companies').select('firmenname')
-      if (recipientFilter === 'lead') {
-        query = query.eq('status', 'lead')
-      } else if (recipientFilter === 'won') {
-        query = query.eq('status', 'won')
+      let query = supabase.from("companies").select("firmenname");
+      if (recipientFilter === "lead") {
+        query = query.eq("status", "lead");
+      } else if (recipientFilter === "won") {
+        query = query.eq("status", "won");
       }
       // Add search filter if provided
       if (searchQuery) {
-        query = query.ilike('firmenname', `%${searchQuery}%`)
+        query = query.ilike("firmenname", `%${searchQuery}%`);
       }
 
-      const { data: companies, error } = await query
-      if (error) throw error
+      const { data: companies, error } = await query;
+      if (error) throw error;
 
       // For each company, send email (placeholder - just log)
       for (const company of companies || []) {
-        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, '')}.com`
-        
-        await supabase
-          .from('email_log')
-          .insert({
-            recipient,
-            subject: templates.find(t => t.id === selectedTemplate)?.subject || '',
-            body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
-            status: 'sent',
-            sent_at: new Date().toISOString(),
-          })
+        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
+
+        await supabase.from("email_log").insert({
+          recipient,
+          subject:
+            templates.find((t) => t.id === selectedTemplate)?.subject || "",
+          body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        });
       }
 
       // Log to timeline
-      await supabase
-        .from('timeline')
-        .insert({
-          company_id: null,
-          activity_type: 'email',
-          title: 'Mass Email Sent',
-          content: `Mass email sent to ${companies?.length || 0} recipients`,
-        })
+      await supabase.from("timeline").insert({
+        company_id: null,
+        activity_type: "email",
+        title: "Mass Email Sent",
+        content: `Mass email sent to ${companies?.length || 0} recipients`,
+      });
 
-      toast.success(`Campaign queued for ${companies?.length || 0} recipients!`)
+      toast.success(
+        `Campaign queued for ${companies?.length || 0} recipients!`,
+      );
     } catch (error) {
-      console.error('Error sending emails:', error)
-      toast.error('Failed to send mass email')
+      console.error("Error sending emails:", error);
+      toast.error("Failed to send mass email");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {'>'} Mass Email</p>
-            <h1 className="text-3xl font-semibold tracking-tight">Mass Email</h1>
+            <p className="text-sm text-muted-foreground">
+              Home {">"} Mass Email
+            </p>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Mass Email
+            </h1>
           </div>
-          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Campaign</Button>
+          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
+            New Campaign
+          </Button>
         </div>
 
         <div className="space-y-4">
@@ -202,7 +204,9 @@ export default function MassEmailPage() {
                     <TableRow key={template.id}>
                       <TableCell>{template.name}</TableCell>
                       <TableCell>{template.subject}</TableCell>
-                      <TableCell>{template.body?.substring(0, 50)}...</TableCell>
+                      <TableCell>
+                        {template.body?.substring(0, 50)}...
+                      </TableCell>
                     </TableRow>
                   ))}
                   {!templates.length && (
@@ -223,7 +227,10 @@ export default function MassEmailPage() {
                 <CardTitle>Send Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={setSelectedTemplate}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
@@ -235,7 +242,10 @@ export default function MassEmailPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
+                <Select
+                  value={recipientFilter}
+                  onValueChange={setRecipientFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipients" />
                   </SelectTrigger>
@@ -271,15 +281,18 @@ export default function MassEmailPage() {
 
             <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  Preview
-                </CardTitle>
+                <CardTitle className="flex items-center">Preview</CardTitle>
               </CardHeader>
               <CardContent>
                 {previewBody ? (
-                  <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: previewBody }} />
+                  <div
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: previewBody }}
+                  />
                 ) : (
-                  <p className="text-muted-foreground">Select a template to preview</p>
+                  <p className="text-muted-foreground">
+                    Select a template to preview
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -322,5 +335,5 @@ export default function MassEmailPage() {
         </div>
       </div>
     </AppLayout>
-  )
+  );
 }

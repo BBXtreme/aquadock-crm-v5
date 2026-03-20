@@ -1,52 +1,56 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { formatDistanceToNow } from 'date-fns'
-import Link from 'next/link'
-import AppLayout from '@/components/layout/AppLayout'
+} from "@/components/ui/select";
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function TimelinePage() {
-  const [timeline, setTimeline] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
-      setError('')
+      setLoading(true);
+      setError("");
       try {
         const { data, error } = await supabase
-          .from('timeline')
-          .select('*, companies(firmenname)')
-          .order('created_at', { ascending: false })
-          .limit(50)
+          .from("timeline")
+          .select("*, companies(firmenname)")
+          .order("created_at", { ascending: false })
+          .limit(50);
 
-        if (error) throw error
+        if (error) throw error;
 
-        setTimeline(data || [])
+        setTimeline(data || []);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch timeline')
+        setError(err.message || "Failed to fetch timeline");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchData()
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   // Get unique companies and types for filters
-  const companies = Array.from(new Set(timeline?.map(t => t.companies?.firmenname).filter(Boolean)))
-  const types = Array.from(new Set(timeline?.map(t => t.activity_type).filter(Boolean)))
+  const companies = Array.from(
+    new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean)),
+  );
+  const types = Array.from(
+    new Set(timeline?.map((t) => t.activity_type).filter(Boolean)),
+  );
 
   if (error) {
     return (
@@ -54,15 +58,19 @@ export default function TimelinePage() {
         <div className="container mx-auto p-6 lg:p-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Home {'>'} Timeline</p>
-              <h1 className="text-3xl font-semibold tracking-tight">Timeline</h1>
+              <p className="text-sm text-muted-foreground">
+                Home {">"} Timeline
+              </p>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                Timeline
+              </h1>
             </div>
             <Button>New Timeline Entry</Button>
           </div>
           <p className="text-red-500">{error}</p>
         </div>
       </AppLayout>
-    )
+    );
   }
 
   return (
@@ -70,7 +78,7 @@ export default function TimelinePage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {'>'} Timeline</p>
+            <p className="text-sm text-muted-foreground">Home {">"} Timeline</p>
             <h1 className="text-3xl font-semibold tracking-tight">Timeline</h1>
           </div>
           <Button>New Timeline Entry</Button>
@@ -110,15 +118,23 @@ export default function TimelinePage() {
             <p>Loading timeline...</p>
           ) : timeline?.length > 0 ? (
             timeline.map((entry) => (
-              <Card key={entry.id} className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+              <Card
+                key={entry.id}
+                className="border border-border bg-card text-card-foreground shadow-sm rounded-xl"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(entry.created_at), {
+                            addSuffix: true,
+                          })}
                         </span>
-                        <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">
+                        <Link
+                          href={`/companies/${entry.company_id}`}
+                          className="text-blue-600 hover:underline"
+                        >
                           {entry.companies?.firmenname}
                         </Link>
                         <Badge variant="outline">{entry.activity_type}</Badge>
@@ -133,12 +149,14 @@ export default function TimelinePage() {
           ) : (
             <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
               <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">No timeline entries found.</p>
+                <p className="text-center text-muted-foreground">
+                  No timeline entries found.
+                </p>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
     </AppLayout>
-  )
+  );
 }
