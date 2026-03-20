@@ -17,18 +17,19 @@ export default function Header() {
     <header className="flex items-center justify-between p-0.5 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="ml-5 w-12 md:w-14 h-12 md:h-14 flex items-center justify-center hover:scale-105 transition-transform">
+          <div className="ml-5 w-16 md:w-18 h-16 md:h-18 flex items-center justify-center hover:scale-105 transition-transform">
             <Image
               src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
               alt="AquaDock CRM"
               width={0}
               height={0}
-              sizes="(max-width: 768px) 48px, 56px"
-              className="h-12 md:h-14 w-auto object-contain"
+              sizes="(max-width: 768px) 64px, 72px"
+              className="h-16 md:h-18 w-auto object-contain"
               priority
             />
           </div>
         </Link>
+        <span className="text-lg font-semibold">CRM v5.0.1</span>
       </div>
       <div className="flex-1 max-w-md mx-4">
         <div className="relative">
