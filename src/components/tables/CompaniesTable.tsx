@@ -51,7 +51,7 @@ const columns: ColumnDef<Company>[] = [
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue()}
+        {String(info.getValue())}
       </Badge>
     ),
   }),
@@ -67,7 +67,7 @@ const columns: ColumnDef<Company>[] = [
             "bg-zinc-500 text-white",
         )}
       >
-        {info.getValue()}
+        {String(info.getValue())}
       </Badge>
     ),
   }),
