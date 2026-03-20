@@ -44,7 +44,9 @@ export default function TimelinePage() {
 
   // Get unique companies and types for filters
   const companies = Array.from(
-    new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[]),
+    new Set(
+      timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[],
+    ),
   );
   const types = Array.from(
     new Set(timeline?.map((t) => t.activity_type).filter(Boolean) as string[]),
@@ -90,7 +92,7 @@ export default function TimelinePage() {
             <SelectContent>
               <SelectItem value="all">All Companies</SelectItem>
               {companies.map((company) => (
-                <SelectItem key={company} value={company}>
+                <SelectItem key={company} value={company ?? "unknown"}>
                   {company}
                 </SelectItem>
               ))}
@@ -103,7 +105,7 @@ export default function TimelinePage() {
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               {types.map((type) => (
-                <SelectItem key={type} value={type}>
+                <SelectItem key={type} value={type ?? "unknown"}>
                   {type}
                 </SelectItem>
               ))}
