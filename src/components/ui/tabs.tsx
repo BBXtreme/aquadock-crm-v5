@@ -1,8 +1,10 @@
+// Fixed: corrected radix-ui imports for Vercel build
 "use client";
 
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Tabs as TabsPrimitive } from "radix-ui";
+// Fixed Radix import
+import * as TabsPrimitive from "@radix-ui/react-tabs";
 
 import { cn } from "@/lib/utils";
 
