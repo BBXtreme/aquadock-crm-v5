@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,11 +18,9 @@ import { getCompanyById } from "@/lib/supabase/services/companies";
 import { createClient } from "@/lib/supabase/browser";
 import AppLayout from "@/components/layout/AppLayout";
 
-export default function CompanyDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CompanyDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [company, setCompany] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,7 +31,7 @@ export default function CompanyDetailPage({
       setError("");
       try {
         const supabase = createClient();
-        const company = await getCompanyById(params.id, supabase);
+        const company = await getCompanyById(id, supabase);
         setCompany(company);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to fetch company");
@@ -40,8 +39,10 @@ export default function CompanyDetailPage({
         setLoading(false);
       }
     };
-    fetchCompany();
-  }, [params.id]);
+    if (id) {
+      fetchCompany();
+    }
+  }, [id]);
 
   if (loading) {
     return (
