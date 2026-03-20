@@ -44,9 +44,7 @@ export default function ContactsPage() {
       setContacts(contacts);
       setCompanies(
         Array.from(
-          new Set(
-            contacts?.map((c) => c.companies?.firmenname).filter(Boolean),
-          ),
+          new Set(contacts?.map((c) => c.companies?.firmenname).filter(Boolean)),
         ),
       );
     } catch (err: unknown) {

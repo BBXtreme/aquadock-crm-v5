@@ -28,15 +28,8 @@ export default function TimelinePage() {
       setError("");
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
-          .from("timeline")
-          .select("*, companies(firmenname)")
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-        if (error) throw error;
-
-        setTimeline(data || []);
+        const timeline = await getTimeline(supabase);
+        setTimeline(timeline.slice(0, 50));
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch timeline",

@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import AppLayout from "@/components/layout/AppLayout";
 import { getCompanies } from "@/lib/supabase/services/companies";
+import { getTimeline } from "@/lib/supabase/services/timeline";
 
 export default function Home() {
   const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
@@ -30,12 +31,8 @@ export default function Home() {
         const companies = await getCompanies(supabase);
         setCompanies(companies);
 
-        const { data: timeData } = await supabase
-          .from("timeline")
-          .select("*, companies(firmenname)")
-          .order("created_at", { ascending: false })
-          .limit(10);
-        setTimeline(timeData || []);
+        const timeline = await getTimeline(supabase);
+        setTimeline(timeline.slice(0, 10));
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {

@@ -349,11 +349,10 @@ export type Database = {
   };
 };
 
-export type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
-export type Company = Tables<"companies">;
-export type Contact = Tables<"contacts">;
-export type Reminder = Tables<"reminders">;
-export type EmailLog = Tables<"email_log">;
-export type EmailTemplate = Tables<"email_templates">;
-export type TimelineEntry = Tables<"timeline">;
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row'];
+export type Company = Tables<'companies'>;
+export type Contact = Tables<'contacts'>;
+export type Reminder = Tables<'reminders'>;
+export type EmailLog = Tables<'email_log'>;
+export type EmailTemplate = Tables<'email_templates'>;
+export type TimelineEntry = Tables<'timeline'>;
