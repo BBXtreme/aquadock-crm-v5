@@ -37,5 +37,19 @@ export function safeString(str: string | null | undefined): string {
   return str ?? "—";
 }
 
+/**
+ * Central error handler for Supabase operations.
+ * @param error - The error object
+ * @param context - Context string for logging
+ * @returns A standardized Error object
+ */
+export function handleSupabaseError(error: unknown, context: string): Error {
+  console.error(`Supabase error in ${context}:`, error);
+  if (error instanceof Error) {
+    return new Error(`Database error: ${error.message}`);
+  }
+  return new Error("An unknown database error occurred");
+}
+
 // Import here to avoid circular dependencies
 import { formatDistanceToNow } from "date-fns";
