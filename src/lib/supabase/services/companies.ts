@@ -8,10 +8,35 @@ import { createClient } from "@/lib/supabase/browser";
  */
 export async function getCompanies(
   client?: SupabaseClient,
+  options?: { limit?: number; offset?: number; statusFilter?: string }
 ): Promise<Company[]> {
   const supabase = client || createClient();
-  const { data, error } = await supabase.from("companies").select("*");
+
+  let query = supabase.from("companies").select("*");
+
+  if (options?.statusFilter) {
+    query = query.eq("status", options.statusFilter);
+  }
+
+  if (options?.limit) {
+    query = query.limit(options.limit);
+  }
+
+  if (options?.offset) {
+    query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
+  }
+
+  const { data, error } = await query;
+
+  if (process.env.NODE_ENV === "development") {
+    console.group("getCompanies");
+    console.log("Query options:", options);
+    console.log("Result count:", data?.length);
+    console.groupEnd();
+  }
+
   if (error) throw handleSupabaseError(error, "getCompanies");
+
   return (data ?? []) as Company[];
 }
 
