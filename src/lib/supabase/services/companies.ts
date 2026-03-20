@@ -4,14 +4,14 @@ import type { Company } from "../database.types";
 /**
  * Get all companies
  */
-export async function getAllCompanies(): Promise<Company[]> {
+export async function getCompanies(): Promise<Company[]> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase.from("companies").select("*");
     if (error) throw error;
     return data ?? [];
   } catch (error) {
-    throw handleSupabaseError(error, "getAllCompanies");
+    throw handleSupabaseError(error, "getCompanies");
   }
 }
 
