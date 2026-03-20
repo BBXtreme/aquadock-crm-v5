@@ -14,17 +14,17 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="flex items-center justify-between h-20 p-0.5 border-b shadow-sm">
+    <header className="flex items-center justify-between h-18 p-0.5 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="ml-5 w-20 md:w-24 h-20 md:h-24 flex items-center justify-center hover:scale-105 transition-transform">
+          <div className="ml-5 w-22 md:w-26 h-22 md:h-26 flex items-center justify-center hover:scale-105 transition-transform">
             <Image
               src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
               alt="AquaDock CRM"
               width={0}
               height={0}
-              sizes="(max-width: 768px) 80px, 96px"
-              className="h-20 md:h-24 w-auto object-contain"
+              sizes="(max-width: 768px) 88px, 104px"
+              className="h-22 md:h-26 w-auto object-contain"
               priority
             />
           </div>
