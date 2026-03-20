@@ -23,8 +23,15 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 
+interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+}
+
 export default function MassEmailPage() {
-  const [templates, setTemplates] = useState<Record<string, unknown>[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [history, setHistory] = useState<Record<string, unknown>[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
@@ -43,7 +50,7 @@ export default function MassEmailPage() {
         console.error("Error fetching templates:", templatesError);
         toast.error("Failed to fetch email templates");
       } else {
-        setTemplates(templatesData || []);
+        setTemplates(templatesData as EmailTemplate[] || []);
       }
 
       // Fetch send history
@@ -66,7 +73,6 @@ export default function MassEmailPage() {
     if (selectedTemplate) {
       const template = templates.find((t) => t.id === selectedTemplate);
       if (template) {
-        // Fill placeholders with sample data
         const filledBody = template.body
           .replace(/{{firmenname}}/g, "Sample Company GmbH")
           .replace(/{{vorname}}/g, "Max")
@@ -82,11 +88,13 @@ export default function MassEmailPage() {
 
     setLoading(true);
     try {
+      const template = templates.find((t) => t.id === selectedTemplate);
+      if (!template) return;
+
       // Log test email
       const { error } = await supabase.from("email_log").insert({
         recipient: "test@example.com",
-        subject:
-          templates.find((t) => t.id === selectedTemplate)?.subject || "",
+        subject: template.subject,
         body: previewBody,
         status: "sent",
         sent_at: new Date().toISOString(),
@@ -116,6 +124,9 @@ export default function MassEmailPage() {
 
     setLoading(true);
     try {
+      const template = templates.find((t) => t.id === selectedTemplate);
+      if (!template) return;
+
       // Fetch recipients based on filter
       let query = supabase.from("companies").select("firmenname");
       if (recipientFilter === "lead") {
@@ -137,8 +148,7 @@ export default function MassEmailPage() {
 
         await supabase.from("email_log").insert({
           recipient,
-          subject:
-            templates.find((t) => t.id === selectedTemplate)?.subject || "",
+          subject: template.subject,
           body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
           status: "sent",
           sent_at: new Date().toISOString(),
