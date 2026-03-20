@@ -23,218 +23,172 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users, Star, Building, RefreshCw } from "lucide-react";
+import { Users, Building, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
-import { Contact } from "@/lib/supabase/types";
-import { getContacts } from "@/lib/supabase/services/contacts";
+import type { Contact } from "@/lib/supabase/database.types";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [companies, setCompanies] = useState<string[]>([]);
+  const [companyNames, setCompanyNames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchData = async () => {
+  const fetchContacts = async () => {
     setLoading(true);
     setError("");
     try {
       const supabase = createClient();
-      const contacts = await getContacts(supabase);
-      setContacts(contacts);
-      setCompanies(
-        Array.from(
-          new Set(
-            contacts?.map((c) => c.companies?.firmenname).filter(Boolean),
-          ),
-        ),
-      );
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch contacts");
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*, companies!company_id (firmenname)");
+
+      if (error) throw error;
+
+      setContacts(data ?? []);
+
+      const uniqueNames = Array.from(
+        new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean))
+      ) as string[];
+      setCompanyNames(uniqueNames);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load contacts");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchContacts();
   }, []);
 
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
-
-  if (error) {
-    return (
-      <AppLayout>
-        <div className="container mx-auto p-6 lg:p-8 space-y-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">
-                Home {">"} Contacts
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Contacts
-              </h1>
-            </div>
-            <Button>New Contact</Button>
-          </div>
-          <Alert variant="destructive" className="border-red-500">
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button
-                onClick={fetchData}
-                variant="outline"
-                className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AppLayout>
-    );
-  }
+  const companiesWithContacts = new Set(
+    contacts.map((c) => c.company_id)
+  ).size;
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {">"} Contacts</p>
+            <p className="text-sm text-muted-foreground">Home > Contacts</p>
             <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
           </div>
           <Button>New Contact</Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button onClick={fetchContacts} variant="outline" size="sm">
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Contacts
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{totalContacts}</div>
-              )}
+              <div className="text-2xl font-bold">{totalContacts}</div>
             </CardContent>
           </Card>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
                 Primary Contacts
               </CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{primaryContacts}</div>
-              )}
+              <div className="text-2xl font-bold">{primaryContacts}</div>
             </CardContent>
           </Card>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">
                 Companies with Contacts
               </CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">
-                  {companiesWithContacts}
-                </div>
-              )}
+              <div className="text-2xl font-bold">
+                {companiesWithContacts}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <div className="flex space-x-4">
-                <Input placeholder="Search contacts..." className="max-w-sm" />
-                <Select>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Filter by company" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Companies</SelectItem>
-                    {companies.map((company) => (
-                      <SelectItem key={company} value={company}>
-                        {company}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <Card>
+          <CardHeader>
+            <CardTitle>Contacts List</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
               </div>
-              {loading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-full" />
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Vorname Nachname</TableHead>
-                        <TableHead>Firma</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Telefon</TableHead>
-                        <TableHead>Primary</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {contacts.map((contact) => (
-                        <TableRow key={contact.id}>
-                          <TableCell>
-                            {contact.vorname} {contact.nachname}
-                          </TableCell>
-                          <TableCell>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Position</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Primary</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contacts.map((contact) => (
+                      <TableRow key={contact.id}>
+                        <TableCell>
+                          {contact.vorname} {contact.nachname}
+                        </TableCell>
+                        <TableCell>
+                          {contact.companies?.firmenname ? (
                             <Link
                               href={`/companies/${contact.company_id}`}
-                              className="text-blue-600 hover:underline"
+                              className="text-primary hover:underline"
                             >
-                              {contact.companies?.firmenname}
+                              {contact.companies.firmenname}
                             </Link>
-                          </TableCell>
-                          <TableCell>{contact.position}</TableCell>
-                          <TableCell>{contact.email}</TableCell>
-                          <TableCell>{contact.telefon}</TableCell>
-                          <TableCell>
-                            {contact.is_primary && (
-                              <Badge className="bg-[#24BACC] text-white">
-                                Primary
-                              </Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {!contacts.length && (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center">
-                            No results.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell>{contact.position || "—"}</TableCell>
+                        <TableCell>{contact.email || "—"}</TableCell>
+                        <TableCell>{contact.telefon || "—"}</TableCell>
+                        <TableCell>
+                          {contact.is_primary && (
+                            <Badge variant="secondary">Primary</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!contacts.length && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          No contacts found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
