@@ -263,15 +263,9 @@ export interface Database {
         };
       };
     };
-    Views: {
-      [K in never]: never;
-    };
-    Functions: {
-      [K in never]: never;
-    };
-    Enums: {
-      [K in never]: never;
-    };
+    Views: {};
+    Functions: {};
+    Enums: {};
   };
 }
 
