@@ -193,7 +193,7 @@ export default function Home() {
                       <div>
                         <p className="font-medium">{entry.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {entry.companies?.firmenname || "Unknown"} •{" "}
+                          {entry.company?.firmenname || "Unknown"} •{" "}
                           {formatDistanceToNow(
                             new Date(entry.created_at || new Date()),
                             {

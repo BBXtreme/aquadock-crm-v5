@@ -45,7 +45,7 @@ export default function TimelinePage() {
   // Get unique companies and types for filters
   const companies = Array.from(
     new Set(
-      timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[],
+      timeline?.map((t) => t.company?.firmenname).filter(Boolean) as string[],
     ),
   );
   const types = Array.from(
@@ -137,7 +137,7 @@ export default function TimelinePage() {
                           href={`/companies/${entry.company_id}`}
                           className="text-blue-600 hover:underline"
                         >
-                          {entry.companies?.firmenname}
+                          {entry.company?.firmenname}
                         </Link>
                         <Badge variant="outline">{entry.activity_type}</Badge>
                       </div>

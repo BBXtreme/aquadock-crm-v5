@@ -14,7 +14,7 @@ export async function getReminders(
 ): Promise<Reminder[]> {
   const { data, error } = await client
     .from("reminders")
-    .select("*, companies!company_id (firmenname)");
+    .select("*, company!company_id (firmenname)");
   if (error) throw handleSupabaseError(error, "getReminders");
   return (data ?? []) as Reminder[];
 }

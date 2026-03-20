@@ -31,7 +31,7 @@ export default function ContactsPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contacts")
-        .select("*, companies!company_id (firmenname)");
+        .select("*, company!company_id (firmenname)");
 
       if (error) throw error;
 
@@ -138,12 +138,12 @@ export default function ContactsPage() {
                           {contact.vorname} {contact.nachname}
                         </TableCell>
                         <TableCell>
-                          {contact.companies?.firmenname ? (
+                          {contact.company?.firmenname ? (
                             <Link
                               href={`/companies/${contact.company_id}`}
                               className="text-primary hover:underline"
                             >
-                              {contact.companies.firmenname}
+                              {contact.company.firmenname}
                             </Link>
                           ) : (
                             "—"

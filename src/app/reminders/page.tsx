@@ -212,7 +212,7 @@ export default function RemindersPage() {
                               href={`/companies/${reminder.company_id}`}
                               className="text-blue-600 hover:underline"
                             >
-                              {reminder.companies?.firmenname}
+                              {reminder.company?.firmenname}
                             </Link>
                           </TableCell>
                           <TableCell
