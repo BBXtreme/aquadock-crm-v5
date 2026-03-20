@@ -50,9 +50,7 @@ export default function ContactsPage() {
 
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const companiesWithContacts = new Set(
-    contacts.map((c) => c.company_id)
-  ).size;
+  const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
 
   return (
     <AppLayout>
@@ -104,9 +102,7 @@ export default function ContactsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {companiesWithContacts}
-              </div>
+              <div className="text-2xl font-bold">{companiesWithContacts}</div>
             </CardContent>
           </Card>
         </div>
