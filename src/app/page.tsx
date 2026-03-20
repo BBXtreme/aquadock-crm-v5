@@ -34,7 +34,9 @@ export default function Home() {
         const timeline = await getTimeline(supabase);
         setTimeline(timeline.slice(0, 10));
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -221,10 +223,7 @@ export default function Home() {
         />
 
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => setDebugMode(!debugMode)}
-          >
+          <Button variant="outline" onClick={() => setDebugMode(!debugMode)}>
             {debugMode ? "Hide Debug" : "Show Debug"}
           </Button>
         </div>
@@ -237,8 +236,8 @@ export default function Home() {
             error={error}
             user={user ? { id: user.id, email: user.email } : null}
             statusSummary={{
-              lead: companies.filter(c => c.status === 'lead').length,
-              won: companies.filter(c => c.status === 'won').length,
+              lead: companies.filter((c) => c.status === "lead").length,
+              won: companies.filter((c) => c.status === "won").length,
             }}
           />
         )}
