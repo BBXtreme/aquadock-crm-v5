@@ -25,7 +25,7 @@ export async function getContactById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getContactById");
-  return data as Contact | null ?? null;
+  return (data as Contact | null) ?? null;
 }
 
 /**
