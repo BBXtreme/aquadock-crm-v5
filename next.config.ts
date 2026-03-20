@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Turbopack config – force absolute root path
   turbopack: {
-    root: ".", // Force current directory as root (ignores workspace.yaml)
+    root: process.cwd(), // absolute path, recommended by Next.js
   },
 };
 
