@@ -36,6 +36,9 @@ export function formatDateDistance(d: string | null | undefined): string {
  * @param fallback - The fallback string if v is null/undefined
  * @returns The string representation or fallback
  */
-export function safeDisplay<T>(v: T | null | undefined, fallback = "–"): string {
+export function safeDisplay<T>(
+  v: T | null | undefined,
+  fallback = "–",
+): string {
   return v != null ? v.toString() : fallback;
 }
