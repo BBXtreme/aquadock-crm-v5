@@ -1,4 +1,7 @@
-import { createServerSupabaseClient, handleSupabaseError } from "../server-client";
+import {
+  createServerSupabaseClient,
+  handleSupabaseError,
+} from "../server-client";
 import type { Contact, ContactInsert, ContactUpdate } from "../database.types";
 
 /**
