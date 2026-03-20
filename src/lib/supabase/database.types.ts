@@ -264,13 +264,13 @@ export interface Database {
       };
     };
     Views: {
-      [_ in never]: never;
+      [K in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      [K in never]: never;
     };
     Enums: {
-      [key in never]: never;
+      [K in never]: never;
     };
   };
 }
