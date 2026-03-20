@@ -50,7 +50,7 @@ const columns: ColumnDef<Company>[] = [
     id: "firmenname",
     header: "Firmenname",
     cell: (info) => safeString(info.getValue()),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
@@ -58,7 +58,7 @@ const columns: ColumnDef<Company>[] = [
         {safeString(info.getValue())}
       </Badge>
     ),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
@@ -77,23 +77,23 @@ const columns: ColumnDef<Company>[] = [
         </Badge>
       );
     },
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("value", {
     header: "Value",
     cell: (info) => formatCurrency(info.getValue()),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("stadt", {
     header: "Stadt",
     cell: (info) => safeString(info.getValue()),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("land", {
     header: "Land",
     cell: (info) => safeString(info.getValue()),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) => formatDateDistance(info.getValue()),
-  }),
+  }) as ColumnDef<Company>,
   columnHelper.display({
     id: "actions",
     header: "Actions",
@@ -114,7 +114,7 @@ const columns: ColumnDef<Company>[] = [
         </Button>
       </div>
     ),
-  }),
+  }) as ColumnDef<Company>,
 ];
 
 export default function CompaniesTable({ companies }: CompaniesTableProps) {
