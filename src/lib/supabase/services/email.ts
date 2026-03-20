@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "../server";
+import { handleSupabaseError } from "../utils";
 import type {
   EmailLog,
   EmailLogInsert,
@@ -11,11 +11,9 @@ import type {
 /**
  * Get all email logs
  */
-export async function getEmailLogs(
-  client = createServerSupabaseClient(),
-): Promise<EmailLog[]> {
+export async function getEmailLogs(client: any): Promise<EmailLog[]> {
   const { data, error } = await client.from("email_log").select("*");
-  if (error) throw new Error(`Failed to fetch email logs: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getEmailLogs");
   return data ?? [];
 }
 
@@ -24,14 +22,14 @@ export async function getEmailLogs(
  */
 export async function getEmailLogById(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailLog | null> {
   const { data, error } = await client
     .from("email_log")
     .select("*")
     .eq("id", id)
     .single();
-  if (error) throw new Error(`Failed to fetch email log: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getEmailLogById");
   return data ?? null;
 }
 
@@ -40,14 +38,14 @@ export async function getEmailLogById(
  */
 export async function createEmailLog(
   emailLog: EmailLogInsert,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailLog> {
   const { data, error } = await client
     .from("email_log")
     .insert(emailLog)
     .select()
     .single();
-  if (error) throw new Error(`Failed to create email log: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "createEmailLog");
   return data;
 }
 
@@ -57,7 +55,7 @@ export async function createEmailLog(
 export async function updateEmailLog(
   id: string,
   updates: EmailLogUpdate,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailLog> {
   const { data, error } = await client
     .from("email_log")
@@ -65,30 +63,24 @@ export async function updateEmailLog(
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error(`Failed to update email log: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "updateEmailLog");
   return data;
 }
 
 /**
  * Delete an email log
  */
-export async function deleteEmailLog(
-  id: string,
-  client = createServerSupabaseClient(),
-): Promise<void> {
+export async function deleteEmailLog(id: string, client: any): Promise<void> {
   const { error } = await client.from("email_log").delete().eq("id", id);
-  if (error) throw new Error(`Failed to delete email log: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "deleteEmailLog");
 }
 
 /**
  * Get all email templates
  */
-export async function getEmailTemplates(
-  client = createServerSupabaseClient(),
-): Promise<EmailTemplate[]> {
+export async function getEmailTemplates(client: any): Promise<EmailTemplate[]> {
   const { data, error } = await client.from("email_templates").select("*");
-  if (error)
-    throw new Error(`Failed to fetch email templates: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getEmailTemplates");
   return data ?? [];
 }
 
@@ -97,15 +89,14 @@ export async function getEmailTemplates(
  */
 export async function getEmailTemplateById(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailTemplate | null> {
   const { data, error } = await client
     .from("email_templates")
     .select("*")
     .eq("id", id)
     .single();
-  if (error)
-    throw new Error(`Failed to fetch email template: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getEmailTemplateById");
   return data ?? null;
 }
 
@@ -114,15 +105,14 @@ export async function getEmailTemplateById(
  */
 export async function createEmailTemplate(
   template: EmailTemplateInsert,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailTemplate> {
   const { data, error } = await client
     .from("email_templates")
     .insert(template)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to create email template: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "createEmailTemplate");
   return data;
 }
 
@@ -132,7 +122,7 @@ export async function createEmailTemplate(
 export async function updateEmailTemplate(
   id: string,
   updates: EmailTemplateUpdate,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<EmailTemplate> {
   const { data, error } = await client
     .from("email_templates")
@@ -140,8 +130,7 @@ export async function updateEmailTemplate(
     .eq("id", id)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to update email template: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "updateEmailTemplate");
   return data;
 }
 
@@ -150,9 +139,8 @@ export async function updateEmailTemplate(
  */
 export async function deleteEmailTemplate(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<void> {
   const { error } = await client.from("email_templates").delete().eq("id", id);
-  if (error)
-    throw new Error(`Failed to delete email template: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "deleteEmailTemplate");
 }

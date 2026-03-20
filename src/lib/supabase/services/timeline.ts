@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "../server";
+import { handleSupabaseError } from "../utils";
 import type {
   TimelineEntry,
   TimelineEntryInsert,
@@ -8,13 +8,11 @@ import type {
 /**
  * Get all timeline entries with joined company data
  */
-export async function getTimeline(
-  client = createServerSupabaseClient(),
-): Promise<TimelineEntry[]> {
+export async function getTimeline(client: any): Promise<TimelineEntry[]> {
   const { data, error } = await client
     .from("timeline")
     .select("*, companies(firmenname)");
-  if (error) throw new Error(`Failed to fetch timeline: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getTimeline");
   return data ?? [];
 }
 
@@ -23,15 +21,14 @@ export async function getTimeline(
  */
 export async function getTimelineEntryById(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<TimelineEntry | null> {
   const { data, error } = await client
     .from("timeline")
     .select("*")
     .eq("id", id)
     .single();
-  if (error)
-    throw new Error(`Failed to fetch timeline entry: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getTimelineEntryById");
   return data ?? null;
 }
 
@@ -40,15 +37,14 @@ export async function getTimelineEntryById(
  */
 export async function createTimelineEntry(
   entry: TimelineEntryInsert,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<TimelineEntry> {
   const { data, error } = await client
     .from("timeline")
     .insert(entry)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to create timeline entry: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "createTimelineEntry");
   return data;
 }
 
@@ -58,7 +54,7 @@ export async function createTimelineEntry(
 export async function updateTimelineEntry(
   id: string,
   updates: TimelineEntryUpdate,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<TimelineEntry> {
   const { data, error } = await client
     .from("timeline")
@@ -66,8 +62,7 @@ export async function updateTimelineEntry(
     .eq("id", id)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to update timeline entry: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "updateTimelineEntry");
   return data;
 }
 
@@ -76,9 +71,8 @@ export async function updateTimelineEntry(
  */
 export async function deleteTimelineEntry(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<void> {
   const { error } = await client.from("timeline").delete().eq("id", id);
-  if (error)
-    throw new Error(`Failed to delete timeline entry: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "deleteTimelineEntry");
 }

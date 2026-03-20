@@ -1,12 +1,10 @@
-import { createServerSupabaseClient, handleSupabaseError } from "../server";
+import { handleSupabaseError } from "../utils";
 import type { Contact, ContactInsert, ContactUpdate } from "../database.types";
 
 /**
  * Get all contacts with joined company data
  */
-export async function getContacts(
-  client = createServerSupabaseClient(),
-): Promise<Contact[]> {
+export async function getContacts(client: any): Promise<Contact[]> {
   const { data, error } = await client
     .from("contacts")
     .select("*, companies(firmenname)");
@@ -19,7 +17,7 @@ export async function getContacts(
  */
 export async function getContactById(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Contact | null> {
   const { data, error } = await client
     .from("contacts")
@@ -35,7 +33,7 @@ export async function getContactById(
  */
 export async function createContact(
   contact: ContactInsert,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Contact> {
   const { data, error } = await client
     .from("contacts")
@@ -52,7 +50,7 @@ export async function createContact(
 export async function updateContact(
   id: string,
   updates: ContactUpdate,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Contact> {
   const { data, error } = await client
     .from("contacts")
@@ -67,10 +65,7 @@ export async function updateContact(
 /**
  * Delete a contact
  */
-export async function deleteContact(
-  id: string,
-  client = createServerSupabaseClient(),
-): Promise<void> {
+export async function deleteContact(id: string, client: any): Promise<void> {
   const { error } = await client.from("contacts").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteContact");
 }

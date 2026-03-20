@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "../server";
+import { handleSupabaseError } from "../utils";
 import type {
   Reminder,
   ReminderInsert,
@@ -8,13 +8,11 @@ import type {
 /**
  * Get all reminders with joined company data
  */
-export async function getReminders(
-  client = createServerSupabaseClient(),
-): Promise<Reminder[]> {
+export async function getReminders(client: any): Promise<Reminder[]> {
   const { data, error } = await client
     .from("reminders")
     .select("*, companies(firmenname)");
-  if (error) throw new Error(`Failed to fetch reminders: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getReminders");
   return data ?? [];
 }
 
@@ -23,14 +21,14 @@ export async function getReminders(
  */
 export async function getReminderById(
   id: string,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Reminder | null> {
   const { data, error } = await client
     .from("reminders")
     .select("*")
     .eq("id", id)
     .single();
-  if (error) throw new Error(`Failed to fetch reminder: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getReminderById");
   return data ?? null;
 }
 
@@ -39,14 +37,14 @@ export async function getReminderById(
  */
 export async function createReminder(
   reminder: ReminderInsert,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Reminder> {
   const { data, error } = await client
     .from("reminders")
     .insert(reminder)
     .select()
     .single();
-  if (error) throw new Error(`Failed to create reminder: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "createReminder");
   return data;
 }
 
@@ -56,7 +54,7 @@ export async function createReminder(
 export async function updateReminder(
   id: string,
   updates: ReminderUpdate,
-  client = createServerSupabaseClient(),
+  client: any,
 ): Promise<Reminder> {
   const { data, error } = await client
     .from("reminders")
@@ -64,17 +62,14 @@ export async function updateReminder(
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error(`Failed to update reminder: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "updateReminder");
   return data;
 }
 
 /**
  * Delete a reminder
  */
-export async function deleteReminder(
-  id: string,
-  client = createServerSupabaseClient(),
-): Promise<void> {
+export async function deleteReminder(id: string, client: any): Promise<void> {
   const { error } = await client.from("reminders").delete().eq("id", id);
-  if (error) throw new Error(`Failed to delete reminder: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "deleteReminder");
 }
