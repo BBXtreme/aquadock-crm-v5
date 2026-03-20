@@ -45,7 +45,7 @@ const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() as string,
   }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
