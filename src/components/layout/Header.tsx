@@ -17,14 +17,14 @@ export default function Header() {
     <header className="flex items-center justify-between p-4 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="w-8 md:w-9 h-8 md:h-9 flex items-center justify-center hover:scale-105 transition-transform">
+          <div className="w-12 md:w-14 h-12 md:h-14 flex items-center justify-center hover:scale-105 transition-transform">
             <Image
               src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
               alt="AquaDock CRM"
               width={0}
               height={0}
-              sizes="(max-width: 768px) 32px, 36px"
-              className="h-8 md:h-9 w-auto object-contain"
+              sizes="(max-width: 768px) 48px, 56px"
+              className="h-12 md:h-14 w-auto object-contain"
               priority
             />
           </div>
