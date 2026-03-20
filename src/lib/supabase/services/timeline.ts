@@ -3,7 +3,7 @@ import type {
   TimelineEntry,
   TimelineEntryInsert,
   TimelineEntryUpdate,
-} from "../database.types";
+} from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
