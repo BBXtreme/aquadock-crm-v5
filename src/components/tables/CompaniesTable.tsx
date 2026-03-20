@@ -33,7 +33,11 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Papa from "papaparse";
 import { Company } from "@/lib/supabase/types";
-import { formatCurrency, formatDateDistance, safeString } from "@/lib/supabase/utils";
+import {
+  formatCurrency,
+  formatDateDistance,
+  safeString,
+} from "@/lib/supabase/utils";
 
 interface CompaniesTableProps {
   companies: Company[];
