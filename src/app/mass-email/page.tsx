@@ -96,6 +96,7 @@ export default function MassEmailPage() {
           activity_type: "email",
           title: "Test Email Sent",
           content: `Test email sent to test@example.com`,
+          user_name: "System",
         },
         supabase,
       );
@@ -156,6 +157,7 @@ export default function MassEmailPage() {
           activity_type: "email",
           title: "Mass Email Sent",
           content: `Mass email sent to ${filteredCompanies.length} recipients`,
+          user_name: "System",
         },
         supabase,
       );
