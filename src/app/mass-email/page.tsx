@@ -89,6 +89,7 @@ export default function MassEmailPage() {
         supabase,
       );
 
+      // Required: user_name must be set (non-nullable in schema)
       // Log to timeline
       await createTimelineEntry(
         {
@@ -151,6 +152,7 @@ export default function MassEmailPage() {
         );
       }
 
+      // Required: user_name must be set (non-nullable in schema)
       // Log to timeline
       await createTimelineEntry(
         {
