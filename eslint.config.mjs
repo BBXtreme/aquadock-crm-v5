@@ -1,15 +1,10 @@
 import js from "@eslint/js";
-import react from "eslint-plugin-react";
+import eslintReact from "@eslint-react/eslint-plugin";
 
 export default [
   js.configs.recommended,
+  eslintReact.configs.recommended,
   {
-    plugins: { react },
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
     rules: {
       // your rules
     },
