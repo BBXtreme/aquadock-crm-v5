@@ -22,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, FileText, CheckCircle, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -69,17 +68,32 @@ export default function ImportPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      Papa.parse(selectedFile, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          setParsedData(results.data as ParsedRow[])
-          setHeaders(Object.keys(results.data[0] || {}))
-        },
-      })
-    }
+    if (!selectedFile) return
+
+    setFile(selectedFile)
+
+    Papa.parse(selectedFile, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results: Papa.ParseResult<ParsedRow>) => {
+        if (results.errors.length > 0) {
+          toast.error(`CSV parsing error: ${results.errors[0].message}`)
+          return
+        }
+
+        if (results.data.length === 0) {
+          toast.warning('The CSV file is empty')
+          return
+        }
+
+        setParsedData(results.data)
+        setHeaders(Object.keys(results.data[0] || {}))
+        toast.success(`${results.data.length} rows loaded successfully`)
+      },
+      error: (error) => {
+        toast.error(`Parsing failed: ${error.message}`)
+      },
+    })
   }
 
   const handleMappingChange = (csvColumn: string, field: string) => {
@@ -87,16 +101,21 @@ export default function ImportPage() {
   }
 
   const parseValue = (value: string): number => {
+    if (!value) return 0
     const cleaned = stripEmojis(value).replace(/[^\d.,-]/g, '').replace(',', '.')
-    return parseFloat(cleaned) || 0
+    const num = parseFloat(cleaned)
+    return isNaN(num) ? 0 : num
   }
 
   const mapLand = (land: string): string => {
-    return landMapping[land] || land
+    return landMapping[land] || land || 'Unknown'
   }
 
   const handleImport = async () => {
-    if (!parsedData.length) return
+    if (!parsedData.length || Object.keys(mappings).length === 0) {
+      toast.warning('No data or mappings available')
+      return
+    }
 
     setImporting(true)
     let successCount = 0
@@ -110,22 +129,26 @@ export default function ImportPage() {
         Object.entries(mappings).forEach(([csvCol, field]) => {
           const value = row[csvCol]?.trim() || ''
           if (field === 'value' || field === 'wasserdistanz' || field === 'lat' || field === 'lon') {
-            mappedRow[field as keyof MappedRow] = parseValue(value) as any
+            mappedRow[field as keyof MappedRow] = parseValue(value)
           } else if (field === 'land') {
             mappedRow[field] = mapLand(value)
           } else {
-            mappedRow[field as keyof MappedRow] = stripEmojis(value) as any
+            mappedRow[field as keyof MappedRow] = stripEmojis(value)
           }
         })
 
-        // Insert company
+        // Validate required fields
+        if (!mappedRow.firmenname || !mappedRow.kundentyp) {
+          throw new Error('Company name or customer type missing')
+        }
+
         const { data: company, error: companyError } = await supabase
           .from('companies')
           .insert({
-            firmenname: mappedRow.firmenname,
-            kundentyp: mappedRow.kundentyp,
+            firmenname: mappedRow.firmenname!,
+            kundentyp: mappedRow.kundentyp!,
             status: mappedRow.status || 'lead',
-            value: mappedRow.value,
+            value: mappedRow.value || 0,
             stadt: mappedRow.stadt,
             land: mappedRow.land,
             wasserdistanz: mappedRow.wasserdistanz,
@@ -142,7 +165,7 @@ export default function ImportPage() {
 
         // Insert contact if data available
         if (mappedRow.vorname || mappedRow.nachname || mappedRow.email) {
-          await supabase
+          const { error: contactError } = await supabase
             .from('contacts')
             .insert({
               company_id: company.id,
@@ -153,18 +176,27 @@ export default function ImportPage() {
               position: mappedRow.position,
               primary: true,
             })
+
+          if (contactError) throw contactError
         }
 
         successCount++
+        toast.success(`Company "${mappedRow.firmenname}" imported`)
       } catch (error: any) {
-        console.error('Import error:', error?.message || error || 'Unknown error')
+        console.error('Import error:', error)
+        toast.error(`Error on row: ${error.message || 'Unknown'}`)
         errorCount++
       }
     }
 
     setResults({ success: successCount, errors: errorCount, companyIds })
     setImporting(false)
-    toast.success(`${successCount} companies imported successfully!`)
+
+    if (successCount > 0) {
+      toast.success(`${successCount} companies imported successfully!`)
+    } else {
+      toast.error('No successful imports – all rows failed')
+    }
   }
 
   return (
@@ -174,7 +206,7 @@ export default function ImportPage() {
         <h1 className="text-3xl font-semibold tracking-tight">CSV Import</h1>
       </div>
 
-      <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Upload className="mr-2 h-5 w-5" />
@@ -204,7 +236,7 @@ export default function ImportPage() {
 
       {parsedData.length > 0 && (
         <>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card>
             <CardHeader>
               <CardTitle>Column Mapping</CardTitle>
             </CardHeader>
@@ -218,21 +250,21 @@ export default function ImportPage() {
                         <SelectValue placeholder="Select field" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="firmenname">Firmenname</SelectItem>
-                        <SelectItem value="kundentyp">Kundentyp</SelectItem>
+                        <SelectItem value="firmenname">Company Name</SelectItem>
+                        <SelectItem value="kundentyp">Customer Type</SelectItem>
                         <SelectItem value="status">Status</SelectItem>
                         <SelectItem value="value">Value</SelectItem>
-                        <SelectItem value="stadt">Stadt</SelectItem>
-                        <SelectItem value="land">Land</SelectItem>
-                        <SelectItem value="wasserdistanz">Wasserdistanz</SelectItem>
-                        <SelectItem value="wassertyp">Wassertyp</SelectItem>
+                        <SelectItem value="stadt">City</SelectItem>
+                        <SelectItem value="land">Country</SelectItem>
+                        <SelectItem value="wasserdistanz">Water Distance</SelectItem>
+                        <SelectItem value="wassertyp">Water Type</SelectItem>
                         <SelectItem value="lat">Latitude</SelectItem>
                         <SelectItem value="lon">Longitude</SelectItem>
-                        <SelectItem value="vorname">AP1_Vorname</SelectItem>
-                        <SelectItem value="nachname">AP1_Nachname</SelectItem>
-                        <SelectItem value="email">AP1_Email</SelectItem>
-                        <SelectItem value="telefon">AP1_Telefon</SelectItem>
-                        <SelectItem value="position">AP1_Position</SelectItem>
+                        <SelectItem value="vorname">First Name (Contact)</SelectItem>
+                        <SelectItem value="nachname">Last Name (Contact)</SelectItem>
+                        <SelectItem value="email">Email (Contact)</SelectItem>
+                        <SelectItem value="telefon">Phone (Contact)</SelectItem>
+                        <SelectItem value="position">Position (Contact)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -241,7 +273,7 @@ export default function ImportPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card>
             <CardHeader>
               <CardTitle>Preview (First 5 Rows)</CardTitle>
             </CardHeader>
@@ -259,7 +291,7 @@ export default function ImportPage() {
                     {parsedData.slice(0, 5).map((row, index) => (
                       <TableRow key={index}>
                         {headers.map((header) => (
-                          <TableCell key={header}>{row[header]}</TableCell>
+                          <TableCell key={header}>{row[header] || '-'}</TableCell>
                         ))}
                       </TableRow>
                     ))}
@@ -282,7 +314,7 @@ export default function ImportPage() {
       )}
 
       {results && (
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <Card>
           <CardHeader>
             <CardTitle>Import Results</CardTitle>
           </CardHeader>
