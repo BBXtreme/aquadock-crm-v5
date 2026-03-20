@@ -30,9 +30,18 @@ interface EmailTemplate {
   body: string;
 }
 
+interface EmailLog {
+  id: string;
+  recipient: string;
+  subject: string;
+  body: string;
+  status: string;
+  sent_at: string;
+}
+
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [history, setHistory] = useState<Record<string, unknown>[]>([]);
+  const [history, setHistory] = useState<EmailLog[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,7 +72,7 @@ export default function MassEmailPage() {
         console.error("Error fetching history:", historyError);
         toast.error("Failed to fetch send history");
       } else {
-        setHistory(historyData || []);
+        setHistory(historyData as EmailLog[] || []);
       }
     };
     fetchData();
