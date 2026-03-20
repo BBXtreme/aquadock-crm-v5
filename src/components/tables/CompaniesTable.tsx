@@ -42,20 +42,20 @@ interface CompaniesTableProps {
 const columnHelper = createColumnHelper<Company>();
 
 const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname" as const, {
+  columnHelper.accessor<string>((row) => row.firmenname, {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("kundentyp" as const, {
+  columnHelper.accessor<string>((row) => row.kundentyp, {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue() as string}
+        {info.getValue()}
       </Badge>
     ),
   }),
-  columnHelper.accessor("status" as const, {
+  columnHelper.accessor<string>((row) => row.status, {
     header: "Status",
     cell: (info) => (
       <Badge
@@ -67,28 +67,26 @@ const columns: ColumnDef<Company>[] = [
             "bg-zinc-500 text-white",
         )}
       >
-        {info.getValue() as string}
+        {info.getValue()}
       </Badge>
     ),
   }),
-  columnHelper.accessor("value" as const, {
+  columnHelper.accessor<number>((row) => row.value, {
     header: "Value",
     cell: (info) => `€${info.getValue()?.toLocaleString() || 0}`,
   }),
-  columnHelper.accessor("stadt" as const, {
+  columnHelper.accessor<string>((row) => row.stadt, {
     header: "Stadt",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("land" as const, {
+  columnHelper.accessor<string>((row) => row.land, {
     header: "Land",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("created_at" as const, {
+  columnHelper.accessor<string>((row) => row.created_at, {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date((info.getValue() as string) || ""), {
-        addSuffix: true,
-      }),
+      formatDistanceToNow(new Date(info.getValue() || ""), { addSuffix: true }),
   }),
   columnHelper.display({
     id: "actions",
