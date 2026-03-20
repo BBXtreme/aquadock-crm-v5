@@ -280,23 +280,32 @@ export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
 export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"] & {
-  company?: Pick<Company, 'id' | 'firmenname'> | null;
+  company?: Pick<Company, "id" | "firmenname"> | null;
 };
 export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
 export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"] & {
-  company?: Pick<Company, 'id' | 'firmenname'> | null;
+  company?: Pick<Company, "id" | "firmenname"> | null;
 };
-export type ReminderInsert = Database["public"]["Tables"]["reminders"]["Insert"];
-export type ReminderUpdate = Database["public"]["Tables"]["reminders"]["Update"];
+export type ReminderInsert =
+  Database["public"]["Tables"]["reminders"]["Insert"];
+export type ReminderUpdate =
+  Database["public"]["Tables"]["reminders"]["Update"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
-export type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
-export type EmailLogUpdate = Database["public"]["Tables"]["email_log"]["Update"];
-export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
-export type EmailTemplateInsert = Database["public"]["Tables"]["email_templates"]["Insert"];
-export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"]["Update"];
+export type EmailLogInsert =
+  Database["public"]["Tables"]["email_log"]["Insert"];
+export type EmailLogUpdate =
+  Database["public"]["Tables"]["email_log"]["Update"];
+export type EmailTemplate =
+  Database["public"]["Tables"]["email_templates"]["Row"];
+export type EmailTemplateInsert =
+  Database["public"]["Tables"]["email_templates"]["Insert"];
+export type EmailTemplateUpdate =
+  Database["public"]["Tables"]["email_templates"]["Update"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
-  company?: Pick<Company, 'id' | 'firmenname'> | null;
+  company?: Pick<Company, "id" | "firmenname"> | null;
 };
-export type TimelineEntryInsert = Database["public"]["Tables"]["timeline"]["Insert"];
-export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Update"];
+export type TimelineEntryInsert =
+  Database["public"]["Tables"]["timeline"]["Insert"];
+export type TimelineEntryUpdate =
+  Database["public"]["Tables"]["timeline"]["Update"];
