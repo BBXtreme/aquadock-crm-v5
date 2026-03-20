@@ -50,7 +50,7 @@ export default function MassEmailPage() {
         console.error("Error fetching templates:", templatesError);
         toast.error("Failed to fetch email templates");
       } else {
-        setTemplates(templatesData as EmailTemplate[] || []);
+        setTemplates((templatesData as EmailTemplate[]) || []);
       }
 
       // Fetch send history
