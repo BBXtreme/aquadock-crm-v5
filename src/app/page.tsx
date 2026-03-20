@@ -19,6 +19,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -31,6 +32,9 @@ export default function Home() {
 
         const timeline = await getTimeline(supabase);
         setTimeline(timeline.slice(0, 10));
+
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -237,6 +241,7 @@ export default function Home() {
                     rowCount: companies.length,
                     sampleData: companies.slice(0, 2),
                     error: error ?? null,
+                    user: user ? { id: user.id, email: user.email } : null,
                   },
                   null,
                   2,
