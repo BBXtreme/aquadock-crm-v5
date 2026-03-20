@@ -27,8 +27,21 @@ import { Users, Star, Building, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
+interface Contact {
+  id: string;
+  vorname: string;
+  nachname: string;
+  company_id: string;
+  position: string;
+  email: string;
+  telefon: string;
+  primary: boolean;
+  companies?: { firmenname: string };
+  created_at: string;
+}
+
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Record<string, unknown>[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [companies, setCompanies] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,7 +57,7 @@ export default function ContactsPage() {
 
       if (error) throw error;
 
-      setContacts(data || []);
+      setContacts(data as Contact[] || []);
       setCompanies(
         Array.from(
           new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean)),
