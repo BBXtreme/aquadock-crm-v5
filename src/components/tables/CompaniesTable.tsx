@@ -42,10 +42,10 @@ interface CompaniesTableProps {
 const columnHelper = createColumnHelper<Company>();
 
 const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname", {
+  columnHelper.accessor<string>("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue() as string,
+    cell: (info) => info.getValue(),
   }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
