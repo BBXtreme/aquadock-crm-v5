@@ -1,12 +1,64 @@
+// eslint.config.mjs
 import js from "@eslint/js";
-import eslintReact from "@eslint-react/eslint-plugin";
+import globals from "globals";
+import tseslint from "typescript-eslint";
+import reactHooks from "eslint-plugin-react-hooks";
+import jsxA11y from "eslint-plugin-jsx-a11y";
+import prettier from "eslint-plugin-prettier";
+import prettierConfig from "eslint-config-prettier";
 
-export default [
-  js.configs.recommended,
-  eslintReact.configs.recommended,
+export default tseslint.config(
+  // Global ignores – MUST be first item in array
   {
-    rules: {
-      // your rules
-    },
+    name: "global/ignores",
+    ignores: [
+      ".next/**",
+      "dist/**",
+      "build/**",
+      "node_modules/**",
+      "public/**",
+      "*.min.js",
+      "**/*.generated.*", // optional – catch any generated files
+    ],
   },
-];
+
+  // Base JS rules
+  js.configs.recommended,
+
+  // TypeScript rules
+  ...tseslint.configs.recommended,
+
+  // Prettier + disable formatting conflicts
+  prettierConfig,
+
+  // Main source code config
+  {
+    name: "app/source",
+    files: ["src/**"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    plugins: {
+      "react-hooks": reactHooks,
+      "jsx-a11y": jsxA11y,
+      prettier,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      ...jsxA11y.configs.recommended.rules,
+      "prettier/prettier": "error",
+      "no-unused-vars": "warn",
+      "no-undef": "warn",
+      // Suppress noisy React 19 warnings temporarily (uncomment if needed)
+      // "@eslint-react/no-forward-ref": "warn",
+      // "@eslint-react/component-hook-factories": "warn",
+      // "@eslint-react/use-state": "warn",
+    },
+    settings: {
+      react: { version: "detect" },
+    },
+  }
+);
