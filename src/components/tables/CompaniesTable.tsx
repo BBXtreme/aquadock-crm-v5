@@ -42,12 +42,12 @@ interface CompaniesTableProps {
 const columnHelper = createColumnHelper<Company>();
 
 const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname", {
+  columnHelper.accessor("firmenname" as const, {
     id: "firmenname",
     header: "Firmenname",
     cell: (info) => info.getValue() as string,
   }),
-  columnHelper.accessor("kundentyp", {
+  columnHelper.accessor("kundentyp" as const, {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
@@ -55,7 +55,7 @@ const columns: ColumnDef<Company>[] = [
       </Badge>
     ),
   }),
-  columnHelper.accessor("status", {
+  columnHelper.accessor("status" as const, {
     header: "Status",
     cell: (info) => (
       <Badge
@@ -71,19 +71,19 @@ const columns: ColumnDef<Company>[] = [
       </Badge>
     ),
   }),
-  columnHelper.accessor("value", {
+  columnHelper.accessor("value" as const, {
     header: "Value",
     cell: (info) => `€${info.getValue()?.toLocaleString() || 0}`,
   }),
-  columnHelper.accessor("stadt", {
+  columnHelper.accessor("stadt" as const, {
     header: "Stadt",
     cell: (info) => info.getValue() as string,
   }),
-  columnHelper.accessor("land", {
+  columnHelper.accessor("land" as const, {
     header: "Land",
     cell: (info) => info.getValue() as string,
   }),
-  columnHelper.accessor("created_at", {
+  columnHelper.accessor("created_at" as const, {
     header: "Created",
     cell: (info) =>
       formatDistanceToNow(new Date((info.getValue() as string) || ""), {
