@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import KPICards from '@/components/dashboard/KPICards'
@@ -20,18 +21,14 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Limited fetch for preview
-        const { data: compData, error: compError, count } = await supabase
+        // Fetch all companies for consistent preview and calculations
+        const { data: compData, error: compError } = await supabase
           .from('companies')
-          .select('*', { count: 'exact' })
-          .limit(5)
+          .select('*')
 
         if (compError) throw compError
         setCompanies(compData || [])
 
-        // Full fetch for calculations
-        const { data: allComp } = await supabase.from('companies').select('*')
-        
         const { data: timeData } = await supabase
           .from('timeline')
           .select('*, companies(firmenname)')
