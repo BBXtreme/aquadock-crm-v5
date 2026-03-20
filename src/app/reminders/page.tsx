@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,48 +12,54 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Bell, AlertTriangle, Calendar, Star, RefreshCw } from 'lucide-react'
-import { isAfter, isThisWeek, formatDistanceToNow } from 'date-fns'
-import Link from 'next/link'
-import AppLayout from '@/components/layout/AppLayout'
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Bell, AlertTriangle, Calendar, Star, RefreshCw } from "lucide-react";
+import { isAfter, isThisWeek, formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function RemindersPage() {
-  const [allReminders, setAllReminders] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [allReminders, setAllReminders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchData = async () => {
-    setLoading(true)
-    setError('')
+    setLoading(true);
+    setError("");
     try {
       const { data, error } = await supabase
-        .from('reminders')
-        .select('*, companies(firmenname)')
-        .order('due_date', { ascending: true })
+        .from("reminders")
+        .select("*, companies(firmenname)")
+        .order("due_date", { ascending: true });
 
-      if (error) throw error
+      if (error) throw error;
 
-      setAllReminders(data || [])
+      setAllReminders(data || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to fetch reminders')
+      setError(err.message || "Failed to fetch reminders");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  const reminders = allReminders.filter(r => r.status === 'open')
+  const reminders = allReminders.filter((r) => r.status === "open");
 
-  const openReminders = allReminders.filter(r => r.status === 'open').length
-  const overdue = allReminders.filter(r => r.status === 'open' && isAfter(new Date(), new Date(r.due_date))).length
-  const thisWeek = allReminders.filter(r => r.status === 'open' && isThisWeek(new Date(r.due_date))).length
-  const highPriority = allReminders.filter(r => r.status === 'open' && r.priority === 'high').length
+  const openReminders = allReminders.filter((r) => r.status === "open").length;
+  const overdue = allReminders.filter(
+    (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
+  ).length;
+  const thisWeek = allReminders.filter(
+    (r) => r.status === "open" && isThisWeek(new Date(r.due_date)),
+  ).length;
+  const highPriority = allReminders.filter(
+    (r) => r.status === "open" && r.priority === "high",
+  ).length;
 
   if (error) {
     return (
@@ -61,15 +67,23 @@ export default function RemindersPage() {
         <div className="container mx-auto p-6 lg:p-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Home {'>'} Reminders</p>
-              <h1 className="text-3xl font-semibold tracking-tight">Reminders</h1>
+              <p className="text-sm text-muted-foreground">
+                Home {">"} Reminders
+              </p>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                Reminders
+              </h1>
             </div>
             <Button>New Reminder</Button>
           </div>
           <Alert variant="destructive" className="border-red-500">
             <AlertDescription className="flex items-center justify-between">
               <span>{error}</span>
-              <Button onClick={fetchData} variant="outline" className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white">
+              <Button
+                onClick={fetchData}
+                variant="outline"
+                className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white"
+              >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Retry
               </Button>
@@ -77,7 +91,7 @@ export default function RemindersPage() {
           </Alert>
         </div>
       </AppLayout>
-    )
+    );
   }
 
   return (
@@ -85,7 +99,9 @@ export default function RemindersPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {'>'} Reminders</p>
+            <p className="text-sm text-muted-foreground">
+              Home {">"} Reminders
+            </p>
             <h1 className="text-3xl font-semibold tracking-tight">Reminders</h1>
           </div>
           <Button>New Reminder</Button>
@@ -94,7 +110,9 @@ export default function RemindersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Open Reminders</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Open Reminders
+              </CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -107,7 +125,9 @@ export default function RemindersPage() {
           </Card>
           <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Overdue Today</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Overdue Today
+              </CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -133,7 +153,9 @@ export default function RemindersPage() {
           </Card>
           <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                High Priority
+              </CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -179,31 +201,53 @@ export default function RemindersPage() {
                   </TableHeader>
                   <TableBody>
                     {reminders.map((reminder) => {
-                      const isOverdue = isAfter(new Date(), new Date(reminder.due_date))
+                      const isOverdue = isAfter(
+                        new Date(),
+                        new Date(reminder.due_date),
+                      );
                       return (
                         <TableRow key={reminder.id}>
                           <TableCell>{reminder.title}</TableCell>
                           <TableCell>
-                            <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+                            <Link
+                              href={`/companies/${reminder.company_id}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {reminder.companies?.firmenname}
                             </Link>
                           </TableCell>
-                          <TableCell className={isOverdue ? 'text-rose-500' : ''}>
-                            {formatDistanceToNow(new Date(reminder.due_date), { addSuffix: true })}
+                          <TableCell
+                            className={isOverdue ? "text-rose-500" : ""}
+                          >
+                            {formatDistanceToNow(new Date(reminder.due_date), {
+                              addSuffix: true,
+                            })}
                           </TableCell>
                           <TableCell>
-                            <Badge className={reminder.priority === 'high' ? 'bg-rose-600 text-white' : 'bg-amber-600 text-white'}>
+                            <Badge
+                              className={
+                                reminder.priority === "high"
+                                  ? "bg-rose-600 text-white"
+                                  : "bg-amber-600 text-white"
+                              }
+                            >
                               {reminder.priority}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge className={reminder.status === 'open' ? 'bg-emerald-600 text-white' : 'bg-zinc-500 text-white'}>
+                            <Badge
+                              className={
+                                reminder.status === "open"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-zinc-500 text-white"
+                              }
+                            >
                               {reminder.status}
                             </Badge>
                           </TableCell>
                           <TableCell>{reminder.assigned_to}</TableCell>
                         </TableRow>
-                      )
+                      );
                     })}
                     {!reminders.length && (
                       <TableRow>
@@ -220,5 +264,5 @@ export default function RemindersPage() {
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }

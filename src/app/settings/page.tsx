@@ -1,31 +1,31 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Settings, Bell, Palette, Shield } from 'lucide-react'
-import AppLayout from '@/components/layout/AppLayout'
+} from "@/components/ui/select";
+import { Settings, Bell, Palette, Shield } from "lucide-react";
+import AppLayout from "@/components/layout/AppLayout";
 
 export default function SettingsPage() {
-  const [notifications, setNotifications] = useState(true)
-  const [emailAlerts, setEmailAlerts] = useState(false)
-  const [theme, setTheme] = useState('system')
-  const [language, setLanguage] = useState('en')
+  const [notifications, setNotifications] = useState(true);
+  const [emailAlerts, setEmailAlerts] = useState(false);
+  const [theme, setTheme] = useState("system");
+  const [language, setLanguage] = useState("en");
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div>
-          <p className="text-sm text-muted-foreground">Home {'>'} Settings</p>
+          <p className="text-sm text-muted-foreground">Home {">"} Settings</p>
           <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
         </div>
 
@@ -54,7 +54,9 @@ export default function SettingsPage() {
                   onCheckedChange={setEmailAlerts}
                 />
               </div>
-              <p className="text-sm text-muted-foreground">Configure how you receive notifications</p>
+              <p className="text-sm text-muted-foreground">
+                Configure how you receive notifications
+              </p>
             </CardContent>
           </Card>
 
@@ -92,7 +94,9 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-sm text-muted-foreground">Customize your app appearance</p>
+              <p className="text-sm text-muted-foreground">
+                Customize your app appearance
+              </p>
             </CardContent>
           </Card>
 
@@ -107,14 +111,22 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label>Two-Factor Authentication</Label>
                 <p className="text-sm text-muted-foreground">Not configured</p>
-                <Button variant="outline" size="sm">Enable 2FA</Button>
+                <Button variant="outline" size="sm">
+                  Enable 2FA
+                </Button>
               </div>
               <div className="space-y-2">
                 <Label>Data Export</Label>
-                <p className="text-sm text-muted-foreground">Download your data</p>
-                <Button variant="outline" size="sm">Export Data</Button>
+                <p className="text-sm text-muted-foreground">
+                  Download your data
+                </p>
+                <Button variant="outline" size="sm">
+                  Export Data
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">Manage your privacy and security settings</p>
+              <p className="text-sm text-muted-foreground">
+                Manage your privacy and security settings
+              </p>
             </CardContent>
           </Card>
 
@@ -128,15 +140,25 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>API Access</Label>
-                <p className="text-sm text-muted-foreground">Manage API keys and integrations</p>
-                <Button variant="outline" size="sm">Manage API</Button>
+                <p className="text-sm text-muted-foreground">
+                  Manage API keys and integrations
+                </p>
+                <Button variant="outline" size="sm">
+                  Manage API
+                </Button>
               </div>
               <div className="space-y-2">
                 <Label>Data Retention</Label>
-                <p className="text-sm text-muted-foreground">Configure data retention policies</p>
-                <Button variant="outline" size="sm">Configure</Button>
+                <p className="text-sm text-muted-foreground">
+                  Configure data retention policies
+                </p>
+                <Button variant="outline" size="sm">
+                  Configure
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">Advanced settings for power users</p>
+              <p className="text-sm text-muted-foreground">
+                Advanced settings for power users
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -148,13 +170,17 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Delete Account</Label>
-              <p className="text-sm text-muted-foreground">Permanently delete your account and all data</p>
-              <Button variant="destructive" size="sm">Delete Account</Button>
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all data
+              </p>
+              <Button variant="destructive" size="sm">
+                Delete Account
+              </Button>
             </div>
             <p className="text-sm text-red-600">This action cannot be undone</p>
           </CardContent>
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }
