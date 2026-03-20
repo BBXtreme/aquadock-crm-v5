@@ -57,7 +57,6 @@ export interface Database {
           user_id?: string | null;
         };
         Update: {
-          id?: string;
           firmenname?: string;
           rechtsform?: string | null;
           kundentyp?: string;
