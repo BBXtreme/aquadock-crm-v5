@@ -57,7 +57,7 @@ export default function ContactsPage() {
 
       if (error) throw error;
 
-      setContacts(data as Contact[] || []);
+      setContacts((data as Contact[]) || []);
       setCompanies(
         Array.from(
           new Set(data?.map((c) => c.companies?.firmenname).filter(Boolean)),

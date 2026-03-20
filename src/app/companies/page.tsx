@@ -55,7 +55,10 @@ export default function CompaniesPage() {
   const totalCompanies = companies.length;
   const leads = companies.filter((c) => c.status === "lead").length;
   const won = companies.filter((c) => c.status === "won").length;
-  const valueSum = companies.reduce((sum: number, c: Company) => sum + (c.value || 0), 0);
+  const valueSum = companies.reduce(
+    (sum: number, c: Company) => sum + (c.value || 0),
+    0,
+  );
 
   if (error) {
     return (

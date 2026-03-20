@@ -11,37 +11,50 @@ export interface Company {
   lat?: number;
   lon?: number;
   created_at: string;
+  updated_at: string;
+  user_id?: string;
 }
 
 export interface Contact {
   id: string;
+  company_id?: string;
+  anrede?: string;
   vorname: string;
   nachname: string;
-  company_id: string;
-  position: string;
-  email: string;
-  telefon: string;
-  primary: boolean;
+  position?: string;
+  email?: string;
+  telefon?: string;
+  mobil?: string;
+  durchwahl?: string;
+  is_primary: boolean;
+  notes?: string;
   created_at: string;
+  updated_at: string;
+  user_id?: string;
 }
 
 export interface Reminder {
   id: string;
-  title: string;
   company_id: string;
+  title: string;
+  description?: string;
   due_date: string;
   priority: string;
   status: string;
   assigned_to: string;
   created_at: string;
+  completed_at?: string;
+  user_id?: string;
 }
 
 export interface EmailLog {
   id: string;
-  recipient: string;
-  subject: string;
-  body: string;
+  template_name?: string;
+  recipient_email: string;
+  recipient_name?: string;
+  subject?: string;
   status: string;
+  error_msg?: string;
   sent_at: string;
 }
 
@@ -50,13 +63,17 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   body: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TimelineEntry {
   id: string;
-  company_id: string | null;
+  company_id?: string;
   activity_type: string;
   title: string;
-  content: string;
+  content?: string;
+  user_name: string;
   created_at: string;
+  user_id?: string;
 }
