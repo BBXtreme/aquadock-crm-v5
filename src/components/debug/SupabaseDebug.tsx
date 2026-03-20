@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/collapsible";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown } from "lucide-react";
+import { Company } from "@/lib/supabase/types";
 
 interface SupabaseDebugProps {
   status: string;
   rowCount: number;
-  sampleData: any[];
+  sampleData: Company[];
   error: string | null;
   user: { id: string; email: string } | null;
   statusSummary: { lead: number; won: number };
