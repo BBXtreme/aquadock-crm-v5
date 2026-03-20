@@ -51,7 +51,7 @@ const columns: ColumnDef<Company, unknown>[] = [
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {String(info.getValue())}
+        {info.getValue()}
       </Badge>
     ),
   }),
@@ -76,7 +76,7 @@ const columns: ColumnDef<Company, unknown>[] = [
   }),
   columnHelper.accessor("value", {
     header: "Value",
-    cell: (info) => `€${info.getValue()?.toLocaleString() || 0}`,
+    cell: (info) => `€${(info.getValue() ?? 0).toLocaleString('de-DE')}`,
   }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
@@ -89,7 +89,7 @@ const columns: ColumnDef<Company, unknown>[] = [
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date((info.getValue() as string) || ""), {
+      formatDistanceToNow(new Date(info.getValue() ?? ""), {
         addSuffix: true,
       }),
   }),
@@ -117,7 +117,7 @@ const columns: ColumnDef<Company, unknown>[] = [
 ];
 
 export default function CompaniesTable({ companies }: CompaniesTableProps) {
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
   // eslint-disable-next-line react-hooks/incompatible-library

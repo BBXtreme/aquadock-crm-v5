@@ -31,10 +31,9 @@ export interface Database {
           user_id: string | null;
         };
         Insert: {
-          id?: string;
           firmenname: string;
           rechtsform?: string | null;
-          kundentyp: string;
+          kundentyp?: string;
           firmentyp?: string | null;
           strasse?: string | null;
           plz?: string | null;
@@ -104,7 +103,6 @@ export interface Database {
           user_id: string | null;
         };
         Insert: {
-          id?: string;
           company_id?: string | null;
           anrede?: string | null;
           vorname: string;
@@ -153,7 +151,6 @@ export interface Database {
           user_id: string | null;
         };
         Insert: {
-          id?: string;
           company_id: string;
           title: string;
           description?: string | null;
@@ -191,7 +188,6 @@ export interface Database {
           user_id: string | null;
         };
         Insert: {
-          id?: string;
           company_id?: string | null;
           activity_type: string;
           title: string;
@@ -223,7 +219,6 @@ export interface Database {
           updated_at: string | null;
         };
         Insert: {
-          id?: string;
           recipient_email: string;
           subject: string;
           body: string;
@@ -253,7 +248,6 @@ export interface Database {
           updated_at: string | null;
         };
         Insert: {
-          id?: string;
           name: string;
           subject: string;
           body: string;
@@ -287,32 +281,23 @@ export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
 export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"] & {
-  companies?: { firmenname: string } | null;
+  company?: { firmenname: string } | null;
 };
 export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
 export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"] & {
-  companies?: { firmenname: string } | null;
+  company?: { firmenname: string } | null;
 };
-export type ReminderInsert =
-  Database["public"]["Tables"]["reminders"]["Insert"];
-export type ReminderUpdate =
-  Database["public"]["Tables"]["reminders"]["Update"];
+export type ReminderInsert = Database["public"]["Tables"]["reminders"]["Insert"];
+export type ReminderUpdate = Database["public"]["Tables"]["reminders"]["Update"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
-export type EmailLogInsert =
-  Database["public"]["Tables"]["email_log"]["Insert"];
-export type EmailLogUpdate =
-  Database["public"]["Tables"]["email_log"]["Update"];
-export type EmailTemplate =
-  Database["public"]["Tables"]["email_templates"]["Row"];
-export type EmailTemplateInsert =
-  Database["public"]["Tables"]["email_templates"]["Insert"];
-export type EmailTemplateUpdate =
-  Database["public"]["Tables"]["email_templates"]["Update"];
+export type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
+export type EmailLogUpdate = Database["public"]["Tables"]["email_log"]["Update"];
+export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
+export type EmailTemplateInsert = Database["public"]["Tables"]["email_templates"]["Insert"];
+export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"]["Update"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
-  companies?: { firmenname: string } | null;
+  company?: { firmenname: string } | null;
 };
-export type TimelineEntryInsert =
-  Database["public"]["Tables"]["timeline"]["Insert"];
-export type TimelineEntryUpdate =
-  Database["public"]["Tables"]["timeline"]["Update"];
+export type TimelineEntryInsert = Database["public"]["Tables"]["timeline"]["Insert"];
+export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Update"];
