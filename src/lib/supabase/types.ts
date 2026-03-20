@@ -277,7 +277,7 @@ export interface Database {
       [_ in never]: never;
     };
     Enums: {
-      [_ in never]: never;
+      [key in never]: never;
     };
   };
 }
