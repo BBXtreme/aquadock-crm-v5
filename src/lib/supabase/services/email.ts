@@ -7,11 +7,12 @@ import type {
   EmailTemplateInsert,
   EmailTemplateUpdate,
 } from "../database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Get all email logs
  */
-export async function getEmailLogs(client: any): Promise<EmailLog[]> {
+export async function getEmailLogs(client: SupabaseClient): Promise<EmailLog[]> {
   const { data, error } = await client.from("email_log").select("*");
   if (error) throw handleSupabaseError(error, "getEmailLogs");
   return (data ?? []) as EmailLog[];
@@ -22,7 +23,7 @@ export async function getEmailLogs(client: any): Promise<EmailLog[]> {
  */
 export async function getEmailLogById(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailLog | null> {
   const { data, error } = await client
     .from("email_log")
@@ -38,7 +39,7 @@ export async function getEmailLogById(
  */
 export async function createEmailLog(
   emailLog: EmailLogInsert,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailLog> {
   const { data, error } = await client
     .from("email_log")
@@ -55,7 +56,7 @@ export async function createEmailLog(
 export async function updateEmailLog(
   id: string,
   updates: EmailLogUpdate,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailLog> {
   const { data, error } = await client
     .from("email_log")
@@ -70,7 +71,7 @@ export async function updateEmailLog(
 /**
  * Delete an email log
  */
-export async function deleteEmailLog(id: string, client: any): Promise<void> {
+export async function deleteEmailLog(id: string, client: SupabaseClient): Promise<void> {
   const { error } = await client.from("email_log").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteEmailLog");
 }
@@ -78,7 +79,7 @@ export async function deleteEmailLog(id: string, client: any): Promise<void> {
 /**
  * Get all email templates
  */
-export async function getEmailTemplates(client: any): Promise<EmailTemplate[]> {
+export async function getEmailTemplates(client: SupabaseClient): Promise<EmailTemplate[]> {
   const { data, error } = await client.from("email_templates").select("*");
   if (error) throw handleSupabaseError(error, "getEmailTemplates");
   return (data ?? []) as EmailTemplate[];
@@ -89,7 +90,7 @@ export async function getEmailTemplates(client: any): Promise<EmailTemplate[]> {
  */
 export async function getEmailTemplateById(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailTemplate | null> {
   const { data, error } = await client
     .from("email_templates")
@@ -105,7 +106,7 @@ export async function getEmailTemplateById(
  */
 export async function createEmailTemplate(
   template: EmailTemplateInsert,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailTemplate> {
   const { data, error } = await client
     .from("email_templates")
@@ -122,7 +123,7 @@ export async function createEmailTemplate(
 export async function updateEmailTemplate(
   id: string,
   updates: EmailTemplateUpdate,
-  client: any,
+  client: SupabaseClient,
 ): Promise<EmailTemplate> {
   const { data, error } = await client
     .from("email_templates")
@@ -139,7 +140,7 @@ export async function updateEmailTemplate(
  */
 export async function deleteEmailTemplate(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<void> {
   const { error } = await client.from("email_templates").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteEmailTemplate");
