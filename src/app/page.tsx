@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import KPICards from "@/components/dashboard/KPICards";
 import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function Home() {
@@ -24,6 +24,7 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
+        const supabase = createClient();
         // Fetch all companies for consistent preview and calculations
         const { data: compData, error: compError } = await supabase
           .from("companies")

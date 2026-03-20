@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { createServerSupabaseClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ export default async function CompanyDetailPage({
 }: {
   params: { id: string };
 }) {
+  const supabase = createServerSupabaseClient();
   const { data: company } = await supabase
     .from("companies")
     .select("*")

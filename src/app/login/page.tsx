@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkUser = async () => {
+      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -24,6 +25,7 @@ export default function LoginPage() {
     };
     checkUser();
 
+    const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -61,7 +63,7 @@ export default function LoginPage() {
             </Button>
           </div>
           <Auth
-            supabaseClient={supabase}
+            supabaseClient={createClient()}
             view={view}
             appearance={{
               theme: ThemeSupa,

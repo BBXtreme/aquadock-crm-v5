@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export default function TimelinePage() {
       setLoading(true);
       setError("");
       try {
+        const supabase = createClient();
         const { data, error } = await supabase
           .from("timeline")
           .select("*, companies(firmenname)")

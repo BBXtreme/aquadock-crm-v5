@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ export default function MassEmailPage() {
   useEffect(() => {
     const fetchData = async () => {
       // Fetch email templates
+      const supabase = createClient();
       const { data: templatesData, error: templatesError } = await supabase
         .from("email_templates")
         .select("*");
@@ -82,6 +83,7 @@ export default function MassEmailPage() {
 
     setLoading(true);
     try {
+      const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
       if (!template) return;
 
@@ -118,6 +120,7 @@ export default function MassEmailPage() {
 
     setLoading(true);
     try {
+      const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
       if (!template) return;
 

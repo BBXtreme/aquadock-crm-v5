@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const getUser = async () => {
       try {
+        const supabase = createClient();
         const {
           data: { user },
           error,
@@ -51,6 +52,7 @@ export default function ProfilePage() {
     setMessage("");
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.updateUser({
         data: { display_name: displayName },
       });
@@ -68,6 +70,7 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
+    const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
   };
