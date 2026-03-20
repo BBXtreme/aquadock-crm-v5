@@ -35,7 +35,9 @@ export default function Home() {
         const timeline = await getTimeline(supabase);
         setTimeline(timeline.slice(0, 10));
 
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -187,7 +189,7 @@ export default function Home() {
                       key={entry.id}
                       className="flex items-start space-x-4 p-4 bg-muted/50 rounded-lg"
                     >
-                      <div className="w-3 h-3 bg-primary rounded-full mt-2 flex-shrink-0" />
+                      <div className="w-3 h-3 bg-primary rounded-full mt-2 shrink-0" />
                       <div>
                         <p className="font-medium">{entry.title}</p>
                         <p className="text-sm text-muted-foreground">
@@ -222,10 +224,7 @@ export default function Home() {
         />
 
         <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => setDebugMode(!debugMode)}
-          >
+          <Button variant="outline" onClick={() => setDebugMode(!debugMode)}>
             {debugMode ? "Hide Debug" : "Show Debug"}
           </Button>
         </div>
@@ -238,8 +237,8 @@ export default function Home() {
             error={error}
             user={user ? { id: user.id, email: user.email } : null}
             statusSummary={{
-              lead: companies.filter(c => c.status === 'lead').length,
-              won: companies.filter(c => c.status === 'won').length,
+              lead: companies.filter((c) => c.status === "lead").length,
+              won: companies.filter((c) => c.status === "won").length,
             }}
           />
         )}
