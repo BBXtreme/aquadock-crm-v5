@@ -1,7 +1,9 @@
+// Fixed: corrected radix-ui imports for Vercel build
 "use client";
 
 import * as React from "react";
-import { Dialog as DialogPrimitive } from "radix-ui";
+// Fixed Radix import
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
