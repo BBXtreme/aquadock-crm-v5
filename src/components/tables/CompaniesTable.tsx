@@ -86,7 +86,9 @@ const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date(info.getValue() as string || ""), { addSuffix: true }),
+      formatDistanceToNow(new Date((info.getValue() as string) || ""), {
+        addSuffix: true,
+      }),
   }),
   columnHelper.display({
     id: "actions",
