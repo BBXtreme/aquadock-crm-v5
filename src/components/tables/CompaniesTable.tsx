@@ -41,24 +41,24 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company, unknown>[] = [
+const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() ?? "—",
   }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue()}
+        {info.getValue() ?? "—"}
       </Badge>
     ),
   }),
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
-      const value = info.getValue() as string;
+      const value = info.getValue() ?? "—";
       return (
         <Badge
           className={cn(
@@ -76,22 +76,24 @@ const columns: ColumnDef<Company, unknown>[] = [
   }),
   columnHelper.accessor("value", {
     header: "Value",
-    cell: (info) => `€${(info.getValue() ?? 0).toLocaleString('de-DE')}`,
+    cell: (info) => `€${Number(info.getValue() ?? 0).toLocaleString('de-DE')}`,
   }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() ?? "—",
   }),
   columnHelper.accessor("land", {
     header: "Land",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() ?? "—",
   }),
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date(info.getValue() ?? ""), {
-        addSuffix: true,
-      }),
+      info.getValue()
+        ? formatDistanceToNow(new Date(info.getValue() as string), {
+            addSuffix: true,
+          })
+        : "—",
   }),
   columnHelper.display({
     id: "actions",
