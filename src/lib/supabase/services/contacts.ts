@@ -13,7 +13,7 @@ export async function getContacts(
   const { data, error } = await client
     .from("contacts")
     .select("*, companies(firmenname)");
-  if (error) throw new Error(`Failed to fetch contacts: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getContacts");
   return data ?? [];
 }
 
@@ -29,7 +29,7 @@ export async function getContactById(
     .select("*")
     .eq("id", id)
     .single();
-  if (error) throw new Error(`Failed to fetch contact: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "getContactById");
   return data ?? null;
 }
 
@@ -45,7 +45,7 @@ export async function createContact(
     .insert(contact)
     .select()
     .single();
-  if (error) throw new Error(`Failed to create contact: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "createContact");
   return data;
 }
 
@@ -63,7 +63,7 @@ export async function updateContact(
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error(`Failed to update contact: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "updateContact");
   return data;
 }
 
@@ -75,5 +75,5 @@ export async function deleteContact(
   client = createServerSupabaseClient(),
 ): Promise<void> {
   const { error } = await client.from("contacts").delete().eq("id", id);
-  if (error) throw new Error(`Failed to delete contact: ${error.message}`);
+  if (error) throw handleSupabaseError(error, "deleteContact");
 }
