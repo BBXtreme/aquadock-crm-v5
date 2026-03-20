@@ -4,11 +4,12 @@ import type {
   TimelineEntryInsert,
   TimelineEntryUpdate,
 } from "../database.types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Get all timeline entries with joined company data
  */
-export async function getTimeline(client: any): Promise<TimelineEntry[]> {
+export async function getTimeline(client: SupabaseClient): Promise<TimelineEntry[]> {
   const { data, error } = await client
     .from("timeline")
     .select("*, companies(firmenname)");
@@ -21,7 +22,7 @@ export async function getTimeline(client: any): Promise<TimelineEntry[]> {
  */
 export async function getTimelineEntryById(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<TimelineEntry | null> {
   const { data, error } = await client
     .from("timeline")
@@ -37,7 +38,7 @@ export async function getTimelineEntryById(
  */
 export async function createTimelineEntry(
   entry: TimelineEntryInsert,
-  client: any,
+  client: SupabaseClient,
 ): Promise<TimelineEntry> {
   const { data, error } = await client
     .from("timeline")
@@ -54,7 +55,7 @@ export async function createTimelineEntry(
 export async function updateTimelineEntry(
   id: string,
   updates: TimelineEntryUpdate,
-  client: any,
+  client: SupabaseClient,
 ): Promise<TimelineEntry> {
   const { data, error } = await client
     .from("timeline")
@@ -71,7 +72,7 @@ export async function updateTimelineEntry(
  */
 export async function deleteTimelineEntry(
   id: string,
-  client: any,
+  client: SupabaseClient,
 ): Promise<void> {
   const { error } = await client.from("timeline").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteTimelineEntry");
