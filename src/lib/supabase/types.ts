@@ -122,7 +122,7 @@ export interface Database {
           company_id?: string | null;
           anrede?: string | null;
           vorname?: string;
-          nachname?: string;
+          nachname: string;
           position?: string | null;
           email?: string | null;
           telefon?: string | null;
@@ -263,9 +263,9 @@ export interface Database {
         };
       };
     };
-    Views: {};
-    Functions: {};
-    Enums: {};
+    Views: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    Functions: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    Enums: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   };
 }
 
