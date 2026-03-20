@@ -1,5 +1,5 @@
 import { handleSupabaseError } from "../utils";
-import type { Company } from "../database.types";
+import type { Company } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/browser";
 
