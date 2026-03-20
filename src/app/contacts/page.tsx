@@ -151,7 +151,7 @@ export default function ContactsPage() {
                         </TableCell>
                         <TableCell>{contact.position || "—"}</TableCell>
                         <TableCell>{contact.email || "—"}</TableCell>
-                        <TableCell>{contact.telson || "—"}</TableCell>
+                        <TableCell>{contact.telefon || "—"}</TableCell>
                         <TableCell>
                           {contact.is_primary && (
                             <Badge variant="secondary">Primary</Badge>
