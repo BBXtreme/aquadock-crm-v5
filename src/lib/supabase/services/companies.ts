@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/browser";
  */
 export async function getCompanies(
   client?: SupabaseClient,
-  options?: { limit?: number; offset?: number; statusFilter?: string }
+  options?: { limit?: number; offset?: number; statusFilter?: string },
 ): Promise<Company[]> {
   const supabase = client || createClient();
 
@@ -23,7 +23,10 @@ export async function getCompanies(
   }
 
   if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
+    query = query.range(
+      options.offset,
+      options.offset + (options.limit || 1000) - 1,
+    );
   }
 
   const { data, error } = await query;
