@@ -41,7 +41,7 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company, unknown>[] = [
+const columns: ColumnDef<Company, any>[] = [
   columnHelper.accessor((row) => row.firmenname, {
     id: "firmenname",
     header: "Firmenname",
