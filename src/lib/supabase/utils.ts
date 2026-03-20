@@ -10,7 +10,7 @@
  * @returns Formatted currency string (e.g., "€1.234,56")
  */
 export function formatCurrency(value: number | null | undefined): string {
-  return `€${Number(value ?? 0).toLocaleString('de-DE')}`;
+  return `€${Number(value ?? 0).toLocaleString("de-DE")}`;
 }
 
 /**
@@ -20,11 +20,11 @@ export function formatCurrency(value: number | null | undefined): string {
  * @returns Relative time string (e.g., "2 days ago") or '—' if invalid
  */
 export function formatDateDistance(date: string | null | undefined): string {
-  if (!date) return '—';
+  if (!date) return "—";
   try {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   } catch {
-    return '—';
+    return "—";
   }
 }
 
@@ -34,7 +34,7 @@ export function formatDateDistance(date: string | null | undefined): string {
  * @returns The original string or '—' if null/undefined
  */
 export function safeString(str: string | null | undefined): string {
-  return str ?? '—';
+  return str ?? "—";
 }
 
 // Import here to avoid circular dependencies
