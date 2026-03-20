@@ -30,7 +30,7 @@ export async function getEmailLogById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getEmailLogById");
-  return data as EmailLog | null ?? null;
+  return (data as EmailLog | null) ?? null;
 }
 
 /**
@@ -97,7 +97,7 @@ export async function getEmailTemplateById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getEmailTemplateById");
-  return data as EmailTemplate | null ?? null;
+  return (data as EmailTemplate | null) ?? null;
 }
 
 /**
