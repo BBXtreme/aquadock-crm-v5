@@ -1,4 +1,5 @@
 import { handleSupabaseError } from "../utils";
+// Use ../types.ts (re-exports + custom Insert/Update types) instead of raw database.types.ts
 import type {
   EmailLog,
   EmailLogInsert,
