@@ -21,10 +21,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import AppLayout from "@/components/layout/AppLayout";
+import { toast } from "sonner";
 
 export default function MassEmailPage() {
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<Record<string, unknown>[]>([]);
+  const [history, setHistory] = useState<Record<string, unknown>[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");

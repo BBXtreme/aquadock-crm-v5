@@ -16,9 +16,8 @@ import { supabase } from "@/lib/supabase";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function Home() {
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [timeline, setTimeline] = useState<any[]>([]);
-  const [reminders, setReminders] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
+  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,9 +38,6 @@ export default function Home() {
           .order("created_at", { ascending: false })
           .limit(10);
         setTimeline(timeData || []);
-
-        const { data: remData } = await supabase.from("reminders").select("*");
-        setReminders(remData || []);
       } catch (err: any) {
         setError(err.message);
       } finally {

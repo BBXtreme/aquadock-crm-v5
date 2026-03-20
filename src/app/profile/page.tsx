@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, LogOut } from "lucide-react";
+import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function ProfilePage() {
@@ -35,7 +36,7 @@ export default function ProfilePage() {
         } else {
           setError("No user found");
         }
-      } catch (err) {
+      } catch (error) {
         setError("Failed to load user data");
       } finally {
         setLoading(false);
@@ -59,7 +60,7 @@ export default function ProfilePage() {
       } else {
         setMessage("Profile updated successfully!");
       }
-    } catch (err) {
+    } catch (error) {
       setMessage("An error occurred");
     } finally {
       setLoading(false);
