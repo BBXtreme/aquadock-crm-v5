@@ -11,8 +11,19 @@ import { Building, Users, Trophy, DollarSign, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
+interface Company {
+  id: string;
+  firmenname: string;
+  kundentyp: string;
+  status: string;
+  value: number;
+  stadt: string;
+  land: string;
+  created_at: string;
+}
+
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,7 +55,7 @@ export default function CompaniesPage() {
   const totalCompanies = companies.length;
   const leads = companies.filter((c) => c.status === "lead").length;
   const won = companies.filter((c) => c.status === "won").length;
-  const valueSum = companies.reduce((sum, c) => sum + (c.value || 0), 0);
+  const valueSum = companies.reduce((sum: number, c: Company) => sum + (c.value || 0), 0);
 
   if (error) {
     return (
