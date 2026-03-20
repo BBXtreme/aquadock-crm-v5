@@ -124,6 +124,7 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: companies,
     columns,
