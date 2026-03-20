@@ -1,6 +1,8 @@
-import type { NextConfig } from "next";
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  turbopack: {
+    root: ".",  // Force current directory as root (ignores workspace.yaml)
+  },
+}
 
-const nextConfig: NextConfig = {
-};
-
-export default nextConfig;
+export default nextConfig
