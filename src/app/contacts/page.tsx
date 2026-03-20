@@ -59,7 +59,7 @@ export default function ContactsPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home > Contacts</p>
+            <p className="text-sm text-muted-foreground">{"Home > Contacts"}</p>
             <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
           </div>
           <Button>New Contact</Button>
