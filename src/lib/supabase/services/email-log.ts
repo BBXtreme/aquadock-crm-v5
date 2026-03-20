@@ -1,4 +1,4 @@
-import { createSupabaseServerClient, handleSupabaseError } from "../server-client";
+import { createClient, handleSupabaseError } from "../client";
 import { Database } from "../database.types";
 
 type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
