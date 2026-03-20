@@ -1,3 +1,4 @@
+// Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
 "use client";
 
 import { useState } from "react";
