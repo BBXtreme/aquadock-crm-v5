@@ -1,7 +1,7 @@
 import {
   createServerSupabaseClient,
   handleSupabaseError,
-} from "../server-client";
+} from "../server";
 import type { Contact, ContactInsert, ContactUpdate } from "../database.types";
 
 /**

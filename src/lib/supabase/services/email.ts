@@ -1,4 +1,4 @@
-import { createServerSupabaseClient } from "../client";
+import { createServerSupabaseClient, handleSupabaseError } from "../server";
 import type {
   EmailLog,
   EmailLogInsert,

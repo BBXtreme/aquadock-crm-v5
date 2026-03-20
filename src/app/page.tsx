@@ -12,7 +12,7 @@ import { formatDistanceToNow } from "date-fns";
 import KPICards from "@/components/dashboard/KPICards";
 import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/browser";
 import AppLayout from "@/components/layout/AppLayout";
 import { getCompanies } from "@/lib/supabase/services/companies";
 import { getTimeline } from "@/lib/supabase/services/timeline";
