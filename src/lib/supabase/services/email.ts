@@ -6,7 +6,7 @@ import type {
   EmailTemplate,
   EmailTemplateInsert,
   EmailTemplateUpdate,
-} from "../database.types";
+} from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
