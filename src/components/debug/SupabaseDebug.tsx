@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown } from "lucide-react";
 
@@ -31,7 +35,9 @@ export default function SupabaseDebug({
           <CardHeader className="cursor-pointer">
             <CardTitle className="flex items-center justify-between">
               Supabase Connection Debug
-              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+              />
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
