@@ -23,7 +23,7 @@ export async function getCompanyById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getCompanyById");
-  return data as Company | null ?? null;
+  return (data as Company | null) ?? null;
 }
 
 /**
@@ -57,7 +57,7 @@ export async function updateCompany(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateCompany");
-  return data as Company | null ?? null;
+  return (data as Company | null) ?? null;
 }
 
 /**
