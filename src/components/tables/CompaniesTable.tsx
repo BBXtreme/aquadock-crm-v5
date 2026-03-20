@@ -11,6 +11,7 @@ import {
   createColumnHelper,
   ColumnDef,
 } from "@tanstack/react-table";
+import { formatDistanceToNow } from "date-fns";
 import { Eye, Edit, Trash, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +34,6 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Papa from "papaparse";
 import { Company } from "@/lib/supabase/types";
-import {
-  formatCurrency,
-  formatDateDistance,
-  safeString,
-} from "@/lib/supabase/utils";
 
 interface CompaniesTableProps {
   companies: Company[];
@@ -49,20 +45,20 @@ const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => safeString(info.getValue()),
+    cell: (info) => info.getValue() ?? "—",
   }) as ColumnDef<Company>,
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {safeString(info.getValue())}
+        {info.getValue() ?? "—"}
       </Badge>
     ),
   }) as ColumnDef<Company>,
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
-      const value = safeString(info.getValue());
+      const value = info.getValue() ?? "—";
       return (
         <Badge
           className={cn(
@@ -80,19 +76,22 @@ const columns: ColumnDef<Company>[] = [
   }) as ColumnDef<Company>,
   columnHelper.accessor("value", {
     header: "Value",
-    cell: (info) => formatCurrency(info.getValue()),
+    cell: (info) => `€${Number(info.getValue() ?? 0).toLocaleString('de-DE')}`,
   }) as ColumnDef<Company>,
   columnHelper.accessor("stadt", {
     header: "Stadt",
-    cell: (info) => safeString(info.getValue()),
+    cell: (info) => info.getValue() ?? "—",
   }) as ColumnDef<Company>,
   columnHelper.accessor("land", {
     header: "Land",
-    cell: (info) => safeString(info.getValue()),
+    cell: (info) => info.getValue() ?? "—",
   }) as ColumnDef<Company>,
   columnHelper.accessor("created_at", {
     header: "Created",
-    cell: (info) => formatDateDistance(info.getValue()),
+    cell: (info) => {
+      const d = info.getValue();
+      return d ? formatDistanceToNow(new Date(d), { addSuffix: true }) : "—";
+    },
   }) as ColumnDef<Company>,
   columnHelper.display({
     id: "actions",
