@@ -87,6 +87,13 @@ export default function Home() {
     }),
   );
 
+  // Calculate new companies this month
+  const thisMonth = new Date();
+  thisMonth.setDate(1);
+  const newCompaniesThisMonth = companies.filter(
+    (c) => new Date(c.created_at as string) >= thisMonth,
+  ).length;
+
   const kpis = [
     {
       title: "Total Companies",
