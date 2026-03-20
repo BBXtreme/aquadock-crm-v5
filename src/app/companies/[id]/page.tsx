@@ -17,11 +17,12 @@ import { MapPin, Phone, Mail, Anchor, Calendar, Bell } from "lucide-react";
 import { getCompanyById } from "@/lib/supabase/services/companies";
 import { createClient } from "@/lib/supabase/browser";
 import AppLayout from "@/components/layout/AppLayout";
+import { Company } from "@/lib/supabase/types";
 
 export default function CompanyDetailPage() {
   const params = useParams();
   const id = params.id as string;
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
