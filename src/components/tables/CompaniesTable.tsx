@@ -42,16 +42,16 @@ interface CompaniesTableProps {
 const columnHelper = createColumnHelper<Company>();
 
 const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor<string>("firmenname", {
+  columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() as string,
   }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {info.getValue()}
+        {info.getValue() as string}
       </Badge>
     ),
   }),
@@ -67,7 +67,7 @@ const columns: ColumnDef<Company>[] = [
             "bg-zinc-500 text-white",
         )}
       >
-        {info.getValue()}
+        {info.getValue() as string}
       </Badge>
     ),
   }),
@@ -77,16 +77,16 @@ const columns: ColumnDef<Company>[] = [
   }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() as string,
   }),
   columnHelper.accessor("land", {
     header: "Land",
-    cell: (info) => info.getValue(),
+    cell: (info) => info.getValue() as string,
   }),
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date(info.getValue() || ""), { addSuffix: true }),
+      formatDistanceToNow(new Date(info.getValue() as string || ""), { addSuffix: true }),
   }),
   columnHelper.display({
     id: "actions",
