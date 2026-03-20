@@ -1,5 +1,9 @@
 import { createServerSupabaseClient, handleSupabaseError } from "../client";
-import { Contact } from "../types";
+import { Database } from "../database.types";
+
+type Contact = Database['public']['Tables']['contacts']['Row'];
+type ContactInsert = Database['public']['Tables']['contacts']['Insert'];
+type ContactUpdate = Database['public']['Tables']['contacts']['Update'];
 
 export async function getAllContacts(): Promise<Contact[]> {
   try {
@@ -48,7 +52,7 @@ export async function getContactById(id: string): Promise<Contact | null> {
   }
 }
 
-export async function createContact(contact: Omit<Contact, "id" | "created_at">): Promise<Contact> {
+export async function createContact(contact: ContactInsert): Promise<Contact> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -64,7 +68,7 @@ export async function createContact(contact: Omit<Contact, "id" | "created_at">)
   }
 }
 
-export async function updateContact(id: string, updates: Partial<Omit<Contact, "id" | "created_at">>): Promise<Contact> {
+export async function updateContact(id: string, updates: ContactUpdate): Promise<Contact> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase

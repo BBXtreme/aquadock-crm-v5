@@ -1,5 +1,9 @@
 import { createServerSupabaseClient, handleSupabaseError } from "../client";
-import { Company } from "../types";
+import { Database } from "../database.types";
+
+type Company = Database['public']['Tables']['companies']['Row'];
+type CompanyInsert = Database['public']['Tables']['companies']['Insert'];
+type CompanyUpdate = Database['public']['Tables']['companies']['Update'];
 
 export async function getAllCompanies(): Promise<Company[]> {
   try {
@@ -32,7 +36,7 @@ export async function getCompanyById(id: string): Promise<Company | null> {
   }
 }
 
-export async function createCompany(company: Omit<Company, "id" | "created_at">): Promise<Company> {
+export async function createCompany(company: CompanyInsert): Promise<Company> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -48,7 +52,7 @@ export async function createCompany(company: Omit<Company, "id" | "created_at">)
   }
 }
 
-export async function updateCompany(id: string, updates: Partial<Omit<Company, "id" | "created_at">>): Promise<Company> {
+export async function updateCompany(id: string, updates: CompanyUpdate): Promise<Company> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase

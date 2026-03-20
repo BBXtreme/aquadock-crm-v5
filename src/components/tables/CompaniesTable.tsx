@@ -33,17 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import Papa from "papaparse";
-
-interface Company {
-  id: string;
-  firmenname: string;
-  kundentyp: string;
-  status: string;
-  value: number;
-  stadt: string;
-  land: string;
-  created_at: string;
-}
+import { Company } from "@/lib/supabase/types";
 
 interface CompaniesTableProps {
   companies: Company[];
@@ -95,7 +85,7 @@ const columns: ColumnDef<Company, unknown>[] = [
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) =>
-      formatDistanceToNow(new Date(info.getValue()), { addSuffix: true }),
+      formatDistanceToNow(new Date(info.getValue() || ""), { addSuffix: true }),
   }),
   columnHelper.display({
     id: "actions",

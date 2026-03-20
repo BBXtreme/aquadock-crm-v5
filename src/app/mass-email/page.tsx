@@ -22,22 +22,7 @@ import {
 } from "@/components/ui/table";
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
-
-interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-}
-
-interface EmailLog {
-  id: string;
-  recipient: string;
-  subject: string;
-  body: string;
-  status: string;
-  sent_at: string;
-}
+import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -102,7 +87,7 @@ export default function MassEmailPage() {
 
       // Log test email
       const { error } = await supabase.from("email_log").insert({
-        recipient: "test@example.com",
+        recipient_email: "test@example.com",
         subject: template.subject,
         body: previewBody,
         status: "sent",
@@ -156,7 +141,7 @@ export default function MassEmailPage() {
         const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
 
         await supabase.from("email_log").insert({
-          recipient,
+          recipient_email: recipient,
           subject: template.subject,
           body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
           status: "sent",
@@ -330,7 +315,7 @@ export default function MassEmailPage() {
                 <TableBody>
                   {history.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell>{log.recipient}</TableCell>
+                      <TableCell>{log.recipient_email}</TableCell>
                       <TableCell>{log.subject}</TableCell>
                       <TableCell>{log.status}</TableCell>
                       <TableCell>{log.sent_at}</TableCell>

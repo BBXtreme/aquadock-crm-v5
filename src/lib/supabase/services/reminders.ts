@@ -1,5 +1,9 @@
 import { createServerSupabaseClient, handleSupabaseError } from "../client";
-import { Reminder } from "../types";
+import { Database } from "../database.types";
+
+type Reminder = Database['public']['Tables']['reminders']['Row'];
+type ReminderInsert = Database['public']['Tables']['reminders']['Insert'];
+type ReminderUpdate = Database['public']['Tables']['reminders']['Update'];
 
 export async function getAllReminders(): Promise<Reminder[]> {
   try {
@@ -48,7 +52,7 @@ export async function getReminderById(id: string): Promise<Reminder | null> {
   }
 }
 
-export async function createReminder(reminder: Omit<Reminder, "id" | "created_at">): Promise<Reminder> {
+export async function createReminder(reminder: ReminderInsert): Promise<Reminder> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -64,7 +68,7 @@ export async function createReminder(reminder: Omit<Reminder, "id" | "created_at
   }
 }
 
-export async function updateReminder(id: string, updates: Partial<Omit<Reminder, "id" | "created_at">>): Promise<Reminder> {
+export async function updateReminder(id: string, updates: ReminderUpdate): Promise<Reminder> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase

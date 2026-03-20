@@ -26,19 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Users, Star, Building, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
-
-interface Contact {
-  id: string;
-  vorname: string;
-  nachname: string;
-  company_id: string;
-  position: string;
-  email: string;
-  telefon: string;
-  primary: boolean;
-  companies?: { firmenname: string };
-  created_at: string;
-}
+import { Contact } from "@/lib/supabase/types";
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -75,7 +63,7 @@ export default function ContactsPage() {
   }, []);
 
   const totalContacts = contacts.length;
-  const primaryContacts = contacts.filter((c) => c.primary).length;
+  const primaryContacts = contacts.filter((c) => c.is_primary).length;
   const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
 
   if (error) {
@@ -229,7 +217,7 @@ export default function ContactsPage() {
                           <TableCell>{contact.email}</TableCell>
                           <TableCell>{contact.telefon}</TableCell>
                           <TableCell>
-                            {contact.primary && (
+                            {contact.is_primary && (
                               <Badge className="bg-[#24BACC] text-white">
                                 Primary
                               </Badge>

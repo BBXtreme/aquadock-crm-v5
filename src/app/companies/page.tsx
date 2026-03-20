@@ -10,17 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Building, Users, Trophy, DollarSign, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
-
-interface Company {
-  id: string;
-  firmenname: string;
-  kundentyp: string;
-  status: string;
-  value: number;
-  stadt: string;
-  land: string;
-  created_at: string;
-}
+import { Company } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);

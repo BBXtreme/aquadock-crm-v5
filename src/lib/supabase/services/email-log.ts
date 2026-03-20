@@ -1,5 +1,9 @@
 import { createServerSupabaseClient, handleSupabaseError } from "../client";
-import { EmailLog } from "../types";
+import { Database } from "../database.types";
+
+type EmailLog = Database['public']['Tables']['email_log']['Row'];
+type EmailLogInsert = Database['public']['Tables']['email_log']['Insert'];
+type EmailLogUpdate = Database['public']['Tables']['email_log']['Update'];
 
 export async function getAllEmailLogs(): Promise<EmailLog[]> {
   try {
@@ -32,7 +36,7 @@ export async function getEmailLogById(id: string): Promise<EmailLog | null> {
   }
 }
 
-export async function createEmailLog(emailLog: Omit<EmailLog, "id">): Promise<EmailLog> {
+export async function createEmailLog(emailLog: EmailLogInsert): Promise<EmailLog> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -48,7 +52,7 @@ export async function createEmailLog(emailLog: Omit<EmailLog, "id">): Promise<Em
   }
 }
 
-export async function updateEmailLog(id: string, updates: Partial<Omit<EmailLog, "id">>): Promise<EmailLog> {
+export async function updateEmailLog(id: string, updates: EmailLogUpdate): Promise<EmailLog> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
