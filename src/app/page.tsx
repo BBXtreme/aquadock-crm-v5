@@ -12,6 +12,7 @@ import { getCompanies } from "@/lib/supabase/services/companies";
 import { getTimeline } from "@/lib/supabase/services/timeline";
 import { Company, TimelineEntry } from "@/lib/supabase/types";
 import { debugQuery } from "@/lib/supabase/debug";
+import SupabaseDebug from "@/components/debug/SupabaseDebug";
 
 export default function Home() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -229,30 +230,17 @@ export default function Home() {
         </div>
 
         {debugMode && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Supabase Connection Debug</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="bg-muted p-4 rounded-lg overflow-auto text-sm max-h-96">
-                {JSON.stringify(
-                  {
-                    status: error ? "Error" : "Connected",
-                    rowCount: companies.length,
-                    sampleData: companies.slice(0, 2),
-                    error: error ?? null,
-                    user: user ? { id: user.id, email: user.email } : null,
-                    statusSummary: {
-                      lead: companies.filter(c => c.status === 'lead').length,
-                      won: companies.filter(c => c.status === 'won').length,
-                    },
-                  },
-                  null,
-                  2,
-                )}
-              </pre>
-            </CardContent>
-          </Card>
+          <SupabaseDebug
+            status={error ? "Error" : "Connected"}
+            rowCount={companies.length}
+            sampleData={companies.slice(0, 2)}
+            error={error}
+            user={user ? { id: user.id, email: user.email } : null}
+            statusSummary={{
+              lead: companies.filter(c => c.status === 'lead').length,
+              won: companies.filter(c => c.status === 'won').length,
+            }}
+          />
         )}
       </div>
     </AppLayout>
