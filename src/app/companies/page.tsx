@@ -53,7 +53,7 @@ export default function CompaniesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                Home {">"} Companies
+                {"Home > Companies"}
               </p>
               <h1 className="text-3xl font-semibold tracking-tight">
                 Companies
@@ -90,7 +90,7 @@ export default function CompaniesPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              Home {">"} Companies
+              {"Home > Companies"}
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
           </div>
