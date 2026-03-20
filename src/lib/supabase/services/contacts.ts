@@ -66,7 +66,10 @@ export async function updateContact(
 /**
  * Delete a contact
  */
-export async function deleteContact(id: string, client: SupabaseClient): Promise<void> {
+export async function deleteContact(
+  id: string,
+  client: SupabaseClient,
+): Promise<void> {
   const { error } = await client.from("contacts").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteContact");
 }
