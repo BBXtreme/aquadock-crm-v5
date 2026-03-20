@@ -12,9 +12,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { User, LogOut } from "lucide-react";
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<Record<string, unknown> | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
