@@ -34,7 +34,9 @@ export default function CompanyDetailPage() {
         const company = await getCompanyById(id, supabase);
         setCompany(company);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to fetch company");
+        setError(
+          err instanceof Error ? err.message : "Failed to fetch company",
+        );
       } finally {
         setLoading(false);
       }
@@ -146,7 +148,8 @@ export default function CompanyDetailPage() {
             <CardContent>
               <p>
                 <Mail className="inline mr-2 h-4 w-4" />
-                contact@{company.firmenname.toLowerCase().replace(/\s+/g, "")}.com
+                contact@{company.firmenname.toLowerCase().replace(/\s+/g, "")}
+                .com
               </p>
               <p>
                 <Phone className="inline mr-2 h-4 w-4" />
