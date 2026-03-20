@@ -242,6 +242,10 @@ export default function Home() {
                     sampleData: companies.slice(0, 2),
                     error: error ?? null,
                     user: user ? { id: user.id, email: user.email } : null,
+                    statusSummary: {
+                      lead: companies.filter(c => c.status === 'lead').length,
+                      won: companies.filter(c => c.status === 'won').length,
+                    },
                   },
                   null,
                   2,
