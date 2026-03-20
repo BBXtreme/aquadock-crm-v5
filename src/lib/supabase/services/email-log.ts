@@ -1,9 +1,9 @@
 import { createServerSupabaseClient, handleSupabaseError } from "../client";
 import { Database } from "../database.types";
 
-type EmailLog = Database['public']['Tables']['email_log']['Row'];
-type EmailLogInsert = Database['public']['Tables']['email_log']['Insert'];
-type EmailLogUpdate = Database['public']['Tables']['email_log']['Update'];
+type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
+type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
+type EmailLogUpdate = Database["public"]["Tables"]["email_log"]["Update"];
 
 export async function getAllEmailLogs(): Promise<EmailLog[]> {
   try {
@@ -36,7 +36,9 @@ export async function getEmailLogById(id: string): Promise<EmailLog | null> {
   }
 }
 
-export async function createEmailLog(emailLog: EmailLogInsert): Promise<EmailLog> {
+export async function createEmailLog(
+  emailLog: EmailLogInsert,
+): Promise<EmailLog> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -52,7 +54,10 @@ export async function createEmailLog(emailLog: EmailLogInsert): Promise<EmailLog
   }
 }
 
-export async function updateEmailLog(id: string, updates: EmailLogUpdate): Promise<EmailLog> {
+export async function updateEmailLog(
+  id: string,
+  updates: EmailLogUpdate,
+): Promise<EmailLog> {
   try {
     const supabase = createServerSupabaseClient();
     const { data, error } = await supabase
@@ -72,10 +77,7 @@ export async function updateEmailLog(id: string, updates: EmailLogUpdate): Promi
 export async function deleteEmailLog(id: string): Promise<void> {
   try {
     const supabase = createServerSupabaseClient();
-    const { error } = await supabase
-      .from("email_log")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("email_log").delete().eq("id", id);
 
     if (error) throw error;
   } catch (error) {

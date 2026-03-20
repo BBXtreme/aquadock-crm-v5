@@ -23,7 +23,12 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
-import { getEmailTemplates, getEmailLogs, createEmailLog, createTimelineEntry } from "@/lib/supabase/services/email";
+import {
+  getEmailTemplates,
+  getEmailLogs,
+  createEmailLog,
+  createTimelineEntry,
+} from "@/lib/supabase/services/email";
 import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function MassEmailPage() {
@@ -73,21 +78,27 @@ export default function MassEmailPage() {
       if (!template) return;
 
       // Log test email
-      await createEmailLog({
-        recipient_email: "test@example.com",
-        subject: template.subject,
-        body: previewBody,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      }, supabase);
+      await createEmailLog(
+        {
+          recipient_email: "test@example.com",
+          subject: template.subject,
+          body: previewBody,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        },
+        supabase,
+      );
 
       // Log to timeline
-      await createTimelineEntry({
-        company_id: null,
-        activity_type: "email",
-        title: "Test Email Sent",
-        content: `Test email sent to test@example.com`,
-      }, supabase);
+      await createTimelineEntry(
+        {
+          company_id: null,
+          activity_type: "email",
+          title: "Test Email Sent",
+          content: `Test email sent to test@example.com`,
+        },
+        supabase,
+      );
 
       toast.success("Test email sent successfully!");
     } catch (error) {
@@ -126,22 +137,28 @@ export default function MassEmailPage() {
       for (const company of filteredCompanies) {
         const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
 
-        await createEmailLog({
-          recipient_email: recipient,
-          subject: template.subject,
-          body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
-          status: "sent",
-          sent_at: new Date().toISOString(),
-        }, supabase);
+        await createEmailLog(
+          {
+            recipient_email: recipient,
+            subject: template.subject,
+            body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
+            status: "sent",
+            sent_at: new Date().toISOString(),
+          },
+          supabase,
+        );
       }
 
       // Log to timeline
-      await createTimelineEntry({
-        company_id: null,
-        activity_type: "email",
-        title: "Mass Email Sent",
-        content: `Mass email sent to ${filteredCompanies.length} recipients`,
-      }, supabase);
+      await createTimelineEntry(
+        {
+          company_id: null,
+          activity_type: "email",
+          title: "Mass Email Sent",
+          content: `Mass email sent to ${filteredCompanies.length} recipients`,
+        },
+        supabase,
+      );
 
       toast.success(
         `Campaign queued for ${filteredCompanies.length} recipients!`,
