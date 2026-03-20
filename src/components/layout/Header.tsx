@@ -14,7 +14,7 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="flex items-center justify-between h-18 p-0.5 border-b shadow-sm">
+    <header className="flex items-center justify-between h-18 p-0.5 pr-5 border-b shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
           <div className="ml-5 w-22 md:w-26 h-22 md:h-26 flex items-center justify-center hover:scale-105 transition-transform">
