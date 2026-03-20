@@ -6,7 +6,9 @@ import { createClient } from "@/lib/supabase/browser";
 /**
  * Get all companies
  */
-export async function getCompanies(client?: SupabaseClient): Promise<Company[]> {
+export async function getCompanies(
+  client?: SupabaseClient,
+): Promise<Company[]> {
   const supabase = client || createClient();
   const { data, error } = await supabase.from("companies").select("*");
   if (error) throw handleSupabaseError(error, "getCompanies");
