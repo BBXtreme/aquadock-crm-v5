@@ -265,7 +265,7 @@ export interface Database {
     };
     Views: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     Functions: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    Enums: {}; // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    Enums: {};
   };
 }
 
