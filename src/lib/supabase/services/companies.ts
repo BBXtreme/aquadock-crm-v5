@@ -7,7 +7,7 @@ import type { Company } from "../database.types";
 export async function getCompanies(client: any): Promise<Company[]> {
   const { data, error } = await client.from("companies").select("*");
   if (error) throw handleSupabaseError(error, "getCompanies");
-  return data ?? [];
+  return (data ?? []) as Company[];
 }
 
 /**
@@ -23,7 +23,7 @@ export async function getCompanyById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getCompanyById");
-  return data ?? null;
+  return data as Company | null ?? null;
 }
 
 /**
@@ -39,7 +39,7 @@ export async function createCompany(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createCompany");
-  return data;
+  return data as Company;
 }
 
 /**
@@ -57,7 +57,7 @@ export async function updateCompany(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateCompany");
-  return data ?? null;
+  return data as Company | null ?? null;
 }
 
 /**

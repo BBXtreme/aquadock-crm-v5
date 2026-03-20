@@ -16,10 +16,11 @@ import { createClient } from "@/lib/supabase/browser";
 import AppLayout from "@/components/layout/AppLayout";
 import { getCompanies } from "@/lib/supabase/services/companies";
 import { getTimeline } from "@/lib/supabase/services/timeline";
+import { Company, TimelineEntry } from "@/lib/supabase/types";
 
 export default function Home() {
-  const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
-  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

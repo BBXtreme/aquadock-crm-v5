@@ -9,7 +9,7 @@ export async function getContacts(client: any): Promise<Contact[]> {
     .from("contacts")
     .select("*, companies(firmenname)");
   if (error) throw handleSupabaseError(error, "getContacts");
-  return data ?? [];
+  return (data ?? []) as Contact[];
 }
 
 /**
@@ -25,7 +25,7 @@ export async function getContactById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getContactById");
-  return data ?? null;
+  return data as Contact | null ?? null;
 }
 
 /**
@@ -41,7 +41,7 @@ export async function createContact(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createContact");
-  return data;
+  return data as Contact;
 }
 
 /**
@@ -59,7 +59,7 @@ export async function updateContact(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateContact");
-  return data;
+  return data as Contact;
 }
 
 /**

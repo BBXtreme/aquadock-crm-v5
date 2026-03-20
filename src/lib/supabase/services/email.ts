@@ -14,7 +14,7 @@ import type {
 export async function getEmailLogs(client: any): Promise<EmailLog[]> {
   const { data, error } = await client.from("email_log").select("*");
   if (error) throw handleSupabaseError(error, "getEmailLogs");
-  return data ?? [];
+  return (data ?? []) as EmailLog[];
 }
 
 /**
@@ -30,7 +30,7 @@ export async function getEmailLogById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getEmailLogById");
-  return data ?? null;
+  return data as EmailLog | null ?? null;
 }
 
 /**
@@ -46,7 +46,7 @@ export async function createEmailLog(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createEmailLog");
-  return data;
+  return data as EmailLog;
 }
 
 /**
@@ -64,7 +64,7 @@ export async function updateEmailLog(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateEmailLog");
-  return data;
+  return data as EmailLog;
 }
 
 /**
@@ -81,7 +81,7 @@ export async function deleteEmailLog(id: string, client: any): Promise<void> {
 export async function getEmailTemplates(client: any): Promise<EmailTemplate[]> {
   const { data, error } = await client.from("email_templates").select("*");
   if (error) throw handleSupabaseError(error, "getEmailTemplates");
-  return data ?? [];
+  return (data ?? []) as EmailTemplate[];
 }
 
 /**
@@ -97,7 +97,7 @@ export async function getEmailTemplateById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getEmailTemplateById");
-  return data ?? null;
+  return data as EmailTemplate | null ?? null;
 }
 
 /**
@@ -113,7 +113,7 @@ export async function createEmailTemplate(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createEmailTemplate");
-  return data;
+  return data as EmailTemplate;
 }
 
 /**
@@ -131,7 +131,7 @@ export async function updateEmailTemplate(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateEmailTemplate");
-  return data;
+  return data as EmailTemplate;
 }
 
 /**

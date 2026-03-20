@@ -13,7 +13,7 @@ export async function getReminders(client: any): Promise<Reminder[]> {
     .from("reminders")
     .select("*, companies(firmenname)");
   if (error) throw handleSupabaseError(error, "getReminders");
-  return data ?? [];
+  return (data ?? []) as Reminder[];
 }
 
 /**
@@ -29,7 +29,7 @@ export async function getReminderById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getReminderById");
-  return data ?? null;
+  return data as Reminder | null ?? null;
 }
 
 /**
@@ -45,7 +45,7 @@ export async function createReminder(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createReminder");
-  return data;
+  return data as Reminder;
 }
 
 /**
@@ -63,7 +63,7 @@ export async function updateReminder(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateReminder");
-  return data;
+  return data as Reminder;
 }
 
 /**

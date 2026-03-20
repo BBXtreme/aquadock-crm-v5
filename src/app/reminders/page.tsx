@@ -20,11 +20,10 @@ import { isAfter, isThisWeek, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 import { getReminders } from "@/lib/supabase/services/reminders";
+import { Reminder } from "@/lib/supabase/types";
 
 export default function RemindersPage() {
-  const [allReminders, setAllReminders] = useState<Record<string, unknown>[]>(
-    [],
-  );
+  const [allReminders, setAllReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

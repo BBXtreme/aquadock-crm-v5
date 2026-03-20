@@ -13,7 +13,7 @@ export async function getTimeline(client: any): Promise<TimelineEntry[]> {
     .from("timeline")
     .select("*, companies(firmenname)");
   if (error) throw handleSupabaseError(error, "getTimeline");
-  return data ?? [];
+  return (data ?? []) as TimelineEntry[];
 }
 
 /**
@@ -29,7 +29,7 @@ export async function getTimelineEntryById(
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getTimelineEntryById");
-  return data ?? null;
+  return data as TimelineEntry | null ?? null;
 }
 
 /**
@@ -45,7 +45,7 @@ export async function createTimelineEntry(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "createTimelineEntry");
-  return data;
+  return data as TimelineEntry;
 }
 
 /**
@@ -63,7 +63,7 @@ export async function updateTimelineEntry(
     .select()
     .single();
   if (error) throw handleSupabaseError(error, "updateTimelineEntry");
-  return data;
+  return data as TimelineEntry;
 }
 
 /**

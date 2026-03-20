@@ -15,9 +15,11 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
+import { getTimeline } from "@/lib/supabase/services/timeline";
+import { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
-  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -27,12 +29,8 @@ export default function TimelinePage() {
       setError("");
       try {
         const supabase = createClient();
-        const timeline = await supabase
-          .from("timeline")
-          .select("*, companies(firmenname)")
-          .order("created_at", { ascending: false })
-          .limit(50);
-        setTimeline(timeline.data || []);
+        const timeline = await getTimeline(supabase);
+        setTimeline(timeline.slice(0, 50));
       } catch (err: unknown) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch timeline",
