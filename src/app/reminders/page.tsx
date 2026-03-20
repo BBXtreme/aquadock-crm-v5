@@ -21,7 +21,7 @@ import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function RemindersPage() {
-  const [allReminders, setAllReminders] = useState<any[]>([]);
+  const [allReminders, setAllReminders] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

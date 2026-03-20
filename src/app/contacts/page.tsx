@@ -28,7 +28,7 @@ import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Record<string, unknown>[]>([]);
   const [companies, setCompanies] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

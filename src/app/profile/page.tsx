@@ -14,7 +14,7 @@ import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -36,7 +36,7 @@ export default function ProfilePage() {
         } else {
           setError("No user found");
         }
-      } catch (error) {
+      } catch (_error) {
         setError("Failed to load user data");
       } finally {
         setLoading(false);
@@ -60,7 +60,7 @@ export default function ProfilePage() {
       } else {
         setMessage("Profile updated successfully!");
       }
-    } catch (error) {
+    } catch (_error) {
       setMessage("An error occurred");
     } finally {
       setLoading(false);

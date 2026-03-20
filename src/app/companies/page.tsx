@@ -12,7 +12,7 @@ import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 

@@ -17,7 +17,7 @@ import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 
 export default function TimelinePage() {
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timeline, setTimeline] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
