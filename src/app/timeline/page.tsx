@@ -44,7 +44,9 @@ export default function TimelinePage() {
 
   // Get unique companies and types for filters
   const companies = Array.from(
-    new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[]),
+    new Set(
+      timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[],
+    ),
   );
   const types = Array.from(
     new Set(timeline?.map((t) => t.activity_type).filter(Boolean) as string[]),
@@ -84,7 +86,7 @@ export default function TimelinePage() {
 
         <div className="flex space-x-4">
           <Select>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-50">
               <SelectValue placeholder="Filter by company" />
             </SelectTrigger>
             <SelectContent>
@@ -97,7 +99,7 @@ export default function TimelinePage() {
             </SelectContent>
           </Select>
           <Select>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-50">
               <SelectValue placeholder="Filter by type" />
             </SelectTrigger>
             <SelectContent>
@@ -125,9 +127,11 @@ export default function TimelinePage() {
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-muted-foreground">
-                          {entry.created_at ? formatDistanceToNow(new Date(entry.created_at), {
-                            addSuffix: true,
-                          }) : "—"}
+                          {entry.created_at
+                            ? formatDistanceToNow(new Date(entry.created_at), {
+                                addSuffix: true,
+                              })
+                            : "—"}
                         </span>
                         <Link
                           href={`/companies/${entry.company_id}`}
