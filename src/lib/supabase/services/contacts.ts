@@ -8,7 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export async function getContacts(client: SupabaseClient): Promise<Contact[]> {
   const { data, error } = await client
     .from("contacts")
-    .select("*, companies!company_id(firmenname)");
+    .select("*, companies!company_id (firmenname)");
   if (error) throw handleSupabaseError(error, "getContacts");
   return (data ?? []) as Contact[];
 }
