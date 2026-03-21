@@ -137,6 +137,7 @@ export default function CompaniesPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
+                  {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders – no dynamic order or state change */}
                   {Array.from({ length: 6 }).map(() => (
                     <Skeleton className="h-14 w-full" />
                   ))}
