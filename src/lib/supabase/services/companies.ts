@@ -80,7 +80,14 @@ export async function updateCompany(
  * Delete a company
  */
 export async function deleteCompany(id: string, client: SupabaseClient): Promise<boolean> {
+  if (!id || typeof id !== "string") throw new Error("Invalid ID");
+
   const { error } = await client.from("companies").delete().eq("id", id);
-  if (error) throw handleSupabaseError(error, "deleteCompany");
+
+  if (error) {
+    console.dir(error, { depth: null });
+    throw handleSupabaseError(error, `deleteCompany ${id}`);
+  }
+
   return true;
 }
