@@ -263,8 +263,11 @@ export interface Database {
         };
       };
     };
+    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
     Views: {};
+    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
     Functions: {};
+    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
     Enums: {};
   };
 }
