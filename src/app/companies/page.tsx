@@ -167,9 +167,7 @@ function StatCard({
   icon,
 }: {
   title: string;
-  // eslint-disable-next-line no-undef
   value: React.ReactNode;
-  // eslint-disable-next-line no-undef
   icon: React.ReactNode;
 }) {
   return (
