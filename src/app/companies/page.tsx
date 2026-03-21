@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { BulkDeleteConfirmationDialog } from "@/components/ui/bulk-delete-confirmation-dialog";
+import { BulkDeleteConfirmationDialog } from "@/components/features/BulkDeleteConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -101,8 +101,14 @@ export default function CompaniesPage() {
       }
     });
 
+    queryClient.invalidateQueries({ queryKey: ["companies"] });
+
     if (successCount > 0) {
       toast.success(`${successCount} Firma${successCount !== 1 ? 'en' : ''} gelöscht`)
+    }
+
+    if (results.some(r => r.status === 'rejected')) {
+      toast.error("Einige Löschungen sind fehlgeschlagen")
     }
 
     clearSelection();
