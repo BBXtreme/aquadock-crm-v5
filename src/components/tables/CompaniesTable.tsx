@@ -158,7 +158,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
   const handleExport = () => {
     const data = table.getFilteredRowModel().rows.map((row) => row.original);
     const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" />);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
@@ -293,7 +293,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         selectedCount={table.getSelectedRowModel().rows.length}
-        onConfirm={() => console.log("Bulk delete confirmed for", selectedIds)}
+        onConfirm={() => console.log("Would delete IDs:", selectedIds)}
       />
     </div>
   );
