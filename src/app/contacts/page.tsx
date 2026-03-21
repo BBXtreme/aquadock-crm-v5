@@ -103,7 +103,6 @@ export default function ContactsPage() {
             {loading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
-                {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders – no dynamic order or state change */}
                 {Array.from({ length: 5 }).map(() => (
                   <Skeleton className="h-12 w-full" />
                 ))}
