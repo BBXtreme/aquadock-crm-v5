@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +21,7 @@ import type { Reminder } from "@/lib/supabase/types";
 
 export default function RemindersPage() {
   const { data: allReminders = [], isLoading: loading, error } = useQuery({
-    queryKey: ['reminders'],
+    queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
       return getReminders(supabase);
@@ -31,9 +31,15 @@ export default function RemindersPage() {
   const reminders = allReminders.filter((r) => r.status === "open");
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
-  const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
-  const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
-  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
+  const overdue = allReminders.filter(
+    (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
+  ).length;
+  const thisWeek = allReminders.filter(
+    (r) => r.status === "open" && isThisWeek(new Date(r.due_date)),
+  ).length;
+  const highPriority = allReminders.filter(
+    (r) => r.status === "open" && r.priority === "high",
+  ).length;
 
   if (error) {
     return (
@@ -78,7 +84,11 @@ export default function RemindersPage() {
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{openReminders}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -87,7 +97,11 @@ export default function RemindersPage() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{overdue}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -96,7 +110,11 @@ export default function RemindersPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{thisWeek}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -105,7 +123,11 @@ export default function RemindersPage() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+              {loading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{highPriority}</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -144,12 +166,18 @@ export default function RemindersPage() {
                   </TableHeader>
                   <TableBody>
                     {reminders.map((reminder) => {
-                      const isOverdue = isAfter(new Date(), new Date(reminder.due_date));
+                      const isOverdue = isAfter(
+                        new Date(),
+                        new Date(reminder.due_date),
+                      );
                       return (
                         <TableRow key={reminder.id}>
                           <TableCell>{reminder.title}</TableCell>
                           <TableCell>
-                            <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+                            <Link
+                              href={`/companies/${reminder.company_id}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {reminder.companies?.firmenname}
                             </Link>
                           </TableCell>
@@ -161,7 +189,9 @@ export default function RemindersPage() {
                           <TableCell>
                             <Badge
                               className={
-                                reminder.priority === "high" ? "bg-rose-600 text-white" : "bg-amber-600 text-white"
+                                reminder.priority === "high"
+                                  ? "bg-rose-600 text-white"
+                                  : "bg-amber-600 text-white"
                               }
                             >
                               {reminder.priority}
@@ -170,7 +200,9 @@ export default function RemindersPage() {
                           <TableCell>
                             <Badge
                               className={
-                                reminder.status === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
+                                reminder.status === "open"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-zinc-500 text-white"
                               }
                             >
                               {reminder.status}

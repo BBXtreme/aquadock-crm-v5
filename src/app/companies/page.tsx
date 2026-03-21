@@ -6,7 +6,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
@@ -20,7 +20,7 @@ import type { Company } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
   const { data: companies = [], isLoading, error: queryError } = useQuery({
-    queryKey: ['companies'],
+    queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
       return getCompanies(supabase);
@@ -81,7 +81,7 @@ export default function CompaniesPage() {
           <div className="flex gap-3">
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
-              </Link>
+            </Link>
             <Button>New Company</Button>
           </div>
         </div>
@@ -90,22 +90,46 @@ export default function CompaniesPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Gesamt Firmen"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.total.toLocaleString("de-DE")
+              )
+            }
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Leads"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.leads.toLocaleString("de-DE")
+              )
+            }
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.won.toLocaleString("de-DE")
+              )
+            }
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gesamtwert"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                `€${stats.value.toLocaleString("de-DE")}`
+              )
+            }
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
         </div>
@@ -133,7 +157,15 @@ export default function CompaniesPage() {
 }
 
 // Wiederverwendbare Statistik-Karte
-function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+}) {
   return (
     <Card className="bg-card border-border rounded-xl shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
