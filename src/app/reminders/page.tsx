@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import Link from "next/link";
 
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,32 +21,13 @@ import { getReminders } from "@/lib/supabase/services/reminders";
 import type { Reminder } from "@/lib/supabase/types";
 
 export default function RemindersPage() {
-  const [allReminders, setAllReminders] = useState<Reminder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data: allReminders = [], isLoading: loading, error } = useQuery({
+    queryKey: ['reminders'],
+    queryFn: async () => {
       const supabase = createClient();
-      const reminders = await getReminders(supabase);
-      setAllReminders(reminders);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Erinnerungen konnten nicht geladen werden";
-      setError(message);
-      toast.error("Fehler beim Laden", {
-        description: message,
-        duration: 5000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      return getReminders(supabase);
+    },
+  });
 
   const reminders = allReminders.filter((r) => r.status === "open");
 
@@ -67,8 +49,8 @@ export default function RemindersPage() {
           </div>
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error}</span>
-              <Button variant="outline" onClick={fetchData}>
+              <span>{error.message}</span>
+              <Button variant="outline" onClick={() => window.location.reload()}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Erneut versuchen
               </Button>

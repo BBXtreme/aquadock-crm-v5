@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 
 import Link from "next/link";
 
 import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,29 +19,13 @@ import { getContacts } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchContacts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data: contacts = [], isLoading: loading, error } = useQuery({
+    queryKey: ['contacts'],
+    queryFn: async () => {
       const supabase = createClient();
-      const data = await getContacts(supabase); // oder deine Funktion
-      setContacts(data ?? []);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Kontakte konnten nicht geladen werden";
-      setError(message);
-      toast.error("Fehler", { description: message, duration: 5000 });
-    } finally {
-      setLoading(false);
-    }
-  }, []); // leere Abhängigkeiten, wenn keine Props/State verwendet
-
-  useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
+      return getContacts(supabase);
+    },
+  });
 
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
@@ -60,8 +45,8 @@ export default function ContactsPage() {
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button onClick={fetchContacts} variant="outline" size="sm">
+              <span>{error.message}</span>
+              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                 Retry
               </Button>
             </AlertDescription>
@@ -74,7 +59,7 @@ export default function ContactsPage() {
               <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-2xl">{totalContacts}</div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
             </CardContent>
           </Card>
           <Card>
@@ -82,7 +67,7 @@ export default function ContactsPage() {
               <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-2xl">{primaryContacts}</div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
             </CardContent>
           </Card>
           <Card>
@@ -90,7 +75,7 @@ export default function ContactsPage() {
               <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-2xl">{companiesWithContacts}</div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : companiesWithContacts}</div>
             </CardContent>
           </Card>
         </div>
