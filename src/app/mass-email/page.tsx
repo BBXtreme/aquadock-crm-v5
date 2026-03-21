@@ -177,7 +177,7 @@ export default function MassEmailPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Home {'>'} Mass Email</p>
+            <p className="text-sm text-muted-foreground">Home → Mass Email</p>
             <h1 className="text-3xl font-semibold tracking-tight">Mass Email</h1>
           </div>
           <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Campaign</Button>

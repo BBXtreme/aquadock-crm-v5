@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
