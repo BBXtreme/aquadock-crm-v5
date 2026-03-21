@@ -112,7 +112,7 @@ export default function CompaniesPage() {
         </div>
 
         {/* Tabelle / Ladezustand */}
-        <Card className="rounded-xl border-border shadow-sm">
+        <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
               <div className="space-y-4">
@@ -136,7 +136,7 @@ export default function CompaniesPage() {
 // Wiederverwendbare Statistik-Karte
 function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
   return (
-    <Card className="rounded-xl border-border bg-card shadow-sm">
+    <Card className="bg-card border-border rounded-xl shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="font-medium text-sm">{title}</CardTitle>
         {icon}
