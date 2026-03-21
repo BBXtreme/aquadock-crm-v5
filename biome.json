@@ -13,15 +13,8 @@
     "rules": {
       "recommended": true,
       "style": {
-        "useNodejsImportProtocol": "error",
         "noNonNullAssertion": "off"
       }
-    }
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "trailingCommas": "es5"
     }
   }
 }
