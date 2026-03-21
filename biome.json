@@ -1,5 +1,7 @@
 {
-  "ignore": ["src/app/globals.css"],
+  "files": {
+    "ignore": ["src/app/globals.css"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -9,10 +11,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "style": {
-        "noNonNullAssertion": "off"
-      }
+      "recommended": true
     }
   }
 }
