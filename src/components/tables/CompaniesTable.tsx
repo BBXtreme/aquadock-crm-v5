@@ -38,7 +38,7 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 interface CompaniesTableProps {
   companies: Company[];
   onDelete?: (id: string) => void;
-  onBulkDelete?: (ids: string[]) => void;
+  onBulkDelete?: (ids: string[], clearSelection: () => void) => void;
 }
 
 const columnHelper = createColumnHelper<Company>();
@@ -293,7 +293,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         selectedCount={table.getSelectedRowModel().rows.length}
-        onConfirm={() => console.log("Would delete IDs:", selectedIds)}
+        onConfirm={() => onBulkDelete?.(selectedIds, () => table.toggleAllPageRowsSelected(false))}
       />
     </div>
   );

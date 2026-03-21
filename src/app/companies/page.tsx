@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
+import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
@@ -27,6 +28,7 @@ export default function CompaniesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
+  const [clearSelection, setClearSelection] = useState<() => void>(() => {});
   const [newCompany, setNewCompany] = useState({
     firmenname: "",
     kundentyp: "sonstige",
@@ -74,8 +76,9 @@ export default function CompaniesPage() {
     });
   };
 
-  const handleBulkDeleteClick = (ids: string[]) => {
+  const handleBulkDeleteClick = (ids: string[], clear: () => void) => {
     setBulkDeleteIds(ids);
+    setClearSelection(() => clear);
     setIsBulkDeleteDialogOpen(true);
   };
 
@@ -96,6 +99,11 @@ export default function CompaniesPage() {
       }
     });
 
+    if (successCount > 0) {
+      toast.success(`${successCount} Firma${successCount !== 1 ? 'en' : ''} gelöscht`)
+    }
+
+    clearSelection();
     setBulkDeleteIds([]);
     // later steps will add toast + clear selection
   };
