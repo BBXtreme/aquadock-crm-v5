@@ -13,10 +13,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
 import { getContacts } from "@/lib/supabase/services/contacts";
-import type { Contact } from "@/lib/supabase/types";
 
 export default function ContactsPage() {
-  const { data: contacts = [], isLoading: loading, error } = useQuery({
+  const {
+    data: contacts = [],
+    isLoading: loading,
+    error,
+  } = useQuery({
     queryKey: ["contacts"],
     queryFn: async () => {
       const supabase = createClient();
@@ -26,9 +29,7 @@ export default function ContactsPage() {
 
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const companiesWithContacts = new Set(
-    contacts.map((c) => c.company_id),
-  ).size;
+  const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
 
   return (
     <AppLayout>
@@ -58,9 +59,7 @@ export default function ContactsPage() {
               <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-2xl">
-                {loading ? <Skeleton className="h-8 w-16" /> : totalContacts}
-              </div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
             </CardContent>
           </Card>
           <Card>
@@ -68,16 +67,12 @@ export default function ContactsPage() {
               <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="font-bold text-2xl">
-                {loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}
-              </div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">
-                Companies with Contacts
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="font-bold text-2xl">
@@ -120,10 +115,7 @@ export default function ContactsPage() {
                         </TableCell>
                         <TableCell>
                           {contact.companies?.firmenname ? (
-                            <Link
-                              href={`/companies/${contact.company_id}`}
-                              className="text-primary hover:underline"
-                            >
+                            <Link href={`/companies/${contact.company_id}`} className="text-primary hover:underline">
                               {contact.companies.firmenname}
                             </Link>
                           ) : (
@@ -133,11 +125,7 @@ export default function ContactsPage() {
                         <TableCell>{contact.position || "—"}</TableCell>
                         <TableCell>{contact.email || "—"}</TableCell>
                         <TableCell>{contact.telefon || "—"}</TableCell>
-                        <TableCell>
-                          {contact.is_primary && (
-                            <Badge variant="secondary">Primary</Badge>
-                          )}
-                        </TableCell>
+                        <TableCell>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</TableCell>
                       </TableRow>
                     ))}
                     {!contacts.length && (
