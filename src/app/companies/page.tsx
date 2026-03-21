@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +35,8 @@ export default function CompaniesPage() {
     status: "lead",
     value: 0,
   });
+
+  const queryClient = useQueryClient();
 
   const {
     data: companies = [],
