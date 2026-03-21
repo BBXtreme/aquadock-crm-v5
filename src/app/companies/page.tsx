@@ -145,8 +145,7 @@ export default function CompaniesPage() {
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    {/* biome-ignore lint/suspicious/noArrayIndexKey: static loading placeholders – order never changes */}
-                    <Skeleton key={`loading-skeleton-${i}`} className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
                   ))}
                 </div>
               </div>
