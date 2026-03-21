@@ -16,8 +16,16 @@ export function useCreateCompany() {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Firma erstellt");
     },
-    onError: () => {
-      toast.error("Fehler beim Erstellen der Firma");
+    onError: (error: any) => {
+      // Handle field-specific errors if available
+      if (error.details && typeof error.details === "object") {
+        // Assuming error.details has field errors
+        Object.entries(error.details).forEach(([field, message]) => {
+          toast.error(`${field}: ${message}`);
+        });
+      } else {
+        toast.error("Fehler beim Erstellen der Firma");
+      }
     },
   });
 }

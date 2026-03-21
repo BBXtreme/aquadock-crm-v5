@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -13,11 +13,24 @@ import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
+import { useCreateCompany } from "@/hooks/useCompanyMutations";
 
 export default function CompaniesPage() {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newCompany, setNewCompany] = useState({
+    firmenname: "",
+    kundentyp: "sonstige",
+    status: "lead",
+    value: 0,
+  });
+
   const {
     data: companies = [],
     isLoading,
@@ -31,6 +44,8 @@ export default function CompaniesPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { mutate: createCompany, isPending: isCreating } = useCreateCompany();
+
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
   const stats = useMemo(() => {
     const total = companies.length;
@@ -40,6 +55,20 @@ export default function CompaniesPage() {
 
     return { total, leads, won, value };
   }, [companies]);
+
+  const handleCreateCompany = () => {
+    createCompany(newCompany, {
+      onSuccess: () => {
+        setIsCreateDialogOpen(false);
+        setNewCompany({
+          firmenname: "",
+          kundentyp: "sonstige",
+          status: "lead",
+          value: 0,
+        });
+      },
+    });
+  };
 
   if (queryError) {
     return (
@@ -85,7 +114,75 @@ export default function CompaniesPage() {
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
             </Link>
-            <Button>New Company</Button>
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Company</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Company</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="firmenname">Firmenname</Label>
+                    <Input
+                      id="firmenname"
+                      value={newCompany.firmenname}
+                      onChange={(e) => setNewCompany({ ...newCompany, firmenname: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="kundentyp">Kundentyp</Label>
+                    <Select
+                      value={newCompany.kundentyp}
+                      onValueChange={(value) => setNewCompany({ ...newCompany, kundentyp: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="restaurant">Restaurant</SelectItem>
+                        <SelectItem value="hotel">Hotel</SelectItem>
+                        <SelectItem value="marina">Marina</SelectItem>
+                        <SelectItem value="camping">Camping</SelectItem>
+                        <SelectItem value="sonstige">Sonstige</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={newCompany.status}
+                      onValueChange={(value) => setNewCompany({ ...newCompany, status: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lead">Lead</SelectItem>
+                        <SelectItem value="qualifiziert">Qualifiziert</SelectItem>
+                        <SelectItem value="akquise">Akquise</SelectItem>
+                        <SelectItem value="angebot">Angebot</SelectItem>
+                        <SelectItem value="gewonnen">Gewonnen</SelectItem>
+                        <SelectItem value="verloren">Verloren</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="value">Value (€)</Label>
+                    <Input
+                      id="value"
+                      type="number"
+                      value={newCompany.value}
+                      onChange={(e) => setNewCompany({ ...newCompany, value: Number(e.target.value) })}
+                    />
+                  </div>
+                  <Button onClick={handleCreateCompany} disabled={isCreating}>
+                    {isCreating ? "Creating..." : "Create"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
