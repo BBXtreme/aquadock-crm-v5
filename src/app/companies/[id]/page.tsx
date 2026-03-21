@@ -1,41 +1,37 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { MapPin, Phone, Mail, Anchor, Calendar, Bell } from 'lucide-react';
-import { getCompanyById } from '@/lib/supabase/services/companies';
-import { createClient } from '@/lib/supabase/browser';
-import AppLayout from '@/components/layout/AppLayout';
-import { Company } from '@/lib/supabase/types';
+import { useEffect, useState } from "react";
+
+import { useParams } from "next/navigation";
+
+import { Anchor, Bell, Calendar, Mail, MapPin, Phone } from "lucide-react";
+
+import AppLayout from "@/components/layout/AppLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/browser";
+import { getCompanyById } from "@/lib/supabase/services/companies";
+import type { Company } from "@/lib/supabase/types";
 
 export default function CompanyDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchCompany = async () => {
       setLoading(true);
-      setError('');
+      setError("");
       try {
         const supabase = createClient();
         const company = await getCompanyById(id, supabase);
         setCompany(company);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch company');
+        setError(err instanceof Error ? err.message : "Failed to fetch company");
       } finally {
         setLoading(false);
       }
@@ -48,7 +44,7 @@ export default function CompanyDetailPage() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="container mx-auto p-6 lg:p-8 space-y-8">
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
           <div>Loading...</div>
         </div>
       </AppLayout>
@@ -58,7 +54,7 @@ export default function CompanyDetailPage() {
   if (error || !company) {
     return (
       <AppLayout>
-        <div className="container mx-auto p-6 lg:p-8 space-y-8">
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
           <div>Company not found or error: {error}</div>
         </div>
       </AppLayout>
@@ -68,49 +64,49 @@ export default function CompanyDetailPage() {
   // Placeholder data for linked contacts, timeline, reminders
   const linkedContacts = [
     {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '+1234567890',
+      id: "1",
+      name: "John Doe",
+      email: "john@example.com",
+      phone: "+1234567890",
     },
     {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      phone: '+0987654321',
+      id: "2",
+      name: "Jane Smith",
+      email: "jane@example.com",
+      phone: "+0987654321",
     },
   ];
 
   const recentTimeline = [
-    { id: '1', date: '2023-10-01', event: 'Initial contact' },
-    { id: '2', date: '2023-10-05', event: 'Proposal sent' },
-    { id: '3', date: '2023-10-10', event: 'Meeting scheduled' },
-    { id: '4', date: '2023-10-15', event: 'Follow-up call' },
-    { id: '5', date: '2023-10-20', event: 'Contract signed' },
+    { id: "1", date: "2023-10-01", event: "Initial contact" },
+    { id: "2", date: "2023-10-05", event: "Proposal sent" },
+    { id: "3", date: "2023-10-10", event: "Meeting scheduled" },
+    { id: "4", date: "2023-10-15", event: "Follow-up call" },
+    { id: "5", date: "2023-10-20", event: "Contract signed" },
   ];
 
   const openReminders = [
-    { id: '1', title: 'Follow-up call', due: '2023-10-25' },
-    { id: '2', title: 'Send invoice', due: '2023-10-28' },
+    { id: "1", title: "Follow-up call", due: "2023-10-25" },
+    { id: "2", title: "Send invoice", due: "2023-10-28" },
   ];
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div>
-          <p className="text-sm text-muted-foreground">
-            Home {'>'} Companies {'>'} {company.firmenname}
+          <p className="text-muted-foreground text-sm">
+            Home {">"} Companies {">"} {company.firmenname}
           </p>
-          <div className="flex items-center justify-between mt-2">
+          <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-semibold tracking-tight">{company.firmenname}</h1>
+              <h1 className="font-semibold text-3xl tracking-tight">{company.firmenname}</h1>
               <Badge
                 className={
-                  company.status === 'won'
-                    ? 'bg-emerald-600 text-white'
-                    : company.status === 'lost'
-                      ? 'bg-rose-600 text-white'
-                      : 'bg-amber-600 text-white'
+                  company.status === "won"
+                    ? "bg-emerald-600 text-white"
+                    : company.status === "lost"
+                      ? "bg-rose-600 text-white"
+                      : "bg-amber-600 text-white"
                 }
               >
                 {company.status}
@@ -120,8 +116,8 @@ export default function CompanyDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MapPin className="mr-2 h-5 w-5" />
@@ -135,7 +131,7 @@ export default function CompanyDetailPage() {
             </CardContent>
           </Card>
 
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Phone className="mr-2 h-5 w-5" />
@@ -144,18 +140,18 @@ export default function CompanyDetailPage() {
             </CardHeader>
             <CardContent>
               <p>
-                <Mail className="inline mr-2 h-4 w-4" />
-                contact@{company.firmenname.toLowerCase().replace(/\s+/g, '')}
+                <Mail className="mr-2 inline h-4 w-4" />
+                contact@{company.firmenname.toLowerCase().replace(/\s+/g, "")}
                 .com
               </p>
               <p>
-                <Phone className="inline mr-2 h-4 w-4" />
+                <Phone className="mr-2 inline h-4 w-4" />
                 +1 234 567 890
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Anchor className="mr-2 h-5 w-5" />
@@ -163,16 +159,16 @@ export default function CompanyDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Distance to water: {company.wasserdistanz || 'N/A'} km</p>
-              <p>Water type: {company.wassertyp || 'N/A'}</p>
+              <p>Distance to water: {company.wasserdistanz || "N/A"} km</p>
+              <p>Water type: {company.wassertyp || "N/A"}</p>
               <p>
-                Coordinates: {company.lat || 'N/A'}, {company.lon || 'N/A'}
+                Coordinates: {company.lat || "N/A"}, {company.lon || "N/A"}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle>Linked Contacts</CardTitle>
           </CardHeader>
@@ -198,7 +194,7 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Calendar className="mr-2 h-5 w-5" />
@@ -225,7 +221,7 @@ export default function CompanyDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />

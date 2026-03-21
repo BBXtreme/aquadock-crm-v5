@@ -1,17 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/browser';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useEffect, useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
-  const [view, setView] = useState<'sign_in' | 'sign_up'>('sign_in');
-  const redirectTo =
-    typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : '/dashboard';
+  const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
+  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : "/dashboard";
   const router = useRouter();
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export default function LoginPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     };
     checkUser();
@@ -29,9 +31,9 @@ export default function LoginPage() {
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     });
 
@@ -39,23 +41,23 @@ export default function LoginPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-md rounded-xl border border-border bg-card text-card-foreground shadow-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-semibold">Sign In to AquaDock CRM</CardTitle>
+          <CardTitle className="font-semibold text-2xl">Sign In to AquaDock CRM</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex justify-center space-x-2 mb-4">
+          <div className="mb-4 flex justify-center space-x-2">
             <Button
-              variant={view === 'sign_in' ? 'default' : 'outline'}
-              onClick={() => setView('sign_in')}
+              variant={view === "sign_in" ? "default" : "outline"}
+              onClick={() => setView("sign_in")}
               className="flex-1"
             >
               Sign In
             </Button>
             <Button
-              variant={view === 'sign_up' ? 'default' : 'outline'}
-              onClick={() => setView('sign_up')}
+              variant={view === "sign_up" ? "default" : "outline"}
+              onClick={() => setView("sign_up")}
               className="flex-1"
             >
               Sign Up
@@ -69,8 +71,8 @@ export default function LoginPage() {
               variables: {
                 default: {
                   colors: {
-                    brand: '#24BACC',
-                    brandAccent: '#1da0a8',
+                    brand: "#24BACC",
+                    brandAccent: "#1da0a8",
                   },
                 },
               },

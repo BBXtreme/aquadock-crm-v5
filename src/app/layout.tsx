@@ -1,13 +1,14 @@
-import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
-import './globals.css';
-import ClientLayout from '@/components/layout/ClientLayout';
-import React from 'react';
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import type { Metadata } from "next";
+import "./globals.css";
+import type React from "react";
+
+import ClientLayout from "@/components/layout/ClientLayout";
 
 export const metadata: Metadata = {
-  title: 'AquaDock CRM',
-  description: 'Marine CRM for managing companies and contacts',
+  title: "AquaDock CRM",
+  description: "Marine CRM for managing companies and contacts",
 };
 
 export default function RootLayout({

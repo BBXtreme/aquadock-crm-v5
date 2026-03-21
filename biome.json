@@ -27,7 +27,8 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "noUndeclaredVariables": "error"
+        "noUndeclaredVariables": "error",
+        "useJsxKeyInIterable": "warn"
       },
       "nursery": {
         "useSortedClasses": "on"

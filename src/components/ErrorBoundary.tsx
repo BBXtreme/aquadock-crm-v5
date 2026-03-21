@@ -1,10 +1,12 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import React from "react";
+
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -27,8 +29,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    toast.error('An unexpected error occurred. Please try refreshing the page.');
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    toast.error("An unexpected error occurred. Please try refreshing the page.");
   }
 
   resetError = () => {
@@ -49,27 +51,24 @@ const DefaultErrorFallback: React.FC<{
   error?: Error;
   resetError: () => void;
 }> = ({ error, resetError }) => (
-  <div className="min-h-screen flex items-center justify-center bg-background p-4">
-    <Card className="w-full max-w-md border border-red-500 bg-card text-card-foreground shadow-sm rounded-xl">
+  <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <Card className="w-full max-w-md rounded-xl border border-red-500 bg-card text-card-foreground shadow-sm">
       <CardHeader className="text-center">
-        <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-        <CardTitle className="text-xl font-semibold text-red-600">Something went wrong</CardTitle>
+        <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+        <CardTitle className="font-semibold text-red-600 text-xl">Something went wrong</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-muted-foreground text-center">
+        <p className="text-center text-muted-foreground">
           An unexpected error occurred. Please try again or contact support if the problem persists.
         </p>
         {error && (
-          <details className="text-sm text-muted-foreground">
+          <details className="text-muted-foreground text-sm">
             <summary className="cursor-pointer">Error details</summary>
-            <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">{error.message}</pre>
+            <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs">{error.message}</pre>
           </details>
         )}
         <div className="flex space-x-2">
-          <Button
-            onClick={resetError}
-            className="flex-1 bg-[#24BACC] hover:bg-[#1da0a8] text-white"
-          >
+          <Button onClick={resetError} className="flex-1 bg-[#24BACC] text-white hover:bg-[#1da0a8]">
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>

@@ -102,4 +102,23 @@ Branch naming: feature/xxx, fix/xxx, chore/xxx
 Commit messages: conventional commits preferred
 Run pnpm check before push
 
+
+# Start of day / after git pull
+pnpm install    # if package.json changed
+
+# Normal coding (99% of the time)
+pnpm dev
+
+# Every few minutes or before commit
+# (many people have this as pre-commit hook already)
+pnpm check:fix
+
+# Before git push / creating PR
+pnpm check
+pnpm build      # optional but recommended for bigger changes
+
+# Deploy / release
+pnpm build      # Vercel does this automatically anyway
+
+
 Built with ❤️ at Waterfront Beach • 2026

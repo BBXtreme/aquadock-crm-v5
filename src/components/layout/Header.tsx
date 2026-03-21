@@ -1,44 +1,46 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Image from "next/image";
+import Link from "next/link";
+
+import { Bell, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { useTheme } from "next-themes";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { Search, Bell, User, Settings, Sun, Moon } from 'lucide-react';
-import { useTheme } from 'next-themes';
-import Image from 'next/image';
-import Link from 'next/link';
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="flex items-center justify-between h-18 p-0.5 pr-5 border-b shadow-sm">
+    <header className="flex h-18 items-center justify-between border-b p-0.5 pr-5 shadow-sm">
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="ml-5 w-22 md:w-26 h-22 md:h-26 flex items-center justify-center hover:scale-105 transition-transform">
+          <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
             <Image
-              src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
+              src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
               alt="AquaDock CRM"
               width={0}
               height={0}
               sizes="(max-width: 768px) 88px, 104px"
-              className="h-22 md:h-26 w-auto object-contain"
+              className="h-22 w-auto object-contain md:h-26"
               priority
             />
           </div>
         </Link>
-        <span className="text-lg font-semibold">CRM v5.0.1</span>
+        <span className="font-semibold text-lg">CRM v5.0.1</span>
       </div>
-      <div className="flex-1 max-w-md mx-4">
+      <div className="mx-4 max-w-md flex-1">
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8" />
         </div>
       </div>
@@ -47,11 +49,7 @@ export default function Header() {
           <Bell className="h-4 w-4" />
           <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">3</Badge>
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
+        <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>

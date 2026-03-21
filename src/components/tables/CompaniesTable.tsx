@@ -1,40 +1,36 @@
 // Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
+
+import Link from "next/link";
+
 import {
-  useReactTable,
+  type ColumnDef,
+  createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
-  createColumnHelper,
-  ColumnDef,
-} from '@tanstack/react-table';
-import { Eye, Edit, Trash, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  useReactTable,
+} from "@tanstack/react-table";
+import { Download, Edit, Eye, Trash } from "lucide-react";
+import Papa from "papaparse";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
-import Papa from 'papaparse';
-import { Company } from '@/lib/supabase/types';
-import { formatCurrency, formatDateDistance, safeDisplay } from '@/lib/utils/data-format';
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Company } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface CompaniesTableProps {
   companies: Company[];
@@ -43,30 +39,30 @@ interface CompaniesTableProps {
 const columnHelper = createColumnHelper<Company>();
 
 const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor('firmenname', {
-    id: 'firmenname',
-    header: 'Firmenname',
+  columnHelper.accessor("firmenname", {
+    id: "firmenname",
+    header: "Firmenname",
     cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
-  columnHelper.accessor('kundentyp', {
-    header: 'Kundentyp',
+  columnHelper.accessor("kundentyp", {
+    header: "Kundentyp",
     cell: (info) => (
       <Badge variant="outline" className="bg-[#24BACC] text-white">
         {safeDisplay(info.getValue())}
       </Badge>
     ),
   }) as ColumnDef<Company>,
-  columnHelper.accessor('status', {
-    header: 'Status',
+  columnHelper.accessor("status", {
+    header: "Status",
     cell: (info) => {
-      const value = info.getValue() ?? '—';
+      const value = info.getValue() ?? "—";
       return (
         <Badge
           className={cn(
-            value === 'won' && 'bg-emerald-600 text-white',
-            value === 'lost' && 'bg-rose-600 text-white',
-            value === 'lead' && 'bg-amber-600 text-white',
-            !['won', 'lost', 'lead'].includes(value) && 'bg-zinc-500 text-white'
+            value === "won" && "bg-emerald-600 text-white",
+            value === "lost" && "bg-rose-600 text-white",
+            value === "lead" && "bg-amber-600 text-white",
+            !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
           )}
         >
           {value}
@@ -74,25 +70,25 @@ const columns: ColumnDef<Company>[] = [
       );
     },
   }) as ColumnDef<Company>,
-  columnHelper.accessor('value', {
-    header: 'Value',
+  columnHelper.accessor("value", {
+    header: "Value",
     cell: (info) => formatCurrency(info.getValue()),
   }) as ColumnDef<Company>,
-  columnHelper.accessor('stadt', {
-    header: 'Stadt',
+  columnHelper.accessor("stadt", {
+    header: "Stadt",
     cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
-  columnHelper.accessor('land', {
-    header: 'Land',
+  columnHelper.accessor("land", {
+    header: "Land",
     cell: (info) => safeDisplay(info.getValue()),
   }) as ColumnDef<Company>,
-  columnHelper.accessor('created_at', {
-    header: 'Created',
+  columnHelper.accessor("created_at", {
+    header: "Created",
     cell: (info) => formatDateDistance(info.getValue()),
   }) as ColumnDef<Company>,
   columnHelper.display({
-    id: 'actions',
-    header: 'Actions',
+    id: "actions",
+    header: "Actions",
     cell: (info) => (
       <div className="flex space-x-2">
         <Link href={`/companies/${info.row.original.id}`}>
@@ -114,7 +110,7 @@ const columns: ColumnDef<Company>[] = [
 ];
 
 export default function CompaniesTable({ companies }: CompaniesTableProps) {
-  const [globalFilter, setGlobalFilter] = useState<string>('');
+  const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -136,12 +132,12 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
   const handleExport = () => {
     const data = table.getFilteredRowModel().rows.map((row) => row.original);
     const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `companies-export-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -152,12 +148,12 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
       <div className="flex items-center justify-between">
         <Input
           placeholder="Search companies..."
-          value={globalFilter ?? ''}
+          value={globalFilter ?? ""}
           onChange={(event) => setGlobalFilter(String(event.target.value))}
           className="max-w-sm"
         />
         <div className="flex space-x-2">
-          <Button onClick={handleExport} className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
+          <Button onClick={handleExport} className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
@@ -185,16 +181,14 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
           </DropdownMenu>
         </div>
       </div>
-      <div className="rounded-md border shadow-sm overflow-x-auto">
+      <div className="overflow-x-auto rounded-md border shadow-sm">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -205,9 +199,7 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
@@ -222,9 +214,9 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+        <div className="flex-1 text-muted-foreground text-sm">
+          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+          selected.
         </div>
         <div className="space-x-2">
           <Button
@@ -235,12 +227,7 @@ export default function CompaniesTable({ companies }: CompaniesTableProps) {
           >
             Previous
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
