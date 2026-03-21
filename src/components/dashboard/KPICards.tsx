@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface KPI {
   title: string;
@@ -20,7 +20,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi, index) => {
         const isPositive = kpi.changePercent >= 0;
-        const arrowColor = isPositive ? "text-[#24BACC]" : "text-rose-500";
+        const arrowColor = isPositive ? 'text-[#24BACC]' : 'text-rose-500';
 
         return (
           <Card
@@ -42,9 +42,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
                   {Math.abs(kpi.changePercent)}%
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {kpi.subtitle}
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">{kpi.subtitle}</p>
             </CardContent>
           </Card>
         );

@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
-import React from "react";
+import { useState, useEffect } from 'react';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import React from 'react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -16,8 +16,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
 
   return (

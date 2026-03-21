@@ -1,21 +1,15 @@
-import { handleSupabaseError } from "../utils";
-import type {
-  TimelineEntry,
-  TimelineEntryInsert,
-  TimelineEntryUpdate,
-} from "../types";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { handleSupabaseError } from '../utils';
+import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from '../types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Get all timeline entries with joined company data
  */
-export async function getTimeline(
-  client: SupabaseClient,
-): Promise<TimelineEntry[]> {
+export async function getTimeline(client: SupabaseClient): Promise<TimelineEntry[]> {
   const { data, error } = await client
-    .from("timeline")
-    .select("*, companies!company_id (firmenname)");
-  if (error) throw handleSupabaseError(error, "getTimeline");
+    .from('timeline')
+    .select('*, companies!company_id (firmenname)');
+  if (error) throw handleSupabaseError(error, 'getTimeline');
   return (data ?? []) as TimelineEntry[];
 }
 
@@ -24,14 +18,10 @@ export async function getTimeline(
  */
 export async function getTimelineEntryById(
   id: string,
-  client: SupabaseClient,
+  client: SupabaseClient
 ): Promise<TimelineEntry | null> {
-  const { data, error } = await client
-    .from("timeline")
-    .select("*")
-    .eq("id", id)
-    .single();
-  if (error) throw handleSupabaseError(error, "getTimelineEntryById");
+  const { data, error } = await client.from('timeline').select('*').eq('id', id).single();
+  if (error) throw handleSupabaseError(error, 'getTimelineEntryById');
   return (data as TimelineEntry | null) ?? null;
 }
 
@@ -40,14 +30,10 @@ export async function getTimelineEntryById(
  */
 export async function createTimelineEntry(
   entry: TimelineEntryInsert,
-  client: SupabaseClient,
+  client: SupabaseClient
 ): Promise<TimelineEntry> {
-  const { data, error } = await client
-    .from("timeline")
-    .insert(entry)
-    .select()
-    .single();
-  if (error) throw handleSupabaseError(error, "createTimelineEntry");
+  const { data, error } = await client.from('timeline').insert(entry).select().single();
+  if (error) throw handleSupabaseError(error, 'createTimelineEntry');
   return data as TimelineEntry;
 }
 
@@ -57,25 +43,22 @@ export async function createTimelineEntry(
 export async function updateTimelineEntry(
   id: string,
   updates: TimelineEntryUpdate,
-  client: SupabaseClient,
+  client: SupabaseClient
 ): Promise<TimelineEntry> {
   const { data, error } = await client
-    .from("timeline")
+    .from('timeline')
     .update(updates)
-    .eq("id", id)
+    .eq('id', id)
     .select()
     .single();
-  if (error) throw handleSupabaseError(error, "updateTimelineEntry");
+  if (error) throw handleSupabaseError(error, 'updateTimelineEntry');
   return data as TimelineEntry;
 }
 
 /**
  * Delete a timeline entry
  */
-export async function deleteTimelineEntry(
-  id: string,
-  client: SupabaseClient,
-): Promise<void> {
-  const { error } = await client.from("timeline").delete().eq("id", id);
-  if (error) throw handleSupabaseError(error, "deleteTimelineEntry");
+export async function deleteTimelineEntry(id: string, client: SupabaseClient): Promise<void> {
+  const { error } = await client.from('timeline').delete().eq('id', id);
+  if (error) throw handleSupabaseError(error, 'deleteTimelineEntry');
 }

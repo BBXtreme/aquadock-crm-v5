@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/browser';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,25 +19,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import AppLayout from "@/components/layout/AppLayout";
-import { toast } from "sonner";
-import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
-import {
-  getEmailTemplates,
-  getEmailLogs,
-  createEmailLog,
-} from "@/lib/supabase/services/email";
-import { getCompanies } from "@/lib/supabase/services/companies";
-import { createTimelineEntry } from "@/lib/supabase/services/timeline";
+} from '@/components/ui/table';
+import AppLayout from '@/components/layout/AppLayout';
+import { toast } from 'sonner';
+import { EmailTemplate, EmailLog } from '@/lib/supabase/types';
+import { getEmailTemplates, getEmailLogs, createEmailLog } from '@/lib/supabase/services/email';
+import { getCompanies } from '@/lib/supabase/services/companies';
+import { createTimelineEntry } from '@/lib/supabase/services/timeline';
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [history, setHistory] = useState<EmailLog[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [recipientFilter, setRecipientFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [previewBody, setPreviewBody] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [recipientFilter, setRecipientFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [previewBody, setPreviewBody] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -59,10 +55,10 @@ export default function MassEmailPage() {
       const template = templates.find((t) => t.id === selectedTemplate);
       if (template) {
         const filledBody = template.body
-          .replace(/{{firmenname}}/g, "Sample Company GmbH")
-          .replace(/{{vorname}}/g, "Max")
-          .replace(/{{nachname}}/g, "Mustermann")
-          .replace(/{{email}}/g, "max.mustermann@example.com");
+          .replace(/{{firmenname}}/g, 'Sample Company GmbH')
+          .replace(/{{vorname}}/g, 'Max')
+          .replace(/{{nachname}}/g, 'Mustermann')
+          .replace(/{{email}}/g, 'max.mustermann@example.com');
         setPreviewBody(filledBody);
       }
     }
@@ -80,13 +76,13 @@ export default function MassEmailPage() {
       // Log test email
       await createEmailLog(
         {
-          recipient_email: "test@example.com",
+          recipient_email: 'test@example.com',
           subject: template.subject,
           body: previewBody,
-          status: "sent",
+          status: 'sent',
           sent_at: new Date().toISOString(),
         },
-        supabase,
+        supabase
       );
 
       // Required: user_name must be set (non-nullable in schema)
@@ -94,19 +90,19 @@ export default function MassEmailPage() {
       await createTimelineEntry(
         {
           company_id: null,
-          activity_type: "email",
-          title: "Test Email Sent",
+          activity_type: 'email',
+          title: 'Test Email Sent',
           content: `Test email sent to test@example.com`,
-          user_name: "Mass Email System",
+          user_name: 'Mass Email System',
           user_id: null,
         },
-        supabase,
+        supabase
       );
 
-      toast.success("Test email sent successfully!");
+      toast.success('Test email sent successfully!');
     } catch (error) {
-      console.error("Error sending test email:", error);
-      toast.error("Failed to send test email");
+      console.error('Error sending test email:', error);
+      toast.error('Failed to send test email');
     } finally {
       setLoading(false);
     }
@@ -124,31 +120,31 @@ export default function MassEmailPage() {
       // Fetch recipients based on filter
       const companies = await getCompanies(supabase);
       let filteredCompanies = companies;
-      if (recipientFilter === "lead") {
-        filteredCompanies = companies.filter((c) => c.status === "lead");
-      } else if (recipientFilter === "won") {
-        filteredCompanies = companies.filter((c) => c.status === "won");
+      if (recipientFilter === 'lead') {
+        filteredCompanies = companies.filter((c) => c.status === 'lead');
+      } else if (recipientFilter === 'won') {
+        filteredCompanies = companies.filter((c) => c.status === 'won');
       }
       // Add search filter if provided
       if (searchQuery) {
         filteredCompanies = filteredCompanies.filter((c) =>
-          c.firmenname.toLowerCase().includes(searchQuery.toLowerCase()),
+          c.firmenname.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
 
       // For each company, send email (placeholder - just log)
       for (const company of filteredCompanies) {
-        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
+        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, '')}.com`;
 
         await createEmailLog(
           {
             recipient_email: recipient,
             subject: template.subject,
             body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
-            status: "sent",
+            status: 'sent',
             sent_at: new Date().toISOString(),
           },
-          supabase,
+          supabase
         );
       }
 
@@ -157,21 +153,19 @@ export default function MassEmailPage() {
       await createTimelineEntry(
         {
           company_id: null,
-          activity_type: "email",
-          title: "Mass Email Sent",
+          activity_type: 'email',
+          title: 'Mass Email Sent',
           content: `Mass email sent to ${filteredCompanies.length} recipients`,
-          user_name: "Mass Email System",
+          user_name: 'Mass Email System',
           user_id: null,
         },
-        supabase,
+        supabase
       );
 
-      toast.success(
-        `Campaign queued for ${filteredCompanies.length} recipients!`,
-      );
+      toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);
     } catch (error) {
-      console.error("Error sending emails:", error);
-      toast.error("Failed to send mass email");
+      console.error('Error sending emails:', error);
+      toast.error('Failed to send mass email');
     } finally {
       setLoading(false);
     }
@@ -182,16 +176,10 @@ export default function MassEmailPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">
-              Home {">"} Mass Email
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Mass Email
-            </h1>
+            <p className="text-sm text-muted-foreground">Home {'>'} Mass Email</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Mass Email</h1>
           </div>
-          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
-            New Campaign
-          </Button>
+          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">New Campaign</Button>
         </div>
 
         <div className="space-y-4">
@@ -213,9 +201,7 @@ export default function MassEmailPage() {
                     <TableRow key={template.id}>
                       <TableCell>{template.name}</TableCell>
                       <TableCell>{template.subject}</TableCell>
-                      <TableCell>
-                        {template.body?.substring(0, 50)}...
-                      </TableCell>
+                      <TableCell>{template.body?.substring(0, 50)}...</TableCell>
                     </TableRow>
                   ))}
                   {!templates.length && (
@@ -236,10 +222,7 @@ export default function MassEmailPage() {
                 <CardTitle>Send Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select
-                  value={selectedTemplate}
-                  onValueChange={setSelectedTemplate}
-                >
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
@@ -251,10 +234,7 @@ export default function MassEmailPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select
-                  value={recipientFilter}
-                  onValueChange={setRecipientFilter}
-                >
+                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipients" />
                   </SelectTrigger>
@@ -299,9 +279,7 @@ export default function MassEmailPage() {
                     dangerouslySetInnerHTML={{ __html: previewBody }}
                   />
                 ) : (
-                  <p className="text-muted-foreground">
-                    Select a template to preview
-                  </p>
+                  <p className="text-muted-foreground">Select a template to preview</p>
                 )}
               </CardContent>
             </Card>

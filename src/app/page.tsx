@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
-import KPICards from "@/components/dashboard/KPICards";
-import SalesPipelineFunnel from "@/components/dashboard/SalesPipelineFunnel";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import AppLayout from "@/components/layout/AppLayout";
-import { getCompanies } from "@/lib/supabase/services/companies";
-import { getTimeline } from "@/lib/supabase/services/timeline";
-import { Company, TimelineEntry } from "@/lib/supabase/types";
-import { debugQuery } from "@/lib/supabase/debug";
-import SupabaseDebug from "@/components/debug/SupabaseDebug";
-import { User } from "@supabase/supabase-js";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { formatDistanceToNow } from 'date-fns';
+import KPICards from '@/components/dashboard/KPICards';
+import SalesPipelineFunnel from '@/components/dashboard/SalesPipelineFunnel';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/browser';
+import AppLayout from '@/components/layout/AppLayout';
+import { getCompanies } from '@/lib/supabase/services/companies';
+import { getTimeline } from '@/lib/supabase/services/timeline';
+import { Company, TimelineEntry } from '@/lib/supabase/types';
+import { debugQuery } from '@/lib/supabase/debug';
+import SupabaseDebug from '@/components/debug/SupabaseDebug';
+import { User } from '@supabase/supabase-js';
 
 export default function Home() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -30,7 +30,7 @@ export default function Home() {
         // Fetch all companies for consistent preview and calculations
         const companies = await getCompanies(supabase);
         setCompanies(companies);
-        debugQuery("Dashboard Companies", companies);
+        debugQuery('Dashboard Companies', companies);
 
         const timeline = await getTimeline(supabase);
         setTimeline(timeline.slice(0, 10));
@@ -40,7 +40,7 @@ export default function Home() {
         } = await supabase.auth.getUser();
         setUser(user);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -49,94 +49,82 @@ export default function Home() {
     fetchData();
   }, []);
 
-  if (loading)
-    return <div className="p-8 text-center">Loading dashboard...</div>;
-  if (error)
-    return <div className="p-8 text-red-500 text-center">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-center">Loading dashboard...</div>;
+  if (error) return <div className="p-8 text-red-500 text-center">Error: {error}</div>;
 
   // KPI calculations
   const totalCompanies = companies.length;
-  const leads = companies.filter((c) => c.status === "lead").length;
-  const won = companies.filter((c) => c.status === "won").length;
-  const valueSum = companies.reduce(
-    (sum, c) => sum + (Number(c.value) || 0),
-    0,
-  );
+  const leads = companies.filter((c) => c.status === 'lead').length;
+  const won = companies.filter((c) => c.status === 'won').length;
+  const valueSum = companies.reduce((sum, c) => sum + (Number(c.value) || 0), 0);
   const wonValue = companies
-    .filter((c) => c.status === "won")
+    .filter((c) => c.status === 'won')
     .reduce((sum, c) => sum + (Number(c.value) || 0), 0);
   const avgValue = totalCompanies > 0 ? valueSum / totalCompanies : 0;
 
-  const kundentypCounts = companies.reduce<Record<string, number>>(
-    (acc, company) => {
-      const typ = company.kundentyp || "sonstige";
-      acc[typ] = (acc[typ] || 0) + 1;
-      return acc;
-    },
-    {},
-  );
+  const kundentypCounts = companies.reduce<Record<string, number>>((acc, company) => {
+    const typ = company.kundentyp || 'sonstige';
+    acc[typ] = (acc[typ] || 0) + 1;
+    return acc;
+  }, {});
 
-  const sortedKundentyp = Object.entries(kundentypCounts).sort(
-    (a, b) => b[1] - a[1],
-  );
-  const topKundentyp = sortedKundentyp[0]?.[0] || "N/A";
+  const sortedKundentyp = Object.entries(kundentypCounts).sort((a, b) => b[1] - a[1]);
+  const topKundentyp = sortedKundentyp[0]?.[0] || 'N/A';
 
-  const companiesByKundentyp = Object.entries(kundentypCounts).map(
-    ([kundentyp, count]) => ({
-      kundentyp,
-      count,
-    }),
-  );
+  const companiesByKundentyp = Object.entries(kundentypCounts).map(([kundentyp, count]) => ({
+    kundentyp,
+    count,
+  }));
 
   // Calculate new companies this month
   const thisMonth = new Date();
   thisMonth.setDate(1);
   const newCompaniesThisMonth = companies.filter(
-    (c) => new Date(c.created_at as string) >= thisMonth,
+    (c) => new Date(c.created_at as string) >= thisMonth
   ).length;
 
   const kpis = [
     {
-      title: "Total Companies",
+      title: 'Total Companies',
       value: totalCompanies,
       changePercent: 12,
-      subtitle: "from last month",
+      subtitle: 'from last month',
     },
     {
-      title: "Active Leads",
+      title: 'Active Leads',
       value: leads,
       changePercent: 8,
-      subtitle: "from last month",
+      subtitle: 'from last month',
     },
     {
-      title: "Won Deals",
+      title: 'Won Deals',
       value: won,
       changePercent: 20,
-      subtitle: "from last month",
+      subtitle: 'from last month',
     },
     {
-      title: "Total Value",
+      title: 'Total Value',
       value: `€${wonValue.toLocaleString()}`,
       changePercent: 15,
-      subtitle: "from last month",
+      subtitle: 'from last month',
     },
     {
-      title: "New This Month",
+      title: 'New This Month',
       value: newCompaniesThisMonth,
       changePercent: 25,
-      subtitle: "companies added",
+      subtitle: 'companies added',
     },
     {
-      title: "Avg Value",
+      title: 'Avg Value',
       value: `€${avgValue.toLocaleString()}`,
       changePercent: 10,
-      subtitle: "average deal value",
+      subtitle: 'average deal value',
     },
     {
-      title: "Top Kundentyp",
+      title: 'Top Kundentyp',
       value: topKundentyp,
       changePercent: 5,
-      subtitle: "most common type",
+      subtitle: 'most common type',
     },
   ];
 
@@ -162,10 +150,7 @@ export default function Home() {
                 </p>
                 <div className="ml-6 space-y-2">
                   {companiesByKundentyp.map((item) => (
-                    <div
-                      key={item.kundentyp}
-                      className="flex items-center space-x-3"
-                    >
+                    <div key={item.kundentyp} className="flex items-center space-x-3">
                       <div className="w-4 h-4 bg-primary rounded-full" />
                       <span className="text-sm font-medium">
                         {item.kundentyp}: {item.count}
@@ -193,21 +178,16 @@ export default function Home() {
                       <div>
                         <p className="font-medium">{entry.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          {entry.companies?.firmenname || "Unknown"} •{" "}
-                          {formatDistanceToNow(
-                            new Date(entry.created_at || new Date()),
-                            {
-                              addSuffix: true,
-                            },
-                          )}
+                          {entry.companies?.firmenname || 'Unknown'} •{' '}
+                          {formatDistanceToNow(new Date(entry.created_at || new Date()), {
+                            addSuffix: true,
+                          })}
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    No recent activity
-                  </p>
+                  <p className="text-muted-foreground text-center py-8">No recent activity</p>
                 )}
               </div>
             </CardContent>
@@ -225,20 +205,20 @@ export default function Home() {
 
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={() => setDebugMode(!debugMode)}>
-            {debugMode ? "Hide Debug" : "Show Debug"}
+            {debugMode ? 'Hide Debug' : 'Show Debug'}
           </Button>
         </div>
 
         {debugMode && (
           <SupabaseDebug
-            status={error ? "Error" : "Connected"}
+            status={error ? 'Error' : 'Connected'}
             rowCount={companies.length}
             sampleData={companies.slice(0, 2)}
             error={error}
             user={user ? { id: user.id, email: user.email } : null}
             statusSummary={{
-              lead: companies.filter((c) => c.status === "lead").length,
-              won: companies.filter((c) => c.status === "won").length,
+              lead: companies.filter((c) => c.status === 'lead').length,
+              won: companies.filter((c) => c.status === 'won').length,
             }}
           />
         )}

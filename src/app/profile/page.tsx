@@ -1,25 +1,25 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { User, LogOut } from "lucide-react";
-import React from "react";
-import AppLayout from "@/components/layout/AppLayout";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/browser';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { User, LogOut } from 'lucide-react';
+import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export default function ProfilePage() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export default function ProfilePage() {
           setError(error.message);
         } else if (user) {
           setUser(user);
-          setDisplayName(user.user_metadata?.display_name || "");
+          setDisplayName(user.user_metadata?.display_name || '');
         } else {
-          setError("No user found");
+          setError('No user found');
         }
       } catch {
-        setError("Failed to load user data");
+        setError('Failed to load user data');
       } finally {
         setLoading(false);
       }
@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setMessage('');
 
     try {
       const supabase = createClient();
@@ -61,10 +61,10 @@ export default function ProfilePage() {
       if (error) {
         setMessage(error.message);
       } else {
-        setMessage("Profile updated successfully!");
+        setMessage('Profile updated successfully!');
       }
     } catch {
-      setMessage("An error occurred");
+      setMessage('An error occurred');
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push('/login');
   };
 
   if (loading) {
@@ -94,9 +94,7 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto p-6 lg:p-8">
         <Alert>
-          <AlertDescription>
-            No user data available. Please try logging in again.
-          </AlertDescription>
+          <AlertDescription>No user data available. Please try logging in again.</AlertDescription>
         </Alert>
       </div>
     );
@@ -106,7 +104,7 @@ export default function ProfilePage() {
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div>
-          <p className="text-sm text-muted-foreground">{"Home > Profile"}</p>
+          <p className="text-sm text-muted-foreground">{'Home > Profile'}</p>
           <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
         </div>
 
@@ -122,20 +120,13 @@ export default function ProfilePage() {
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
                   <AvatarImage
-                    src={
-                      user.user_metadata?.avatar_url ||
-                      "/placeholder-avatar.jpg"
-                    }
+                    src={user.user_metadata?.avatar_url || '/placeholder-avatar.jpg'}
                     alt="Profile"
                   />
-                  <AvatarFallback>
-                    {user.email?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
+                  <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-lg font-medium">
-                    {displayName || "No display name"}
-                  </p>
+                  <p className="text-lg font-medium">{displayName || 'No display name'}</p>
                   <p className="text-muted-foreground">{user.email}</p>
                 </div>
               </div>
@@ -160,22 +151,15 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="profilePicture">Profile Picture</Label>
-                  <Input
-                    id="profilePicture"
-                    type="file"
-                    accept="image/*"
-                    disabled
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Upload functionality placeholder
-                  </p>
+                  <Input id="profilePicture" type="file" accept="image/*" disabled />
+                  <p className="text-sm text-muted-foreground">Upload functionality placeholder</p>
                 </div>
                 <Button
                   type="submit"
                   className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
                   disabled={loading}
                 >
-                  {loading ? "Updating..." : "Update Profile"}
+                  {loading ? 'Updating...' : 'Update Profile'}
                 </Button>
               </form>
               {message && (
@@ -192,11 +176,7 @@ export default function ProfilePage() {
             <CardTitle>Account Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={handleLogout}
-              variant="destructive"
-              className="flex items-center"
-            >
+            <Button onClick={handleLogout} variant="destructive" className="flex items-center">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>

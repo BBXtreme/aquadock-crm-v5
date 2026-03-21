@@ -1,137 +1,100 @@
-# AquaDock CRM – Supabase Schema Documentation
+# AquaDock CRM – Supabase Schema v5
 
-**Version**: v5 (March 2026)  
-**Last updated**: 2026-03-20  
-**Source**: Supabase CLI dump + SQL queries + manual review  
-**Generated types**: `src/lib/supabase/database.types.ts`  
-**Service layer**: `src/lib/supabase/services/` (CRUD wrappers with error handling)
+**Version**: 5.0 (March 2026)  
+**Last audited**: 2026-03-21  
+**Environment**: Supabase PostgreSQL 15+  
+**RLS**: Enabled on all business tables  
+**Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
+**Service layer**: `src/lib/supabase/services/*.ts`
 
-## 1. Summary
+## 1. Overview
 
-| Table           | Description              | Rows (approx) | PK        | Main FKs                  | RLS? | Indexes? |
-| --------------- | ------------------------ | ------------- | --------- | ------------------------- | ---- | -------- |
-| companies       | Core company data        | ~450          | id (uuid) | —                         | Yes  | Yes      |
-| contacts        | People / decision makers | ~1,200        | id (uuid) | → companies.id            | Yes  | Yes      |
-| reminders       | Tasks & follow-ups       | ~320          | id (uuid) | → companies.id            | Yes  | Yes      |
-| timeline        | Activity history         | ~2,800        | id (uuid) | → companies.id (nullable) | Yes  | Yes      |
-| email_log       | Sent email tracking      | ~1,900        | id (uuid) | —                         | Yes  | —        |
-| email_templates | Reusable templates       | ~18           | id (uuid) | —                         | Yes  | —        |
+| Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
+| --------------- | ------------------------- | ----- | ---- | ------------------------- | ---- | ---------------------------- |
+| companies       | Core business entities    | 450   | uuid | —                         | Yes  | status, user_id, kundentyp   |
+| contacts        | Persons / decision makers | 1 200 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
+| reminders       | Tasks & follow-ups        | 320   | uuid | → companies.id (required) | Yes  | company_id, due_date, status |
+| timeline        | Activity log              | 2 800 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
+| email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
+| email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 
-## 2. Detailed Schemas
+## 2. Core Tables – Column Overview
 
 ### companies
-**Primary Key**: id (uuid)  
-**Description**: Main entity for companies/harbours/resorts/etc.
 
-| Column        | Type        | Nullable | Default            | Comment / Business Meaning                                   | Constraints / Indexes |
-| ------------- | ----------- | -------- | ------------------ | ------------------------------------------------------------ | --------------------- |
-| id            | uuid        | NO       | uuid_generate_v4() | Unique record ID                                             | PK                    |
-| firmenname    | text        | NO       | —                  | Official company name                                        | —                     |
-| rechtsform    | text        | YES      | —                  | Legal form (GmbH, AG, e.K., etc.)                            | —                     |
-| kundentyp     | text        | NO       | 'sonstige'         | Category: restaurant, hotel, marina, camping, segelschule, sonstige | —                     |
-| firmentyp     | text        | YES      | —                  | Chain vs. independent                                        | —                     |
-| strasse       | text        | YES      | —                  | Street address                                               | —                     |
-| plz           | text        | YES      | —                  | Postal code                                                  | —                     |
-| stadt         | text        | YES      | —                  | City                                                         | —                     |
-| bundesland    | text        | YES      | —                  | Federal state                                                | —                     |
-| land          | text        | YES      | 'Deutschland'      | Country                                                      | —                     |
-| website       | text        | YES      | —                  | Website URL                                                  | —                     |
-| telefon       | text        | YES      | —                  | Phone                                                        | —                     |
-| email         | text        | YES      | —                  | Main email                                                   | —                     |
-| wasserdistanz | real        | YES      | —                  | Distance to nearest water [km]                               | —                     |
-| wassertyp     | text        | YES      | —                  | Sea, lake, river, canal                                      | —                     |
-| lat           | real        | YES      | —                  | Latitude                                                     | —                     |
-| lon           | real        | YES      | —                  | Longitude                                                    | —                     |
-| osm           | text        | YES      | —                  | OpenStreetMap node/way/relation ID                           | —                     |
-| import_batch  | text        | YES      | —                  | Import batch identifier (for deduplication)                  | —                     |
-| status        | text        | NO       | 'lead'             | lead, interessant, qualifiziert, akquise, angebot, gewonnen, verloren | Index                 |
-| value         | bigint      | YES      | 0                  | Estimated project value [€]                                  | —                     |
-| notes         | text        | YES      | —                  | Internal notes                                               | —                     |
-| created_at    | timestamptz | YES      | now()              | Record creation time                                         | —                     |
-| updated_at    | timestamptz | YES      | now()              | Last update time                                             | —                     |
-| user_id       | uuid        | YES      | —                  | Owning user (auth.uid())                                     | Index                 |
+| Column     | Type        | Nullable | Default           | Business Meaning                          | Notes / Index |
+| ---------- | ----------- | -------- | ----------------- | ----------------------------------------- | ------------- |
+| id         | uuid        | false    | gen_random_uuid() | Primary key                               | PK            |
+| firmenname | text        | false    | —                 | Legal name                                | —             |
+| kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
+| status     | text        | false    | 'lead'            | lead, qualifiziert, gewonnen, verloren, … | Indexed       |
+| value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
+| lat / lon  | real        | true     | —                 | Geographic coordinates                    | —             |
+| osm        | text        | true     | —                 | OSM node/way/relation ID                  | —             |
+| user_id    | uuid        | true     | —                 | Owner (auth.uid())                        | Indexed       |
+| created_at | timestamptz | true     | now()             | —                                         | —             |
+| updated_at | timestamptz | true     | now()             | —                                         | —             |
 
-(Repeat similar blocks for contacts, reminders, timeline, email_log, email_templates — use your existing data)
+*(contacts, reminders, timeline follow similar pattern – full columns in generated types)*
 
-## 3. Relationships & Joins
+## 3. Important Enums & Constraints
 
-- contacts.company_id → companies.id (nullable)
-- reminders.company_id → companies.id (required)
-- timeline.company_id → companies.id (nullable – global events possible)
+- `companies.status`: `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren'`
+- `reminders.priority`: `'hoch' | 'normal' | 'niedrig'`
+- `reminders.status`: `'open' | 'closed'`
 
-## 4. Indexes & Performance
+## 4. Row Level Security (RLS) – Summary
 
-- companies: idx_companies_status (on status)
-- companies: idx_companies_user_id (on user_id)
-- contacts: idx_contacts_company_id (on company_id)
-- reminders: idx_reminders_company_id (on company_id)
-- reminders: idx_reminders_due_date (on due_date)
-- timeline: idx_timeline_company_id (on company_id)
+All tables use the same pattern:
 
-| schemaname | tablename       | indexname                | indexdef                                                     |
-| ---------- | --------------- | ------------------------ | ------------------------------------------------------------ |
-| public     | companies       | companies_pkey           | CREATE UNIQUE INDEX companies_pkey ON public.companies USING btree (id) |
-| public     | companies       | idx_companies_kundentyp  | CREATE INDEX idx_companies_kundentyp ON public.companies USING btree (kundentyp) |
-| public     | companies       | idx_companies_status     | CREATE INDEX idx_companies_status ON public.companies USING btree (status) |
-| public     | companies       | idx_companies_user_id    | CREATE INDEX idx_companies_user_id ON public.companies USING btree (user_id) |
-| public     | contacts        | contacts_pkey            | CREATE UNIQUE INDEX contacts_pkey ON public.contacts USING btree (id) |
-| public     | contacts        | idx_contacts_company_id  | CREATE INDEX idx_contacts_company_id ON public.contacts USING btree (company_id) |
-| public     | contacts        | idx_contacts_is_primary  | CREATE INDEX idx_contacts_is_primary ON public.contacts USING btree (company_id, is_primary) |
-| public     | contacts        | idx_contacts_user_id     | CREATE INDEX idx_contacts_user_id ON public.contacts USING btree (user_id) |
-| public     | email_log       | email_log_pkey           | CREATE UNIQUE INDEX email_log_pkey ON public.email_log USING btree (id) |
-| public     | email_templates | email_templates_name_key | CREATE UNIQUE INDEX email_templates_name_key ON public.email_templates USING btree (name) |
-| public     | email_templates | email_templates_pkey     | CREATE UNIQUE INDEX email_templates_pkey ON public.email_templates USING btree (id) |
-| public     | reminders       | idx_reminders_company_id | CREATE INDEX idx_reminders_company_id ON public.reminders USING btree (company_id) |
-| public     | reminders       | idx_reminders_due_date   | CREATE INDEX idx_reminders_due_date ON public.reminders USING btree (due_date) |
-| public     | reminders       | idx_reminders_status     | CREATE INDEX idx_reminders_status ON public.reminders USING btree (status) |
-| public     | reminders       | idx_reminders_user_id    | CREATE INDEX idx_reminders_user_id ON public.reminders USING btree (user_id) |
-| public     | reminders       | reminders_pkey           | CREATE UNIQUE INDEX reminders_pkey ON public.reminders USING btree (id) |
-| public     | timeline        | idx_timeline_company_id  | CREATE INDEX idx_timeline_company_id ON public.timeline USING btree (company_id) |
-| public     | timeline        | idx_timeline_user_id     | CREATE INDEX idx_timeline_user_id ON public.timeline USING btree (user_id) |
-| public     | timeline        | timeline_pkey            | CREATE UNIQUE INDEX timeline_pkey ON public.timeline USING btree (id) |
+```sql
+-- Read / Update / Delete
+(auth.uid() = user_id)
+OR
+(company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
+OR
+(auth.role() IN ('admin', 'service_role'))
 
-## 5. Row Level Security (RLS)
+-- Insert: WITH CHECK (auth.uid() = user_id)
+Admin & service_role bypass for maintenance & migrations.
+5. Performance Indexes (active)
 
-- All tables: enabled
-- Policy pattern: `auth.uid() = user_id` or `company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())`
+companies: status, kundentyp, user_id
+contacts: company_id, user_id, (company_id + is_primary)
+reminders: company_id, due_date, status, user_id
+timeline: company_id, user_id
 
-| tablename | policyname                 | roles    | cmd    | qual                                                         | with_check             |
-| --------- | -------------------------- | -------- | ------ | ------------------------------------------------------------ | ---------------------- |
-| companies | users_delete_own_companies | {public} | DELETE | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
-| companies | users_insert_own_companies | {public} | INSERT | null                                                         | (auth.uid() = user_id) |
-| companies | users_read_own_companies   | {public} | SELECT | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
-| companies | users_update_own_companies | {public} | UPDATE | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
-| contacts  | users_delete_own_contacts  | {public} | DELETE | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
-| contacts  | users_insert_own_contacts  | {public} | INSERT | null                                                         | (auth.uid() = user_id) |
-| contacts  | users_read_own_contacts    | {public} | SELECT | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
-| contacts  | users_update_own_contacts  | {public} | UPDATE | ((auth.uid() = user_id) OR (auth.role() = ANY (ARRAY['admin'::text, 'service_role'::text]))) | null                   |
+```
 
-## 6. Type Safety & Services
 
-- All queries use generated types: `src/lib/supabase/database.types.ts`
-- Centralized service layer: `src/lib/supabase/services/{table}.ts`
-- Error handling: consistent via `handleSupabaseError()`
 
-## 5. Enums / Status Values
+## 6. Maintenance & Type Safety
 
-- companies.status: lead, interessant, qualifiziert, akquise, angebot, gewonnen, verloren
-- reminders.priority: hoch, normal, niedrig
-- reminders.status: open, closed
-- email_log.status: sent, failed, pending
+Regenerate types after schema change
+Bash# Local Supabase
+npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
-## 6. Type Safety & Service Layer
+# Remote project (recommended for CI)
+npx supabase gen types typescript --project-id <your-project-ref> > src/lib/supabase/database.types.ts
+Service layer pattern (example):
+TypeScript// src/lib/supabase/services/companies.ts
+import { createServerClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/database.types";
 
-- All queries use generated types: `src/lib/supabase/database.types.ts`
-- Centralized services: `src/lib/supabase/services/{table}.ts`
-- Error handling: `handleSupabaseError()` in `client.ts`
+type Company = Database["public"]["Tables"]["companies"]["Row"];
 
-## 7. Change Log & Update Instructions
+export async function getCompanies(userId: string): Promise<Company[]> {
+  const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("user_id", userId)
+    .order("firmenname");
 
-- **2026-03-20**: Initial schema snapshot + types generation
-- **Next change**: Add new columns/tables → re-run `npx supabase gen types` & update this file
+  if (error) throw handleSupabaseError(error);
+  return data ?? [];
+}
+## 7. Change Log
 
-## 8. Entity Relationship Overview (Text)
-
-companies (1) ───┬─── (N) contacts                 ├─── (N) reminders                 └─── (N) timeline (nullable) email_templates (1) ───┬─── (N) email_log (via template_name)
-
-![mermaid-diagram](/Users/marco/Downloads/mermaid-diagram.svg)
+2026-03-20 Initial v5 snapshot
+2026-03-21 Refined documentation, added index overview

@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Home, Building, Users, Clock, Bell, Mail } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, Home, Building, Users, Clock, Bell, Mail } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -14,19 +14,15 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/companies", label: "Companies", icon: Building },
-  { href: "/contacts", label: "Contacts", icon: Users },
-  { href: "/timeline", label: "Timeline", icon: Clock },
-  { href: "/reminders", label: "Reminders", icon: Bell },
-  { href: "/mass-email", label: "Mass Email", icon: Mail },
+  { href: '/', label: 'Dashboard', icon: Home },
+  { href: '/companies', label: 'Companies', icon: Building },
+  { href: '/contacts', label: 'Contacts', icon: Users },
+  { href: '/timeline', label: 'Timeline', icon: Clock },
+  { href: '/reminders', label: 'Reminders', icon: Bell },
+  { href: '/mass-email', label: 'Mass Email', icon: Mail },
 ];
 
-export default function Sidebar({
-  isCollapsed,
-  isMobile,
-  onToggle,
-}: SidebarProps) {
+export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
   const pathname = usePathname();
 
   const sidebarContent = (
@@ -43,10 +39,7 @@ export default function Sidebar({
               <Link href={item.href}>
                 <Button
                   variant="ghost"
-                  className={cn(
-                    "w-full justify-start",
-                    pathname === item.href && "bg-accent",
-                  )}
+                  className={cn('w-full justify-start', pathname === item.href && 'bg-accent')}
                 >
                   <item.icon className="h-4 w-4" />
                   {!isCollapsed && <span className="ml-2">{item.label}</span>}
@@ -75,9 +68,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside
-      className={`bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"}`}
-    >
+    <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
       {sidebarContent}
     </aside>
   );

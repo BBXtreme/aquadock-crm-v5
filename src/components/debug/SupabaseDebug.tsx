@@ -1,14 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown } from "lucide-react";
-import { Company } from "@/lib/supabase/types";
+import { useState } from 'react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ChevronDown } from 'lucide-react';
+import { Company } from '@/lib/supabase/types';
 
 interface SupabaseDebugProps {
   status: string;
@@ -37,7 +33,7 @@ export default function SupabaseDebug({
             <CardTitle className="flex items-center justify-between">
               Supabase Connection Debug
               <ChevronDown
-                className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
               />
             </CardTitle>
           </CardHeader>
@@ -55,7 +51,7 @@ export default function SupabaseDebug({
                   statusSummary,
                 },
                 null,
-                2,
+                2
               )}
             </pre>
           </CardContent>

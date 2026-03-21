@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Settings, Bell, Palette, Shield } from "lucide-react";
-import AppLayout from "@/components/layout/AppLayout";
+} from '@/components/ui/select';
+import { Settings, Bell, Palette, Shield } from 'lucide-react';
+import AppLayout from '@/components/layout/AppLayout';
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(false);
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("en");
+  const [theme, setTheme] = useState('system');
+  const [language, setLanguage] = useState('en');
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div>
-          <p className="text-sm text-muted-foreground">Home {">"} Settings</p>
+          <p className="text-sm text-muted-foreground">Home {'>'} Settings</p>
           <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
         </div>
 
@@ -48,11 +48,7 @@ export default function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="emailAlerts">Email Alerts</Label>
-                <Switch
-                  id="emailAlerts"
-                  checked={emailAlerts}
-                  onCheckedChange={setEmailAlerts}
-                />
+                <Switch id="emailAlerts" checked={emailAlerts} onCheckedChange={setEmailAlerts} />
               </div>
               <p className="text-sm text-muted-foreground">
                 Configure how you receive notifications
@@ -94,9 +90,7 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Customize your app appearance
-              </p>
+              <p className="text-sm text-muted-foreground">Customize your app appearance</p>
             </CardContent>
           </Card>
 
@@ -117,9 +111,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Data Export</Label>
-                <p className="text-sm text-muted-foreground">
-                  Download your data
-                </p>
+                <p className="text-sm text-muted-foreground">Download your data</p>
                 <Button variant="outline" size="sm">
                   Export Data
                 </Button>
@@ -140,25 +132,19 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>API Access</Label>
-                <p className="text-sm text-muted-foreground">
-                  Manage API keys and integrations
-                </p>
+                <p className="text-sm text-muted-foreground">Manage API keys and integrations</p>
                 <Button variant="outline" size="sm">
                   Manage API
                 </Button>
               </div>
               <div className="space-y-2">
                 <Label>Data Retention</Label>
-                <p className="text-sm text-muted-foreground">
-                  Configure data retention policies
-                </p>
+                <p className="text-sm text-muted-foreground">Configure data retention policies</p>
                 <Button variant="outline" size="sm">
                   Configure
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Advanced settings for power users
-              </p>
+              <p className="text-sm text-muted-foreground">Advanced settings for power users</p>
             </CardContent>
           </Card>
         </div>

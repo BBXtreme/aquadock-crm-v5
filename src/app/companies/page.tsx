@@ -1,34 +1,32 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import CompaniesTable from "@/components/tables/CompaniesTable";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Building, Users, Trophy, DollarSign, RefreshCw } from "lucide-react";
-import Link from "next/link";
-import AppLayout from "@/components/layout/AppLayout";
-import { Company } from "@/lib/supabase/types";
-import { getCompanies } from "@/lib/supabase/services/companies";
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/browser';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import CompaniesTable from '@/components/tables/CompaniesTable';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Building, Users, Trophy, DollarSign, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import AppLayout from '@/components/layout/AppLayout';
+import { Company } from '@/lib/supabase/types';
+import { getCompanies } from '@/lib/supabase/services/companies';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const supabase = createClient();
       const companies = await getCompanies(supabase);
       setCompanies(companies);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch companies",
-      );
+      setError(err instanceof Error ? err.message : 'Failed to fetch companies');
     } finally {
       setLoading(false);
     }
@@ -39,12 +37,9 @@ export default function CompaniesPage() {
   }, []);
 
   const totalCompanies = companies.length;
-  const leads = companies.filter((c) => c.status === "lead").length;
-  const won = companies.filter((c) => c.status === "won").length;
-  const valueSum = companies.reduce(
-    (sum: number, c: Company) => sum + (c.value || 0),
-    0,
-  );
+  const leads = companies.filter((c) => c.status === 'lead').length;
+  const won = companies.filter((c) => c.status === 'won').length;
+  const valueSum = companies.reduce((sum: number, c: Company) => sum + (c.value || 0), 0);
 
   if (error) {
     return (
@@ -52,12 +47,8 @@ export default function CompaniesPage() {
         <div className="container mx-auto p-6 lg:p-8 space-y-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">
-                {"Home > Companies"}
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Companies
-              </h1>
+              <p className="text-sm text-muted-foreground">{'Home > Companies'}</p>
+              <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
             </div>
             <div className="flex space-x-2">
               <Link href="/import">
@@ -89,9 +80,7 @@ export default function CompaniesPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">
-              {"Home > Companies"}
-            </p>
+            <p className="text-sm text-muted-foreground">{'Home > Companies'}</p>
             <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
           </div>
           <div className="flex space-x-2">
@@ -105,9 +94,7 @@ export default function CompaniesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Companies
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
               <Building className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -153,9 +140,7 @@ export default function CompaniesPage() {
               {loading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <div className="text-2xl font-bold">
-                  €{valueSum.toLocaleString()}
-                </div>
+                <div className="text-2xl font-bold">€{valueSum.toLocaleString()}</div>
               )}
             </CardContent>
           </Card>
