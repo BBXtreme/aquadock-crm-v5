@@ -19,6 +19,7 @@ import { Download, Edit, Eye, Trash } from "lucide-react";
 import Papa from "papaparse";
 
 import { Badge } from "@/components/ui/badge";
+import { BulkDeleteConfirmationDialog } from "@/components/ui/bulk-delete-confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -134,6 +135,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -224,8 +226,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
                 <Button
                   variant="destructive"
                   size="sm"
-                  disabled
-                  onClick={() => console.log("bulk delete clicked")}
+                  onClick={() => setDeleteDialogOpen(true)}
                 >
                   Löschen
                 </Button>
@@ -286,6 +287,21 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
           </Button>
         </div>
       </div>
+
+      <BulkDeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`${selectedRows.length} Firmen löschen`}
+        description={`${selectedRows.length} Firmen wirklich löschen? Kontakte/Timeline werden mitgelöscht.`}
+        onConfirm={() => {
+          // Placeholder for now
+          console.log("bulk delete clicked");
+        }}
+        confirmText="Löschen"
+        cancelText="Abbrechen"
+        loading={false}
+        count={selectedRows.length}
+      />
     </div>
   );
 }
