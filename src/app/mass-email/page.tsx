@@ -277,6 +277,7 @@ export default function MassEmailPage() {
                 {previewBody ? (
                   <div
                     className="prose prose-sm max-w-none"
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
                   />
                 ) : (
