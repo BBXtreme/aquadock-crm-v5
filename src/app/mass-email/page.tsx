@@ -23,7 +23,7 @@ export default function MassEmailPage() {
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewBody, setPreviewBody] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
     queryKey: ['email-templates'],
@@ -43,6 +43,8 @@ export default function MassEmailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const loading = templatesLoading || historyLoading;
+
   useEffect(() => {
     if (selectedTemplate) {
       const template = templates.find((t) => t.id === selectedTemplate);
@@ -60,7 +62,7 @@ export default function MassEmailPage() {
   const handleSendTest = async () => {
     if (!selectedTemplate) return;
 
-    setLoading(true);
+    setSendLoading(true);
     try {
       const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
@@ -97,14 +99,14 @@ export default function MassEmailPage() {
       console.error("Error sending test email:", error);
       toast.error("Failed to send test email");
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
   const handleSendToAll = async () => {
     if (!selectedTemplate) return;
 
-    setLoading(true);
+    setSendLoading(true);
     try {
       const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
@@ -160,7 +162,7 @@ export default function MassEmailPage() {
       console.error("Error sending emails:", error);
       toast.error("Failed to send mass email");
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
@@ -245,14 +247,14 @@ export default function MassEmailPage() {
                 <div className="flex space-x-2">
                   <Button
                     onClick={handleSendTest}
-                    disabled={!selectedTemplate || loading}
+                    disabled={!selectedTemplate || sendLoading}
                     className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
                   >
                     Send Test
                   </Button>
                   <Button
                     onClick={handleSendToAll}
-                    disabled={!selectedTemplate || loading}
+                    disabled={!selectedTemplate || sendLoading}
                     className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
                   >
                     Send to All
