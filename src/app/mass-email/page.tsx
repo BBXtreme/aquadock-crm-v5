@@ -26,6 +26,7 @@ import { getCompanies } from '@/lib/supabase/services/companies';
 import { createEmailLog, getEmailLogs, getEmailTemplates } from '@/lib/supabase/services/email';
 import { createTimelineEntry } from '@/lib/supabase/services/timeline';
 import type { EmailLog, EmailTemplate } from '@/lib/supabase/types';
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -276,7 +277,7 @@ export default function MassEmailPage() {
                 {previewBody ? (
                   <div
                     className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: previewBody }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
                   />
                 ) : (
                   <p className="text-muted-foreground">Select a template to preview</p>
