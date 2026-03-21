@@ -79,16 +79,25 @@ export default function CompaniesPage() {
     setIsBulkDeleteDialogOpen(true);
   };
 
-  const handleConfirmBulkDelete = () => {
-    bulkDeleteIds.forEach(id => {
-      deleteCompany.mutate({ id }, {
-        onSuccess: () => {
-          console.log(`Deleted ${id}`)
-        }
-      })
-    })
-    setIsBulkDeleteDialogOpen(false);
+  const handleConfirmBulkDelete = async () => {
+    setIsBulkDeleteDialogOpen(false); // close early for perceived speed
+
+    const promises = bulkDeleteIds.map(id => deleteCompany.mutateAsync({ id }));
+
+    const results = await Promise.allSettled(promises);
+
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    console.log(`Successfully deleted ${successCount}/${bulkDeleteIds.length}`);
+
+    // Error handling
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`Failed to delete ${bulkDeleteIds[index]}:`, result.reason);
+      }
+    });
+
     setBulkDeleteIds([]);
+    // later steps will add toast + clear selection
   };
 
   if (queryError) {
