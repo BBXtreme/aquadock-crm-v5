@@ -1,8 +1,7 @@
 'use client';
 
+import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import React from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface KPI {
   title: string;
