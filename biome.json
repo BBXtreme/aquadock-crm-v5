@@ -1,7 +1,4 @@
 {
-  "files": {
-    "ignore": ["src/app/globals.css"]
-  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
