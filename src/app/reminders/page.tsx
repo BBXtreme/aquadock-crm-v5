@@ -72,7 +72,7 @@ export default function RemindersPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
