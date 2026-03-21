@@ -45,8 +45,16 @@ export function safeString(str: string | null | undefined): string {
  */
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.error(`Supabase error in ${context}:`, error);
+  console.dir(error, { depth: null });
   if (error instanceof Error) {
-    return new Error(`Database error: ${error.message}`);
+    let message = `Database error: ${error.message}`;
+    if ('code' in error && error.code) {
+      message += ` (Code: ${error.code})`;
+    }
+    if ('details' in error && error.details) {
+      message += ` Details: ${error.details}`;
+    }
+    return new Error(message);
   }
   return new Error("An unknown database error occurred");
 }
