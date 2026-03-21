@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Browser client for client-side operations
 export function createClient() {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl!, supabaseAnonKey!);
 }
 
 // Central error handler
