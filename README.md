@@ -3,6 +3,16 @@
 Modern CRM for marinas, hotels, restaurants & water-sports businesses  
 **Next.js 16 • React 19 • Supabase • Tailwind v4 • shadcn/ui (radix-nova)**
 
+## Recent Refactor (March 2026)
+
+- shadcn/ui updated to latest radix-nova style
+- Biome upgraded & configured (minimal, Tailwind v4 compatible)
+- Static loading skeletons cleaned (keys removed)
+- Type safety improved (no non-null assertions on env vars)
+- Pre-commit hook now reliable
+
+Next: react-query caching, RHF + zod forms, mass-email sanitization
+
 ## Tech Stack
 
 | Layer            | Technology                              | Version / Note                  |
