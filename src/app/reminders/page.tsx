@@ -50,9 +50,8 @@ export default function RemindersPage() {
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between gap-4">
               <span>{error.message}</span>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Erneut versuchen
+              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                Retry
               </Button>
             </AlertDescription>
           </Alert>
@@ -74,36 +73,32 @@ export default function RemindersPage() {
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="pb-2">
               <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="pb-2">
               <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="pb-2">
               <CardTitle className="font-medium text-sm">This Week</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="pb-2">
               <CardTitle className="font-medium text-sm">High Priority</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
@@ -124,8 +119,8 @@ export default function RemindersPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map(() => (
-                    <Skeleton className="h-12 w-full" />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
                   ))}
                 </div>
               </div>
@@ -149,7 +144,7 @@ export default function RemindersPage() {
                         <TableRow key={reminder.id}>
                           <TableCell>{reminder.title}</TableCell>
                           <TableCell>
-                            <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+                            <Link href={`/companies/${reminder.company_id}`} className="text-primary hover:underline">
                               {reminder.companies?.firmenname}
                             </Link>
                           </TableCell>
