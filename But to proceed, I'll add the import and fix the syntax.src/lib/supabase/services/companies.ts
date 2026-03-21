@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/browser";
+import { createServerSupabaseClient as createServerClient } from "@/lib/supabase/server";
 
 import type { Company } from "../types";
 import { handleSupabaseError } from "../utils";
@@ -68,7 +69,7 @@ export async function createCompany(
  */
 export async function updateCompany(
   id: string,
-  updates: Partial<Omit<Company, "id" | "created_at" | "updated_at">,
+  updates: Partial<Omit<Company, "id" | "created_at" | "updated_at">>,
   client: SupabaseClient,
 ): Promise<Company | null> {
   const { data, error } = await client.from("companies").update(updates).eq("id", id).select().single();
@@ -82,7 +83,7 @@ export async function updateCompany(
 export async function deleteCompany(id: string): Promise<boolean> {
   if (!id || typeof id !== "string") throw new Error("Invalid ID");
 
-  const supabase = createServerClient(true); // service role
+  const supabase = createServerClient(); // service role
   // TODO: remove after RLS fix
 
   const { error } = await supabase.from("companies").delete().eq("id", id);
