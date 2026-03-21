@@ -8,7 +8,7 @@ type CookieOptions = {
   httpOnly?: boolean;
   maxAge?: number;
   path?: string;
-  sameSite?: boolean | 'strict' | 'lax' | 'none';
+  sameSite?: boolean | "strict" | "lax" | "none";
   secure?: boolean;
 };
 

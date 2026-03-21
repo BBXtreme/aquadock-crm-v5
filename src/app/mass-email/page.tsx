@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "isomorphic-dompurify";
 import { toast } from "sonner";
-import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export default function MassEmailPage() {
   const [sendLoading, setSendLoading] = useState(false);
 
   const { data: templates = [], isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
-    queryKey: ['email-templates'],
+    queryKey: ["email-templates"],
     queryFn: async () => {
       const supabase = createClient();
       return getEmailTemplates(supabase);
@@ -35,7 +35,7 @@ export default function MassEmailPage() {
   });
 
   const { data: history = [], isLoading: historyLoading } = useQuery<EmailLog[]>({
-    queryKey: ['email-logs'],
+    queryKey: ["email-logs"],
     queryFn: async () => {
       const supabase = createClient();
       return getEmailLogs(supabase);
@@ -43,7 +43,7 @@ export default function MassEmailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const loading = templatesLoading || historyLoading;
+  const _loading = templatesLoading || historyLoading;
 
   useEffect(() => {
     if (selectedTemplate) {
