@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/browser';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -20,12 +21,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import AppLayout from '@/components/layout/AppLayout';
-import { toast } from 'sonner';
-import { EmailTemplate, EmailLog } from '@/lib/supabase/types';
-import { getEmailTemplates, getEmailLogs, createEmailLog } from '@/lib/supabase/services/email';
+import { createClient } from '@/lib/supabase/browser';
 import { getCompanies } from '@/lib/supabase/services/companies';
+import { createEmailLog, getEmailLogs, getEmailTemplates } from '@/lib/supabase/services/email';
 import { createTimelineEntry } from '@/lib/supabase/services/timeline';
+import type { EmailLog, EmailTemplate } from '@/lib/supabase/types';
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
