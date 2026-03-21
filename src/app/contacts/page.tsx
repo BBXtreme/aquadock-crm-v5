@@ -108,7 +108,7 @@ export default function ContactsPage() {
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={`loading-skeleton-${i}`} className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
                 ))}
               </div>
             ) : (

@@ -161,7 +161,7 @@ export default function CompaniesPage() {
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
                   {Array.from({ length: 6 }).map((_, _i) => (
-                    <Skeleton key={_i} className="h-14 w-full" />
+                    <Skeleton className="h-14 w-full" />
                   ))}
                 </div>
               </div>
