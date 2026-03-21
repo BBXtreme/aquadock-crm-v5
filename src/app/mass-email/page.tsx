@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import DOMPurify from "isomorphic-dompurify";
 import { toast } from "sonner";
+import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -18,27 +19,29 @@ import { createTimelineEntry } from "@/lib/supabase/services/timeline";
 import type { EmailLog, EmailTemplate } from "@/lib/supabase/types";
 
 export default function MassEmailPage() {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [history, setHistory] = useState<EmailLog[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewBody, setPreviewBody] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Fetch email templates
+  const { data: templates = [], isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
+    queryKey: ['email-templates'],
+    queryFn: async () => {
       const supabase = createClient();
-      const templates = await getEmailTemplates(supabase);
-      setTemplates(templates);
+      return getEmailTemplates(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      // Fetch send history
-      const history = await getEmailLogs(supabase);
-      setHistory(history);
-    };
-    fetchData();
-  }, []);
+  const { data: history = [], isLoading: historyLoading } = useQuery<EmailLog[]>({
+    queryKey: ['email-logs'],
+    queryFn: async () => {
+      const supabase = createClient();
+      return getEmailLogs(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     if (selectedTemplate) {
