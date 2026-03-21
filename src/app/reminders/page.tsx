@@ -124,8 +124,9 @@ export default function RemindersPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={`reminder-skeleton-${i}`} className="h-12 w-full" />
+                  // eslint-disable-next-line react/jsx-key
+                  {Array.from({ length: 5 }).map(() => (
+                    <Skeleton className="h-12 w-full" />
                   ))}
                 </div>
               </div>
