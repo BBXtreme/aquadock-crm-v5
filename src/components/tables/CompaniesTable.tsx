@@ -34,6 +34,7 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 
 interface CompaniesTableProps {
   companies: Company[];
+  onDelete?: (id: string) => void;
 }
 
 const columnHelper = createColumnHelper<Company>();
@@ -101,7 +102,7 @@ const columns: ColumnDef<Company>[] = [
             <Edit className="h-4 w-4" />
           </Button>
         </Link>
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={() => onDelete?.(info.row.original.id)}>
           <Trash className="h-4 w-4" />
         </Button>
       </div>
@@ -109,7 +110,7 @@ const columns: ColumnDef<Company>[] = [
   }) as ColumnDef<Company>,
 ];
 
-export default function CompaniesTable({ companies }: CompaniesTableProps) {
+export default function CompaniesTable({ companies, onDelete }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
