@@ -4,6 +4,7 @@ import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -25,23 +26,29 @@ import type { Reminder } from "@/lib/supabase/types";
 export default function RemindersPage() {
   const [allReminders, setAllReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setError(null);
     try {
       const supabase = createClient();
       const reminders = await getReminders(supabase);
       setAllReminders(reminders);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch reminders",
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Erinnerungen konnten nicht geladen werden";
+      setError(message);
+      toast.error("Fehler beim Laden", {
+        description: message,
+        duration: 5000,
+      });
     } finally {
       setLoading(false);
     }
-  });
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -67,7 +74,7 @@ export default function RemindersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
-                Home {">"} Reminders
+                Home → Reminders
               </p>
               <h1 className="text-3xl font-semibold tracking-tight">
                 Reminders
@@ -75,16 +82,12 @@ export default function RemindersPage() {
             </div>
             <Button>New Reminder</Button>
           </div>
-          <Alert variant="destructive" className="border-red-500">
-            <AlertDescription className="flex items-center justify-between">
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-4">
               <span>{error}</span>
-              <Button
-                onClick={fetchData}
-                variant="outline"
-                className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white"
-              >
+              <Button variant="outline" onClick={fetchData}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
+                Erneut versuchen
               </Button>
             </AlertDescription>
           </Alert>
@@ -99,7 +102,7 @@ export default function RemindersPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              Home {">"} Reminders
+              Home → Reminders
             </p>
             <h1 className="text-3xl font-semibold tracking-tight">Reminders</h1>
           </div>
@@ -181,7 +184,7 @@ export default function RemindersPage() {
                 <Skeleton className="h-8 w-48" />
                 <div className="space-y-2">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                    <Skeleton key={`reminder-skeleton-${i}`} className="h-12 w-full" />
                   ))}
                 </div>
               </div>
