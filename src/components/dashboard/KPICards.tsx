@@ -23,7 +23,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
 
         return (
           <Card
-            key={index}
+            key={kpi.title}
             className="border border-border bg-card text-card-foreground shadow-sm rounded-xl"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
