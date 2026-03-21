@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'isomorphic-dompurify';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import AppLayout from '@/components/layout/AppLayout';
@@ -26,7 +27,6 @@ import { getCompanies } from '@/lib/supabase/services/companies';
 import { createEmailLog, getEmailLogs, getEmailTemplates } from '@/lib/supabase/services/email';
 import { createTimelineEntry } from '@/lib/supabase/services/timeline';
 import type { EmailLog, EmailTemplate } from '@/lib/supabase/types';
-import DOMPurify from 'isomorphic-dompurify';
 
 export default function MassEmailPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
