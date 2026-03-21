@@ -91,7 +91,6 @@ export default function ContactsPage() {
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
                 {Array.from({ length: 5 }).map(() => (
-                  {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders – no dynamic order or state change */}
                   <Skeleton className="h-12 w-full" />
                 ))}
               </div>
