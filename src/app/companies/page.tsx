@@ -1,81 +1,69 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import CompaniesTable from "@/components/tables/CompaniesTable";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Building, Users, Trophy, DollarSign, RefreshCw } from "lucide-react";
+import type React from "react";
+import { useMemo } from "react";
+
 import Link from "next/link";
+
+import { useQuery } from "@tanstack/react-query";
+import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
+
 import AppLayout from "@/components/layout/AppLayout";
-import { Company } from "@/lib/supabase/types";
+import CompaniesTable from "@/components/tables/CompaniesTable";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-    try {
+  const {
+    data: companies = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
       const supabase = createClient();
-      const companies = await getCompanies(supabase);
-      setCompanies(companies);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch companies",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+      return getCompanies(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
+  const stats = useMemo(() => {
+    const total = companies.length;
+    const leads = companies.filter((c) => c.status === "lead").length;
+    const won = companies.filter((c) => c.status === "won").length;
+    const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
 
-  const totalCompanies = companies.length;
-  const leads = companies.filter((c) => c.status === "lead").length;
-  const won = companies.filter((c) => c.status === "won").length;
-  const valueSum = companies.reduce(
-    (sum: number, c: Company) => sum + (c.value || 0),
-    0,
-  );
+    return { total, leads, won, value };
+  }, [companies]);
 
-  if (error) {
+  if (queryError) {
     return (
       <AppLayout>
-        <div className="container mx-auto p-6 lg:p-8 space-y-8">
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">
-                {"Home > Companies"}
-              </p>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Companies
-              </h1>
+              <p className="text-muted-foreground text-sm">Home → Companies</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex gap-3">
               <Link href="/import">
                 <Button variant="outline">Import CSV</Button>
               </Link>
               <Button>New Company</Button>
             </div>
           </div>
-          <Alert variant="destructive" className="border-red-500">
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button
-                onClick={fetchData}
-                variant="outline"
-                className="border-[#24BACC] text-[#24BACC] hover:bg-[#24BACC] hover:text-white"
-              >
+
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{queryError.message}</span>
+              <Button variant="outline" onClick={() => window.location.reload()}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Retry
+                Erneut versuchen
               </Button>
             </AlertDescription>
           </Alert>
@@ -86,15 +74,14 @@ export default function CompaniesPage() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">
-              {"Home > Companies"}
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
+            <p className="text-muted-foreground text-sm">Home → Companies</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex gap-3">
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
             </Link>
@@ -102,73 +89,39 @@ export default function CompaniesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Companies
-              </CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{totalCompanies}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Leads</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{leads}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Won Deals</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">{won}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="text-2xl font-bold">
-                  €{valueSum.toLocaleString()}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Gesamt Firmen"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+            icon={<Building className="h-5 w-5 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Leads"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Gewonnene Deals"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+            icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Gesamtwert"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+            icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+          />
         </div>
 
-        <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+        {/* Tabelle / Ladezustand */}
+        <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
-            {loading ? (
+            {isLoading ? (
               <div className="space-y-4">
-                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={`company-skeleton-${i}`} className="h-14 w-full" />
                   ))}
                 </div>
               </div>
@@ -179,5 +132,20 @@ export default function CompaniesPage() {
         </Card>
       </div>
     </AppLayout>
+  );
+}
+
+// Wiederverwendbare Statistik-Karte
+function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
+  return (
+    <Card className="bg-card border-border rounded-xl shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="font-medium text-sm">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="font-bold text-2xl">{value}</div>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,58 +1,49 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import AppLayout from "@/components/layout/AppLayout";
+import { useEffect, useState } from "react";
+
+import { useQuery } from "@tanstack/react-query";
+import DOMPurify from "isomorphic-dompurify";
 import { toast } from "sonner";
-import { EmailTemplate, EmailLog } from "@/lib/supabase/types";
-import {
-  getEmailTemplates,
-  getEmailLogs,
-  createEmailLog,
-} from "@/lib/supabase/services/email";
+
+import AppLayout from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
+import { createEmailLog, getEmailLogs, getEmailTemplates } from "@/lib/supabase/services/email";
 import { createTimelineEntry } from "@/lib/supabase/services/timeline";
+import type { EmailLog, EmailTemplate } from "@/lib/supabase/types";
 
 export default function MassEmailPage() {
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [history, setHistory] = useState<EmailLog[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [recipientFilter, setRecipientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [previewBody, setPreviewBody] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Fetch email templates
+  const { data: templates = [], isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
+    queryKey: ["email-templates"],
+    queryFn: async () => {
       const supabase = createClient();
-      const templates = await getEmailTemplates(supabase);
-      setTemplates(templates);
+      return getEmailTemplates(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      // Fetch send history
-      const history = await getEmailLogs(supabase);
-      setHistory(history);
-    };
-    fetchData();
-  }, []);
+  const { data: history = [], isLoading: historyLoading } = useQuery<EmailLog[]>({
+    queryKey: ["email-logs"],
+    queryFn: async () => {
+      const supabase = createClient();
+      return getEmailLogs(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const _loading = templatesLoading || historyLoading;
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -71,7 +62,7 @@ export default function MassEmailPage() {
   const handleSendTest = async () => {
     if (!selectedTemplate) return;
 
-    setLoading(true);
+    setSendLoading(true);
     try {
       const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
@@ -108,14 +99,14 @@ export default function MassEmailPage() {
       console.error("Error sending test email:", error);
       toast.error("Failed to send test email");
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
   const handleSendToAll = async () => {
     if (!selectedTemplate) return;
 
-    setLoading(true);
+    setSendLoading(true);
     try {
       const supabase = createClient();
       const template = templates.find((t) => t.id === selectedTemplate);
@@ -166,36 +157,28 @@ export default function MassEmailPage() {
         supabase,
       );
 
-      toast.success(
-        `Campaign queued for ${filteredCompanies.length} recipients!`,
-      );
+      toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);
     } catch (error) {
       console.error("Error sending emails:", error);
       toast.error("Failed to send mass email");
     } finally {
-      setLoading(false);
+      setSendLoading(false);
     }
   };
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">
-              Home {">"} Mass Email
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Mass Email
-            </h1>
+            <p className="text-muted-foreground text-sm">Home → Mass Email</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Mass Email</h1>
           </div>
-          <Button className="bg-[#24BACC] hover:bg-[#1da0a8] text-white">
-            New Campaign
-          </Button>
+          <Button className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">New Campaign</Button>
         </div>
 
         <div className="space-y-4">
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle>Email Templates</CardTitle>
             </CardHeader>
@@ -213,9 +196,7 @@ export default function MassEmailPage() {
                     <TableRow key={template.id}>
                       <TableCell>{template.name}</TableCell>
                       <TableCell>{template.subject}</TableCell>
-                      <TableCell>
-                        {template.body?.substring(0, 50)}...
-                      </TableCell>
+                      <TableCell>{template.body?.substring(0, 50)}...</TableCell>
                     </TableRow>
                   ))}
                   {!templates.length && (
@@ -230,16 +211,13 @@ export default function MassEmailPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
               <CardHeader>
                 <CardTitle>Send Configuration</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select
-                  value={selectedTemplate}
-                  onValueChange={setSelectedTemplate}
-                >
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
@@ -251,10 +229,7 @@ export default function MassEmailPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Select
-                  value={recipientFilter}
-                  onValueChange={setRecipientFilter}
-                >
+                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select recipients" />
                   </SelectTrigger>
@@ -272,15 +247,15 @@ export default function MassEmailPage() {
                 <div className="flex space-x-2">
                   <Button
                     onClick={handleSendTest}
-                    disabled={!selectedTemplate || loading}
-                    className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
+                    disabled={!selectedTemplate || sendLoading}
+                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
                   >
                     Send Test
                   </Button>
                   <Button
                     onClick={handleSendToAll}
-                    disabled={!selectedTemplate || loading}
-                    className="bg-[#24BACC] hover:bg-[#1da0a8] text-white"
+                    disabled={!selectedTemplate || sendLoading}
+                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
                   >
                     Send to All
                   </Button>
@@ -288,7 +263,7 @@ export default function MassEmailPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center">Preview</CardTitle>
               </CardHeader>
@@ -296,18 +271,17 @@ export default function MassEmailPage() {
                 {previewBody ? (
                   <div
                     className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: previewBody }}
+                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
                   />
                 ) : (
-                  <p className="text-muted-foreground">
-                    Select a template to preview
-                  </p>
+                  <p className="text-muted-foreground">Select a template to preview</p>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader>
               <CardTitle>Send History ({history.length} sent)</CardTitle>
             </CardHeader>

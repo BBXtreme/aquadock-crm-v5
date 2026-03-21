@@ -1,8 +1,8 @@
 "use client";
 
+import { TrendingDown, TrendingUp } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface KPI {
   title: string;
@@ -17,34 +17,27 @@ interface KPICardsProps {
 
 export default function KPICards({ kpis }: KPICardsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {kpis.map((kpi, index) => {
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {kpis.map((kpi, _index) => {
         const isPositive = kpi.changePercent >= 0;
         const arrowColor = isPositive ? "text-[#24BACC]" : "text-rose-500";
 
         return (
-          <Card
-            key={index}
-            className="border border-border bg-card text-card-foreground shadow-sm rounded-xl"
-          >
+          <Card key={kpi.title} className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+              <CardTitle className="font-medium text-sm">{kpi.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{kpi.value}</div>
-              <div className="flex items-center space-x-1 mt-1">
+              <div className="font-bold text-3xl">{kpi.value}</div>
+              <div className="mt-1 flex items-center space-x-1">
                 {isPositive ? (
                   <TrendingUp className={`h-4 w-4 ${arrowColor}`} />
                 ) : (
                   <TrendingDown className={`h-4 w-4 ${arrowColor}`} />
                 )}
-                <span className={`text-sm font-medium ${arrowColor}`}>
-                  {Math.abs(kpi.changePercent)}%
-                </span>
+                <span className={`font-medium text-sm ${arrowColor}`}>{Math.abs(kpi.changePercent)}%</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {kpi.subtitle}
-              </p>
+              <p className="mt-1 text-muted-foreground text-xs">{kpi.subtitle}</p>
             </CardContent>
           </Card>
         );

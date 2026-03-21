@@ -1,16 +1,13 @@
-import { handleSupabaseError } from "../utils";
-import type { Reminder, ReminderInsert, ReminderUpdate } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Reminder, ReminderInsert, ReminderUpdate } from "../types";
+import { handleSupabaseError } from "../utils";
 
 /**
  * Get all reminders with joined company data
  */
-export async function getReminders(
-  client: SupabaseClient,
-): Promise<Reminder[]> {
-  const { data, error } = await client
-    .from("reminders")
-    .select("*, companies!company_id (firmenname)");
+export async function getReminders(client: SupabaseClient): Promise<Reminder[]> {
+  const { data, error } = await client.from("reminders").select("*, companies!company_id (firmenname)");
   if (error) throw handleSupabaseError(error, "getReminders");
   return (data ?? []) as Reminder[];
 }
@@ -18,15 +15,8 @@ export async function getReminders(
 /**
  * Get reminder by ID
  */
-export async function getReminderById(
-  id: string,
-  client: SupabaseClient,
-): Promise<Reminder | null> {
-  const { data, error } = await client
-    .from("reminders")
-    .select("*")
-    .eq("id", id)
-    .single();
+export async function getReminderById(id: string, client: SupabaseClient): Promise<Reminder | null> {
+  const { data, error } = await client.from("reminders").select("*").eq("id", id).single();
   if (error) throw handleSupabaseError(error, "getReminderById");
   return (data as Reminder | null) ?? null;
 }
@@ -34,15 +24,8 @@ export async function getReminderById(
 /**
  * Create a new reminder
  */
-export async function createReminder(
-  reminder: ReminderInsert,
-  client: SupabaseClient,
-): Promise<Reminder> {
-  const { data, error } = await client
-    .from("reminders")
-    .insert(reminder)
-    .select()
-    .single();
+export async function createReminder(reminder: ReminderInsert, client: SupabaseClient): Promise<Reminder> {
+  const { data, error } = await client.from("reminders").insert(reminder).select().single();
   if (error) throw handleSupabaseError(error, "createReminder");
   return data as Reminder;
 }
@@ -50,17 +33,8 @@ export async function createReminder(
 /**
  * Update a reminder
  */
-export async function updateReminder(
-  id: string,
-  updates: ReminderUpdate,
-  client: SupabaseClient,
-): Promise<Reminder> {
-  const { data, error } = await client
-    .from("reminders")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
+export async function updateReminder(id: string, updates: ReminderUpdate, client: SupabaseClient): Promise<Reminder> {
+  const { data, error } = await client.from("reminders").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateReminder");
   return data as Reminder;
 }
@@ -68,10 +42,7 @@ export async function updateReminder(
 /**
  * Delete a reminder
  */
-export async function deleteReminder(
-  id: string,
-  client: SupabaseClient,
-): Promise<void> {
+export async function deleteReminder(id: string, client: SupabaseClient): Promise<void> {
   const { error } = await client.from("reminders").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteReminder");
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
+import type React from "react";
+import { useEffect, useState } from "react";
+
 import Header from "./Header";
-import React from "react";
+import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -22,12 +23,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="flex h-screen">
-      <Sidebar
-        isCollapsed={isCollapsed}
-        isMobile={isMobile}
-        onToggle={() => setIsCollapsed(!isCollapsed)}
-      />
-      <div className="flex-1 flex flex-col">
+      <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} onToggle={() => setIsCollapsed(!isCollapsed)} />
+      <div className="flex flex-1 flex-col">
         <Header />
         <main className="flex-1">{children}</main>
       </div>

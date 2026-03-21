@@ -1,51 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/browser";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
+
+import { useQuery } from "@tanstack/react-query";
+
 import AppLayout from "@/components/layout/AppLayout";
-import { Contact } from "@/lib/supabase/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/browser";
+import { getContacts } from "@/lib/supabase/services/contacts";
 
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const fetchContacts = async () => {
-    setLoading(true);
-    setError("");
-    try {
+  const {
+    data: contacts = [],
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*, companies!company_id (firmenname)");
-
-      if (error) throw error;
-
-      setContacts(data ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load contacts");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchContacts();
-  }, []);
+      return getContacts(supabase);
+    },
+  });
 
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
@@ -53,11 +33,11 @@ export default function ContactsPage() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{"Home > Contacts"}</p>
-            <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
+            <p className="text-muted-foreground text-sm">Home → Contacts</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
           </div>
           <Button>New Contact</Button>
         </div>
@@ -65,8 +45,8 @@ export default function ContactsPage() {
         {error && (
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button onClick={fetchContacts} variant="outline" size="sm">
+              <span>{error.message}</span>
+              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                 Retry
               </Button>
             </AlertDescription>
@@ -76,32 +56,28 @@ export default function ContactsPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Contacts
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalContacts}</div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Primary Contacts
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{primaryContacts}</div>
+              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Companies with Contacts
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{companiesWithContacts}</div>
+              <div className="font-bold text-2xl">
+                {loading ? <Skeleton className="h-8 w-16" /> : companiesWithContacts}
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -114,8 +90,8 @@ export default function ContactsPage() {
             {loading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
+                {Array.from({ length: 5 }).map(() => (
+                  <Skeleton className="h-12 w-full" />
                 ))}
               </div>
             ) : (
@@ -139,10 +115,7 @@ export default function ContactsPage() {
                         </TableCell>
                         <TableCell>
                           {contact.companies?.firmenname ? (
-                            <Link
-                              href={`/companies/${contact.company_id}`}
-                              className="text-primary hover:underline"
-                            >
+                            <Link href={`/companies/${contact.company_id}`} className="text-primary hover:underline">
                               {contact.companies.firmenname}
                             </Link>
                           ) : (
@@ -152,11 +125,7 @@ export default function ContactsPage() {
                         <TableCell>{contact.position || "—"}</TableCell>
                         <TableCell>{contact.email || "—"}</TableCell>
                         <TableCell>{contact.telefon || "—"}</TableCell>
-                        <TableCell>
-                          {contact.is_primary && (
-                            <Badge variant="secondary">Primary</Badge>
-                          )}
-                        </TableCell>
+                        <TableCell>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</TableCell>
                       </TableRow>
                     ))}
                     {!contacts.length && (

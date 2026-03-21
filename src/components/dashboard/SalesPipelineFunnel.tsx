@@ -20,17 +20,8 @@ const defaultProps: SalesPipelineFunnelProps = {
   changePercent: 18.2,
 };
 
-export default function SalesPipelineFunnel(
-  props: SalesPipelineFunnelProps = defaultProps,
-) {
-  const {
-    leads = 680,
-    qualified = 480,
-    proposal = 210,
-    negotiation = 120,
-    won = 45,
-    changePercent = 18.2,
-  } = props;
+export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = defaultProps) {
+  const { leads = 680, qualified = 480, proposal = 210, negotiation = 120, won = 45, changePercent = 18.2 } = props;
 
   const stages = [
     {
@@ -71,28 +62,19 @@ export default function SalesPipelineFunnel(
   ];
 
   return (
-    <Card className="border border-border bg-card text-card-foreground shadow-sm rounded-xl">
+    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
       <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Sales Pipeline</h3>
+        <h3 className="mb-4 font-semibold text-lg">Sales Pipeline</h3>
         <div className="flex flex-col items-center">
           {stages.map((stage) => (
-            <div
-              key={stage.name}
-              className="flex items-center justify-center mb-1"
-            >
-              <span className="text-xs font-bold text-foreground mr-1">
-                {stage.value}
-              </span>
-              <div className={`${stage.height} ${stage.gradient} w-32`}></div>
-              <span className="text-xs font-medium text-foreground ml-1">
-                {stage.name}
-              </span>
+            <div key={stage.name} className="mb-1 flex items-center justify-center">
+              <span className="mr-1 font-bold text-foreground text-xs">{stage.value}</span>
+              <div className={`${stage.height} ${stage.gradient} w-32`} />
+              <span className="ml-1 font-medium text-foreground text-xs">{stage.name}</span>
             </div>
           ))}
         </div>
-        <p className="text-sm text-muted-foreground mt-4">
-          Leads increased by {changePercent}% since last month.
-        </p>
+        <p className="mt-4 text-muted-foreground text-sm">Leads increased by {changePercent}% since last month.</p>
       </CardContent>
     </Card>
   );

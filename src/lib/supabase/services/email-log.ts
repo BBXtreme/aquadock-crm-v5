@@ -1,6 +1,6 @@
 import { createClient, handleSupabaseError } from "../client";
 // Use ../types.ts (re-exports + custom Insert/Update types) instead of raw database.types.ts
-import { Database } from "../types";
+import type { Database } from "../types";
 
 type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
@@ -9,10 +9,7 @@ type EmailLogUpdate = Database["public"]["Tables"]["email_log"]["Update"];
 export async function getAllEmailLogs(): Promise<EmailLog[]> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("email_log")
-      .select("*")
-      .order("sent_at", { ascending: false });
+    const { data, error } = await supabase.from("email_log").select("*").order("sent_at", { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -24,11 +21,7 @@ export async function getAllEmailLogs(): Promise<EmailLog[]> {
 export async function getEmailLogById(id: string): Promise<EmailLog | null> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("email_log")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const { data, error } = await supabase.from("email_log").select("*").eq("id", id).single();
 
     if (error) throw error;
     return data;
@@ -37,16 +30,10 @@ export async function getEmailLogById(id: string): Promise<EmailLog | null> {
   }
 }
 
-export async function createEmailLog(
-  emailLog: EmailLogInsert,
-): Promise<EmailLog> {
+export async function createEmailLog(emailLog: EmailLogInsert): Promise<EmailLog> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("email_log")
-      .insert(emailLog)
-      .select()
-      .single();
+    const { data, error } = await supabase.from("email_log").insert(emailLog).select().single();
 
     if (error) throw error;
     return data;
@@ -55,18 +42,10 @@ export async function createEmailLog(
   }
 }
 
-export async function updateEmailLog(
-  id: string,
-  updates: EmailLogUpdate,
-): Promise<EmailLog> {
+export async function updateEmailLog(id: string, updates: EmailLogUpdate): Promise<EmailLog> {
   try {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from("email_log")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from("email_log").update(updates).eq("id", id).select().single();
 
     if (error) throw error;
     return data;

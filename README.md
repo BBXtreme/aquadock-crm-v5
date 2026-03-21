@@ -1,40 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AquaDock CRM v5
 
-See docs/tanstack-table-typescript.md for common TanStack Table typing patterns
+Modern CRM for marinas, hotels, restaurants & water-sports businesses  
+**Next.js 16 • React 19 • Supabase • Tailwind v4 • shadcn/ui (radix-nova)**
+
+## Recent Refactor (March 2026)
+
+- shadcn/ui updated to latest radix-nova style
+- Biome upgraded & configured (minimal, Tailwind v4 compatible)
+- Static loading skeletons cleaned (keys removed)
+- Type safety improved (no non-null assertions on env vars)
+- Pre-commit hook now reliable
+
+Next: react-query caching, RHF + zod forms, mass-email sanitization
+
+## Tech Stack
+
+| Layer            | Technology                              | Version / Note                  |
+|------------------|-----------------------------------------|---------------------------------|
+| Framework        | Next.js                                 | 16.2+ (App Router)              |
+| UI               | React 19 • shadcn/ui (radix-nova)       | latest • CSS variables enabled  |
+| Styling          | Tailwind CSS                            | exactly 4.2.2 (config-less)     |
+| Fonts            | Geist Sans + Mono                       | official Vercel package         |
+| State / Data     | TanStack React Query + Table v8         | v5 / v8                         |
+| Forms            | react-hook-form + zod                   | —                               |
+| Backend / DB     | Supabase (PostgreSQL + Auth + RLS)      | —                               |
+| Toasts           | sonner                                  | ^2.0+                           |
+| Icons            | lucide-react                            | latest                          |
+| Package Manager  | pnpm                                    | —                               |
+| Linting/Formatting | Biome                                 | 2.3.8+                          |
+| Other            | next-themes, vaul, cmdk, zustand        | —                               |
+
+## Features
+
+- Multi-user CRM with Row Level Security
+- Companies + Contacts separation
+- Timeline & reminders per company
+- Geo data (lat/lon, OSM integration)
+- Import from CSV & OpenStreetMap POIs
+- Responsive dashboard & data tables
+- Dark mode & theme persistence
 
 ## Getting Started
 
-First, run the development server:
+# 1. Clone & enter directory
+git clone <your-repo-url> aquadock-crm
+cd aquadock-crm
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+# 2. Install dependencies
+pnpm install
+
+# 3. Copy example environment file
+cp .env.example .env.local
+
+# 4. Fill required Supabase variables
+
+#    → SUPABASE_URL
+
+#    → SUPABASE_ANON_KEY
+
+#    → optionally: SUPABASE_SERVICE_ROLE_KEY (for admin scripts)
+
+# 5. Start development server
 pnpm dev
-# or
-bun dev
-# or
-vercel dev
-```
+Open http://localhost:3000
+Core Commands
+Bashpnpm dev             # development server
+pnpm build           # production build
+pnpm start           # run production build
+pnpm check           # biome lint + type check
+pnpm format          # format all files
+pnpm check:fix       # lint + auto-fix
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Guidelines
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Root app/layout.tsx → Server Component only
+Interactive components → "use client" at top
+Data fetching → Server Components + Supabase server client
+Forms → react-hook-form + zod resolver
+Tables → TanStack Table v8 with generated types
+UI components → src/components/ui/* (shadcn convention)
+Supabase services → src/lib/supabase/services/*.ts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Folder Structure (main folders only)
 
-## Learn More
+textsrc/
+├── app/                  # App Router routes + layouts
+├── components/
+│   ├── ui/               # shadcn primitives
+│   ├── layout/           # reusable layout pieces
+│   └── features/         # domain components (CompanyCard, Timeline, etc.)
+├── lib/
+│   ├── supabase/         # client factory, services, types
+│   └── utils/            # cn(), formatters, helpers
+├── hooks/                # custom hooks
+└── types/                # global type declarations
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Recommended: Vercel (automatic previews, env vars, Supabase edge functions compatible)
+Bashvercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# or connect GitHub repo → Vercel dashboard
+Supabase Schema & Types
+See docs/SUPABASE_SCHEMA.md
 
-## Deploy on Vercel
+After schema changes:
+Bashnpx supabase gen types typescript --local > src/lib/supabase/database.types.ts
+Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Branch naming: feature/xxx, fix/xxx, chore/xxx
+Commit messages: conventional commits preferred
+Run pnpm check before push
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+# Start of day / after git pull
+pnpm install    # if package.json changed
+
+# Normal coding (99% of the time)
+pnpm dev
+
+# Every few minutes or before commit
+# (many people have this as pre-commit hook already)
+pnpm check:fix
+
+# Before git push / creating PR
+pnpm check
+pnpm build      # optional but recommended for bigger changes
+
+# Deploy / release
+pnpm build      # Vercel does this automatically anyway
+
+
+Built with ❤️ at Waterfront Beach • 2026

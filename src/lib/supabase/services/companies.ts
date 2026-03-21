@@ -1,7 +1,9 @@
-import { handleSupabaseError } from "../utils";
-import type { Company } from "../types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
 import { createClient } from "@/lib/supabase/browser";
+
+import type { Company } from "../types";
+import { handleSupabaseError } from "../utils";
 
 /**
  * Get all companies
@@ -23,10 +25,7 @@ export async function getCompanies(
   }
 
   if (options?.offset) {
-    query = query.range(
-      options.offset,
-      options.offset + (options.limit || 1000) - 1,
-    );
+    query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
   }
 
   const { data, error } = await query;
@@ -46,15 +45,8 @@ export async function getCompanies(
 /**
  * Get company by ID
  */
-export async function getCompanyById(
-  id: string,
-  client: SupabaseClient,
-): Promise<Company | null> {
-  const { data, error } = await client
-    .from("companies")
-    .select("*")
-    .eq("id", id)
-    .single();
+export async function getCompanyById(id: string, client: SupabaseClient): Promise<Company | null> {
+  const { data, error } = await client.from("companies").select("*").eq("id", id).single();
   if (error) throw handleSupabaseError(error, "getCompanyById");
   return (data as Company | null) ?? null;
 }
@@ -66,11 +58,7 @@ export async function createCompany(
   company: Omit<Company, "id" | "created_at" | "updated_at">,
   client: SupabaseClient,
 ): Promise<Company> {
-  const { data, error } = await client
-    .from("companies")
-    .insert(company)
-    .select()
-    .single();
+  const { data, error } = await client.from("companies").insert(company).select().single();
   if (error) throw handleSupabaseError(error, "createCompany");
   return data as Company;
 }
@@ -83,12 +71,7 @@ export async function updateCompany(
   updates: Partial<Omit<Company, "id" | "created_at" | "updated_at">>,
   client: SupabaseClient,
 ): Promise<Company | null> {
-  const { data, error } = await client
-    .from("companies")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await client.from("companies").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateCompany");
   return (data as Company | null) ?? null;
 }
@@ -96,10 +79,7 @@ export async function updateCompany(
 /**
  * Delete a company
  */
-export async function deleteCompany(
-  id: string,
-  client: SupabaseClient,
-): Promise<boolean> {
+export async function deleteCompany(id: string, client: SupabaseClient): Promise<boolean> {
   const { error } = await client.from("companies").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
   return true;
