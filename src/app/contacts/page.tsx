@@ -24,7 +24,7 @@ import { toast } from "sonner";
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -39,15 +39,11 @@ export default function ContactsPage() {
           ? err.message
           : "Kontakte konnten nicht geladen werden";
       setError(message);
-      toast.error("Fehler", { description: message });
+      toast.error("Fehler", { description: message, duration: 5000 });
     } finally {
       setLoading(false);
     }
   }, []); // leere Abhängigkeiten, wenn keine Props/State verwendet
-
-  useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
 
   useEffect(() => {
     fetchContacts();
@@ -62,7 +58,7 @@ export default function ContactsPage() {
       <div className="container mx-auto p-6 lg:p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">{"Home > Contacts"}</p>
+            <p className="text-sm text-muted-foreground">Home → Contacts</p>
             <h1 className="text-3xl font-semibold tracking-tight">Contacts</h1>
           </div>
           <Button>New Contact</Button>
@@ -122,7 +118,7 @@ export default function ContactsPage() {
                 <Skeleton className="h-8 w-full" />
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton
-                    key={`contact-skeleton-${i}`}
+                    key={`loading-skeleton-${i}`}
                     className="h-12 w-full"
                   />
                 ))}
