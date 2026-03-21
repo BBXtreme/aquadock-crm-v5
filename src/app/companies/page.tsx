@@ -1,12 +1,13 @@
 "use client";
 
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import Link from "next/link";
 
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 import { toast } from "sonner"; // ← korrekter Import für radix-nova Style
+import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
@@ -19,34 +20,14 @@ import { getCompanies } from "@/lib/supabase/services/companies";
 import type { Company } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Stabile Fetch-Funktion – keine externen Abhängigkeiten
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const { data: companies = [], isLoading, error: queryError } = useQuery({
+    queryKey: ['companies'],
+    queryFn: async () => {
       const supabase = createClient();
-      const data = await getCompanies(supabase);
-      setCompanies(data ?? []);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Companies could not be loaded";
-      setError(message);
-      toast.error("Error while loading companies", {
-        description: message,
-        duration: 5000,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      return getCompanies(supabase);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
   const stats = useMemo(() => {
@@ -58,7 +39,7 @@ export default function CompaniesPage() {
     return { total, leads, won, value };
   }, [companies]);
 
-  if (error) {
+  if (queryError) {
     return (
       <AppLayout>
         <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -77,8 +58,8 @@ export default function CompaniesPage() {
 
           <Alert variant="destructive">
             <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error}</span>
-              <Button variant="outline" onClick={fetchData}>
+              <span>{queryError.message}</span>
+              <Button variant="outline" onClick={() => window.location.reload()}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Erneut versuchen
               </Button>
@@ -101,7 +82,7 @@ export default function CompaniesPage() {
           <div className="flex gap-3">
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
-            </Link>
+              </Link>
             <Button>New Company</Button>
           </div>
         </div>
@@ -110,22 +91,22 @@ export default function CompaniesPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Gesamt Firmen"
-            value={loading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Leads"
-            value={loading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={loading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gesamtwert"
-            value={loading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
         </div>
@@ -133,7 +114,7 @@ export default function CompaniesPage() {
         {/* Tabelle / Ladezustand */}
         <Card className="rounded-xl border-border shadow-sm">
           <CardContent className="p-6">
-            {loading ? (
+            {isLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
