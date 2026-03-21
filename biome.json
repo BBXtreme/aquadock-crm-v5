@@ -31,7 +31,7 @@
         "useJsxKeyInIterable": "warn"
       },
       "nursery": {
-        "useSortedClasses": "on"
+        "useSortedClasses": "off"
       },
       "performance": {
         "noImgElement": "warn"
