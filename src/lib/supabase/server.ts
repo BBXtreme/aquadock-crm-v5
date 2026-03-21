@@ -12,6 +12,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
+  if (process.env.NODE_ENV === "development") {
+    console.log("Creating server Supabase client");
+  }
+
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
