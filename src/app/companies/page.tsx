@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
-import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner"; // ← korrekter Import für radix-nova Style
-import AppLayout from "@/components/layout/AppLayout";
-import CompaniesTable from "@/components/tables/CompaniesTable";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/browser";
-import { getCompanies } from "@/lib/supabase/services/companies";
-import type { Company } from "@/lib/supabase/types";
+import { Building, DollarSign, RefreshCw, Trophy, Users } from 'lucide-react';
+import Link from 'next/link';
+import type React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner'; // ← korrekter Import für radix-nova Style
+import AppLayout from '@/components/layout/AppLayout';
+import CompaniesTable from '@/components/tables/CompaniesTable';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { createClient } from '@/lib/supabase/browser';
+import { getCompanies } from '@/lib/supabase/services/companies';
+import type { Company } from '@/lib/supabase/types';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -30,12 +30,9 @@ export default function CompaniesPage() {
       const data = await getCompanies(supabase);
       setCompanies(data ?? []);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Firmen konnten nicht geladen werden";
+      const message = err instanceof Error ? err.message : 'Firmen konnten nicht geladen werden';
       setError(message);
-      toast.error("Fehler beim Laden", {
+      toast.error('Fehler beim Laden', {
         description: message,
         duration: 5000,
       });
@@ -51,8 +48,8 @@ export default function CompaniesPage() {
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
   const stats = useMemo(() => {
     const total = companies.length;
-    const leads = companies.filter((c) => c.status === "lead").length;
-    const won = companies.filter((c) => c.status === "won").length;
+    const leads = companies.filter((c) => c.status === 'lead').length;
+    const won = companies.filter((c) => c.status === 'won').length;
     const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
 
     return { total, leads, won, value };
@@ -65,9 +62,7 @@ export default function CompaniesPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Home → Companies</p>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                Companies
-              </h1>
+              <h1 className="text-3xl font-semibold tracking-tight">Companies</h1>
             </div>
             <div className="flex gap-3">
               <Link href="/import">
@@ -113,34 +108,20 @@ export default function CompaniesPage() {
           <StatCard
             title="Gesamt Firmen"
             value={
-              loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                stats.total.toLocaleString("de-DE")
-              )
+              loading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString('de-DE')
             }
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Leads"
             value={
-              loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                stats.leads.toLocaleString("de-DE")
-              )
+              loading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString('de-DE')
             }
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={
-              loading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                stats.won.toLocaleString("de-DE")
-              )
-            }
+            value={loading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString('de-DE')}
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
@@ -149,7 +130,7 @@ export default function CompaniesPage() {
               loading ? (
                 <Skeleton className="h-8 w-20" />
               ) : (
-                `€${stats.value.toLocaleString("de-DE")}`
+                `€${stats.value.toLocaleString('de-DE')}`
               )
             }
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
@@ -164,10 +145,7 @@ export default function CompaniesPage() {
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton
-                      key={`loading-skeleton-${i}`}
-                      className="h-14 w-full"
-                    />
+                    <Skeleton key={`loading-skeleton-${i}`} className="h-14 w-full" />
                   ))}
                 </div>
               </div>
