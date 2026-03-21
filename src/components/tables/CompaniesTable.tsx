@@ -19,7 +19,7 @@ import { Download, Edit, Eye, Trash } from "lucide-react";
 import Papa from "papaparse";
 
 import { Badge } from "@/components/ui/badge";
-import { BulkDeleteConfirmationDialog } from "@/components/ui/bulk-delete-confirmation-dialog";
+import { BulkDeleteConfirmationDialog } from "@/components/features/BulkDeleteConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -158,7 +158,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
   const handleExport = () => {
     const data = table.getFilteredRowModel().rows.map((row) => row.original);
     const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" />);
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
@@ -170,6 +170,7 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
   };
 
   const selectedRows = table.getFilteredSelectedRowModel().rows;
+  const selectedIds = selectedRows.map(r => r.original.id);
 
   return (
     <div className="space-y-4">
@@ -291,16 +292,8 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
       <BulkDeleteConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title={`${selectedRows.length} Firmen löschen`}
-        description={`${selectedRows.length} Firmen wirklich löschen? Kontakte/Timeline werden mitgelöscht.`}
-        onConfirm={() => {
-          // Placeholder for now
-          console.log("bulk delete clicked");
-        }}
-        confirmText="Löschen"
-        cancelText="Abbrechen"
-        loading={false}
-        count={selectedRows.length}
+        selectedCount={table.getSelectedRowModel().rows.length}
+        onConfirm={() => console.log("Bulk delete confirmed for", selectedIds)}
       />
     </div>
   );
