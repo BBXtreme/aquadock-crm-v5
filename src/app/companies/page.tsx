@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { Building, DollarSign, RefreshCw, Trophy, Users } from 'lucide-react';
