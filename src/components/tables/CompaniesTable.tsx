@@ -20,6 +20,7 @@ import Papa from "papaparse";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -178,11 +179,6 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
           className="max-w-sm"
         />
         <div className="flex space-x-2">
-          {selectedRows.length > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {selectedRows.length} Firmen ausgewählt
-            </span>
-          )}
           <Button onClick={handleExport} className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">
             <Download className="mr-2 h-4 w-4" />
             Export CSV
@@ -211,6 +207,34 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
           </DropdownMenu>
         </div>
       </div>
+
+      {selectedRows.length > 0 && (
+        <Card className="bg-muted/50 border-dashed">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">{selectedRows.length} Firmen ausgewählt</span>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.toggleAllPageRowsSelected(false)}
+                >
+                  Auswahl aufheben
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled
+                  onClick={() => console.log("bulk delete clicked")}
+                >
+                  Löschen
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="overflow-x-auto rounded-md border shadow-sm">
         <Table>
           <TableHeader>
