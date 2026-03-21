@@ -6,7 +6,6 @@ import { useMemo } from "react";
 import Link from "next/link";
 
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
-import { toast } from "sonner"; // ← korrekter Import für radix-nova Style
 import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";

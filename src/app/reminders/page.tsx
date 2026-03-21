@@ -6,7 +6,6 @@ import Link from "next/link";
 
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
-import { toast } from "sonner";
 import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";

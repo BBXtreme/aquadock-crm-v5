@@ -1,10 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-
 import Link from "next/link";
 
-import { toast } from "sonner";
 import { useQuery } from '@tanstack/react-query';
 
 import AppLayout from "@/components/layout/AppLayout";
