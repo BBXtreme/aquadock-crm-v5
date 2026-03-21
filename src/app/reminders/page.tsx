@@ -169,7 +169,7 @@ export default function RemindersPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
+                  {Array.from({ length: 5 }).map(() => (
                     <Skeleton className="h-12 w-full" />
                   ))}
                 </div>
