@@ -82,7 +82,7 @@ export default function RemindersPage() {
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
             </CardContent>
           </Card>
-          <Card className="border border-border bg-card text-card-foreground rounded-xl shadow-sm">
+          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
@@ -91,7 +91,7 @@ export default function RemindersPage() {
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
             </CardContent>
           </Card>
-          <Card className="border border-border bg-card text-card-foreground rounded-xl shadow-sm">
+          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">This Week</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -100,7 +100,7 @@ export default function RemindersPage() {
               {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
             </CardContent>
           </Card>
-          <Card className="border border-border bg-card text-card-foreground rounded-xl shadow-sm">
+          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">High Priority</CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
@@ -118,7 +118,7 @@ export default function RemindersPage() {
           <Button variant="outline">My Tasks</Button>
         </div>
 
-        <Card className="border border-border bg-card text-card-foreground rounded-xl shadow-sm">
+        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
             {loading ? (
               <div className="space-y-4">
