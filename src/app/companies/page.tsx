@@ -93,22 +93,46 @@ export default function CompaniesPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Gesamt Firmen"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.total.toLocaleString("de-DE")
+              )
+            }
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Leads"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.leads.toLocaleString("de-DE")
+              )
+            }
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                stats.won.toLocaleString("de-DE")
+              )
+            }
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
           />
           <StatCard
             title="Gesamtwert"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+            value={
+              isLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                `€${stats.value.toLocaleString("de-DE")}`
+              )
+            }
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           />
         </div>
@@ -120,8 +144,8 @@ export default function CompaniesPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-56" />
                 <div className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={`company-skeleton-${i}`} className="h-14 w-full" />
+                  {Array.from({ length: 6 }).map(() => (
+                    <Skeleton className="h-14 w-full" />
                   ))}
                 </div>
               </div>
@@ -136,7 +160,15 @@ export default function CompaniesPage() {
 }
 
 // Wiederverwendbare Statistik-Karte
-function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+}) {
   return (
     <Card className="bg-card border-border rounded-xl shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
