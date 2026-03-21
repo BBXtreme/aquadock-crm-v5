@@ -11,6 +11,7 @@ import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BulkDeleteConfirmationDialog } from "@/components/ui/bulk-delete-confirmation-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,10 +21,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
-import { useCreateCompany } from "@/hooks/useCompanyMutations";
+import { useCreateCompany, useDeleteCompany } from "@/hooks/useCompanyMutations";
 
 export default function CompaniesPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[]>([]);
   const [newCompany, setNewCompany] = useState({
     firmenname: "",
     kundentyp: "sonstige",
@@ -45,6 +48,7 @@ export default function CompaniesPage() {
   });
 
   const { mutate: createCompany, isPending: isCreating } = useCreateCompany();
+  const deleteCompany = useDeleteCompany();
 
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
   const stats = useMemo(() => {
@@ -68,6 +72,23 @@ export default function CompaniesPage() {
         });
       },
     });
+  };
+
+  const handleBulkDeleteClick = (ids: string[]) => {
+    setBulkDeleteIds(ids);
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  const handleConfirmBulkDelete = () => {
+    bulkDeleteIds.forEach(id => {
+      deleteCompany.mutate({ id }, {
+        onSuccess: () => {
+          console.log(`Deleted ${id}`)
+        }
+      })
+    })
+    setIsBulkDeleteDialogOpen(false);
+    setBulkDeleteIds([]);
   };
 
   if (queryError) {
@@ -163,7 +184,7 @@ export default function CompaniesPage() {
                         <SelectItem value="qualifiziert">Qualifiziert</SelectItem>
                         <SelectItem value="akquise">Akquise</SelectItem>
                         <SelectItem value="angebot">Angebot</SelectItem>
-                        <SelectItem value="gewonnen">Gewonnen</SelectItem>
+                        <SelectItem value="gewonnen">Gewinnen</SelectItem>
                         <SelectItem value="verloren">Verloren</SelectItem>
                       </SelectContent>
                     </Select>
@@ -223,10 +244,22 @@ export default function CompaniesPage() {
                 </div>
               </div>
             ) : (
-              <CompaniesTable companies={companies} />
+              <CompaniesTable companies={companies} onBulkDelete={handleBulkDeleteClick} />
             )}
           </CardContent>
         </Card>
+
+        <BulkDeleteConfirmationDialog
+          open={isBulkDeleteDialogOpen}
+          onOpenChange={setIsBulkDeleteDialogOpen}
+          title={`${bulkDeleteIds.length} Firmen löschen`}
+          description={`${bulkDeleteIds.length} Firmen wirklich löschen? Kontakte/Timeline werden mitgelöscht.`}
+          onConfirm={handleConfirmBulkDelete}
+          confirmText="Löschen"
+          cancelText="Abbrechen"
+          loading={deleteCompany.isPending}
+          count={bulkDeleteIds.length}
+        />
       </div>
     </AppLayout>
   );
