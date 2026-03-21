@@ -20,6 +20,7 @@ import Papa from "papaparse";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,16 +36,34 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 interface CompaniesTableProps {
   companies: Company[];
   onDelete?: (id: string) => void;
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company>[] = [
+const columns = [
+  columnHelper.display({
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+  }),
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
     cell: (info) => safeDisplay(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
@@ -52,7 +71,7 @@ const columns: ColumnDef<Company>[] = [
         {safeDisplay(info.getValue())}
       </Badge>
     ),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
@@ -70,23 +89,23 @@ const columns: ColumnDef<Company>[] = [
         </Badge>
       );
     },
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("value", {
     header: "Value",
     cell: (info) => formatCurrency(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
     cell: (info) => safeDisplay(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("land", {
     header: "Land",
     cell: (info) => safeDisplay(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) => formatDateDistance(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.display({
     id: "actions",
     header: "Actions",
@@ -107,12 +126,13 @@ const columns: ColumnDef<Company>[] = [
         </Button>
       </div>
     ),
-  }) as ColumnDef<Company>,
-];
+  }),
+] satisfies ColumnDef<Company>[];
 
-export default function CompaniesTable({ companies, onDelete }: CompaniesTableProps) {
+export default function CompaniesTable({ companies, onDelete, onBulkDelete }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -125,9 +145,11 @@ export default function CompaniesTable({ companies, onDelete }: CompaniesTablePr
     state: {
       globalFilter,
       columnVisibility,
+      rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
   });
 
   const handleExport = () => {
@@ -144,6 +166,8 @@ export default function CompaniesTable({ companies, onDelete }: CompaniesTablePr
     document.body.removeChild(link);
   };
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -154,6 +178,11 @@ export default function CompaniesTable({ companies, onDelete }: CompaniesTablePr
           className="max-w-sm"
         />
         <div className="flex space-x-2">
+          {selectedRows.length > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {selectedRows.length} Firmen ausgewählt
+            </span>
+          )}
           <Button onClick={handleExport} className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">
             <Download className="mr-2 h-4 w-4" />
             Export CSV
