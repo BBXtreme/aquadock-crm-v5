@@ -75,7 +75,10 @@ export function useDeleteCompany() {
   const supabase = createClient();
 
   return useMutation({
-    mutationFn: (id: string) => deleteCompany(id, supabase),
+    mutationFn: (id: string) => {
+      console.log("🔴 Attempting to delete company with ID:", id);
+      return deleteCompany(id, supabase);
+    },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["companies"] });
       await queryClient.cancelQueries({ queryKey: ["company", id] });
@@ -91,6 +94,7 @@ export function useDeleteCompany() {
       return { previousCompanies, previousCompany };
     },
     onError: (err, id, context) => {
+      console.dir(err);
       if (context?.previousCompanies) {
         queryClient.setQueryData(["companies"], context.previousCompanies);
       }
