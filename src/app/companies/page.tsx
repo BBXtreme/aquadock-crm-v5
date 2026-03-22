@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { createCompany } from "@/lib/supabase/services/companies";
+import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
