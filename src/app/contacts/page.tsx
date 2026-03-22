@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,28 +24,6 @@ import { createClient } from "@/lib/supabase/browser";
 import { createContact } from "@/lib/supabase/services/contacts";
 import { getContacts } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
-import { Eye, Edit, Trash } from "lucide-react";
-import { useState } from "react";
-import {
-  type ColumnDef,
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { Columns, Download, Upload } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import Papa from "papaparse";
-import { toast } from "sonner";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
