@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+import { createClient } from "@/lib/supabase/browser";
 
 import type { Company, CompanyInsert } from "../types";
 import { handleSupabaseError } from "../utils";
@@ -12,7 +12,7 @@ export async function getCompanies(
   client?: SupabaseClient,
   options?: { limit?: number; offset?: number; statusFilter?: string },
 ): Promise<Company[]> {
-  const supabase = client || createServerSupabaseClient();
+  const supabase = client || createClient();
 
   let query = supabase.from("companies").select("*");
 
@@ -55,13 +55,9 @@ export async function getCompanyById(id: string, client: SupabaseClient): Promis
  * Create a new company
  */
 export async function createCompany(values: CompanyInsert): Promise<Company> {
-  const supabase = createServerSupabaseClient();
+  const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from("companies")
-    .insert(values)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").insert(values).select().single();
 
   if (error) throw handleSupabaseError(error, "Failed to create company");
   return data;
