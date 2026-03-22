@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  console.log("API companies/[id] - method:", request.method, "id:", id);
   const supabase = await createServerSupabaseClient();
 
   const { data, error } = await supabase
@@ -17,6 +18,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  console.log("API companies/[id] - method:", request.method, "id:", id);
   const body = await request.json();
   const supabase = await createServerSupabaseClient();
 
@@ -31,8 +33,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   return NextResponse.json({ success: true, company: data });
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  console.log("API companies/[id] - method:", request.method, "id:", id);
   const supabase = await createServerSupabaseClient();
 
   const { error } = await supabase.from("companies").delete().eq("id", id);
