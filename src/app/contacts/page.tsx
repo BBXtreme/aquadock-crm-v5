@@ -338,9 +338,6 @@ export default function ContactsPage() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Contacts List</CardTitle>
-          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-2">
