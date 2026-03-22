@@ -95,6 +95,21 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
       },
       enableSorting: false,
     }),
+    columnHelper.accessor("contacts", {
+      id: "kontakt_typ",
+      header: "Kontakte",
+      cell: (info) => {
+        const count = info.getValue()?.length || 0;
+        if (count === 0) return <Badge variant="outline">Keine</Badge>;
+        const hasPrimary = info.getValue()?.some((c: any) => c.is_primary);
+        return (
+          <Badge variant={hasPrimary ? "default" : "secondary"}>
+            {count} {hasPrimary ? "(Primär)" : ""}
+          </Badge>
+        );
+      },
+      enableSorting: false,
+    }),
     columnHelper.accessor("value", {
       header: "Value",
       cell: (info) => formatCurrency(info.getValue() as number | null),
