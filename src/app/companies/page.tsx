@@ -167,14 +167,7 @@ export default function CompaniesPage() {
           </CardContent>
         </Card>
 
-        <Dialog open={!!editCompany} onOpenChange={() => setEditCompany(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Company</DialogTitle>
-            </DialogHeader>
-            {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
-          </DialogContent>
-        </Dialog>
+        {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
     </AppLayout>
   );
