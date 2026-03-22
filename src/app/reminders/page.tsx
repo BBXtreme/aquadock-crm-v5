@@ -122,8 +122,8 @@ export default function RemindersPage() {
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
             {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-48" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
                 <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
               </div>
             ) : (
@@ -158,7 +158,11 @@ export default function RemindersPage() {
                           <TableCell>
                             <Badge
                               className={
-                                reminder.priority === "high" ? "bg-rose-600 text-white" : "bg-amber-600 text-white"
+                                reminder.priority === "hoch"
+                                  ? "bg-orange-500 text-white"
+                                  : reminder.priority === "normal"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-500 text-white"
                               }
                             >
                               {reminder.priority}
