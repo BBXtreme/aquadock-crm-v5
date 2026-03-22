@@ -134,7 +134,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   };
 
   return (
-    <div className="max-w-screen-2xl mx-auto p-6 md:p-8 lg:p-10 bg-background rounded-xl border max-h-[90vh] overflow-y-auto">
+    <div className="max-w-screen-xl mx-auto p-6 md:p-8 lg:p-10 bg-background rounded-xl border max-h-[90vh] overflow-y-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Firmendaten */}
