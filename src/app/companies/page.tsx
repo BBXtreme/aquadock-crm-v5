@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonList";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
 import type { CompanyInsert } from "@/lib/supabase/types";
@@ -154,11 +155,7 @@ export default function CompaniesPage() {
             {isLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-56" />
-                <div className="space-y-2">
-                  {Array.from({ length: 6 }).map(() => (
-                    <Skeleton className="h-14 w-full" />
-                  ))}
-                </div>
+                <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
             ) : (
               <CompaniesTable companies={companies} />
