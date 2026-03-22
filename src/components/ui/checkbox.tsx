@@ -15,16 +15,14 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
       )}
       {...props}
     >
-      <div
+      <CheckboxPrimitive.Indicator
         className={cn(
           "absolute inset-0 flex items-center justify-center text-current",
-          "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:opacity-100",
-          className
+          "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
         )}
-        data-state={props.checked ? "checked" : "unchecked"}
       >
         <Check className="h-4 w-4" />
-      </div>
+      </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
 }

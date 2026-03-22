@@ -58,7 +58,10 @@ const columns = [
         {console.log("Row selected:", row.id, row.getIsSelected())}
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          onCheckedChange={(value) => {
+            console.log("Checkbox onCheckedChange:", value, "for row:", row.id);
+            row.toggleSelected(!!value);
+          }}
           aria-label="Select row"
         />
       </div>
