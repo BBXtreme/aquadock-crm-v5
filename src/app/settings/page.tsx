@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, Palette, Send, Settings, Shield } from "lucide-react";
+import { Bell, Eye, EyeOff, Mail, Palette, Send, Settings, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const [language, setLanguage] = useState("en");
   const [userId, setUserId] = useState<string | null>(null);
   const [testRecipient, setTestRecipient] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -302,7 +303,18 @@ export default function SettingsPage() {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <div className="relative">
+                              <Input type={showPassword ? "text" : "password"} {...field} />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
