@@ -6,8 +6,6 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
   const body = await request.json();
 
-  console.log("API companies POST - body:", body);
-
   const { data, error } = await supabase
     .from("companies")
     .insert(body)
@@ -15,9 +13,10 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    console.error("Create company error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(`API error [companies]:`, error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 
+  console.log("API success:", { method: request.method, id: "create" });
   return NextResponse.json({ success: true, company: data }, { status: 201 });
 }

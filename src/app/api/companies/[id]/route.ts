@@ -12,7 +12,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     .eq("id", id)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error(`API error [companies]:`, error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+
+  console.log("API success:", { method: request.method, id: id });
   return NextResponse.json({ success: true, company: data });
 }
 
@@ -29,7 +34,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error(`API error [companies]:`, error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+
+  console.log("API success:", { method: request.method, id: id });
   return NextResponse.json({ success: true, company: data });
 }
 
@@ -40,6 +50,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
   const { error } = await supabase.from("companies").delete().eq("id", id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error(`API error [companies]:`, error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+
+  console.log("API success:", { method: request.method, id: id });
   return NextResponse.json({ success: true });
 }
