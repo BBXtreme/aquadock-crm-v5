@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { Building, Edit, Trash, User } from "lucide-react";
+import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +59,7 @@ export default function ContactDetailPage() {
         await deleteContact(id, supabase);
         router.push("/contacts");
       } catch (_error) {
-        alert("Error deleting contact");
+        toast.error("Failed to delete contact");
       }
     }
   };

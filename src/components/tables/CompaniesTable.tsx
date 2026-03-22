@@ -16,6 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Download, Edit, Eye, Trash } from "lucide-react";
+import { toast } from "sonner";
 import Papa from "papaparse";
 
 import { Badge } from "@/components/ui/badge";
@@ -35,11 +36,12 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 interface CompaniesTableProps {
   companies: Company[];
   onEdit?: (company: Company) => void;
+  onDelete?: (company: Company) => void;
 }
 
 const columnHelper = createColumnHelper<any>();
 
-export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
+export default function CompaniesTable({ companies, onEdit, onDelete }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
@@ -141,7 +143,20 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
           <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this company?")) {
+                try {
+                  onDelete?.(info.row.original);
+                } catch (error) {
+                  console.error("Error deleting company:", error);
+                  toast.error("Failed to delete company");
+                }
+              }
+            }}
+          >
             <Trash className="h-4 w-4" />
           </Button>
         </div>
@@ -166,17 +181,22 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
   });
 
   const handleExport = () => {
-    const data = table.getFilteredRowModel().rows.map((row) => row.original);
-    const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const data = table.getFilteredRowModel().rows.map((row) => row.original);
+      const csv = Papa.unparse(data);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data");
+    }
   };
 
   return (

@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
+import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -94,7 +95,7 @@ export default function CompanyDetailPage() {
         await deleteCompany(id, supabase);
         router.push("/companies");
       } catch (_error) {
-        alert("Error deleting company");
+        toast.error("Failed to delete company");
       }
     }
   };
@@ -106,7 +107,7 @@ export default function CompanyDetailPage() {
         await deleteContact(contactId, supabase);
         fetchData();
       } catch (_error) {
-        alert("Error deleting contact");
+        toast.error("Failed to delete contact");
       }
     }
   };
@@ -118,7 +119,7 @@ export default function CompanyDetailPage() {
         await deleteReminder(reminderId, supabase);
         fetchData();
       } catch (_error) {
-        alert("Error deleting reminder");
+        toast.error("Failed to delete reminder");
       }
     }
   };

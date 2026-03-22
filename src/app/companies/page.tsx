@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
+import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
@@ -20,6 +21,7 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany } from "@/lib/supabase/services/companies";
+import { deleteCompany } from "@/lib/supabase/services/companies";
 import type { Company, CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
@@ -48,6 +50,19 @@ export default function CompaniesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return deleteCompany(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      toast.success("Company deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete company", { description: error.message });
     },
   });
 
@@ -162,7 +177,11 @@ export default function CompaniesPage() {
                 <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
             ) : (
-              <CompaniesTable companies={companies} onEdit={setEditCompany} />
+              <CompaniesTable
+                companies={companies}
+                onEdit={setEditCompany}
+                onDelete={(company) => deleteCompanyMutation.mutate(company.id)}
+              />
             )}
           </CardContent>
         </Card>
