@@ -22,10 +22,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("Creating server Supabase client");
-  }
-
   return createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
       getAll() {
@@ -44,4 +40,12 @@ export async function createServerSupabaseClient() {
       },
     },
   });
+}
+
+export function handleSupabaseError(error: unknown, context: string): Error {
+  console.error(`Supabase error in ${context}:`, error);
+  if (error instanceof Error) {
+    return new Error(`Database error: ${error.message}`);
+  }
+  return new Error("An unknown database error occurred");
 }
