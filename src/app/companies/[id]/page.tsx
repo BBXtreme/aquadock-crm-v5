@@ -116,6 +116,25 @@ export default function CompanyDetailPage() {
     }
   };
 
+  const getKundentypLabel = (t: string) => {
+    const map = {
+      restaurant: "🍽 Restaurant",
+      hotel: "🏨 Hotel",
+      resort: "🌴 Resort",
+      camping: "⛺ Camping",
+      marina: "⚓ Marina",
+      segelschule: "⛵ Segelschule",
+      segelverein: "🏆 Segelverein",
+      bootsverleih: "🚤 Bootsverleih",
+      neukunde: "🆕 Neukunde",
+      bestandskunde: "⭐ Bestandskunde",
+      interessent: "👁 Interessent",
+      partner: "🤝 Partner",
+      sonstige: "Sonstige",
+    };
+    return map[t] || t;
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -221,6 +240,11 @@ export default function CompanyDetailPage() {
           >
             {company.status}
           </Badge>
+          {company.kundentyp && (
+            <Badge variant="outline">
+              {getKundentypLabel(company.kundentyp)}
+            </Badge>
+          )}
           {company.firmentyp && (
             <Badge variant="outline">
               {company.firmentyp === "kette" ? "Chain" : "Single"}
