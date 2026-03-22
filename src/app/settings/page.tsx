@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, Palette, Settings, Shield } from "lucide-react";
+import { Bell, Mail, Palette, Send, Settings, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -25,6 +25,7 @@ const smtpSchema = z.object({
   port: z.number().min(1, "Port must be at least 1").max(65535, "Port must be at most 65535"),
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
+  senderName: z.string().min(1, "Sender name is required"),
   useTLS: z.boolean(),
 });
 
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
   const [userId, setUserId] = useState<string | null>(null);
+  const [testRecipient, setTestRecipient] = useState("");
 
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -61,6 +63,7 @@ export default function SettingsPage() {
       port: 587,
       username: "",
       password: "",
+      senderName: "",
       useTLS: true,
     },
   });
@@ -72,6 +75,7 @@ export default function SettingsPage() {
         port: parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587"),
         username: (settings.find((s) => s.key === "smtp_username")?.value as string) || "",
         password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
+        senderName: (settings.find((s) => s.key === "smtp_sender_name")?.value as string) || "",
         useTLS: (settings.find((s) => s.key === "smtp_use_tls")?.value as string) === "true",
       });
     }
@@ -85,6 +89,7 @@ export default function SettingsPage() {
         upsertUserSetting({ user_id: userId, key: "smtp_port", value: data.port.toString() }),
         upsertUserSetting({ user_id: userId, key: "smtp_username", value: data.username }),
         upsertUserSetting({ user_id: userId, key: "smtp_password", value: data.password }),
+        upsertUserSetting({ user_id: userId, key: "smtp_sender_name", value: data.senderName }),
         upsertUserSetting({ user_id: userId, key: "smtp_use_tls", value: data.useTLS.toString() }),
       ];
       await Promise.all(promises);
@@ -95,6 +100,27 @@ export default function SettingsPage() {
     },
     onError: (error) => {
       toast.error("Failed to save SMTP settings", { description: error.message });
+    },
+  });
+
+  const testEmailMutation = useMutation({
+    mutationFn: async (recipient: string) => {
+      const response = await fetch("/api/send-test-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to send test email");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Test email sent successfully");
+      setTestRecipient("");
+    },
+    onError: (error) => {
+      toast.error("Failed to send test email", { description: error.message });
     },
   });
 
@@ -289,6 +315,19 @@ export default function SettingsPage() {
                   </div>
                   <FormField
                     control={form.control}
+                    name="senderName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Absendername</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your Name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="useTLS"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -306,6 +345,24 @@ export default function SettingsPage() {
                   </Button>
                 </form>
               </Form>
+              <div className="mt-6 space-y-4">
+                <h3 className="text-lg font-medium">Test Email</h3>
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="test@example.com"
+                    value={testRecipient}
+                    onChange={(e) => setTestRecipient(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => testEmailMutation.mutate(testRecipient)}
+                    disabled={testEmailMutation.isPending || !testRecipient}
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    {testEmailMutation.isPending ? "Sending..." : "Send Test Email"}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
