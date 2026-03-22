@@ -40,14 +40,18 @@ export default function CompanyDetailPage() {
       const supabase = createClient();
 
       // Fetch company
-      const companyResponse = await fetch(`/api/companies/${id}`);
-      const companyData = await companyResponse.json();
-      if (companyData.success) {
-        setCompany(companyData.company);
-      } else {
-        setError(companyData.error || "Failed to load company");
+      const { data: companyData, error: companyError } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (companyError) {
+        setError(companyError.message);
         return;
       }
+
+      setCompany(companyData);
 
       // Fetch contacts
       const allContacts = await getContacts(supabase);
