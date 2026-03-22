@@ -194,7 +194,11 @@ export default function ContactsPage() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.location.href = `/contacts/${contact.id}?edit=true`}
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button

@@ -114,6 +114,13 @@ export default function ContactDetailPage() {
     return () => clearTimeout(timeout);
   }, [id]);
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('edit') === 'true') {
+      setEditDialog(true);
+    }
+  }, []);
+
   const handleDeleteContact = async () => {
     if (confirm("Are you sure you want to delete this contact?")) {
       try {
