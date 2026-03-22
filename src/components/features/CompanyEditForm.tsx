@@ -107,7 +107,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(companySchema as any),
     defaultValues: {
       firmenname: company.firmenname || "",
       rechtsform: company.rechtsform || "",
