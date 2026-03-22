@@ -1,4 +1,4 @@
-import { createClient, handleSupabaseError } from "../client";
+import { createClient, handleSupabaseError } from "../browser";
 // Use ../types.ts (re-exports + custom Insert/Update types) instead of raw database.types.ts
 import type { Database } from "../types";
 
