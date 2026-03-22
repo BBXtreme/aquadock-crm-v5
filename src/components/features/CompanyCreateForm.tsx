@@ -1,6 +1,5 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,8 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCompany } from "@/lib/supabase/services/companies";
-import type { CompanyInsert } from "@/lib/supabase/types";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -51,8 +48,6 @@ interface CompanyCreateFormProps {
 }
 
 export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps) {
-  const queryClient = useQueryClient();
-
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
@@ -63,19 +58,8 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
     },
   });
 
-  const createCompanyMutation = useMutation({
-    mutationFn: async (data: CompanyInsert) => {
-      return createCompany(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
-      form.reset();
-      onSuccess?.();
-    },
-  });
-
   const onSubmit = (data: CompanyFormData) => {
-    createCompanyMutation.mutate(data as CompanyInsert);
+    console.log(data);
   };
 
   return (
@@ -160,8 +144,8 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={createCompanyMutation.isPending}>
-          {createCompanyMutation.isPending ? "Creating..." : "Create Company"}
+        <Button type="submit">
+          Create Company
         </Button>
       </form>
     </Form>
