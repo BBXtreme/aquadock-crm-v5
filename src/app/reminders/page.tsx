@@ -31,6 +31,85 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createClient } from "@/lib/supabase/browser";
 import { getReminders } from "@/lib/supabase/services/reminders";
 
+const columnHelper = createColumnHelper<any>();
+
+const columns: ColumnDef<any>[] = [
+  columnHelper.display({
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+  }),
+  columnHelper.accessor("title", {
+    header: "Title",
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.accessor("companies.firmenname", {
+    header: "Company",
+    cell: (info) => (
+      <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+        {info.getValue()}
+      </Link>
+    ),
+  }),
+  columnHelper.accessor("due_date", {
+    header: "Due Date",
+    cell: (info) => {
+      const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
+      return (
+        <span className={isOverdue ? "text-rose-500" : ""}>
+          {formatDistanceToNow(new Date(info.getValue() as string), {
+            addSuffix: true,
+          })}
+        </span>
+      );
+    },
+  }),
+  columnHelper.accessor("priority", {
+    header: "Priority",
+    cell: (info) => (
+      <Badge
+        className={
+          info.getValue() === "hoch"
+            ? "bg-orange-500 text-white"
+            : info.getValue() === "normal"
+            ? "bg-blue-500 text-white"
+            : "bg-gray-500 text-white"
+        }
+      >
+        {info.getValue()}
+      </Badge>
+    ),
+  }),
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: (info) => (
+      <Badge
+        className={
+          info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
+        }
+      >
+        {info.getValue()}
+      </Badge>
+    ),
+  }),
+  columnHelper.accessor("assigned_to", {
+    header: "Assigned To",
+    cell: (info) => info.getValue(),
+  }),
+];
+
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -54,85 +133,6 @@ export default function RemindersPage() {
   const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
   const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
   const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
-
-  const columnHelper = createColumnHelper<any>();
-
-  const columns: ColumnDef<any>[] = [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-    }),
-    columnHelper.accessor("title", {
-      header: "Title",
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("companies.firmenname", {
-      header: "Company",
-      cell: (info) => (
-        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-          {info.getValue()}
-        </Link>
-      ),
-    }),
-    columnHelper.accessor("due_date", {
-      header: "Due Date",
-      cell: (info) => {
-        const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
-        return (
-          <span className={isOverdue ? "text-rose-500" : ""}>
-            {formatDistanceToNow(new Date(info.getValue() as string), {
-              addSuffix: true,
-            })}
-          </span>
-        );
-      },
-    }),
-    columnHelper.accessor("priority", {
-      header: "Priority",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "hoch"
-              ? "bg-orange-500 text-white"
-              : info.getValue() === "normal"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-500 text-white"
-          }
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-          }
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("assigned_to", {
-      header: "Assigned To",
-      cell: (info) => info.getValue(),
-    }),
-  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useMemo(() => useReactTable({
