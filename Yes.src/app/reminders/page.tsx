@@ -30,6 +30,8 @@ import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/browser";
+import { getReminders } from "@/lib/supabase/services/reminders";
 
 const columnHelper = createColumnHelper<any>();
 
