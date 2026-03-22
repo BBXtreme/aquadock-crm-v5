@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
+import CompanyEditForm from "@/components/features/CompanyEditForm";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -19,11 +20,12 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
-import type { CompanyInsert } from "@/lib/supabase/types";
+import type { Company, CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editCompany, setEditCompany] = useState<Company | null>(null);
 
   const {
     data: companies = [],
@@ -158,10 +160,19 @@ export default function CompaniesPage() {
                 <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
             ) : (
-              <CompaniesTable companies={companies} />
+              <CompaniesTable companies={companies} onEdit={setEditCompany} />
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={!!editCompany} onOpenChange={() => setEditCompany(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Company</DialogTitle>
+            </DialogHeader>
+            {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
