@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { BarChart, Building, MapPin, Waves } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { BarChart, Building, MapPin, Waves } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -29,7 +29,20 @@ const companySchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   osm: z.string().optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"]).optional(),
+  status: z
+    .enum([
+      "lead",
+      "interessant",
+      "qualifiziert",
+      "akquise",
+      "angebot",
+      "gewonnen",
+      "verloren",
+      "kunde",
+      "partner",
+      "inaktiv",
+    ])
+    .optional(),
   value: z.number().optional(),
   notes: z.string().optional(),
 });
@@ -487,7 +500,12 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Value</FormLabel>
                     <FormControl>
-                      <Input className="w-full" type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
+                      <Input
+                        className="w-full"
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
