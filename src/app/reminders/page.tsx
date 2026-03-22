@@ -75,7 +75,7 @@ export default function RemindersPage() {
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
-  const reminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open") : [];
+  const reminders = Array.isArray(allReminders) ? allReminders : [];
 
   const filteredReminders = useMemo(() => {
     if (statusFilter === "all") return reminders;
