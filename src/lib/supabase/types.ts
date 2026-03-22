@@ -108,14 +108,14 @@ export interface Database {
           id: string;
           user_id: string;
           key: string;
-          value: any;  // jsonb – e.g. string[] for column order
+          value: unknown;  // jsonb – e.g. string[] for column order
           created_at: string | null;
           updated_at: string | null;
         };
         Insert: {
           user_id: string;
           key: string;
-          value: any;
+          value: unknown;
           created_at?: string | null;
           updated_at?: string | null;
         };
