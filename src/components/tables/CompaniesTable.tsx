@@ -28,12 +28,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Company } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface CompaniesTableProps {
-  companies: any[];
-  onEdit?: (company: any) => void;
+  companies: Company[]
+  onEdit?: (company: Company) => void
 }
 
 const columnHelper = createColumnHelper<any>();
