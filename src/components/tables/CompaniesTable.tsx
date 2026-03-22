@@ -39,7 +39,7 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns = [
+const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
@@ -110,7 +110,7 @@ const columns = [
       </div>
     ),
   }),
-] satisfies ColumnDef<Company>[];
+];
 
 export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
