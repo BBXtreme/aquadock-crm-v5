@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("contacts")
@@ -20,18 +17,10 @@ export async function GET(
   return NextResponse.json({ success: true, contact: data });
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient();
   const body = await request.json();
-  const { data, error } = await supabase
-    .from("contacts")
-    .update(body)
-    .eq("id", params.id)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("contacts").update(body).eq("id", params.id).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -40,15 +29,9 @@ export async function PUT(
   return NextResponse.json({ success: true, contact: data });
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase
-    .from("contacts")
-    .delete()
-    .eq("id", params.id);
+  const { error } = await supabase.from("contacts").delete().eq("id", params.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
