@@ -33,9 +33,9 @@ export async function createServerSupabaseClient() {
             cookieStore.set(name, value, options);
           });
         } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+          // Intentional: setAll called from Server Component is safe.
+          // Middleware or session refresh handles cookie conflicts.
+          // See: https://supabase.com/docs/guides/auth/server-side/creating-a-client
         }
       },
     },
