@@ -5,7 +5,6 @@ import "./globals.css";
 import type React from "react";
 
 import ClientLayout from "@/components/layout/ClientLayout";
-import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
@@ -21,7 +20,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <ClientLayout>{children}</ClientLayout>
-        <Toaster position="top-right" richColors />
       </body>
     </html>
   );
