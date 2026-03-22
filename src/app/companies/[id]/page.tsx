@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import Link from "next/link";
+import { isAfter } from "date-fns";
 
 import { Building, MapPin, Waves, BarChart, Edit, Trash, Plus, Eye, Calendar, Bell, User } from "lucide-react";
 
@@ -170,6 +171,12 @@ export default function CompanyDetailPage() {
     );
   }
 
+  // Calculate stats
+  const totalContacts = contacts.length;
+  const primaryContacts = contacts.filter(c => c.is_primary).length;
+  const openReminders = reminders.filter(r => r.status === "open").length;
+  const overdueReminders = reminders.filter(r => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
+
   return (
     <AppLayout>
       <div className="container mx-auto p-6 space-y-8">
@@ -231,193 +238,232 @@ export default function CompanyDetailPage() {
           )}
         </div>
 
-        {/* Firmendaten */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Firmendaten
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Firmenname</label>
-                <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Rechtsform</label>
-                <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Kundentyp</label>
-                <p className="text-sm text-gray-900">{company.kundentyp || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Firmentyp</label>
-                <p className="text-sm text-gray-900">
-                  {company.firmentyp === "kette"
-                    ? "Kette"
-                    : company.firmentyp === "einzeln"
-                    ? "Einzelbetrieb"
-                    : "—"}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Website</label>
-                <p className="text-sm text-gray-900">
-                  {company.website ? (
-                    <a
-                      href={company.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {company.website}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Telefon</label>
-                <p className="text-sm text-gray-900">
-                  {company.telefon ? (
-                    <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
-                      {company.telefon}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <p className="text-sm text-gray-900">
-                  {company.email ? (
-                    <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
-                      {company.email}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Dashboard Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl">{totalContacts}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl">{primaryContacts}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl">{openReminders}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="font-medium text-sm">Overdue Reminders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="font-bold text-2xl text-red-600">{overdueReminders}</div>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Adresse */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Adresse
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Strasse</label>
-                <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+        {/* Sections in two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Firmendaten */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Firmendaten
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Firmenname</label>
+                  <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Rechtsform</label>
+                  <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Kundentyp</label>
+                  <p className="text-sm text-gray-900">{company.kundentyp || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Firmentyp</label>
+                  <p className="text-sm text-gray-900">
+                    {company.firmentyp === "kette"
+                      ? "Kette"
+                      : company.firmentyp === "einzeln"
+                      ? "Einzelbetrieb"
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Website</label>
+                  <p className="text-sm text-gray-900">
+                    {company.website ? (
+                      <a
+                        href={company.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {company.website}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Telefon</label>
+                  <p className="text-sm text-gray-900">
+                    {company.telefon ? (
+                      <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
+                        {company.telefon}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm text-gray-900">
+                    {company.email ? (
+                      <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
+                        {company.email}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">PLZ</label>
-                <p className="text-sm text-gray-900">{company.plz || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Stadt</label>
-                <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Bundesland</label>
-                <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Land</label>
-                <p className="text-sm text-gray-900">{company.land || "—"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* AquaDock Daten */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Waves className="w-5 h-5" />
-              AquaDock Daten
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
-                <p className="text-sm text-gray-900">
-                  {company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}
-                </p>
+          {/* Adresse */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Adresse
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Strasse</label>
+                  <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">PLZ</label>
+                  <p className="text-sm text-gray-900">{company.plz || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Stadt</label>
+                  <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Bundesland</label>
+                  <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Land</label>
+                  <p className="text-sm text-gray-900">{company.land || "—"}</p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Wassertyp</label>
-                <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Latitude</label>
-                <p className="text-sm text-gray-900">{company.lat || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Longitude</label>
-                <p className="text-sm text-gray-900">{company.lon || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">OSM</label>
-                <p className="text-sm text-gray-900">
-                  {company.osm ? (
-                    <a
-                      href={company.osm}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {company.osm}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* CRM Informationen */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart className="w-5 h-5" />
-              CRM Informationen
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
-                <p className="text-sm text-gray-900">{company.status || "—"}</p>
+          {/* AquaDock Daten */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Waves className="w-5 h-5" />
+                AquaDock Daten
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
+                  <p className="text-sm text-gray-900">
+                    {company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Wassertyp</label>
+                  <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Latitude</label>
+                  <p className="text-sm text-gray-900">{company.lat || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Longitude</label>
+                  <p className="text-sm text-gray-900">{company.lon || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">OSM</label>
+                  <p className="text-sm text-gray-900">
+                    {company.osm ? (
+                      <a
+                        href={company.osm}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {company.osm}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Value</label>
-                <p className="text-sm text-gray-900">
-                  {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
-                </p>
+            </CardContent>
+          </Card>
+
+          {/* CRM Informationen */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart className="w-5 h-5" />
+                CRM Informationen
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <p className="text-sm text-gray-900">{company.status || "—"}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Value</label>
+                  <p className="text-sm text-gray-900">
+                    {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
+                  </p>
+                </div>
+                <div className="lg:col-span-2">
+                  <label className="text-sm font-medium text-gray-700">Notes</label>
+                  <p className="text-sm text-gray-900">{company.notes || "—"}</p>
+                </div>
               </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Notes</label>
-                <p className="text-sm text-gray-900">{company.notes || "—"}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Linked Contacts */}
         <Card>
