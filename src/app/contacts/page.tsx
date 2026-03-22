@@ -110,7 +110,9 @@ export default function ContactsPage() {
                     {contacts.map((contact) => (
                       <TableRow key={contact.id}>
                         <TableCell>
-                          {contact.vorname} {contact.nachname}
+                          <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                            {contact.vorname} {contact.nachname}
+                          </Link>
                         </TableCell>
                         <TableCell>
                           {contact.companies?.firmenname ? (
