@@ -151,389 +151,394 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   });
 
   return (
-    <div className="max-w-4xl w-full sm:w-4/5 md:w-4/5 lg:w-4/5 xl:w-4/5 mx-auto p-6 bg-background rounded-xl border max-h-[85vh] overflow-y-auto">
-      <Form {...form}>
-        <form onSubmit={onSubmit} className="space-y-8">
-          {/* Firmendaten */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Building className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">Firmendaten</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="firmenname"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Firmenname</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="rechtsform"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Rechtsform</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="kundentyp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kundentyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-5xl mx-4 sm:mx-6 lg:mx-auto bg-background rounded-xl border shadow-2xl max-h-[90vh] overflow-y-auto">
+        <Form {...form}>
+          <form onSubmit={onSubmit} className="p-6 md:p-8 lg:p-10 space-y-8">
+            {/* Firmendaten */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Building className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Firmendaten</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="firmenname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Firmenname</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select customer type" />
-                        </SelectTrigger>
+                        <Input className="w-full" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {kundentypOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="firmentyp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Firmentyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rechtsform"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Rechtsform</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select company type" />
-                        </SelectTrigger>
+                        <Input className="w-full" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {firmentypOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="telefon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefon</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="kundentyp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Kundentyp</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select customer type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {kundentypOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="firmentyp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Firmentyp</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select company type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {firmentypOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Website</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="telefon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Telefon</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Email</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Adresse */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">Adresse</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="strasse"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Strasse</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="plz"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Plz</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="stadt"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stadt</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="bundesland"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bundesland</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="land"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Land</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+            {/* Adresse */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Adresse</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="strasse"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Strasse</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
+                        <Input className="w-full" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {landOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* AquaDock Daten */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <Waves className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">AquaDock Daten</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="wasserdistanz"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Wasserdistanz</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="wassertyp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Wassertyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="plz"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Plz</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select water type" />
-                        </SelectTrigger>
+                        <Input className="w-full" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {wassertypOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lat"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lat</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="any"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lon</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="any"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="osm"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Osm</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          {/* CRM Informationen */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <BarChart className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">CRM Informationen</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stadt"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Stadt</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
+                        <Input className="w-full" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="value"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Value</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Notes</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="bundesland"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Bundesland</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="land"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Land</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {landOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Fixed bottom buttons */}
-          <div className="sticky bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-end gap-3 z-10">
-            <Button type="button" variant="outline" onClick={onSuccess}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Speichert..." : "Speichern"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+            {/* AquaDock Daten */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Waves className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">AquaDock Daten</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="wasserdistanz"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Wasserdistanz</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="w-full"
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="wassertyp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Wassertyp</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select water type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {wassertypOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lat"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Lat</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="w-full"
+                          type="number"
+                          step="any"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lon"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Lon</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="w-full"
+                          type="number"
+                          step="any"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="osm"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Osm</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* CRM Informationen */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <BarChart className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">CRM Informationen</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Value</FormLabel>
+                      <FormControl>
+                        <Input className="w-full" type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel className="text-base">Notes</FormLabel>
+                      <FormControl>
+                        <Textarea className="w-full" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Fixed bottom buttons */}
+            <div className="sticky bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-end gap-4 z-10">
+              <Button type="button" variant="outline" onClick={onSuccess}>
+                Abbrechen
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Speichert..." : "Speichern"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }
