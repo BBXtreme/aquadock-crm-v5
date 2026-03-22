@@ -110,14 +110,14 @@ export default function ContactsPage() {
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          onChange={(e) => table.toggleAllRowsSelected(e.target.checked)}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          onChange={(e) => row.toggleSelected(e.target.checked)}
           aria-label="Select row"
         />
       ),
