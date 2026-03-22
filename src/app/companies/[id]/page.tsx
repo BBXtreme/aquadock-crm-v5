@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AppLayout from "@/components/layout/AppLayout";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import { createClient } from "@/lib/supabase/browser";
 import { getContacts } from "@/lib/supabase/services/contacts";
@@ -116,468 +117,478 @@ export default function CompanyDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="text-gray-600">{error}</p>
-          <Button onClick={() => router.back()} className="mt-4">
-            Go Back
-          </Button>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+            <p className="text-gray-600">{error}</p>
+            <Button onClick={() => router.back()} className="mt-4">
+              Go Back
+            </Button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (!company) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
-          <Button onClick={() => router.push("/companies")}>
-            Back to Companies
-          </Button>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
+            <Button onClick={() => router.push("/companies")}>
+              Back to Companies
+            </Button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (edit) {
     return (
-      <div className="container mx-auto p-6">
-        <CompanyEditForm company={company} onSuccess={() => setEdit(false)} />
-      </div>
+      <AppLayout>
+        <div className="container mx-auto p-6">
+          <CompanyEditForm company={company} onSuccess={() => setEdit(false)} />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      {/* Breadcrumbs */}
-      <nav className="text-sm text-gray-600">
-        <Link href="/companies" className="hover:underline">Companies</Link> &gt; {company.firmenname}
-      </nav>
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-8">
+        {/* Breadcrumbs */}
+        <nav className="text-sm text-gray-600">
+          <Link href="/companies" className="hover:underline">Companies</Link> &gt; {company.firmenname}
+        </nav>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{company.firmenname}</h1>
-          {company.rechtsform && (
-            <p className="text-gray-600 mt-1">{company.rechtsform}</p>
-          )}
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">{company.firmenname}</h1>
+            {company.rechtsform && (
+              <p className="text-gray-600 mt-1">{company.rechtsform}</p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={() => setEdit(true)} variant="outline">
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Company
+            </Button>
+            <Button onClick={handleDeleteCompany} variant="destructive">
+              <Trash className="w-4 h-4 mr-2" />
+              Delete Company
+            </Button>
+            <Button onClick={() => router.push("/companies")}>
+              Back to Companies
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => setEdit(true)} variant="outline">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Company
-          </Button>
-          <Button onClick={handleDeleteCompany} variant="destructive">
-            <Trash className="w-4 h-4 mr-2" />
-            Delete Company
-          </Button>
-          <Button onClick={() => router.push("/companies")}>
-            Back to Companies
-          </Button>
-        </div>
-      </div>
 
-      {/* Status and Badges */}
-      <div className="flex items-center gap-4">
-        <Badge
-          variant={
-            company.status === "won"
-              ? "default"
-              : company.status === "lost"
-              ? "destructive"
-              : "secondary"
-          }
-        >
-          {company.status}
-        </Badge>
-        {company.firmentyp && (
-          <Badge variant="outline">
-            {company.firmentyp === "kette" ? "Chain" : "Single"}
+        {/* Status and Badges */}
+        <div className="flex items-center gap-4">
+          <Badge
+            variant={
+              company.status === "won"
+                ? "default"
+                : company.status === "lost"
+                ? "destructive"
+                : "secondary"
+            }
+          >
+            {company.status}
           </Badge>
-        )}
-        {company.created_at && (
-          <span className="text-sm text-gray-500">
-            Created: {new Date(company.created_at).toLocaleDateString()}
-          </span>
-        )}
-        {company.updated_at && (
-          <span className="text-sm text-gray-500">
-            Updated: {new Date(company.updated_at).toLocaleDateString()}
-          </span>
-        )}
+          {company.firmentyp && (
+            <Badge variant="outline">
+              {company.firmentyp === "kette" ? "Chain" : "Single"}
+            </Badge>
+          )}
+          {company.created_at && (
+            <span className="text-sm text-gray-500">
+              Created: {new Date(company.created_at).toLocaleDateString()}
+            </span>
+          )}
+          {company.updated_at && (
+            <span className="text-sm text-gray-500">
+              Updated: {new Date(company.updated_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+
+        {/* Firmendaten */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" />
+              Firmendaten
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Firmenname</label>
+                <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Rechtsform</label>
+                <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Kundentyp</label>
+                <p className="text-sm text-gray-900">{company.kundentyp || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Firmentyp</label>
+                <p className="text-sm text-gray-900">
+                  {company.firmentyp === "kette"
+                    ? "Kette"
+                    : company.firmentyp === "einzeln"
+                    ? "Einzelbetrieb"
+                    : "—"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Website</label>
+                <p className="text-sm text-gray-900">
+                  {company.website ? (
+                    <a
+                      href={company.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {company.website}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Telefon</label>
+                <p className="text-sm text-gray-900">
+                  {company.telefon ? (
+                    <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
+                      {company.telefon}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <p className="text-sm text-gray-900">
+                  {company.email ? (
+                    <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
+                      {company.email}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Adresse */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Adresse
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Strasse</label>
+                <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">PLZ</label>
+                <p className="text-sm text-gray-900">{company.plz || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Stadt</label>
+                <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Bundesland</label>
+                <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Land</label>
+                <p className="text-sm text-gray-900">{company.land || "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AquaDock Daten */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Waves className="w-5 h-5" />
+              AquaDock Daten
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
+                <p className="text-sm text-gray-900">
+                  {company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Wassertyp</label>
+                <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Latitude</label>
+                <p className="text-sm text-gray-900">{company.lat || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Longitude</label>
+                <p className="text-sm text-gray-900">{company.lon || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">OSM</label>
+                <p className="text-sm text-gray-900">
+                  {company.osm ? (
+                    <a
+                      href={company.osm}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {company.osm}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CRM Informationen */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart className="w-5 h-5" />
+              CRM Informationen
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <p className="text-sm text-gray-900">{company.status || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Value</label>
+                <p className="text-sm text-gray-900">
+                  {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Notes</label>
+                <p className="text-sm text-gray-900">{company.notes || "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Linked Contacts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Linked Contacts ({contacts.length})
+              </CardTitle>
+              <Button onClick={() => router.push(`/contacts?company=${id}`)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Contact
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {contacts.length === 0 ? (
+              <p className="text-gray-500">No contacts linked to this company.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Primary</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contacts.map((contact) => (
+                    <TableRow key={contact.id}>
+                      <TableCell>{contact.vorname} {contact.nachname}</TableCell>
+                      <TableCell>{contact.position || "—"}</TableCell>
+                      <TableCell>{contact.email || "—"}</TableCell>
+                      <TableCell>{contact.telefon || "—"}</TableCell>
+                      <TableCell>
+                        {contact.is_primary && <Badge variant="secondary">Primary</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => router.push(`/contacts?edit=${contact.id}`)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteContact(contact.id)}
+                            size="sm"
+                            variant="destructive"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Reminders */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Reminders ({reminders.length})
+              </CardTitle>
+              <Button onClick={() => router.push(`/reminders?company=${id}`)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Reminder
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {reminders.length === 0 ? (
+              <p className="text-gray-500">No reminders for this company.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reminders.map((reminder) => (
+                    <TableRow key={reminder.id}>
+                      <TableCell>{reminder.title}</TableCell>
+                      <TableCell>{new Date(reminder.due_date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Badge variant={reminder.priority === "high" ? "destructive" : "secondary"}>
+                          {reminder.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{reminder.assigned_to || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => router.push(`/reminders?edit=${reminder.id}`)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteReminder(reminder.id)}
+                            size="sm"
+                            variant="destructive"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Timeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Timeline ({timeline.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {timeline.length === 0 ? (
+              <p className="text-gray-500">No timeline entries for this company.</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Event</TableHead>
+                    <TableHead>User</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {timeline.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell>{new Date(entry.event_date).toLocaleDateString()}</TableCell>
+                      <TableCell>{entry.title}</TableCell>
+                      <TableCell>{entry.description || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Firmendaten */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
-            Firmendaten
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Firmenname</label>
-              <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Rechtsform</label>
-              <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Kundentyp</label>
-              <p className="text-sm text-gray-900">{company.kundentyp || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Firmentyp</label>
-              <p className="text-sm text-gray-900">
-                {company.firmentyp === "kette"
-                  ? "Kette"
-                  : company.firmentyp === "einzeln"
-                  ? "Einzelbetrieb"
-                  : "—"}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Website</label>
-              <p className="text-sm text-gray-900">
-                {company.website ? (
-                  <a
-                    href={company.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {company.website}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Telefon</label>
-              <p className="text-sm text-gray-900">
-                {company.telefon ? (
-                  <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
-                    {company.telefon}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Email</label>
-              <p className="text-sm text-gray-900">
-                {company.email ? (
-                  <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
-                    {company.email}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Adresse */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="w-5 h-5" />
-            Adresse
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Strasse</label>
-              <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">PLZ</label>
-              <p className="text-sm text-gray-900">{company.plz || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Stadt</label>
-              <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Bundesland</label>
-              <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Land</label>
-              <p className="text-sm text-gray-900">{company.land || "—"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AquaDock Daten */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Waves className="w-5 h-5" />
-            AquaDock Daten
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
-              <p className="text-sm text-gray-900">
-                {company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Wassertyp</label>
-              <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Latitude</label>
-              <p className="text-sm text-gray-900">{company.lat || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Longitude</label>
-              <p className="text-sm text-gray-900">{company.lon || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">OSM</label>
-              <p className="text-sm text-gray-900">
-                {company.osm ? (
-                  <a
-                    href={company.osm}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {company.osm}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* CRM Informationen */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart className="w-5 h-5" />
-            CRM Informationen
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700">Status</label>
-              <p className="text-sm text-gray-900">{company.status || "—"}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Value</label>
-              <p className="text-sm text-gray-900">
-                {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-700">Notes</label>
-              <p className="text-sm text-gray-900">{company.notes || "—"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Linked Contacts */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Linked Contacts ({contacts.length})
-            </CardTitle>
-            <Button onClick={() => router.push(`/contacts?company=${id}`)} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Contact
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {contacts.length === 0 ? (
-            <p className="text-gray-500">No contacts linked to this company.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Primary</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contacts.map((contact) => (
-                  <TableRow key={contact.id}>
-                    <TableCell>{contact.vorname} {contact.nachname}</TableCell>
-                    <TableCell>{contact.position || "—"}</TableCell>
-                    <TableCell>{contact.email || "—"}</TableCell>
-                    <TableCell>{contact.telefon || "—"}</TableCell>
-                    <TableCell>
-                      {contact.is_primary && <Badge variant="secondary">Primary</Badge>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => router.push(`/contacts?edit=${contact.id}`)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteContact(contact.id)}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Reminders */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              Reminders ({reminders.length})
-            </CardTitle>
-            <Button onClick={() => router.push(`/reminders?company=${id}`)} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Reminder
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {reminders.length === 0 ? (
-            <p className="text-gray-500">No reminders for this company.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Assigned To</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reminders.map((reminder) => (
-                  <TableRow key={reminder.id}>
-                    <TableCell>{reminder.title}</TableCell>
-                    <TableCell>{new Date(reminder.due_date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <Badge variant={reminder.priority === "high" ? "destructive" : "secondary"}>
-                        {reminder.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                        {reminder.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{reminder.assigned_to || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => router.push(`/reminders?edit=${reminder.id}`)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteReminder(reminder.id)}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Timeline ({timeline.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {timeline.length === 0 ? (
-            <p className="text-gray-500">No timeline entries for this company.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Event</TableHead>
-                  <TableHead>User</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {timeline.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{new Date(entry.event_date).toLocaleDateString()}</TableCell>
-                    <TableCell>{entry.title}</TableCell>
-                    <TableCell>{entry.description || "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    </AppLayout>
   );
 }
