@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -35,7 +37,7 @@ const contactSchema = z.object({
   mobil: z.string().optional(),
   durchwahl: z.string().optional(),
   notes: z.string().optional(),
-  company_id: z.string().optional(),
+  company_id: z.string().nullable().optional(),
   is_primary: z.boolean().optional(),
 });
 
@@ -49,6 +51,8 @@ const anredeOptions = [
 ];
 
 export default function ContactsPage() {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const {
     data: contacts = [],
     isLoading: loading,
@@ -73,7 +77,7 @@ export default function ContactsPage() {
             <p className="text-muted-foreground text-sm">Home → Contacts</p>
             <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
           </div>
-          <Dialog>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>New Contact</Button>
             </DialogTrigger>
@@ -81,7 +85,7 @@ export default function ContactsPage() {
               <DialogHeader>
                 <DialogTitle>Create New Contact</DialogTitle>
               </DialogHeader>
-              <ContactCreateForm />
+              <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -190,7 +194,9 @@ export default function ContactsPage() {
   );
 }
 
-function ContactCreateForm() {
+function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient();
+
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -203,20 +209,23 @@ function ContactCreateForm() {
       mobil: "",
       durchwahl: "",
       notes: "",
-      company_id: "",
+      company_id: null,
       is_primary: false,
     },
   });
 
-  const onSubmit = form.handleSubmit(async (data) => {
-    try {
-      const supabase = createClient();
-      await createContact(data, supabase);
-      // Handle success, e.g., close dialog, refresh data
-    } catch (error) {
-      console.error("Failed to create contact:", error);
-    }
+  const mutation = useMutation({
+    mutationFn: createContact,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Contact created");
+      form.reset();
+      onSuccess?.();
+    },
+    onError: (err) => toast.error("Creation failed", { description: err.message }),
   });
+
+  const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
   return (
     <Form {...form}>
@@ -349,7 +358,9 @@ function ContactCreateForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Create Contact</Button>
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "Creating..." : "Create Contact"}
+        </Button>
       </form>
     </Form>
   );
