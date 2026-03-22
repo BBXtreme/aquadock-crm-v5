@@ -1,5 +1,6 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import type { Company } from "@/lib/supabase/types";
+import { updateCompany } from "@/lib/supabase/services/companies";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -101,6 +104,8 @@ const wassertypOptions = [
 ];
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company; onSuccess?: () => void }) {
+  const queryClient = useQueryClient();
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: {
@@ -127,14 +132,25 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
     },
   });
 
-  const onSubmit = (data: CompanyFormValues) => {
-    console.log("Edit submit:", data);
-    onSuccess?.();
-  };
+  const updateMutation = useMutation({
+    mutationFn: (data: CompanyFormValues) => updateCompany(company.id, data as Partial<Company>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      toast.success("Company updated successfully");
+      onSuccess?.();
+    },
+    onError: (error) => {
+      toast.error("Failed to update company", { description: error.message });
+    },
+  });
+
+  const onSubmit = form.handleSubmit((data) => {
+    updateMutation.mutate(data);
+  });
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-6">
         <FormField
           control={form.control}
           name="firmenname"
@@ -488,7 +504,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           )}
         />
 
-        <Button type="submit">Update Company</Button>
+        <Button type="submit" disabled={updateMutation.isPending}>
+          {updateMutation.isPending ? "Updating..." : "Update Company"}
+        </Button>
       </form>
     </Form>
   );
