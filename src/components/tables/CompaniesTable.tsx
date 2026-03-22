@@ -54,11 +54,14 @@ const columns = [
       />
     ),
     cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
+      <div className="data-[state=checked]:bg-primary/20">
+        {console.log("Row selected:", row.id, row.getIsSelected())}
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      </div>
     ),
   }),
   columnHelper.accessor("firmenname", {
@@ -298,3 +301,4 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
     </div>
   );
 }
+```
