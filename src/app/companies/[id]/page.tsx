@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { isAfter } from "date-fns";
 
-import { Building, MapPin, Waves, BarChart, Edit, Trash, Plus, Eye, Calendar, Bell, User } from "lucide-react";
+import { Building, MapPin, Waves, BarChart, Edit, Trash, Plus, Eye, Calendar, Bell, User, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -226,8 +226,8 @@ export default function CompanyDetailPage() {
             <Button onClick={handleDeleteCompany} variant="destructive" size="sm">
               <Trash className="w-4 h-4" />
             </Button>
-            <Button onClick={() => router.push("/companies")}>
-              Back to Companies
+            <Button onClick={() => router.push("/companies")} size="sm">
+              <ArrowLeft className="w-4 h-4" />
             </Button>
           </div>
         </div>
