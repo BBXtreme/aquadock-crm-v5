@@ -25,6 +25,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -180,7 +181,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
     onColumnVisibilityChange: setColumnVisibility,
   });
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     try {
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
@@ -189,6 +190,25 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast.error("Failed to export data");
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const data = table.getFilteredRowModel().rows.map((row) => row.original);
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.json`);
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -209,9 +229,17 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           className="max-w-sm"
         />
         <div className="flex space-x-2">
-          <Button variant="outline" size="icon" onClick={handleExport}>
-            <Download className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Download className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleExportCSV}>Export CSV</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportJSON}>Export JSON</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
