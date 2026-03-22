@@ -34,6 +34,7 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 
 interface CompaniesTableProps {
   companies: Company[];
+  onEdit?: (company: Company) => void;
 }
 
 const columnHelper = createColumnHelper<Company>();
@@ -100,11 +101,9 @@ const columns: ColumnDef<Company>[] = [
             <Eye className="h-4 w-4" />
           </Button>
         </Link>
-        <Link href={`/companies/${info.row.original.id}`}>
-          <Button variant="ghost" size="sm">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
+          <Edit className="h-4 w-4" />
+        </Button>
         <Button variant="ghost" size="sm">
           <Trash className="h-4 w-4" />
         </Button>
@@ -113,7 +112,7 @@ const columns: ColumnDef<Company>[] = [
   }) as ColumnDef<Company>,
 ];
 
-export default function CompaniesTable({ companies }: CompaniesTableProps) {
+export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
