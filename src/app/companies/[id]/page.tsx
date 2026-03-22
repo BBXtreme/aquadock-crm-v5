@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ export default function CompanyDetailPage() {
   const [addContactDialog, setAddContactDialog] = useState(false);
   const [addReminderDialog, setAddReminderDialog] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
       setError("Invalid company ID");
       setLoading(false);
@@ -75,18 +75,17 @@ export default function CompanyDetailPage() {
       // Fetch timeline
       const allTimeline = await getTimeline(supabase);
       setTimeline(allTimeline.filter((t) => t.company_id === id));
-    } catch (_err) {
+    } catch (err) {
+      console.error(err);
       setError("Failed to load data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id, fetchData]);
+    fetchData();
+  }, [fetchData]);
 
   const handleDeleteCompany = async () => {
     if (confirm("Are you sure you want to delete this company?")) {

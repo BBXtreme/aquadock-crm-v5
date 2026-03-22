@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
       setError("Invalid contact ID");
       setLoading(false);
@@ -41,12 +41,13 @@ export default function ContactDetailPage() {
       } else {
         setError(data.error || "Failed to load contact");
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error(err);
       setError("Failed to load contact");
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchData();
