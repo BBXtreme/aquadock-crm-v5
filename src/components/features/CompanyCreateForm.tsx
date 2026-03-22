@@ -1,8 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart, Building, MapPin, Waves } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createCompany } from "@/lib/supabase/services/companies";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -115,6 +118,8 @@ const wassertypOptions = [
 ];
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient();
+
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema as any),
     defaultValues: {
@@ -141,15 +146,23 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     },
   });
 
-  const onSubmit = (data: CompanyFormValues) => {
-    console.log("Submit:", data); // replace with mutation later
-    onSuccess?.();
-  };
+  const mutation = useMutation({
+    mutationFn: createCompany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      toast.success("Company created");
+      form.reset();
+      onSuccess?.();
+    },
+    onError: (err) => toast.error("Creation failed", { description: err.message }),
+  });
+
+  const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
   return (
     <div className="max-w-screen-2xl mx-auto p-6 md:p-8 lg:p-10 bg-background rounded-xl border max-h-[90vh] overflow-y-auto">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={onSubmit} className="space-y-8">
           {/* Firmendaten */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
