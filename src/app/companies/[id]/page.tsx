@@ -1,24 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
+import Link from "next/link";
 import { isAfter } from "date-fns";
-import { BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
 
-import CompanyEditForm from "@/components/features/CompanyEditForm";
-import AppLayout from "@/components/layout/AppLayout";
-import { Badge } from "@/components/ui/badge";
+import { Building, MapPin, Waves, BarChart, Edit, Trash, Plus, Eye, Calendar, Bell, User } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import AppLayout from "@/components/layout/AppLayout";
+import CompanyEditForm from "@/components/features/CompanyEditForm";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteCompany } from "@/lib/supabase/services/companies";
-import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
-import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
+import { getContacts } from "@/lib/supabase/services/contacts";
+import { getReminders } from "@/lib/supabase/services/reminders";
 import { getTimeline } from "@/lib/supabase/services/timeline";
+import { deleteContact } from "@/lib/supabase/services/contacts";
+import { deleteReminder } from "@/lib/supabase/services/reminders";
+import { deleteCompany } from "@/lib/supabase/services/companies";
 import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,12 @@ export default function CompanyDetailPage() {
   const [edit, setEdit] = useState(false);
 
   const fetchData = async () => {
+    if (!id || id === "undefined") {
+      setError("Invalid company ID");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const supabase = createClient();
@@ -56,16 +64,17 @@ export default function CompanyDetailPage() {
 
       // Fetch contacts
       const allContacts = await getContacts(supabase);
-      setContacts(allContacts.filter((c) => c.company_id === id));
+      setContacts(allContacts.filter(c => c.company_id === id));
 
       // Fetch reminders
       const allReminders = await getReminders(supabase);
-      setReminders(allReminders.filter((r) => r.company_id === id));
+      setReminders(allReminders.filter(r => r.company_id === id));
 
       // Fetch timeline
       const allTimeline = await getTimeline(supabase);
-      setTimeline(allTimeline.filter((t) => t.company_id === id));
-    } catch (_err) {
+      setTimeline(allTimeline.filter(t => t.company_id === id));
+
+    } catch (err) {
       setError("Failed to load data");
     } finally {
       setLoading(false);
@@ -76,40 +85,40 @@ export default function CompanyDetailPage() {
     if (id) {
       fetchData();
     }
-  }, [id, fetchData]);
+  }, [id]);
 
   const handleDeleteCompany = async () => {
-    if (confirm("Are you sure you want to delete this company?")) {
+    if (confirm('Are you sure you want to delete this company?')) {
       try {
         const supabase = createClient();
         await deleteCompany(id, supabase);
-        router.push("/companies");
-      } catch (_error) {
-        alert("Error deleting company");
+        router.push('/companies');
+      } catch (error) {
+        alert('Error deleting company');
       }
     }
   };
 
   const handleDeleteContact = async (contactId: string) => {
-    if (confirm("Are you sure you want to delete this contact?")) {
+    if (confirm('Are you sure you want to delete this contact?')) {
       try {
         const supabase = createClient();
         await deleteContact(contactId, supabase);
         fetchData();
-      } catch (_error) {
-        alert("Error deleting contact");
+      } catch (error) {
+        alert('Error deleting contact');
       }
     }
   };
 
   const handleDeleteReminder = async (reminderId: string) => {
-    if (confirm("Are you sure you want to delete this reminder?")) {
+    if (confirm('Are you sure you want to delete this reminder?')) {
       try {
         const supabase = createClient();
         await deleteReminder(reminderId, supabase);
         fetchData();
-      } catch (_error) {
-        alert("Error deleting reminder");
+      } catch (error) {
+        alert('Error deleting reminder');
       }
     }
   };
@@ -138,9 +147,9 @@ export default function CompanyDetailPage() {
       <AppLayout>
         <div className="container mx-auto p-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
           </div>
         </div>
       </AppLayout>
@@ -169,7 +178,9 @@ export default function CompanyDetailPage() {
         <div className="container mx-auto p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
-            <Button onClick={() => router.push("/companies")}>Back to Companies</Button>
+            <Button onClick={() => router.push("/companies")}>
+              Back to Companies
+            </Button>
           </div>
         </div>
       </AppLayout>
@@ -180,13 +191,7 @@ export default function CompanyDetailPage() {
     return (
       <AppLayout>
         <div className="container mx-auto p-6">
-          <CompanyEditForm
-            company={company}
-            onSuccess={() => {
-              setEdit(false);
-              fetchData();
-            }}
-          />
+          <CompanyEditForm company={company} onSuccess={() => { setEdit(false); fetchData(); }} />
         </div>
       </AppLayout>
     );
@@ -194,28 +199,25 @@ export default function CompanyDetailPage() {
 
   // Calculate stats
   const totalContacts = contacts.length;
-  const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const openReminders = reminders.filter((r) => r.status === "open").length;
-  const overdueReminders = reminders.filter(
-    (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
-  ).length;
+  const primaryContacts = contacts.filter(c => c.is_primary).length;
+  const openReminders = reminders.filter(r => r.status === "open").length;
+  const overdueReminders = reminders.filter(r => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
 
   return (
     <AppLayout>
       <div className="container mx-auto p-6 space-y-8">
         {/* Breadcrumbs */}
         <nav className="text-sm text-gray-600">
-          <Link href="/companies" className="hover:underline">
-            Companies
-          </Link>{" "}
-          &gt; {company.firmenname}
+          <Link href="/companies" className="hover:underline">Companies</Link> &gt; {company.firmenname}
         </nav>
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">{company.firmenname}</h1>
-            {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
+            {company.rechtsform && (
+              <p className="text-gray-600 mt-1">{company.rechtsform}</p>
+            )}
           </div>
           <div className="flex gap-3">
             <Button onClick={() => setEdit(true)} variant="outline">
@@ -226,7 +228,9 @@ export default function CompanyDetailPage() {
               <Trash className="w-4 h-4 mr-2" />
               Delete Company
             </Button>
-            <Button onClick={() => router.push("/companies")}>Back to Companies</Button>
+            <Button onClick={() => router.push("/companies")}>
+              Back to Companies
+            </Button>
           </div>
         </div>
 
@@ -243,14 +247,28 @@ export default function CompanyDetailPage() {
             {company.status}
           </Badge>
           {company.kundentyp && (
-            <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
+            <Badge className="bg-[#24BACC] text-white">
+              {getKundentypLabel(company.kundentyp)}
+            </Badge>
           )}
-          {company.firmentyp && <Badge variant="outline">{company.firmentyp === "kette" ? "Chain" : "Single"}</Badge>}
+          {company.firmentyp && (
+            <Badge variant="outline">
+              {company.firmentyp === "kette"
+                ? "Chain"
+                : company.firmentyp === "einzeln"
+                ? "Single"
+                : "—"}
+            </Badge>
+          )}
           {company.created_at && (
-            <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
+            <span className="text-sm text-gray-500">
+              Created: {new Date(company.created_at).toLocaleDateString()}
+            </span>
           )}
           {company.updated_at && (
-            <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+            <span className="text-sm text-gray-500">
+              Updated: {new Date(company.updated_at).toLocaleDateString()}
+            </span>
           )}
         </div>
 
@@ -317,7 +335,11 @@ export default function CompanyDetailPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-700">Firmentyp</label>
                   <p className="text-sm text-gray-900">
-                    {company.firmentyp === "kette" ? "Kette" : company.firmentyp === "einzeln" ? "Einzelbetrieb" : "—"}
+                    {company.firmentyp === "kette"
+                      ? "Kette"
+                      : company.firmentyp === "einzeln"
+                      ? "Einzelbetrieb"
+                      : "—"}
                   </p>
                 </div>
                 <div>
@@ -411,7 +433,9 @@ export default function CompanyDetailPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
-                  <p className="text-sm text-gray-900">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
+                  <p className="text-sm text-gray-900">
+                    {company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Wassertyp</label>
@@ -507,13 +531,13 @@ export default function CompanyDetailPage() {
                 <TableBody>
                   {contacts.map((contact) => (
                     <TableRow key={contact.id}>
-                      <TableCell>
-                        {contact.vorname} {contact.nachname}
-                      </TableCell>
+                      <TableCell>{contact.vorname} {contact.nachname}</TableCell>
                       <TableCell>{contact.position || "—"}</TableCell>
                       <TableCell>{contact.email || "—"}</TableCell>
                       <TableCell>{contact.telefon || "—"}</TableCell>
-                      <TableCell>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</TableCell>
+                      <TableCell>
+                        {contact.is_primary && <Badge variant="secondary">Primary</Badge>}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button
@@ -523,7 +547,11 @@ export default function CompanyDetailPage() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button onClick={() => handleDeleteContact(contact.id)} size="sm" variant="destructive">
+                          <Button
+                            onClick={() => handleDeleteContact(contact.id)}
+                            size="sm"
+                            variant="destructive"
+                          >
                             <Trash className="w-4 h-4" />
                           </Button>
                         </div>
@@ -576,7 +604,9 @@ export default function CompanyDetailPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
                       </TableCell>
                       <TableCell>{reminder.assigned_to || "—"}</TableCell>
                       <TableCell>
@@ -588,7 +618,11 @@ export default function CompanyDetailPage() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button onClick={() => handleDeleteReminder(reminder.id)} size="sm" variant="destructive">
+                          <Button
+                            onClick={() => handleDeleteReminder(reminder.id)}
+                            size="sm"
+                            variant="destructive"
+                          >
                             <Trash className="w-4 h-4" />
                           </Button>
                         </div>
