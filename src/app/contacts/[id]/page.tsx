@@ -25,6 +25,12 @@ export default function ContactDetailPage() {
   const [error, setError] = useState("");
 
   const fetchData = async () => {
+    if (!id || id === "undefined") {
+      setError("Invalid contact ID");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(`/api/contacts/${id}`);
@@ -42,9 +48,7 @@ export default function ContactDetailPage() {
   };
 
   useEffect(() => {
-    if (id) {
-      fetchData();
-    }
+    fetchData();
   }, [id]);
 
   const handleDeleteContact = async () => {
