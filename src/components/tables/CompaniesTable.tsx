@@ -304,4 +304,3 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
     </div>
   );
 }
-```
