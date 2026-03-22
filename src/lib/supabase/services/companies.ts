@@ -56,31 +56,38 @@ export async function getCompanyById(id: string, client: SupabaseClient): Promis
  */
 export async function createCompany(values: CompanyInsert): Promise<Company> {
   const supabase = createClient();
-
-  const { data, error } = await supabase.from("companies").insert(values).select().single();
-
-  if (error) throw handleSupabaseError(error, "Failed to create company");
+  const { data, error } = await supabase
+    .from("companies")
+    .insert(values)
+    .select()
+    .single();
+  if (error) throw handleSupabaseError(error, "createCompany");
   return data;
 }
 
 /**
  * Update a company
  */
-export async function updateCompany(
-  id: string,
-  updates: Partial<Omit<Company, "id" | "created_at" | "updated_at">>,
-  client: SupabaseClient,
-): Promise<Company | null> {
-  const { data, error } = await client.from("companies").update(updates).eq("id", id).select().single();
+export async function updateCompany(id: string, updates: Partial<Company>): Promise<Company> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw handleSupabaseError(error, "updateCompany");
-  return (data as Company | null) ?? null;
+  return data;
 }
 
 /**
  * Delete a company
  */
-export async function deleteCompany(id: string, client: SupabaseClient): Promise<boolean> {
-  const { error } = await client.from("companies").delete().eq("id", id);
+export async function deleteCompany(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("companies")
+    .delete()
+    .eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
-  return true;
 }
