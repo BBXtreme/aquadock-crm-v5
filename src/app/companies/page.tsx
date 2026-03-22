@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { getCompanies } from "@/lib/supabase/services/companies";
+import { createCompany } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
+  const queryClient = useQueryClient();
+
   const {
     data: companies = [],
     isLoading,
@@ -29,6 +31,16 @@ export default function CompaniesPage() {
       return getCompanies(supabase);
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const createCompanyMutation = useMutation({
+    mutationFn: async (newCompany: Omit<Company, "id" | "created_at" | "updated_at">) => {
+      const supabase = createClient();
+      return createCompany(newCompany, supabase);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
   });
 
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
