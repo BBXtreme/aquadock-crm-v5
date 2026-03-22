@@ -349,20 +349,20 @@ export default function ContactsPage() {
               </div>
             ) : (
               <>
-                {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                  <div className="mb-4 p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">
-                      Selected: {table.getFilteredSelectedRowModel().rows.length} contacts
-                    </p>
-                  </div>
-                )}
                 <div className="flex items-center justify-between mb-4">
-                  <Input
-                    placeholder="Search contacts..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(String(event.target.value))}
-                    className="max-w-sm"
-                  />
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      placeholder="Search contacts..."
+                      value={globalFilter ?? ""}
+                      onChange={(event) => setGlobalFilter(String(event.target.value))}
+                      className="max-w-sm"
+                    />
+                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                      <span className="text-sm text-muted-foreground">
+                        {table.getFilteredSelectedRowModel().rows.length} selected
+                      </span>
+                    )}
+                  </div>
                   <div className="flex space-x-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
