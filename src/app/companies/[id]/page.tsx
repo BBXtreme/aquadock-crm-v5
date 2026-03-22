@@ -786,7 +786,15 @@ export default function CompanyDetailPage() {
                       <TableCell>{reminder.title}</TableCell>
                       <TableCell>{new Date(reminder.due_date).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        <Badge variant={reminder.priority === "high" ? "destructive" : "secondary"}>
+                        <Badge
+                          className={
+                            reminder.priority === "hoch"
+                              ? "bg-orange-500 text-white"
+                              : reminder.priority === "normal"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-500 text-white"
+                          }
+                        >
                           {reminder.priority}
                         </Badge>
                       </TableCell>
