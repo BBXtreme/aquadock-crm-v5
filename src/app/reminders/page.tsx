@@ -33,6 +33,7 @@ import { getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
 
   const {
@@ -62,14 +63,14 @@ export default function RemindersPage() {
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllRowsSelected()}
-          onChange={(e) => table.toggleAllRowsSelected(e.target.checked)}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onChange={(e) => row.toggleSelected(e.target.checked)}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
         />
       ),
