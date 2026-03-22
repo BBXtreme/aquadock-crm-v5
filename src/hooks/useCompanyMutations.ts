@@ -72,12 +72,15 @@ export function useUpdateCompany() {
 
 export function useDeleteCompany() {
   const queryClient = useQueryClient();
-  const supabase = createClient();
 
   return useMutation({
     mutationFn: (id: string) => {
-      console.log("🔴 Attempting to delete company with ID:", id);
-      return deleteCompany(id, supabase);
+      const safeId = String(id ?? "").trim();
+      if (!safeId) {
+        throw new Error("Keine gültige Firmen-ID gefunden");
+      }
+      console.log("🔴 Attempting to delete company with ID:", safeId);
+      return deleteCompany(safeId);
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["companies"] });
