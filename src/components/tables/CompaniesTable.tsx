@@ -100,8 +100,14 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
       cell: (info) => formatCurrency(info.getValue() as number | null),
     }),
     columnHelper.accessor("stadt", {
-      header: "Stadt",
-      cell: (info) => safeDisplay(info.getValue() as string | null),
+      id: "ort",
+      header: "Ort",
+      cell: (info) => {
+        const row = info.row.original;
+        const plz = row.plz ? `${row.plz} ` : "";
+        const stadt = row.stadt || "";
+        return `${plz}${stadt}` || "—";
+      },
     }),
     columnHelper.accessor("land", {
       header: "Land",
