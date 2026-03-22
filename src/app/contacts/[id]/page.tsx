@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 
-import { User, Building, Edit, Trash, Mail, Phone, Smartphone, Hash } from "lucide-react";
+import { Building, Edit, Trash, User } from "lucide-react";
 
+import AppLayout from "@/components/layout/AppLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import AppLayout from "@/components/layout/AppLayout";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
@@ -40,7 +40,7 @@ export default function ContactDetailPage() {
       } else {
         setError(data.error || "Failed to load contact");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to load contact");
     } finally {
       setLoading(false);
@@ -49,16 +49,16 @@ export default function ContactDetailPage() {
 
   useEffect(() => {
     fetchData();
-  }, [id]);
+  }, [fetchData]);
 
   const handleDeleteContact = async () => {
-    if (confirm('Are you sure you want to delete this contact?')) {
+    if (confirm("Are you sure you want to delete this contact?")) {
       try {
         const supabase = createClient();
         await deleteContact(id, supabase);
-        router.push('/contacts');
-      } catch (error) {
-        alert('Error deleting contact');
+        router.push("/contacts");
+      } catch (_error) {
+        alert("Error deleting contact");
       }
     }
   };
@@ -68,9 +68,9 @@ export default function ContactDetailPage() {
       <AppLayout>
         <div className="container mx-auto p-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+            <div className="h-4 bg-gray-200 rounded w-1/3" />
           </div>
         </div>
       </AppLayout>
@@ -99,9 +99,7 @@ export default function ContactDetailPage() {
         <div className="container mx-auto p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Contact Not Found</h1>
-            <Button onClick={() => router.push("/contacts")}>
-              Back to Contacts
-            </Button>
+            <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
           </div>
         </div>
       </AppLayout>
@@ -113,16 +111,19 @@ export default function ContactDetailPage() {
       <div className="container mx-auto p-6 space-y-8">
         {/* Breadcrumbs */}
         <nav className="text-sm text-gray-600">
-          <Link href="/contacts" className="hover:underline">Contacts</Link> &gt; {contact.vorname} {contact.nachname}
+          <Link href="/contacts" className="hover:underline">
+            Contacts
+          </Link>{" "}
+          &gt; {contact.vorname} {contact.nachname}
         </nav>
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">{contact.vorname} {contact.nachname}</h1>
-            {contact.position && (
-              <p className="text-gray-600 mt-1">{contact.position}</p>
-            )}
+            <h1 className="text-3xl font-bold">
+              {contact.vorname} {contact.nachname}
+            </h1>
+            {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
           </div>
           <div className="flex gap-3">
             <Button onClick={() => router.push(`/contacts?edit=${id}`)} variant="outline">
@@ -133,20 +134,14 @@ export default function ContactDetailPage() {
               <Trash className="w-4 h-4 mr-2" />
               Delete Contact
             </Button>
-            <Button onClick={() => router.push("/contacts")}>
-              Back to Contacts
-            </Button>
+            <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
           </div>
         </div>
 
         {/* Badges */}
         <div className="flex items-center gap-4">
-          {contact.is_primary && (
-            <Badge variant="secondary">Primary Contact</Badge>
-          )}
-          {contact.anrede && (
-            <Badge variant="outline">{contact.anrede}</Badge>
-          )}
+          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
+          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
         </div>
 
         {/* Contact Details */}
@@ -234,7 +229,10 @@ export default function ContactDetailPage() {
           <CardContent>
             {contact.companies ? (
               <div>
-                <Link href={`/companies/${contact.company_id}`} className="text-blue-600 hover:underline text-lg font-semibold">
+                <Link
+                  href={`/companies/${contact.company_id}`}
+                  className="text-blue-600 hover:underline text-lg font-semibold"
+                >
                   {contact.companies.firmenname}
                 </Link>
                 <p className="text-sm text-gray-600 mt-1">Click to view company details</p>
