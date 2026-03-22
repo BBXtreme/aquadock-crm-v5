@@ -33,127 +33,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const columnHelper = createColumnHelper<any>();
 
-const columns = useMemo(() => [
-  columnHelper.display({
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-  }),
-  columnHelper.accessor("title", {
-    header: "Title",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("companies.firmenname", {
-    header: "Company",
-    cell: (info) => {
-      try {
-        const company = info.row.original.companies;
-        if (!company) return "—";
-        return (
-          <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-            {company.firmenname}
-          </Link>
-        );
-      } catch {
-        return "—";
-      }
-    },
-  }),
-  columnHelper.accessor("due_date", {
-    header: "Due Date",
-    cell: (info) => {
-      try {
-        const dueDate = info.getValue() as string;
-        if (!dueDate) return "—";
-        const isOverdue = isAfter(new Date(), new Date(dueDate));
-        return (
-          <span className={isOverdue ? "text-rose-500" : ""}>
-            {formatDistanceToNow(new Date(dueDate), {
-              addSuffix: true,
-            })}
-          </span>
-        );
-      } catch {
-        return "Invalid date";
-      }
-    },
-  }),
-  columnHelper.accessor("priority", {
-    header: "Priority",
-    cell: (info) => (
-      <Badge
-        className={
-          info.getValue() === "hoch"
-            ? "bg-orange-500 text-white"
-            : info.getValue() === "normal"
-            ? "bg-blue-500 text-white"
-            : "bg-gray-500 text-white"
-        }
-      >
-        {info.getValue()}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: (info) => (
-      <Badge
-        className={
-          info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-        }
-      >
-
-        {info.getValue()}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("assigned_to", {
-    header: "Assigned To",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "Actions",
-    cell: (info) => (
-      <div className="flex space-x-2">
-        <Link href={`/reminders/${info.row.original.id}`}>
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-        </Link>
-        <Link href={`/reminders/${info.row.original.id}?edit=true`}>
-          <Button variant="ghost" size="sm">
-            Edit
-          </Button>
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            if (confirm("Are you sure you want to delete this reminder?")) {
-              // delete
-            }
-          }}
-        >
-          Delete
-        </Button>
-      </div>
-    ),
-  }),
-], []);
-
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -187,6 +66,127 @@ export default function RemindersPage() {
   const overdue = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length : 0;
   const thisWeek = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length : 0;
   const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
+
+  const columns = useMemo(() => [
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+    }),
+    columnHelper.accessor("title", {
+      header: "Title",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("companies.firmenname", {
+      header: "Company",
+      cell: (info) => {
+        try {
+          const company = info.row.original.companies;
+          if (!company) return "—";
+          return (
+            <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+              {company.firmenname}
+            </Link>
+          );
+        } catch {
+          return "—";
+        }
+      },
+    }),
+    columnHelper.accessor("due_date", {
+      header: "Due Date",
+      cell: (info) => {
+        try {
+          const dueDate = info.getValue() as string;
+          if (!dueDate) return "—";
+          const isOverdue = isAfter(new Date(), new Date(dueDate));
+          return (
+            <span className={isOverdue ? "text-rose-500" : ""}>
+              {formatDistanceToNow(new Date(dueDate), {
+                addSuffix: true,
+              })}
+            </span>
+          );
+        } catch {
+          return "Invalid date";
+        }
+      },
+    }),
+    columnHelper.accessor("priority", {
+      header: "Priority",
+      cell: (info) => (
+        <Badge
+          className={
+            info.getValue() === "hoch"
+              ? "bg-orange-500 text-white"
+              : info.getValue() === "normal"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-500 text-white"
+          }
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => (
+        <Badge
+          className={
+            info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
+          }
+        >
+
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("assigned_to", {
+      header: "Assigned To",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <div className="flex space-x-2">
+          <Link href={`/reminders/${info.row.original.id}`}>
+            <Button variant="ghost" size="sm">
+              View
+            </Button>
+          </Link>
+          <Link href={`/reminders/${info.row.original.id}?edit=true`}>
+            <Button variant="ghost" size="sm">
+              Edit
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this reminder?")) {
+                // delete
+              }
+            }}
+          >
+            Delete
+          </Button>
+        </div>
+      ),
+    }),
+  ], []);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -307,7 +307,7 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                {header.isPlaceholder ? null : flexRender(header.columnDef.header, header.getContext())}
                               </TableHead>
                             ))}
                           </TableRow>
