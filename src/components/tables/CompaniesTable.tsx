@@ -33,8 +33,8 @@ import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface CompaniesTableProps {
-  companies: Company[]
-  onEdit?: (company: Company) => void
+  companies: Company[];
+  onEdit?: (company: Company) => void;
 }
 
 const columnHelper = createColumnHelper<any>();
