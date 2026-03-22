@@ -143,9 +143,12 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
   const [rowSelection, setRowSelection] = useState({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  // Ensure companies have string IDs
+  const safeCompanies = companies.map(c => ({ ...c, id: String(c.id) }));
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: companies,
+    data: safeCompanies,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -304,3 +307,4 @@ export default function CompaniesTable({ companies, onDelete, onBulkDelete }: Co
     </div>
   );
 }
+```
