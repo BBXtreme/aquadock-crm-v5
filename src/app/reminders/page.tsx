@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -135,7 +135,7 @@ export default function RemindersPage() {
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useMemo(() => useReactTable({
     data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -152,7 +152,7 @@ export default function RemindersPage() {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
-  });
+  }), [reminders, globalFilter, columnVisibility, rowSelection]);
 
   if (error) {
     return (
