@@ -111,7 +111,11 @@ export default function ContactsPage() {
     columnHelper.accessor("nachname", {
       id: "nachname",
       header: "Nachname",
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
+          {info.getValue()}
+        </Link>
+      ),
     }),
     columnHelper.accessor("anrede", {
       id: "anrede",
