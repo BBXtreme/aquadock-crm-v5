@@ -102,7 +102,7 @@ const wassertypOptions = [
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company; onSuccess?: () => void }) {
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema as any),
+    resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company.firmenname || "",
       rechtsform: company.rechtsform || "",
@@ -140,7 +140,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="firmenname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Firmenname *</FormLabel>
+              <FormLabel>Firmenname</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -246,7 +246,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>E-Mail</FormLabel>
+              <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input type="email" {...field} />
               </FormControl>
@@ -260,7 +260,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="strasse"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Straße</FormLabel>
+              <FormLabel>Strasse</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -274,7 +274,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="plz"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>PLZ</FormLabel>
+              <FormLabel>Plz</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -341,7 +341,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="wasserdistanz"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Wasserdistanz (m)</FormLabel>
+              <FormLabel>Wasserdistanz</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -384,7 +384,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="lat"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Latitude</FormLabel>
+              <FormLabel>Lat</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -403,7 +403,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="lon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Longitude</FormLabel>
+              <FormLabel>Lon</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -422,7 +422,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="osm"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>OSM Link</FormLabel>
+              <FormLabel>Osm</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -461,7 +461,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="value"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Value (€)</FormLabel>
+              <FormLabel>Value</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -479,7 +479,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notizen</FormLabel>
+              <FormLabel>Notes</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>
