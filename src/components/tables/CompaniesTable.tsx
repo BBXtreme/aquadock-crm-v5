@@ -55,11 +55,7 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
     }),
     columnHelper.accessor("kundentyp", {
       header: "Kundentyp",
-      cell: (info) => (
-        <Badge className="bg-[#24BACC] text-white">
-          {safeDisplay(info.getValue() as string)}
-        </Badge>
-      ),
+      cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue() as string)}</Badge>,
     }),
     columnHelper.accessor("status", {
       header: "Status",
