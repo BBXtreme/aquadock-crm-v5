@@ -8,15 +8,15 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 
-import AppLayout from "@/components/layout/AppLayout";
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
+import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonList } from "@/components/ui/SkeletonList";
+import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
 import type { CompanyInsert } from "@/lib/supabase/types";
@@ -38,7 +38,7 @@ export default function CompaniesPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const createCompanyMutation = useMutation({
+  const _createCompanyMutation = useMutation({
     mutationFn: async (newCompany: CompanyInsert) => {
       return createCompany(newCompany);
     },
