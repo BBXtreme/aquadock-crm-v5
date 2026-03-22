@@ -1,21 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Bell, Palette, Settings, Shield } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, Mail, Palette, Settings, Shield } from "lucide-react";
+import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { createClient } from "@/lib/supabase/browser";
+import { getUserSettings, upsertUserSetting } from "@/lib/supabase/services/user-settings";
+
+const smtpSchema = z.object({
+  host: z.string().min(1, "Host is required"),
+  port: z.number().min(1, "Port must be at least 1").max(65535, "Port must be at most 65535"),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+  useTLS: z.boolean(),
+});
+
+type SmtpForm = z.infer<typeof smtpSchema>;
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(false);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+    };
+    getUser();
+  }, [supabase.auth]);
+
+  const { data: settings } = useQuery({
+    queryKey: ["user-settings", userId],
+    queryFn: () => userId ? getUserSettings(userId) : Promise.resolve([]),
+    enabled: !!userId,
+  });
+
+  const form = useForm<SmtpForm>({
+    resolver: zodResolver(smtpSchema),
+    defaultValues: {
+      host: "",
+      port: 587,
+      username: "",
+      password: "",
+      useTLS: true,
+    },
+  });
+
+  useEffect(() => {
+    if (settings) {
+      form.reset({
+        host: (settings.find((s) => s.key === "smtp_host")?.value as string) || "",
+        port: parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587"),
+        username: (settings.find((s) => s.key === "smtp_username")?.value as string) || "",
+        password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
+        useTLS: (settings.find((s) => s.key === "smtp_use_tls")?.value as string) === "true",
+      });
+    }
+  }, [settings, form]);
+
+  const mutation = useMutation({
+    mutationFn: async (data: SmtpForm) => {
+      if (!userId) throw new Error("User not authenticated");
+      const promises = [
+        upsertUserSetting({ user_id: userId, key: "smtp_host", value: data.host }),
+        upsertUserSetting({ user_id: userId, key: "smtp_port", value: data.port.toString() }),
+        upsertUserSetting({ user_id: userId, key: "smtp_username", value: data.username }),
+        upsertUserSetting({ user_id: userId, key: "smtp_password", value: data.password }),
+        upsertUserSetting({ user_id: userId, key: "smtp_use_tls", value: data.useTLS.toString() }),
+      ];
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-settings", userId] });
+      toast.success("SMTP settings saved successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to save SMTP settings", { description: error.message });
+    },
+  });
 
   return (
     <AppLayout>
@@ -133,6 +214,98 @@ export default function SettingsPage() {
                 </Button>
               </div>
               <p className="text-muted-foreground text-sm">Advanced settings for power users</p>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Mail className="mr-2 h-5 w-5" />
+                SMTP-Konfiguration für den E-Mail Versand
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="host"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Host</FormLabel>
+                          <FormControl>
+                            <Input placeholder="smtp.example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="port"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Port</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Username</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="useTLS"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Use TLS</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={mutation.isPending}>
+                    {mutation.isPending ? "Saving..." : "Save Settings"}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         </div>

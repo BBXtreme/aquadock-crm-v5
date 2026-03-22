@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/utils";
+import type { UserSetting, UserSettingInsert } from "@/lib/supabase/types";
 
 export async function getUserColumnOrder(): Promise<string[] | null> {
   const supabase = createClient();
@@ -22,4 +23,25 @@ export async function saveUserColumnOrder(order: string[]): Promise<void> {
   });
 
   if (error) throw handleSupabaseError(error, "saveUserColumnOrder");
+}
+
+export async function getUserSettings(userId: string): Promise<UserSetting[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("user_id", userId);
+  if (error) throw handleSupabaseError(error, "getUserSettings");
+  return data || [];
+}
+
+export async function upsertUserSetting(setting: UserSettingInsert): Promise<UserSetting> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("user_settings")
+    .upsert(setting, { onConflict: "user_id,key" })
+    .select()
+    .single();
+  if (error) throw handleSupabaseError(error, "upsertUserSetting");
+  return data;
 }
