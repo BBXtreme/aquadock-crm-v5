@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AppLayout from "@/components/layout/AppLayout";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import { createClient } from "@/lib/supabase/browser";
@@ -36,6 +37,8 @@ export default function CompanyDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [edit, setEdit] = useState(false);
+  const [addContactDialog, setAddContactDialog] = useState(false);
+  const [addReminderDialog, setAddReminderDialog] = useState(false);
 
   const fetchData = async () => {
     if (!id || id === "undefined") {
@@ -511,7 +514,7 @@ export default function CompanyDetailPage() {
                 <User className="w-5 h-5" />
                 Linked Contacts ({contacts.length})
               </CardTitle>
-              <Button onClick={() => router.push(`/contacts?company=${id}`)} size="sm">
+              <Button onClick={() => setAddContactDialog(true)} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Contact
               </Button>
@@ -576,7 +579,7 @@ export default function CompanyDetailPage() {
                 <Bell className="w-5 h-5" />
                 Reminders ({reminders.length})
               </CardTitle>
-              <Button onClick={() => router.push(`/reminders?company=${id}`)} size="sm">
+              <Button onClick={() => setAddReminderDialog(true)} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Reminder
               </Button>
@@ -672,6 +675,36 @@ export default function CompanyDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Add Contact Dialog */}
+        <Dialog open={addContactDialog} onOpenChange={setAddContactDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Contact</DialogTitle>
+            </DialogHeader>
+            <div>
+              <p>Feature not implemented yet. Please use the Contacts page to add a new contact.</p>
+              <Button onClick={() => { setAddContactDialog(false); router.push('/contacts'); }} className="mt-4">
+                Go to Contacts
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Reminder Dialog */}
+        <Dialog open={addReminderDialog} onOpenChange={setAddReminderDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Reminder</DialogTitle>
+            </DialogHeader>
+            <div>
+              <p>Feature not implemented yet. Please use the Reminders page to add a new reminder.</p>
+              <Button onClick={() => { setAddReminderDialog(false); router.push('/reminders'); }} className="mt-4">
+                Go to Reminders
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
