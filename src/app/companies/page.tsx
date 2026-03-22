@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -9,10 +9,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
@@ -20,6 +22,7 @@ import type { CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const {
     data: companies = [],
@@ -66,7 +69,17 @@ export default function CompaniesPage() {
               <Link href="/import">
                 <Button variant="outline">Import CSV</Button>
               </Link>
-              <Button>New Company</Button>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>New Company</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Company</DialogTitle>
+                  </DialogHeader>
+                  <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -97,7 +110,17 @@ export default function CompaniesPage() {
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
             </Link>
-            <Button>New Company</Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Company</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Company</DialogTitle>
+                </DialogHeader>
+                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

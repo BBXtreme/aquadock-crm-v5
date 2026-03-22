@@ -39,7 +39,11 @@ const statusOptions = [
   { value: "verloren", label: "Verloren" },
 ];
 
-export default function CompanyCreateForm() {
+interface CompanyCreateFormProps {
+  onSuccess?: () => void;
+}
+
+export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps) {
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyFormData>({
@@ -59,6 +63,7 @@ export default function CompanyCreateForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       form.reset();
+      onSuccess?.();
     },
   });
 
