@@ -39,82 +39,82 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname", {
-    id: "firmenname",
-    header: "Firmenname",
-    cell: (info) => (
-      <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
-        {safeDisplay(info.getValue() as string)}
-      </Link>
-    ),
-  }),
-  columnHelper.accessor("kundentyp", {
-    header: "Kundentyp",
-    cell: (info) => (
-      <Badge variant="outline" className="bg-[#24BACC] text-white">
-        {safeDisplay(info.getValue() as string)}
-      </Badge>
-    ),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: (info) => {
-      const value = info.getValue() as string;
-      return (
-        <Badge
-          className={cn(
-            value === "won" && "bg-emerald-600 text-white",
-            value === "lost" && "bg-rose-600 text-white",
-            value === "lead" && "bg-amber-600 text-white",
-            !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
-          )}
-        >
-          {value}
-        </Badge>
-      );
-    },
-  }),
-  columnHelper.accessor("value", {
-    header: "Value",
-    cell: (info) => formatCurrency(info.getValue() as number | null),
-  }),
-  columnHelper.accessor("stadt", {
-    header: "Stadt",
-    cell: (info) => safeDisplay(info.getValue() as string | null),
-  }),
-  columnHelper.accessor("land", {
-    header: "Land",
-    cell: (info) => safeDisplay(info.getValue() as string),
-  }),
-  columnHelper.accessor("created_at", {
-    header: "Created",
-    cell: (info) => formatDateDistance(info.getValue() as string | null),
-  }),
-  columnHelper.display({
-    id: "actions",
-    header: "Actions",
-    cell: (info) => (
-      <div className="flex space-x-2">
-        <Link href={`/companies/${info.row.original.id}`}>
-          <Button variant="ghost" size="sm">
-            <Eye className="h-4 w-4" />
-          </Button>
-        </Link>
-        <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="sm">
-          <Trash className="h-4 w-4" />
-        </Button>
-      </div>
-    ),
-  }),
-];
-
 export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
+
+  const columns: ColumnDef<Company>[] = [
+    columnHelper.accessor("firmenname", {
+      id: "firmenname",
+      header: "Firmenname",
+      cell: (info) => (
+        <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
+          {safeDisplay(info.getValue() as string)}
+        </Link>
+      ),
+    }),
+    columnHelper.accessor("kundentyp", {
+      header: "Kundentyp",
+      cell: (info) => (
+        <Badge variant="outline" className="bg-[#24BACC] text-white">
+          {safeDisplay(info.getValue() as string)}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => {
+        const value = info.getValue() as string;
+        return (
+          <Badge
+            className={cn(
+              value === "won" && "bg-emerald-600 text-white",
+              value === "lost" && "bg-rose-600 text-white",
+              value === "lead" && "bg-amber-600 text-white",
+              !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
+            )}
+          >
+            {value}
+          </Badge>
+        );
+      },
+    }),
+    columnHelper.accessor("value", {
+      header: "Value",
+      cell: (info) => formatCurrency(info.getValue() as number | null),
+    }),
+    columnHelper.accessor("stadt", {
+      header: "Stadt",
+      cell: (info) => safeDisplay(info.getValue() as string | null),
+    }),
+    columnHelper.accessor("land", {
+      header: "Land",
+      cell: (info) => safeDisplay(info.getValue() as string),
+    }),
+    columnHelper.accessor("created_at", {
+      header: "Created",
+      cell: (info) => formatDateDistance(info.getValue() as string | null),
+    }),
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <div className="flex space-x-2">
+          <Link href={`/companies/${info.row.original.id}`}>
+            <Button variant="ghost" size="sm">
+              <Eye className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm">
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }),
+  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
