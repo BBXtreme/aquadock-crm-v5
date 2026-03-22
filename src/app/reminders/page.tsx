@@ -163,24 +163,23 @@ export default function RemindersPage() {
   const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useMemo(() => useReactTable({
-    data: reminders,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getRowId: (row) => row.id,
-    state: {
-      globalFilter,
-      columnVisibility,
-      rowSelection,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    enableRowSelection: true,
-  }), [reminders, globalFilter, columnVisibility, rowSelection]);
+  const table = useMemo(() => 
+    useReactTable({
+      data: reminders || [],
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      state: { globalFilter, columnVisibility, rowSelection },
+      onGlobalFilterChange: setGlobalFilter,
+      onColumnVisibilityChange: setColumnVisibility,
+      onRowSelectionChange: setRowSelection,
+      enableRowSelection: true,
+      getRowId: (row) => row.id,
+    }),
+    [reminders, globalFilter, columnVisibility, rowSelection, columns]
+  );
 
   if (isError) {
     return (
