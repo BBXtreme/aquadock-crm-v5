@@ -215,7 +215,7 @@ function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   });
 
   const mutation = useMutation({
-    mutationFn: createContact,
+    mutationFn: (data) => createContact(data, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact created");
