@@ -25,9 +25,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany } from "@/lib/supabase/services/companies";
-import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
-import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
-import { getTimeline } from "@/lib/supabase/services/timeline";
 import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -191,16 +188,16 @@ export default function CompanyDetailPage() {
       setCompany(companyData);
 
       // Fetch contacts
-      const allContacts = await getContacts(supabase);
-      setContacts(allContacts.filter((c) => c.company_id === id));
+      const { data: contactsData } = await supabase.from("contacts").select("*").eq("company_id", id);
+      setContacts(contactsData || []);
 
       // Fetch reminders
-      const allReminders = await getReminders(supabase);
-      setReminders(allReminders.filter((r) => r.company_id === id));
+      const { data: remindersData } = await supabase.from("reminders").select("*").eq("company_id", id);
+      setReminders(remindersData || []);
 
       // Fetch timeline
-      const allTimeline = await getTimeline(supabase);
-      setTimeline(allTimeline.filter((t) => t.company_id === id));
+      const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
+      setTimeline(timelineData || []);
     } catch (err) {
       console.error(err);
       setError("Failed to load data");
@@ -238,16 +235,16 @@ export default function CompanyDetailPage() {
         setCompany(companyData);
 
         // Fetch contacts
-        const allContacts = await getContacts(supabase);
-        setContacts(allContacts.filter((c) => c.company_id === id));
+        const { data: contactsData } = await supabase.from("contacts").select("*").eq("company_id", id);
+        setContacts(contactsData || []);
 
         // Fetch reminders
-        const allReminders = await getReminders(supabase);
-        setReminders(allReminders.filter((r) => r.company_id === id));
+        const { data: remindersData } = await supabase.from("reminders").select("*").eq("company_id", id);
+        setReminders(remindersData || []);
 
         // Fetch timeline
-        const allTimeline = await getTimeline(supabase);
-        setTimeline(allTimeline.filter((t) => t.company_id === id));
+        const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
+        setTimeline(timelineData || []);
       } catch (err) {
         console.error(err);
         setError("Failed to load data");
@@ -724,7 +721,9 @@ export default function CompanyDetailPage() {
                   {contacts.map((contact) => (
                     <TableRow key={contact.id}>
                       <TableCell>
-                        {contact.vorname} {contact.nachname}
+                        <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                          {contact.vorname} {contact.nachname}
+                        </Link>
                       </TableCell>
                       <TableCell>{contact.position || "—"}</TableCell>
                       <TableCell>{contact.email || "—"}</TableCell>
