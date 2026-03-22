@@ -26,7 +26,6 @@ const smtpSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
   senderName: z.string().min(1, "Sender name is required"),
-  useTLS: z.boolean(),
 });
 
 type SmtpForm = z.infer<typeof smtpSchema>;
@@ -64,7 +63,6 @@ export default function SettingsPage() {
       username: "",
       password: "",
       senderName: "",
-      useTLS: true,
     },
   });
 
@@ -76,7 +74,6 @@ export default function SettingsPage() {
         username: (settings.find((s) => s.key === "smtp_username")?.value as string) || "",
         password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
         senderName: (settings.find((s) => s.key === "smtp_sender_name")?.value as string) || "",
-        useTLS: (settings.find((s) => s.key === "smtp_use_tls")?.value as string) === "true",
       });
     }
   }, [settings, form]);
@@ -90,7 +87,6 @@ export default function SettingsPage() {
         upsertUserSetting({ user_id: userId, key: "smtp_username", value: data.username }),
         upsertUserSetting({ user_id: userId, key: "smtp_password", value: data.password }),
         upsertUserSetting({ user_id: userId, key: "smtp_sender_name", value: data.senderName }),
-        upsertUserSetting({ user_id: userId, key: "smtp_use_tls", value: data.useTLS.toString() }),
       ];
       await Promise.all(promises);
     },
@@ -323,20 +319,6 @@ export default function SettingsPage() {
                           <Input placeholder="Your Name" {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="useTLS"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Use TLS</FormLabel>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
                       </FormItem>
                     )}
                   />

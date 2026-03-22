@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     const smtpUsername = settings.find((s) => s.key === "smtp_username")?.value as string;
     const smtpPassword = settings.find((s) => s.key === "smtp_password")?.value as string;
     const smtpSenderName = settings.find((s) => s.key === "smtp_sender_name")?.value as string;
-    const smtpUseTLS = (settings.find((s) => s.key === "smtp_use_tls")?.value as string) === "true";
 
     if (!smtpHost || !smtpUsername || !smtpPassword || !smtpSenderName) {
       return NextResponse.json({ error: "SMTP settings not configured" }, { status: 400 });
@@ -35,7 +34,6 @@ export async function POST(request: NextRequest) {
     const transporter = nodemailer.createTransporter({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpUseTLS,
       auth: {
         user: smtpUsername,
         pass: smtpPassword,
