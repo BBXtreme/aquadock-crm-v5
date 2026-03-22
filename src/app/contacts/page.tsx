@@ -109,8 +109,8 @@ export default function ContactsPage() {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          checked={table.getIsAllRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
           aria-label="Select all"
         />
       ),
@@ -348,6 +348,13 @@ export default function ContactsPage() {
               </div>
             ) : (
               <>
+                {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                  <div className="mb-4 p-4 bg-muted rounded-lg">
+                    <p className="text-sm font-medium">
+                      Selected: {table.getFilteredSelectedRowModel().rows.length} contacts
+                    </p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-4">
                   <Input
                     placeholder="Search contacts..."
