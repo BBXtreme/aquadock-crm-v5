@@ -1,12 +1,13 @@
 "use client";
 
-import { z } from "zod";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -125,11 +126,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
             <FormItem>
               <FormLabel>Value (€)</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-                />
+                <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
               </FormControl>
               <FormMessage />
             </FormItem>
