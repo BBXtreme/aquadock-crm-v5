@@ -50,8 +50,37 @@ export default function ContactDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    setLoading(true);
+    const timeout = setTimeout(() => setLoading(false), 15000);
+
+    const loadData = async () => {
+      try {
+        if (!id || id === "undefined") {
+          setError("Invalid contact ID");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`/api/contacts/${id}`);
+        const data = await response.json();
+        if (data.success) {
+          setContact(data.contact);
+        } else {
+          setError(data.error || "Failed to load contact");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load contact");
+      } finally {
+        setLoading(false);
+        clearTimeout(timeout);
+      }
+    };
+
+    loadData();
+
+    return () => clearTimeout(timeout);
+  }, [id]);
 
   const handleDeleteContact = async () => {
     if (confirm("Are you sure you want to delete this contact?")) {

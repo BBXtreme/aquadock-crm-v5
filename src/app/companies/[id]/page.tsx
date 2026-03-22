@@ -84,8 +84,57 @@ export default function CompanyDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    setLoading(true);
+    const timeout = setTimeout(() => setLoading(false), 15000);
+
+    const loadData = async () => {
+      try {
+        if (!id || id === "undefined") {
+          setError("Invalid company ID");
+          setLoading(false);
+          return;
+        }
+
+        const supabase = createClient();
+
+        // Fetch company
+        const { data: companyData, error: companyError } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (companyError) {
+          setError(companyError.message);
+          return;
+        }
+
+        setCompany(companyData);
+
+        // Fetch contacts
+        const allContacts = await getContacts(supabase);
+        setContacts(allContacts.filter((c) => c.company_id === id));
+
+        // Fetch reminders
+        const allReminders = await getReminders(supabase);
+        setReminders(allReminders.filter((r) => r.company_id === id));
+
+        // Fetch timeline
+        const allTimeline = await getTimeline(supabase);
+        setTimeline(allTimeline.filter((t) => t.company_id === id));
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load data");
+      } finally {
+        setLoading(false);
+        clearTimeout(timeout);
+      }
+    };
+
+    loadData();
+
+    return () => clearTimeout(timeout);
+  }, [id]);
 
   const handleDeleteCompany = async () => {
     if (confirm("Are you sure you want to delete this company?")) {
