@@ -25,7 +25,7 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const _fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
       setError("Invalid contact ID");
       setLoading(false);
