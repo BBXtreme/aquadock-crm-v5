@@ -30,14 +30,20 @@ import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { createClient } from "@/lib/supabase/browser";
+import { createReminder, deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const columnHelper = createColumnHelper<any>();
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const queryClient = useQueryClient();
 
   const queryFn = useCallback(async () => {
     try {
@@ -60,12 +66,28 @@ export default function RemindersPage() {
     queryFn,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteReminder(id, createClient()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success("Reminder deleted");
+    },
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+  });
+
   const reminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open") : [];
+
+  const filteredReminders = useMemo(() => {
+    if (statusFilter === "all") return reminders;
+    if (statusFilter === "open") return reminders.filter((r) => r.status === "open");
+    if (statusFilter === "overdue") return reminders.filter((r) => isAfter(new Date(), new Date(r.due_date)));
+    return reminders;
+  }, [reminders, statusFilter]);
 
   const openReminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open").length : 0;
   const overdue = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length : 0;
   const thisWeek = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length : 0;
-  const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
+  const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "hoch").length : 0;
 
   const columns = useMemo(() => [
     columnHelper.display({
@@ -148,7 +170,6 @@ export default function RemindersPage() {
             info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
           }
         >
-
           {info.getValue()}
         </Badge>
       ),
@@ -177,7 +198,7 @@ export default function RemindersPage() {
             size="sm"
             onClick={() => {
               if (confirm("Are you sure you want to delete this reminder?")) {
-                // delete
+                deleteMutation.mutate(info.row.original.id);
               }
             }}
           >
@@ -190,15 +211,14 @@ export default function RemindersPage() {
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: reminders || [],
+    data: filteredReminders || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    state: { globalFilter, columnVisibility, rowSelection },
+    state: { globalFilter, rowSelection },
     onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
     getRowId: (row) => row.id,
@@ -265,9 +285,9 @@ export default function RemindersPage() {
         </div>
 
         <div className="flex space-x-2">
-          <Button variant="outline">All</Button>
-          <Button variant="outline">Open</Button>
-          <Button variant="outline">Overdue</Button>
+          <Button variant={statusFilter === "all" ? "default" : "outline"} onClick={() => setStatusFilter("all")}>All</Button>
+          <Button variant={statusFilter === "open" ? "default" : "outline"} onClick={() => setStatusFilter("open")}>Open</Button>
+          <Button variant={statusFilter === "overdue" ? "default" : "outline"} onClick={() => setStatusFilter("overdue")}>Overdue</Button>
           <Button variant="outline">My Tasks</Button>
         </div>
 
