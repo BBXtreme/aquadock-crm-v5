@@ -358,7 +358,7 @@ export default function ContactsPage() {
                       className="max-w-sm"
                     />
                     {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
                         {table.getFilteredSelectedRowModel().rows.length} selected
                       </span>
                     )}
