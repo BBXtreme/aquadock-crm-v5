@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, Bell, Calendar, Plus, RefreshCw, Star } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Edit, Eye, Plus, RefreshCw, Star, Trash } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -185,12 +185,12 @@ export default function RemindersPage() {
         <div className="flex space-x-2">
           <Link href={`/reminders/${info.row.original.id}`}>
             <Button variant="ghost" size="sm">
-              View
+              <Eye className="h-4 w-4" />
             </Button>
           </Link>
           <Link href={`/reminders/${info.row.original.id}?edit=true`}>
             <Button variant="ghost" size="sm">
-              Edit
+              <Edit className="h-4 w-4" />
             </Button>
           </Link>
           <Button
@@ -202,7 +202,7 @@ export default function RemindersPage() {
               }
             }}
           >
-            Delete
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       ),
