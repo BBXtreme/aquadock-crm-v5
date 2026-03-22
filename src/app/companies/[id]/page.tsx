@@ -260,6 +260,12 @@ export default function CompanyDetailPage() {
                 : "—"}
             </Badge>
           )}
+          {company.wassertyp && (
+            <Badge variant="outline">
+              <Waves className="w-3 h-3 mr-1" />
+              {company.wassertyp}
+            </Badge>
+          )}
           {company.created_at && (
             <span className="text-sm text-gray-500">
               Created: {new Date(company.created_at).toLocaleDateString()}
