@@ -1,17 +1,18 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import type { Company } from "@/lib/supabase/types";
 import { updateCompany } from "@/lib/supabase/services/companies";
+import type { Company } from "@/lib/supabase/types";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -31,7 +32,20 @@ const companySchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   osm: z.string().optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"]).optional(),
+  status: z
+    .enum([
+      "lead",
+      "interessant",
+      "qualifiziert",
+      "akquise",
+      "angebot",
+      "gewonnen",
+      "verloren",
+      "kunde",
+      "partner",
+      "inaktiv",
+    ])
+    .optional(),
   value: z.number().optional(),
   notes: z.string().optional(),
 });
@@ -479,11 +493,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             <FormItem>
               <FormLabel>Value</FormLabel>
               <FormControl>
-                <Input
-                  type="number"
-                  {...field}
-                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-                />
+                <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
               </FormControl>
               <FormMessage />
             </FormItem>
