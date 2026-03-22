@@ -34,7 +34,7 @@ import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/dat
 
 interface CompaniesTableProps {
   companies: any[];
-  onEdit?: (company: Company) => void;
+  onEdit?: (company: any) => void;
 }
 
 const columnHelper = createColumnHelper<any>();
