@@ -28,7 +28,7 @@ const companySchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   osm: z.string().optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren"]).optional(),
+  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"]).optional(),
   value: z.number().optional(),
   notes: z.string().optional(),
 });
@@ -102,7 +102,7 @@ const wassertypOptions = [
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company; onSuccess?: () => void }) {
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(companySchema as any),
     defaultValues: {
       firmenname: company.firmenname || "",
       rechtsform: company.rechtsform || "",
