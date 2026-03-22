@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Plus, RefreshCw, Star } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -224,6 +224,17 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
   });
 
+  const handleBulkDelete = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    if (selectedRows.length === 0) return;
+    if (confirm(`Delete ${selectedRows.length} selected reminders?`)) {
+      selectedRows.forEach((row) => {
+        deleteMutation.mutate(row.original.id);
+      });
+      setRowSelection({});
+    }
+  };
+
   return (
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -234,7 +245,9 @@ export default function RemindersPage() {
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>New Reminder</Button>
+              <Button size="icon">
+                <Plus className="h-4 w-4" />
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -315,9 +328,14 @@ export default function RemindersPage() {
                       className="max-w-sm"
                     />
                     {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {table.getFilteredSelectedRowModel().rows.length} selected
-                      </span>
+                      <>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">
+                          {table.getFilteredSelectedRowModel().rows.length} selected
+                        </span>
+                        <Button variant="destructive" onClick={handleBulkDelete}>
+                          Delete Selected
+                        </Button>
+                      </>
                     )}
                   </div>
                   <div className="rounded-md border">
