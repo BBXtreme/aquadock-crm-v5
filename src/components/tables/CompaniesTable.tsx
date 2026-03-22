@@ -232,7 +232,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
-                <Upload className="h-4 w-4" />
+                <Download className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -247,7 +247,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
-                <Download className="h-4 w-4" />
+                <Upload className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
