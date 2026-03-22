@@ -24,8 +24,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { Input } from "@/components/ui/input";
+import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -115,6 +117,7 @@ export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const {
     data: allReminders = [],
@@ -188,7 +191,17 @@ export default function RemindersPage() {
             <p className="text-muted-foreground text-sm">Home → Reminders</p>
             <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
           </div>
-          <Button>New Reminder</Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>New Reminder</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Reminder</DialogTitle>
+              </DialogHeader>
+              <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
