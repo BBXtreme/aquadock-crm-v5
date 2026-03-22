@@ -6,7 +6,14 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createCompany } from "@/lib/supabase/services/companies";
@@ -50,9 +57,9 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: "",
-      kundentyp: undefined,
-      status: undefined,
-      value: undefined,
+      kundentyp: "",
+      status: "lead",
+      value: 0,
     },
   });
 
@@ -146,7 +153,7 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
                   type="number"
                   placeholder="Enter value"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                 />
               </FormControl>
               <FormMessage />
