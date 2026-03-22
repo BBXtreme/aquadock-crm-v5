@@ -226,6 +226,7 @@ export default function ContactsPage() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id,
     state: {
       globalFilter,
       columnVisibility,
