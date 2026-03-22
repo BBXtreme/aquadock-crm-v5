@@ -22,8 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import { createContact } from "@/lib/supabase/services/contacts";
-import { getContacts } from "@/lib/supabase/services/contacts";
+import { createContact, deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
 
 const contactSchema = z.object({
@@ -69,7 +68,7 @@ export default function ContactsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteContact,
+    mutationFn: (id: string) => deleteContact(id, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact deleted");
