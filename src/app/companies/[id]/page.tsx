@@ -5,11 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
-import { toast } from "sonner";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
@@ -21,8 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany } from "@/lib/supabase/services/companies";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
@@ -855,7 +855,13 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Edit Firmendaten</DialogTitle>
             </DialogHeader>
-            <FirmendatenForm company={company} onSuccess={() => { setEditFirmendaten(false); fetchData(); }} />
+            <FirmendatenForm
+              company={company}
+              onSuccess={() => {
+                setEditFirmendaten(false);
+                fetchData();
+              }}
+            />
           </DialogContent>
         </Dialog>
 
@@ -865,7 +871,13 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Edit Adresse</DialogTitle>
             </DialogHeader>
-            <AdresseForm company={company} onSuccess={() => { setEditAdresse(false); fetchData(); }} />
+            <AdresseForm
+              company={company}
+              onSuccess={() => {
+                setEditAdresse(false);
+                fetchData();
+              }}
+            />
           </DialogContent>
         </Dialog>
 
@@ -875,7 +887,13 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Edit AquaDock Daten</DialogTitle>
             </DialogHeader>
-            <AquaDockForm company={company} onSuccess={() => { setEditAquaDock(false); fetchData(); }} />
+            <AquaDockForm
+              company={company}
+              onSuccess={() => {
+                setEditAquaDock(false);
+                fetchData();
+              }}
+            />
           </DialogContent>
         </Dialog>
 
@@ -885,7 +903,13 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Edit CRM Informationen</DialogTitle>
             </DialogHeader>
-            <CRMForm company={company} onSuccess={() => { setEditCRM(false); fetchData(); }} />
+            <CRMForm
+              company={company}
+              onSuccess={() => {
+                setEditCRM(false);
+                fetchData();
+              }}
+            />
           </DialogContent>
         </Dialog>
 
