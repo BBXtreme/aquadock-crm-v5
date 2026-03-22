@@ -124,7 +124,6 @@ export default function RemindersPage() {
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
                 <div className="space-y-2">
-                  {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders */}
                   {Array.from({ length: 5 }).map(() => (
                     <Skeleton className="h-12 w-full" />
                   ))}
