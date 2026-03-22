@@ -62,14 +62,14 @@ export default function RemindersPage() {
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          onChange={(e) => table.toggleAllRowsSelected(e.target.checked)}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          onChange={(e) => row.toggleSelected(e.target.checked)}
           aria-label="Select row"
         />
       ),
@@ -144,9 +144,11 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
     state: {
       globalFilter,
+      columnVisibility,
       rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
   });
