@@ -37,7 +37,7 @@ const statusOptions = [
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(companySchema as any),
     defaultValues: {
       firmenname: "",
       kundentyp: "",
