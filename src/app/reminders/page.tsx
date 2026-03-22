@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
 import { getReminders } from "@/lib/supabase/services/reminders";
@@ -123,11 +124,7 @@ export default function RemindersPage() {
             {loading ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-48" />
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map(() => (
-                    <Skeleton className="h-12 w-full" />
-                  ))}
-                </div>
+                <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
               </div>
             ) : (
               <div className="rounded-md border">
