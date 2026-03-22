@@ -23,9 +23,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import { createContact } from "@/lib/supabase/services/contacts";
+import { createContact, deleteContact } from "@/lib/supabase/services/contacts";
 import { getContacts } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
+import { Eye, Edit, Trash } from "lucide-react";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -53,6 +54,8 @@ const anredeOptions = [
 export default function ContactsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const queryClient = useQueryClient();
+
   const {
     data: contacts = [],
     isLoading: loading,
@@ -63,6 +66,15 @@ export default function ContactsPage() {
       const supabase = createClient();
       return getContacts(supabase);
     },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteContact,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Contact deleted");
+    },
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
   const totalContacts = contacts.length;
@@ -151,6 +163,7 @@ export default function ContactsPage() {
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Primary</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -174,11 +187,34 @@ export default function ContactsPage() {
                         <TableCell>{contact.email || "—"}</TableCell>
                         <TableCell>{contact.telefon || "—"}</TableCell>
                         <TableCell>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Link href={`/contacts/${contact.id}`}>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm("Are you sure you want to delete this contact?")) {
+                                  deleteMutation.mutate(contact.id);
+                                }
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {!contacts.length && (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={7} className="h-24 text-center">
                           No contacts found.
                         </TableCell>
                       </TableRow>
