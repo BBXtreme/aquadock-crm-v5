@@ -3,6 +3,8 @@
  * All functions handle null/undefined inputs safely.
  */
 
+import { toast } from "sonner";
+
 /**
  * Formats a number as currency in German locale (Euro).
  * Handles null/undefined by defaulting to 0.
@@ -45,10 +47,19 @@ export function safeString(str: string | null | undefined): string {
  */
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.error(`Supabase error in ${context}:`, error);
+
+  let errorMessage: string;
   if (error instanceof Error) {
-    return new Error(`Database error: ${error.message}`);
+    errorMessage = error.message;
+  } else {
+    errorMessage = "An unknown database error occurred";
   }
-  return new Error("An unknown database error occurred");
+
+  if (typeof window !== 'undefined') {
+    toast.error(`Error in ${context}`, { description: errorMessage });
+  }
+
+  return new Error(`Database error: ${errorMessage}`);
 }
 
 // Import here to avoid circular dependencies
