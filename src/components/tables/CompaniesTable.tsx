@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -45,8 +46,26 @@ const columnHelper = createColumnHelper<any>();
 export default function CompaniesTable({ companies, onEdit, onDelete }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const columns: ColumnDef<any>[] = [
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+    }),
     columnHelper.accessor("firmenname", {
       id: "firmenname",
       header: "Firmenname",
@@ -173,12 +192,16 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id,
     state: {
       globalFilter,
       columnVisibility,
+      rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
   });
 
   const handleExportCSV = () => {
@@ -205,7 +228,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
-      const link = document.createElement("a");
+      const link = document.createElement("a">
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.json`);
@@ -222,12 +245,19 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Input
-          placeholder="Search companies..."
-          value={globalFilter ?? ""}
-          onChange={(event) => setGlobalFilter(String(event.target.value))}
-          className="max-w-sm"
-        />
+        <div className="flex items-center space-x-4">
+          <Input
+            placeholder="Search companies..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            className="max-w-sm"
+          />
+          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              {table.getFilteredSelectedRowModel().rows.length} selected
+            </span>
+          )}
+        </div>
         <div className="flex space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

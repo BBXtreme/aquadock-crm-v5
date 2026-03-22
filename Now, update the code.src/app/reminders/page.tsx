@@ -1,9 +1,21 @@
 "use client";
 
+import { useState } from "react";
+
 import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
+import {
+  type ColumnDef,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -12,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +32,9 @@ import { createClient } from "@/lib/supabase/browser";
 import { getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [rowSelection, setRowSelection] = useState({});
+
   const {
     data: allReminders = [],
     isLoading: loading,
@@ -37,6 +53,103 @@ export default function RemindersPage() {
   const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
   const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
   const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
+
+  const columnHelper = createColumnHelper<any>();
+
+  const columns: ColumnDef<any>[] = [
+    columnHelper.display({
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+    }),
+    columnHelper.accessor("title", {
+      header: "Title",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("companies.firmenname", {
+      header: "Company",
+      cell: (info) => (
+        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+          {info.getValue()}
+        </Link>
+      ),
+    }),
+    columnHelper.accessor("due_date", {
+      header: "Due Date",
+      cell: (info) => {
+        const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
+        return (
+          <span className={isOverdue ? "text-rose-500" : ""}>
+            {formatDistanceToNow(new Date(info.getValue() as string), {
+              addSuffix: true,
+            })}
+          </span>
+        );
+      },
+    }),
+    columnHelper.accessor("priority", {
+      header: "Priority",
+      cell: (info) => (
+        <Badge
+          className={
+            info.getValue() === "hoch"
+              ? "bg-orange-500 text-white"
+              : info.getValue() === "normal"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-500 text-white"
+          }
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => (
+        <Badge
+          className={
+            info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
+          }
+        >
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor("assigned_to", {
+      header: "Assigned To",
+      cell: (info) => info.getValue(),
+    }),
+  ];
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: reminders,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getRowId: (row) => row.id,
+    state: {
+      globalFilter,
+      rowSelection,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+  });
 
   if (error) {
     return (
@@ -129,87 +242,69 @@ export default function RemindersPage() {
               </div>
             ) : (
               <>
-                {reminders.length > 0 && (
-                  <div className="mb-4 p-4 bg-muted rounded-lg">
-                    <p className="text-sm font-medium">
-                      Selected: {reminders.filter((r) => r.selected).length} reminders
-                    </p>
-                  </div>
-                )}
+                <div className="flex items-center space-x-4 mb-4">
+                  <Input
+                    placeholder="Search reminders..."
+                    value={globalFilter ?? ""}
+                    onChange={(event) => setGlobalFilter(String(event.target.value))}
+                    className="max-w-sm"
+                  />
+                  {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {table.getFilteredSelectedRowModel().rows.length} selected
+                    </span>
+                  )}
+                </div>
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Select</TableHead>
-                        <TableHead>Title</TableHead>
-                        <TableHead>Company</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Priority</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Assigned To</TableHead>
-                      </TableRow>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                              {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      ))}
                     </TableHeader>
                     <TableBody>
-                      {reminders.map((reminder) => {
-                        const isOverdue = isAfter(new Date(), new Date(reminder.due_date));
-                        return (
-                          <TableRow key={reminder.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={reminder.selected || false}
-                                onCheckedChange={(checked) => {
-                                  // Simple selection logic, update the reminder object
-                                  reminder.selected = !!checked;
-                                }}
-                                aria-label="Select reminder"
-                              />
-                            </TableCell>
-                            <TableCell>{reminder.title}</TableCell>
-                            <TableCell>
-                              <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
-                                {reminder.companies?.firmenname}
-                              </Link>
-                            </TableCell>
-                            <TableCell className={isOverdue ? "text-rose-500" : ""}>
-                              {formatDistanceToNow(new Date(reminder.due_date), {
-                                addSuffix: true,
-                              })}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  reminder.priority === "hoch"
-                                    ? "bg-orange-500 text-white"
-                                    : reminder.priority === "normal"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-500 text-white"
-                                }
-                              >
-                                {reminder.priority}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={
-                                  reminder.status === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-                                }
-                              >
-                                {reminder.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{reminder.assigned_to}</TableCell>
+                      {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow key={row.id}>
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                            ))}
                           </TableRow>
-                        );
-                      })}
-                      {!reminders.length && (
+                        ))
+                      ) : (
                         <TableRow>
-                          <TableCell colSpan={7} className="h-24 text-center">
+                          <TableCell colSpan={columns.length} className="h-24 text-center">
                             No results.
                           </TableCell>
                         </TableRow>
                       )}
                     </TableBody>
                   </Table>
+                </div>
+                <div className="flex items-center justify-end space-x-2 py-4">
+                  <div className="flex-1 text-muted-foreground text-sm">
+                    {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+                    selected.
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                    >
+                      Previous
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </>
             )}
