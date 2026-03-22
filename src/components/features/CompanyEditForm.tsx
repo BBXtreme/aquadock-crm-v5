@@ -151,7 +151,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   });
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6 bg-background rounded-xl border max-h-[80vh] overflow-y-auto">
       <Form {...form}>
         <form onSubmit={onSubmit} className="space-y-8">
           {/* Firmendaten */}
@@ -524,12 +524,12 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
           </div>
 
           {/* Fixed bottom buttons */}
-          <div className="sticky bottom-0 bg-background border-t p-4 flex justify-end gap-3">
+          <div className="sticky bottom-0 left-0 right-0 bg-background border-t p-4 flex justify-end gap-3 z-10">
             <Button type="button" variant="outline" onClick={onSuccess}>
               Abbrechen
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? "Updating..." : "Speichern"}
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? "Speichert..." : "Speichern"}
             </Button>
           </div>
         </form>
