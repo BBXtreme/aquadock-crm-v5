@@ -41,6 +41,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { createContact, deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
+import { Eye, Edit, Trash, Download, Upload, Columns } from "lucide-react";
+import Papa from "papaparse";
+import { toast } from "sonner";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
