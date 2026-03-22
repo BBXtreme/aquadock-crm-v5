@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
+import type { CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
@@ -34,9 +35,8 @@ export default function CompaniesPage() {
   });
 
   const createCompanyMutation = useMutation({
-    mutationFn: async (newCompany: Omit<Company, "id" | "created_at" | "updated_at">) => {
-      const supabase = createClient();
-      return createCompany(newCompany, supabase);
+    mutationFn: async (newCompany: CompanyInsert) => {
+      return createCompany(newCompany);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
