@@ -15,8 +15,8 @@ export function SkeletonList({
 }: SkeletonListProps) {
   return (
     <div className={className}>
-      {Array.from({ length: count }).map(() => (
-        <Skeleton className={itemClassName} />
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={`skeleton-list-${i}`} className={itemClassName} />
       ))}
     </div>
   )
