@@ -307,4 +307,3 @@ function StatCard({ title, value, icon }: { title: string; value: React.ReactNod
     </Card>
   );
 }
-```
