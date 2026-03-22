@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -117,6 +117,7 @@ const columns = [
           info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
         }
       >
+
         {info.getValue()}
       </Badge>
     ),
@@ -133,6 +134,16 @@ export default function RemindersPage() {
   const [rowSelection, setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const queryFn = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      return await getReminders(supabase);
+    } catch (err) {
+      console.error("Error fetching reminders:", err);
+      throw err;
+    }
+  }, []);
+
   const {
     data: allReminders = [],
     isLoading,
@@ -141,15 +152,7 @@ export default function RemindersPage() {
     refetch,
   } = useQuery({
     queryKey: ["reminders"],
-    queryFn: async () => {
-      try {
-        const supabase = createClient();
-        return await getReminders(supabase);
-      } catch (err) {
-        console.error("Error fetching reminders:", err);
-        throw err;
-      }
-    },
+    queryFn,
   });
 
   const reminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open") : [];
