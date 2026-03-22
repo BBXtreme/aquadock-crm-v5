@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { createCompany, deleteCompany } from "@/lib/supabase/services/companies";
+import { createCompany, deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import type { Company, CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
@@ -50,17 +50,22 @@ export default function CompaniesPage() {
     },
   });
 
-  const deleteCompanyMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return deleteCompany(id);
-    },
+  const updateMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success("Company deleted successfully");
+      toast.success("Company updated");
     },
-    onError: (error) => {
-      toast.error("Failed to delete company", { description: error.message });
+    onError: (err) => toast.error("Update failed", { description: err.message }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteCompany,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      toast.success("Company deleted");
     },
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
@@ -171,7 +176,9 @@ export default function CompaniesPage() {
               <CompaniesTable
                 companies={companies}
                 onEdit={setEditCompany}
-                onDelete={(company) => deleteCompanyMutation.mutate(company.id)}
+                onDelete={(company) => {
+                  if (confirm("Delete company?")) deleteMutation.mutate(company.id);
+                }}
               />
             )}
           </CardContent>
