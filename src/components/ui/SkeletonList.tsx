@@ -1,23 +1,19 @@
-"use client"
+"use client";
 
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SkeletonListProps {
-  count: number
-  className?: string
-  itemClassName?: string
+  count: number;
+  className?: string;
+  itemClassName?: string;
 }
 
-export function SkeletonList({
-  count,
-  className = "space-y-2",
-  itemClassName = "h-14 w-full",
-}: SkeletonListProps) {
+export function SkeletonList({ count, className = "space-y-2", itemClassName = "h-14 w-full" }: SkeletonListProps) {
   return (
     <div className={className}>
       {Array.from({ length: count }).map((_, i) => (
         <Skeleton key={`skeleton-list-${i}`} className={itemClassName} />
       ))}
     </div>
-  )
+  );
 }
