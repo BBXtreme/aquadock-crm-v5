@@ -33,17 +33,17 @@ import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface CompaniesTableProps {
-  companies: Company[];
+  companies: any[];
   onEdit?: (company: Company) => void;
 }
 
-const columnHelper = createColumnHelper<Company>();
+const columnHelper = createColumnHelper<any>();
 
 export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
 
-  const columns: ColumnDef<Company>[] = [
+  const columns: ColumnDef<any>[] = [
     columnHelper.accessor("firmenname", {
       id: "firmenname",
       header: "Firmenname",
@@ -78,6 +78,22 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
           </Badge>
         );
       },
+    }),
+    columnHelper.accessor("contacts", {
+      id: "hauptkontakt",
+      header: "Hauptkontakt",
+      cell: (info) => {
+        const contacts = info.row.original.contacts || [];
+        const primary = contacts.find((c: any) => c.is_primary);
+        if (!primary) return "—";
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{`${primary.vorname} ${primary.nachname}`}</span>
+            <span className="text-xs text-muted-foreground">{primary.email || "—"}</span>
+          </div>
+        );
+      },
+      enableSorting: false,
     }),
     columnHelper.accessor("value", {
       header: "Value",
