@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
-import { Building, Edit, Trash, User } from "lucide-react";
+import { Building, Edit, Trash, User, ArrowLeft } from "lucide-react";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -93,13 +93,19 @@ export default function ContactDetailPage() {
           return;
         }
 
-        const response = await fetch(`/api/contacts/${id}`);
-        const data = await response.json();
-        if (data.success) {
-          setContact(data.contact);
-        } else {
-          setError(data.error || "Failed to load contact");
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("contacts")
+          .select("*, companies!company_id(firmenname)")
+          .eq("id", id)
+          .single();
+
+        if (error) {
+          setError(error.message);
+          return;
         }
+
+        setContact(data);
       } catch (err) {
         console.error(err);
         setError("Failed to load contact");
@@ -196,15 +202,15 @@ export default function ContactDetailPage() {
             {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => setEditDialog(true)} variant="outline">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Contact
+            <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
+              <Edit className="w-4 h-4" />
             </Button>
-            <Button onClick={handleDeleteContact} variant="destructive">
-              <Trash className="w-4 h-4 mr-2" />
-              Delete Contact
+            <Button onClick={handleDeleteContact} variant="destructive" size="sm">
+              <Trash className="w-4 h-4" />
             </Button>
-            <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
+            <Button onClick={() => router.push("/contacts")} size="sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
