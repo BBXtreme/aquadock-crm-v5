@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -132,12 +132,13 @@ export default function RemindersPage() {
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const {
     data: allReminders = [],
     isLoading,
+    isError,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
@@ -158,13 +159,9 @@ export default function RemindersPage() {
   const thisWeek = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length : 0;
   const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
 
-  useEffect(() => {
-    if (reminders) setLoading(false);
-  }, [reminders]);
-
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
-    data: reminders || [],
+  const table = useMemo(() => useReactTable({
+    data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -180,9 +177,9 @@ export default function RemindersPage() {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
-  });
+  }), [reminders, globalFilter, columnVisibility, rowSelection]);
 
-  if (error) {
+  if (isError) {
     return (
       <AppLayout>
         <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -194,11 +191,9 @@ export default function RemindersPage() {
             <Button>New Reminder</Button>
           </div>
           <Alert variant="destructive">
-            <AlertTitle>Failed to load reminders</AlertTitle>
-            <AlertDescription>{error.message}</AlertDescription>
-            <Button onClick={() => queryClient.refetchQueries({ queryKey: ['reminders'] })}>
-              Retry
-            </Button>
+            <AlertTitle>Error loading reminders</AlertTitle>
+            <AlertDescription>{error?.message || "Unknown error"}</AlertDescription>
+            <Button onClick={() => refetch()}>Retry</Button>
           </Alert>
         </div>
       </AppLayout>
@@ -234,7 +229,7 @@ export default function RemindersPage() {
                 <Bell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
               </CardContent>
             </Card>
             <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -243,7 +238,7 @@ export default function RemindersPage() {
                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
               </CardContent>
             </Card>
             <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -252,7 +247,7 @@ export default function RemindersPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
               </CardContent>
             </Card>
             <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -261,7 +256,7 @@ export default function RemindersPage() {
                 <Star className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
               </CardContent>
             </Card>
           </div>
@@ -276,7 +271,7 @@ export default function RemindersPage() {
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardContent className="p-6">
               <Suspense fallback={<SkeletonList count={10} />}>
-                {loading ? <SkeletonList count={10} /> : (
+                {isLoading ? <SkeletonList count={10} /> : (
                   table.getRowModel().rows.length === 0 ? (
                     <Alert>
                       <AlertDescription>No reminders found. Create one to get started.</AlertDescription>
