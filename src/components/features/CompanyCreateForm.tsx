@@ -35,7 +35,7 @@ const statusOptions = [
   { value: "verloren", label: "Verloren" },
 ];
 
-export function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: {
