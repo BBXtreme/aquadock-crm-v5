@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
@@ -90,9 +91,7 @@ export default function ContactsPage() {
             {loading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
-                {Array.from({ length: 5 }).map(() => (
-                  <Skeleton className="h-12 w-full" />
-                ))}
+                <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
               </div>
             ) : (
               <div className="rounded-md border">

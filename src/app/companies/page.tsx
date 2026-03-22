@@ -1,23 +1,30 @@
 "use client";
 
 import type React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 
+import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { getCompanies } from "@/lib/supabase/services/companies";
+import { createCompany, getCompanies } from "@/lib/supabase/services/companies";
+import type { CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
+  const queryClient = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const {
     data: companies = [],
     isLoading,
@@ -29,6 +36,15 @@ export default function CompaniesPage() {
       return getCompanies(supabase);
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const _createCompanyMutation = useMutation({
+    mutationFn: async (newCompany: CompanyInsert) => {
+      return createCompany(newCompany);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
   });
 
   // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
@@ -54,7 +70,17 @@ export default function CompaniesPage() {
               <Link href="/import">
                 <Button variant="outline">Import CSV</Button>
               </Link>
-              <Button>New Company</Button>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>New Company</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Company</DialogTitle>
+                  </DialogHeader>
+                  <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
@@ -85,7 +111,17 @@ export default function CompaniesPage() {
             <Link href="/import">
               <Button variant="outline">Import CSV</Button>
             </Link>
-            <Button>New Company</Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Company</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Company</DialogTitle>
+                </DialogHeader>
+                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -119,11 +155,7 @@ export default function CompaniesPage() {
             {isLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-8 w-56" />
-                <div className="space-y-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={`company-skeleton-${i}`} className="h-14 w-full" />
-                  ))}
-                </div>
+                <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
             ) : (
               <CompaniesTable companies={companies} />

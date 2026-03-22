@@ -42,7 +42,11 @@ const columns: ColumnDef<Company>[] = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
-    cell: (info) => safeDisplay(info.getValue()),
+    cell: (info) => (
+      <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
+        {safeDisplay(info.getValue())}
+      </Link>
+    ),
   }) as ColumnDef<Company>,
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",

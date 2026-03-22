@@ -1,113 +1,77 @@
-# AIDER RULES – AQUADOCK CRM v5 (March 2026 Standard)
+# AIDER RULES – AQUADOCK CRM v5 (March 2026 – Final Stable)
 
-You are strictly bound by these rules on **every single change**.  
-They reflect the architecture of modern Next.js 16+ + shadcn/ui + Tailwind v4 dashboard projects.
+You are **strictly bound** by these rules on every single change.  
+They protect the core (companies page + Supabase layer) and prevent all previous Biome/parse/TS issues.
 
-### 1. Core Stack (Locked)
-- Next.js 16+ (latest stable)
+### 1. Core Stack (Locked – Never Change)
+- Next.js 16+ (App Router)
 - React 19+
-- Tailwind CSS **exactly 4.2.2** (pinned version)
-- shadcn/ui latest – style = **radix-nova**, CSS variables = true
-- TypeScript **strict mode** enabled
-- Geist fonts via official `geist` package
+- Tailwind CSS **exactly 4.2.2** (config-less)
+- shadcn/ui (radix-nova style)
+- Biome 2.4.8+ for linting/formatting
+- pnpm
 
-### 2. Tailwind v4 Rules (Never Deviate)
-- Pure config-less setup only
-- `globals.css` may **only** contain:
-  ```css
-  @import "tailwindcss";
-  @import "tw-animate-css";
+### 2. Tailwind v4 & Biome Rules
+- No tailwind.config.js ever
+- globals.css uses only `@import "tailwindcss";` + `@theme inline`
+- For static loading skeletons (`Array.from({ length: N })`):
+  - **Always remove the `key` prop** (React does not need it)
+  - Use `() => (` – never `(_, i) =>`
+  - Never add biome-ignore inside the map (causes Turbopack parse error)
+  - If warning remains, add suppression **only outside** the map:
+    {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders */}
 
-No @tailwind base;, @tailwind components;, @tailwind utilities;
-No tailwind.config.js/ts file ever
-Theming only via @theme inline { … } using OKLCH colors
-No @custom-variant dark — Tailwind v4 handles .dark natively
-Remove any @import "shadcn/tailwind.css"
+### 3. Supabase Data Layer – Strict Boundaries (Future-Proof)
+- **Never edit** these files unless explicitly told:
+  - `src/lib/supabase/client.ts`
+  - `src/lib/supabase/server.ts`
+  - `src/lib/supabase/server-client.ts`
+  - `src/lib/supabase/browser.ts`
+  - `src/lib/supabase/database.types.ts` or `types.ts`
+- All data fetching → use existing service functions in `src/lib/supabase/services/*.ts`
+- New features → create **new functions** in the appropriate service file (e.g. `companies.ts`)
+- Always use `createClient()` or `createServerClient()` – never raw Supabase imports
+- RLS must be respected in every query
 
-3. Architecture Rules (Strict Boundaries)
+### 4. Companies Page & Table – Protected Core
+- This is the **central heart** of the CRM
+- When adding delete, select, bulk edit, new fields, filters, bid popup, etc.:
+  - Never touch Supabase client/server files
+  - Extend only via `src/lib/supabase/services/companies.ts`
+  - Use `useQuery` + `useMutation` from react-query
+  - Table columns → always use `satisfies ColumnDef<Company>[]` or explicit cast
+  - Static skeletons → follow rule #2 exactly
+- All new functionality must keep existing data flow intact
 
-app/layout.tsxmust remain a pure Server Component (no hooks, no "use client")
-Use one single ClientLayout wrapper for all client-side providers
-(TooltipProvider, Toaster, theme provider, auth context, etc.)
-Every component/page that uses hooks, state, effects, shadcn UI or interactivity must start with "use client";
-Prefer Server Components for data fetching (Supabase queries)
+### 5. React-Query & TanStack Table Rules
+- All data fetching → `useQuery({ queryKey, queryFn })`
+- Mutations → `useMutation` with `queryClient.invalidateQueries`
+- Table columns → prefer `satisfies ColumnDef<T>[]`
+- Global error handling in `ReactQueryProvider`
 
-4. Font Rules (Geist)
+### 6. General Rules
+- "use client" only where needed
+- Server Components preferred for initial data
+- No unsafe `!` assertions on env vars
+- Keep code clean – no commented old code
+- When user says “follow standards” or “clean up”, apply these rules strictly
 
-Install: pnpm add geist
-Import exactly like this:tsximport { GeistSans } from 'geist/font/sans';
-import { GeistMono } from 'geist/font/mono';
-Apply in root layout:tsx<body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+### Summary
 
-5. shadcn/ui Rules
+Companies page = **protected core** → Aider knows not to break data flow
 
-Always install with: npx shadcn@latest add ... --overwrite
-Style = radix-nova
-Use cn() from @/lib/utils
-All components live in src/components/ui/
+Supabase client/server layer = **locked** → future Aider sessions cannot touch them accidentally
 
-6. Supabase Client & Types
+Static skeletons = **standardized** (no keys, no inner comments) → no more parse/key wars
 
-Always import like this:TypeScriptimport { createClient, type SupabaseClient } from '@supabase/supabase-js';
-Never use @supabase/supabase
-Generated types: import from src/lib/supabase/database.types or src/lib/supabase/types
-Centralize client creation:
-createSupabaseClient()
-createSupabaseServerClient() (for server components/actions)
+Biome noise = **handled** (downgraded noisy rules, auto-fix first, minimal config)
 
-Never hardcode env vars outside client creation files
+Type safety = **enforced** (no !, explicit types, tsc check before commit)
 
-7. TanStack React Table v8 – Column Typing Gotcha
-Problem
-createColumnHelper<T>() + const columns: ColumnDef<T>[] = […] often causes huge contravariant errors
-(AccessorKeyColumnDef<…, string> not assignable to ColumnDef<…, unknown>).
-Rule
-Never commit a table without one of these annotations when seeing unknown/string/accessorFn mismatch errors.
-Prefer order: 1 → 2 → 3
-TypeScript// 1. Best – modern & clean (TS 4.9+)
-const columns = [
-  columnHelper.accessor("firmenname", { … }),
-  columnHelper.accessor("value", { … }),
-  columnHelper.display({ id: "actions", … }),
-] satisfies ColumnDef<Company>[];
-
-// 2. Explicit & reliable
-const columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname", { … }) as ColumnDef<Company>,
-  columnHelper.accessor("value",      { … }) as ColumnDef<Company>,
-  columnHelper.display({ … })         as ColumnDef<Company>,
-  // cast every column
-];
-
-// 3. Quick fallback (loses cell value typing – avoid if possible)
-const columns: ColumnDef<Company, unknown>[] = [ … ];
-8. General Type & Null Safety Rules
-
-Use ?? for safe defaults (numbers, strings, dates)
-Protect nullable fields with:
-??, ?., early returns
-helpers: formatCurrency, formatDateDistance, safeDisplay
-
-Remove unsafe casts (as string, as any, String(…))
-Explicitly type state: useState<string>(""), useState<Record<string, boolean>>({})
-tsc --noEmit + next build must pass before commit
-
-9. Clean Code & Verification Rules
-
-Clean code only — no leftovers, no commented-out old code
-No reactCompiler: true in next.config.ts (Next 16 enables it automatically)
-Every change must preserve:
-dark mode
-sidebar
-theme persistence
-
-Before finishing any task verify:
-No font errors
-No hook errors
-globals.css is clean
-All interactive files have "use client"
-Dev server runs without warnings
+New functionality = **forced through services/** → future-proof, RLS-safe, consistent
 
 
-When the user says "follow standards", "clean up" or "update rules", strictly follow and apply this entire document.
-Last updated: 2026-03-20
+
+**Last updated**: March 2026 (after full Biome + React-Query stabilization)
+
+When the user says "follow standards" or "update rules", replace the file with this exact content.
