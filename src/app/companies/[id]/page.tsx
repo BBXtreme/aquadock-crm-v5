@@ -220,13 +220,11 @@ export default function CompanyDetailPage() {
             )}
           </div>
           <div className="flex gap-3">
-            <Button onClick={() => setEdit(true)} variant="outline">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Company
+            <Button onClick={() => setEdit(true)} variant="outline" size="sm">
+              <Edit className="w-4 h-4" />
             </Button>
-            <Button onClick={handleDeleteCompany} variant="destructive">
-              <Trash className="w-4 h-4 mr-2" />
-              Delete Company
+            <Button onClick={handleDeleteCompany} variant="destructive" size="sm">
+              <Trash className="w-4 h-4" />
             </Button>
             <Button onClick={() => router.push("/companies")}>
               Back to Companies
