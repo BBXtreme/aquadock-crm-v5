@@ -165,7 +165,7 @@ export default function CompanyDetailPage() {
     return (
       <AppLayout>
         <div className="container mx-auto p-6">
-          <CompanyEditForm company={company} onSuccess={() => setEdit(false)} />
+          <CompanyEditForm company={company} onSuccess={() => { setEdit(false); fetchData(); }} />
         </div>
       </AppLayout>
     );
