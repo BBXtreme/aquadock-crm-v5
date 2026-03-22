@@ -25,8 +25,8 @@ export interface Database {
           import_batch: string | null;
           status: string;
         };
-        Insert: Partial<Database['public']['Tables']['companies']['Row']>;
-        Update: Partial<Database['public']['Tables']['companies']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["companies"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["companies"]["Row"]>;
       };
 
       contacts: {
@@ -40,8 +40,8 @@ export interface Database {
           created_at: string | null;
           updated_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['contacts']['Row']>;
-        Update: Partial<Database['public']['Tables']['contacts']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["contacts"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["contacts"]["Row"]>;
       };
 
       reminders: {
@@ -57,8 +57,8 @@ export interface Database {
           created_at: string | null;
           updated_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['reminders']['Row']>;
-        Update: Partial<Database['public']['Tables']['reminders']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["reminders"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["reminders"]["Row"]>;
       };
 
       timeline: {
@@ -72,8 +72,8 @@ export interface Database {
           created_at: string | null;
           updated_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['timeline']['Row']>;
-        Update: Partial<Database['public']['Tables']['timeline']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
       };
 
       email_log: {
@@ -86,8 +86,8 @@ export interface Database {
           sent_at: string | null;
           created_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['email_log']['Row']>;
-        Update: Partial<Database['public']['Tables']['email_log']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["email_log"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["email_log"]["Row"]>;
       };
 
       email_templates: {
@@ -99,8 +99,8 @@ export interface Database {
           created_at: string | null;
           updated_at: string | null;
         };
-        Insert: Partial<Database['public']['Tables']['email_templates']['Row']>;
-        Update: Partial<Database['public']['Tables']['email_templates']['Row']>;
+        Insert: Partial<Database["public"]["Tables"]["email_templates"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["email_templates"]["Row"]>;
       };
 
       user_settings: {
@@ -108,7 +108,7 @@ export interface Database {
           id: string;
           user_id: string;
           key: string;
-          value: unknown;  // jsonb – e.g. string[] for column order
+          value: unknown; // jsonb – e.g. string[] for column order
           created_at: string | null;
           updated_at: string | null;
         };
@@ -119,7 +119,7 @@ export interface Database {
           created_at?: string | null;
           updated_at?: string | null;
         };
-        Update: Partial<Database['public']['Tables']['user_settings']['Insert']>;
+        Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
       };
     };
     // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
