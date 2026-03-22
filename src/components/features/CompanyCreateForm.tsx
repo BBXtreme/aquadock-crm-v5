@@ -1,24 +1,12 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCompany } from "@/lib/supabase/services/companies";
-import type { CompanyInsert } from "@/lib/supabase/types";
+import { Button } from "@/components/ui/button";
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -27,7 +15,7 @@ const companySchema = z.object({
   value: z.number().optional(),
 });
 
-type CompanyFormData = z.infer<typeof companySchema>;
+type CompanyFormValues = z.infer<typeof companySchema>;
 
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
@@ -47,15 +35,9 @@ const statusOptions = [
   { value: "verloren", label: "Verloren" },
 ];
 
-interface CompanyCreateFormProps {
-  onSuccess?: () => void;
-}
-
-export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps) {
-  const queryClient = useQueryClient();
-
-  const form = useForm<CompanyFormData>({
-    resolver: zodResolver(companySchema as any),
+export function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+  const form = useForm<CompanyFormValues>({
+    resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: "",
       kundentyp: "",
@@ -64,39 +46,28 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
     },
   });
 
-  const createMutation = useMutation({
-    mutationFn: createCompany,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success("Company created successfully");
-    },
-    onError: (error) => {
-      toast.error("Failed to create company", { description: error.message });
-    },
-  });
-
-  const onSubmit = form.handleSubmit((data) => {
-    createMutation.mutate(data);
-    form.reset();
+  const onSubmit = (data: CompanyFormValues) => {
+    console.log("Submit:", data); // replace with mutation later
     onSuccess?.();
-  });
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="firmenname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Firmenname</FormLabel>
+              <FormLabel>Firmenname *</FormLabel>
               <FormControl>
-                <Input placeholder="Enter company name" {...field} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="kundentyp"
@@ -121,6 +92,7 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="status"
@@ -145,6 +117,7 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="value"
@@ -154,7 +127,6 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
               <FormControl>
                 <Input
                   type="number"
-                  placeholder="Enter value"
                   {...field}
                   onChange={(e) => field.onChange(Number(e.target.value) || 0)}
                 />
@@ -163,9 +135,8 @@ export default function CompanyCreateForm({ onSuccess }: CompanyCreateFormProps)
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={createMutation.isPending}>
-          {createMutation.isPending ? "Creating..." : "Create Company"}
-        </Button>
+
+        <Button type="submit">Create Company</Button>
       </form>
     </Form>
   );
