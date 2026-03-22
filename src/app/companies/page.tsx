@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
+import { Building, DollarSign, RefreshCw, Trophy, Upload, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -86,7 +86,9 @@ export default function CompaniesPage() {
             </div>
             <div className="flex gap-3">
               <Link href="/import">
-                <Button variant="outline">Import CSV</Button>
+                <Button variant="outline" size="icon">
+                  <Upload className="h-4 w-4" />
+                </Button>
               </Link>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
@@ -127,7 +129,9 @@ export default function CompaniesPage() {
           </div>
           <div className="flex gap-3">
             <Link href="/import">
-              <Button variant="outline">Import CSV</Button>
+              <Button variant="outline" size="icon">
+                <Upload className="h-4 w-4" />
+              </Button>
             </Link>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
