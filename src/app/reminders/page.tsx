@@ -60,23 +60,37 @@ const columns: ColumnDef<any>[] = [
   }),
   columnHelper.accessor("companies.firmenname", {
     header: "Company",
-    cell: (info) => (
-      <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-        {info.getValue()}
-      </Link>
-    ),
+    cell: (info) => {
+      try {
+        const company = info.row.original.companies;
+        if (!company) return "—";
+        return (
+          <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+            {company.firmenname}
+          </Link>
+        );
+      } catch {
+        return "—";
+      }
+    },
   }),
   columnHelper.accessor("due_date", {
     header: "Due Date",
     cell: (info) => {
-      const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
-      return (
-        <span className={isOverdue ? "text-rose-500" : ""}>
-          {formatDistanceToNow(new Date(info.getValue() as string), {
-            addSuffix: true,
-          })}
-        </span>
-      );
+      try {
+        const dueDate = info.getValue() as string;
+        if (!dueDate) return "—";
+        const isOverdue = isAfter(new Date(), new Date(dueDate));
+        return (
+          <span className={isOverdue ? "text-rose-500" : ""}>
+            {formatDistanceToNow(new Date(dueDate), {
+              addSuffix: true,
+            })}
+          </span>
+        );
+      } catch {
+        return "Invalid date";
+      }
     },
   }),
   columnHelper.accessor("priority", {
@@ -126,17 +140,22 @@ export default function RemindersPage() {
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
-      const supabase = createClient();
-      return getReminders(supabase);
+      try {
+        const supabase = createClient();
+        return await getReminders(supabase);
+      } catch (err) {
+        console.error("Error fetching reminders:", err);
+        throw err;
+      }
     },
   });
 
-  const reminders = allReminders.filter((r) => r.status === "open");
+  const reminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open") : [];
 
-  const openReminders = allReminders.filter((r) => r.status === "open").length;
-  const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
-  const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
-  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
+  const openReminders = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open").length : 0;
+  const overdue = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length : 0;
+  const thisWeek = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length : 0;
+  const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
