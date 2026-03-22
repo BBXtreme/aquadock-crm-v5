@@ -314,7 +314,7 @@ export default function CompanyDetailPage() {
       partner: "🤝 Partner",
       sonstige: "Sonstige",
     };
-    return map[t] || t;
+    return map[t.toLowerCase()] || t;
   };
 
   if (loading) {
@@ -511,7 +511,9 @@ export default function CompanyDetailPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Kundentyp</label>
-                  <p className="text-sm text-gray-900">{company.kundentyp || "—"}</p>
+                  <p className="text-sm text-gray-900">
+                    {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : "—"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Firmentyp</label>
