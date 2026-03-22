@@ -1,5 +1,6 @@
 import type * as React from "react";
 
+import { Check } from "lucide-react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 
 import { cn } from "@/lib/utils";
@@ -13,7 +14,18 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
         className,
       )}
       {...props}
-    />
+    >
+      <div
+        className={cn(
+          "absolute inset-0 flex items-center justify-center text-current",
+          "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:opacity-100",
+          className
+        )}
+        data-state={props.checked ? "checked" : "unchecked"}
+      >
+        <Check className="h-4 w-4" />
+      </div>
+    </CheckboxPrimitive.Root>
   );
 }
 
