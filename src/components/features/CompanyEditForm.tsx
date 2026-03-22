@@ -161,7 +161,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                 <Building className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">Firmendaten</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <FormField
                   control={form.control}
                   name="firmenname"
@@ -284,7 +284,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                 <MapPin className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">Adresse</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <FormField
                   control={form.control}
                   name="strasse"
@@ -370,7 +370,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                 <Waves className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">AquaDock Daten</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <FormField
                   control={form.control}
                   name="wasserdistanz"
@@ -473,7 +473,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                 <BarChart className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold">CRM Informationen</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <FormField
                   control={form.control}
                   name="status"
@@ -515,7 +515,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   control={form.control}
                   name="notes"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem>
                       <FormLabel className="text-base">Notes</FormLabel>
                       <FormControl>
                         <Textarea className="w-full" {...field} />
