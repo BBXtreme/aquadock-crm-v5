@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Company } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 

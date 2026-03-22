@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BarChart, Building, MapPin, Waves } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { BarChart, Building, MapPin, Waves } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -33,7 +33,20 @@ const companySchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   osm: z.string().optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"]).optional(),
+  status: z
+    .enum([
+      "lead",
+      "interessant",
+      "qualifiziert",
+      "akquise",
+      "angebot",
+      "gewonnen",
+      "verloren",
+      "kunde",
+      "partner",
+      "inaktiv",
+    ])
+    .optional(),
   value: z.number().optional(),
   notes: z.string().optional(),
 });
@@ -378,7 +391,11 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     <FormItem>
                       <FormLabel>Wasserdistanz</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -415,7 +432,12 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     <FormItem>
                       <FormLabel>Lat</FormLabel>
                       <FormControl>
-                        <Input type="number" step="any" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                        <Input
+                          type="number"
+                          step="any"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -428,7 +450,12 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     <FormItem>
                       <FormLabel>Lon</FormLabel>
                       <FormControl>
-                        <Input type="number" step="any" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                        <Input
+                          type="number"
+                          step="any"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
