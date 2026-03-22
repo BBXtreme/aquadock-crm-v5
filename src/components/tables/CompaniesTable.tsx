@@ -56,7 +56,7 @@ export default function CompaniesTable({ companies, onEdit }: CompaniesTableProp
     columnHelper.accessor("kundentyp", {
       header: "Kundentyp",
       cell: (info) => (
-        <Badge variant="outline" className="bg-[#24BACC] text-white">
+        <Badge className="bg-[#24BACC] text-white">
           {safeDisplay(info.getValue() as string)}
         </Badge>
       ),

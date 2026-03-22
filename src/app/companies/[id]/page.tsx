@@ -22,6 +22,7 @@ import { deleteContact } from "@/lib/supabase/services/contacts";
 import { deleteReminder } from "@/lib/supabase/services/reminders";
 import { deleteCompany } from "@/lib/supabase/services/companies";
 import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 
 export default function CompanyDetailPage() {
   const params = useParams();
@@ -230,18 +231,17 @@ export default function CompanyDetailPage() {
         {/* Status and Badges */}
         <div className="flex items-center gap-4">
           <Badge
-            variant={
-              company.status === "won"
-                ? "default"
-                : company.status === "lost"
-                ? "destructive"
-                : "secondary"
-            }
+            className={cn(
+              company.status === "won" && "bg-emerald-600 text-white",
+              company.status === "lost" && "bg-rose-600 text-white",
+              company.status === "lead" && "bg-amber-600 text-white",
+              !["won", "lost", "lead"].includes(company.status) && "bg-zinc-500 text-white",
+            )}
           >
             {company.status}
           </Badge>
           {company.kundentyp && (
-            <Badge variant="outline">
+            <Badge className="bg-[#24BACC] text-white">
               {getKundentypLabel(company.kundentyp)}
             </Badge>
           )}
