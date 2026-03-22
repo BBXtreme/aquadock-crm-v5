@@ -20,8 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { createCompany } from "@/lib/supabase/services/companies";
-import { deleteCompany } from "@/lib/supabase/services/companies";
+import { createCompany, deleteCompany } from "@/lib/supabase/services/companies";
 import type { Company, CompanyInsert } from "@/lib/supabase/types";
 
 export default function CompaniesPage() {
