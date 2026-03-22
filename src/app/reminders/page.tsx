@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ import {
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,7 +135,7 @@ export default function RemindersPage() {
 
   const {
     data: allReminders = [],
-    isLoading: loading,
+    isLoading,
     error,
   } = useQuery({
     queryKey: ["reminders"],
@@ -158,7 +158,7 @@ export default function RemindersPage() {
   const highPriority = Array.isArray(allReminders) ? allReminders.filter((r) => r.status === "open" && r.priority === "high").length : 0;
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useMemo(() => useReactTable({
     data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -175,7 +175,7 @@ export default function RemindersPage() {
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
-  });
+  }), [reminders, globalFilter, columnVisibility, rowSelection]);
 
   if (error) {
     return (
@@ -189,13 +189,11 @@ export default function RemindersPage() {
             <Button>New Reminder</Button>
           </div>
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error.message}</span>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Erneut versuchen
-              </Button>
-            </AlertDescription>
+            <AlertTitle>Failed to load reminders</AlertTitle>
+            <AlertDescription>{error.message}</AlertDescription>
+            <Button onClick={() => queryClient.refetchQueries({ queryKey: ['reminders'] })}>
+              Retry
+            </Button>
           </Alert>
         </div>
       </AppLayout>
@@ -204,151 +202,154 @@ export default function RemindersPage() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
+      <ErrorBoundary fallback={<Alert variant="destructive"><AlertTitle>Error loading reminders</AlertTitle><AlertDescription>{error?.message || "Unknown error"}</AlertDescription></Alert>}>
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm">Home → Reminders</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Reminder</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Reminder</DialogTitle>
+                </DialogHeader>
+                <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>New Reminder</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Reminder</DialogTitle>
-              </DialogHeader>
-              <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">This Week</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">High Priority</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
-            </CardContent>
-          </Card>
-        </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
+                <Bell className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
+              </CardContent>
+            </Card>
+            <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
+              </CardContent>
+            </Card>
+            <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="font-medium text-sm">This Week</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+              </CardContent>
+            </Card>
+            <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="font-medium text-sm">High Priority</CardTitle>
+                <Star className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+              </CardContent>
+            </Card>
+          </div>
 
-        <div className="flex space-x-2">
-          <Button variant="outline">All</Button>
-          <Button variant="outline">Open</Button>
-          <Button variant="outline">Overdue</Button>
-          <Button variant="outline">My Tasks</Button>
-        </div>
+          <div className="flex space-x-2">
+            <Button variant="outline">All</Button>
+            <Button variant="outline">Open</Button>
+            <Button variant="outline">Overdue</Button>
+            <Button variant="outline">My Tasks</Button>
+          </div>
 
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardContent className="p-6">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center space-x-4 mb-4">
-                  <Input
-                    placeholder="Search reminders..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(String(event.target.value))}
-                    className="max-w-sm"
-                  />
-                  {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {table.getFilteredSelectedRowModel().rows.length} selected
-                    </span>
-                  )}
-                </div>
-                <ErrorBoundary fallback={<div>Error loading reminders</div>}>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                              <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
-                              No results.
-                            </TableCell>
-                          </TableRow>
+          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+            <CardContent className="p-6">
+              <Suspense fallback={<SkeletonList count={10} />}>
+                {isLoading ? <SkeletonList count={10} /> : (
+                  table.getRowModel().rows.length === 0 ? (
+                    <Alert>
+                      <AlertDescription>No reminders found. Create one to get started.</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-4 mb-4">
+                        <Input
+                          placeholder="Search reminders..."
+                          value={globalFilter ?? ""}
+                          onChange={(event) => setGlobalFilter(String(event.target.value))}
+                          className="max-w-sm"
+                        />
+                        {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">
+                            {table.getFilteredSelectedRowModel().rows.length} selected
+                          </span>
                         )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </ErrorBoundary>
-                <div className="flex items-center justify-end space-x-2 py-4">
-                  <div className="flex-1 text-muted-foreground text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-                    selected.
-                  </div>
-                  <div className="space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                    >
-                      Previous
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                      </div>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                              <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                  <TableHead key={header.id}>
+                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                  </TableHead>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableHeader>
+                          <TableBody>
+                            {table.getRowModel().rows?.length ? (
+                              table.getRowModel().rows.map((row) => (
+                                <TableRow key={row.id}>
+                                  {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                  ))}
+                                </TableRow>
+                              ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
+                                  No results.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      <div className="flex items-center justify-end space-x-2 py-4">
+                        <div className="flex-1 text-muted-foreground text-sm">
+                          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+                          selected.
+                        </div>
+                        <div className="space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                          >
+                            Previous
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )
+                )}
+              </Suspense>
+            </CardContent>
+          </Card>
+        </div>
+      </ErrorBoundary>
     </AppLayout>
   );
 }
