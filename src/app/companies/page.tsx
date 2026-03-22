@@ -87,7 +87,10 @@ export default function CompaniesPage() {
   const handleConfirmBulkDelete = async () => {
     setIsBulkDeleteDialogOpen(false); // close early for perceived speed
 
-    const promises = bulkDeleteIds.map(id => deleteCompany.mutateAsync({ id }));
+    const promises = bulkDeleteIds.map(id => {
+      console.log("Triggering delete for company id:", id, typeof id);
+      return deleteCompany.mutateAsync(id);
+    });
 
     const results = await Promise.allSettled(promises);
 
@@ -304,3 +307,4 @@ function StatCard({ title, value, icon }: { title: string; value: React.ReactNod
     </Card>
   );
 }
+```
