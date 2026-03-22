@@ -3,10 +3,8 @@
 import type React from "react";
 import { useMemo, useState } from "react";
 
-import Link from "next/link";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building, DollarSign, RefreshCw, Trophy, Upload, Users } from "lucide-react";
+import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -17,12 +15,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
@@ -91,21 +83,6 @@ export default function CompaniesPage() {
               <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
             </div>
             <div className="flex gap-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Upload className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem asChild>
-                    <Link href="/import/csv">Import CSV</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/import/json">Import JSON</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>New Company</Button>
@@ -144,21 +121,6 @@ export default function CompaniesPage() {
             <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
           </div>
           <div className="flex gap-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Upload className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem asChild>
-                  <Link href="/import/csv">Import CSV</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/import/json">Import JSON</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>New Company</Button>

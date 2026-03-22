@@ -15,7 +15,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Columns, Download, Edit, Eye, Trash } from "lucide-react";
+import { Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 
@@ -229,6 +229,21 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           className="max-w-sm"
         />
         <div className="flex space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Upload className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Link href="/import/csv">Import CSV</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/import/json">Import JSON</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
