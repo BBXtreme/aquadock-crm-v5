@@ -3,17 +3,50 @@
 import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
+import { createContact } from "@/lib/supabase/services/contacts";
 import { getContacts } from "@/lib/supabase/services/contacts";
+import type { Contact } from "@/lib/supabase/types";
+
+const contactSchema = z.object({
+  vorname: z.string().min(1, "Vorname is required"),
+  nachname: z.string().min(1, "Nachname is required"),
+  anrede: z.string().optional(),
+  position: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  telefon: z.string().optional(),
+  mobil: z.string().optional(),
+  durchwahl: z.string().optional(),
+  notes: z.string().optional(),
+  company_id: z.string().optional(),
+  is_primary: z.boolean().optional(),
+});
+
+type ContactFormValues = z.infer<typeof contactSchema>;
+
+const anredeOptions = [
+  { value: "Herr", label: "Herr" },
+  { value: "Frau", label: "Frau" },
+  { value: "Dr.", label: "Dr." },
+  { value: "Prof.", label: "Prof." },
+];
 
 export default function ContactsPage() {
   const {
@@ -40,7 +73,17 @@ export default function ContactsPage() {
             <p className="text-muted-foreground text-sm">Home → Contacts</p>
             <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
           </div>
-          <Button>New Contact</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>New Contact</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Contact</DialogTitle>
+              </DialogHeader>
+              <ContactCreateForm />
+            </DialogContent>
+          </Dialog>
         </div>
 
         {error && (
@@ -144,5 +187,170 @@ export default function ContactsPage() {
         </Card>
       </div>
     </AppLayout>
+  );
+}
+
+function ContactCreateForm() {
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      vorname: "",
+      nachname: "",
+      anrede: "",
+      position: "",
+      email: "",
+      telefon: "",
+      mobil: "",
+      durchwahl: "",
+      notes: "",
+      company_id: "",
+      is_primary: false,
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    try {
+      const supabase = createClient();
+      await createContact(data, supabase);
+      // Handle success, e.g., close dialog, refresh data
+    } catch (error) {
+      console.error("Failed to create contact:", error);
+    }
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="vorname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vorname</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="nachname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nachname</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="anrede"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Anrede</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select anrede" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {anredeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Position</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="telefon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefon</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mobil"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mobil</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="durchwahl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Durchwahl</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Create Contact</Button>
+      </form>
+    </Form>
   );
 }
