@@ -151,7 +151,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   });
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-background rounded-xl border max-h-[80vh] overflow-y-auto">
+    <div className="max-w-4xl w-full sm:w-4/5 md:w-3/4 lg:w-4/5 xl:w-3/5 mx-auto p-6 bg-background rounded-xl border max-h-[85vh] overflow-y-auto">
       <Form {...form}>
         <form onSubmit={onSubmit} className="space-y-8">
           {/* Firmendaten */}
