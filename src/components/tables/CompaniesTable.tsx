@@ -39,7 +39,7 @@ interface CompaniesTableProps {
 
 const columnHelper = createColumnHelper<Company>();
 
-const columns: ColumnDef<Company>[] = [
+const columns = [
   columnHelper.accessor("firmenname", {
     id: "firmenname",
     header: "Firmenname",
@@ -48,7 +48,7 @@ const columns: ColumnDef<Company>[] = [
         {safeDisplay(info.getValue())}
       </Link>
     ),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("kundentyp", {
     header: "Kundentyp",
     cell: (info) => (
@@ -56,7 +56,7 @@ const columns: ColumnDef<Company>[] = [
         {safeDisplay(info.getValue())}
       </Badge>
     ),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => {
@@ -74,23 +74,23 @@ const columns: ColumnDef<Company>[] = [
         </Badge>
       );
     },
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("value", {
     header: "Value",
     cell: (info) => formatCurrency(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("stadt", {
     header: "Stadt",
     cell: (info) => safeDisplay(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("land", {
     header: "Land",
     cell: (info) => safeDisplay(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.accessor("created_at", {
     header: "Created",
     cell: (info) => formatDateDistance(info.getValue()),
-  }) as ColumnDef<Company>,
+  }),
   columnHelper.display({
     id: "actions",
     header: "Actions",
@@ -109,8 +109,8 @@ const columns: ColumnDef<Company>[] = [
         </Button>
       </div>
     ),
-  }) as ColumnDef<Company>,
-];
+  }),
+] satisfies ColumnDef<Company>[];
 
 export default function CompaniesTable({ companies, onEdit }: CompaniesTableProps) {
   const [globalFilter, setGlobalFilter] = useState<string>("");
