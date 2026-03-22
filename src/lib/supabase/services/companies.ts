@@ -56,11 +56,7 @@ export async function getCompanyById(id: string, client: SupabaseClient): Promis
  */
 export async function createCompany(values: CompanyInsert): Promise<Company> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .insert(values)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").insert(values).select().single();
   if (error) throw handleSupabaseError(error, "createCompany");
   return data;
 }
@@ -70,12 +66,7 @@ export async function createCompany(values: CompanyInsert): Promise<Company> {
  */
 export async function updateCompany(id: string, updates: Partial<Company>): Promise<Company> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateCompany");
   return data;
 }
@@ -85,9 +76,6 @@ export async function updateCompany(id: string, updates: Partial<Company>): Prom
  */
 export async function deleteCompany(id: string): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase
-    .from("companies")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
 }
