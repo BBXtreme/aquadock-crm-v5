@@ -109,7 +109,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema as any),
+    resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company.firmenname || "",
       rechtsform: company.rechtsform || "",
@@ -128,7 +128,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       lat: company.lat || 0,
       lon: company.lon || 0,
       osm: company.osm || "",
-      status: (company.status as any) || "lead",
+      status: company.status || "lead",
       value: company.value || 0,
       notes: company.notes || "",
     },
@@ -167,9 +167,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="firmenname"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Firmenname</FormLabel>
+                      <FormLabel>Firmenname</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -180,9 +180,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="rechtsform"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Rechtsform</FormLabel>
+                      <FormLabel>Rechtsform</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -193,21 +193,21 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="kundentyp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Kundentyp</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
+                      <FormLabel>Kundentyp</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select customer type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {kundentypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {kundentypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -217,21 +217,21 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="firmentyp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Firmentyp</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
+                      <FormLabel>Firmentyp</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select company type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {firmentypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {firmentypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -241,9 +241,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="website"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Website</FormLabel>
+                      <FormLabel>Website</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -254,9 +254,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="telefon"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Telefon</FormLabel>
+                      <FormLabel>Telefon</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -267,9 +267,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Email</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input className="w-full" type="email" {...field} />
+                        <Input type="email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -290,9 +290,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="strasse"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Strasse</FormLabel>
+                      <FormLabel>Strasse</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -303,9 +303,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="plz"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Plz</FormLabel>
+                      <FormLabel>Plz</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -316,9 +316,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="stadt"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Stadt</FormLabel>
+                      <FormLabel>Stadt</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -329,9 +329,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="bundesland"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Bundesland</FormLabel>
+                      <FormLabel>Bundesland</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -342,21 +342,21 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="land"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Land</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
+                      <FormLabel>Land</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {landOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {landOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -376,14 +376,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="wasserdistanz"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Wasserdistanz</FormLabel>
+                      <FormLabel>Wasserdistanz</FormLabel>
                       <FormControl>
-                        <Input
-                          className="w-full"
-                          type="number"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                        />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -394,21 +389,21 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="wassertyp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Wassertyp</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
+                      <FormLabel>Wassertyp</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select water type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {wassertypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {wassertypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -418,15 +413,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="lat"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Lat</FormLabel>
+                      <FormLabel>Lat</FormLabel>
                       <FormControl>
-                        <Input
-                          className="w-full"
-                          type="number"
-                          step="any"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                        />
+                        <Input type="number" step="any" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -437,15 +426,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="lon"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Lon</FormLabel>
+                      <FormLabel>Lon</FormLabel>
                       <FormControl>
-                        <Input
-                          className="w-full"
-                          type="number"
-                          step="any"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                        />
+                        <Input type="number" step="any" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -456,9 +439,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="osm"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Osm</FormLabel>
+                      <FormLabel>Osm</FormLabel>
                       <FormControl>
-                        <Input className="w-full" {...field} />
+                        <Input {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -479,21 +462,21 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {statusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -503,9 +486,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="value"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Value</FormLabel>
+                      <FormLabel>Value</FormLabel>
                       <FormControl>
-                        <Input className="w-full" type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -516,9 +499,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Notes</FormLabel>
+                      <FormLabel>Notes</FormLabel>
                       <FormControl>
-                        <Textarea className="w-full" {...field} />
+                        <Textarea {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
