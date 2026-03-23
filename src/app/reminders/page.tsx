@@ -113,8 +113,10 @@ export default function RemindersPage() {
     setIsViewOpen(true);
   }, []);
 
-  const handleEdit = useCallback((reminder: any) => {
-    setEditReminder(reminder);
+  const handleEdit = useCallback((reminder) => {
+    if (reminder) {
+      setEditReminder(reminder);
+    }
   }, []);
 
   const allReminders = reminders || [];
