@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
 import { createEmailLog, getEmailLogs, getEmailTemplates } from "@/lib/supabase/services/email";
-import { createTimelineEntry } from "@/lib/supabase/services/timeline";
 import type { EmailLog, EmailTemplate } from "@/lib/supabase/types";
 
 export default function MassEmailPage() {
@@ -80,20 +79,6 @@ export default function MassEmailPage() {
         supabase,
       );
 
-      // Required: user_name must be set (non-nullable in schema)
-      // Log to timeline
-      await createTimelineEntry(
-        {
-          company_id: null,
-          activity_type: "email",
-          title: "Test Email Sent",
-          content: `Test email sent to test@example.com`,
-          user_name: "Mass Email System",
-          user_id: null,
-        },
-        supabase,
-      );
-
       toast.success("Test email sent successfully!");
     } catch (error) {
       console.error("Error sending test email:", error);
@@ -142,20 +127,6 @@ export default function MassEmailPage() {
           supabase,
         );
       }
-
-      // Required: user_name must be set (non-nullable in schema)
-      // Log to timeline
-      await createTimelineEntry(
-        {
-          company_id: null,
-          activity_type: "email",
-          title: "Mass Email Sent",
-          content: `Mass email sent to ${filteredCompanies.length} recipients`,
-          user_name: "Mass Email System",
-          user_id: null,
-        },
-        supabase,
-      );
 
       toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);
     } catch (error) {
