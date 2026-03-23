@@ -15,6 +15,7 @@ import { z } from "zod";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1000,7 +1001,20 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
             </DialogHeader>
-            {/* Form kommt im nächsten Schritt */}
+            <TimelineEntryForm
+              onSubmit={async (values) => {
+                // Reuse oder neue Mutation – vorerst nur Placeholder
+                console.log("Create timeline for company", preselectedCompanyId, values);
+                // TODO: createTimelineMutation.mutateAsync(values)
+                setTimelineDialogOpen(false);
+                toast.success("Timeline-Eintrag erstellt");
+              }}
+              isSubmitting={false} // später Mutation.isPending
+              companies={[]} // vorerst leer – preselect übernimmt
+              contacts={[]}
+              editEntry={null}
+              preselectedCompanyId={preselectedCompanyId}
+            />
           </DialogContent>
         </Dialog>
       </div>
