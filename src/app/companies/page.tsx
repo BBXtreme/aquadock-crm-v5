@@ -6,17 +6,12 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  Bell,
-  Building,
   Calendar,
   DollarSign,
   Edit,
   Eye,
   RefreshCw,
-  Star,
-  Trash,
   Trophy,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -60,19 +55,19 @@ export default function CompaniesPage() {
   ];
 
   const kategorieIcons = {
-    Restaurant: Utensils,
-    Hotel: Building2,
-    Resort: Hotel,
-    Camping: Tent,
-    Marina: Anchor,
-    Segelschule: Sailboat,
-    Segelverein: Anchor,
-    Bootsverleih: Ship,
-    Neukunde: UserPlus,
-    Bestandskunde: UserCheck,
-    Interessent: Users,
-    Partner: Users,
-    Sonstige: null,
+    restaurant: "🍽",
+    hotel: "🏨",
+    resort: "🌴",
+    camping: "⛺",
+    marina: "⚓",
+    segelschule: "⛵",
+    segelverein: "🏆",
+    bootsverleih: "🚤",
+    neukunde: "🆕",
+    bestandskunde: "⭐",
+    interessent: "👁",
+    partner: "🤝",
+    sonstige: "",
   };
 
   const toggleFilter = (group: string, value: string) => {
@@ -269,7 +264,7 @@ export default function CompaniesPage() {
                         <h4>Kategorie</h4>
                         <div className="flex flex-wrap gap-2">
                           {kategorieOptions.map(k => {
-                            const Icon = kategorieIcons[k.charAt(0).toUpperCase() + k.slice(1)];
+                            const Icon = kategorieIcons[k];
                             return (
                               <Button
                                 key={k}
@@ -278,7 +273,7 @@ export default function CompaniesPage() {
                                 className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                                 onClick={() => toggleFilter('kategorie', k)}
                               >
-                                {Icon ? <Icon className="mr-1 h-3 w-3" /> : null}
+                                {Icon ? <span className="mr-1">{Icon}</span> : null}
                                 {k}
                               </Button>
                             );
