@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import Link from "next/link";
 
@@ -59,7 +59,7 @@ export default function RemindersPage() {
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns: ColumnDef<any>[] = [
+  const columns = useMemo<ColumnDef<any>[]>(() => [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -134,11 +134,11 @@ export default function RemindersPage() {
       header: "Assigned To",
       cell: (info) => info.getValue(),
     }),
-  ];
+  ], []);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: reminders,
+    data: reminders || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
