@@ -3,6 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Calendar, Clock, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -23,6 +25,7 @@ import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // TODO: use useSession or Server Component auth
   // const { userId } = useAuth();
@@ -39,6 +42,12 @@ export default function TimelinePage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (error && error.message.includes("Unauthorized")) {
+      router.push("/login");
+    }
+  }, [error, router]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -77,7 +86,7 @@ export default function TimelinePage() {
     );
   }
 
-  if (error) {
+  if (error && !error.message.includes("Unauthorized")) {
     return (
       <AppLayout>
         <div className="container mx-auto space-y-8 p-6 lg:p-8">
