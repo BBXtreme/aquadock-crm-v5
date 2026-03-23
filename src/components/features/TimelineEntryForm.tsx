@@ -21,6 +21,7 @@ const formSchema = z.object({
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
   company_id: z.string().optional(),
+  user_name: z.string().min(1, "User name is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,7 +34,7 @@ interface Props {
 export default function TimelineEntryForm({ onSubmit, isSubmitting }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "" },
+    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", user_name: "" },
   });
 
   return (
@@ -86,6 +87,19 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting }: Props) {
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="user_name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>User Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter user name" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
