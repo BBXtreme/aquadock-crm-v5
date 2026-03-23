@@ -11,6 +11,7 @@ import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +26,12 @@ export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
+  const [activeFilters, setActiveFilters] = useState({
+    status: [],
+    kategorie: [],
+    betriebstyp: [],
+    land: [],
+  });
 
   const {
     data: companies = [],
@@ -164,13 +171,23 @@ export default function CompaniesPage() {
                 <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
             ) : (
-              <CompaniesTable
-                companies={companies}
-                onEdit={setEditCompany}
-                onDelete={(company) => {
-                  if (confirm("Delete company?")) deleteMutation.mutate(company.id);
-                }}
-              />
+              <>
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="filters">
+                    <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
+                    <AccordionContent>
+                      {/* 4 filter groups here – next prompt */}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                <CompaniesTable
+                  companies={companies}
+                  onEdit={setEditCompany}
+                  onDelete={(company) => {
+                    if (confirm("Delete company?")) deleteMutation.mutate(company.id);
+                  }}
+                />
+              </>
             )}
           </CardContent>
         </Card>
