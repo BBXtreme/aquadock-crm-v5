@@ -377,7 +377,7 @@ function StatCard({ title, value, icon, className, change }: { title: string; va
       <div className="hover:brightness-105 transition-all">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-          <div className="rounded-full bg-muted p-3 flex items-center justify-center">{icon}</div>
+          <div className="rounded-full bg-muted/50 p-3 flex items-center justify-center">{icon}</div>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
