@@ -4,7 +4,20 @@ import type React from "react";
 import { useMemo, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Anchor, Building2, DollarSign, Hotel, RefreshCw, Sailboat, Ship, Tent, Trophy, UserCheck, UserPlus, Users, Utensils } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  Building,
+  Calendar,
+  DollarSign,
+  Edit,
+  Eye,
+  RefreshCw,
+  Star,
+  Trash,
+  Trophy,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
