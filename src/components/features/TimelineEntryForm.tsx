@@ -49,7 +49,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           contact_id: editEntry.contact_id || "none",
           user_name: editEntry.user_name || "",
         }
-      : { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "" },
+      : { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "Dev User" },
   });
 
   useEffect(() => {
