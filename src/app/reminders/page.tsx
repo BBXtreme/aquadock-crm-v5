@@ -171,7 +171,7 @@ export default function RemindersPage() {
             className="text-blue-600 hover:underline"
           >
             {info.getValue()}
-          </Link>
+        </Link>
         ),
       }),
       columnHelper.accessor("due_date", {
@@ -412,14 +412,9 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : header.columnDef
-                                    .header ? (
-                                  flexRender(
-                                    header.columnDef.header,
-                                    header.getContext(),
-                                  )
-                                ) : (
-                                  <span>—</span>
+                                {header.isPlaceholder ? null : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
                                 )}
                               </TableHead>
                             ))}
@@ -433,7 +428,7 @@ export default function RemindersPage() {
                               {row.getVisibleCells().map((cell) => (
                                 <TableCell key={cell.id}>
                                   {flexRender(
-                                    cell.columnDef.cell,
+                                    cell.column.columnDef.cell,
                                     cell.getContext(),
                                   )}
                                 </TableCell>
