@@ -57,6 +57,20 @@ export default function Header() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const { data: overdueRemindersCount = 0 } = useQuery({
+    queryKey: ["reminders-count-overdue"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from("reminders")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open")
+        .lt("due_date", new Date().toISOString());
+      return count || 0;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   return (
     <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
       <div className="flex items-center space-x-4">
@@ -82,8 +96,18 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center space-x-4">
+        {overdueRemindersCount > 0 && (
+          <Link href="/reminders?status=overdue">
+            <Button variant="ghost" className="relative">
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white">
+                {overdueRemindersCount}
+              </Badge>
+            </Button>
+          </Link>
+        )}
         {openRemindersCount > 0 && (
-          <Link href="/reminders">
+          <Link href="/reminders?status=open">
             <Button variant="ghost" className="relative">
               <Bell className="h-4 w-4" />
               <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
