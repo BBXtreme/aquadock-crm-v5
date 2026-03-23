@@ -277,7 +277,7 @@ export default function ContactsPage() {
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
-      const link = document.createElement("a">
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.json`);
