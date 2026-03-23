@@ -43,7 +43,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
     defaultValues: editEntry
       ? {
           title: editEntry.title || "",
-          content: editEntry.content || "",
+          content: editEntry.content ?? "",
           activity_type: editEntry.activity_type || "note",
           company_id: editEntry.company_id || "none",
           contact_id: editEntry.contact_id || "none",
@@ -65,6 +65,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
         ...editEntry,
         company_id: editEntry.company_id || "none",
         contact_id: editEntry.contact_id || "none",
+        content: editEntry.content ?? "",
       });
     }
   }, [editEntry, form]);
@@ -92,7 +93,11 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
             <FormItem>
               <FormLabel>Content (optional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Enter content" {...field} />
+                <Textarea
+                  placeholder="Enter content"
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
