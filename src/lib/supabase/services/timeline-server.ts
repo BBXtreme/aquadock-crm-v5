@@ -12,7 +12,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
     .select(`
       *,
       companies!left (id, firmenname),
-      contacts!left (id, (vorname || ' ' || nachname) AS name, email, telefon)
+      contacts!left (id, vorname || ' ' || nachname as name, email, telefon)
     `)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -34,7 +34,7 @@ export async function createTimelineEntry(
     .select(`
       *,
       companies!left (id, firmenname),
-      contacts!left (id, name, email, telefon)
+      contacts!left (id, vorname || ' ' || nachname as name, email, telefon)
     `)
     .single();
 
