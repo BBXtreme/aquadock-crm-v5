@@ -39,7 +39,7 @@ export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [rowSelection, setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editReminder, setEditReminder] = useState<any>(null);
+  const [editReminder, setEditReminder] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -416,16 +416,14 @@ export default function RemindersPage() {
           </DialogContent>
         </Dialog>
 
-        {editReminder && (
-          <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Reminder</DialogTitle>
-              </DialogHeader>
-              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Reminder</DialogTitle>
+            </DialogHeader>
+            <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
