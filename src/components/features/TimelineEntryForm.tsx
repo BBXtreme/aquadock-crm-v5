@@ -40,7 +40,7 @@ interface Props {
 export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "" },
+    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: null, user_name: "" },
   });
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
         activity_type: editEntry.activity_type,
         user_name: editEntry.user_name,
         company_id: editEntry.company_id || "",
-        contact_id: editEntry.contact_id || "none",
+        contact_id: editEntry.contact_id || null,
       });
     } else {
       form.reset();
@@ -155,7 +155,10 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           render={({ field }) => (
             <FormItem>
               <FormLabel>Contact (optional)</FormLabel>
-              <Select onValueChange={(val) => field.onChange(val === "none" ? null : val)} value={field.value ?? "none"}>
+              <Select
+                onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                value={field.value ?? "none"}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Kein Kontakt ausgewählt" />
@@ -165,7 +168,9 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
                   <SelectItem value="none">Kein Kontakt</SelectItem>
                   {contacts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.vorname} {c.nachname} {c.email ? `(${c.email})` : ""}
+                      {c.vorname} {c.nachname}
+                      {c.position ? ` (${c.position})` : ""}
+                      {c.email ? ` – ${c.email}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
