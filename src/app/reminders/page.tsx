@@ -71,6 +71,7 @@ import {
 } from "@/lib/supabase/services/reminders";
 import { cn } from "@/lib/utils";
 import { reminderColumns } from "@/components/tables/RemindersTable";
+import RemindersTable from "@/components/tables/RemindersTable";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -156,26 +157,6 @@ export default function RemindersPage() {
     (r) => r.status === "open" && r.priority === "hoch",
   ).length;
 
-  const columns = reminderColumns(handleEdit, handleView, handleDelete);
-
-  const table = useReactTable({
-    data: filteredReminders,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    initialState: { sorting: [{ id: "due_date", desc: false }], pagination: { pageSize: 20 } },
-    state: { rowSelection, columnVisibility, globalFilter },
-    onRowSelectionChange: setRowSelection,
-    onColumnVisibilityChange: setColumnVisibility,
-    onGlobalFilterChange: setGlobalFilter,
-    enableRowSelection: true,
-    getRowId: (row) => row.id,
-    globalFilterFn: "includesString",
-    filterFromLeafRows: true,
-  });
-
   if (isLoading) return (
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -203,7 +184,7 @@ export default function RemindersPage() {
       </Alert>
     );
 
-  if (table.getRowModel().rows.length === 0) return (
+  if (filteredReminders.length === 0) return (
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div className="flex items-center justify-between">
@@ -327,154 +308,17 @@ export default function RemindersPage() {
                 </AlertDescription>
                 <Button onClick={() => refetch()}>Retry</Button>
               </Alert>
-            ) : table.getRowModel().rows.length === 0 ? (
+            ) : filteredReminders.length === 0 ? (
               <Alert>No reminders found. Create one to get started.</Alert>
             ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <Input
-                      placeholder="Search reminders..."
-                      value={globalFilter ?? ""}
-                      onChange={(event) =>
-                        setGlobalFilter(String(event.target.value))
-                      }
-                      className="max-w-sm"
-                    />
-                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {table.getFilteredSelectedRowModel().rows.length} selected
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <select
-                      value={table.getState().pagination.pageSize}
-                      onChange={(e) => table.setPageSize(Number(e.target.value))}
-                      className="px-2 py-1 border rounded"
-                    >
-                      <option value={20}>20</option>
-                      <option value={30}>30</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                      <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                        Delete Selected
-                      </Button>
-                    )}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="icon">
-                          <Columns className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {table
-                          .getAllColumns()
-                          .filter((column) => column.getCanHide())
-                          .map((column) => {
-                            return (
-                              <DropdownMenuCheckboxItem
-                                key={column.id}
-                                className="capitalize"
-                                checked={column.getIsVisible()}
-                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                              >
-                                {column.id}
-                              </DropdownMenuCheckboxItem>
-                            );
-                          })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-                {table && (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                              <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : (
-                                  <div
-                                    className={cn(
-                                      "flex items-center space-x-2 select-none",
-                                      header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
-                                    )}
-                                    onClick={header.column.getToggleSortingHandler()}
-                                  >
-                                    {flexRender(header.column.columnDef.header, header.getContext())}
-                                    {header.column.getIsSorted() === "asc" && (
-                                      <ArrowUp className="h-4 w-4" />
-                                    )}
-                                    {header.column.getIsSorted() === "desc" && (
-                                      <ArrowDown className="h-4 w-4" />
-                                    )}
-                                    {header.column.getIsSorted() === false && header.column.getCanSort() && (
-                                      <ArrowUpDown className="h-4 w-4" />
-                                    )}
-                                  </div>
-                                )}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext(),
-                                  )}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell
-                              colSpan={columns.length}
-                              className="h-24 text-center"
-                            >
-                              No results.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-                <div className="flex items-center justify-end space-x-2 py-4">
-                  <div className="flex-1 text-muted-foreground text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
-                  </div>
-                  <div className="space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              </>
+              <RemindersTable
+                reminders={filteredReminders}
+                globalFilter={globalFilter}
+                onGlobalFilterChange={setGlobalFilter}
+                handleEdit={handleEdit}
+                handleView={handleView}
+                handleDelete={handleDelete}
+              />
             )}
           </CardContent>
         </Card>
