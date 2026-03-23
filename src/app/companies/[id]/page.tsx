@@ -738,8 +738,7 @@ export default function CompanyDetailPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Contact
               </Button>
-            </div>
-          </CardHeader>
+            </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (
               <p className="text-gray-500">No contacts linked to this company.</p>
@@ -989,6 +988,19 @@ export default function CompanyDetailPage() {
                 fetchData();
               }}
             />
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Timeline Dialog */}
+        <Dialog open={timelineDialogOpen} onOpenChange={(open) => {
+          setTimelineDialogOpen(open);
+          if (!open) setPreselectedCompanyId(null);
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
+            </DialogHeader>
+            {/* Form kommt im nächsten Schritt */}
           </DialogContent>
         </Dialog>
       </div>
