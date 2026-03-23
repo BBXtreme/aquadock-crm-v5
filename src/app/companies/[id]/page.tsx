@@ -880,7 +880,14 @@ export default function CompanyDetailPage() {
                 <tbody>
                   {timeline.map((entry) => (
                     <tr key={entry.id}>
-                      <td>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</td>
+                      <td>
+                        {entry.created_at 
+                          ? new Date(entry.created_at).toLocaleString('de-DE', {
+                              dateStyle: 'medium',
+                              timeStyle: 'short'
+                            }) 
+                          : "—"}
+                      </td>
                       <td>{entry.title} ({entry.activity_type})</td>
                       <td>{entry.companies?.firmenname || "—"}</td>
                       <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
