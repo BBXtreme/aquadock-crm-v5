@@ -14,7 +14,7 @@ import {
   Edit,
   Eye,
   Handshake,
-  PalmTree,
+  Palmtree,
   Sailboat,
   Ship,
   Sparkles,
@@ -75,7 +75,7 @@ export default function CompaniesPage() {
   const kategorieIcons = {
     restaurant: Utensils,
     hotel: Building2,
-    resort: PalmTree,
+    resort: Palmtree,
     camping: Tent,
     marina: Anchor,
     segelschule: Sailboat,
