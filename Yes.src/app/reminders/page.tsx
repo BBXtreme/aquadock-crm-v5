@@ -17,6 +17,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AlertTriangle, Bell, Calendar, Edit, Eye, Plus, RefreshCw, Star, Trash } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,15 +28,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import ReminderCreateForm from "@/components/features/ReminderCreateForm";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import { createClient } from "@/lib/supabase/browser";
 import { createReminder, deleteReminder, getReminders, updateReminder } from "@/lib/supabase/services/reminders";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+const reminderSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  company_id: z.string().min(1, "Company is required"),
+  due_date: z.string().min(1, "Due date is required"),
+  priority: z.enum(["hoch", "normal", "niedrig"]).optional(),
+  status: z.enum(["open", "closed"]).optional(),
+  assigned_to: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type ReminderFormValues = z.infer<typeof reminderSchema>;
+
+const priorityOptions = [
+  { value: "hoch", label: "Hoch" },
+  { value: "normal", label: "Normal" },
+  { value: "niedrig", label: "Niedrig" },
+];
+
+const statusOptions = [
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];
 
 const columnHelper = createColumnHelper<any>();
 
