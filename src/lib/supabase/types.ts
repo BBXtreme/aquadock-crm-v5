@@ -62,18 +62,17 @@ export interface Database {
       };
 
       timeline: {
-        Row: {
-          id: string;
-          company_id: string | null;
-          contact_id: string | null;
-          title: string;
-          description: string | null;
-          event_date: string;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
-        Update: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
+        Row: Database["public"]["Tables"]["timeline"]["Row"];
+        Insert: Database["public"]["Tables"]["timeline"]["Insert"];
+        Update: Database["public"]["Tables"]["timeline"]["Update"];
+      };
+
+      // Then keep or add your derived / joined types:
+      export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
+
+      export type TimelineEntryWithCompany = TimelineEntry & {
+        companies?: Pick<Company, "id" | "firmenname"> | null;
+        contacts?: Pick<Contact, "id" | "name"> | null;  // optional future join
       };
 
       email_log: {

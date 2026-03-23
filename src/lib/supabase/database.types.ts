@@ -185,6 +185,7 @@ export interface Database {
           user_name: string;
           created_at: string | null;
           user_id: string | null;
+          contact_id?: string | null;
         };
         Insert: {
           company_id?: string | null;
@@ -194,6 +195,7 @@ export interface Database {
           user_name: string;
           created_at?: string | null;
           user_id?: string | null;
+          contact_id?: string | null;
         };
         Update: {
           id?: string;
@@ -204,6 +206,7 @@ export interface Database {
           user_name?: string;
           created_at?: string | null;
           user_id?: string | null;
+          contact_id?: string | null;
         };
       };
       email_log: {
