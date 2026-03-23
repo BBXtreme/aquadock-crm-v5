@@ -1,13 +1,16 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { Building, Calendar, Clock, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
 import { toast } from "sonner";
 
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,14 +24,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
-import { Skeleton } from "@/components/ui/skeleton";
-import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const _router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
 
@@ -36,12 +37,16 @@ export default function TimelinePage() {
   // const { userId } = useAuth();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes('create=true')) {
+    if (typeof window !== "undefined" && window.location.search.includes("create=true")) {
       setDialogOpen(true);
     }
   }, []);
 
-  const { data: timeline = [], isLoading, error } = useQuery({
+  const {
+    data: timeline = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
       const response = await fetch("/api/timeline");
@@ -100,11 +105,11 @@ export default function TimelinePage() {
       const payload = {
         title: values.title.trim() || "Untitled entry",
         content: values.content?.trim() || null,
-        activity_type: values.activity_type || "note",           // fallback
+        activity_type: values.activity_type || "note", // fallback
         company_id: values.company_id || null,
         contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
         user_name: values.user_name?.trim() || "BangLee",
-        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",         // Marco – real user
+        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7", // Marco – real user
       };
 
       console.log("[createMutation] Sending cleaned payload:", payload);
@@ -126,7 +131,7 @@ export default function TimelinePage() {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
       const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
       queryClient.setQueryData(["timeline"], (old = []) => [
-        { ...newEntry, id: "temp-" + Date.now(), created_at: new Date().toISOString() },
+        { ...newEntry, id: `temp-${Date.now()}`, created_at: new Date().toISOString() },
         ...old,
       ]);
       return { previous };
@@ -179,10 +184,10 @@ export default function TimelinePage() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
       const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
-      queryClient.setQueryData(["timeline"], (old = []) => old.filter(e => e.id !== id));
+      queryClient.setQueryData(["timeline"], (old = []) => old.filter((e) => e.id !== id));
       return { previous };
     },
-    onError: (err, id, context) => {
+    onError: (_err, _id, context) => {
       queryClient.setQueryData(["timeline"], context?.previous);
       toast.error("Delete failed");
     },
@@ -278,7 +283,13 @@ export default function TimelinePage() {
             <p className="text-muted-foreground text-sm">Home → Timeline</p>
             <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditEntry(null); }}>
+          <Dialog
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) setEditEntry(null);
+            }}
+          >
             <DialogTrigger asChild>
               <Button onClick={() => setEditEntry(null)}>New Entry</Button>
             </DialogTrigger>
@@ -342,14 +353,17 @@ export default function TimelinePage() {
                         {entry.company_id && (
                           <div className="flex items-center gap-1">
                             <Building className="h-4 w-4" />
-                            Company: <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">{entry.companies?.firmenname || "Unknown"}</Link>
+                            Company:{" "}
+                            <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">
+                              {entry.companies?.firmenname || "Unknown"}
+                            </Link>
                           </div>
                         )}
                         {entry.contact_id && entry.contacts && (
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <User className="h-4 w-4" />
                             Kontakt: {entry.contacts.vorname} {entry.contacts.nachname}
-                            {entry.contacts.position ? ` (${entry.contacts.position})` : ''}
+                            {entry.contacts.position ? ` (${entry.contacts.position})` : ""}
                           </div>
                         )}
                       </div>
