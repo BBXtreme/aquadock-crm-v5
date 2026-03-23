@@ -67,6 +67,6 @@ export default function Sidebar({ isMobile }: SidebarProps) {
   }
 
   return (
-    <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-64"}`}>{sidebarContent}</aside>
+    <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}>{sidebarContent}</aside>
   );
 }
