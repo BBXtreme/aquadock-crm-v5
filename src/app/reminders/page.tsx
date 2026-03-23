@@ -213,6 +213,18 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
   });
 
+  if (isLoading) return <SkeletonList count={10} />;
+
+  if (isError) return (
+    <Alert variant="destructive">
+      <AlertTitle>Error loading reminders</AlertTitle>
+      <AlertDescription>{error?.message}</AlertDescription>
+      <Button onClick={() => refetch()}>Retry</Button>
+    </Alert>
+  );
+
+  if (table.getRowModel().rows.length === 0) return <Alert>No reminders found</Alert>;
+
   return (
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
