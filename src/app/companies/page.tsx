@@ -13,6 +13,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -203,6 +204,18 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(activeFilters).map(([group, values]) => 
+                    values.map(v => (
+                      <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
+                        {v} ×
+                      </Badge>
+                    ))
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => setActiveFilters({status:[], kategorie:[], betriebstyp:[], land:[]})}>
+                    Clear all
+                  </Button>
+                </div>
                 <Accordion type="single" collapsible>
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
