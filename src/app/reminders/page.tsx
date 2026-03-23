@@ -157,7 +157,7 @@ export default function RemindersPage() {
         cell: (info) => (
           <button
             className="text-blue-600 hover:underline"
-            onClick={() => handleView(info.row.original)}
+            onClick={() => handleEdit(info.row.original)}
           >
             {info.getValue()}
           </button>
