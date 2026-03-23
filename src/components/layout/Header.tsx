@@ -82,16 +82,16 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <Link href="/reminders">
-          <Button variant="ghost" className="relative">
-            <Bell className="h-4 w-4" />
-            {openRemindersCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
+        {openRemindersCount > 0 && (
+          <Link href="/reminders">
+            <Button variant="ghost" className="relative">
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
                 {openRemindersCount}
               </Badge>
-            )}
-          </Button>
-        </Link>
+            </Button>
+          </Link>
+        )}
         <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
           <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
