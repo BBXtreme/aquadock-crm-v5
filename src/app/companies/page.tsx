@@ -226,11 +226,12 @@ export default function CompaniesPage() {
                           {statusOptions.map(s => (
                             <Button
                               key={s}
-                              variant={activeFilters.status.includes(s) ? "default" : "outline"}
+                              variant={activeFilters.status.includes(s) ? "secondary" : "outline"}
                               size="sm"
+                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('status', s)}
                             >
-                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                              {s}
                             </Button>
                           ))}
                         </div>
@@ -241,11 +242,12 @@ export default function CompaniesPage() {
                           {kategorieOptions.map(k => (
                             <Button
                               key={k}
-                              variant={activeFilters.kategorie.includes(k) ? "default" : "outline"}
+                              variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
                               size="sm"
+                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('kategorie', k)}
                             >
-                              {k.charAt(0).toUpperCase() + k.slice(1)}
+                              {k}
                             </Button>
                           ))}
                         </div>
@@ -256,11 +258,12 @@ export default function CompaniesPage() {
                           {betriebstypOptions.map(b => (
                             <Button
                               key={b}
-                              variant={activeFilters.betriebstyp.includes(b) ? "default" : "outline"}
+                              variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "outline"}
                               size="sm"
+                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('betriebstyp', b)}
                             >
-                              {b.charAt(0).toUpperCase() + b.slice(1)}
+                              {b}
                             </Button>
                           ))}
                         </div>
@@ -271,8 +274,9 @@ export default function CompaniesPage() {
                           {landOptions.map(l => (
                             <Button
                               key={l}
-                              variant={activeFilters.land.includes(l) ? "default" : "outline"}
+                              variant={activeFilters.land.includes(l) ? "secondary" : "outline"}
                               size="sm"
+                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('land', l)}
                             >
                               {l}
