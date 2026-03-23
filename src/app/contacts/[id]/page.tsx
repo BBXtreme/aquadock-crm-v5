@@ -24,6 +24,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
 import { Building, Edit, Trash, User, ArrowLeft } from "lucide-react";
+import CompanyEditForm from "@/components/features/CompanyEditForm";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -59,6 +60,7 @@ export default function ContactDetailPage() {
   const [editDialog, setEditDialog] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
+  const [editCompanyDialog, setEditCompanyDialog] = useState(false);
 
   const _fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -346,9 +348,16 @@ export default function ContactDetailPage() {
         {/* Linked Company */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Linked Company
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building className="w-5 h-5" />
+                Linked Company
+              </div>
+              {contact.companies && (
+                <Button variant="ghost" size="sm" onClick={() => setEditCompanyDialog(true)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -378,6 +387,22 @@ export default function ContactDetailPage() {
               contact={contact}
               onSuccess={() => {
                 setEditDialog(false);
+                _fetchData();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Company Dialog */}
+        <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Company</DialogTitle>
+            </DialogHeader>
+            <CompanyEditForm
+              company={contact.companies}
+              onSuccess={() => {
+                setEditCompanyDialog(false);
                 _fetchData();
               }}
             />
