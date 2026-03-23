@@ -299,15 +299,6 @@ export default function RemindersPage() {
 
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
-            if (isLoading) return <SkeletonList count={10} />;
-            if (isError) return (
-              <Alert variant="destructive">
-                <AlertTitle>Error loading reminders</AlertTitle>
-                <AlertDescription>{error?.message}</AlertDescription>
-                <Button onClick={() => refetch()}>Retry</Button>
-              </Alert>
-            );
-            if (!reminders?.length) return <Alert>No reminders found</Alert>;
             <RemindersTable
               reminders={filteredReminders}
               globalFilter={globalFilter}
