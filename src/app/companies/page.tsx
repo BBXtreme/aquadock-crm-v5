@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Building,
   Calendar,
   DollarSign,
   Edit,
@@ -222,7 +223,7 @@ export default function CompaniesPage() {
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
-              <div className="space-y-4">
+              <div className="space-y-2">
                 <Skeleton className="h-8 w-56" />
                 <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
               </div>
