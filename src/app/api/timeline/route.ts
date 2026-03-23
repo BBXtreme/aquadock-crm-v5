@@ -7,7 +7,7 @@ import { getAllTimelineForUser, createTimelineEntry } from "@/lib/supabase/servi
 // Returns timeline entries for current authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const timeline = await getAllTimelineForUser("dummy");
+    const timeline = await getAllTimelineForUser("dev-mock-user-11111111-2222-3333-4444-555555555555");
     return NextResponse.json(timeline);
   } catch (error) {
     console.error("Error fetching timeline:", error);
@@ -20,19 +20,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, content, activity_type, company_id, user_name } = body;
-
-    if (!title || !activity_type) {
-      return NextResponse.json({ error: "Title and activity_type are required" }, { status: 400 });
-    }
-
-    const timelineEntry = await createTimelineEntry({
-      title,
-      content,
-      activity_type,
-      company_id,
-      user_name,
-    });
+    const payload = {
+      ...body,
+      user_id: "dev-mock-user-11111111-2222-3333-4444-555555555555",
+      user_name: body.user_name || "Dev User"
+    };
+    const timelineEntry = await createTimelineEntry(payload);
 
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error) {
