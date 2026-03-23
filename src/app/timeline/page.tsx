@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Building, Clock, Edit, Trash, User } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -263,7 +264,7 @@ export default function TimelinePage() {
                         {entry.company_id && (
                           <div className="flex items-center gap-1">
                             <Building className="h-4 w-4" />
-                            Company: {entry.companies?.firmenname || "Unknown"}
+                            Company: <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">{entry.companies?.firmenname || "Unknown"}</Link>
                           </div>
                         )}
                       </div>
