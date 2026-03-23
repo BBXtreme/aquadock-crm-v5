@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
 import { toast } from "sonner";
@@ -150,12 +150,6 @@ export default function CompanyDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [company, setCompany] = useState<Company | null>(null);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [edit, setEdit] = useState(false);
   const [addContactDialog, setAddContactDialog] = useState(false);
   const [addReminderDialog, setAddReminderDialog] = useState(false);
@@ -167,6 +161,43 @@ export default function CompanyDetailPage() {
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
+
+  const { data: company, isLoading, error } = useQuery({
+    queryKey: ["company", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("contacts").select("*").eq("company_id", id);
+      return data || [];
+    },
+  });
+
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["reminders", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("reminders").select("*").eq("company_id", id);
+      return data || [];
+    },
+  });
+
+  const { data: timeline = [] } = useQuery({
+    queryKey: ["timeline", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("timeline").select("*").eq("company_id", id);
+      return data || [];
+    },
+  });
 
   const createTimelineMutation = useMutation({
     mutationFn: async (values: any) => {
@@ -184,106 +215,12 @@ export default function CompanyDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["company", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      toast.success("Timeline-Eintrag erstellt");
       setTimelineDialogOpen(false);
     },
   });
-
-  const fetchData = useCallback(async () => {
-    if (!id || id === "undefined") {
-      setError("Invalid company ID");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const supabase = createClient();
-
-      // Fetch company
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (companyError) {
-        setError(companyError.message);
-        return;
-      }
-
-      setCompany(companyData);
-
-      // Fetch contacts
-      const { data: contactsData } = await supabase.from("contacts").select("*").eq("company_id", id);
-      setContacts(contactsData || []);
-
-      // Fetch reminders
-      const { data: remindersData } = await supabase.from("reminders").select("*").eq("company_id", id);
-      setReminders(remindersData || []);
-
-      // Fetch timeline
-      const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
-      setTimeline(timelineData || []);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 15000);
-
-    const loadData = async () => {
-      try {
-        if (!id || id === "undefined") {
-          setError("Invalid company ID");
-          setLoading(false);
-          return;
-        }
-
-        const supabase = createClient();
-
-        // Fetch company
-        const { data: companyData, error: companyError } = await supabase
-          .from("companies")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (companyError) {
-          setError(companyError.message);
-          return;
-        }
-
-        setCompany(companyData);
-
-        // Fetch contacts
-        const { data: contactsData } = await supabase.from("contacts").select("*").eq("company_id", id);
-        setContacts(contactsData || []);
-
-        // Fetch reminders
-        const { data: remindersData } = await supabase.from("reminders").select("*").eq("company_id", id);
-      setReminders(remindersData || []);
-
-      // Fetch timeline
-      const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
-      setTimeline(timelineData || []);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load data");
-    } finally {
-      setLoading(false);
-      clearTimeout(timeout);
-    }
-  };
-
-    loadData();
-
-    return () => clearTimeout(timeout);
-  }, [id]);
 
   const handleDeleteCompany = async () => {
     if (confirm("Are you sure you want to delete this company?")) {
@@ -302,7 +239,7 @@ export default function CompanyDetailPage() {
       try {
         const supabase = createClient();
         await deleteContact(contactId, supabase);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["contacts", id] });
       } catch (_error) {
         toast.error("Failed to delete contact");
       }
@@ -314,7 +251,7 @@ export default function CompanyDetailPage() {
       try {
         const supabase = createClient();
         await deleteReminder(reminderId, supabase);
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ["reminders", id] });
       } catch (_error) {
         toast.error("Failed to delete reminder");
       }
@@ -340,7 +277,7 @@ export default function CompanyDetailPage() {
     return map[t.toLowerCase()] || t;
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="container mx-auto p-6">
@@ -360,7 +297,7 @@ export default function CompanyDetailPage() {
         <div className="container mx-auto p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">{error}</p>
+            <p className="text-gray-600">{error.message}</p>
             <Button
               variant="outline"
               onClick={() => {
@@ -414,7 +351,7 @@ export default function CompanyDetailPage() {
             company={company}
             onSuccess={() => {
               setEdit(false);
-              fetchData();
+              queryClient.invalidateQueries({ queryKey: ["company", id] });
             }}
           />
         </div>
@@ -928,7 +865,7 @@ export default function CompanyDetailPage() {
               company={company}
               onSuccess={() => {
                 setEditFirmendaten(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["company", id] });
               }}
             />
           </DialogContent>
@@ -944,7 +881,7 @@ export default function CompanyDetailPage() {
               company={company}
               onSuccess={() => {
                 setEditAdresse(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["company", id] });
               }}
             />
           </DialogContent>
@@ -960,7 +897,7 @@ export default function CompanyDetailPage() {
               company={company}
               onSuccess={() => {
                 setEditAquaDock(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["company", id] });
               }}
             />
           </DialogContent>
@@ -976,7 +913,7 @@ export default function CompanyDetailPage() {
               company={company}
               onSuccess={() => {
                 setEditCRM(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["company", id] });
               }}
             />
           </DialogContent>
@@ -992,7 +929,7 @@ export default function CompanyDetailPage() {
               companyId={company.id}
               onSuccess={() => {
                 setAddContactDialog(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["contacts", id] });
               }}
             />
           </DialogContent>
@@ -1008,7 +945,7 @@ export default function CompanyDetailPage() {
               companyId={company.id}
               onSuccess={() => {
                 setAddReminderDialog(false);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ["reminders", id] });
               }}
             />
           </DialogContent>
