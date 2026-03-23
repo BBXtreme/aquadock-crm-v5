@@ -713,8 +713,8 @@ export default function CompanyDetailPage() {
                 <User className="w-5 h-5" />
                 Linked Contacts ({contacts.length})
               </CardTitle>
-              <Button onClick={() => setAddContactDialog(true)} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={() => setContactDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Contact
               </Button>
             </div>
@@ -723,47 +723,53 @@ export default function CompanyDetailPage() {
             {contacts.length === 0 ? (
               <p className="text-gray-500">No contacts linked to this company.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Primary</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Primary</th>
+                    <th className="text-right w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {contacts.map((contact) => (
-                    <TableRow key={contact.id}>
-                      <TableCell>
+                    <tr key={contact.id}>
+                      <td>
                         <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
                           {contact.vorname} {contact.nachname}
                         </Link>
-                      </TableCell>
-                      <TableCell>{contact.position || "—"}</TableCell>
-                      <TableCell>{contact.email || "—"}</TableCell>
-                      <TableCell>{contact.telefon || "—"}</TableCell>
-                      <TableCell>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => router.push(`/contacts?edit=${contact.id}`)}
-                            size="sm"
-                            variant="outline"
+                      </td>
+                      <td>{contact.position || "—"}</td>
+                      <td>{contact.email || "—"}</td>
+                      <td>{contact.telefon || "—"}</td>
+                      <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
+                      <td className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEditContact(contact)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
-                          <Button onClick={() => handleDeleteContact(contact.id)} size="sm" variant="destructive">
-                            <Trash className="w-4 h-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteContact(contact.id)}
+                          >
+                            <Trash className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             )}
           </CardContent>
         </Card>
