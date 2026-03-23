@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { Bell, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -99,6 +99,11 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center space-x-4">
+        <Link href="/timeline?create=true">
+          <Button variant="ghost" size="icon" aria-label="Create new timeline entry">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </Link>
         {overdueRemindersCount > 0 && (
           <Link href="/reminders?status=overdue">
             <Button variant="ghost" className="relative">

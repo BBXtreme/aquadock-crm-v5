@@ -35,6 +35,12 @@ export default function TimelinePage() {
   // TODO: use useSession or Server Component auth
   // const { userId } = useAuth();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('create=true')) {
+      setDialogOpen(true);
+    }
+  }, []);
+
   const { data: timeline = [], isLoading, error } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
