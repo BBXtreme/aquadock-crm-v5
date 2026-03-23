@@ -754,7 +754,10 @@ export default function CompanyDetailPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => router.push(`/contacts?edit=${contact.id}`)}
+                            onClick={() => {
+                              setEditContact(contact);
+                              setContactDialogOpen(true);
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -833,7 +836,10 @@ export default function CompanyDetailPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => router.push(`/reminders?edit=${reminder.id}`)}
+                            onClick={() => {
+                              setEditReminder(reminder);
+                              setReminderDialogOpen(true);
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
