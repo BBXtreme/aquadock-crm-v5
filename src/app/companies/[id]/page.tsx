@@ -163,6 +163,8 @@ export default function CompanyDetailPage() {
   const [editAdresse, setEditAdresse] = useState(false);
   const [editAquaDock, setEditAquaDock] = useState(false);
   const [editCRM, setEditCRM] = useState(false);
+  const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
+  const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -424,6 +426,17 @@ export default function CompanyDetailPage() {
             {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
           </div>
           <div className="flex gap-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setPreselectedCompanyId(company.id);
+                setTimelineDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Timeline
+            </Button>
             <Button onClick={() => setEdit(true)} variant="outline" size="sm">
               <Edit className="w-4 h-4" />
             </Button>
