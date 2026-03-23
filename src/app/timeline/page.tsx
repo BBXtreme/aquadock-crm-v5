@@ -64,11 +64,20 @@ export default function TimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // TODO: fetch real contacts when needed
-  const contacts = [
-    { id: "1", name: "John Doe", email: "john@example.com" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com" },
-  ];
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, name, email, telefon")
+        .order("name")
+        .limit(100);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   /*
     TEMPORARY BYPASS FOR DEVELOPMENT
@@ -83,10 +92,15 @@ export default function TimelinePage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
+      const payload = {
+        ...values,
+        user_id: "dev-mock-user-...",
+        user_name: "Dev User",
+      };
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
@@ -262,10 +276,9 @@ export default function TimelinePage() {
                     createMutation.mutate(values);
                   }
                 }}
-                isSubmitting={createMutation.isPending || updateMutation.isPending}
+                isSubmitting={createMutation.isPending}
                 companies={companies}
                 contacts={contacts}
-                editEntry={editEntry}
               />
             </DialogContent>
           </Dialog>
