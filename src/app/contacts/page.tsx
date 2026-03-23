@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -135,7 +135,6 @@ export default function ContactsPage() {
           aria-label="Select row"
         />
       ),
-      enableHiding: false,
     }),
     columnHelper.accessor("vorname", {
       id: "vorname",
@@ -230,7 +229,6 @@ export default function ContactsPage() {
           </Button>
         </div>
       ),
-      enableHiding: false,
     }),
   ];
 
@@ -279,7 +277,7 @@ export default function ContactsPage() {
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
-      const link = document.createElement("a");
+      const link = document.createElement("a">
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.json`);
@@ -506,8 +504,6 @@ export default function ContactsPage() {
 }
 
 function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
-  const queryClient = useQueryClient();
-
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -525,18 +521,17 @@ function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data) => createContact(data, createClient()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+  const onSubmit = form.handleSubmit(async (data) => {
+    try {
+      const supabase = createClient();
+      await createContact(data, supabase);
       toast.success("Contact created");
       form.reset();
       onSuccess?.();
-    },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
+    } catch (error) {
+      toast.error("Failed to create contact", { description: error.message });
+    }
   });
-
-  const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
   return (
     <Form {...form}>
@@ -669,9 +664,26 @@ function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating..." : "Create Contact"}
-        </Button>
+        <FormField
+          control={form.control}
+          name="is_primary"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Primary Contact
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Create Contact</Button>
       </form>
     </Form>
   );
