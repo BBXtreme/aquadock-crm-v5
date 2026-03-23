@@ -291,8 +291,8 @@ export default function RemindersPage() {
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-muted-foreground text-sm">Home → Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
+            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
