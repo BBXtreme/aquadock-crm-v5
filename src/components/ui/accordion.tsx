@@ -39,7 +39,7 @@ function AccordionTrigger({ className, children, open, setOpen, ...props }: any)
   );
 }
 
-function AccordionContent({ className, children, open, ...props }: any) {
+function AccordionContent({ className, children, open, setOpen, ...props }: any) {
   return (
     <div
       className={cn(
