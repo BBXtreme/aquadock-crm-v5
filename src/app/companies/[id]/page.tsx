@@ -338,13 +338,17 @@ export default function CompanyDetailPage() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
             <p className="text-gray-600">{error}</p>
-            <Button variant="outline" onClick={() => {
-              if (document.referrer.includes("/contacts")) {
-                router.back();  // returns to contacts or contact detail
-              } else {
-                router.push("/companies");  // fallback
-              }
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const referrer = document.referrer || "";
+                if (referrer.includes("/contacts")) {
+                  router.back(); // returns to contacts or contact detail
+                } else {
+                  router.push("/companies"); // fallback
+                }
+              }}
+            >
               <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
             </Button>
           </div>
@@ -359,7 +363,20 @@ export default function CompanyDetailPage() {
         <div className="container mx-auto p-6">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
-            <Button onClick={() => router.push("/companies")}>Back to Companies</Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const referrer = document.referrer || "";
+                if (referrer.includes("/contacts")) {
+                  router.back(); // return to contacts or contact detail
+                } else {
+                  router.push("/companies"); // fallback
+                }
+              }}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Button>
           </div>
         </div>
       </AppLayout>
