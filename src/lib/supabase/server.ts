@@ -24,7 +24,8 @@ export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
   // Use service role key in development to bypass RLS for testing
-  const key = process.env.NODE_ENV === "development" && supabaseServiceRoleKey ? supabaseServiceRoleKey : supabaseAnonKey;
+  const key =
+    process.env.NODE_ENV === "development" && supabaseServiceRoleKey ? supabaseServiceRoleKey : supabaseAnonKey;
 
   return createServerClient(supabaseUrl!, key!, {
     cookies: {
@@ -48,7 +49,7 @@ export async function createServerSupabaseClient() {
 
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.error(`Supabase error in ${context}:`, error);
-  if (error && typeof error === 'object' && 'message' in error) {
+  if (error && typeof error === "object" && "message" in error) {
     return new Error(`Database error: ${(error as any).message}`);
   }
   return new Error("An unknown database error occurred");

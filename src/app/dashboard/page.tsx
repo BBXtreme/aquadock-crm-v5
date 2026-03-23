@@ -1,37 +1,19 @@
 "use client";
 
-import type React from "react";
 import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Anchor,
-  Building,
-  CalendarPlus,
-  CheckCircle,
-  DollarSign,
-  FileText,
-  Handshake,
-  MapPin,
-  Percent,
-  Trophy,
-  Users,
-  UtensilsCrossed,
-  Waves,
-} from "lucide-react";
+import { Building, DollarSign, Trophy, Users } from "lucide-react";
 import { Cell, Funnel, FunnelChart, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import AppLayout from "@/components/layout/AppLayout";
-import StatCard from "@/components/ui/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StatCard from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 
 export default function DashboardPage() {
-  const {
-    data: companies = [],
-    isLoading,
-  } = useQuery({
+  const { data: companies = [], isLoading } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
@@ -61,7 +43,7 @@ export default function DashboardPage() {
       { name: "Negotiation", value: 120, fill: "#f97316" },
       { name: "Won", value: 45, fill: "#10b981" },
     ],
-    []
+    [],
   );
 
   // Mock pie data
@@ -73,7 +55,7 @@ export default function DashboardPage() {
       { name: "Restaurants", value: 3, fill: "#ef4444" },
       { name: "Sonstige", value: 5, fill: "#a78bfa" },
     ],
-    []
+    [],
   );
 
   return (
@@ -127,13 +109,7 @@ export default function DashboardPage() {
                 <div className="relative h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <FunnelChart>
-                      <Funnel
-                        dataKey="value"
-                        data={funnelData}
-                        isAnimationActive
-                        labelLine={false}
-                        stroke="none"
-                      >
+                      <Funnel dataKey="value" data={funnelData} isAnimationActive labelLine={false} stroke="none">
                         {funnelData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
@@ -178,7 +154,8 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  The sales funnel shows the progression of leads through various stages. The funnel visualization helps identify bottlenecks and optimize conversion rates.
+                  The sales funnel shows the progression of leads through various stages. The funnel visualization helps
+                  identify bottlenecks and optimize conversion rates.
                 </p>
               </CardContent>
             </Card>
@@ -218,7 +195,8 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  The pie chart illustrates the distribution of companies by customer type. This helps in understanding market segments and tailoring strategies accordingly.
+                  The pie chart illustrates the distribution of companies by customer type. This helps in understanding
+                  market segments and tailoring strategies accordingly.
                 </p>
               </CardContent>
             </Card>
