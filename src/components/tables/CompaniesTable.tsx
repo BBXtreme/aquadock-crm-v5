@@ -15,7 +15,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
 
@@ -65,6 +65,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           aria-label="Select row"
         />
       ),
+      enableSorting: false,
     }),
     columnHelper.accessor("firmenname", {
       id: "firmenname",
@@ -181,6 +182,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
           </Button>
         </div>
       ),
+      enableSorting: false,
     }),
   ];
 
@@ -193,7 +195,7 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row) => row.id,
-    initialState: { pagination: { pageSize: 20 } },
+    initialState: { sorting: [{ id: "firmenname", desc: false }], pagination: { pageSize: 20 } },
     state: {
       globalFilter,
       columnVisibility,
@@ -329,7 +331,26 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={cn(
+                          "flex items-center space-x-2 select-none",
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                        )}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === "asc" && (
+                          <ArrowUp className="h-4 w-4" />
+                        )}
+                        {header.column.getIsSorted() === "desc" && (
+                          <ArrowDown className="h-4 w-4" />
+                        )}
+                        {header.column.getIsSorted() === false && header.column.getCanSort() && (
+                          <ArrowUpDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
