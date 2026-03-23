@@ -205,12 +205,14 @@ export default function TimelineEntryForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="none">Kein Unternehmen</SelectItem>
-                  {localCompanies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.firmenname}
-                      {company.kundentyp ? ` (${company.kundentyp})` : ""}
-                    </SelectItem>
-                  ))}
+                  {localCompanies
+                    .filter((company, index, self) => self.findIndex(c => c.id === company.id) === index)
+                    .map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.firmenname}
+                        {company.kundentyp ? ` (${company.kundentyp})` : ""}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               <FormMessage />
