@@ -55,6 +55,7 @@ export default function ReminderEditForm({ reminder, onSuccess }: { reminder: an
       company_id: reminder?.company_id || "",
       due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
       priority: reminder?.priority || "normal",
+      status: reminder?.status || "open",
       assigned_to: reminder?.assigned_to || "",
       notes: reminder?.notes || "",
     },
