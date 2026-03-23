@@ -20,6 +20,7 @@ import {
   UtensilsCrossed,
   Waves,
 } from "lucide-react";
+import { Funnel, FunnelChart, LabelList, ResponsiveContainer } from "recharts";
 
 import AppLayout from "@/components/layout/AppLayout";
 import StatCard from "@/components/ui/StatCard";
@@ -51,6 +52,14 @@ export default function DashboardPage() {
 
     return { total, leads, won, value };
   }, [companies]);
+
+  const funnelData = [
+    { name: "Leads", value: 680, fill: "#0ea5e9" },
+    { name: "Qualified", value: 480, fill: "#22c55e" },
+    { name: "Proposal", value: 210, fill: "#eab308" },
+    { name: "Negotiation", value: 120, fill: "#f97316" },
+    { name: "Won", value: 45, fill: "#10b981" },
+  ];
 
   return (
     <AppLayout>
@@ -142,78 +151,13 @@ export default function DashboardPage() {
               <CardTitle>Sales Pipeline</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6 py-4">
-                <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Leads</p>
-                      <p className="text-2xl font-bold">68</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">100%</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/40 p-3 ml-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <CheckCircle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Qualified</p>
-                      <p className="text-2xl font-bold">48</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">71%</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/30 p-2 ml-8">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Proposal</p>
-                      <p className="text-2xl font-bold">21</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">31%</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/20 p-1 ml-12">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Handshake className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Negotiation</p>
-                      <p className="text-2xl font-bold">12</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">18%</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between rounded-lg bg-muted/10 p-0.5 ml-16">
-                  <div className="flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <TrophyIcon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Won</p>
-                      <p className="text-2xl font-bold">4.5</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">7%</p>
-                  </div>
-                </div>
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <FunnelChart data={funnelData}>
+                  <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                    <LabelList position="center" fill="#fff" stroke="none" />
+                  </Funnel>
+                </FunnelChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
