@@ -246,8 +246,8 @@ export default function CompaniesPage() {
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
-                      <div>
-                        <h4>Status</h4>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Status</h4>
                         <div className="flex flex-wrap gap-2">
                           {statusOptions.map(s => (
                             <Button
@@ -262,8 +262,8 @@ export default function CompaniesPage() {
                           ))}
                         </div>
                       </div>
-                      <div>
-                        <h4>Kategorie</h4>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Kategorie</h4>
                         <div className="flex flex-wrap gap-2">
                           {kategorieOptions.map(k => {
                             const Icon = kategorieIcons[k];
@@ -282,8 +282,8 @@ export default function CompaniesPage() {
                           })}
                         </div>
                       </div>
-                      <div>
-                        <h4>Betriebstyp</h4>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Betriebstyp</h4>
                         <div className="flex flex-wrap gap-2">
                           {betriebstypOptions.map(b => (
                             <Button
@@ -299,7 +299,7 @@ export default function CompaniesPage() {
                         </div>
                       </div>
                       <div>
-                        <h4>Land</h4>
+                        <h4 className="font-normal">Land</h4>
                         <div className="flex flex-wrap gap-2">
                           {landOptions.map(l => (
                             <Button
