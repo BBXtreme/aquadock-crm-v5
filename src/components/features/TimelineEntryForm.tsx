@@ -54,13 +54,15 @@ export default function TimelineEntryForm({
   preselectedCompanyId,
   defaultValues,
 }: Props) {
+  console.log("[TimelineEntryForm] Preselected company_id:", preselectedCompanyId);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
       title: "",
       content: "",
       activity_type: "note",
-      company_id: "none",
+      company_id: preselectedCompanyId || "none",
       contact_id: "none",
       user_name: "",
     },
@@ -71,6 +73,12 @@ export default function TimelineEntryForm({
       form.reset(defaultValues);
     }
   }, [defaultValues, form]);
+
+  useEffect(() => {
+    if (preselectedCompanyId) {
+      form.setValue("company_id", preselectedCompanyId);
+    }
+  }, [preselectedCompanyId, form]);
 
   return (
     <Form {...form}>
