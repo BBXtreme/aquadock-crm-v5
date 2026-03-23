@@ -230,14 +230,16 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-2 mt-1 mb-4">
-                  {Object.entries(activeFilters).map(([group, values]) => 
-                    values.map(v => (
-                      <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
-                        {v} ×
-                      </Badge>
-                    ))
-                  )}
+                <div className="flex items-center justify-between mt-2 mb-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(activeFilters).map(([group, values]) => 
+                      values.map(v => (
+                        <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
+                          {v} ×
+                        </Badge>
+                      ))
+                    )}
+                  </div>
                   <Button variant="ghost" size="sm" onClick={() => setActiveFilters({status:[], kategorie:[], betriebstyp:[], land:[]})}>
                     Clear all
                   </Button>
