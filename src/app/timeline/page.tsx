@@ -22,7 +22,7 @@ import {
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
-import { getCompanies } from "@/lib/supabase/services/companies";
+import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
@@ -48,7 +48,17 @@ export default function TimelinePage() {
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
-    queryFn: () => getCompanies("dummy"),
+    queryFn: async () => {
+      const supabase = createClient(); // browser client
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname")
+        .order("firmenname")
+        .limit(50);
+
+      if (error) throw error;
+      return data ?? [];
+    },
     staleTime: 5 * 60 * 1000,
   });
 
