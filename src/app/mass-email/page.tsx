@@ -80,7 +80,7 @@ export default function MassEmailPage() {
       );
 
       // Log to timeline
-      await fetch("/api/timeline", {
+      const response = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,6 +91,9 @@ export default function MassEmailPage() {
           user_name: "Mass Email System",
         }),
       });
+      if (!response.ok) {
+        console.error("Failed to log to timeline:", await response.text());
+      }
 
       toast.success("Test email sent successfully!");
     } catch (error) {
@@ -141,7 +144,7 @@ export default function MassEmailPage() {
         );
 
         // Log to timeline
-        await fetch("/api/timeline", {
+        const response = await fetch("/api/timeline", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -152,6 +155,9 @@ export default function MassEmailPage() {
             user_name: "Mass Email System",
           }),
         });
+        if (!response.ok) {
+          console.error("Failed to log to timeline:", await response.text());
+        }
       }
 
       toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);

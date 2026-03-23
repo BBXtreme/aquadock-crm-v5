@@ -31,7 +31,10 @@ export default function TimelinePage() {
     queryKey: ["timeline"],
     queryFn: async () => {
       const response = await fetch("/api/timeline");
-      if (!response.ok) throw new Error("Failed to fetch timeline");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
       return response.json() as Promise<TimelineEntry[]>;
     },
     staleTime: 5 * 60 * 1000,
@@ -40,7 +43,10 @@ export default function TimelinePage() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const response = await fetch(`/api/timeline/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
       return response.json();
     },
     onSuccess: () => {

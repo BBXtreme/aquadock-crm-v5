@@ -44,7 +44,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
     .from("timeline")
     .select(`
       *,
-      companies!inner (id, firmenname, status, kundentyp)
+      companies(firmenname, status, kundentyp)
     `)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -66,7 +66,7 @@ export async function createTimelineEntry(
     .insert(values)
     .select(`
       *,
-      companies!inner (id, firmenname)
+      companies(firmenname)
     `)
     .single();
 
