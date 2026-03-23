@@ -125,15 +125,19 @@ export default function TimelinePage() {
       ]);
       return { previous };
     },
-    onError: (err, newEntry, context) => {
-      queryClient.setQueryData(["timeline"], context?.previous);
-      toast.error("Erstellen fehlgeschlagen", { description: err.message || "Unbekannter Fehler" });
+    onError: (err) => {
+      console.error("[createMutation] Full error:", err);
+      toast.error("Erstellen fehlgeschlagen", {
+        description: err.message || "Unbekannter Fehler – bitte Logs prüfen",
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
     },
-    onSuccess: () => {
-      toast.success("Entry created");
+    onSuccess: (newEntry) => {
+      toast.success("Eintrag erstellt", {
+        description: newEntry.title,
+      });
       setDialogOpen(false);
     },
   });
