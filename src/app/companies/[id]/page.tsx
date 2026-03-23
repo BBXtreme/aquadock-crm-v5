@@ -266,19 +266,19 @@ export default function CompanyDetailPage() {
 
         // Fetch reminders
         const { data: remindersData } = await supabase.from("reminders").select("*").eq("company_id", id);
-        setReminders(remindersData || []);
+      setReminders(remindersData || []);
 
-        // Fetch timeline
-        const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
-        setTimeline(timelineData || []);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load data");
-      } finally {
-        setLoading(false);
-        clearTimeout(timeout);
-      }
-    };
+      // Fetch timeline
+      const { data: timelineData } = await supabase.from("timeline").select("*").eq("company_id", id);
+      setTimeline(timelineData || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load data");
+    } finally {
+      setLoading(false);
+      clearTimeout(timeout);
+    }
+  };
 
     loadData();
 
