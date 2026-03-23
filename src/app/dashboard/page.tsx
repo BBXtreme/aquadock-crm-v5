@@ -237,7 +237,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Sales Pipeline</CardTitle>
+                <CardTitle>Sales Funnel</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -251,11 +251,11 @@ export default function DashboardPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Pipeline Insights</CardTitle>
+                <CardTitle>Funnel Insights</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  The sales pipeline shows the progression of leads through various stages. The funnel visualization helps identify bottlenecks and optimize conversion rates.
+                  The sales funnel shows the progression of leads through various stages. The funnel visualization helps identify bottlenecks and optimize conversion rates.
                 </p>
               </CardContent>
             </Card>
