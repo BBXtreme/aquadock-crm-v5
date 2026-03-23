@@ -300,7 +300,7 @@ export default function RemindersPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: { rowSelection, columnVisibility },
+    state: { rowSelection, columnVisibility, sorting: [{ id: "due_date", desc: false }] },
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
     enableRowSelection: true,
