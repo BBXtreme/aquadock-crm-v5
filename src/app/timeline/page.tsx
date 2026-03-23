@@ -92,16 +92,28 @@ export default function TimelinePage() {
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
       const payload = {
-        ...values,
-        user_id: "dev-mock-user-...",
-        user_name: "Dev User",
+        title: values.title,
+        content: values.content || null,
+        activity_type: values.activity_type,
+        company_id: values.company_id || null,           // ← jetzt NULL erlaubt
+        contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
+        user_name: values.user_name || "BangLee",
+        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // Marco – echt & existent
       };
+
+      console.log("[createMutation] Final payload:", payload);
+
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(await res.text());
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("[createMutation] Server error:", res.status, errData);
+        throw new Error(errData.error || errData.details || `HTTP ${res.status}`);
+      }
       return res.json();
     },
     onMutate: async (newEntry) => {
@@ -115,7 +127,7 @@ export default function TimelinePage() {
     },
     onError: (err, newEntry, context) => {
       queryClient.setQueryData(["timeline"], context?.previous);
-      toast.error("Failed to create entry");
+      toast.error("Erstellen fehlgeschlagen", { description: err.message || "Unbekannter Fehler" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
