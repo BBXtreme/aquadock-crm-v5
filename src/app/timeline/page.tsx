@@ -322,7 +322,7 @@ export default function TimelinePage() {
                             Company: <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">{entry.companies?.firmenname || "Unknown"}</Link>
                           </div>
                         )}
-                        {entry.contact_id && entry.contacts?.name && (
+                        {entry.contacts?.name && (
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <User className="h-4 w-4" />
                             Contact: {entry.contacts.name}
