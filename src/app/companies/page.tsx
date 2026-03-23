@@ -35,15 +35,23 @@ export default function CompaniesPage() {
 
   const statusOptions = ["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"];
 
-  const toggleFilter = (category: string, value: string) => {
-    setActiveFilters(prev => {
-      const current = prev[category];
-      if (current.includes(value)) {
-        return { ...prev, [category]: current.filter(v => v !== value) };
-      } else {
-        return { ...prev, [category]: [...current, value] };
-      }
-    });
+  const kategorieOptions = [
+    "restaurant", "hotel", "resort", "camping", "marina", "segelschule", "segelverein", "bootsverleih", "neukunde", "bestandskunde", "interessent", "partner", "sonstige"
+  ];
+
+  const betriebstypOptions = ["kette", "einzeln"];
+
+  const landOptions = [
+    "Deutschland", "Österreich", "Schweiz", "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien", "Dänemark", "Schweden", "Norwegen", "Polen", "Ungarn", "Griechenland", "Portugal", "Großbritannien"
+  ];
+
+  const toggleFilter = (group: string, value: string) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [group]: prev[group].includes(value)
+        ? prev[group].filter(v => v !== value)
+        : [...prev[group], value]
+    }));
   };
 
   const {
@@ -88,6 +96,16 @@ export default function CompaniesPage() {
 
     return { total, leads, won, value };
   }, [companies]);
+
+  const filteredCompanies = useMemo(() => {
+    return companies.filter(c => {
+      if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status)) return false;
+      if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp)) return false;
+      if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp)) return false;
+      if (activeFilters.land.length > 0 && !activeFilters.land.includes(c.land)) return false;
+      return true;
+    });
+  }, [companies, activeFilters]);
 
   if (queryError) {
     return (
@@ -204,11 +222,56 @@ export default function CompaniesPage() {
                           ))}
                         </div>
                       </div>
+                      <div>
+                        <h4>Kategorie</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {kategorieOptions.map(k => (
+                            <Button
+                              key={k}
+                              variant={activeFilters.kategorie.includes(k) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleFilter('kategorie', k)}
+                            >
+                              {k.charAt(0).toUpperCase() + k.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Betriebstyp</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {betriebstypOptions.map(b => (
+                            <Button
+                              key={b}
+                              variant={activeFilters.betriebstyp.includes(b) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleFilter('betriebstyp', b)}
+                            >
+                              {b.charAt(0).toUpperCase() + b.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Land</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {landOptions.map(l => (
+                            <Button
+                              key={l}
+                              variant={activeFilters.land.includes(l) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleFilter('land', l)}
+                            >
+                              {l}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
                 <CompaniesTable
-                  companies={companies}
+                  companies={filteredCompanies}
                   onEdit={setEditCompany}
                   onDelete={(company) => {
                     if (confirm("Delete company?")) deleteMutation.mutate(company.id);
