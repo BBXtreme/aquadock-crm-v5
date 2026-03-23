@@ -122,7 +122,7 @@ export default function TimelinePage() {
     },
     onError: (err, id, context) => {
       queryClient.setQueryData(["timeline"], context?.previous);
-      toast.error("Deletion failed", { description: err.message });
+      toast.error("Delete failed");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
