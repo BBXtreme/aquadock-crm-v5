@@ -11,7 +11,8 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
     .from("timeline")
     .select(`
       *,
-      companies(firmenname, status, kundentyp)
+      companies!left (id, firmenname),
+      contacts!left (id, name, email, telefon)
     `)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -21,20 +22,21 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
 }
 
 /**
- * Create a new timeline entry
+ * Create a new timeline entry. Supports contact_id.
  */
-export async function createTimelineEntry(values: TimelineEntryInsert & { user_id?: string }): Promise<TimelineEntry> {
+export async function createTimelineEntry(values: TimelineEntryInsert & { user_id: string }): Promise<TimelineEntry> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
-    .insert({ ...values, user_id: null })
+    .insert(values)
     .select(`
       *,
-      companies(firmenname)
+      companies!left (id, firmenname),
+      contacts!left (id, name)
     `)
     .single();
 
-  if (error) throw handleSupabaseError(error, "Failed to create timeline entry");
+  if (error) throw handleSupabaseError(error);
   return data;
 }
 
