@@ -7,14 +7,7 @@ import { getAllTimelineForUser, createTimelineEntry } from "@/lib/supabase/servi
 // Returns timeline entries for current authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const timeline = await getAllTimelineForUser(user.id);
+    const timeline = await getAllTimelineForUser("dummy");
     return NextResponse.json(timeline);
   } catch (error) {
     console.error("Error fetching timeline:", error);
@@ -26,13 +19,6 @@ export async function GET(request: NextRequest) {
 // Create new timeline entry
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { title, content, activity_type, company_id, user_name } = body;
 
@@ -46,7 +32,6 @@ export async function POST(request: NextRequest) {
       activity_type,
       company_id,
       user_name,
-      user_id: user.id,
     });
 
     return NextResponse.json(timelineEntry, { status: 201 });

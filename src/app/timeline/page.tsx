@@ -91,7 +91,7 @@ export default function TimelinePage() {
     );
   }
 
-  if (error && !error.message.includes("Unauthorized")) {
+  if (error) {
     return (
       <AppLayout>
         <div className="container mx-auto space-y-8 p-6 lg:p-8">
