@@ -98,6 +98,20 @@ export default function ContactsPage() {
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
+  const handleBulkDelete = useCallback(async () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} contacts?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => deleteContact(id, createClient())));
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success(`${selectedIds.length} contacts deleted`);
+      setRowSelection({});
+    } catch (error) {
+      toast.error("Bulk delete failed", { description: error.message });
+    }
+  }, [rowSelection, queryClient]);
+
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
   const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
@@ -300,7 +314,7 @@ export default function ContactsPage() {
 
         {error && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between">
+            <AlertDescription className="flex items-center justify-between gap-4">
               <span>{error.message}</span>
               <Button onClick={() => window.location.reload()} variant="outline" size="sm">
                 Retry
@@ -372,6 +386,11 @@ export default function ContactsPage() {
                       <option value={50}>50</option>
                       <option value={100}>100</option>
                     </select>
+                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                      <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                        Delete Selected
+                      </Button>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
