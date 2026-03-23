@@ -3,9 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, handleSupabaseError } from "@/lib/supabase/server";
 import { deleteTimelineEntry } from "@/lib/supabase/services/timeline-server";
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = await params;  // <-- must await here
+
+    console.log("Deleting timeline entry with id:", id);  // debug
 
     await deleteTimelineEntry(id);
     return NextResponse.json({ success: true });
