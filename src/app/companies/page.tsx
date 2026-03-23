@@ -54,6 +54,7 @@ export default function CompaniesPage() {
     betriebstyp: [],
     land: [],
   });
+  const [globalFilter, setGlobalFilter] = useState<string>("");
 
   const statusOptions = ["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"];
 
@@ -345,6 +346,8 @@ export default function CompaniesPage() {
                 </Accordion>
                 <CompaniesTable
                   companies={filteredCompanies}
+                  globalFilter={globalFilter}
+                  onGlobalFilterChange={setGlobalFilter}
                   onEdit={setEditCompany}
                   onDelete={(company) => {
                     if (confirm("Delete company?")) deleteMutation.mutate(company.id);

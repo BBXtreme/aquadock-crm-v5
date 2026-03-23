@@ -39,14 +39,19 @@ interface CompaniesTableProps {
   companies: Company[];
   onEdit?: (company: Company) => void;
   onDelete?: (company: Company) => void;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
 }
 
 const columnHelper = createColumnHelper<any>();
 
-export default function CompaniesTable({ companies, onEdit, onDelete }: CompaniesTableProps) {
-  const [globalFilter, setGlobalFilter] = useState<string>("");
+export default function CompaniesTable({ companies, onEdit, onDelete, globalFilter: propGlobalFilter, onGlobalFilterChange: propOnGlobalFilterChange }: CompaniesTableProps) {
+  const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+
+  const globalFilter = propGlobalFilter ?? localGlobalFilter;
+  const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
   const columns: ColumnDef<any>[] = [
     columnHelper.display({
@@ -205,6 +210,8 @@ export default function CompaniesTable({ companies, onEdit, onDelete }: Companie
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
+    globalFilterFn: "includesString",
+    filterFromLeafRows: true,
   });
 
   const handleExportCSV = () => {
