@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import { SkeletonList } from "@/components/ui/SkeletonList";
@@ -253,6 +253,9 @@ export default function RemindersPage() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Reminder</DialogTitle>
+                <DialogDescription>
+                  Create a new reminder for a company to track follow-ups and tasks.
+                </DialogDescription>
               </DialogHeader>
               <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
             </DialogContent>
