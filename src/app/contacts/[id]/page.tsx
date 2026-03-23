@@ -292,6 +292,11 @@ export default function ContactDetailPage() {
                 <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
               </div>
             </div>
+            {!contact.is_primary && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <p className="text-sm text-yellow-800">This contact is not marked as primary. Consider marking it as primary if this is the main contact for the company.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
