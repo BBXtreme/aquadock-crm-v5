@@ -44,9 +44,10 @@ interface Props {
   companies: Company[];
   contacts: { id: string; vorname: string; nachname: string; email?: string; telefon?: string; position?: string }[];
   editEntry?: TimelineEntry | null;
+  onCancel?: () => void;
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry }: Props) {
+export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry, onCancel }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: editEntry
@@ -209,9 +210,16 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : "Submit"}
-        </Button>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </Button>
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+        </div>
       </form>
     </Form>
   );

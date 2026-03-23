@@ -295,6 +295,7 @@ export default function TimelinePage() {
                 companies={companies}
                 contacts={contacts}
                 editEntry={editEntry}
+                onCancel={() => setDialogOpen(false)}
               />
             </DialogContent>
           </Dialog>
