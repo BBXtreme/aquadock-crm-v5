@@ -272,7 +272,23 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
   });
 
-  if (isLoading) return <SkeletonList count={10} />;
+  if (isLoading) return (
+    <AppLayout>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+          </div>
+          <Button>New Reminder</Button>
+        </div>
+        <Card>
+          <CardHeader><CardTitle>Loading reminders...</CardTitle></CardHeader>
+          <CardContent><SkeletonList count={10} /></CardContent>
+        </Card>
+      </div>
+    </AppLayout>
+  );
 
   if (isError)
     return (
@@ -283,8 +299,28 @@ export default function RemindersPage() {
       </Alert>
     );
 
-  if (table.getRowModel().rows.length === 0)
-    return <Alert>No reminders found</Alert>;
+  if (table.getRowModel().rows.length === 0) return (
+    <AppLayout>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+          </div>
+          <Button>New Reminder</Button>
+        </div>
+        <Card>
+          <CardHeader><CardTitle>No reminders yet</CardTitle></CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Create your first reminder to stay on top of tasks.</p>
+            <Button className="mt-4" onClick={() => setDialogOpen(true)}>
+              New Reminder
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>
+  );
 
   return (
     <AppLayout>
