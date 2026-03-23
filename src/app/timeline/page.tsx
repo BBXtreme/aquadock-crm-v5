@@ -94,13 +94,16 @@ export default function TimelinePage() {
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
       const payload = {
-        ...values,
-        contact_id: values.contact_id === "none" ? null : values.contact_id,
-        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // ← deine echte User-ID!
+        title: values.title,
+        content: values.content || null,
+        activity_type: values.activity_type,
+        company_id: values.company_id || null,
+        contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
         user_name: values.user_name || "BangLee",
+        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // deine echte User-ID!
       };
 
-      console.log("Sending create payload:", payload);
+      console.log("[createMutation] Sending payload:", payload);
 
       const res = await fetch("/api/timeline", {
         method: "POST",
@@ -109,9 +112,9 @@ export default function TimelinePage() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("Server response:", res.status, errText);
-        throw new Error(errText || "HTTP " + res.status);
+        const errData = await res.json().catch(() => ({}));
+        console.error("[createMutation] Server error:", res.status, errData);
+        throw new Error(errData.error || errData.details || `HTTP ${res.status}`);
       }
       return res.json();
     },
@@ -125,9 +128,9 @@ export default function TimelinePage() {
       return { previous };
     },
     onError: (err, newEntry, context) => {
-      console.error("Create mutation failed:", err);
+      console.error("[createMutation] Client error:", err);
       queryClient.setQueryData(["timeline"], context?.previous);
-      toast.error("Failed to create entry");
+      toast.error("Erstellen fehlgeschlagen", { description: err.message || "Unbekannter Fehler" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
