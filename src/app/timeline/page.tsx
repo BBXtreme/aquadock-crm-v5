@@ -68,9 +68,15 @@ export default function TimelinePage() {
     queryKey: ["contacts"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("contacts").select("id, name, email").order("name");
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, name, email")
+        .order("name")
+        .limit(100);
+      if (error) throw error;
       return data ?? [];
-    }
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   /*
