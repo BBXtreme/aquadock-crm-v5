@@ -406,7 +406,7 @@ export default function RemindersPage() {
               {isLoading ? (
                 <Skeleton className="h-8 w-16" />
               ) : (
-                <div className="font-bold text-2xl">{overdue}</div>
+                <div className="font-bold text-2xl text-red-500">{overdue}</div>
               )}
             </CardContent>
           </Card>
