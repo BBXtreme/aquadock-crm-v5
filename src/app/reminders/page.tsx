@@ -20,6 +20,7 @@ import { AlertTriangle, Bell, Calendar, Edit, Eye, RefreshCw, Star, Trash } from
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
+import ReminderEditForm from "@/components/features/ReminderEditForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
