@@ -45,40 +45,28 @@ interface Props {
   contacts: { id: string; vorname: string; nachname: string; email?: string; telefon?: string; position?: string }[];
   editEntry?: TimelineEntry | null;
   onCancel?: () => void;
+  preselectedCompanyId?: string | null;
+  defaultValues?: Partial<FormValues>;
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry, onCancel }: Props) {
+export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry, onCancel, preselectedCompanyId, defaultValues }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: editEntry
-      ? {
-          title: editEntry.title || "",
-          content: editEntry.content ?? "",
-          activity_type: editEntry.activity_type || "note",
-          company_id: editEntry.company_id ?? "none",
-          contact_id: editEntry.contact_id ?? "none",
-          user_name: editEntry.user_name || "",
-        }
-      : {
-          title: "",
-          content: "",
-          activity_type: "note",
-          company_id: "none",
-          contact_id: "none",
-          user_name: "",
-        },
+    defaultValues: defaultValues || {
+      title: "",
+      content: "",
+      activity_type: "note",
+      company_id: "none",
+      contact_id: "none",
+      user_name: "",
+    },
   });
 
   useEffect(() => {
-    if (editEntry) {
-      form.reset({
-        ...editEntry,
-        company_id: editEntry.company_id ?? "none",
-        contact_id: editEntry.contact_id ?? "none",
-        content: editEntry.content ?? "",
-      });
+    if (defaultValues) {
+      form.reset(defaultValues);
     }
-  }, [editEntry, form]);
+  }, [defaultValues, form]);
 
   return (
     <Form {...form}>
