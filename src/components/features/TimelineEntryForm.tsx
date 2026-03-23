@@ -40,7 +40,7 @@ interface Props {
 export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: "", user_name: "" },
+    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "" },
   });
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
         activity_type: editEntry.activity_type,
         user_name: editEntry.user_name,
         company_id: editEntry.company_id || "",
-        contact_id: editEntry.contact_id || "",
+        contact_id: editEntry.contact_id || "none",
       });
     } else {
       form.reset();

@@ -280,6 +280,7 @@ export default function TimelinePage() {
                 isSubmitting={createMutation.isPending}
                 companies={companies}
                 contacts={contacts}
+                editEntry={editEntry}
               />
             </DialogContent>
           </Dialog>
