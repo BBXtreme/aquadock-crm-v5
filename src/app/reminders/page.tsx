@@ -309,38 +309,44 @@ export default function RemindersPage() {
                     </span>
                   )}
                 </div>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => (
-                            <TableHead key={header.id}>
-                              {header.isPlaceholder ? null : flexRender(header.columnDef.header, header.getContext())}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                          <TableRow key={row.id}>
-                            {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                {table && (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                              <TableHead key={header.id}>
+                                {header.isPlaceholder ? null : header.columnDef.header ? (
+                                  flexRender(header.columnDef.header, header.getContext())
+                                ) : (
+                                  <span>—</span>
+                                )}
+                              </TableHead>
                             ))}
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={columns.length} className="h-24 text-center">
-                            No results.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ))}
+                      </TableHeader>
+                      <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                          table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                              No results.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
                 <div className="flex items-center justify-end space-x-2 py-4">
                   <div className="flex-1 text-muted-foreground text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
