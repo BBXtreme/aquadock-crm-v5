@@ -163,8 +163,13 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="">Kein Kontakt</SelectItem>
-                  {/* Placeholder – wird später mit echten Daten gefüllt */}
-                  <SelectItem value="placeholder">Max Mustermann</SelectItem>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.vorname} {c.nachname} 
+                      {c.position ? ` (${c.position})` : ''}
+                      {c.email ? ` – ${c.email}` : ''}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />
