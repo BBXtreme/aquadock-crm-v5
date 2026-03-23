@@ -10,6 +10,7 @@ import { formatDistanceToNow, isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useForm } from "react-hook-form";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
