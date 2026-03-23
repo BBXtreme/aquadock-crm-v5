@@ -174,6 +174,19 @@ export default function ContactsPage() {
       header: "Position",
       cell: (info) => info.getValue() || "—",
     }),
+    columnHelper.accessor("companies.firmenname", {
+      id: "company",
+      header: "Firma",
+      cell: (info) => {
+        const company = info.row.original.companies;
+        if (!company) return "—";
+        return (
+          <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
+            {company.firmenname}
+          </Link>
+        );
+      },
+    }),
     columnHelper.accessor("email", {
       id: "email",
       header: "Email",
@@ -198,19 +211,6 @@ export default function ContactsPage() {
       id: "notes",
       header: "Notes",
       cell: (info) => info.getValue() || "—",
-    }),
-    columnHelper.accessor("companies.firmenname", {
-      id: "company",
-      header: "Company",
-      cell: (info) => {
-        const company = info.row.original.companies;
-        if (!company) return "—";
-        return (
-          <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
-            {company.firmenname}
-          </Link>
-        );
-      },
     }),
     columnHelper.display({
       id: "actions",
