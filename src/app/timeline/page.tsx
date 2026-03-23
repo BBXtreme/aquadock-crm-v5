@@ -9,12 +9,23 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
+
+  // TODO: use useSession or Server Component auth
+  // const { userId } = useAuth();
 
   const { data: timeline = [], isLoading, error } = useQuery({
     queryKey: ["timeline"],
@@ -89,6 +100,33 @@ export default function TimelinePage() {
             <p className="text-muted-foreground text-sm">Home → Timeline</p>
             <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>New Entry</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Timeline Entry</DialogTitle>
+                <DialogDescription>
+                  Add a new activity to the timeline. (Form implementation coming soon)
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground">
+                  This is a placeholder. The full form with react-hook-form and zod will be added later.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => {
+                    toast.info("New timeline entry form coming soon!");
+                  }}
+                >
+                  Placeholder Action
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="space-y-4">
