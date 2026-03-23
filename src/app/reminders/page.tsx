@@ -70,6 +70,7 @@ import {
   getReminders,
 } from "@/lib/supabase/services/reminders";
 import { cn } from "@/lib/utils";
+import { reminderColumns } from "@/components/tables/RemindersTable";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -119,20 +120,6 @@ export default function RemindersPage() {
     [deleteMutation],
   );
 
-  const handleBulkDelete = useCallback(async () => {
-    const selectedIds = Object.keys(rowSelection);
-    if (selectedIds.length === 0) return;
-    if (!confirm(`Delete ${selectedIds.length} reminders?`)) return;
-    try {
-      await Promise.all(selectedIds.map(id => deleteReminder(id, createClient())));
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success(`${selectedIds.length} reminders deleted`);
-      setRowSelection({});
-    } catch (error) {
-      toast.error("Bulk delete failed", { description: error.message });
-    }
-  }, [rowSelection, queryClient]);
-
   const handleView = useCallback((reminder: any) => {
     setSelectedReminder(reminder);
     setIsViewOpen(true);
@@ -169,134 +156,7 @@ export default function RemindersPage() {
     (r) => r.status === "open" && r.priority === "hoch",
   ).length;
 
-  const columnHelper = createColumnHelper<any>();
-
-  const columns = useMemo(
-    () => [
-      columnHelper.display({
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-            aria-label="Select all"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
-          />
-        ),
-        enableSorting: false,
-      }),
-      columnHelper.accessor("title", {
-        header: "Title",
-        cell: (info) => (
-          <button
-            className="text-blue-600 hover:underline"
-            onClick={() => handleEdit(info.row.original)}
-          >
-            {info.getValue()}
-          </button>
-        ),
-      }),
-      columnHelper.accessor("companies.firmenname", {
-        id: "company",
-        header: "Company",
-        cell: (info) => (
-          <Link
-            href={`/companies/${info.row.original.company_id}`}
-            className="text-blue-600 hover:underline"
-          >
-            {info.getValue()}
-        </Link>
-        ),
-      }),
-      columnHelper.accessor("due_date", {
-        header: "Due Date",
-        cell: (info) => {
-          const isOverdue = isAfter(
-            new Date(),
-            new Date(info.getValue() as string),
-          );
-          return (
-            <span className={isOverdue ? "text-rose-500" : ""}>
-              {formatDistanceToNow(new Date(info.getValue() as string), {
-                addSuffix: true,
-              })}
-            </span>
-          );
-        },
-      }),
-      columnHelper.accessor("priority", {
-        header: "Priority",
-        cell: (info) => (
-          <Badge
-            className={
-              info.getValue() === "hoch"
-                ? "bg-orange-500 text-white"
-                : info.getValue() === "normal"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-500 text-white"
-            }
-          >
-            {info.getValue()}
-          </Badge>
-        ),
-      }),
-      columnHelper.accessor("status", {
-        header: "Status",
-        cell: (info) => (
-          <Badge
-            className={
-              info.getValue() === "open"
-                ? "bg-emerald-600 text-white"
-                : "bg-zinc-500 text-white"
-            }
-          >
-            {info.getValue()}
-          </Badge>
-        ),
-      }),
-      columnHelper.accessor("assigned_to", {
-        header: "Assigned To",
-        cell: (info) => info.getValue(),
-      }),
-      columnHelper.display({
-        id: "actions",
-        header: "Actions",
-        cell: (info) => (
-          <div className="flex space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleView(info.row.original)}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(info.row.original)}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(info.row.original.id)}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
-        ),
-        enableSorting: false,
-      }),
-    ],
-    [],
-  );
+  const columns = reminderColumns(handleEdit, handleView, handleDelete);
 
   const table = useReactTable({
     data: filteredReminders,
