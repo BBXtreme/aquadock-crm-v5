@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Edit, Eye, RefreshCw, Star, Trash } from "lucide-react";
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
