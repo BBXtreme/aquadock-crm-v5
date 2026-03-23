@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isAfter } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -199,7 +199,7 @@ export default function CompanyDetailPage() {
     queryKey: ["timeline", id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("timeline").select("*").eq("company_id", id);
+      const { data } = await supabase.from("timeline").select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)").eq("company_id", id);
       return data || [];
     },
   });
@@ -866,22 +866,26 @@ export default function CompanyDetailPage() {
             {timeline.length === 0 ? (
               <p className="text-gray-500">No timeline entries for this company.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead className="text-right w-24">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Event</th>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>User</th>
+                    <th className="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {timeline.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{new Date(entry.event_date).toLocaleDateString()}</TableCell>
-                      <TableCell>{entry.title}</TableCell>
-                      <TableCell>{entry.description || "—"}</TableCell>
-                      <TableCell className="text-right">
+                    <tr key={entry.id}>
+                      <td>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</td>
+                      <td>{entry.title} ({entry.activity_type})</td>
+                      <td>{entry.companies?.firmenname || "—"}</td>
+                      <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
+                      <td>{entry.user_name || "—"}</td>
+                      <td className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button 
                             variant="ghost" 
@@ -907,11 +911,11 @@ export default function CompanyDetailPage() {
                             <Trash className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             )}
           </CardContent>
         </Card>
