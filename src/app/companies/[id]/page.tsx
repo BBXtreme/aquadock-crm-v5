@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
+import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
