@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/browser";
 import type { Company, TimelineEntry } from "@/lib/supabase/types";
 
 const formSchema = z.object({
@@ -56,6 +57,25 @@ export default function TimelineEntryForm({
 }: Props) {
   console.log("[TimelineEntryForm] Preselected company_id:", preselectedCompanyId);
 
+  const [localCompanies, setLocalCompanies] = useState(companies);
+
+  useEffect(() => {
+    setLocalCompanies(companies);
+  }, [companies]);
+
+  useEffect(() => {
+    if (preselectedCompanyId && !localCompanies.find(c => c.id === preselectedCompanyId)) {
+      const fetchCompany = async () => {
+        const supabase = createClient();
+        const { data } = await supabase.from("companies").select("*").eq("id", preselectedCompanyId).single();
+        if (data) {
+          setLocalCompanies(prev => [...prev, data]);
+        }
+      };
+      fetchCompany();
+    }
+  }, [preselectedCompanyId, localCompanies]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
@@ -73,6 +93,14 @@ export default function TimelineEntryForm({
       form.reset(defaultValues);
     }
   }, [defaultValues, form]);
+
+  useEffect(() => {
+    if (props.defaultValues?.company_id && props.defaultValues.company_id !== "none") {
+      form.setValue("company_id", props.defaultValues.company_id, { shouldValidate: true });
+    } else if (!form.getValues("company_id")) {
+      form.setValue("company_id", "none");
+    }
+  }, [props.defaultValues?.company_id, form]);
 
   useEffect(() => {
     if (preselectedCompanyId) {
@@ -164,7 +192,7 @@ export default function TimelineEntryForm({
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="none">Kein Unternehmen</SelectItem>
-                  {companies.map((company) => (
+                  {localCompanies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.firmenname}
                       {company.kundentyp ? ` (${company.kundentyp})` : ""}
