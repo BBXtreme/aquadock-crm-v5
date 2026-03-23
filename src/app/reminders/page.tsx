@@ -163,7 +163,7 @@ export default function RemindersPage() {
     (r) => r.status === "open" && isThisWeek(new Date(r.due_date)),
   ).length;
   const highPriority = allReminders.filter(
-    (r) => r.status === "open" && r.priority === "high",
+    (r) => r.status === "open" && r.priority === "hoch",
   ).length;
 
   const columnHelper = createColumnHelper<any>();
