@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import Link from "next/link";
 
@@ -44,6 +44,7 @@ export default function RemindersPage() {
   const [editReminder, setEditReminder] = useState<any>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
+  const [columnVisibility, setColumnVisibility] = useState({});
 
   const queryClient = useQueryClient();
 
@@ -82,7 +83,7 @@ export default function RemindersPage() {
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns: ColumnDef<any>[] = [
+  const columns = useMemo<ColumnDef<any>[]>(() => [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -199,11 +200,11 @@ export default function RemindersPage() {
         </div>
       ),
     }),
-  ];
+  ], []);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: reminders,
+    data: reminders || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -212,9 +213,11 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
     state: {
       globalFilter,
+      columnVisibility,
       rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
   });
