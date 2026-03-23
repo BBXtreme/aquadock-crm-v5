@@ -192,6 +192,23 @@ export default function CompanyDetailPage() {
     },
   });
 
+  const { data: linkedContacts = [] } = useQuery({
+    queryKey: ["contacts", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, vorname, nachname, email, telefon, position")
+        .eq("company_id", id)
+        .order("nachname")
+        .order("vorname");
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!id,
+  });
+
   const { data: reminders = [] } = useQuery({
     queryKey: ["reminders", id],
     queryFn: async () => {
@@ -1110,9 +1127,13 @@ export default function CompanyDetailPage() {
               onSubmit={createTimelineMutation.mutate}
               isSubmitting={createTimelineMutation.isPending}
               companies={[]} // vorerst leer – preselect übernimmt
-              contacts={[]}
+              contacts={linkedContacts}
               editEntry={editEntry}
               preselectedCompanyId={preselectedCompanyId}
+              defaultValues={{
+                company_id: company?.id || null,
+                contact_id: "none",
+              }}
             />
           </DialogContent>
         </Dialog>
