@@ -254,10 +254,10 @@ export default function CompaniesPage() {
                               key={s}
                               variant={activeFilters.status.includes(s) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
                               onClick={() => toggleFilter('status', s)}
                             >
-                              {s}
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
                             </Button>
                           ))}
                         </div>
@@ -272,11 +272,11 @@ export default function CompaniesPage() {
                                 key={k}
                                 variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
                                 size="sm"
-                                className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
+                                className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
                                 onClick={() => toggleFilter('kategorie', k)}
                               >
                                 {Icon ? <span className="mr-1">{Icon}</span> : null}
-                                {k}
+                                {k.charAt(0).toUpperCase() + k.slice(1)}
                               </Button>
                             );
                           })}
@@ -290,7 +290,7 @@ export default function CompaniesPage() {
                               key={b}
                               variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
                               onClick={() => toggleFilter('betriebstyp', b)}
                             >
                               {b.charAt(0).toUpperCase() + b.slice(1)}
@@ -306,7 +306,7 @@ export default function CompaniesPage() {
                               key={l}
                               variant={activeFilters.land.includes(l) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
                               onClick={() => toggleFilter('land', l)}
                             >
                               {l}
