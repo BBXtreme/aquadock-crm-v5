@@ -95,12 +95,12 @@ export default function TimelineEntryForm({
   }, [defaultValues, form]);
 
   useEffect(() => {
-    if (props.defaultValues?.company_id && props.defaultValues.company_id !== "none") {
-      form.setValue("company_id", props.defaultValues.company_id, { shouldValidate: true });
+    if (defaultValues?.company_id && defaultValues.company_id !== "none") {
+      form.setValue("company_id", defaultValues.company_id, { shouldValidate: true });
     } else if (!form.getValues("company_id")) {
       form.setValue("company_id", "none");
     }
-  }, [props.defaultValues?.company_id, form]);
+  }, [defaultValues?.company_id, form]);
 
   useEffect(() => {
     if (preselectedCompanyId) {
