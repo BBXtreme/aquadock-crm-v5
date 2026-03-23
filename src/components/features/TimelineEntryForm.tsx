@@ -57,10 +57,18 @@ export default function TimelineEntryForm({
 }: Props) {
   console.log("[TimelineEntryForm] Preselected company_id:", preselectedCompanyId);
 
-  const [localCompanies, setLocalCompanies] = useState(companies);
+  const [localCompanies, setLocalCompanies] = useState<Company[]>([]);
 
   useEffect(() => {
-    setLocalCompanies(companies);
+    setLocalCompanies(prev => {
+      const newCompanies = [...prev];
+      companies.forEach(c => {
+        if (!newCompanies.find(nc => nc.id === c.id)) {
+          newCompanies.push(c);
+        }
+      });
+      return newCompanies;
+    });
   }, [companies]);
 
   useEffect(() => {
@@ -69,7 +77,12 @@ export default function TimelineEntryForm({
         const supabase = createClient();
         const { data } = await supabase.from("companies").select("*").eq("id", preselectedCompanyId).single();
         if (data) {
-          setLocalCompanies(prev => [...prev, data]);
+          setLocalCompanies(prev => {
+            if (!prev.find(c => c.id === data.id)) {
+              return [...prev, data];
+            }
+            return prev;
+          });
         }
       };
       fetchCompany();
