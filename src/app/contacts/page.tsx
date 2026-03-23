@@ -438,7 +438,7 @@ export default function ContactsPage() {
                                 checked={column.getIsVisible()}
                                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
                               >
-                                {column.columnDef.header}
+                                {column.id}
                               </DropdownMenuCheckboxItem>
                             );
                           })}
@@ -508,7 +508,13 @@ export default function ContactsPage() {
               <DialogHeader>
                 <DialogTitle>Edit Contact</DialogTitle>
               </DialogHeader>
-              <ContactEditForm contact={editContact} onSuccess={() => setEditContact(null)} />
+              <ContactEditForm
+                contact={editContact}
+                onSuccess={() => {
+                  setEditContact(null);
+                  queryClient.invalidateQueries({ queryKey: ["contacts"] });
+                }}
+              />
             </DialogContent>
           </Dialog>
         )}
