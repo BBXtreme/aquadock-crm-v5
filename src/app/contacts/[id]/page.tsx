@@ -367,7 +367,7 @@ export default function ContactDetailPage() {
           <CardContent>
             <Select onValueChange={(value) => {
               const supabase = createClient();
-              updateContact(contact.id, { company_id: value }, supabase).then(() => {
+              updateContact(contact.id, { company_id: value || null }, supabase).then(() => {
                 toast.success("Company updated");
                 _fetchData();
               }).catch((err) => {
@@ -378,6 +378,7 @@ export default function ContactDetailPage() {
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">None</SelectItem>
                 {companies.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.firmenname}
