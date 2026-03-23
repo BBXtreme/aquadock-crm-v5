@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Building, Clock, Edit, Trash, User } from "lucide-react";
+import { Building, Calendar, Clock, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -153,6 +153,40 @@ export default function TimelinePage() {
     },
   });
 
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "email":
+        return <Mail className="h-3 w-3 mr-1" />;
+      case "call":
+        return <Phone className="h-3 w-3 mr-1" />;
+      case "meeting":
+        return <Calendar className="h-3 w-3 mr-1" />;
+      case "note":
+        return <MessageSquare className="h-3 w-3 mr-1" />;
+      case "reminder":
+        return <Bell className="h-3 w-3 mr-1" />;
+      default:
+        return <MoreHorizontal className="h-3 w-3 mr-1" />;
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case "email":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "call":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "meeting":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "note":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "reminder":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -247,7 +281,8 @@ export default function TimelinePage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className={`text-xs ${getActivityColor(entry.activity_type)}`}>
+                          {getActivityIcon(entry.activity_type)}
                           {entry.activity_type}
                         </Badge>
                         <span className="text-sm text-muted-foreground">
