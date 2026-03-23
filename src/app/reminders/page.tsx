@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Bell,
   Calendar,
+  Columns,
   Edit,
   Eye,
   RefreshCw,
@@ -44,6 +45,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -280,8 +287,9 @@ export default function RemindersPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: { rowSelection },
+    state: { rowSelection, columnVisibility },
     onRowSelectionChange: setRowSelection,
+    onColumnVisibilityChange: setColumnVisibility,
     enableRowSelection: true,
     getRowId: (row) => row.id,
   });
@@ -457,11 +465,37 @@ export default function RemindersPage() {
                       </span>
                     )}
                   </div>
-                  {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                      Delete Selected
-                    </Button>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                      <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                        Delete Selected
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Columns className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {table
+                          .getAllColumns()
+                          .filter((column) => column.getCanHide())
+                          .map((column) => {
+                            return (
+                              <DropdownMenuCheckboxItem
+                                key={column.id}
+                                className="capitalize"
+                                checked={column.getIsVisible()}
+                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                              >
+                                {column.id}
+                              </DropdownMenuCheckboxItem>
+                            );
+                          })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 {table && (
                   <div className="rounded-md border">
