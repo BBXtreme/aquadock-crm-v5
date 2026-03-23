@@ -25,6 +25,7 @@ import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
 import { Building, Edit, Trash, User, ArrowLeft } from "lucide-react";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
+import { useQuery } from "@tanstack/react-query";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -61,6 +62,16 @@ export default function ContactDetailPage() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
   const [editCompanyDialog, setEditCompanyDialog] = useState(false);
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const _fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -348,32 +359,32 @@ export default function ContactDetailPage() {
         {/* Linked Company */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Linked Company
-              </div>
-              {contact.companies && (
-                <Button variant="ghost" size="sm" onClick={() => setEditCompanyDialog(true)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              )}
+            <CardTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" />
+              Linked Company
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {contact.companies ? (
-              <div>
-                <Link
-                  href={`/companies/${contact.company_id}`}
-                  className="text-blue-600 hover:underline text-lg font-semibold"
-                >
-                  {contact.companies.firmenname}
-                </Link>
-                <p className="text-sm text-gray-600 mt-1">Click to view company details</p>
-              </div>
-            ) : (
-              <p className="text-gray-500">No company linked</p>
-            )}
+            <Select onValueChange={(value) => {
+              const supabase = createClient();
+              updateContact(contact.id, { company_id: value }, supabase).then(() => {
+                toast.success("Company updated");
+                _fetchData();
+              }).catch((err) => {
+                toast.error("Update failed", { description: err.message });
+              });
+            }} defaultValue={contact.company_id || ""}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select company" />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.firmenname}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
