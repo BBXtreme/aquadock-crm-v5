@@ -266,26 +266,44 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle>Companies by Kundentyp</CardTitle>
               </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+              <CardContent className="pt-6">
+                <div className="relative h-[400px] w-full max-w-3xl mx-auto">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <FunnelChart>
+                      <Funnel
+                        dataKey="value"
+                        data={funnelData}
+                        isAnimationActive
+                        labelLine={false}
+                        stroke="none"
+                      >
+                        {funnelData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                        <LabelList
+                          position="right"
+                          offset={20}
+                          formatter={(value: number, entry: any) => `${entry.payload.name} ${Math.round((value / funnelData[0].value) * 100)}%`}
+                          fill="#fff"
+                          fontSize={14}
+                          fontWeight="bold"
+                        />
+                        <LabelList
+                          position="left"
+                          offset={20}
+                          formatter={(value: number) => value.toLocaleString("de-DE")}
+                          fill="#fff"
+                          fontSize={18}
+                          fontWeight="bold"
+                        />
+                      </Funnel>
+                    </FunnelChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <p className="text-center text-sm text-muted-foreground mt-6">
+                  Leads increased by 18.2% since last month.
+                </p>
               </CardContent>
             </Card>
             <Card>
