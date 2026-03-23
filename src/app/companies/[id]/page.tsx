@@ -828,10 +828,23 @@ export default function CompanyDetailPage() {
         {/* Timeline */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Timeline ({timeline.length})
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Timeline ({timeline.length})
+              </CardTitle>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setTimelineDialogOpen(true);
+                  setPreselectedCompanyId(company.id);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Timeline
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {timeline.length === 0 ? (
