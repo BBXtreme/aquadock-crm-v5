@@ -298,28 +298,23 @@ export default function RemindersPage() {
 
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
-            {isLoading ? (
-              <SkeletonList count={10} />
-            ) : isError ? (
+            if (isLoading) return <SkeletonList count={10} />;
+            if (isError) return (
               <Alert variant="destructive">
                 <AlertTitle>Error loading reminders</AlertTitle>
-                <AlertDescription>
-                  {error?.message || "Unknown error"}
-                </AlertDescription>
+                <AlertDescription>{error?.message}</AlertDescription>
                 <Button onClick={() => refetch()}>Retry</Button>
               </Alert>
-            ) : filteredReminders.length === 0 ? (
-              <Alert>No reminders found. Create one to get started.</Alert>
-            ) : (
-              <RemindersTable
-                reminders={filteredReminders}
-                globalFilter={globalFilter}
-                onGlobalFilterChange={setGlobalFilter}
-                handleEdit={handleEdit}
-                handleView={handleView}
-                handleDelete={handleDelete}
-              />
-            )}
+            );
+            if (!reminders?.length) return <Alert>No reminders found</Alert>;
+            <RemindersTable
+              reminders={filteredReminders}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              handleEdit={handleEdit}
+              handleView={handleView}
+              handleDelete={handleDelete}
+            />
           </CardContent>
         </Card>
 
