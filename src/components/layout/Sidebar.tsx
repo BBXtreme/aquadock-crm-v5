@@ -39,7 +39,13 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
           {navItems.map((item) => (
             <li key={item.href}>
               <Link href={item.href}>
-                <Button variant="ghost" className={cn("w-full justify-start rounded-md transition-colors hover:bg-muted/50", pathname === item.href && "bg-accent text-accent-foreground")}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start rounded-md transition-colors hover:bg-muted/50",
+                    pathname === item.href && "bg-accent text-accent-foreground",
+                  )}
+                >
                   <item.icon className="h-4 w-4" />
                   {!isCollapsed && <span className="ml-2">{item.label}</span>}
                 </Button>
@@ -67,6 +73,10 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
   }
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen z-40 bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}>{sidebarContent}</aside>
+    <aside
+      className={`fixed left-0 top-0 h-screen z-40 bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}
+    >
+      {sidebarContent}
+    </aside>
   );
 }

@@ -19,7 +19,6 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -817,8 +816,8 @@ export default function CompanyDetailPage() {
                             reminder.priority === "hoch"
                               ? "bg-orange-500 text-white"
                               : reminder.priority === "normal"
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-500 text-white"
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-500 text-white"
                           }
                         >
                           {reminder.priority}
@@ -954,12 +953,12 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Add Contact to {company.firmenname}</DialogTitle>
             </DialogHeader>
-            <ContactCreateForm 
-              companyId={company.id} 
+            <ContactCreateForm
+              companyId={company.id}
               onSuccess={() => {
                 setAddContactDialog(false);
                 fetchData();
-              }} 
+              }}
             />
           </DialogContent>
         </Dialog>
@@ -970,12 +969,12 @@ export default function CompanyDetailPage() {
             <DialogHeader>
               <DialogTitle>Add Reminder for {company.firmenname}</DialogTitle>
             </DialogHeader>
-            <ReminderCreateForm 
-              companyId={company.id} 
+            <ReminderCreateForm
+              companyId={company.id}
               onSuccess={() => {
                 setAddReminderDialog(false);
                 fetchData();
-              }} 
+              }}
             />
           </DialogContent>
         </Dialog>

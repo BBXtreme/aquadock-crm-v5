@@ -1,42 +1,23 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import Link from "next/link";
+import { useCallback, useState } from "react";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import AppLayout from "@/components/layout/AppLayout";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SkeletonList } from "@/components/ui/SkeletonList";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser";
-import { createContact, deleteContact, getContacts } from "@/lib/supabase/services/contacts";
-import type { Contact } from "@/lib/supabase/types";
-import { Eye, Edit, Trash, Download, Upload, Columns } from "lucide-react";
-import Papa from "papaparse";
-import { toast } from "sonner";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ContactEditForm from "@/components/features/ContactEditForm";
+import AppLayout from "@/components/layout/AppLayout";
 import ContactsTable from "@/components/tables/ContactsTable";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/SkeletonList";
+import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/browser";
+import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -54,7 +35,7 @@ const contactSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactSchema>;
 
-const anredeOptions = [
+const _anredeOptions = [
   { value: "Herr", label: "Herr" },
   { value: "Frau", label: "Frau" },
   { value: "Dr.", label: "Dr." },
@@ -64,7 +45,7 @@ const anredeOptions = [
 export default function ContactsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({ anrede: false });
+  const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [editContact, setEditContact] = useState(null);
 
@@ -91,12 +72,12 @@ export default function ContactsPage() {
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
-  const handleBulkDelete = useCallback(async () => {
+  const _handleBulkDelete = useCallback(async () => {
     const selectedIds = Object.keys(rowSelection);
     if (selectedIds.length === 0) return;
     if (!confirm(`Delete ${selectedIds.length} contacts?`)) return;
     try {
-      await Promise.all(selectedIds.map(id => deleteContact(id, createClient())));
+      await Promise.all(selectedIds.map((id) => deleteContact(id, createClient())));
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success(`${selectedIds.length} contacts deleted`);
       setRowSelection({});

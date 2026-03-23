@@ -7,128 +7,175 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 
 - shadcn/ui updated to latest radix-nova style
 - Biome upgraded & configured (minimal, Tailwind v4 compatible)
-- Static loading skeletons cleaned (keys removed)
+- Static loading skeletons cleaned (keys removed, proper static rendering)
 - Type safety improved (no non-null assertions on env vars)
-- Pre-commit hook now reliable
+- Pre-commit hooks stabilized (Biome + typecheck)
+- React Query caching & invalidation patterns standardized
 
-Next: react-query caching, RHF + zod forms, mass-email sanitization
+**Next priorities**: full RHF + zod forms, mass-email sanitization, optimistic updates
 
 ## Tech Stack
 
-| Layer            | Technology                              | Version / Note                  |
-|------------------|-----------------------------------------|---------------------------------|
-| Framework        | Next.js                                 | 16.2+ (App Router)              |
-| UI               | React 19 • shadcn/ui (radix-nova)       | latest • CSS variables enabled  |
-| Styling          | Tailwind CSS                            | exactly 4.2.2 (config-less)     |
-| Fonts            | Geist Sans + Mono                       | official Vercel package         |
-| State / Data     | TanStack React Query + Table v8         | v5 / v8                         |
-| Forms            | react-hook-form + zod                   | —                               |
-| Backend / DB     | Supabase (PostgreSQL + Auth + RLS)      | —                               |
-| Toasts           | sonner                                  | ^2.0+                           |
-| Icons            | lucide-react                            | latest                          |
-| Package Manager  | pnpm                                    | —                               |
-| Linting/Formatting | Biome                                 | 2.3.8+                          |
-| Other            | next-themes, vaul, cmdk, zustand        | —                               |
+| Layer              | Technology                         | Version / Note                 |
+| ------------------ | ---------------------------------- | ------------------------------ |
+| Framework          | Next.js                            | 16.2+ (App Router)             |
+| UI                 | React 19 • shadcn/ui (radix-nova)  | latest • CSS variables enabled |
+| Styling            | Tailwind CSS                       | exactly 4.2.2 (config-less)    |
+| Fonts              | Geist Sans + Mono                  | official Vercel package        |
+| State / Data       | TanStack React Query + Table v8    | v5 / v8                        |
+| Forms              | react-hook-form + zod              | —                              |
+| Backend / DB       | Supabase (PostgreSQL + Auth + RLS) | —                              |
+| Toasts             | sonner                             | ^2.0+                          |
+| Icons              | lucide-react                       | latest                         |
+| Package Manager    | pnpm                               | —                              |
+| Linting/Formatting | Biome                              | 2.3.8+                         |
+| Other              | next-themes, vaul, cmdk, zustand   | —                              |
 
 ## Features
 
-- Multi-user CRM with Row Level Security
+- Multi-user CRM with Row Level Security (RLS)
 - Companies + Contacts separation
 - Timeline & reminders per company
 - Geo data (lat/lon, OSM integration)
-- Import from CSV & OpenStreetMap POIs
-- Responsive dashboard & data tables
+- CSV import & OpenStreetMap POI import
+- Responsive dashboard & TanStack Tables
 - Dark mode & theme persistence
 
 ## Getting Started
 
-# 1. Clone & enter directory
-git clone <your-repo-url> aquadock-crm
-cd aquadock-crm
+1. Clone & enter directory
+   ```bash
+   git clone <your-repo-url> aquadock-crm
+   cd aquadock-crm
 
-# 2. Install dependencies
-pnpm install
+1. Install dependencies
 
-# 3. Copy example environment file
-cp .env.example .env.local
+   Bash
 
-# 4. Fill required Supabase variables
+   ```
+   pnpm install
+   ```
 
-#    → SUPABASE_URL
+2. Copy example environment file
 
-#    → SUPABASE_ANON_KEY
+   Bash
 
-#    → optionally: SUPABASE_SERVICE_ROLE_KEY (for admin scripts)
+   ```
+   cp .env.example .env.local
+   ```
 
-# 5. Start development server
-pnpm dev
-Open http://localhost:3000
-Core Commands
-Bashpnpm dev             # development server
-pnpm build           # production build
-pnpm start           # run production build
-pnpm check           # biome lint + type check
-pnpm format          # format all files
-pnpm check:fix       # lint + auto-fix
+3. Fill required Supabase variables
+
+   - NEXT_PUBLIC_SUPABASE_URL
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - (optional) SUPABASE_SERVICE_ROLE_KEY for admin tasks
+
+4. Start development server
+
+   Bash
+
+   ```
+   pnpm dev
+   ```
+
+   Open
+
+    
+
+   http://localhost:3000
+
+## Core Commands
+
+Bash
+
+```
+pnpm dev          # development server
+pnpm build        # production build
+pnpm start        # run production build
+pnpm check        # biome lint + type check
+pnpm format       # format all files
+pnpm check:fix    # lint + auto-fix
+```
 
 ## Development Guidelines
 
-Root app/layout.tsx → Server Component only
-Interactive components → "use client" at top
-Data fetching → Server Components + Supabase server client
-Forms → react-hook-form + zod resolver
-Tables → TanStack Table v8 with generated types
-UI components → src/components/ui/* (shadcn convention)
-Supabase services → src/lib/supabase/services/*.ts
+- Root app/layout.tsx → Server Component only
+- Interactive components → "use client" at top
+- Data fetching → prefer Server Components + Supabase server client
+- Forms → react-hook-form + zod resolver
+- Tables → TanStack Table v8 with generated types
+- UI components → src/components/ui/* (shadcn convention)
+- Supabase services → src/lib/supabase/services/*.ts
 
-## Folder Structure (main folders only)
+## Folder Structure (main folders)
 
-textsrc/
+text
+
+```
+src/
 ├── app/                  # App Router routes + layouts
 ├── components/
 │   ├── ui/               # shadcn primitives
-│   ├── layout/           # reusable layout pieces
+│   ├── layout/           # Sidebar, Header, PageHeader, etc.
 │   └── features/         # domain components (CompanyCard, Timeline, etc.)
 ├── lib/
-│   ├── supabase/         # client factory, services, types
-│   └── utils/            # cn(), formatters, helpers
-├── hooks/                # custom hooks
+│   ├── supabase/         # client factories, services, types
+│   └── utils/            # cn(), formatters, error helpers
+├── hooks/                # custom hooks (useCompanyMutations, etc.)
 └── types/                # global type declarations
+```
 
 ## Deployment
 
-Recommended: Vercel (automatic previews, env vars, Supabase edge functions compatible)
-Bashvercel
+**Recommended**: Vercel (automatic previews, env vars, Supabase edge functions compatible)
 
-# or connect GitHub repo → Vercel dashboard
-Supabase Schema & Types
+Bash
+
+```
+vercel
+```
+
+Or connect your GitHub repo directly in the Vercel dashboard.
+
+## Supabase Schema & Types
+
 See docs/SUPABASE_SCHEMA.md
 
 After schema changes:
-Bashnpx supabase gen types typescript --local > src/lib/supabase/database.types.ts
-Contributing
 
-Branch naming: feature/xxx, fix/xxx, chore/xxx
-Commit messages: conventional commits preferred
-Run pnpm check before push
+Bash
 
+```
+# Local Supabase
+npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
+# Remote (recommended for CI)
+npx supabase gen types typescript --project-id <your-project-ref> > src/lib/supabase/database.types.ts
+```
+
+## Contributing
+
+- Branch naming: feature/xxx, fix/xxx, chore/xxx
+- Commit messages: conventional commits preferred (feat:, fix:, chore:, etc.)
+- Run pnpm check before push
+
+### Daily Workflow
+
+Bash
+
+```
 # Start of day / after git pull
 pnpm install    # if package.json changed
 
-# Normal coding (99% of the time)
+# Normal development
 pnpm dev
 
-# Every few minutes or before commit
-# (many people have this as pre-commit hook already)
+# Before commit (pre-commit hook should run this)
 pnpm check:fix
 
-# Before git push / creating PR
+# Before push / PR
 pnpm check
-pnpm build      # optional but recommended for bigger changes
-
-# Deploy / release
-pnpm build      # Vercel does this automatically anyway
-
+pnpm build      # optional but recommended
+```
 
 Built with ❤️ at Waterfront Beach • 2026

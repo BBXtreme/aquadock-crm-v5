@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/browser";
-import { createReminder, getReminders } from "@/lib/supabase/services/reminders";
+import { createReminder } from "@/lib/supabase/services/reminders";
 
 const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),

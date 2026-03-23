@@ -37,7 +37,7 @@ export async function getCompanies(
     console.groupEnd();
   }
 
-  if (error && error.message) throw handleSupabaseError(error, "getCompanies");
+  if (error?.message) throw handleSupabaseError(error, "getCompanies");
 
   return (data ?? []) as Company[];
 }
@@ -47,38 +47,26 @@ export async function getCompanies(
  */
 export async function getCompanyById(id: string, client: SupabaseClient): Promise<Company | null> {
   const { data, error } = await client.from("companies").select("*").eq("id", id).single();
-  if (error && error.message) throw handleSupabaseError(error, "getCompanyById");
+  if (error?.message) throw handleSupabaseError(error, "getCompanyById");
   return (data as Company | null) ?? null;
 }
 
 export async function createCompany(values: CompanyInsert): Promise<Company> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .insert(values)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").insert(values).select().single();
   if (error) throw handleSupabaseError(error, "createCompany");
   return data;
 }
 
 export async function updateCompany(id: string, updates: Partial<Company>): Promise<Company> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .update(updates)
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateCompany");
   return data;
 }
 
 export async function deleteCompany(id: string): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase
-    .from("companies")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
 }

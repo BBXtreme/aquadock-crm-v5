@@ -242,15 +242,10 @@ export default function ContactEditForm({ contact, onSuccess }: { contact: any; 
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Primary Contact
-                </FormLabel>
+                <FormLabel>Primary Contact</FormLabel>
               </div>
             </FormItem>
           )}

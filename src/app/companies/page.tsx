@@ -5,13 +5,10 @@ import { useMemo, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangle,
   Anchor,
   Building,
   Building2,
-  Calendar,
   DollarSign,
-  Edit,
   Eye,
   Handshake,
   Palmtree,
@@ -40,8 +37,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
-import { createCompany, deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
-import type { Company, CompanyInsert } from "@/lib/supabase/types";
+import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
+import type { Company } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 export default function CompaniesPage() {
@@ -56,16 +53,54 @@ export default function CompaniesPage() {
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
-  const statusOptions = ["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"];
+  const statusOptions = [
+    "lead",
+    "interessant",
+    "qualifiziert",
+    "akquise",
+    "angebot",
+    "gewonnen",
+    "verloren",
+    "kunde",
+    "partner",
+    "inaktiv",
+  ];
 
   const kategorieOptions = [
-    "restaurant", "hotel", "resort", "camping", "marina", "segelschule", "segelverein", "bootsverleih", "neukunde", "bestandskunde", "interessent", "partner", "sonstige"
+    "restaurant",
+    "hotel",
+    "resort",
+    "camping",
+    "marina",
+    "segelschule",
+    "segelverein",
+    "bootsverleih",
+    "neukunde",
+    "bestandskunde",
+    "interessent",
+    "partner",
+    "sonstige",
   ];
 
   const betriebstypOptions = ["kette", "einzeln"];
 
   const landOptions = [
-    "Deutschland", "Österreich", "Schweiz", "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien", "Dänemark", "Schweden", "Norwegen", "Polen", "Ungarn", "Griechenland", "Portugal", "Großbritannien"
+    "Deutschland",
+    "Österreich",
+    "Schweiz",
+    "Frankreich",
+    "Italien",
+    "Spanien",
+    "Niederlande",
+    "Belgien",
+    "Dänemark",
+    "Schweden",
+    "Norwegen",
+    "Polen",
+    "Ungarn",
+    "Griechenland",
+    "Portugal",
+    "Großbritannien",
   ];
 
   const statusIcons = {
@@ -91,11 +126,9 @@ export default function CompaniesPage() {
   };
 
   const toggleFilter = (group: string, value: string) => {
-    setActiveFilters(prev => ({
+    setActiveFilters((prev) => ({
       ...prev,
-      [group]: prev[group].includes(value)
-        ? prev[group].filter(v => v !== value)
-        : [...prev[group], value]
+      [group]: prev[group].includes(value) ? prev[group].filter((v) => v !== value) : [...prev[group], value],
     }));
   };
 
@@ -143,7 +176,7 @@ export default function CompaniesPage() {
   }, [companies]);
 
   const filteredCompanies = useMemo(() => {
-    return companies.filter(c => {
+    return companies.filter((c) => {
       if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status)) return false;
       if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp)) return false;
       if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp)) return false;
@@ -199,7 +232,9 @@ export default function CompaniesPage() {
           <div className="flex items-center justify-between pb-6 border-b">
             <div>
               <div className="text-sm text-muted-foreground">Home → Companies</div>
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Companies</h1>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Companies
+              </h1>
             </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -248,39 +283,53 @@ export default function CompaniesPage() {
                 </div>
               ) : (
                 <>
-                  <div className={cn(
-                    "flex flex-wrap gap-2 items-center",
-                    Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4"
-                  )}>
-                    {Object.entries(activeFilters).map(([group, values]) => 
-                      values.map(v => (
+                  <div
+                    className={cn(
+                      "flex flex-wrap gap-2 items-center",
+                      Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
+                    )}
+                  >
+                    {Object.entries(activeFilters).map(([group, values]) =>
+                      values.map((v) => (
                         <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
                           {v} ×
                         </Badge>
-                      ))
+                      )),
                     )}
                     {Object.values(activeFilters).flat().length > 0 && (
-                      <Button variant="ghost" size="sm" onClick={() => setActiveFilters({status:[], kategorie:[], betriebstyp:[], land:[]})}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}
+                      >
                         Clear all
                       </Button>
                     )}
                   </div>
-                  <Accordion type="single" collapsible className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}>
+                  <Accordion
+                    type="single"
+                    collapsible
+                    className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}
+                  >
                     <AccordionItem value="filters">
                       <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                       <AccordionContent>
                         <div className="mb-4">
                           <h4 className="font-normal">Status</h4>
                           <div className="flex flex-wrap gap-2">
-                            {statusOptions.map(s => {
+                            {statusOptions.map((s) => {
                               const Icon = statusIcons[s];
                               return (
                                 <Button
                                   key={s}
                                   variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
                                   size="sm"
-                                  className={activeFilters.status.includes(s) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
-                                  onClick={() => toggleFilter('status', s)}
+                                  className={
+                                    activeFilters.status.includes(s)
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("status", s)}
                                 >
                                   {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
                                   {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -292,15 +341,19 @@ export default function CompaniesPage() {
                         <div className="mb-4">
                           <h4 className="font-normal">Kategorie</h4>
                           <div className="flex flex-wrap gap-2">
-                            {kategorieOptions.map(k => {
+                            {kategorieOptions.map((k) => {
                               const Icon = kategorieIcons[k];
                               return (
                                 <Button
                                   key={k}
                                   variant={activeFilters.kategorie.includes(k) ? "secondary" : "ghost"}
                                   size="sm"
-                                  className={activeFilters.kategorie.includes(k) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
-                                  onClick={() => toggleFilter('kategorie', k)}
+                                  className={
+                                    activeFilters.kategorie.includes(k)
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("kategorie", k)}
                                 >
                                   {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
                                   {k.charAt(0).toUpperCase() + k.slice(1)}
@@ -312,13 +365,17 @@ export default function CompaniesPage() {
                         <div className="mb-4">
                           <h4 className="font-normal">Betriebstyp</h4>
                           <div className="flex flex-wrap gap-2">
-                            {betriebstypOptions.map(b => (
+                            {betriebstypOptions.map((b) => (
                               <Button
                                 key={b}
                                 variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "ghost"}
                                 size="sm"
-                                className={activeFilters.betriebstyp.includes(b) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
-                                onClick={() => toggleFilter('betriebstyp', b)}
+                                className={
+                                  activeFilters.betriebstyp.includes(b)
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("betriebstyp", b)}
                               >
                                 {b.charAt(0).toUpperCase() + b.slice(1)}
                               </Button>
@@ -328,13 +385,17 @@ export default function CompaniesPage() {
                         <div>
                           <h4 className="font-normal">Land</h4>
                           <div className="flex flex-wrap gap-2">
-                            {landOptions.map(l => (
+                            {landOptions.map((l) => (
                               <Button
                                 key={l}
                                 variant={activeFilters.land.includes(l) ? "secondary" : "ghost"}
                                 size="sm"
-                                className={activeFilters.land.includes(l) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
-                                onClick={() => toggleFilter('land', l)}
+                                className={
+                                  activeFilters.land.includes(l)
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("land", l)}
                               >
                                 {l}
                               </Button>

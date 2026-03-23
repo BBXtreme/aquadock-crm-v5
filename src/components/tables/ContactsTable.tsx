@@ -33,7 +33,6 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Contact } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -45,7 +44,13 @@ interface ContactsTableProps {
 
 const columnHelper = createColumnHelper<any>();
 
-export default function ContactsTable({ contacts, onEdit, onDelete, globalFilter: propGlobalFilter, onGlobalFilterChange: propOnGlobalFilterChange }: ContactsTableProps) {
+export default function ContactsTable({
+  contacts,
+  onEdit,
+  onDelete,
+  globalFilter: propGlobalFilter,
+  onGlobalFilterChange: propOnGlobalFilterChange,
+}: ContactsTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
@@ -325,17 +330,13 @@ export default function ContactsTable({ contacts, onEdit, onDelete, globalFilter
                       <div
                         className={cn(
                           "flex items-center space-x-2 select-none",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === "asc" && (
-                          <ArrowUp className="h-4 w-4" />
-                        )}
-                        {header.column.getIsSorted() === "desc" && (
-                          <ArrowDown className="h-4 w-4" />
-                        )}
+                        {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
+                        {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
                         {header.column.getIsSorted() === false && header.column.getCanSort() && (
                           <ArrowUpDown className="h-4 w-4" />
                         )}

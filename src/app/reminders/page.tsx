@@ -1,45 +1,19 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import Link from "next/link";
-
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
-import {
-  type ColumnDef,
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  AlertTriangle,
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Bell,
-  Calendar,
-  Columns,
-  Edit,
-  Eye,
-  RefreshCw,
-  Star,
-  Trash,
-} from "lucide-react";
+import { AlertTriangle, Bell, Calendar, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/ReminderEditForm";
 import AppLayout from "@/components/layout/AppLayout";
+import RemindersTable from "@/components/tables/RemindersTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -48,40 +22,19 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
-import {
-  deleteReminder,
-  getReminders,
-} from "@/lib/supabase/services/reminders";
-import { cn } from "@/lib/utils";
-import { reminderColumns } from "@/components/tables/RemindersTable";
-import RemindersTable from "@/components/tables/RemindersTable";
+import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [rowSelection, setRowSelection] = useState({});
+  const [rowSelection, _setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [_columnVisibility, _setColumnVisibility] = useState({});
   const [filterType, setFilterType] = useState<"all" | "open" | "overdue">("all");
 
   const queryClient = useQueryClient();
@@ -111,8 +64,7 @@ export default function RemindersPage() {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder deleted");
     },
-    onError: (err) =>
-      toast.error("Deletion failed", { description: err.message }),
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
   const handleDelete = useCallback(
@@ -136,7 +88,7 @@ export default function RemindersPage() {
   const allReminders = reminders || [];
   const filteredReminders = useMemo(() => {
     if (filterType === "all") return allReminders;
-    return allReminders.filter(r => {
+    return allReminders.filter((r) => {
       if (filterType === "open") {
         return r.status === "open" && isAfter(new Date(r.due_date), new Date());
       }
@@ -148,33 +100,32 @@ export default function RemindersPage() {
   }, [allReminders, filterType]);
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
-  const overdue = allReminders.filter(
-    (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
-  ).length;
-  const thisWeek = allReminders.filter(
-    (r) => r.status === "open" && isThisWeek(new Date(r.due_date)),
-  ).length;
-  const highPriority = allReminders.filter(
-    (r) => r.status === "open" && r.priority === "hoch",
-  ).length;
+  const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
+  const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
+  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "hoch").length;
 
-  if (isLoading) return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+  if (isLoading)
+    return (
+      <AppLayout>
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+            </div>
+            <Button>New Reminder</Button>
           </div>
-          <Button>New Reminder</Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading reminders...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SkeletonList count={10} />
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardHeader><CardTitle>Loading reminders...</CardTitle></CardHeader>
-          <CardContent><SkeletonList count={10} /></CardContent>
-        </Card>
-      </div>
-    </AppLayout>
-  );
+      </AppLayout>
+    );
 
   if (isError)
     return (
@@ -185,28 +136,31 @@ export default function RemindersPage() {
       </Alert>
     );
 
-  if (filteredReminders.length === 0) return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+  if (filteredReminders.length === 0)
+    return (
+      <AppLayout>
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+            </div>
+            <Button>New Reminder</Button>
           </div>
-          <Button>New Reminder</Button>
+          <Card>
+            <CardHeader>
+              <CardTitle>No reminders yet</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Create your first reminder to stay on top of tasks.</p>
+              <Button className="mt-4" onClick={() => setDialogOpen(true)}>
+                New Reminder
+              </Button>
+            </CardContent>
+          </Card>
         </div>
-        <Card>
-          <CardHeader><CardTitle>No reminders yet</CardTitle></CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Create your first reminder to stay on top of tasks.</p>
-            <Button className="mt-4" onClick={() => setDialogOpen(true)}>
-              New Reminder
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </AppLayout>
-  );
+      </AppLayout>
+    );
 
   return (
     <AppLayout>
@@ -232,9 +186,7 @@ export default function RemindersPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">
-                Open Reminders
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -247,9 +199,7 @@ export default function RemindersPage() {
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">
-                Overdue Today
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -266,34 +216,30 @@ export default function RemindersPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="font-bold text-2xl">{thisWeek}</div>
-              )}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">
-                High Priority
-              </CardTitle>
+              <CardTitle className="font-medium text-sm">High Priority</CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="font-bold text-2xl">{highPriority}</div>
-              )}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
             </CardContent>
           </Card>
         </div>
 
         <div className="flex space-x-2">
-          <Button variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>All</Button>
-          <Button variant={filterType === "open" ? "default" : "outline"} onClick={() => setFilterType("open")}>Open</Button>
-          <Button variant={filterType === "overdue" ? "default" : "outline"} onClick={() => setFilterType("overdue")}>Overdue</Button>
+          <Button variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>
+            All
+          </Button>
+          <Button variant={filterType === "open" ? "default" : "outline"} onClick={() => setFilterType("open")}>
+            Open
+          </Button>
+          <Button variant={filterType === "overdue" ? "default" : "outline"} onClick={() => setFilterType("overdue")}>
+            Overdue
+          </Button>
           <Button variant="outline">My Tasks</Button>
         </div>
 
@@ -315,9 +261,7 @@ export default function RemindersPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>View Reminder</DialogTitle>
-              <DialogDescription>
-                Details of the selected reminder.
-              </DialogDescription>
+              <DialogDescription>Details of the selected reminder.</DialogDescription>
             </DialogHeader>
             {selectedReminder && (
               <div className="space-y-4">
@@ -333,10 +277,7 @@ export default function RemindersPage() {
                   <label className="font-medium">Due Date:</label>
                   <p>
                     {selectedReminder.due_date
-                      ? formatDistanceToNow(
-                          new Date(selectedReminder.due_date),
-                          { addSuffix: true },
-                        )
+                      ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true })
                       : "—"}
                   </p>
                 </div>

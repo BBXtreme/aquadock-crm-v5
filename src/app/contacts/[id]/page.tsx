@@ -6,10 +6,13 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import CompanyEditForm from "@/components/features/CompanyEditForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,9 +26,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
-import { Building, Edit, Trash, User, ArrowLeft } from "lucide-react";
-import CompanyEditForm from "@/components/features/CompanyEditForm";
-import { useQuery } from "@tanstack/react-query";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -140,7 +140,7 @@ export default function ContactDetailPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get('edit') === 'true') {
+    if (searchParams.get("edit") === "true") {
       setEditDialog(true);
     }
   }, []);
@@ -160,7 +160,7 @@ export default function ContactDetailPage() {
   const handleSaveNotes = async () => {
     try {
       const supabase = createClient();
-      await updateContact(contact!.id, { notes: notesValue }, supabase);
+      await updateContact(contact?.id, { notes: notesValue }, supabase);
       toast.success("Notes updated");
       setEditingNotes(false);
       _fetchData();
@@ -255,12 +255,14 @@ export default function ContactDetailPage() {
               checked={contact.is_primary}
               onCheckedChange={(checked) => {
                 const supabase = createClient();
-                updateContact(contact.id, { is_primary: checked }, supabase).then(() => {
-                  toast.success("Primary contact updated");
-                  _fetchData();
-                }).catch((err) => {
-                  toast.error("Update failed", { description: err.message });
-                });
+                updateContact(contact.id, { is_primary: checked }, supabase)
+                  .then(() => {
+                    toast.success("Primary contact updated");
+                    _fetchData();
+                  })
+                  .catch((err) => {
+                    toast.error("Update failed", { description: err.message });
+                  });
               }}
             />
             <label className="text-sm font-medium text-gray-700">Primary Contact</label>
@@ -344,8 +346,19 @@ export default function ContactDetailPage() {
                   <div>
                     <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
                     <div className="flex gap-2 mt-2">
-                      <Button size="sm" onClick={handleSaveNotes}>Save</Button>
-                      <Button size="sm" variant="outline" onClick={() => { setEditingNotes(false); setNotesValue(contact.notes || ""); }}>Cancel</Button>
+                      <Button size="sm" onClick={handleSaveNotes}>
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingNotes(false);
+                          setNotesValue(contact.notes || "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -365,15 +378,20 @@ export default function ContactDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Select onValueChange={(value) => {
-              const supabase = createClient();
-              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase).then(() => {
-                toast.success("Company updated");
-                _fetchData();
-              }).catch((err) => {
-                toast.error("Update failed", { description: err.message });
-              });
-            }} defaultValue={contact.company_id || "none"}>
+            <Select
+              onValueChange={(value) => {
+                const supabase = createClient();
+                updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
+                  .then(() => {
+                    toast.success("Company updated");
+                    _fetchData();
+                  })
+                  .catch((err) => {
+                    toast.error("Update failed", { description: err.message });
+                  });
+              }}
+              defaultValue={contact.company_id || "none"}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
@@ -591,15 +609,10 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Primary Contact
-                </FormLabel>
+                <FormLabel>Primary Contact</FormLabel>
               </div>
             </FormItem>
           )}

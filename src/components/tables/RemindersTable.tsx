@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
-import { formatDistanceToNow, isAfter } from "date-fns";
+
 import Link from "next/link";
+
 import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Columns,
-  Edit,
-  Eye,
-  Trash,
-} from "lucide-react";
+  type ColumnDef,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { formatDistanceToNow, isAfter } from "date-fns";
+import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Edit, Eye, Trash } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,23 +27,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 
 const columnHelper = createColumnHelper<any>();
 
@@ -70,10 +58,7 @@ export const reminderColumns = (
   columnHelper.accessor("title", {
     header: "Title",
     cell: (info) => (
-      <button
-        className="text-blue-600 hover:underline"
-        onClick={() => handleEdit(info.row.original)}
-      >
+      <button className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
         {info.getValue()}
       </button>
     ),
@@ -82,21 +67,15 @@ export const reminderColumns = (
     id: "company",
     header: "Company",
     cell: (info) => (
-      <Link
-        href={`/companies/${info.row.original.company_id}`}
-        className="text-blue-600 hover:underline"
-      >
+      <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
         {info.getValue()}
-    </Link>
+      </Link>
     ),
   }),
   columnHelper.accessor("due_date", {
     header: "Due Date",
     cell: (info) => {
-      const isOverdue = isAfter(
-        new Date(),
-        new Date(info.getValue() as string),
-      );
+      const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
       return (
         <span className={isOverdue ? "text-rose-500" : ""}>
           {formatDistanceToNow(new Date(info.getValue() as string), {
@@ -125,13 +104,7 @@ export const reminderColumns = (
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => (
-      <Badge
-        className={
-          info.getValue() === "open"
-            ? "bg-emerald-600 text-white"
-            : "bg-zinc-500 text-white"
-        }
-      >
+      <Badge className={info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
         {info.getValue()}
       </Badge>
     ),
@@ -145,25 +118,13 @@ export const reminderColumns = (
     header: "Actions",
     cell: (info) => (
       <div className="flex space-x-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleView(info.row.original)}
-        >
+        <Button variant="ghost" size="sm" onClick={() => handleView(info.row.original)}>
           <Eye className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(info.row.original)}
-        >
+        <Button variant="ghost" size="sm" onClick={() => handleEdit(info.row.original)}>
           <Edit className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleDelete(info.row.original.id)}
-        >
+        <Button variant="ghost" size="sm" onClick={() => handleDelete(info.row.original.id)}>
           <Trash className="h-4 w-4" />
         </Button>
       </div>
@@ -219,9 +180,7 @@ export default function RemindersTable({
           <Input
             placeholder="Search reminders..."
             value={globalFilter ?? ""}
-            onChange={(event) =>
-              onGlobalFilterChange?.(String(event.target.value))
-            }
+            onChange={(event) => onGlobalFilterChange?.(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -283,17 +242,13 @@ export default function RemindersTable({
                       <div
                         className={cn(
                           "flex items-center space-x-2 select-none",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === "asc" && (
-                          <ArrowUp className="h-4 w-4" />
-                        )}
-                        {header.column.getIsSorted() === "desc" && (
-                          <ArrowDown className="h-4 w-4" />
-                        )}
+                        {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
+                        {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
                         {header.column.getIsSorted() === false && header.column.getCanSort() && (
                           <ArrowUpDown className="h-4 w-4" />
                         )}
@@ -309,21 +264,13 @@ export default function RemindersTable({
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -333,8 +280,8 @@ export default function RemindersTable({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-muted-foreground text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+          selected.
         </div>
         <div className="space-x-2">
           <Button
@@ -345,12 +292,7 @@ export default function RemindersTable({
           >
             Previous
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>

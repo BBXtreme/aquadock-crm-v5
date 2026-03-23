@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Eye, EyeOff, Mail, Palette, Send, Settings, Shield } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import * as z from "zod";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUserId(user?.id || null);
     };
     getUser();
@@ -52,7 +54,7 @@ export default function SettingsPage() {
 
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],
-    queryFn: () => userId ? getUserSettings(userId) : Promise.resolve([]),
+    queryFn: () => (userId ? getUserSettings(userId) : Promise.resolve([])),
     enabled: !!userId,
   });
 
@@ -71,7 +73,7 @@ export default function SettingsPage() {
     if (settings) {
       form.reset({
         host: (settings.find((s) => s.key === "smtp_host")?.value as string) || "",
-        port: parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587"),
+        port: parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587", 10),
         username: (settings.find((s) => s.key === "smtp_username")?.value as string) || "",
         password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
         senderName: (settings.find((s) => s.key === "smtp_sender_name")?.value as string) || "",
@@ -274,7 +276,7 @@ export default function SettingsPage() {
                             <Input
                               type="number"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                              onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
                             />
                           </FormControl>
                           <FormMessage />

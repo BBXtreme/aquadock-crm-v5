@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -29,8 +30,8 @@ export default function Header() {
       setIsScrolled(window.scrollY > 0);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Calculate start and end of current week (Monday to Sunday)
@@ -72,7 +73,9 @@ export default function Header() {
   });
 
   return (
-    <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
+    <header
+      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? "shadow-md" : "shadow-sm"}`}
+    >
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
@@ -110,13 +113,16 @@ export default function Header() {
           <Link href="/reminders?status=open">
             <Button variant="ghost" className="relative">
               <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
-                {openRemindersCount}
-              </Badge>
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">{openRemindersCount}</Badge>
             </Button>
           </Link>
         )}
-        <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Toggle theme">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
+        >
           <Sun className="h-4 w-4 rotate-0 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           <Moon className="absolute h-4 w-4 rotate-90 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <span className="sr-only">Toggle theme</span>

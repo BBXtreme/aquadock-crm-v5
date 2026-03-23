@@ -1,7 +1,8 @@
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 function Accordion({ type, collapsible = false, className, children, ...props }: any) {
   return (
@@ -16,9 +17,7 @@ function AccordionItem({ className, children, ...props }: any) {
 
   return (
     <div className={cn("border-b", className)} {...props}>
-      {React.Children.map(children, (child) =>
-        React.cloneElement(child as React.ReactElement, { open, setOpen })
-      )}
+      {React.Children.map(children, (child) => React.cloneElement(child as React.ReactElement, { open, setOpen }))}
     </div>
   );
 }
@@ -34,24 +33,17 @@ function AccordionTrigger({ className, children, open, setOpen, ...props }: any)
       {...props}
     >
       {children}
-      <ChevronDownIcon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      <ChevronDownIcon className={`h-4 w-4 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
     </button>
   );
 }
 
 function AccordionContent({ className, children, open, setOpen, ...props }: any) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden text-sm transition-all",
-        open ? "max-h-96" : "max-h-0",
-        className,
-      )}
-      {...props}
-    >
+    <div className={cn("overflow-hidden text-sm transition-all", open ? "max-h-96" : "max-h-0", className)} {...props}>
       <div className="pb-4 pt-0">{children}</div>
     </div>
   );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

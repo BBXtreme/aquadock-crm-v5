@@ -18,7 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-gradient-to-b from-background to-muted/30`}>
+      <body
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-gradient-to-b from-background to-muted/30`}
+      >
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
 import nodemailer from "nodemailer";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -7,7 +8,10 @@ import { getUserSettings } from "@/lib/supabase/services/user-settings";
 export async function POST(request: NextRequest) {
   try {
     const supabase = createServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -22,7 +26,7 @@ export async function POST(request: NextRequest) {
     const settings = await getUserSettings(user.id);
 
     const smtpHost = settings.find((s) => s.key === "smtp_host")?.value as string;
-    const smtpPort = parseInt(settings.find((s) => s.key === "smtp_port")?.value as string || "587");
+    const smtpPort = parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587", 10);
     const smtpUsername = settings.find((s) => s.key === "smtp_username")?.value as string;
     const smtpPassword = settings.find((s) => s.key === "smtp_password")?.value as string;
     const smtpSenderName = settings.find((s) => s.key === "smtp_sender_name")?.value as string;

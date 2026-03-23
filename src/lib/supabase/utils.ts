@@ -55,7 +55,7 @@ export function handleSupabaseError(error: unknown, context: string): Error {
     errorMessage = "An unknown database error occurred";
   }
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     toast.error(`Error in ${context}`, { description: errorMessage });
   }
 
