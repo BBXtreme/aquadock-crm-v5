@@ -219,28 +219,28 @@ export default function CompaniesPage() {
               title="Gesamt Firmen"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
               icon={<Building className="h-5 w-5 text-muted-foreground" />}
-              className="border-l-4 border-primary"
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+12% from last month"
             />
             <StatCard
               title="Leads"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
               icon={<Users className="h-5 w-5 text-muted-foreground" />}
-              className="border-l-4 border-green-500"
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+8% from last month"
             />
             <StatCard
               title="Gewonnene Deals"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
               icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
-              className="border-l-4 border-amber-500"
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+15% from last month"
             />
             <StatCard
               title="Gesamtwert"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
               icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
-              className="border-l-4 border-blue-500"
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+22% from last month"
             />
           </div>
