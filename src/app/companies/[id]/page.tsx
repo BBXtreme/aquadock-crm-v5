@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -27,7 +27,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany } from "@/lib/supabase/services/companies";
-import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/types";
+import type { Company } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -162,7 +162,11 @@ export default function CompanyDetailPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: company, isLoading, error } = useQuery({
+  const {
+    data: company,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["company", id],
     queryFn: async () => {
       const supabase = createClient();
@@ -385,9 +389,9 @@ export default function CompanyDetailPage() {
             {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
           </div>
           <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setPreselectedCompanyId(company.id);
                 setTimelineDialogOpen(true);
@@ -952,10 +956,13 @@ export default function CompanyDetailPage() {
         </Dialog>
 
         {/* Add Timeline Dialog */}
-        <Dialog open={timelineDialogOpen} onOpenChange={(open) => {
-          setTimelineDialogOpen(open);
-          if (!open) setPreselectedCompanyId(null);
-        }}>
+        <Dialog
+          open={timelineDialogOpen}
+          onOpenChange={(open) => {
+            setTimelineDialogOpen(open);
+            if (!open) setPreselectedCompanyId(null);
+          }}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
