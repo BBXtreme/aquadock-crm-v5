@@ -11,6 +11,7 @@ import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Tras
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
@@ -166,6 +167,28 @@ export default function CompanyDetailPage() {
   const [editCRM, setEditCRM] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
+
+  const createTimelineMutation = useMutation({
+    mutationFn: async (values: any) => {
+      const res = await fetch("/api/timeline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...values,
+          company_id: preselectedCompanyId || values.company_id,
+          user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      setTimelineDialogOpen(false);
+    },
+  });
 
   const fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -1002,14 +1025,8 @@ export default function CompanyDetailPage() {
               <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
             </DialogHeader>
             <TimelineEntryForm
-              onSubmit={async (values) => {
-                // Reuse oder neue Mutation – vorerst nur Placeholder
-                console.log("Create timeline for company", preselectedCompanyId, values);
-                // TODO: createTimelineMutation.mutateAsync(values)
-                setTimelineDialogOpen(false);
-                toast.success("Timeline-Eintrag erstellt");
-              }}
-              isSubmitting={false} // später Mutation.isPending
+              onSubmit={createTimelineMutation.mutate}
+              isSubmitting={createTimelineMutation.isPending}
               companies={[]} // vorerst leer – preselect übernimmt
               contacts={[]}
               editEntry={null}
