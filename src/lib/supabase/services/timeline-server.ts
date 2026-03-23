@@ -1,4 +1,4 @@
-import { createServerClient } from "../server";
+import { createServerSupabaseClient } from "../server";
 import type { TimelineEntry, TimelineEntryInsert } from "../types";
 import { handleSupabaseError } from "../utils";
 
@@ -6,7 +6,7 @@ import { handleSupabaseError } from "../utils";
  * Get all timeline entries for a specific user
  */
 export async function getAllTimelineForUser(userId: string): Promise<TimelineEntry[]> {
-  const supabase = createServerClient();
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
     .select(`
@@ -25,7 +25,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
  * Create a new timeline entry
  */
 export async function createTimelineEntry(values: TimelineEntryInsert & { user_id: string }): Promise<TimelineEntry> {
-  const supabase = createServerClient();
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
     .insert(values)
@@ -43,7 +43,7 @@ export async function createTimelineEntry(values: TimelineEntryInsert & { user_i
  * Delete a timeline entry
  */
 export async function deleteTimelineEntry(id: string): Promise<void> {
-  const supabase = createServerClient();
+  const supabase = await createServerSupabaseClient();
   const { error } = await supabase
     .from("timeline")
     .delete()
