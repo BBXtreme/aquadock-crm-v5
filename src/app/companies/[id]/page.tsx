@@ -5,13 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
@@ -762,7 +760,8 @@ export default function CompanyDetailPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Contact
               </Button>
-            </CardHeader>
+            </div>
+          </CardHeader>
           <CardContent>
             {contacts.length === 0 ? (
               <p className="text-gray-500">No contacts linked to this company.</p>
