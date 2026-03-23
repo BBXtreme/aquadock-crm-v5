@@ -43,11 +43,16 @@ export default function TimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    if (error && error.message.includes("Unauthorized")) {
-      router.push("/login");
-    }
-  }, [error, router]);
+  /*
+    TEMPORARY BYPASS FOR DEVELOPMENT
+    Timeline page redirects to /login because auth is not fully implemented.
+    Remove this bypass after implementing protected routes / middleware / session provider (planned v5.2)
+  */
+  // useEffect(() => {
+  //   if (error && error.message.includes("Unauthorized")) {
+  //     router.push("/login");
+  //   }
+  // }, [error, router]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
