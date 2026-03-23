@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,7 +10,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
+  isCollapsed: boolean;
   isMobile: boolean;
+  onToggle: () => void;
 }
 
 const navItems = [
@@ -23,14 +24,13 @@ const navItems = [
   { href: "/mass-email", label: "Mass Email", icon: Mail },
 ];
 
-export default function Sidebar({ isMobile }: SidebarProps) {
+export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="p-4">
-        <Button variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)} className="mb-4">
+        <Button variant="ghost" onClick={onToggle} className="mb-4">
           <Menu className="h-4 w-4" />
         </Button>
       </div>
@@ -67,6 +67,6 @@ export default function Sidebar({ isMobile }: SidebarProps) {
   }
 
   return (
-    <aside className={`bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}>{sidebarContent}</aside>
+    <aside className={`fixed left-0 top-0 h-screen z-40 bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}>{sidebarContent}</aside>
   );
 }
