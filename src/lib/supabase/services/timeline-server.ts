@@ -27,7 +27,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
 export async function createTimelineEntry(
   values: TimelineEntryInsert & { user_id: string }
 ): Promise<TimelineEntry> {
-  console.log("Creating timeline entry with values:", values);
+  console.log("[createTimelineEntry] Insert values:", values);
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
@@ -40,7 +40,13 @@ export async function createTimelineEntry(
     .single();
 
   if (error) {
-    console.error("Supabase error in createTimelineEntry:", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    console.error("[createTimelineEntry] Supabase insert failed:", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      valuesAttempted: values
+    });
     throw handleSupabaseError(error);
   }
   return data;
