@@ -4,7 +4,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building, DollarSign, RefreshCw, Trophy, Users } from "lucide-react";
+import { Anchor, Building2, DollarSign, Hotel, RefreshCw, Sailboat, Ship, Tent, Trophy, UserCheck, UserPlus, Users, Utensils } from "lucide-react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -45,6 +45,22 @@ export default function CompaniesPage() {
   const landOptions = [
     "Deutschland", "Österreich", "Schweiz", "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien", "Dänemark", "Schweden", "Norwegen", "Polen", "Ungarn", "Griechenland", "Portugal", "Großbritannien"
   ];
+
+  const kategorieIcons = {
+    Restaurant: Utensils,
+    Hotel: Building2,
+    Resort: Hotel,
+    Camping: Tent,
+    Marina: Anchor,
+    Segelschule: Sailboat,
+    Segelverein: Anchor,
+    Bootsverleih: Ship,
+    Neukunde: UserPlus,
+    Bestandskunde: UserCheck,
+    Interessent: Users,
+    Partner: Users,
+    Sonstige: null,
+  };
 
   const toggleFilter = (group: string, value: string) => {
     setActiveFilters(prev => ({
@@ -239,17 +255,21 @@ export default function CompaniesPage() {
                       <div>
                         <h4>Kategorie</h4>
                         <div className="flex flex-wrap gap-2">
-                          {kategorieOptions.map(k => (
-                            <Button
-                              key={k}
-                              variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
-                              size="sm"
-                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-                              onClick={() => toggleFilter('kategorie', k)}
-                            >
-                              {k}
-                            </Button>
-                          ))}
+                          {kategorieOptions.map(k => {
+                            const Icon = kategorieIcons[k.charAt(0).toUpperCase() + k.slice(1)];
+                            return (
+                              <Button
+                                key={k}
+                                variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
+                                size="sm"
+                                className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                                onClick={() => toggleFilter('kategorie', k)}
+                              >
+                                {Icon ? <Icon className="mr-1 h-3 w-3" /> : null}
+                                {k}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                       <div>
