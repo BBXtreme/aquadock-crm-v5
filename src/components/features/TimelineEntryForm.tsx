@@ -23,6 +23,7 @@ const formSchema = z.object({
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
   company_id: z.string().optional(),
+  contact_id: z.string().uuid().nullable().optional(),
   user_name: z.string().min(1, "User name is required"),
 });
 
@@ -32,13 +33,14 @@ interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
   companies: Company[];
+  contacts: { id: string; name: string; email?: string | null }[];
   editEntry?: TimelineEntry | null;
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, editEntry }: Props) {
+export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", user_name: "" },
+    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: "", user_name: "" },
   });
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, e
         activity_type: editEntry.activity_type,
         user_name: editEntry.user_name,
         company_id: editEntry.company_id || "",
+        contact_id: editEntry.contact_id || "",
       });
     } else {
       form.reset();
@@ -138,6 +141,31 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, e
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.firmenname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="contact_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contact (optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select contact" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {contacts?.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.email ? `(${c.email})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

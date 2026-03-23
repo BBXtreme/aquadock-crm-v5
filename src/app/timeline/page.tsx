@@ -64,6 +64,12 @@ export default function TimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // TODO: fetch real contacts when needed
+  const contacts = [
+    { id: "1", name: "John Doe", email: "john@example.com" },
+    { id: "2", name: "Jane Smith", email: "jane@example.com" },
+  ];
+
   /*
     TEMPORARY BYPASS FOR DEVELOPMENT
     Timeline page redirects to /login because auth is not fully implemented.
@@ -258,6 +264,7 @@ export default function TimelinePage() {
                 }}
                 isSubmitting={createMutation.isPending || updateMutation.isPending}
                 companies={companies}
+                contacts={contacts}
                 editEntry={editEntry}
               />
             </DialogContent>
