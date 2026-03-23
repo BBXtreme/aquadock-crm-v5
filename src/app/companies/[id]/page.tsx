@@ -942,20 +942,15 @@ export default function CompanyDetailPage() {
         <Dialog open={addReminderDialog} onOpenChange={setAddReminderDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Reminder</DialogTitle>
+              <DialogTitle>Add Reminder for {company.firmenname}</DialogTitle>
             </DialogHeader>
-            <div>
-              <p>Feature not implemented yet. Please use the Reminders page to add a new reminder.</p>
-              <Button
-                onClick={() => {
-                  setAddReminderDialog(false);
-                  router.push("/reminders");
-                }}
-                className="mt-4"
-              >
-                Go to Reminders
-              </Button>
-            </div>
+            <ReminderCreateForm 
+              companyId={company.id} 
+              onSuccess={() => {
+                setAddReminderDialog(false);
+                fetchData();
+              }} 
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -1425,6 +1420,27 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
 }
 
 function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
+  const contactSchema = z.object({
+    vorname: z.string().min(1, "Vorname is required"),
+    nachname: z.string().min(1, "Nachname is required"),
+    anrede: z.string().optional(),
+    position: z.string().optional(),
+    email: z.string().email().optional().or(z.literal("")),
+    telefon: z.string().optional(),
+    mobil: z.string().optional(),
+    durchwahl: z.string().optional(),
+    notes: z.string().optional(),
+    company_id: z.string().optional(),
+    is_primary: z.boolean().optional(),
+  });
+
+  const anredeOptions = [
+    { value: "Herr", label: "Herr" },
+    { value: "Frau", label: "Frau" },
+    { value: "Dr.", label: "Dr." },
+    { value: "Prof.", label: "Prof." },
+  ];
+
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
