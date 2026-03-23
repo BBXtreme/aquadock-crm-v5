@@ -76,6 +76,7 @@ export default function RemindersPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [filterType, setFilterType] = useState<"all" | "open" | "overdue">("all");
 
   const queryClient = useQueryClient();
 
@@ -141,7 +142,18 @@ export default function RemindersPage() {
   }, []);
 
   const allReminders = reminders || [];
-  const filteredReminders = allReminders.filter((r) => r.status === "open");
+  const filteredReminders = useMemo(() => {
+    if (filterType === "all") return allReminders;
+    return allReminders.filter(r => {
+      if (filterType === "open") {
+        return r.status === "open" && isAfter(new Date(r.due_date), new Date());
+      }
+      if (filterType === "overdue") {
+        return r.status === "open" && !isAfter(new Date(r.due_date), new Date());
+      }
+      return true;
+    });
+  }, [allReminders, filterType]);
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
   const overdue = allReminders.filter(
@@ -282,7 +294,7 @@ export default function RemindersPage() {
   );
 
   const table = useReactTable({
-    data: reminders || [],
+    data: filteredReminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -428,9 +440,9 @@ export default function RemindersPage() {
         </div>
 
         <div className="flex space-x-2">
-          <Button variant="outline">All</Button>
-          <Button variant="outline">Open</Button>
-          <Button variant="outline">Overdue</Button>
+          <Button variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>All</Button>
+          <Button variant={filterType === "open" ? "default" : "outline"} onClick={() => setFilterType("open")}>Open</Button>
+          <Button variant={filterType === "overdue" ? "default" : "outline"} onClick={() => setFilterType("overdue")}>Overdue</Button>
           <Button variant="outline">My Tasks</Button>
         </div>
 
