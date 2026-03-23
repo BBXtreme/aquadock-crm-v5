@@ -334,9 +334,8 @@ export default function RemindersPage() {
             {loading ? (
               <div className="space-y-2">
                 <Skeleton className="h-8 w-full" />
-                {/* biome-ignore lint/correctness/useJsxKeyInIterable: static loading placeholders */}
-                {Array.from({ length: 5 }).map(() => (
-                  <Skeleton className="h-12 w-full" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             ) : (
@@ -456,9 +455,8 @@ export default function RemindersPage() {
               <DialogHeader>
                 <DialogTitle>Edit Reminder</DialogTitle>
               </DialogHeader>
-              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-            </DialogContent>
-          </Dialog>
+            <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+          </DialogContent>
         )}
       </div>
     </AppLayout>
