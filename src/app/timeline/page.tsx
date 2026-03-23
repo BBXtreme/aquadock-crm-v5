@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, Clock, Edit, Trash, User } from "lucide-react";
+import { Building, Clock, Edit, Trash, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -262,7 +262,7 @@ export default function TimelinePage() {
                         </div>
                         {entry.company_id && (
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
+                            <Building className="h-4 w-4" />
                             Company: {entry.companies?.firmenname || "Unknown"}
                           </div>
                         )}
