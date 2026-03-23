@@ -18,6 +18,9 @@ import {
 } from "@tanstack/react-table";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Bell,
   Calendar,
   Columns,
@@ -67,6 +70,7 @@ import {
   deleteReminder,
   getReminders,
 } from "@/lib/supabase/services/reminders";
+import { cn } from "@/lib/utils";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -186,6 +190,7 @@ export default function RemindersPage() {
             aria-label="Select row"
           />
         ),
+        enableSorting: false,
       }),
       columnHelper.accessor("title", {
         header: "Title",
@@ -288,6 +293,7 @@ export default function RemindersPage() {
             </Button>
           </div>
         ),
+        enableSorting: false,
       }),
     ],
     [],
@@ -519,9 +525,25 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext(),
+                                {header.isPlaceholder ? null : (
+                                  <div
+                                    className={cn(
+                                      "flex items-center space-x-2 select-none",
+                                      header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                                    )}
+                                    onClick={header.column.getToggleSortingHandler()}
+                                  >
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                    {header.column.getIsSorted() === "asc" && (
+                                      <ArrowUp className="h-4 w-4" />
+                                    )}
+                                    {header.column.getIsSorted() === "desc" && (
+                                      <ArrowDown className="h-4 w-4" />
+                                    )}
+                                    {header.column.getIsSorted() === false && header.column.getCanSort() && (
+                                      <ArrowUpDown className="h-4 w-4" />
+                                    )}
+                                  </div>
                                 )}
                               </TableHead>
                             ))}
