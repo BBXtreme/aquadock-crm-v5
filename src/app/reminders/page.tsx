@@ -16,7 +16,16 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, Bell, Calendar, Edit, Eye, RefreshCw, Star, Trash } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  Calendar,
+  Edit,
+  Eye,
+  RefreshCw,
+  Star,
+  Trash,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
@@ -27,13 +36,30 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
+import {
+  deleteReminder,
+  getReminders,
+} from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -46,7 +72,13 @@ export default function RemindersPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: reminders, isLoading, isError, error, refetch } = useQuery({
+  const {
+    data: reminders,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
@@ -65,12 +97,16 @@ export default function RemindersPage() {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+    onError: (err) =>
+      toast.error("Deletion failed", { description: err.message }),
   });
 
-  const handleDelete = useCallback((id: string) => {
-    if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
-  }, [deleteMutation]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
+    },
+    [deleteMutation],
+  );
 
   const handleView = useCallback((reminder: any) => {
     setSelectedReminder(reminder);
@@ -85,120 +121,141 @@ export default function RemindersPage() {
   const filteredReminders = allReminders.filter((r) => r.status === "open");
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
-  const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
-  const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
-  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
+  const overdue = allReminders.filter(
+    (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
+  ).length;
+  const thisWeek = allReminders.filter(
+    (r) => r.status === "open" && isThisWeek(new Date(r.due_date)),
+  ).length;
+  const highPriority = allReminders.filter(
+    (r) => r.status === "open" && r.priority === "high",
+  ).length;
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns = useMemo(() => [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-    }),
-    columnHelper.accessor("title", {
-      header: "Title",
-      cell: (info) => (
-        <button
-          className="text-blue-600 hover:underline"
-          onClick={() => handleView(info.row.original)}
-        >
-          {info.getValue()}
-        </button>
-      ),
-    }),
-    columnHelper.accessor("companies.firmenname", {
-      header: "Company",
-      cell: (info) => (
-        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-          {info.getValue()}
-        </Link>
-      ),
-    }),
-    columnHelper.accessor("due_date", {
-      header: "Due Date",
-      cell: (info) => {
-        const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
-        return (
-          <span className={isOverdue ? "text-rose-500" : ""}>
-            {formatDistanceToNow(new Date(info.getValue() as string), {
-              addSuffix: true,
-            })}
-          </span>
-        );
-      },
-    }),
-    columnHelper.accessor("priority", {
-      header: "Priority",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "hoch"
-              ? "bg-orange-500 text-white"
-              : info.getValue() === "normal"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-500 text-white"
-          }
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-          }
-        >
-          {info.getValue()}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("assigned_to", {
-      header: "Assigned To",
-      cell: (info) => info.getValue(),
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
+  const columns = useMemo(
+    () => [
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+      }),
+      columnHelper.accessor("title", {
+        header: "Title",
+        cell: (info) => (
+          <button
+            className="text-blue-600 hover:underline"
             onClick={() => handleView(info.row.original)}
           >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(info.row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(info.row.original.id)}
+            {info.getValue()}
+          </button>
+        ),
+      }),
+      columnHelper.accessor("companies.firmenname", {
+        header: "Company",
+        cell: (info) => (
+          <Link
+            href={`/companies/${info.row.original.company_id}`}
+            className="text-blue-600 hover:underline"
           >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    }),
-  ], []);
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("due_date", {
+        header: "Due Date",
+        cell: (info) => {
+          const isOverdue = isAfter(
+            new Date(),
+            new Date(info.getValue() as string),
+          );
+          return (
+            <span className={isOverdue ? "text-rose-500" : ""}>
+              {formatDistanceToNow(new Date(info.getValue() as string), {
+                addSuffix: true,
+              })}
+            </span>
+          );
+        },
+      }),
+      columnHelper.accessor("priority", {
+        header: "Priority",
+        cell: (info) => (
+          <Badge
+            className={
+              info.getValue() === "hoch"
+                ? "bg-orange-500 text-white"
+                : info.getValue() === "normal"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-500 text-white"
+            }
+          >
+            {info.getValue()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        cell: (info) => (
+          <Badge
+            className={
+              info.getValue() === "open"
+                ? "bg-emerald-600 text-white"
+                : "bg-zinc-500 text-white"
+            }
+          >
+            {info.getValue()}
+          </Badge>
+        ),
+      }),
+      columnHelper.accessor("assigned_to", {
+        header: "Assigned To",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: (info) => (
+          <div className="flex space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleView(info.row.original)}
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(info.row.original)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(info.row.original.id)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      }),
+    ],
+    [],
+  );
 
   const table = useReactTable({
     data: reminders || [],
@@ -215,15 +272,17 @@ export default function RemindersPage() {
 
   if (isLoading) return <SkeletonList count={10} />;
 
-  if (isError) return (
-    <Alert variant="destructive">
-      <AlertTitle>Error loading reminders</AlertTitle>
-      <AlertDescription>{error?.message}</AlertDescription>
-      <Button onClick={() => refetch()}>Retry</Button>
-    </Alert>
-  );
+  if (isError)
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Error loading reminders</AlertTitle>
+        <AlertDescription>{error?.message}</AlertDescription>
+        <Button onClick={() => refetch()}>Retry</Button>
+      </Alert>
+    );
 
-  if (table.getRowModel().rows.length === 0) return <Alert>No reminders found</Alert>;
+  if (table.getRowModel().rows.length === 0)
+    return <Alert>No reminders found</Alert>;
 
   return (
     <AppLayout>
@@ -249,20 +308,32 @@ export default function RemindersPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
+              <CardTitle className="font-medium text-sm">
+                Open Reminders
+              </CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{openReminders}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
+              <CardTitle className="font-medium text-sm">
+                Overdue Today
+              </CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{overdue}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -271,16 +342,26 @@ export default function RemindersPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{thisWeek}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">High Priority</CardTitle>
+              <CardTitle className="font-medium text-sm">
+                High Priority
+              </CardTitle>
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+              {isLoading ? (
+                <Skeleton className="h-8 w-16" />
+              ) : (
+                <div className="font-bold text-2xl">{highPriority}</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -299,7 +380,9 @@ export default function RemindersPage() {
             ) : isError ? (
               <Alert variant="destructive">
                 <AlertTitle>Error loading reminders</AlertTitle>
-                <AlertDescription>{error?.message || "Unknown error"}</AlertDescription>
+                <AlertDescription>
+                  {error?.message || "Unknown error"}
+                </AlertDescription>
                 <Button onClick={() => refetch()}>Retry</Button>
               </Alert>
             ) : table.getRowModel().rows.length === 0 ? (
@@ -310,7 +393,9 @@ export default function RemindersPage() {
                   <Input
                     placeholder="Search reminders..."
                     value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(String(event.target.value))}
+                    onChange={(event) =>
+                      setGlobalFilter(String(event.target.value))
+                    }
                     className="max-w-sm"
                   />
                   {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -327,8 +412,12 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : header.columnDef.header ? (
-                                  flexRender(header.columnDef.header, header.getContext())
+                                {header.isPlaceholder ? null : header.columnDef
+                                    .header ? (
+                                  flexRender(
+                                    header.columnDef.header,
+                                    header.getContext(),
+                                  )
                                 ) : (
                                   <span>—</span>
                                 )}
@@ -342,13 +431,21 @@ export default function RemindersPage() {
                           table.getRowModel().rows.map((row) => (
                             <TableRow key={row.id}>
                               {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>{flexRender(cell.columnDef.cell, cell.getContext())}</TableCell>
+                                <TableCell key={cell.id}>
+                                  {flexRender(
+                                    cell.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </TableCell>
                               ))}
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={columns.length} className="h-24 text-center">
+                            <TableCell
+                              colSpan={columns.length}
+                              className="h-24 text-center"
+                            >
                               No results.
                             </TableCell>
                           </TableRow>
@@ -359,8 +456,8 @@ export default function RemindersPage() {
                 )}
                 <div className="flex items-center justify-end space-x-2 py-4">
                   <div className="flex-1 text-muted-foreground text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-                    selected.
+                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                    {table.getFilteredRowModel().rows.length} row(s) selected.
                   </div>
                   <div className="space-x-2">
                     <Button
@@ -371,7 +468,12 @@ export default function RemindersPage() {
                     >
                       Previous
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                    >
                       Next
                     </Button>
                   </div>
@@ -402,7 +504,14 @@ export default function RemindersPage() {
                 </div>
                 <div>
                   <label className="font-medium">Due Date:</label>
-                  <p>{selectedReminder.due_date ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true }) : "—"}</p>
+                  <p>
+                    {selectedReminder.due_date
+                      ? formatDistanceToNow(
+                          new Date(selectedReminder.due_date),
+                          { addSuffix: true },
+                        )
+                      : "—"}
+                  </p>
                 </div>
                 <div>
                   <label className="font-medium">Priority:</label>
@@ -421,12 +530,18 @@ export default function RemindersPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
+        <Dialog
+          open={!!editReminder}
+          onOpenChange={() => setEditReminder(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Reminder</DialogTitle>
             </DialogHeader>
-            <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+            <ReminderEditForm
+              reminder={editReminder}
+              onSuccess={() => setEditReminder(null)}
+            />
           </DialogContent>
         </Dialog>
       </div>
