@@ -21,6 +21,7 @@ const formSchema = z.object({
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
   company_id: z.string().optional(),
+  contact_id: z.string().uuid().nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -28,12 +29,13 @@ type FormValues = z.infer<typeof formSchema>;
 interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
+  contacts: { id: string; vorname: string; nachname: string; email?: string; telefon?: string; position?: string }[];
 }
 
-export default function TimelineCreateForm({ onSubmit, isSubmitting }: Props) {
+export default function TimelineCreateForm({ onSubmit, isSubmitting, contacts }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "" },
+    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none" },
   });
 
   return (
@@ -99,6 +101,36 @@ export default function TimelineCreateForm({ onSubmit, isSubmitting }: Props) {
               <FormControl>
                 <Input placeholder="Enter company ID" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="contact_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Contact (optional)</FormLabel>
+              <Select
+                onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                value={field.value ?? "none"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kein Kontakt ausgewählt" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Kein Kontakt</SelectItem>
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.vorname} {c.nachname}
+                      {c.position ? ` (${c.position})` : ""}
+                      {c.email ? ` – ${c.email}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

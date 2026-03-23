@@ -23,6 +23,7 @@ import {
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
+import TimelineCreateForm from "@/components/features/TimelineCreateForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
@@ -282,19 +283,25 @@ export default function TimelinePage() {
                   {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
                 </DialogDescription>
               </DialogHeader>
-              <TimelineEntryForm
-                onSubmit={(values) => {
-                  if (editEntry) {
+              {editEntry ? (
+                <TimelineEntryForm
+                  onSubmit={(values) => {
                     updateMutation.mutate({ id: editEntry.id, values });
-                  } else {
+                  }}
+                  isSubmitting={updateMutation.isPending}
+                  companies={companies}
+                  contacts={contacts}
+                  editEntry={editEntry}
+                />
+              ) : (
+                <TimelineCreateForm
+                  onSubmit={(values) => {
                     createMutation.mutate(values);
-                  }
-                }}
-                isSubmitting={createMutation.isPending}
-                companies={companies}
-                contacts={contacts}
-                editEntry={editEntry}
-              />
+                  }}
+                  isSubmitting={createMutation.isPending}
+                  contacts={contacts}
+                />
+              )}
             </DialogContent>
           </Dialog>
         </div>
