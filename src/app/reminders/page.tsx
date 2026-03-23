@@ -41,6 +41,9 @@ export default function RemindersPage() {
   const [editReminder, setEditReminder] = useState<any>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
+  const [columnVisibility, setColumnVisibility] = useState({});
+
+  console.log("RemindersPage render", { remindersLength: reminders.length, rowSelection });
 
   const queryClient = useQueryClient();
 
@@ -208,9 +211,11 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
     state: {
       globalFilter,
+      columnVisibility,
       rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
   });
