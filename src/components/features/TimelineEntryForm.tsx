@@ -19,12 +19,21 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Company, TimelineEntry } from "@/lib/supabase/types";
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Titel ist erforderlich"),
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
-  company_id: z.string().uuid().nullable().optional(),
-  contact_id: z.string().uuid().nullable().optional(),
-  user_name: z.string().min(1, "User name is required"),
+  
+  company_id: z.union([
+    z.literal("none"),
+    z.string().uuid()
+  ]).transform(val => val === "none" ? null : val).optional(),
+  
+  contact_id: z.union([
+    z.literal("none"),
+    z.string().uuid()
+  ]).transform(val => val === "none" ? null : val).optional(),
+  
+  user_name: z.string().min(1, "Benutzername ist erforderlich"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
