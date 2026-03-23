@@ -42,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { createCompany, deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import type { Company, CompanyInsert } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
@@ -246,21 +247,24 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mt-2 mb-4">
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(activeFilters).map(([group, values]) => 
-                      values.map(v => (
-                        <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
-                          {v} ×
-                        </Badge>
-                      ))
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveFilters({status:[], kategorie:[], betriebstyp:[], land:[]})}>
-                    Clear all
-                  </Button>
+                <div className={cn(
+                  "flex flex-wrap gap-2 items-center",
+                  Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4"
+                )}>
+                  {Object.entries(activeFilters).map(([group, values]) => 
+                    values.map(v => (
+                      <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
+                        {v} ×
+                      </Badge>
+                    ))
+                  )}
+                  {Object.values(activeFilters).flat().length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setActiveFilters({status:[], kategorie:[], betriebstyp:[], land:[]})}>
+                      Clear all
+                    </Button>
+                  )}
                 </div>
-                <Accordion type="single" collapsible className="mb-3">
+                <Accordion type="single" collapsible className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}>
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
