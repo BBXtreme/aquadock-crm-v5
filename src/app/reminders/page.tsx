@@ -38,7 +38,6 @@ import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -307,11 +306,14 @@ export default function RemindersPage() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: { sorting: [{ id: "due_date", desc: false }], pagination: { pageSize: 20 } },
-    state: { rowSelection, columnVisibility },
+    state: { rowSelection, columnVisibility, globalFilter },
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
+    onGlobalFilterChange: setGlobalFilter,
     enableRowSelection: true,
     getRowId: (row) => row.id,
+    globalFilterFn: "includesString",
+    filterFromLeafRows: true,
   });
 
   if (isLoading) return (
