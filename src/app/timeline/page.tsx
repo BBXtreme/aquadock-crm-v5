@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { getCompanies } from "@/lib/supabase/services/companies";
 import { createTimelineEntry } from "@/lib/supabase/services/timeline-server";
+import { TimelineEntryForm } from "@/components/features/TimelineEntryForm";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 const timelineSchema = z.object({
@@ -187,112 +188,13 @@ export default function TimelinePage() {
                   Add a new activity to the timeline.
                 </DialogDescription>
               </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="activity_type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Activity Type</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select activity type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {activityTypes.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="content"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Content (optional)</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Enter content" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="user_name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>User Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter user name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="company_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company (optional)</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select company" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {companies.map((company) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.firmenname}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setDialogOpen(false);
-                        form.reset();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? "Creating..." : "Create"}
-                    </Button>
-                  </div>
-                </form>
-              </Form>
+              <TimelineEntryForm
+                onSubmit={async (values) => {
+                  // temporary toast for now
+                  toast.info("Submit coming soon");
+                }}
+                isSubmitting={false}
+              />
             </DialogContent>
           </Dialog>
         </div>
