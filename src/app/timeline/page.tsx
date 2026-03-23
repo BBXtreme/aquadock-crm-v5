@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, Clock, User } from "lucide-react";
+import { Calendar, Clock, Trash, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -230,7 +230,7 @@ export default function TimelinePage() {
                       }}
                       className="text-red-500 hover:text-red-700"
                     >
-                      Delete
+                      <Trash className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
