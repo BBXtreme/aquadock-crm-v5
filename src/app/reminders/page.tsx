@@ -317,8 +317,8 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : header.columnDef.header ? (
-                                  flexRender(header.columnDef.header, header.getContext())
+                                {header.isPlaceholder ? null : header.column.columnDef.header ? (
+                                  flexRender(header.column.columnDef.header, header.getContext())
                                 ) : (
                                   <span>—</span>
                                 )}
