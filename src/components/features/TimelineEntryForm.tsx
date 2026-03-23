@@ -114,6 +114,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting }: Props) {
                 <Input placeholder="Enter company ID" {...field} />
               </FormControl>
               <FormMessage />
+              <p className="text-xs text-muted-foreground">Company ID (optional – full picker coming soon)</p>
             </FormItem>
           )}
         />
