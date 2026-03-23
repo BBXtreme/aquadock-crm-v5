@@ -44,8 +44,8 @@ export async function createServerSupabaseClient() {
 
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.error(`Supabase error in ${context}:`, error);
-  if (error instanceof Error) {
-    return new Error(`Database error: ${error.message}`);
+  if (error && typeof error === 'object' && 'message' in error) {
+    return new Error(`Database error: ${(error as any).message}`);
   }
   return new Error("An unknown database error occurred");
 }
