@@ -43,21 +43,19 @@ export default function RemindersPage() {
   const [selectedReminder, setSelectedReminder] = useState<any>(null);
   const [columnVisibility, setColumnVisibility] = useState({});
 
-  console.log("RemindersPage render", { remindersLength: reminders.length, rowSelection });
-
   const queryClient = useQueryClient();
 
-  const {
-    data: allReminders = [],
-    isLoading: loading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data: reminders, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
       return getReminders(supabase);
     },
+  });
+
+  console.log("RemindersPage render", {
+    remindersLength: reminders?.length || 0,
+    rowSelection,
   });
 
   const deleteMutation = useMutation({
@@ -82,7 +80,8 @@ export default function RemindersPage() {
     setEditReminder(reminder);
   }, []);
 
-  const reminders = allReminders.filter((r) => r.status === "open");
+  const allReminders = reminders || [];
+  const filteredReminders = allReminders.filter((r) => r.status === "open");
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
   const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
@@ -202,7 +201,7 @@ export default function RemindersPage() {
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: reminders || [],
+    data: filteredReminders || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -248,7 +247,7 @@ export default function RemindersPage() {
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -257,7 +256,7 @@ export default function RemindersPage() {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -266,7 +265,7 @@ export default function RemindersPage() {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
             </CardContent>
           </Card>
           <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
@@ -275,7 +274,7 @@ export default function RemindersPage() {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
             </CardContent>
           </Card>
         </div>
@@ -289,9 +288,9 @@ export default function RemindersPage() {
 
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
-            {loading ? (
+            {isLoading ? (
               <SkeletonList count={10} />
-            ) : error ? (
+            ) : isError ? (
               <Alert variant="destructive">
                 <AlertTitle>Error loading reminders</AlertTitle>
                 <AlertDescription>{error?.message || "Unknown error"}</AlertDescription>
