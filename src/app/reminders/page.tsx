@@ -306,7 +306,7 @@ export default function RemindersPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: { sorting: [{ id: "due_date", desc: false }] },
+    initialState: { sorting: [{ id: "due_date", desc: false }], pagination: { pageSize: 20 } },
     state: { rowSelection, columnVisibility },
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,
@@ -486,6 +486,16 @@ export default function RemindersPage() {
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
+                    <select
+                      value={table.getState().pagination.pageSize}
+                      onChange={(e) => table.setPageSize(Number(e.target.value))}
+                      className="px-2 py-1 border rounded"
+                    >
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
                     {table.getFilteredSelectedRowModel().rows.length > 0 && (
                       <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
                         Delete Selected
