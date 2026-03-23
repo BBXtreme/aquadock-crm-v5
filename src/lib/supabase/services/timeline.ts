@@ -48,7 +48,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
     `)
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(150);
 
   if (error) throw handleSupabaseError(error, "Cannot load timeline");
   return data ?? [];
@@ -57,13 +57,11 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
 /**
  * Create a new timeline entry
  */
-export async function createTimelineEntry(
-  values: Omit<TimelineEntryInsert, "id" | "created_at" | "user_id"> & { user_id: string }
-): Promise<TimelineEntry> {
+export async function createTimelineEntry(values: TimelineEntryInsert & { user_id: string }): Promise<TimelineEntry> {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
-    .insert(values)
+    .insert({ ...values, updated_at: new Date().toISOString() })
     .select(`
       *,
       companies(firmenname)
@@ -83,7 +81,7 @@ export async function deleteTimelineEntry(id: string, userId: string): Promise<v
     .from("timeline")
     .delete()
     .eq("id", id)
-    .eq("user_id", userId);   // extra safety
+    .eq("user_id", userId);
 
   if (error) throw handleSupabaseError(error, "Cannot delete timeline entry");
 }
