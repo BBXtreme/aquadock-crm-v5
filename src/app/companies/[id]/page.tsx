@@ -713,7 +713,7 @@ export default function CompanyDetailPage() {
                 <User className="w-5 h-5" />
                 Linked Contacts ({contacts.length})
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setContactDialogOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => setAddContactDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Contact
               </Button>
@@ -752,7 +752,7 @@ export default function CompanyDetailPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => handleEditContact(contact)}
+                            onClick={() => router.push(`/contacts?edit=${contact.id}`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -782,7 +782,7 @@ export default function CompanyDetailPage() {
                 <Bell className="w-5 h-5" />
                 Reminders ({reminders.length})
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setReminderDialogOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => setAddReminderDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Reminder
               </Button>
@@ -831,7 +831,7 @@ export default function CompanyDetailPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-8 w-8"
-                            onClick={() => handleEditReminder(reminder)}
+                            onClick={() => router.push(`/reminders?edit=${reminder.id}`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
