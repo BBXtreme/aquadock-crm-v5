@@ -335,10 +335,11 @@ export default function CompaniesPage() {
                                 size="sm"
                                 className={activeFilters.land.includes(l) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                                 onClick={() => toggleFilter('land', l)}
-                            >
-                              {l}
-                            </Button>
-                          ))}
+                              >
+                                {l}
+                              </Button>
+                            ))}
+                          </div>
                         </div>
                       </AccordionContent>
                     </AccordionItem>
