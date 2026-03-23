@@ -22,7 +22,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
 }
 
 /**
- * Create a new timeline entry. Supports contact_id.
+ * Create new timeline entry. Supports company_id and contact_id.
  */
 export async function createTimelineEntry(
   values: TimelineEntryInsert & { user_id: string }
@@ -34,7 +34,7 @@ export async function createTimelineEntry(
     .select(`
       *,
       companies!left (id, firmenname),
-      contacts!left (id, vorname || ' ' || nachname as name)
+      contacts!left (id, name, email, telefon)
     `)
     .single();
 
