@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { updateReminder } from "@/lib/supabase/services/reminders";
 
@@ -21,7 +20,6 @@ const reminderSchema = z.object({
   priority: z.enum(["hoch", "normal", "niedrig"]).optional(),
   status: z.enum(["open", "closed"]).optional(),
   assigned_to: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
@@ -59,7 +57,6 @@ export default function ReminderEditForm({ reminder, onSuccess }: { reminder: an
       priority: reminder.priority || "normal",
       status: reminder.status || "open",
       assigned_to: reminder.assigned_to || "",
-      notes: reminder.notes || "",
     },
   });
 
@@ -185,19 +182,6 @@ export default function ReminderEditForm({ reminder, onSuccess }: { reminder: an
               <FormLabel>Assigned To</FormLabel>
               <FormControl>
                 <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
