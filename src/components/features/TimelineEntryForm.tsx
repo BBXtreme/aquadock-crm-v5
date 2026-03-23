@@ -40,21 +40,28 @@ interface Props {
 export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "", content: "", activity_type: "note", company_id: "", contact_id: null, user_name: "" },
+    defaultValues: editEntry
+      ? {
+          title: editEntry.title || "",
+          content: editEntry.content || "",
+          activity_type: editEntry.activity_type || "note",
+          company_id: editEntry.company_id || "",
+          contact_id: editEntry.contact_id || "none",
+          user_name: editEntry.user_name || "",
+        }
+      : { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "" },
   });
 
   useEffect(() => {
     if (editEntry) {
       form.reset({
-        title: editEntry.title,
+        title: editEntry.title || "",
         content: editEntry.content || "",
-        activity_type: editEntry.activity_type,
-        user_name: editEntry.user_name,
+        activity_type: editEntry.activity_type || "note",
         company_id: editEntry.company_id || "",
-        contact_id: editEntry.contact_id || null,
+        contact_id: editEntry.contact_id ? editEntry.contact_id : "none",
+        user_name: editEntry.user_name || "",
       });
-    } else {
-      form.reset();
     }
   }, [editEntry, form]);
 
