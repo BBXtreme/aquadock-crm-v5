@@ -31,7 +31,6 @@ import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
-import PageHeader from "@/components/ui/PageHeader";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -197,22 +196,22 @@ export default function CompaniesPage() {
     <AppLayout>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
         <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <PageHeader title="Companies" subtitle="Home → Companies" />
-            <div className="flex gap-3">
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>New Company</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Company</DialogTitle>
-                  </DialogHeader>
-                  <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-                </DialogContent>
-              </Dialog>
+          <div className="flex items-center justify-between pb-6 border-b">
+            <div>
+              <div className="text-sm text-muted-foreground">Home → Companies</div>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Companies</h1>
             </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Company</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Company</DialogTitle>
+                </DialogHeader>
+                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* KPI Cards */}
