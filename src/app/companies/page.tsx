@@ -254,7 +254,7 @@ export default function CompaniesPage() {
                               key={s}
                               variant={activeFilters.status.includes(s) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('status', s)}
                             >
                               {s}
@@ -272,7 +272,7 @@ export default function CompaniesPage() {
                                 key={k}
                                 variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
                                 size="sm"
-                                className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                                className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
                                 onClick={() => toggleFilter('kategorie', k)}
                               >
                                 {Icon ? <span className="mr-1">{Icon}</span> : null}
@@ -290,7 +290,7 @@ export default function CompaniesPage() {
                               key={b}
                               variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('betriebstyp', b)}
                             >
                               {b}
@@ -306,7 +306,7 @@ export default function CompaniesPage() {
                               key={l}
                               variant={activeFilters.land.includes(l) ? "secondary" : "outline"}
                               size="sm"
-                              className="text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('land', l)}
                             >
                               {l}
