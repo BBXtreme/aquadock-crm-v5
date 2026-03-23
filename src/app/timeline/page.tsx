@@ -1,58 +1,84 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import Link from "next/link";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { Calendar, Clock, User } from "lucide-react";
+import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/browser";
-import { getTimeline } from "@/lib/supabase/services/timeline";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SkeletonList } from "@/components/ui/SkeletonList";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const supabase = createClient();
-        const timeline = await getTimeline(supabase);
-        setTimeline(timeline.slice(0, 50));
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Failed to fetch timeline");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  // Mock userId - in real app, get from auth
+  const userId = "mock-user-id";
 
-  // Get unique companies and types for filters
-  const companies = Array.from(new Set(timeline?.map((t) => t.companies?.firmenname).filter(Boolean) as string[]));
-  const types = Array.from(new Set(timeline?.map((t) => t.activity_type).filter(Boolean) as string[]));
+  const { data: timeline = [], isLoading, error } = useQuery({
+    queryKey: ["timeline", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/timeline?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch timeline");
+      return response.json() as Promise<TimelineEntry[]>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/timeline/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Failed to delete");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      toast.success("Timeline entry deleted");
+    },
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+  });
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
+          <div>
+            <p className="text-muted-foreground text-sm">Home → Timeline</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Loading timeline...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <SkeletonList count={10} />
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (error) {
     return (
       <AppLayout>
         <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">{"Home > Timeline"}</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
-            </div>
-            <Button>New Timeline Entry</Button>
+          <div>
+            <p className="text-muted-foreground text-sm">Home → Timeline</p>
+            <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
-          <p className="text-red-500">{error}</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Error loading timeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-500">{error.message}</p>
+            </CardContent>
+          </Card>
         </div>
       </AppLayout>
     );
@@ -63,76 +89,66 @@ export default function TimelinePage() {
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-muted-foreground text-sm">{"Home > Timeline"}</p>
+            <p className="text-muted-foreground text-sm">Home → Timeline</p>
             <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
-          <Button>New Timeline Entry</Button>
-        </div>
-
-        <div className="flex space-x-4">
-          <Select>
-            <SelectTrigger className="w-50">
-              <SelectValue placeholder="Filter by company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Companies</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company} value={company ?? "unknown"}>
-                  {company}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select>
-            <SelectTrigger className="w-50">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {types.map((type) => (
-                <SelectItem key={type} value={type ?? "unknown"}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="space-y-4">
-          {loading ? (
-            <p>Loading timeline...</p>
-          ) : timeline?.length > 0 ? (
+          {timeline.length === 0 ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>No timeline entries yet</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Timeline entries will appear here as activities occur.</p>
+              </CardContent>
+            </Card>
+          ) : (
             timeline.map((entry) => (
-              <Card key={entry.id} className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+              <Card key={entry.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground text-sm">
-                          {entry.created_at
-                            ? formatDistanceToNow(new Date(entry.created_at), {
-                                addSuffix: true,
-                              })
-                            : "—"}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          {entry.activity_type}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
                         </span>
-                        <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">
-                          {entry.companies?.firmenname}
-                        </Link>
-                        <Badge variant="outline">{entry.activity_type}</Badge>
                       </div>
-                      <h3 className="font-semibold text-lg">{entry.title}</h3>
-                      <p className="text-muted-foreground">{entry.content}</p>
+                      <h3 className="font-medium text-lg mb-1">{entry.title}</h3>
+                      {entry.content && <p className="text-muted-foreground mb-3">{entry.content}</p>}
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <User className="h-4 w-4" />
+                          {entry.user_name}
+                        </div>
+                        {entry.company_id && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            Company: {entry.companies?.firmenname || "Unknown"}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("Delete this timeline entry?")) {
+                          deleteMutation.mutate(entry.id);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Delete
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))
-          ) : (
-            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">No timeline entries found.</p>
-              </CardContent>
-            </Card>
           )}
         </div>
       </div>
