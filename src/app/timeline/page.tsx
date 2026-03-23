@@ -104,11 +104,22 @@ export default function TimelinePage() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["timeline"] });
+      const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
+      queryClient.setQueryData(["timeline"], (old = []) => old.filter(e => e.id !== id));
+      return { previous };
+    },
+    onError: (err, id, context) => {
+      queryClient.setQueryData(["timeline"], context?.previous);
+      toast.error("Deletion failed", { description: err.message });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
+    },
+    onSuccess: () => {
       toast.success("Timeline entry deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
   if (isLoading) {
