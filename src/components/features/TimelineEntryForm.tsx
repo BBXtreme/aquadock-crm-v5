@@ -60,10 +60,10 @@ export default function TimelineEntryForm({
   const [localCompanies, setLocalCompanies] = useState<Company[]>([]);
 
   useEffect(() => {
-    setLocalCompanies(prev => {
+    setLocalCompanies((prev) => {
       const newCompanies = [...prev];
-      companies.forEach(c => {
-        if (!newCompanies.find(nc => nc.id === c.id)) {
+      companies.forEach((c) => {
+        if (!newCompanies.find((nc) => nc.id === c.id)) {
           newCompanies.push(c);
         }
       });
@@ -72,13 +72,13 @@ export default function TimelineEntryForm({
   }, [companies]);
 
   useEffect(() => {
-    if (preselectedCompanyId && !localCompanies.find(c => c.id === preselectedCompanyId)) {
+    if (preselectedCompanyId && !localCompanies.find((c) => c.id === preselectedCompanyId)) {
       const fetchCompany = async () => {
         const supabase = createClient();
         const { data } = await supabase.from("companies").select("*").eq("id", preselectedCompanyId).single();
         if (data) {
-          setLocalCompanies(prev => {
-            if (!prev.find(c => c.id === data.id)) {
+          setLocalCompanies((prev) => {
+            if (!prev.find((c) => c.id === data.id)) {
               return [...prev, data];
             }
             return prev;
@@ -206,7 +206,7 @@ export default function TimelineEntryForm({
                 <SelectContent>
                   <SelectItem value="none">Kein Unternehmen</SelectItem>
                   {localCompanies
-                    .filter((company, index, self) => self.findIndex(c => c.id === company.id) === index)
+                    .filter((company, index, self) => self.findIndex((c) => c.id === company.id) === index)
                     .map((company) => (
                       <SelectItem key={company.id} value={company.id}>
                         {company.firmenname}

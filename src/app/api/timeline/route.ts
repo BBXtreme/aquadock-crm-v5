@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-import { createServerSupabaseClient, handleSupabaseError } from "@/lib/supabase/server";
-import { getAllTimelineForUser, createTimelineEntry } from "@/lib/supabase/services/timeline-server";
+import { createTimelineEntry, getAllTimelineForUser } from "@/lib/supabase/services/timeline-server";
 
 // GET /api/timeline
 // Returns timeline entries for current authenticated user
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const timeline = await getAllTimelineForUser("dev-mock-user-11111111-2222-3333-4444-555555555555");
     return NextResponse.json(timeline);
@@ -30,7 +29,10 @@ export async function POST(request: NextRequest) {
 
     // Explicit required fields check
     if (!body.title || !body.activity_type) {
-      console.warn("[POST /api/timeline] Missing required fields:", { title: !!body.title, activity_type: !!body.activity_type });
+      console.warn("[POST /api/timeline] Missing required fields:", {
+        title: !!body.title,
+        activity_type: !!body.activity_type,
+      });
       return NextResponse.json({ error: "Title and activity_type are required" }, { status: 400 });
     }
 
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
       company_id: body.company_id ?? null,
       contact_id: body.contact_id ?? null,
       user_name: body.user_name ?? "BangLee (fallback)",
-      user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // Marco's real user ID – must exist in auth.users
+      user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7", // Marco's real user ID – must exist in auth.users
     };
 
     console.log("[POST /api/timeline] Final payload to service:", JSON.stringify(payload, null, 2));
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
       details: error.details,
       hint: error.hint,
       cause: error.cause,
-      bodyReceived: body || "not parsed"
+      bodyReceived: body || "not parsed",
     };
 
     console.error("[POST /api/timeline] FULL CRASH:", JSON.stringify(errorDetails, null, 2));
@@ -70,9 +72,9 @@ export async function POST(request: NextRequest) {
         error: "Failed to create timeline entry",
         details: errorDetails.message,
         code: errorDetails.code,
-        hint: errorDetails.hint
+        hint: errorDetails.hint,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
