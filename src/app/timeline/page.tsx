@@ -4,7 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Calendar, Clock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -19,13 +22,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { getCompanies } from "@/lib/supabase/services/companies";
+import { createTimelineEntry } from "@/lib/supabase/services/timeline-server";
 import type { TimelineEntry } from "@/lib/supabase/types";
+
+const timelineSchema = z.object({
+  activity_type: z.string().min(1, "Activity type is required"),
+  title: z.string().min(1, "Title is required"),
+  content: z.string().optional(),
+  user_name: z.string().min(1, "User name is required"),
+  company_id: z.string().optional(),
+});
+
+type TimelineForm = z.infer<typeof timelineSchema>;
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // TODO: use useSession or Server Component auth
   // const { userId } = useAuth();
@@ -43,6 +69,23 @@ export default function TimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: () => getCompanies("dummy"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const form = useForm<TimelineForm>({
+    resolver: zodResolver(timelineSchema),
+    defaultValues: {
+      activity_type: "",
+      title: "",
+      content: "",
+      user_name: "",
+      company_id: "",
+    },
+  });
+
   /*
     TEMPORARY BYPASS FOR DEVELOPMENT
     Timeline page redirects to /login because auth is not fully implemented.
@@ -53,6 +96,17 @@ export default function TimelinePage() {
   //     router.push("/login");
   //   }
   // }, [error, router]);
+
+  const createMutation = useMutation({
+    mutationFn: (values: TimelineForm) => createTimelineEntry({ ...values, user_id: "dev-user-11111111-2222-3333-4444-555555555555" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      setDialogOpen(false);
+      form.reset();
+      toast.success("Timeline entry created");
+    },
+    onError: (err) => toast.error("Creation failed", { description: err.message }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -69,6 +123,8 @@ export default function TimelinePage() {
     },
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
+
+  const activityTypes = ["note", "call", "meeting", "email", "task"];
 
   if (isLoading) {
     return (
@@ -120,7 +176,7 @@ export default function TimelinePage() {
             <p className="text-muted-foreground text-sm">Home → Timeline</p>
             <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
-          <Dialog>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>New Entry</Button>
             </DialogTrigger>
@@ -128,23 +184,115 @@ export default function TimelinePage() {
               <DialogHeader>
                 <DialogTitle>Create New Timeline Entry</DialogTitle>
                 <DialogDescription>
-                  Add a new activity to the timeline. (Form implementation coming soon)
+                  Add a new activity to the timeline.
                 </DialogDescription>
               </DialogHeader>
-              <div className="py-4">
-                <p className="text-sm text-muted-foreground">
-                  This is a placeholder. The full form with react-hook-form and zod will be added later.
-                </p>
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => {
-                    toast.info("New timeline entry form coming soon!");
-                  }}
-                >
-                  Placeholder Action
-                </Button>
-              </div>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="activity_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Activity Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select activity type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {activityTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Content (optional)</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Enter content" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="user_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>User Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter user name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="company_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company (optional)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select company" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {companies.map((company) => (
+                              <SelectItem key={company.id} value={company.id}>
+                                {company.firmenname}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setDialogOpen(false);
+                        form.reset();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createMutation.isPending}>
+                      {createMutation.isPending ? "Creating..." : "Create"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
             </DialogContent>
           </Dialog>
         </div>
