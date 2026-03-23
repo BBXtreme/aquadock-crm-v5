@@ -335,11 +335,10 @@ export default function CompaniesPage() {
                                 size="sm"
                                 className={activeFilters.land.includes(l) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                                 onClick={() => toggleFilter('land', l)}
-                              >
-                                {l}
-                              </Button>
-                            ))}
-                          </div>
+                            >
+                              {l}
+                            </Button>
+                          ))}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -366,14 +365,16 @@ export default function CompaniesPage() {
 // Wiederverwendbare Statistik-Karte
 function StatCard({ title, value, icon }: { title: string; value: React.ReactNode; icon: React.ReactNode }) {
   return (
-    <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm hover:shadow-md hover:shadow-primary/10 transition-all duration-200 hover:scale-[1.02]">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className="rounded-full bg-primary/10 p-3 dark:bg-primary/20">{icon}</div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
-      </CardContent>
+    <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50">
+      <div className="hover:brightness-105 transition-all">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <div className="rounded-full bg-primary/10 p-3 dark:bg-primary/20">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+        </CardContent>
+      </div>
     </Card>
   );
 }
