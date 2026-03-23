@@ -92,16 +92,16 @@ export default function TimelinePage() {
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
       const payload = {
-        title: values.title,
-        content: values.content || null,
-        activity_type: values.activity_type,
-        company_id: values.company_id || null,           // ← jetzt NULL erlaubt
+        title: values.title.trim() || "Untitled entry",
+        content: values.content?.trim() || null,
+        activity_type: values.activity_type || "note",           // fallback
+        company_id: values.company_id || null,
         contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
-        user_name: values.user_name || "BangLee",
-        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // Marco – echt & existent
+        user_name: values.user_name?.trim() || "BangLee",
+        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",         // Marco – real user
       };
 
-      console.log("[createMutation] Final payload:", payload);
+      console.log("[createMutation] Sending cleaned payload:", payload);
 
       const res = await fetch("/api/timeline", {
         method: "POST",
