@@ -215,14 +215,12 @@ export default function ContactDetailPage() {
           </div>
         </div>
 
-        {/* Badges */}
-        <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
-          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
-        </div>
-
-        {/* Primary Contact Checkbox */}
-        <div className="flex justify-end mb-4">
+        {/* Badges and Primary Contact Checkbox */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
+            {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+          </div>
           <div className="flex items-center gap-2">
             <Checkbox
               checked={contact.is_primary}
