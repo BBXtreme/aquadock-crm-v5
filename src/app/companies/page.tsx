@@ -348,10 +348,8 @@ export default function CompaniesPage() {
                   companies={filteredCompanies}
                   globalFilter={globalFilter}
                   onGlobalFilterChange={setGlobalFilter}
-                  onEdit={setEditCompany}
-                  onDelete={(company) => {
-                    if (confirm("Delete company?")) deleteMutation.mutate(company.id);
-                  }}
+                  onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
+                  onDelete={(id) => deleteMutation.mutate(id)}
                 />
               </>
             )}
