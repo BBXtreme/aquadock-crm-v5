@@ -227,6 +227,7 @@ export default function ContactsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row) => row.id,
+    initialState: { pagination: { pageSize: 20 } },
     state: {
       globalFilter,
       columnVisibility,
@@ -361,6 +362,16 @@ export default function ContactsPage() {
                     )}
                   </div>
                   <div className="flex space-x-2">
+                    <select
+                      value={table.getState().pagination.pageSize}
+                      onChange={(e) => table.setPageSize(Number(e.target.value))}
+                      className="px-2 py-1 border rounded"
+                    >
+                      <option value={20}>20</option>
+                      <option value={30}>30</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="icon">
