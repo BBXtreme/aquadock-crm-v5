@@ -20,7 +20,7 @@ export default function StatCard({ title, value, icon, change, className }: Stat
       </CardHeader>
       <CardContent>
         <div className="text-3xl font-bold tracking-tight">{value}</div>
-        {change && <p className="text-xs text-green-600/80">{change}</p>}
+        {change && <p className="text-xs text-muted-foreground">{change}</p>}
       </CardContent>
     </Card>
   );
