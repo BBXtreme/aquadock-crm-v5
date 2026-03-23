@@ -154,6 +154,86 @@ export default function DashboardPage() {
             />
           </div>
 
+          <Card className="col-span-full lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Sales Pipeline</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6 py-4">
+                <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Leads</p>
+                      <p className="text-2xl font-bold">68</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">100%</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/40 p-3 ml-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Qualified</p>
+                      <p className="text-2xl font-bold">48</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">71%</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/30 p-2 ml-8">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Proposal</p>
+                      <p className="text-2xl font-bold">21</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">31%</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/20 p-1 ml-12">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Handshake className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Negotiation</p>
+                      <p className="text-2xl font-bold">12</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">18%</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-muted/10 p-0.5 ml-16">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <TrophyIcon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Won</p>
+                      <p className="text-2xl font-bold">4.5</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">7%</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
