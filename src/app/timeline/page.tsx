@@ -105,7 +105,7 @@ export default function TimelinePage() {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
       toast.success("Timeline entry deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message });
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
   if (isLoading) {
