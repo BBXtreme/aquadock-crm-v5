@@ -32,7 +32,7 @@ export default function Header() {
   }, []);
 
   return (
-    <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-18 items-center justify-between p-0.5 pr-5 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
+    <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
