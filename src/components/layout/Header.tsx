@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -19,9 +20,19 @@ import { Input } from "@/components/ui/input";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="flex h-18 items-center justify-between border-b p-0.5 pr-5 shadow-sm">
+    <header className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-18 items-center justify-between p-0.5 pr-5 ${isScrolled ? 'shadow-md' : 'shadow-sm'}`}>
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
