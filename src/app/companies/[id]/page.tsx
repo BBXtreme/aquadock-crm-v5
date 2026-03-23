@@ -782,8 +782,8 @@ export default function CompanyDetailPage() {
                 <Bell className="w-5 h-5" />
                 Reminders ({reminders.length})
               </CardTitle>
-              <Button onClick={() => setAddReminderDialog(true)} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={() => setReminderDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
                 Add Reminder
               </Button>
             </div>
@@ -792,23 +792,23 @@ export default function CompanyDetailPage() {
             {reminders.length === 0 ? (
               <p className="text-gray-500">No reminders for this company.</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <table className="w-full">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Due Date</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th className="text-right w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {reminders.map((reminder) => (
-                    <TableRow key={reminder.id}>
-                      <TableCell>{reminder.title}</TableCell>
-                      <TableCell>{new Date(reminder.due_date).toLocaleDateString()}</TableCell>
-                      <TableCell>
+                    <tr key={reminder.id}>
+                      <td>{reminder.title}</td>
+                      <td>{new Date(reminder.due_date).toLocaleDateString()}</td>
+                      <td>
                         <Badge
                           className={
                             reminder.priority === "hoch"
@@ -820,29 +820,35 @@ export default function CompanyDetailPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
+                      </td>
+                      <td>
                         <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
-                      </TableCell>
-                      <TableCell>{reminder.assigned_to || "—"}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => router.push(`/reminders?edit=${reminder.id}`)}
-                            size="sm"
-                            variant="outline"
+                      </td>
+                      <td>{reminder.assigned_to || "—"}</td>
+                      <td className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => handleEditReminder(reminder)}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
-                          <Button onClick={() => handleDeleteReminder(reminder.id)} size="sm" variant="destructive">
-                            <Trash className="w-4 h-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteReminder(reminder.id)}
+                          >
+                            <Trash className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   ))}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             )}
           </CardContent>
         </Card>
