@@ -1,20 +1,15 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Company, TimelineEntry } from "@/lib/supabase/types";
 
@@ -22,17 +17,17 @@ const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
-  
-  company_id: z.union([
-    z.literal("none"),
-    z.string().uuid()
-  ]).transform(val => val === "none" ? null : val).optional(),
-  
-  contact_id: z.union([
-    z.literal("none"),
-    z.string().uuid()
-  ]).transform(val => val === "none" ? null : val).optional(),
-  
+
+  company_id: z
+    .union([z.literal("none"), z.string().uuid()])
+    .transform((val) => (val === "none" ? null : val))
+    .optional(),
+
+  contact_id: z
+    .union([z.literal("none"), z.string().uuid()])
+    .transform((val) => (val === "none" ? null : val))
+    .optional(),
+
   user_name: z.string().min(1, "Benutzername ist erforderlich"),
 });
 
@@ -49,7 +44,16 @@ interface Props {
   defaultValues?: Partial<FormValues>;
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, contacts, editEntry, onCancel, preselectedCompanyId, defaultValues }: Props) {
+export default function TimelineEntryForm({
+  onSubmit,
+  isSubmitting,
+  companies,
+  contacts,
+  editEntry,
+  onCancel,
+  preselectedCompanyId,
+  defaultValues,
+}: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
@@ -91,11 +95,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
             <FormItem>
               <FormLabel>Content (optional)</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="Enter content"
-                  {...field}
-                  value={field.value ?? ""}
-                />
+                <Textarea placeholder="Enter content" {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
