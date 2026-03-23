@@ -155,19 +155,16 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           render={({ field }) => (
             <FormItem>
               <FormLabel>Contact (optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select contact" />
+                    <SelectValue placeholder="Kein Kontakt" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">None</SelectItem>
-                  {contacts?.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} {c.email ? `(${c.email})` : ""}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="">Kein Kontakt</SelectItem>
+                  {/* Placeholder – wird später mit echten Daten gefüllt */}
+                  <SelectItem value="placeholder">Max Mustermann</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
