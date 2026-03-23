@@ -16,13 +16,10 @@ import type { TimelineEntry } from "@/lib/supabase/types";
 export default function TimelinePage() {
   const queryClient = useQueryClient();
 
-  // Mock userId - in real app, get from auth
-  const userId = "mock-user-id";
-
   const { data: timeline = [], isLoading, error } = useQuery({
-    queryKey: ["timeline", userId],
+    queryKey: ["timeline"],
     queryFn: async () => {
-      const response = await fetch(`/api/timeline?userId=${userId}`);
+      const response = await fetch("/api/timeline");
       if (!response.ok) throw new Error("Failed to fetch timeline");
       return response.json() as Promise<TimelineEntry[]>;
     },

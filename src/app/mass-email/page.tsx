@@ -89,7 +89,6 @@ export default function MassEmailPage() {
           title: "Test Email Sent",
           content: `Test email sent to test@example.com`,
           user_name: "Mass Email System",
-          user_id: null,
         }),
       });
 
@@ -151,7 +150,6 @@ export default function MassEmailPage() {
             title: "Mass Email Sent",
             content: `Mass email sent to ${company.firmenname}`,
             user_name: "Mass Email System",
-            user_id: null,
           }),
         });
       }
