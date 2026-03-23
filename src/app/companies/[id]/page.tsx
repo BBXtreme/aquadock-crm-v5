@@ -1366,17 +1366,16 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
                     <SelectValue placeholder="Select water type" />
                   </SelectTrigger>
                 </FormControl>
-                  <SelectContent>
-                    {wassertypOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+                <SelectContent>
+                  {wassertypOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )}
         />
         <FormField
