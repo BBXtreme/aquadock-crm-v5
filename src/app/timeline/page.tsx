@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TimelineEntryForm } from "@/components/features/TimelineEntryForm";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
