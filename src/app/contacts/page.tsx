@@ -159,6 +159,11 @@ export default function ContactsPage() {
         </Link>
       ),
     }),
+    columnHelper.accessor("is_primary", {
+      id: "is_primary",
+      header: "Primary",
+      cell: (info) => (info.getValue() ? <Badge variant="secondary">Primary</Badge> : "—"),
+    }),
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
@@ -206,11 +211,6 @@ export default function ContactsPage() {
           </Link>
         );
       },
-    }),
-    columnHelper.accessor("is_primary", {
-      id: "is_primary",
-      header: "Primary",
-      cell: (info) => (info.getValue() ? <Badge variant="secondary">Primary</Badge> : "—"),
     }),
     columnHelper.display({
       id: "actions",
