@@ -6,14 +6,24 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Anchor,
   Building,
+  Building2,
   Calendar,
   DollarSign,
   Edit,
   Eye,
-  RefreshCw,
+  Handshake,
+  PalmTree,
+  Sailboat,
+  Ship,
+  Sparkles,
+  Star,
+  Tent,
   Trophy,
   Users,
+  Utensils,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,20 +66,26 @@ export default function CompaniesPage() {
     "Deutschland", "Österreich", "Schweiz", "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien", "Dänemark", "Schweden", "Norwegen", "Polen", "Ungarn", "Griechenland", "Portugal", "Großbritannien"
   ];
 
+  const statusIcons = {
+    lead: Sparkles,
+    gewonnen: Trophy,
+    verloren: XCircle,
+  };
+
   const kategorieIcons = {
-    restaurant: "🍽",
-    hotel: "🏨",
-    resort: "🌴",
-    camping: "⛺",
-    marina: "⚓",
-    segelschule: "⛵",
-    segelverein: "🏆",
-    bootsverleih: "🚤",
-    neukunde: "🆕",
-    bestandskunde: "⭐",
-    interessent: "👁",
-    partner: "🤝",
-    sonstige: "",
+    restaurant: Utensils,
+    hotel: Building2,
+    resort: PalmTree,
+    camping: Tent,
+    marina: Anchor,
+    segelschule: Sailboat,
+    segelverein: Trophy,
+    bootsverleih: Ship,
+    neukunde: Sparkles,
+    bestandskunde: Star,
+    interessent: Eye,
+    partner: Handshake,
+    sonstige: null,
   };
 
   const toggleFilter = (group: string, value: string) => {
@@ -251,17 +267,21 @@ export default function CompaniesPage() {
                       <div className="mb-4">
                         <h4 className="font-normal">Status</h4>
                         <div className="flex flex-wrap gap-2">
-                          {statusOptions.map(s => (
-                            <Button
-                              key={s}
-                              variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
-                              size="sm"
-                              className={activeFilters.status.includes(s) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
-                              onClick={() => toggleFilter('status', s)}
-                            >
-                              {s.charAt(0).toUpperCase() + s.slice(1)}
-                            </Button>
-                          ))}
+                          {statusOptions.map(s => {
+                            const Icon = statusIcons[s];
+                            return (
+                              <Button
+                                key={s}
+                                variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
+                                size="sm"
+                                className={activeFilters.status.includes(s) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
+                                onClick={() => toggleFilter('status', s)}
+                              >
+                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                       <div className="mb-4">
@@ -277,7 +297,7 @@ export default function CompaniesPage() {
                                 className={activeFilters.kategorie.includes(k) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                                 onClick={() => toggleFilter('kategorie', k)}
                               >
-                                {Icon ? <span className="mr-1">{Icon}</span> : null}
+                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
                                 {k.charAt(0).toUpperCase() + k.slice(1)}
                               </Button>
                             );
