@@ -159,6 +159,7 @@ export default function CompanyDetailPage() {
   const [editCRM, setEditCRM] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
+  const [editEntry, setEditEntry] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -223,6 +224,21 @@ export default function CompanyDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["contacts", id] });
       toast.success("Timeline-Eintrag erstellt");
       setTimelineDialogOpen(false);
+    },
+  });
+
+  const deleteTimelineMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/timeline/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(await res.text());
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["company", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      toast.success("Timeline-Eintrag gelöscht");
     },
   });
 
@@ -856,6 +872,7 @@ export default function CompanyDetailPage() {
                     <TableHead>Date</TableHead>
                     <TableHead>Event</TableHead>
                     <TableHead>User</TableHead>
+                    <TableHead className="text-right w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -864,6 +881,33 @@ export default function CompanyDetailPage() {
                       <TableCell>{new Date(entry.event_date).toLocaleDateString()}</TableCell>
                       <TableCell>{entry.title}</TableCell>
                       <TableCell>{entry.description || "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setEditEntry(entry);
+                              setTimelineDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              if (confirm("Delete this timeline entry?")) {
+                                deleteTimelineMutation.mutate(entry.id);
+                              }
+                            }}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -973,7 +1017,10 @@ export default function CompanyDetailPage() {
           open={timelineDialogOpen}
           onOpenChange={(open) => {
             setTimelineDialogOpen(open);
-            if (!open) setPreselectedCompanyId(null);
+            if (!open) {
+              setPreselectedCompanyId(null);
+              setEditEntry(null);
+            }
           }}
         >
           <DialogContent>
@@ -985,7 +1032,7 @@ export default function CompanyDetailPage() {
               isSubmitting={createTimelineMutation.isPending}
               companies={[]} // vorerst leer – preselect übernimmt
               contacts={[]}
-              editEntry={null}
+              editEntry={editEntry}
               preselectedCompanyId={preselectedCompanyId}
             />
           </DialogContent>
@@ -1308,16 +1355,17 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
                     <SelectValue placeholder="Select water type" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  {wassertypOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+                  <SelectContent>
+                    {wassertypOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           )}
         />
         <FormField
