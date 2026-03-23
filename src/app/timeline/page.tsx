@@ -89,7 +89,10 @@ export default function TimelinePage() {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
     },
-    onSuccess: () => toast.success("Entry created"),
+    onSuccess: () => {
+      toast.success("Entry created");
+      setDialogOpen(false);
+    },
   });
 
   const deleteMutation = useMutation({
