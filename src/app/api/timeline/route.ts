@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log("POST body received:", body);
+    console.log("POST /api/timeline - received body:", body);
     const payload = {
       ...body,
       user_id: "dev-mock-user-11111111-2222-3333-4444-555555555555",
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error) {
-    console.error("Error creating timeline entry:", error);
-    return NextResponse.json({ error: "Failed to create timeline entry" }, { status: 500 });
+    console.error("POST error details:", error);
+    return NextResponse.json({ error: "Failed to create timeline entry", details: error.message || String(error) }, { status: 500 });
   }
 }

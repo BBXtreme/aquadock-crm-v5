@@ -95,23 +95,23 @@ export default function TimelinePage() {
     mutationFn: async (values: any) => {
       const payload = {
         ...values,
-        contact_id: values.contact_id === "none" || values.contact_id === "" ? null : values.contact_id,
-        user_id: "dev-mock-user-11111111-2222-3333-4444-555555555555", // oder gen_random_uuid()
+        contact_id: values.contact_id === "none" ? null : values.contact_id,
+        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // ← deine echte User-ID!
         user_name: values.user_name || "BangLee",
       };
 
-      console.log("Sending create payload:", payload); // debug
+      console.log("Sending create payload:", payload);
 
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        console.error("Create failed:", err);
-        throw new Error(err.error || "Create failed");
+        const errText = await res.text();
+        console.error("Server response:", res.status, errText);
+        throw new Error(errText || "HTTP " + res.status);
       }
       return res.json();
     },
@@ -125,6 +125,7 @@ export default function TimelinePage() {
       return { previous };
     },
     onError: (err, newEntry, context) => {
+      console.error("Create mutation failed:", err);
       queryClient.setQueryData(["timeline"], context?.previous);
       toast.error("Failed to create entry");
     },
