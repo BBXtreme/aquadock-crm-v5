@@ -34,9 +34,9 @@ export default function CompaniesPage() {
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*");
+      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
       if (error) throw error;
-      return data;
+      return data as any[];
     },
     staleTime: 5 * 60 * 1000,
   });
