@@ -45,8 +45,8 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           title: editEntry.title || "",
           content: editEntry.content ?? "",
           activity_type: editEntry.activity_type || "note",
-          company_id: editEntry.company_id || "none",
-          contact_id: editEntry.contact_id || "none",
+          company_id: editEntry.company_id ?? "none",
+          contact_id: editEntry.contact_id ?? "none",
           user_name: editEntry.user_name || "",
         }
       : {
@@ -63,8 +63,8 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
     if (editEntry) {
       form.reset({
         ...editEntry,
-        company_id: editEntry.company_id || "none",
-        contact_id: editEntry.contact_id || "none",
+        company_id: editEntry.company_id ?? "none",
+        contact_id: editEntry.contact_id ?? "none",
         content: editEntry.content ?? "",
       });
     }
