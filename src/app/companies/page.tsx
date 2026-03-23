@@ -204,7 +204,7 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 mt-1 mb-4">
                   {Object.entries(activeFilters).map(([group, values]) => 
                     values.map(v => (
                       <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
@@ -216,7 +216,7 @@ export default function CompaniesPage() {
                     Clear all
                   </Button>
                 </div>
-                <Accordion type="single" collapsible>
+                <Accordion type="single" collapsible className="mb-3">
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
