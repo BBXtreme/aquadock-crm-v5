@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,9 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
-  isCollapsed: boolean;
   isMobile: boolean;
-  onToggle: () => void;
 }
 
 const navItems = [
@@ -24,13 +23,14 @@ const navItems = [
   { href: "/mass-email", label: "Mass Email", icon: Mail },
 ];
 
-export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
+export default function Sidebar({ isMobile }: SidebarProps) {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="p-4">
-        <Button variant="ghost" onClick={onToggle} className="mb-4">
+        <Button variant="ghost" onClick={() => setIsCollapsed(!isCollapsed)} className="mb-4">
           <Menu className="h-4 w-4" />
         </Button>
       </div>
@@ -39,7 +39,7 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
           {navItems.map((item) => (
             <li key={item.href}>
               <Link href={item.href}>
-                <Button variant="ghost" className={cn("w-full justify-start", pathname === item.href && "bg-accent")}>
+                <Button variant="ghost" className={cn("w-full justify-start rounded-md transition-colors hover:bg-muted/50", pathname === item.href && "bg-accent text-accent-foreground")}>
                   <item.icon className="h-4 w-4" />
                   {!isCollapsed && <span className="ml-2">{item.label}</span>}
                 </Button>
