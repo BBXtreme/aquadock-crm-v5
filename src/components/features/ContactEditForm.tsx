@@ -11,19 +11,32 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { updateContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
   nachname: z.string().min(1, "Nachname is required"),
+  anrede: z.string().optional(),
+  position: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   telefon: z.string().optional(),
+  mobil: z.string().optional(),
+  durchwahl: z.string().optional(),
+  notes: z.string().optional(),
   company_id: z.string().optional(),
   is_primary: z.boolean().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
+
+const anredeOptions = [
+  { value: "Herr", label: "Herr" },
+  { value: "Frau", label: "Frau" },
+  { value: "Dr.", label: "Dr." },
+  { value: "Prof.", label: "Prof." },
+];
 
 export default function ContactEditForm({ contact, onSuccess }: { contact: any; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -43,8 +56,13 @@ export default function ContactEditForm({ contact, onSuccess }: { contact: any; 
     defaultValues: {
       vorname: contact?.vorname || "",
       nachname: contact?.nachname || "",
+      anrede: contact?.anrede || "",
+      position: contact?.position || "",
       email: contact?.email || "",
       telefon: contact?.telefon || "",
+      mobil: contact?.mobil || "",
+      durchwahl: contact?.durchwahl || "",
+      notes: contact?.notes || "",
       company_id: contact?.company_id || "",
       is_primary: contact?.is_primary || false,
     },
@@ -94,6 +112,43 @@ export default function ContactEditForm({ contact, onSuccess }: { contact: any; 
         />
         <FormField
           control={form.control}
+          name="anrede"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Anrede</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select anrede" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {anredeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Position</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -113,6 +168,45 @@ export default function ContactEditForm({ contact, onSuccess }: { contact: any; 
               <FormLabel>Telefon</FormLabel>
               <FormControl>
                 <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mobil"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mobil</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="durchwahl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Durchwahl</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
