@@ -187,6 +187,7 @@ export default function RemindersPage() {
         ),
       }),
       columnHelper.accessor("companies.firmenname", {
+        id: "company",
         header: "Company",
         cell: (info) => (
           <Link
