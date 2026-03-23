@@ -49,18 +49,21 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           contact_id: editEntry.contact_id || "none",
           user_name: editEntry.user_name || "",
         }
-      : { title: "", content: "", activity_type: "note", company_id: "", contact_id: "none", user_name: "Dev User" },
+      : {
+          title: "",
+          content: "",
+          activity_type: "note",
+          company_id: "",
+          contact_id: "none",
+          user_name: "",
+        },
   });
 
   useEffect(() => {
     if (editEntry) {
       form.reset({
-        title: editEntry.title || "",
-        content: editEntry.content || "",
-        activity_type: editEntry.activity_type || "note",
-        company_id: editEntry.company_id || "",
-        contact_id: editEntry.contact_id ? editEntry.contact_id : "none",
-        user_name: editEntry.user_name || "",
+        ...editEntry,
+        contact_id: editEntry.contact_id || "none",
       });
     }
   }, [editEntry, form]);
