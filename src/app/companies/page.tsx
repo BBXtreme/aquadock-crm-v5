@@ -293,7 +293,7 @@ export default function CompaniesPage() {
                               className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors"
                               onClick={() => toggleFilter('betriebstyp', b)}
                             >
-                              {b}
+                              {b.charAt(0).toUpperCase() + b.slice(1)}
                             </Button>
                           ))}
                         </div>
