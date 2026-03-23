@@ -55,10 +55,8 @@ export default function TimelinePage() {
       const supabase = createClient(); // browser client
       const { data, error } = await supabase
         .from("companies")
-        .select("id, firmenname")
-        .order("firmenname")
-        .limit(50);
-
+        .select("id, firmenname, kundentyp")
+        .order("firmenname", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -95,28 +93,16 @@ export default function TimelinePage() {
   const createMutation = useMutation({
     mutationFn: async (values: any) => {
       const payload = {
-        title: values.title,
-        content: values.content || null,
-        activity_type: values.activity_type,
-        company_id: values.company_id || null,
-        contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
-        user_name: values.user_name || "BangLee",
-        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // deine echte User-ID!
+        ...values,
+        user_id: "dev-mock-user-...",
+        user_name: "Dev User",
       };
-
-      console.log("[createMutation] Sending payload:", payload);
-
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("[createMutation] Server error:", res.status, errData);
-        throw new Error(errData.error || errData.details || `HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
     onMutate: async (newEntry) => {
@@ -129,9 +115,8 @@ export default function TimelinePage() {
       return { previous };
     },
     onError: (err, newEntry, context) => {
-      console.error("[createMutation] Client error:", err);
       queryClient.setQueryData(["timeline"], context?.previous);
-      toast.error("Erstellen fehlgeschlagen", { description: err.message || "Unbekannter Fehler" });
+      toast.error("Failed to create entry");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
