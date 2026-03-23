@@ -162,6 +162,10 @@ export default function CompanyDetailPage() {
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState(null);
+  const [editContact, setEditContact] = useState(null);
+  const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [editReminder, setEditReminder] = useState(null);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
