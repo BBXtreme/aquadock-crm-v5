@@ -27,6 +27,7 @@ export async function getAllTimelineForUser(userId: string): Promise<TimelineEnt
 export async function createTimelineEntry(
   values: TimelineEntryInsert & { user_id: string }
 ): Promise<TimelineEntry> {
+  console.log("Creating timeline entry with values:", values);
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
@@ -38,7 +39,10 @@ export async function createTimelineEntry(
     `)
     .single();
 
-  if (error) throw handleSupabaseError(error);
+  if (error) {
+    console.error("Supabase error in createTimelineEntry:", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    throw handleSupabaseError(error);
+  }
   return data;
 }
 
@@ -46,6 +50,7 @@ export async function createTimelineEntry(
  * Update a timeline entry
  */
 export async function updateTimelineEntry(id: string, updates: Partial<TimelineEntry>): Promise<TimelineEntry> {
+  console.log("Updating timeline entry", id, "with:", updates);
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("timeline")
@@ -53,11 +58,15 @@ export async function updateTimelineEntry(id: string, updates: Partial<TimelineE
     .eq("id", id)
     .select(`
       *,
-      companies(firmenname)
+      companies(firmenname),
+      contacts!left (id, vorname, nachname, email, telefon, position)
     `)
     .single();
 
-  if (error) throw handleSupabaseError(error, "Failed to update timeline entry");
+  if (error) {
+    console.error("Supabase error in updateTimelineEntry:", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    throw handleSupabaseError(error, "Failed to update timeline entry");
+  }
   return data;
 }
 
@@ -71,5 +80,8 @@ export async function deleteTimelineEntry(id: string): Promise<void> {
     .delete()
     .eq("id", id);
 
-  if (error) throw handleSupabaseError(error, "Failed to delete timeline entry");
+  if (error) {
+    console.error("Supabase error in deleteTimelineEntry:", { code: error.code, message: error.message, details: error.details, hint: error.hint });
+    throw handleSupabaseError(error, "Failed to delete timeline entry");
+  }
 }

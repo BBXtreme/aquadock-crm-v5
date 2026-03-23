@@ -6,8 +6,9 @@ import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/supabase/service
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
+    console.log("PUT id:", id);
     const body = await request.json();
+    console.log("PUT body received:", body);
     const updatedEntry = await updateTimelineEntry(id, body);
     return NextResponse.json(updatedEntry);
   } catch (error) {

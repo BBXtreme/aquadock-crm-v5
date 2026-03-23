@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log("POST body received:", body);
     const payload = {
       ...body,
       user_id: "dev-mock-user-11111111-2222-3333-4444-555555555555",
