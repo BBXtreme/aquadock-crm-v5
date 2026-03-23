@@ -108,6 +108,20 @@ export default function RemindersPage() {
     [deleteMutation],
   );
 
+  const handleBulkDelete = useCallback(async () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete ${selectedIds.length} reminders?`)) return;
+    try {
+      await Promise.all(selectedIds.map(id => deleteReminder(id, createClient())));
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success(`${selectedIds.length} reminders deleted`);
+      setRowSelection({});
+    } catch (error) {
+      toast.error("Bulk delete failed", { description: error.message });
+    }
+  }, [rowSelection, queryClient]);
+
   const handleView = useCallback((reminder: any) => {
     setSelectedReminder(reminder);
     setIsViewOpen(true);
@@ -427,19 +441,26 @@ export default function RemindersPage() {
               <Alert>No reminders found. Create one to get started.</Alert>
             ) : (
               <>
-                <div className="flex items-center space-x-4 mb-4">
-                  <Input
-                    placeholder="Search reminders..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) =>
-                      setGlobalFilter(String(event.target.value))
-                    }
-                    className="max-w-sm"
-                  />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <Input
+                      placeholder="Search reminders..."
+                      value={globalFilter ?? ""}
+                      onChange={(event) =>
+                        setGlobalFilter(String(event.target.value))
+                      }
+                      className="max-w-sm"
+                    />
+                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">
+                        {table.getFilteredSelectedRowModel().rows.length} selected
+                      </span>
+                    )}
+                  </div>
                   {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {table.getFilteredSelectedRowModel().rows.length} selected
-                    </span>
+                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                      Delete Selected
+                    </Button>
                   )}
                 </div>
                 {table && (
