@@ -13,6 +13,7 @@ import {
   Eye,
   RefreshCw,
   Trophy,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
