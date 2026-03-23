@@ -291,6 +291,21 @@ export default function ContactDetailPage() {
                 <label className="text-sm font-medium text-gray-700">Notes</label>
                 <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
               </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Primary Contact</label>
+                <Checkbox
+                  checked={contact.is_primary}
+                  onCheckedChange={(checked) => {
+                    const supabase = createClient();
+                    updateContact(contact.id, { is_primary: checked }, supabase).then(() => {
+                      toast.success("Primary contact updated");
+                      _fetchData();
+                    }).catch((err) => {
+                      toast.error("Update failed", { description: err.message });
+                    });
+                  }}
+                />
+              </div>
             </div>
             {!contact.is_primary && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
