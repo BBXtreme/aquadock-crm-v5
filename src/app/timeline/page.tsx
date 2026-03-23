@@ -5,9 +5,6 @@ import { formatDistanceToNow } from "date-fns";
 import { Calendar, Clock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -22,32 +19,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { getCompanies } from "@/lib/supabase/services/companies";
-import { createTimelineEntry } from "@/lib/supabase/services/timeline-server";
 import { TimelineEntryForm } from "@/components/features/TimelineEntryForm";
 import type { TimelineEntry } from "@/lib/supabase/types";
-
-const timelineSchema = z.object({
-  activity_type: z.string().min(1, "Activity type is required"),
-  title: z.string().min(1, "Title is required"),
-  content: z.string().optional(),
-  user_name: z.string().min(1, "User name is required"),
-  company_id: z.string().optional(),
-});
-
-type TimelineForm = z.infer<typeof timelineSchema>;
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
@@ -70,23 +45,6 @@ export default function TimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
-    queryFn: () => getCompanies("dummy"),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const form = useForm<TimelineForm>({
-    resolver: zodResolver(timelineSchema),
-    defaultValues: {
-      activity_type: "",
-      title: "",
-      content: "",
-      user_name: "",
-      company_id: "",
-    },
-  });
-
   /*
     TEMPORARY BYPASS FOR DEVELOPMENT
     Timeline page redirects to /login because auth is not fully implemented.
@@ -99,14 +57,32 @@ export default function TimelinePage() {
   // }, [error, router]);
 
   const createMutation = useMutation({
-    mutationFn: (values: TimelineForm) => createTimelineEntry({ ...values, user_id: "dev-user-11111111-2222-3333-4444-555555555555" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline"] });
-      setDialogOpen(false);
-      form.reset();
-      toast.success("Timeline entry created");
+    mutationFn: async (values: any) => {
+      const res = await fetch("/api/timeline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
     },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
+    onMutate: async (newEntry) => {
+      await queryClient.cancelQueries({ queryKey: ["timeline"] });
+      const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
+      queryClient.setQueryData(["timeline"], (old = []) => [
+        { ...newEntry, id: "temp-" + Date.now(), created_at: new Date().toISOString() },
+        ...old,
+      ]);
+      return { previous };
+    },
+    onError: (err, newEntry, context) => {
+      queryClient.setQueryData(["timeline"], context?.previous);
+      toast.error("Failed to create entry");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+    },
+    onSuccess: () => toast.success("Entry created"),
   });
 
   const deleteMutation = useMutation({
@@ -124,8 +100,6 @@ export default function TimelinePage() {
     },
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
-
-  const activityTypes = ["note", "call", "meeting", "email", "task"];
 
   if (isLoading) {
     return (
@@ -189,11 +163,8 @@ export default function TimelinePage() {
                 </DialogDescription>
               </DialogHeader>
               <TimelineEntryForm
-                onSubmit={async (values) => {
-                  // temporary toast for now
-                  toast.info("Submit coming soon");
-                }}
-                isSubmitting={false}
+                onSubmit={(values) => createMutation.mutate(values)}
+                isSubmitting={createMutation.isPending}
               />
             </DialogContent>
           </Dialog>
