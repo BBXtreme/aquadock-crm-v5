@@ -74,7 +74,7 @@ const anredeOptions = [
 export default function ContactsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [editContact, setEditContact] = useState(null);
 
