@@ -95,15 +95,24 @@ export default function TimelinePage() {
     mutationFn: async (values: any) => {
       const payload = {
         ...values,
-        user_id: "dev-mock-user-...",
-        user_name: "Dev User",
+        contact_id: values.contact_id === "none" || values.contact_id === "" ? null : values.contact_id,
+        user_id: "dev-mock-user-11111111-2222-3333-4444-555555555555", // oder gen_random_uuid()
+        user_name: values.user_name || "BangLee",
       };
+
+      console.log("Sending create payload:", payload); // debug
+
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(await res.text());
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Create failed:", err);
+        throw new Error(err.error || "Create failed");
+      }
       return res.json();
     },
     onMutate: async (newEntry) => {
