@@ -26,7 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
@@ -254,9 +254,9 @@ export default function CompaniesPage() {
                           {statusOptions.map(s => (
                             <Button
                               key={s}
-                              variant={activeFilters.status.includes(s) ? "secondary" : "outline"}
+                              variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
+                              className={activeFilters.status.includes(s) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                               onClick={() => toggleFilter('status', s)}
                             >
                               {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -272,9 +272,9 @@ export default function CompaniesPage() {
                             return (
                               <Button
                                 key={k}
-                                variant={activeFilters.kategorie.includes(k) ? "secondary" : "outline"}
+                                variant={activeFilters.kategorie.includes(k) ? "secondary" : "ghost"}
                                 size="sm"
-                                className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
+                                className={activeFilters.kategorie.includes(k) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                                 onClick={() => toggleFilter('kategorie', k)}
                               >
                                 {Icon ? <span className="mr-1">{Icon}</span> : null}
@@ -290,9 +290,9 @@ export default function CompaniesPage() {
                           {betriebstypOptions.map(b => (
                             <Button
                               key={b}
-                              variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "outline"}
+                              variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "ghost"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
+                              className={activeFilters.betriebstyp.includes(b) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                               onClick={() => toggleFilter('betriebstyp', b)}
                             >
                               {b.charAt(0).toUpperCase() + b.slice(1)}
@@ -306,9 +306,9 @@ export default function CompaniesPage() {
                           {landOptions.map(l => (
                             <Button
                               key={l}
-                              variant={activeFilters.land.includes(l) ? "secondary" : "outline"}
+                              variant={activeFilters.land.includes(l) ? "secondary" : "ghost"}
                               size="sm"
-                              className="text-xs font-normal hover:bg-accent hover:text-accent-foreground transition-colors rounded-lg h-6"
+                              className={activeFilters.land.includes(l) ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-accent/60"}
                               onClick={() => toggleFilter('land', l)}
                             >
                               {l}
