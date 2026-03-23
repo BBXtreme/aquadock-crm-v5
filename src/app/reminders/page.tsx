@@ -91,7 +91,7 @@ export default function RemindersPage() {
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const columns = useMemo(() => [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -198,26 +198,19 @@ export default function RemindersPage() {
         </div>
       ),
     }),
-  ], [handleDelete, handleView, handleEdit]);
+  ], []);
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: filteredReminders || [],
+    data: reminders || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getRowId: (row) => row.id,
-    state: {
-      globalFilter,
-      columnVisibility,
-      rowSelection,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: { rowSelection },
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
+    getRowId: (row) => row.id,
   });
 
   return (
@@ -322,8 +315,8 @@ export default function RemindersPage() {
                           <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
                               <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : header.column.columnDef.header ? (
-                                  flexRender(header.column.columnDef.header, header.getContext())
+                                {header.isPlaceholder ? null : header.columnDef.header ? (
+                                  flexRender(header.columnDef.header, header.getContext())
                                 ) : (
                                   <span>—</span>
                                 )}
@@ -337,7 +330,7 @@ export default function RemindersPage() {
                           table.getRowModel().rows.map((row) => (
                             <TableRow key={row.id}>
                               {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                <TableCell key={cell.id}>{flexRender(cell.columnDef.cell, cell.getContext())}</TableCell>
                               ))}
                             </TableRow>
                           ))
