@@ -367,18 +367,18 @@ export default function ContactDetailPage() {
           <CardContent>
             <Select onValueChange={(value) => {
               const supabase = createClient();
-              updateContact(contact.id, { company_id: value || null }, supabase).then(() => {
+              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase).then(() => {
                 toast.success("Company updated");
                 _fetchData();
               }).catch((err) => {
                 toast.error("Update failed", { description: err.message });
               });
-            }} defaultValue={contact.company_id || ""}>
+            }} defaultValue={contact.company_id || "none"}>
               <SelectTrigger>
                 <SelectValue placeholder="Select company" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value="none">None</SelectItem>
                 {companies.map((company) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.firmenname}
