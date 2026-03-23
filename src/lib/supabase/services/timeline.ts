@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { TimelineEntry, TimelineEntryUpdate } from "../types";
+import { createServerSupabaseClient } from "../server";
+import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from "../types";
 import { handleSupabaseError } from "../utils";
 
 /**
@@ -32,4 +33,57 @@ export async function updateTimelineEntry(
   const { data, error } = await client.from("timeline").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateTimelineEntry");
   return data as TimelineEntry;
+}
+
+/**
+ * Get all timeline entries for a specific user
+ */
+export async function getAllTimelineForUser(userId: string): Promise<TimelineEntry[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("timeline")
+    .select(`
+      *,
+      companies!inner (id, firmenname, status, kundentyp)
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) throw handleSupabaseError(error, "Cannot load timeline");
+  return data ?? [];
+}
+
+/**
+ * Create a new timeline entry
+ */
+export async function createTimelineEntry(
+  values: Omit<TimelineEntryInsert, "id" | "created_at" | "user_id"> & { user_id: string }
+): Promise<TimelineEntry> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("timeline")
+    .insert(values)
+    .select(`
+      *,
+      companies!inner (id, firmenname)
+    `)
+    .single();
+
+  if (error) throw handleSupabaseError(error, "Cannot create timeline entry");
+  return data;
+}
+
+/**
+ * Delete a timeline entry
+ */
+export async function deleteTimelineEntry(id: string, userId: string): Promise<void> {
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("timeline")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);   // extra safety
+
+  if (error) throw handleSupabaseError(error, "Cannot delete timeline entry");
 }
