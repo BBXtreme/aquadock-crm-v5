@@ -33,6 +33,19 @@ export default function CompaniesPage() {
     land: [],
   });
 
+  const statusOptions = ["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv"];
+
+  const toggleFilter = (category: string, value: string) => {
+    setActiveFilters(prev => {
+      const current = prev[category];
+      if (current.includes(value)) {
+        return { ...prev, [category]: current.filter(v => v !== value) };
+      } else {
+        return { ...prev, [category]: [...current, value] };
+      }
+    });
+  };
+
   const {
     data: companies = [],
     isLoading,
@@ -176,7 +189,21 @@ export default function CompaniesPage() {
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
-                      {/* 4 filter groups here – next prompt */}
+                      <div>
+                        <h4>Status</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {statusOptions.map(s => (
+                            <Button
+                              key={s}
+                              variant={activeFilters.status.includes(s) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleFilter('status', s)}
+                            >
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
