@@ -525,20 +525,16 @@ export default function RemindersPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog
-          open={!!editReminder}
-          onOpenChange={() => setEditReminder(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Reminder</DialogTitle>
-            </DialogHeader>
-            <ReminderEditForm
-              reminder={editReminder}
-              onSuccess={() => setEditReminder(null)}
-            />
-          </DialogContent>
-        </Dialog>
+        {editReminder && (
+          <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Reminder</DialogTitle>
+              </DialogHeader>
+              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </AppLayout>
   );
