@@ -455,8 +455,9 @@ export default function RemindersPage() {
               <DialogHeader>
                 <DialogTitle>Edit Reminder</DialogTitle>
               </DialogHeader>
-            <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-          </DialogContent>
+              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </AppLayout>
