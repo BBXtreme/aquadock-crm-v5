@@ -21,7 +21,7 @@ import { AlertTriangle, Bell, Calendar, Edit, Eye, RefreshCw, Star, Trash } from
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/ReminderEditForm";
 import AppLayout from "@/components/layout/AppLayout";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,6 +52,7 @@ export default function RemindersPage() {
     data: allReminders = [],
     isLoading: loading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
@@ -222,41 +223,6 @@ export default function RemindersPage() {
     enableRowSelection: true,
   });
 
-  if (error) {
-    return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Home → Reminders</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
-            </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>New Reminder</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Reminder</DialogTitle>
-                </DialogHeader>
-                <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
-          </div>
-          <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error.message}</span>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Erneut versuchen
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AppLayout>
-    );
-  }
-
   return (
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -335,12 +301,15 @@ export default function RemindersPage() {
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
             {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
+              <SkeletonList count={10} />
+            ) : error ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error loading reminders</AlertTitle>
+                <AlertDescription>{error?.message}</AlertDescription>
+                <Button onClick={() => refetch()}>Retry</Button>
+              </Alert>
+            ) : reminders.length === 0 ? (
+              <Alert>No reminders found. Create one to get started.</Alert>
             ) : (
               <>
                 <div className="flex items-center space-x-4 mb-4">
