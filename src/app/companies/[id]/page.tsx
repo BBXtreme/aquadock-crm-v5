@@ -728,11 +728,11 @@ export default function CompanyDetailPage() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Primary</th>
+                    <th className="text-left">Name</th>
+                    <th className="text-left">Position</th>
+                    <th className="text-left">Email</th>
+                    <th className="text-left">Phone</th>
+                    <th className="text-left">Primary</th>
                     <th className="text-right w-24">Actions</th>
                   </tr>
                 </thead>
@@ -797,11 +797,11 @@ export default function CompanyDetailPage() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th>Title</th>
-                    <th>Due Date</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Assigned To</th>
+                    <th className="text-left">Title</th>
+                    <th className="text-left">Due Date</th>
+                    <th className="text-left">Priority</th>
+                    <th className="text-left">Status</th>
+                    <th className="text-left">Assigned To</th>
                     <th className="text-right w-24">Actions</th>
                   </tr>
                 </thead>
@@ -883,11 +883,11 @@ export default function CompanyDetailPage() {
               <table className="w-full">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Event</th>
-                    <th>Company</th>
-                    <th>Contact</th>
-                    <th>User</th>
+                    <th className="text-left">Date</th>
+                    <th className="text-left">Event</th>
+                    <th className="text-left">Company</th>
+                    <th className="text-left">Contact</th>
+                    <th className="text-left">User</th>
                     <th className="text-right">Actions</th>
                   </tr>
                 </thead>
