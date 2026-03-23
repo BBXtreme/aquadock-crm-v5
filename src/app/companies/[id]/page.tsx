@@ -338,8 +338,14 @@ export default function CompanyDetailPage() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
             <p className="text-gray-600">{error}</p>
-            <Button onClick={() => router.back()} className="mt-4">
-              Go Back
+            <Button variant="outline" onClick={() => {
+              if (document.referrer.includes("/contacts")) {
+                router.back();  // returns to contacts or contact detail
+              } else {
+                router.push("/companies");  // fallback
+              }
+            }}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
             </Button>
           </div>
         </div>
