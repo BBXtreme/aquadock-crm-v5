@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { Company } from "@/lib/supabase/types";
+import type { Company, TimelineEntry } from "@/lib/supabase/types";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -31,13 +32,28 @@ interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
   companies: Company[];
+  editEntry?: TimelineEntry | null;
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting, companies }: Props) {
+export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, editEntry }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { title: "", content: "", activity_type: "note", company_id: "", user_name: "" },
   });
+
+  useEffect(() => {
+    if (editEntry) {
+      form.reset({
+        title: editEntry.title,
+        content: editEntry.content || "",
+        activity_type: editEntry.activity_type,
+        user_name: editEntry.user_name,
+        company_id: editEntry.company_id || "",
+      });
+    } else {
+      form.reset();
+    }
+  }, [editEntry, form]);
 
   return (
     <Form {...form}>
@@ -74,7 +90,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies }:
           render={({ field }) => (
             <FormItem>
               <FormLabel>Activity Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select activity type" />
@@ -112,7 +128,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies }:
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company (optional)</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company" />

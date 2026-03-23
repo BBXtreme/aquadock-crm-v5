@@ -39,6 +39,25 @@ export async function createTimelineEntry(values: TimelineEntryInsert & { user_i
 }
 
 /**
+ * Update a timeline entry
+ */
+export async function updateTimelineEntry(id: string, updates: Partial<TimelineEntry>): Promise<TimelineEntry> {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("timeline")
+    .update(updates)
+    .eq("id", id)
+    .select(`
+      *,
+      companies(firmenname)
+    `)
+    .single();
+
+  if (error) throw handleSupabaseError(error, "Failed to update timeline entry");
+  return data;
+}
+
+/**
  * Delete a timeline entry
  */
 export async function deleteTimelineEntry(id: string): Promise<void> {

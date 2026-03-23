@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Calendar, Clock, Trash, User } from "lucide-react";
+import { Calendar, Clock, Edit, Trash, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ export default function TimelinePage() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
 
   // TODO: use useSession or Server Component auth
   // const { userId } = useAuth();
@@ -103,6 +104,25 @@ export default function TimelinePage() {
       toast.success("Entry created");
       setDialogOpen(false);
     },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: any }) => {
+      const res = await fetch(`/api/timeline/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      setDialogOpen(false);
+      setEditEntry(null);
+      toast.success("Entry updated");
+    },
+    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const deleteMutation = useMutation({
@@ -182,21 +202,28 @@ export default function TimelinePage() {
             <p className="text-muted-foreground text-sm">Home → Timeline</p>
             <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditEntry(null); }}>
             <DialogTrigger asChild>
-              <Button>New Entry</Button>
+              <Button onClick={() => setEditEntry(null)}>New Entry</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Timeline Entry</DialogTitle>
+                <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
                 <DialogDescription>
-                  Add a new activity to the timeline.
+                  {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
                 </DialogDescription>
               </DialogHeader>
               <TimelineEntryForm
-                onSubmit={(values) => createMutation.mutate(values)}
-                isSubmitting={createMutation.isPending}
+                onSubmit={(values) => {
+                  if (editEntry) {
+                    updateMutation.mutate({ id: editEntry.id, values });
+                  } else {
+                    createMutation.mutate(values);
+                  }
+                }}
+                isSubmitting={createMutation.isPending || updateMutation.isPending}
                 companies={companies}
+                editEntry={editEntry}
               />
             </DialogContent>
           </Dialog>
@@ -241,18 +268,30 @@ export default function TimelinePage() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm("Delete this timeline entry?")) {
-                          deleteMutation.mutate(entry.id);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditEntry(entry);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm("Delete this timeline entry?")) {
+                            deleteMutation.mutate(entry.id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

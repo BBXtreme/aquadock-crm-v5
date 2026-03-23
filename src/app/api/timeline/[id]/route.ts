@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createServerSupabaseClient, handleSupabaseError } from "@/lib/supabase/server";
-import { deleteTimelineEntry } from "@/lib/supabase/services/timeline-server";
+import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/supabase/services/timeline-server";
+
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+
+    const body = await request.json();
+    const updatedEntry = await updateTimelineEntry(id, body);
+    return NextResponse.json(updatedEntry);
+  } catch (error) {
+    console.error("Error updating timeline entry:", error);
+    return NextResponse.json({ error: "Failed to update timeline entry" }, { status: 500 });
+  }
+}
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
