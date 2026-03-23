@@ -57,6 +57,8 @@ export default function ContactDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editDialog, setEditDialog] = useState(false);
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState("");
 
   const _fetchData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -71,6 +73,7 @@ export default function ContactDetailPage() {
       const data = await response.json();
       if (data.success) {
         setContact(data.contact);
+        setNotesValue(data.contact.notes || "");
       } else {
         setError(data.error || "Failed to load contact");
       }
@@ -107,6 +110,7 @@ export default function ContactDetailPage() {
         }
 
         setContact(data);
+        setNotesValue(data.notes || "");
       } catch (err) {
         console.error(err);
         setError("Failed to load contact");
@@ -137,6 +141,18 @@ export default function ContactDetailPage() {
       } catch (_error) {
         toast.error("Failed to delete contact");
       }
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    try {
+      const supabase = createClient();
+      await updateContact(contact!.id, { notes: notesValue }, supabase);
+      toast.success("Notes updated");
+      setEditingNotes(false);
+      _fetchData();
+    } catch (error) {
+      toast.error("Failed to update notes", { description: error.message });
     }
   };
 
@@ -305,8 +321,23 @@ export default function ContactDetailPage() {
                 <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Notes</label>
-                <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
+                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  Notes
+                  <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </label>
+                {editingNotes ? (
+                  <div>
+                    <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" onClick={handleSaveNotes}>Save</Button>
+                      <Button size="sm" variant="outline" onClick={() => { setEditingNotes(false); setNotesValue(contact.notes || ""); }}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
+                )}
               </div>
             </div>
           </CardContent>
