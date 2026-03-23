@@ -79,6 +79,20 @@ export default function MassEmailPage() {
         supabase,
       );
 
+      // Log to timeline
+      await fetch("/api/timeline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_id: null,
+          activity_type: "email",
+          title: "Test Email Sent",
+          content: `Test email sent to test@example.com`,
+          user_name: "Mass Email System",
+          user_id: null,
+        }),
+      });
+
       toast.success("Test email sent successfully!");
     } catch (error) {
       console.error("Error sending test email:", error);
@@ -126,6 +140,20 @@ export default function MassEmailPage() {
           },
           supabase,
         );
+
+        // Log to timeline
+        await fetch("/api/timeline", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            company_id: company.id,
+            activity_type: "email",
+            title: "Mass Email Sent",
+            content: `Mass email sent to ${company.firmenname}`,
+            user_name: "Mass Email System",
+            user_id: null,
+          }),
+        });
       }
 
       toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);
