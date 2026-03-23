@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
 import Link from "next/link";
 
@@ -16,43 +16,32 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { AlertTriangle, Bell, Calendar, Edit, Eye, RefreshCw, Star, Trash } from "lucide-react";
+import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
-import ReminderEditForm from "@/components/features/ReminderEditForm";
 import AppLayout from "@/components/layout/AppLayout";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [rowSelection, setRowSelection] = useState({});
-  const [currentFilter, setCurrentFilter] = useState<"all" | "open" | "overdue" | "my">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editReminder, setEditReminder] = useState<any>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedReminder, setSelectedReminder] = useState<any>(null);
-  const [columnVisibility, setColumnVisibility] = useState({});
-
-  const queryClient = useQueryClient();
 
   const {
     data: allReminders = [],
     isLoading: loading,
     error,
-    refetch,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
@@ -61,30 +50,16 @@ export default function RemindersPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteReminder(id, createClient()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success("Reminder deleted");
-    },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
-  });
-
-  const reminders = allReminders.filter((r) => {
-    if (currentFilter === "open") return r.status === "open";
-    if (currentFilter === "overdue") return r.status === "open" && isAfter(new Date(), new Date(r.due_date));
-    if (currentFilter === "my") return r.status === "open" && r.assigned_to; // Placeholder for current user
-    return true;
-  });
+  const reminders = allReminders.filter((r) => r.status === "open");
 
   const openReminders = allReminders.filter((r) => r.status === "open").length;
   const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
   const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
-  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "hoch").length;
+  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
 
   const columnHelper = createColumnHelper<any>();
 
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const columns: ColumnDef<any>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -104,17 +79,7 @@ export default function RemindersPage() {
     }),
     columnHelper.accessor("title", {
       header: "Title",
-      cell: (info) => (
-        <button
-          className="text-blue-600 hover:underline"
-          onClick={() => {
-            setSelectedReminder(info.row.original);
-            setIsViewOpen(true);
-          }}
-        >
-          {info.getValue()}
-        </button>
-      ),
+      cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("companies.firmenname", {
       header: "Company",
@@ -169,43 +134,11 @@ export default function RemindersPage() {
       header: "Assigned To",
       cell: (info) => info.getValue(),
     }),
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setSelectedReminder(info.row.original);
-              setIsViewOpen(true);
-            }}
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setEditReminder(info.row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this reminder?")) {
-                deleteMutation.mutate(info.row.original.id);
-              }
-            }}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    }),
-  ], []);
+  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data: reminders || [],
+    data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -214,14 +147,47 @@ export default function RemindersPage() {
     getRowId: (row) => row.id,
     state: {
       globalFilter,
-      columnVisibility,
       rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
-    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     enableRowSelection: true,
   });
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto space-y-8 p-6 lg:p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm">Home → Reminders</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Reminder</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Reminder</DialogTitle>
+                </DialogHeader>
+                <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          </div>
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{error.message}</span>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Erneut versuchen
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -284,32 +250,19 @@ export default function RemindersPage() {
         </div>
 
         <div className="flex space-x-2">
-          <Button variant={currentFilter === "all" ? "default" : "outline"} onClick={() => setCurrentFilter("all")}>
-            All
-          </Button>
-          <Button variant={currentFilter === "open" ? "default" : "outline"} onClick={() => setCurrentFilter("open")}>
-            Open
-          </Button>
-          <Button variant={currentFilter === "overdue" ? "default" : "outline"} onClick={() => setCurrentFilter("overdue")}>
-            Overdue
-          </Button>
-          <Button variant={currentFilter === "my" ? "default" : "outline"} onClick={() => setCurrentFilter("my")}>
-            My Tasks
-          </Button>
+          <Button variant="outline">All</Button>
+          <Button variant="outline">Open</Button>
+          <Button variant="outline">Overdue</Button>
+          <Button variant="outline">My Tasks</Button>
         </div>
 
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
           <CardContent className="p-6">
             {loading ? (
-              <SkeletonList count={10} />
-            ) : error ? (
-              <Alert variant="destructive">
-                <AlertTitle>Error loading reminders</AlertTitle>
-                <AlertDescription>{error?.message}</AlertDescription>
-                <Button onClick={() => refetch()}>Retry</Button>
-              </Alert>
-            ) : reminders.length === 0 ? (
-              <Alert>No reminders found. Create one to get started.</Alert>
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
+              </div>
             ) : (
               <>
                 <div className="flex items-center space-x-4 mb-4">
@@ -380,57 +333,6 @@ export default function RemindersPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* View Dialog */}
-        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>View Reminder</DialogTitle>
-              <DialogDescription>
-                Details of the selected reminder.
-              </DialogDescription>
-            </DialogHeader>
-            {selectedReminder && (
-              <div className="space-y-4">
-                <div>
-                  <label className="font-medium">Title:</label>
-                  <p>{selectedReminder.title || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Company:</label>
-                  <p>{selectedReminder.companies?.firmenname || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Due Date:</label>
-                  <p>{selectedReminder.due_date ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true }) : "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Priority:</label>
-                  <p>{selectedReminder.priority || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Status:</label>
-                  <p>{selectedReminder.status || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Assigned To:</label>
-                  <p>{selectedReminder.assigned_to || "—"}</p>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {editReminder && (
-          <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Reminder</DialogTitle>
-              </DialogHeader>
-              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
     </AppLayout>
   );
