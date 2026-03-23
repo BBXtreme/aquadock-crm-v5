@@ -926,20 +926,15 @@ export default function CompanyDetailPage() {
         <Dialog open={addContactDialog} onOpenChange={setAddContactDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Contact</DialogTitle>
+              <DialogTitle>Add Contact to {company.firmenname}</DialogTitle>
             </DialogHeader>
-            <div>
-              <p>Feature not implemented yet. Please use the Contacts page to add a new contact.</p>
-              <Button
-                onClick={() => {
-                  setAddContactDialog(false);
-                  router.push("/contacts");
-                }}
-                className="mt-4"
-              >
-                Go to Contacts
-              </Button>
-            </div>
+            <ContactCreateForm 
+              companyId={company.id} 
+              onSuccess={() => {
+                setAddContactDialog(false);
+                fetchData();
+              }} 
+            />
           </DialogContent>
         </Dialog>
 
@@ -1424,6 +1419,192 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
           )}
         />
         <Button type="submit">Save</Button>
+      </form>
+    </Form>
+  );
+}
+
+function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      vorname: "",
+      nachname: "",
+      anrede: "",
+      position: "",
+      email: "",
+      telefon: "",
+      mobil: "",
+      durchwahl: "",
+      notes: "",
+      company_id: companyId || "",
+      is_primary: false,
+    },
+  });
+
+  const onSubmit = form.handleSubmit(async (data) => {
+    try {
+      const supabase = createClient();
+      await createContact(data, supabase);
+      toast.success("Contact created");
+      form.reset();
+      onSuccess?.();
+    } catch (error) {
+      toast.error("Failed to create contact", { description: error.message });
+    }
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="vorname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Vorname</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="nachname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nachname</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="anrede"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Anrede</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select anrede" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {anredeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Position</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="telefon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Telefon</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mobil"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mobil</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="durchwahl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Durchwahl</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="is_primary"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Primary Contact
+                </FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Create Contact</Button>
       </form>
     </Form>
   );
