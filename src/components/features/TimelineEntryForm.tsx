@@ -22,7 +22,7 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().optional(),
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
-  company_id: z.string().optional(),
+  company_id: z.string().uuid().nullable().optional(),
   contact_id: z.string().uuid().nullable().optional(),
   user_name: z.string().min(1, "User name is required"),
 });
@@ -45,7 +45,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           title: editEntry.title || "",
           content: editEntry.content || "",
           activity_type: editEntry.activity_type || "note",
-          company_id: editEntry.company_id || "",
+          company_id: editEntry.company_id || "none",
           contact_id: editEntry.contact_id || "none",
           user_name: editEntry.user_name || "",
         }
@@ -53,7 +53,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           title: "",
           content: "",
           activity_type: "note",
-          company_id: "",
+          company_id: "none",
           contact_id: "none",
           user_name: "",
         },
@@ -63,6 +63,7 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
     if (editEntry) {
       form.reset({
         ...editEntry,
+        company_id: editEntry.company_id || "none",
         contact_id: editEntry.contact_id || "none",
       });
     }
@@ -141,16 +142,21 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting, companies, c
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company (optional)</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select
+                onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                value={field.value ?? "none"}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
+                    <SelectValue placeholder="Kein Unternehmen ausgewählt" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="none">Kein Unternehmen</SelectItem>
                   {companies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.firmenname}
+                      {company.kundentyp ? ` (${company.kundentyp})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
