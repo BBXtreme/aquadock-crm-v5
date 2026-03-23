@@ -232,6 +232,7 @@ export default function ContactDetailPage() {
 
         {/* Badges */}
         <div className="flex items-center gap-4">
+          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
           {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
         </div>
 
