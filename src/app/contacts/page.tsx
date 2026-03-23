@@ -135,6 +135,7 @@ export default function ContactsPage() {
           aria-label="Select row"
         />
       ),
+      enableHiding: false,
     }),
     columnHelper.accessor("vorname", {
       id: "vorname",
@@ -229,6 +230,7 @@ export default function ContactsPage() {
           </Button>
         </div>
       ),
+      enableHiding: false,
     }),
   ];
 
