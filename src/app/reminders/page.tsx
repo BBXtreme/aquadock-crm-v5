@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
 import {
   type ColumnDef,
@@ -17,6 +17,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
+import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -31,12 +32,17 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser";
-import { getReminders } from "@/lib/supabase/services/reminders";
+import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [rowSelection, setRowSelection] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editReminder, setEditReminder] = useState<any>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [selectedReminder, setSelectedReminder] = useState<any>(null);
+
+  const queryClient = useQueryClient();
 
   const {
     data: allReminders = [],
@@ -49,6 +55,28 @@ export default function RemindersPage() {
       return getReminders(supabase);
     },
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteReminder(id, createClient()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success("Reminder deleted");
+    },
+    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+  });
+
+  const handleDelete = useCallback((id: string) => {
+    if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
+  }, [deleteMutation]);
+
+  const handleView = useCallback((reminder: any) => {
+    setSelectedReminder(reminder);
+    setIsViewOpen(true);
+  }, []);
+
+  const handleEdit = useCallback((reminder: any) => {
+    setEditReminder(reminder);
+  }, []);
 
   const reminders = allReminders.filter((r) => r.status === "open");
 
@@ -79,7 +107,14 @@ export default function RemindersPage() {
     }),
     columnHelper.accessor("title", {
       header: "Title",
-      cell: (info) => info.getValue(),
+      cell: (info) => (
+        <button
+          className="text-blue-600 hover:underline"
+          onClick={() => handleView(info.row.original)}
+        >
+          {info.getValue()}
+        </button>
+      ),
     }),
     columnHelper.accessor("companies.firmenname", {
       header: "Company",
@@ -134,7 +169,32 @@ export default function RemindersPage() {
       header: "Assigned To",
       cell: (info) => info.getValue(),
     }),
-  ], []);
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: (info) => (
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleView(info.row.original)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(info.row.original)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(info.row.original.id)}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    }),
+  ], [handleDelete, handleView, handleEdit]);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -333,6 +393,57 @@ export default function RemindersPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* View Dialog */}
+        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>View Reminder</DialogTitle>
+              <DialogDescription>
+                Details of the selected reminder.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedReminder && (
+              <div className="space-y-4">
+                <div>
+                  <label className="font-medium">Title:</label>
+                  <p>{selectedReminder.title || "—"}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Company:</label>
+                  <p>{selectedReminder.companies?.firmenname || "—"}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Due Date:</label>
+                  <p>{selectedReminder.due_date ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true }) : "—"}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Priority:</label>
+                  <p>{selectedReminder.priority || "—"}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Status:</label>
+                  <p>{selectedReminder.status || "—"}</p>
+                </div>
+                <div>
+                  <label className="font-medium">Assigned To:</label>
+                  <p>{selectedReminder.assigned_to || "—"}</p>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {editReminder && (
+          <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Reminder</DialogTitle>
+              </DialogHeader>
+              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </AppLayout>
   );
