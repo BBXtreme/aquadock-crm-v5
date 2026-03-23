@@ -19,11 +19,19 @@ export async function GET(request: NextRequest) {
 // Create new timeline entry
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log("[POST /api/timeline] Raw received body:", JSON.stringify(body, null, 2));
+    let body;
+    try {
+      body = await request.json();
+      console.log("[POST /api/timeline] Raw received body:", JSON.stringify(body, null, 2));
+    } catch (parseErr) {
+      console.error("[POST /api/timeline] Body parse failed:", parseErr);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
+    // Explicit required fields check
     if (!body.title || !body.activity_type) {
-      return NextResponse.json({ error: "Missing required fields: title and activity_type" }, { status: 400 });
+      console.warn("[POST /api/timeline] Missing required fields:", { title: !!body.title, activity_type: !!body.activity_type });
+      return NextResponse.json({ error: "Title and activity_type are required" }, { status: 400 });
     }
 
     const payload = {
@@ -32,34 +40,37 @@ export async function POST(request: NextRequest) {
       activity_type: body.activity_type,
       company_id: body.company_id ?? null,
       contact_id: body.contact_id ?? null,
-      user_name: body.user_name ?? "Unknown",
-      user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // Marco's real user ID
+      user_name: body.user_name ?? "BangLee (fallback)",
+      user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",  // Marco's real user ID – must exist in auth.users
     };
 
-    console.log("[POST /api/timeline] Prepared payload:", JSON.stringify(payload, null, 2));
+    console.log("[POST /api/timeline] Final payload to service:", JSON.stringify(payload, null, 2));
 
     const timelineEntry = await createTimelineEntry(payload);
 
+    console.log("[POST /api/timeline] Success – created entry:", timelineEntry.id);
+
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error: any) {
-    console.error("[POST /api/timeline] CRASH DETAILS:", {
-      message: error.message,
+    const errorDetails = {
+      message: error.message || "Unknown error",
       stack: error.stack,
       name: error.name,
-      cause: error.cause,
       code: error.code,
       details: error.details,
       hint: error.hint,
-      bodyReceived: await request.json().catch(() => "could not re-read body")
-    });
+      cause: error.cause,
+      bodyReceived: body || "not parsed"
+    };
+
+    console.error("[POST /api/timeline] FULL CRASH:", JSON.stringify(errorDetails, null, 2));
 
     return NextResponse.json(
       {
         error: "Failed to create timeline entry",
-        details: error.message || "Unknown server error",
-        code: error.code,
-        hint: error.hint,
-        status: 500
+        details: errorDetails.message,
+        code: errorDetails.code,
+        hint: errorDetails.hint
       },
       { status: 500 }
     );
