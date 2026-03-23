@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { Company } from "@/lib/supabase/types";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -29,9 +30,10 @@ type FormValues = z.infer<typeof formSchema>;
 interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
+  companies: Company[];
 }
 
-export default function TimelineEntryForm({ onSubmit, isSubmitting }: Props) {
+export default function TimelineEntryForm({ onSubmit, isSubmitting, companies }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { title: "", content: "", activity_type: "note", company_id: "", user_name: "" },
@@ -109,12 +111,22 @@ export default function TimelineEntryForm({ onSubmit, isSubmitting }: Props) {
           name="company_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company ID (optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter company ID" {...field} />
-              </FormControl>
+              <FormLabel>Company (optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {companies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.firmenname}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
-              <p className="text-xs text-muted-foreground">Company ID (optional – full picker coming soon)</p>
             </FormItem>
           )}
         />

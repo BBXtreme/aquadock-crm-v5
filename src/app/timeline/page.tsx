@@ -22,6 +22,7 @@ import {
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
+import { getCompanies } from "@/lib/supabase/services/companies";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
 export default function TimelinePage() {
@@ -42,6 +43,12 @@ export default function TimelinePage() {
       }
       return response.json() as Promise<TimelineEntry[]>;
     },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: () => getCompanies("dummy"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -98,7 +105,7 @@ export default function TimelinePage() {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
       toast.success("Timeline entry deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+    onError: (err) => toast.error("Deletion failed", { description: err.message });
   });
 
   if (isLoading) {
@@ -165,6 +172,7 @@ export default function TimelinePage() {
               <TimelineEntryForm
                 onSubmit={(values) => createMutation.mutate(values)}
                 isSubmitting={createMutation.isPending}
+                companies={companies}
               />
             </DialogContent>
           </Dialog>
