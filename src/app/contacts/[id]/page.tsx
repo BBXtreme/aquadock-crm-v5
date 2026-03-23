@@ -201,6 +201,21 @@ export default function ContactDetailPage() {
               {contact.vorname} {contact.nachname}
             </h1>
             {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
+            <div className="mt-2 flex items-center gap-2">
+              <Checkbox
+                checked={contact.is_primary}
+                onCheckedChange={(checked) => {
+                  const supabase = createClient();
+                  updateContact(contact.id, { is_primary: checked }, supabase).then(() => {
+                    toast.success("Primary contact updated");
+                    _fetchData();
+                  }).catch((err) => {
+                    toast.error("Update failed", { description: err.message });
+                  });
+                }}
+              />
+              <label className="text-sm font-medium text-gray-700">Primary Contact</label>
+            </div>
           </div>
           <div className="flex gap-3">
             <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
@@ -217,7 +232,6 @@ export default function ContactDetailPage() {
 
         {/* Badges */}
         <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
           {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
         </div>
 
@@ -291,27 +305,7 @@ export default function ContactDetailPage() {
                 <label className="text-sm font-medium text-gray-700">Notes</label>
                 <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
               </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Primary Contact</label>
-                <Checkbox
-                  checked={contact.is_primary}
-                  onCheckedChange={(checked) => {
-                    const supabase = createClient();
-                    updateContact(contact.id, { is_primary: checked }, supabase).then(() => {
-                      toast.success("Primary contact updated");
-                      _fetchData();
-                    }).catch((err) => {
-                      toast.error("Update failed", { description: err.message });
-                    });
-                  }}
-                />
-              </div>
             </div>
-            {!contact.is_primary && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-sm text-yellow-800">This contact is not marked as primary. Consider marking it as primary if this is the main contact for the company.</p>
-              </div>
-            )}
           </CardContent>
         </Card>
 
