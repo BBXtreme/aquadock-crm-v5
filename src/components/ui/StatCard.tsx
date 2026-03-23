@@ -13,14 +13,14 @@ interface StatCardProps {
 
 export default function StatCard({ title, value, icon, change, className }: StatCardProps) {
   return (
-    <Card className={cn("border-l-4 border-muted/50 bg-card/90 shadow-sm hover:shadow-md transition-all", className)}>
+    <Card className={cn("bg-card shadow-sm border border-border/50 hover:shadow-md transition-all duration-200", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div className="rounded-full bg-muted/30 p-3 text-muted-foreground">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-3xl font-bold tracking-tight">{value}</div>
-        {change && <p className="text-xs text-muted-foreground">{change}</p>}
+        <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+        {change && <p className="text-xs text-green-600/80 mt-1">{change}</p>}
       </CardContent>
     </Card>
   );
