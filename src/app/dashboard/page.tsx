@@ -20,7 +20,7 @@ import {
   UtensilsCrossed,
   Waves,
 } from "lucide-react";
-import { Funnel, FunnelChart, LabelList, ResponsiveContainer } from "recharts";
+import { Cell, Funnel, FunnelChart, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import AppLayout from "@/components/layout/AppLayout";
 import StatCard from "@/components/ui/StatCard";
@@ -59,6 +59,14 @@ export default function DashboardPage() {
     { name: "Proposal", value: 210, fill: "#eab308" },
     { name: "Negotiation", value: 120, fill: "#f97316" },
     { name: "Won", value: 45, fill: "#10b981" },
+  ];
+
+  const pieData = [
+    { name: "Marinas", value: 9, fill: "#0ea5e9" },
+    { name: "Camping", value: 6, fill: "#22c55e" },
+    { name: "Hotels/Resorts", value: 4, fill: "#eab308" },
+    { name: "Restaurants", value: 3, fill: "#ef4444" },
+    { name: "Sonstige", value: 5, fill: "#a78bfa" },
   ];
 
   return (
@@ -172,6 +180,33 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Companies by Kundentyp</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AppLayout>
