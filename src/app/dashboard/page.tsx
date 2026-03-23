@@ -146,20 +146,32 @@ export default function DashboardPage() {
             />
           </div>
 
-          <Card className="col-span-full lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Sales Pipeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <FunnelChart data={funnelData}>
-                  <Funnel dataKey="value" data={funnelData} isAnimationActive>
-                    <LabelList position="center" fill="#fff" stroke="none" />
-                  </Funnel>
-                </FunnelChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Sales Pipeline</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <FunnelChart data={funnelData}>
+                    <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                      <LabelList position="center" fill="#fff" stroke="none" />
+                    </Funnel>
+                  </FunnelChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Pipeline Insights</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  The sales pipeline shows the progression of leads through various stages. The funnel visualization helps identify bottlenecks and optimize conversion rates.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
