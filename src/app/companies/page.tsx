@@ -34,20 +34,11 @@ export default function CompaniesPage() {
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
+      const { data, error } = await supabase.from("companies").select("*");
       if (error) throw error;
-      return data as any[];
+      return data;
     },
     staleTime: 5 * 60 * 1000,
-  });
-
-  const _createCompanyMutation = useMutation({
-    mutationFn: async (newCompany: CompanyInsert) => {
-      return createCompany(newCompany);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
-    },
   });
 
   const updateMutation = useMutation({
