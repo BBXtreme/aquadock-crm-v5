@@ -5,7 +5,7 @@ import { deleteTimelineEntry } from "@/lib/supabase/services/timeline-server";
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     await deleteTimelineEntry(id);
     return NextResponse.json({ success: true });
