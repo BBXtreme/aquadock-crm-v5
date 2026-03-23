@@ -815,7 +815,17 @@ export default function CompanyDetailPage() {
                 <tbody>
                   {reminders.map((reminder) => (
                     <tr key={reminder.id}>
-                      <td>{reminder.title}</td>
+                      <td className="font-medium">
+                        <button
+                          className="text-primary hover:underline cursor-pointer"
+                          onClick={() => {
+                            setEditReminder(reminder);
+                            setReminderDialogOpen(true);
+                          }}
+                        >
+                          {reminder.title}
+                        </button>
+                      </td>
                       <td>{new Date(reminder.due_date).toLocaleDateString()}</td>
                       <td>
                         <Badge
@@ -1041,6 +1051,40 @@ export default function CompanyDetailPage() {
               companyId={company.id}
               onSuccess={() => {
                 setAddReminderDialog(false);
+                queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Contact Dialog */}
+        <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Contact</DialogTitle>
+            </DialogHeader>
+            <ContactCreateForm
+              companyId={company.id}
+              contact={editContact}
+              onSuccess={() => {
+                setContactDialogOpen(false);
+                queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Reminder Dialog */}
+        <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Reminder</DialogTitle>
+            </DialogHeader>
+            <ReminderCreateForm
+              companyId={company.id}
+              reminder={editReminder}
+              onSuccess={() => {
+                setReminderDialogOpen(false);
                 queryClient.invalidateQueries({ queryKey: ["reminders", id] });
               }}
             />
