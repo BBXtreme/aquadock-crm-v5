@@ -5,10 +5,16 @@ import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  Anchor,
   Building,
+  CalendarPlus,
   DollarSign,
+  MapPin,
+  Percent,
   Trophy,
   Users,
+  UtensilsCrossed,
+  Waves,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -58,25 +64,71 @@ export default function DashboardPage() {
               title="Gesamt Firmen"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
               icon={<Building className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+12% from last month"
             />
             <StatCard
               title="Leads"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
               icon={<Users className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+8% from last month"
             />
             <StatCard
               title="Gewonnene Deals"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
               icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+15% from last month"
             />
             <StatCard
               title="Gesamtwert"
               value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
               icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+22% from last month"
+            />
+            <StatCard
+              title="Active Marinas"
+              value="12"
+              icon={<Anchor className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+3 this month"
+            />
+            <StatCard
+              title="Restaurants & Hotels"
+              value="28"
+              icon={<UtensilsCrossed className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+15% from last month"
+            />
+            <StatCard
+              title="Avg. Wasserdistanz"
+              value="420 m"
+              icon={<Waves className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="-8% closer"
+            />
+            <StatCard
+              title="New This Month"
+              value="5"
+              icon={<CalendarPlus className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+25% vs last month"
+            />
+            <StatCard
+              title="Conversion Rate"
+              value="18%"
+              icon={<Percent className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+4% points"
+            />
+            <StatCard
+              title="Top Region"
+              value="Schleswig-Holstein"
+              icon={<MapPin className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="most active area"
             />
           </div>
         </div>
