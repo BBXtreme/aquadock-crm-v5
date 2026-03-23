@@ -115,6 +115,12 @@ export default function ContactsPage() {
     }
   }, [rowSelection, queryClient]);
 
+  const handleEdit = useCallback((contact) => {
+    if (contact) {
+      setEditContact(contact);
+    }
+  }, []);
+
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
   const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
@@ -216,7 +222,7 @@ export default function ContactsPage() {
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => setEditContact(info.row.original)}>
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
