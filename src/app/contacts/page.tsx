@@ -45,6 +45,8 @@ import type { Contact } from "@/lib/supabase/types";
 import { Eye, Edit, Trash, Download, Upload, Columns } from "lucide-react";
 import Papa from "papaparse";
 import { toast } from "sonner";
+import ContactCreateForm from "@/components/features/ContactCreateForm";
+import ContactEditForm from "@/components/features/ContactEditForm";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -74,6 +76,7 @@ export default function ContactsPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+  const [editContact, setEditContact] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -213,7 +216,7 @@ export default function ContactsPage() {
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => window.location.href = `/contacts/${info.row.original.id}?edit=true`}>
+          <Button variant="ghost" size="sm" onClick={() => setEditContact(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
@@ -498,193 +501,18 @@ export default function ContactsPage() {
             )}
           </CardContent>
         </Card>
+
+        {editContact && (
+          <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Contact</DialogTitle>
+              </DialogHeader>
+              <ContactEditForm contact={editContact} onSuccess={() => setEditContact(null)} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </AppLayout>
-  );
-}
-
-function ContactCreateForm({ onSuccess }: { onSuccess?: () => void }) {
-  const form = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema),
-    defaultValues: {
-      vorname: "",
-      nachname: "",
-      anrede: "",
-      position: "",
-      email: "",
-      telefon: "",
-      mobil: "",
-      durchwahl: "",
-      notes: "",
-      company_id: "",
-      is_primary: false,
-    },
-  });
-
-  const onSubmit = form.handleSubmit(async (data) => {
-    try {
-      const supabase = createClient();
-      await createContact(data, supabase);
-      toast.success("Contact created");
-      form.reset();
-      onSuccess?.();
-    } catch (error) {
-      toast.error("Failed to create contact", { description: error.message });
-    }
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="vorname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Vorname</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="nachname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nachname</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="anrede"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Anrede</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select anrede" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {anredeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="position"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Position</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="telefon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefon</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="mobil"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mobil</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="durchwahl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Durchwahl</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="is_primary"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>
-                  Primary Contact
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Create Contact</Button>
-      </form>
-    </Form>
   );
 }
