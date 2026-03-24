@@ -8,23 +8,44 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+// import "react-leaflet-markercluster/dist/styles.min.css";
 import L from "leaflet";
 import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { importOsmPoi } from "@/lib/supabase/services/companies";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-import { fetchOsmPois, getStatusIcon } from "@/lib/utils/map";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import { importOsmPoi } from "@/lib/supabase/services/companies";
+import { fetchOsmPois } from "@/lib/utils/map";
 
-// Fix default Leaflet icons
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "/leaflet/marker-icon-2x.png",
-  iconUrl: "/leaflet/marker-icon.png",
-  shadowUrl: "/leaflet/marker-shadow.png",
-});
+const getStatusIcon = (status?: string) => {
+  const colorMap: Record<string, string> = {
+    lead: "#808080", // gray
+    qualifiziert: "#f59e0b", // orange
+    akquise: "#8b5cf6", // violet
+    angebot: "#ec4899", // pink
+    gewonnen: "#10b981", // emerald
+    verloren: "#ef4444", // red
+    kunde: "#14b8a6", // teal
+    partner: "#6366f1", // indigo
+    inaktiv: "#6b7280", // gray
+  };
+
+  const color = colorMap[status?.toLowerCase() || "lead"] || "#6b7280";
+
+  return L.divIcon({
+    className: "svg-marker",
+    html: `
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="${color}" stroke="#ffffff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="6" fill="#ffffff" />
+      </svg>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -20],
+  });
+};
 
 const getOsmPoiIcon = () => {
   return L.divIcon({
@@ -160,8 +181,8 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
   }, []);
 
   const tileUrl = isDarkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"     // Carto Dark Matter
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";   // Carto Positron (clean light)
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" // Carto Dark Matter
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"; // Carto Positron (clean light)
 
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
@@ -296,7 +317,7 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
 
       {/* OSM Loading Overlay */}
       {loadingOsm && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[1000]">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
           <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
             <p className="text-sm text-center">Loading OSM POIs...</p>
@@ -306,21 +327,48 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
 
       {/* Legend */}
       {showLegend && (
-        <div className="absolute top-28 right-4 z-[1002] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
+        <div className="absolute top-20 right-4 z-101 bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-0">
           <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Info className="h-4 w-4" />
             Status Legende
           </h4>
           <div className="space-y-2 text-sm">
-            {Object.entries(statusLabels).map(([key, label]) => (
-              <div key={key} className="flex items-center gap-3">
-                <div 
-                  className="w-5 h-5 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: statusColors[key] }} 
-                />
-                <span>{label}</span>
-              </div>
-            ))}
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-gray-500 flex-shrink-0" />
+              <span>Lead</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-orange-500 flex-shrink-0" />
+              <span>Qualifiziert</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-violet-500 flex-shrink-0" />
+              <span>Akquise</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span>Angebot</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0" />
+              <span>Gewonnen</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0" />
+              <span>Verloren</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-teal-500 flex-shrink-0" />
+              <span>Kunde</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-indigo-500 flex-shrink-0" />
+              <span>Partner</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-zinc-500 flex-shrink-0" />
+              <span>Inaktiv</span>
+            </div>
           </div>
         </div>
       )}
