@@ -11,8 +11,10 @@ import Link from "next/link";
 import L from "leaflet";
 import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { importOsmPoi } from "@/lib/supabase/services/companies";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getStatusIcon } from "@/lib/utils/map";
 
@@ -63,6 +65,18 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<any[]>([]);
   const [showLegend, setShowLegend] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const importMutation = useMutation({
+    mutationFn: (poi: any) => importOsmPoi(poi),
+    onSuccess: (newCompany, poi) => {
+      toast.success(`POI "${newCompany.firmenname}" imported successfully`);
+      queryClient.invalidateQueries({ queryKey: ["companiesForMap"] });
+      setOsmPois((prev) => prev.filter((p) => p.id !== poi.id));
+    },
+    onError: (err) => toast.error("Import failed", { description: err.message }),
+  });
 
   const loadOsmPois = async () => {
     if (!mapRef.current) return;
@@ -118,8 +132,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
   const handleImportPoi = (poi: any) => {
-    // Placeholder for future mutation
-    toast.info(`Import von ${poi.tags?.name || "POI"} geplant`);
+    importMutation.mutate(poi);
   };
 
   // Invalidate size and re-center on dark mode change for better stability
@@ -226,9 +239,9 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
                   <div className="min-w-[220px] space-y-2">
                     <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
                     <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
-                    <Button size="sm" variant="outline" onClick={() => handleImportPoi(poi)} className="w-full">
+                    <Button size="sm" variant="outline" onClick={() => handleImportPoi(poi)} disabled={importMutation.isPending} className="w-full">
                       <Plus className="h-3 w-3 mr-1" />
-                      Zu CRM hinzufügen
+                      {importMutation.isPending ? "Importing..." : "Zu CRM hinzufügen"}
                     </Button>
                   </div>
                 </Popup>
