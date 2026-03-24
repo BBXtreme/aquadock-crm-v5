@@ -1,12 +1,11 @@
-import { getCompaniesForOpenMap, CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import { getCompaniesForOpenMap, type CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { OpenMapClient } from "@/components/features/OpenMapClient";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";   // ← change this if needed
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function OpenMapPage() {
-  const _cookieStore = cookies();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerClient();
 
   const { data: { user } } = await supabase.auth.getUser();
 
