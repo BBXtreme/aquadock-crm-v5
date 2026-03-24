@@ -39,7 +39,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
-  const [showOsm, setShowOsm] = useState(true);
 
   const queryClient = useQueryClient();
 
@@ -106,10 +105,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     }
   };
 
-  // Dynamic POI loading when map is moved or zoomed (only when showOsm is true)
+  // Dynamic POI loading when map is moved or zoomed
   useEffect(() => {
-    console.log("[OpenMap] Dynamic loading useEffect", { showOsm });
-    if (!showOsm || !mapRef.current) return;
+    if (!mapRef.current) return;
 
     const handleMapChange = () => {
       const now = Date.now();
@@ -140,7 +138,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         mapRef.current.off("zoomend", handleMapChange);
       }
     };
-  }, [showOsm, lastLoadTime, activeCategories]);
+  }, [lastLoadTime, activeCategories]);
 
   const toggleCategory = (key: PoiCategoryKey) => {
     setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -329,28 +327,27 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
             </Marker>
           ))}
 
-          {showOsm &&
-            osmPois.map((poi: any) => (
-              <Marker
-                key={poi.id}
-                position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-                icon={getOsmPoiIcon(isDarkMode)}
-              >
-                <Popup>
-                  <div className="min-w-[220px] space-y-2">
-                    <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
-                    <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
-                    <button
-                      onClick={() => handleImportPoi(poi)}
-                      className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md w-full"
-                    >
-                      <Plus className="h-3 w-3 mr-1 inline" />
-                      Zu CRM hinzufügen
-                    </button>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+          {osmPois.map((poi: any) => (
+            <Marker
+              key={poi.id}
+              position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
+              icon={getOsmPoiIcon(isDarkMode)}
+            >
+              <Popup>
+                <div className="min-w-[220px] space-y-2">
+                  <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
+                  <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
+                  <button
+                    onClick={() => handleImportPoi(poi)}
+                    className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md w-full"
+                  >
+                    <Plus className="h-3 w-3 mr-1 inline" />
+                    Zu CRM hinzufügen
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MarkerClusterGroup>
       </MapContainer>
 
@@ -397,19 +394,8 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </Button>
 
         <Button
-          variant={showOsm ? "default" : "secondary"}
+          variant="secondary"
           size="icon"
-          onClick={() => {
-            if (showOsm) {
-              console.log("[OpenMap] Toggle OFF");
-              setShowOsm(false);
-              setOsmPois([]);
-            } else {
-              console.log("[OpenMap] Toggle ON");
-              setShowOsm(true);
-              loadOsmPois(true);
-            }
-          }}
           className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
