@@ -60,8 +60,8 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       const pois = await fetchOsmPois(bounds);
       setOsmPois(pois);
       toast.success(`${pois.length} OSM-POIs geladen`);
-    } catch (err) {
-      showError("OSM-POIs konnten nicht geladen werden");
+    } catch (err: any) {
+      showError(err.message || "OSM-POIs konnten nicht geladen werden");
       console.error("[OpenMap OSM]", err);
     } finally {
       setLoadingOsm(false);
