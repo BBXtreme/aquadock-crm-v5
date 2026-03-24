@@ -114,7 +114,7 @@ export default function ContactDetailPage() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("contacts")
-          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land)")
+          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm)")
           .eq("id", id)
           .single();
 
@@ -404,6 +404,17 @@ export default function ContactDetailPage() {
                 <p className="text-sm text-muted-foreground">
                   {contact.companies.stadt}, {contact.companies.land}
                 </p>
+              )}
+
+              {contact.companies.osm && (
+                <a
+                  href={contact.companies.osm}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  OSM Link
+                </a>
               )}
 
               <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
