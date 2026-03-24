@@ -1,4 +1,3 @@
-// Explicit ColumnDef<Contact> casts used to satisfy TanStack Table generics
 "use client";
 
 import { useState } from "react";
@@ -42,7 +41,7 @@ interface ContactsTableProps {
   onGlobalFilterChange?: (value: string) => void;
 }
 
-const columnHelper = createColumnHelper<any>();
+const columnHelper = createColumnHelper<Contact>();
 
 export default function ContactsTable({
   contacts,
@@ -58,7 +57,7 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Contact>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -180,7 +179,7 @@ export default function ContactsTable({
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useReactTable<Contact>({
     data: contacts,
     columns,
     getCoreRowModel: getCoreRowModel(),
