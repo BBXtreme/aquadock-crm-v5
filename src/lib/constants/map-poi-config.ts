@@ -1,37 +1,47 @@
 export const poiCategories = {
   restaurant: {
+    icon: "🍽️",
     name: "Restaurant",
-    icon: "🍽",
-    osmTags: ["amenity=restaurant", "amenity=cafe", "amenity=bar"],
+    tags: ["restaurant", "cafe", "bar"],
   },
   camping: {
+    icon: "🏕️",
     name: "Camping",
-    icon: "⛺",
-    osmTags: ["tourism=camp_site"],
+    tags: ["camp_site"],
   },
   marina: {
-    name: "Marina",
     icon: "⚓",
-    osmTags: ["leisure=marina"],
+    name: "Marina",
+    tags: ["marina"],
   },
   boat: {
+    icon: "⛵",
     name: "Boat Rental",
-    icon: "🚤",
-    osmTags: ["amenity=boat_rental"],
+    tags: ["boat_rental"],
   },
   hotel: {
-    name: "Hotel",
     icon: "🏨",
-    osmTags: ["tourism=hotel", "tourism=hostel"],
+    name: "Hotel",
+    tags: ["hotel", "hostel"],
   },
   resort: {
-    name: "Resort",
     icon: "🌴",
-    osmTags: ["tourism=resort"],
+    name: "Resort",
+    tags: ["resort"],
   },
   sailing: {
-    name: "Sailing School",
     icon: "⛵",
-    osmTags: ["amenity=sailing_school"],
+    name: "Sailing School",
+    tags: ["sailing", "sailing_school"],
   },
-};
+  rowing: {
+    icon: "🚣",
+    name: "Ruderclub",
+    tags: ["rowing", "rowing_club", "sport=rowing"],
+  },
+  club: {
+    icon: "🏛️",
+    name: "Vereine",
+    tags: ["club", "sports_club", "leisure=club"],
+  },
+} as const;
