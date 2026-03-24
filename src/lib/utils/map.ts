@@ -14,6 +14,21 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
+export const getOsmPoiIcon = () => {
+  return L.divIcon({
+    className: "osm-poi",
+    html: `
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="6" fill="#ffffff" />
+      </svg>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -20],
+  });
+};
+
 export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const bbox = bounds.toBBoxString();
 
