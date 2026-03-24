@@ -1,26 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
-
-import Link from "next/link";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { poiCategories } from "@/lib/constants/map-poi-config";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import Link from "next/link";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import { poiCategories } from "@/lib/constants/map-poi-config";
+
+type PoiCategoryKey = keyof typeof poiCategories;
 
 export default function OpenMapClientInnerComponent({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<L.Map>(null);
@@ -159,6 +158,12 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     }
   };
 
+  const toggleCategory = (key: PoiCategoryKey) => {
+    setActiveCategories(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
   // Legend items
   const legendItems = Object.entries(statusLabels).map(([key, label]) => ({
     key,
@@ -194,36 +199,38 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   return (
     <div className="relative h-full w-full">
-      {/* POI Category Toggle and Search */}
-      <div className="absolute top-4 left-4 z-[1001] flex items-start gap-6">
-        <div className="relative flex gap-2">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
-            placeholder="Adresse suchen (z.B. Hamburg Hafen)"
-            className="bg-background/95 backdrop-blur-sm border shadow-md w-80 text-foreground"
-          />
-          <Button
-            onClick={handleGeocode}
-            disabled={isSearching}
-            size="icon"
-            className="bg-card border shadow-md text-foreground hover:bg-card"
-          >
-            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          </Button>
+      {/* Top Controls Bar */}
+      <div className="absolute top-4 left-8 right-4 z-[1001] flex flex-wrap gap-3 items-start">
+        {/* Search */}
+        <div className="flex-1 max-w-md">
+          <div className="relative flex gap-2">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
+              placeholder="Adresse suchen (z.B. Hamburg Hafen)"
+              className="bg-background/95 backdrop-blur-sm border shadow-md text-foreground"
+            />
+            <Button
+              onClick={handleGeocode}
+              disabled={isSearching}
+              size="icon"
+              className={`bg-card border shadow-md ${isDarkMode ? 'text-white' : 'text-black'} hover:bg-card`}
+            >
+              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
-        {/* POI Category Filter Buttons */}
-        <div className="flex flex-wrap gap-2 m--auto">
+
+        {/* POI Category Filters */}
+        <div className="flex flex-wrap gap-2">
           {Object.entries(poiCategories).map(([key, category]) => (
             <Button
               key={key}
-              variant={activeCategories.includes(key) ? "default" : "outline"}
+              variant={activeCategories.includes(key as PoiCategoryKey) ? "default" : "outline"}
               size="sm"
-              onClick={() => {
-                setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
-              }}
-              className="text-xs bg-background/95 backdrop-blur-sm border shadow-md text-foreground hover:bg-card"
+              onClick={() => toggleCategory(key as PoiCategoryKey)}
+              className={`bg-background/95 backdrop-blur-sm border shadow-md whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-black'} hover:bg-card`}
             >
               {category.icon} {category.name}
             </Button>
@@ -239,12 +246,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
-        {/* Move zoom controls lower */}
-        <style jsx global>{`
-          .leaflet-control-zoom {
-            margin-top: 80px !important;
-          }
-        `}</style>
         <TileLayer attribution={attribution} url={tileUrl} />
 
         <MapController companies={initialCompanies} />
