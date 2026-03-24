@@ -147,6 +147,20 @@ src/
 └── types/
 ```
 
+### Visual Hierarchy in Your Project
+
+Your current structure looks like this:
+
+```
+app/
+├── layout.tsx                  ← Root Layout (Server)
+│     └─ ClientLayout           ← Providers (Theme, Query, Toaster)
+│           └─ AppLayout        ← Sidebar + Header + main
+│                 └─ Page content (Companies, OpenMap, etc.)
+```
+
+
+
 ## Deployment
 
 **Recommended**: Vercel (automatic previews, env vars, Supabase edge functions compatible)
