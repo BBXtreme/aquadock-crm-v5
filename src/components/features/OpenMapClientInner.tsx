@@ -228,6 +228,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     return null;
   }
 
+  const newPoiCount = useMemo(() => {
+    return osmPois.filter(poi => !initialCompanies.some(company => company.osm === `${poi.type}/${poi.id}`)).length;
+  }, [osmPois, initialCompanies]);
+
   return (
     <div className="relative h-full w-full">
       {/* Top Controls Bar */}
@@ -393,6 +397,23 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
           </div>
         </div>
       )}
+
+      {/* Live Info Panel */}
+      <div className="absolute bottom-4 left-4 z-10">
+        <Card className="bg-background/95 backdrop-blur-sm border shadow-md p-3 text-sm">
+          <div className="flex items-center gap-2">
+            {loadingOsm ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MapPin className="h-4 w-4" />
+            )}
+            <span>{loadingOsm ? "Loading POIs..." : `${osmPois.length} POIs loaded`}</span>
+            {!loadingOsm && newPoiCount > 0 && (
+              <span className="text-green-600">({newPoiCount} new)</span>
+            )}
+          </div>
+        </Card>
+      </div>
 
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
