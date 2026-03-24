@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
-import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,275 +170,267 @@ export default function ContactDetailPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">{error}</p>
-            <Button onClick={() => router.back()} className="mt-4">
-              Go Back
-            </Button>
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-gray-600">{error}</p>
+          <Button onClick={() => router.back()} className="mt-4">
+            Go Back
+          </Button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!contact) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Contact Not Found</h1>
-            <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Contact Not Found</h1>
+          <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Breadcrumbs */}
-        <nav className="text-sm text-gray-600">
-          <Link href="/contacts" className="hover:underline">
-            Contacts
-          </Link>{" "}
-          &gt; {contact.vorname} {contact.nachname}
-        </nav>
+    <div className="container mx-auto p-6 space-y-8">
+      {/* Breadcrumbs */}
+      <nav className="text-sm text-gray-600">
+        <Link href="/contacts" className="hover:underline">
+          Contacts
+        </Link>{" "}
+        &gt; {contact.vorname} {contact.nachname}
+      </nav>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">
-              {contact.vorname} {contact.nachname}
-            </h1>
-            {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
-          </div>
-          <div className="flex gap-3">
-            <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleDeleteContact} variant="destructive" size="sm">
-              <Trash className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => router.push("/contacts")} size="sm">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {contact.vorname} {contact.nachname}
+          </h1>
+          {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
         </div>
-
-        {/* Badges and Primary Contact Checkbox */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
-            {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={contact.is_primary}
-              onCheckedChange={(checked) => {
-                const supabase = createClient();
-                updateContact(contact.id, { is_primary: checked }, supabase)
-                  .then(() => {
-                    toast.success("Primary contact updated");
-                    _fetchData();
-                  })
-                  .catch((err) => {
-                    toast.error("Update failed", { description: err.message });
-                  });
-              }}
-            />
-            <label className="text-sm font-medium text-gray-700">Primary Contact</label>
-          </div>
+        <div className="flex gap-3">
+          <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleDeleteContact} variant="destructive" size="sm">
+            <Trash className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => router.push("/contacts")} size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
         </div>
-
-        {/* Contact Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Contact Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Vorname</label>
-                <p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Nachname</label>
-                <p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Anrede</label>
-                <p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Position</label>
-                <p className="text-sm text-gray-900">{contact.position || "—"}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <p className="text-sm text-gray-900">
-                  {contact.email ? (
-                    <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                      {contact.email}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Telefon</label>
-                <p className="text-sm text-gray-900">
-                  {contact.telefon ? (
-                    <a href={`tel:${contact.telefon}`} className="text-blue-600 hover:underline">
-                      {contact.telefon}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Mobil</label>
-                <p className="text-sm text-gray-900">
-                  {contact.mobil ? (
-                    <a href={`tel:${contact.mobil}`} className="text-blue-600 hover:underline">
-                      {contact.mobil}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Durchwahl</label>
-                <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  Notes
-                  <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </label>
-                {editingNotes ? (
-                  <div>
-                    <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
-                    <div className="flex gap-2 mt-2">
-                      <Button size="sm" onClick={handleSaveNotes}>
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingNotes(false);
-                          setNotesValue(contact.notes || "");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Linked Company */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Linked Company
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select
-              onValueChange={(value) => {
-                const supabase = createClient();
-                updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
-                  .then(() => {
-                    toast.success("Company updated");
-                    _fetchData();
-                  })
-                  .catch((err) => {
-                    toast.error("Update failed", { description: err.message });
-                  });
-              }}
-              defaultValue={contact.company_id || "none"}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select company" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">None</SelectItem>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.firmenname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-
-        {/* Edit Contact Dialog */}
-        <Dialog open={editDialog} onOpenChange={setEditDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Contact</DialogTitle>
-            </DialogHeader>
-            <EditContactForm
-              contact={contact}
-              onSuccess={() => {
-                setEditDialog(false);
-                _fetchData();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Company Dialog */}
-        <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Company</DialogTitle>
-            </DialogHeader>
-            <CompanyEditForm
-              company={contact.companies}
-              onSuccess={() => {
-                setEditCompanyDialog(false);
-                _fetchData();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
-    </AppLayout>
+
+      {/* Badges and Primary Contact Checkbox */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
+          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={contact.is_primary}
+            onCheckedChange={(checked) => {
+              const supabase = createClient();
+              updateContact(contact.id, { is_primary: checked }, supabase)
+                .then(() => {
+                  toast.success("Primary contact updated");
+                  _fetchData();
+                })
+                .catch((err) => {
+                  toast.error("Update failed", { description: err.message });
+                });
+            }}
+          />
+          <label className="text-sm font-medium text-gray-700">Primary Contact</label>
+        </div>
+      </div>
+
+      {/* Contact Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Contact Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700">Vorname</label>
+              <p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Nachname</label>
+              <p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Anrede</label>
+              <p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Position</label>
+              <p className="text-sm text-gray-900">{contact.position || "—"}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Email</label>
+              <p className="text-sm text-gray-900">
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                    {contact.email}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Telefon</label>
+              <p className="text-sm text-gray-900">
+                {contact.telefon ? (
+                  <a href={`tel:${contact.telefon}`} className="text-blue-600 hover:underline">
+                    {contact.telefon}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Mobil</label>
+              <p className="text-sm text-gray-900">
+                {contact.mobil ? (
+                  <a href={`tel:${contact.mobil}`} className="text-blue-600 hover:underline">
+                    {contact.mobil}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700">Durchwahl</label>
+              <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                Notes
+                <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </label>
+              {editingNotes ? (
+                <div>
+                  <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
+                  <div className="flex gap-2 mt-2">
+                    <Button size="sm" onClick={handleSaveNotes}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingNotes(false);
+                        setNotesValue(contact.notes || "");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Linked Company */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="w-5 h-5" />
+            Linked Company
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select
+            onValueChange={(value) => {
+              const supabase = createClient();
+              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
+                .then(() => {
+                  toast.success("Company updated");
+                  _fetchData();
+                })
+                .catch((err) => {
+                  toast.error("Update failed", { description: err.message });
+                });
+            }}
+            defaultValue={contact.company_id || "none"}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select company" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {companies.map((company) => (
+                <SelectItem key={company.id} value={company.id}>
+                  {company.firmenname}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={editDialog} onOpenChange={setEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact</DialogTitle>
+          </DialogHeader>
+          <EditContactForm
+            contact={contact}
+            onSuccess={() => {
+              setEditDialog(false);
+              _fetchData();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Company Dialog */}
+      <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Company</DialogTitle>
+          </DialogHeader>
+          <CompanyEditForm
+            company={contact.companies}
+            onSuccess={() => {
+              setEditCompanyDialog(false);
+              _fetchData();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
