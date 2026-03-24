@@ -170,16 +170,18 @@ export default function MassEmailPage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <p className="text-muted-foreground text-sm">Home → Mass Email</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Mass Email</h1>
+          <div className="text-sm text-muted-foreground">Home → Mass Email</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Mass Email
+          </h1>
         </div>
         <Button className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">New Campaign</Button>
       </div>
 
       <div className="space-y-4">
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
           <CardHeader>
             <CardTitle>Email Templates</CardTitle>
           </CardHeader>
@@ -213,7 +215,7 @@ export default function MassEmailPage() {
         </Card>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
             <CardHeader>
               <CardTitle>Send Configuration</CardTitle>
             </CardHeader>
@@ -264,7 +266,7 @@ export default function MassEmailPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
             <CardHeader>
               <CardTitle className="flex items-center">Preview</CardTitle>
             </CardHeader>
@@ -282,7 +284,7 @@ export default function MassEmailPage() {
           </Card>
         </div>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
           <CardHeader>
             <CardTitle>Send History ({history.length} sent)</CardTitle>
           </CardHeader>
