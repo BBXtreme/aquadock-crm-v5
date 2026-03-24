@@ -153,11 +153,7 @@ export async function importOsmPoi(poiData: any, userId: string) {
     user_id: userId,
   };
 
-  const { data, error } = await supabase
-    .from("companies")
-    .insert(values)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").insert(values).select().single();
 
   if (error) throw handleSupabaseError(error, "Failed to import OSM POI");
 

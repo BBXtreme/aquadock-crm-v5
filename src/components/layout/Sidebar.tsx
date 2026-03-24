@@ -18,11 +18,11 @@ interface SidebarProps {
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/companies", label: "Companies", icon: Building },
-  { href: "/openmap", label: "OpenMap", icon: Map },
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/reminders", label: "Reminders", icon: Bell },
   { href: "/mass-email", label: "Mass Email", icon: Mail },
+  { href: "/openmap", label: "OpenMap", icon: Map },
 ];
 
 export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {

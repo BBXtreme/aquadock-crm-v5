@@ -453,9 +453,7 @@ export default function CompanyDetailPage() {
         >
           {company.status}
         </Badge>
-        {company.kundentyp && (
-          <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
-        )}
+        {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && (
           <Badge variant="outline">
             {company.firmentyp === "kette" ? "Chain" : company.firmentyp === "einzeln" ? "Single" : "—"}
@@ -848,9 +846,7 @@ export default function CompanyDetailPage() {
                       </Badge>
                     </td>
                     <td>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                        {reminder.status}
-                      </Badge>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
                     </td>
                     <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">

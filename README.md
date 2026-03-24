@@ -159,8 +159,6 @@ app/
 │                 └─ Page content (Companies, OpenMap, etc.)
 ```
 
-
-
 ## Deployment
 
 **Recommended**: Vercel (automatic previews, env vars, Supabase edge functions compatible)
@@ -213,5 +211,13 @@ pnpm check:fix
 pnpm check
 pnpm build      # optional but recommended
 ```
+
+### Dialoge Styling
+
+<WideDialogContent size="2xl">   // very wide
+<WideDialogContent size="lg">    // narrower
+<WideDialogContent size="xl">    // balanced (recommended default)
+
+
 
 Built with ❤️ at Waterfront Beach • 2026
