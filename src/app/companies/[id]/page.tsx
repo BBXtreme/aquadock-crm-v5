@@ -5,13 +5,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow, isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
@@ -222,7 +222,10 @@ export default function CompanyDetailPage() {
     queryKey: ["timeline", id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("timeline").select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)").eq("company_id", id);
+      const { data } = await supabase
+        .from("timeline")
+        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)")
+        .eq("company_id", id);
       return data || [];
     },
   });
@@ -771,9 +774,9 @@ export default function CompanyDetailPage() {
                       <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => {
                               setEditContact(contact);
@@ -782,9 +785,9 @@ export default function CompanyDetailPage() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700"
                             onClick={() => handleDeleteContact(contact.id)}
                           >
@@ -863,9 +866,9 @@ export default function CompanyDetailPage() {
                       <td>{reminder.assigned_to || "—"}</td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => {
                               setEditReminder(reminder);
@@ -874,9 +877,9 @@ export default function CompanyDetailPage() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700"
                             onClick={() => handleDeleteReminder(reminder.id)}
                           >
@@ -900,8 +903,8 @@ export default function CompanyDetailPage() {
                 <Calendar className="w-5 h-5" />
                 Timeline ({timeline.length})
               </CardTitle>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   setTimelineDialogOpen(true);
@@ -932,22 +935,24 @@ export default function CompanyDetailPage() {
                   {timeline.map((entry) => (
                     <tr key={entry.id}>
                       <td>
-                        {entry.created_at 
-                          ? new Date(entry.created_at).toLocaleString('de-DE', {
-                              dateStyle: 'medium',
-                              timeStyle: 'short'
-                            }) 
+                        {entry.created_at
+                          ? new Date(entry.created_at).toLocaleString("de-DE", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })
                           : "—"}
                       </td>
-                      <td>{entry.title} ({entry.activity_type})</td>
+                      <td>
+                        {entry.title} ({entry.activity_type})
+                      </td>
                       <td>{entry.companies?.firmenname || "—"}</td>
                       <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
                       <td>{entry.user_name || "—"}</td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => {
                               setEditEntry(entry);
@@ -956,9 +961,9 @@ export default function CompanyDetailPage() {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-red-600 hover:text-red-700"
                             onClick={() => {
                               if (confirm("Delete this timeline entry?")) {

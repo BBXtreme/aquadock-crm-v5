@@ -24,12 +24,16 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 | Fonts              | Geist Sans + Mono                  | official Vercel package        |
 | State / Data       | TanStack React Query + Table v8    | v5 / v8                        |
 | Forms              | react-hook-form + zod              | —                              |
-| Backend / DB       | Supabase (PostgreSQL + Auth + RLS) | —                              |
+| Backend / DB       | Supabase (PostgreSQL + Auth + RLS) | Full service layer pattern     |
 | Toasts             | sonner                             | ^2.0+                          |
 | Icons              | lucide-react                       | latest                         |
 | Package Manager    | pnpm                               | —                              |
 | Linting/Formatting | Biome                              | 2.3.8+                         |
-| Other              | next-themes, vaul, cmdk, zustand   | —                              |
+| Other              | next-themes, vaul, cmdk, zustand   | All present                    |
+
+> [!IMPORTANT]
+>
+> Protected routes are handled via root layout.tsx + Supabase Auth (no route groups). 
 
 ## Features
 
@@ -113,16 +117,34 @@ text
 
 ```
 src/
-├── app/                  # App Router routes + layouts
+├── app/                          # ← Flat routes (no (dashboard) or (protected) group)
+│   ├── companies/
+│   ├── contacts/
+│   ├── login/
+│   ├── mass-email/
+│   ├── profile/
+│   ├── reminders/
+│   ├── settings/
+│   ├── timeline/
+│   ├── layout.tsx                # root layout (Server Component)
+│   └── page.tsx
 ├── components/
-│   ├── ui/               # shadcn primitives
-│   ├── layout/           # Sidebar, Header, PageHeader, etc.
-│   └── features/         # domain components (CompanyCard, Timeline, etc.)
+│   ├── ui/                       # shadcn primitives
+│   ├── layout/                   # ← Sidebar.tsx lives here
+│   ├── features/                 # domain components
+│   ├── dashboard/
+│   ├── tables/
+│   └── ErrorBoundary.tsx
 ├── lib/
-│   ├── supabase/         # client factories, services, types
-│   └── utils/            # cn(), formatters, error helpers
-├── hooks/                # custom hooks (useCompanyMutations, etc.)
-└── types/                # global type declarations
+│   ├── supabase/
+│   │   └── services/
+│   │       ├── companies.ts      # ← we will ONLY extend this
+│   │       ├── contacts.ts
+│   │       ├── reminders.ts
+│   │       └── ...
+│   └── utils/
+├── hooks/
+└── types/
 ```
 
 ## Deployment
