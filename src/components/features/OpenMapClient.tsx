@@ -286,13 +286,13 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
         </div>
       )}
 
-      {/* Floating Controls */}
+      {/* Floating Controls – visible in light & dark mode */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
           onClick={resetView}
-          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-card"
+          className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -302,7 +302,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           size="icon"
           onClick={() => setShowOsm(!showOsm)}
           disabled={loadingOsm}
-          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-card"
+          className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
@@ -311,7 +311,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
-          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-card"
+          className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           <Info className="h-4 w-4" />
         </Button>
