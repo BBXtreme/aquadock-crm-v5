@@ -30,7 +30,7 @@ export const getOsmPoiIcon = () => {
   });
 };
 
-export async function fetchOsmPois(bounds: L.LatLngBounds, activeCategories: string[] = Object.keys(poiCategories)): Promise<any[]> {
+export async function fetchOsmPois(bounds: L.LatLngBounds, activeCategories: string[] = Object.keys(poiCategories)): Promise<{ pois: any[], totalFound: number }> {
   const bbox = bounds.toBBoxString(); // "west,south,east,north"
   const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
@@ -93,7 +93,19 @@ ${conditions.map(cond => `      way${cond};`).join("\n")}
 
       const data = await res.json();
       console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs from ${endpoint}`);
-      return data.elements || [];
+
+      // Basic deduplication by OSM ID
+      const seen = new Set<string>();
+      const deduplicated = (data.elements || []).filter((poi: any) => {
+        const key = `${poi.type}/${poi.id}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      console.log(`[OpenMap OSM] After deduplication: ${deduplicated.length} unique POIs`);
+
+      return { pois: deduplicated, totalFound: deduplicated.length };
     } catch (err: any) {
       if (err.name === 'AbortError') {
         console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
