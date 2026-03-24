@@ -34,6 +34,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [activeCategories, setActiveCategories] = useState(Object.keys(poiCategories));
   const [filterMessage, setFilterMessage] = useState("");
   const [lastLoadTime, setLastLoadTime] = useState(0);
+  const [currentZoom, setCurrentZoom] = useState(6);
 
   const queryClient = useQueryClient();
 
@@ -99,6 +100,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     const handleMapChange = () => {
       const now = Date.now();
       if (now - lastLoadTime < 800) return;
+
+      const zoom = mapRef.current.getZoom();
+      setCurrentZoom(zoom);
+      if (zoom < 12) return;
 
       setLastLoadTime(now);
       loadOsmPois();
@@ -404,12 +409,22 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
           <div className="flex items-center gap-2">
             {loadingOsm ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : currentZoom < 12 ? (
+              <MapPin className="h-4 w-4" />
             ) : (
               <MapPin className="h-4 w-4" />
             )}
-            <span>{loadingOsm ? "Loading POIs..." : `${osmPois.length} POIs loaded`}</span>
-            {!loadingOsm && newPoiCount > 0 && (
-              <span className="text-green-600">({newPoiCount} new)</span>
+            <span>
+              {loadingOsm
+                ? "Karte wird analysiert..."
+                : currentZoom < 12
+                  ? "Zoom näher heran für POIs"
+                  : osmPois.length > 0
+                    ? `${osmPois.length} POIs geladen`
+                    : "Keine POIs gefunden"}
+            </span>
+            {!loadingOsm && currentZoom >= 12 && newPoiCount > 0 && (
+              <span className="text-green-600">({newPoiCount} neue)</span>
             )}
           </div>
         </Card>
