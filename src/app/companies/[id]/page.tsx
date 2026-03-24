@@ -1130,7 +1130,14 @@ export default function CompanyDetailPage() {
             contacts={linkedContacts}
             editEntry={editEntry}
             preselectedCompanyId={preselectedCompanyId}
-            defaultValues={{
+            defaultValues={editEntry ? {
+              title: editEntry.title,
+              content: editEntry.content,
+              activity_type: editEntry.activity_type,
+              company_id: editEntry.company_id,
+              contact_id: editEntry.contact_id || "none",
+              user_name: editEntry.user_name,
+            } : {
               company_id: company?.id || null,
               contact_id: "none",
             }}
