@@ -311,11 +311,11 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
               Qualifiziert
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500" />
+              <div className="w-4 h-4 rounded-full bg-violet-500" />
               Akquise
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-pink-500" />
+              <div className="w-4 h-4 rounded-full bg-emerald-500" />
               Angebot
             </div>
             <div className="flex items-center gap-2">
