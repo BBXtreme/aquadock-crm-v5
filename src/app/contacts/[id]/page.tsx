@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building, Edit, Trash, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -25,6 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
+import { cn } from "@/lib/utils";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -112,7 +113,7 @@ export default function ContactDetailPage() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("contacts")
-          .select("*, companies!company_id(firmenname)")
+          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land)")
           .eq("id", id)
           .single();
 
@@ -207,21 +208,13 @@ export default function ContactDetailPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-8">
-      {/* Breadcrumbs */}
-      <nav className="text-sm text-gray-600">
-        <Link href="/contacts" className="hover:underline">
-          Contacts
-        </Link>{" "}
-        &gt; {contact.vorname} {contact.nachname}
-      </nav>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <h1 className="text-3xl font-bold">
+          <div className="text-sm text-muted-foreground">Contacts → {contact.vorname} {contact.nachname}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
           </h1>
-          {contact.position && <p className="text-gray-600 mt-1">{contact.position}</p>}
+          {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
         </div>
         <div className="flex gap-3">
           <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
@@ -369,33 +362,52 @@ export default function ContactDetailPage() {
             Linked Company
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Select
-            onValueChange={(value) => {
-              const supabase = createClient();
-              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
-                .then(() => {
-                  toast.success("Company updated");
-                  _fetchData();
-                })
-                .catch((err) => {
-                  toast.error("Update failed", { description: err.message });
-                });
-            }}
-            defaultValue={contact.company_id || "none"}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.firmenname}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="pt-0">
+          {contact.companies ? (
+            <div className="space-y-3">
+              <div>
+                <Link
+                  href={`/companies/${contact.companies.id}`}
+                  className="text-lg font-semibold hover:underline text-primary flex items-center gap-2"
+                >
+                  {contact.companies.firmenname}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {contact.companies.kundentyp && (
+                  <Badge variant="secondary">
+                    {contact.companies.kundentyp.charAt(0).toUpperCase() + contact.companies.kundentyp.slice(1)}
+                  </Badge>
+                )}
+                {contact.companies.status && (
+                  <Badge
+                    className={cn(
+                      contact.companies.status === "gewonnen" && "bg-emerald-600",
+                      contact.companies.status === "lead" && "bg-amber-600",
+                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500"
+                    )}
+                  >
+                    {contact.companies.status}
+                  </Badge>
+                )}
+                {contact.companies.value && (
+                  <Badge variant="outline">
+                    €{contact.companies.value.toLocaleString("de-DE")}
+                  </Badge>
+                )}
+              </div>
+
+              {contact.companies.stadt && contact.companies.land && (
+                <p className="text-sm text-muted-foreground">
+                  {contact.companies.stadt}, {contact.companies.land}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-muted-foreground">No company linked yet.</p>
+          )}
         </CardContent>
       </Card>
 
