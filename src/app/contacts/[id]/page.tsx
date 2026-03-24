@@ -486,6 +486,7 @@ export default function ContactDetailPage() {
               updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
                 .then(() => {
                   toast.success("Company updated");
+                  queryClient.invalidateQueries({ queryKey: ["contact", id] });  // force refresh
                   _fetchData();
                   setChangeCompanyDialog(false);
                 })
