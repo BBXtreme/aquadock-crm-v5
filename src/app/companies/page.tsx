@@ -26,7 +26,6 @@ import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
-import AppLayout from "@/components/layout/AppLayout";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -187,248 +186,244 @@ export default function CompaniesPage() {
 
   if (queryError) {
     return (
-      <AppLayout>
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-          <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">Home → Companies</p>
-                <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
-              </div>
-              <div className="flex gap-3">
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button>New Company</Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Create New Company</DialogTitle>
-                    </DialogHeader>
-                    <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-                  </DialogContent>
-                </Dialog>
-              </div>
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-muted-foreground text-sm">Home → Companies</p>
+              <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
             </div>
-
-            <Alert variant="destructive">
-              <AlertDescription className="flex items-center justify-between gap-4">
-                <span>{queryError.message}</span>
-                <Button variant="outline" onClick={() => window.location.reload()}>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Erneut versuchen
-                </Button>
-              </AlertDescription>
-            </Alert>
+            <div className="flex gap-3">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>New Company</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Company</DialogTitle>
+                  </DialogHeader>
+                  <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
+
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{queryError.message}</span>
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Erneut versuchen
+              </Button>
+            </AlertDescription>
+          </Alert>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-          <div className="flex items-center justify-between pb-6 border-b">
-            <div>
-              <div className="text-sm text-muted-foreground">Home → Companies</div>
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Companies
-              </h1>
-            </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>New Company</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create New Company</DialogTitle>
-                </DialogHeader>
-                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-              </DialogContent>
-            </Dialog>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Companies</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Companies
+            </h1>
           </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Gesamt Firmen"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
-              icon={<Building className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+12% from last month"
-            />
-            <StatCard
-              title="Leads"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
-              icon={<Users className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+8% from last month"
-            />
-            <StatCard
-              title="Gewonnene Deals"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
-              icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+15% from last month"
-            />
-            <StatCard
-              title="Gesamtwert"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
-              icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+22% from last month"
-            />
-          </div>
-
-          {/* Tabelle / Ladezustand */}
-          <Card className="border-border rounded-xl shadow-sm">
-            <CardContent className="p-6">
-              {isLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-56" />
-                  <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
-                </div>
-              ) : (
-                <>
-                  <div
-                    className={cn(
-                      "flex flex-wrap gap-2 items-center",
-                      Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-                    )}
-                  >
-                    {Object.entries(activeFilters).map(([group, values]) =>
-                      values.map((v) => (
-                        <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
-                          {v} ×
-                        </Badge>
-                      )),
-                    )}
-                    {Object.values(activeFilters).flat().length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}
-                      >
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}
-                  >
-                    <AccordionItem value="filters">
-                      <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
-                      <AccordionContent>
-                        <div className="mb-4">
-                          <h4 className="font-normal">Status</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {statusOptions.map((s) => {
-                              const Icon = statusIcons[s];
-                              return (
-                                <Button
-                                  key={s}
-                                  variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    activeFilters.status.includes(s)
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("status", s)}
-                                >
-                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <h4 className="font-normal">Kategorie</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {kategorieOptions.map((k) => {
-                              const Icon = kategorieIcons[k];
-                              return (
-                                <Button
-                                  key={k}
-                                  variant={activeFilters.kategorie.includes(k) ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    activeFilters.kategorie.includes(k)
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("kategorie", k)}
-                                >
-                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                  {k.charAt(0).toUpperCase() + k.slice(1)}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <div className="mb-4">
-                          <h4 className="font-normal">Betriebstyp</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {betriebstypOptions.map((b) => (
-                              <Button
-                                key={b}
-                                variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  activeFilters.betriebstyp.includes(b)
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("betriebstyp", b)}
-                              >
-                                {b.charAt(0).toUpperCase() + b.slice(1)}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-normal">Land</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {landOptions.map((l) => (
-                              <Button
-                                key={l}
-                                variant={activeFilters.land.includes(l) ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  activeFilters.land.includes(l)
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("land", l)}
-                              >
-                                {l}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                  <CompaniesTable
-                    companies={filteredCompanies}
-                    globalFilter={globalFilter}
-                    onGlobalFilterChange={setGlobalFilter}
-                    onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
-                    onDelete={(id) => deleteMutation.mutate(id)}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>New Company</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Company</DialogTitle>
+              </DialogHeader>
+              <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Gesamt Firmen"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+            icon={<Building className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+12% from last month"
+          />
+          <StatCard
+            title="Leads"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+8% from last month"
+          />
+          <StatCard
+            title="Gewonnene Deals"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+            icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+15% from last month"
+          />
+          <StatCard
+            title="Gesamtwert"
+            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+            icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+22% from last month"
+          />
+        </div>
+
+        {/* Tabelle / Ladezustand */}
+        <Card className="border-border rounded-xl shadow-sm">
+          <CardContent className="p-6">
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-56" />
+                <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
+              </div>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    "flex flex-wrap gap-2 items-center",
+                    Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
+                  )}
+                >
+                  {Object.entries(activeFilters).map(([group, values]) =>
+                    values.map((v) => (
+                      <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
+                        {v} ×
+                      </Badge>
+                    )),
+                  )}
+                  {Object.values(activeFilters).flat().length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}
+                    >
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+                <Accordion
+                  type="single"
+                  collapsible
+                  className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}
+                >
+                  <AccordionItem value="filters">
+                    <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Status</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {statusOptions.map((s) => {
+                            const Icon = statusIcons[s];
+                            return (
+                              <Button
+                                key={s}
+                                variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
+                                size="sm"
+                                className={
+                                  activeFilters.status.includes(s)
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("status", s)}
+                              >
+                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Kategorie</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {kategorieOptions.map((k) => {
+                            const Icon = kategorieIcons[k];
+                            return (
+                              <Button
+                                key={k}
+                                variant={activeFilters.kategorie.includes(k) ? "secondary" : "ghost"}
+                                size="sm"
+                                className={
+                                  activeFilters.kategorie.includes(k)
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("kategorie", k)}
+                              >
+                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                                {k.charAt(0).toUpperCase() + k.slice(1)}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="mb-4">
+                        <h4 className="font-normal">Betriebstyp</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {betriebstypOptions.map((b) => (
+                            <Button
+                              key={b}
+                              variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                activeFilters.betriebstyp.includes(b)
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("betriebstyp", b)}
+                            >
+                              {b.charAt(0).toUpperCase() + b.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-normal">Land</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {landOptions.map((l) => (
+                            <Button
+                              key={l}
+                              variant={activeFilters.land.includes(l) ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                activeFilters.land.includes(l)
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("land", l)}
+                            >
+                              {l}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+                <CompaniesTable
+                  companies={filteredCompanies}
+                  globalFilter={globalFilter}
+                  onGlobalFilterChange={setGlobalFilter}
+                  onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                />
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
-    </AppLayout>
+    </div>
   );
 }
 
