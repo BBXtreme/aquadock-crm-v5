@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -377,7 +378,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
             }
           }}
           disabled={loadingOsm}
-          className={showOsm ? "bg-primary border shadow-md hover:bg-primary/80 text-foreground" : "bg-card border shadow-md hover:bg-card text-foreground"}
+          className={
+            showOsm
+              ? "bg-primary border shadow-md hover:bg-primary/80 text-foreground"
+              : "bg-card border shadow-md hover:bg-card text-foreground"
+          }
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
