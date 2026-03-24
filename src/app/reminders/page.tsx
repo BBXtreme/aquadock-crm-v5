@@ -25,6 +25,7 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
+import { cn } from "@/lib/utils";
 
 export default function RemindersPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
