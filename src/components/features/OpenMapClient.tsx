@@ -16,7 +16,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-import { fetchOsmPois, getStatusIcon } from "@/lib/utils/map";
+import { fetchOsmPois } from "@/lib/utils/map";
 
 // Fix default Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -25,6 +25,46 @@ L.Icon.Default.mergeOptions({
   iconUrl: "/leaflet/marker-icon.png",
   shadowUrl: "/leaflet/marker-shadow.png",
 });
+
+const getStatusIcon = (status?: string) => {
+  const colorMap: Record<string, string> = {
+    lead: "#f59e0b",      // amber
+    qualifiziert: "#3b82f6", // blue
+    akquise: "#8b5cf6",   // violet
+    angebot: "#ec4899",   // pink
+    gewonnen: "#10b981",  // emerald
+    verloren: "#ef4444",  // red
+    kunde: "#14b8a6",     // teal
+    partner: "#6366f1",   // indigo
+  };
+
+  const color = colorMap[status || "lead"] || "#6b7280";
+
+  return L.divIcon({
+    className: "custom-marker",
+    html: `
+      <div style="
+        background-color: ${color};
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+      ">
+        •
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -20],
+  });
+};
 
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];
@@ -113,8 +153,15 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
-  const isDarkMode = useMemo(() => 
-    document.documentElement.classList.contains("dark"), []);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"     // Carto Dark Matter
@@ -221,9 +268,27 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
                 position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
                 icon={L.divIcon({
                   className: "osm-poi",
-                  html: '<div style="background:#22c55e;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">P</div>',
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12],
+                  html: `
+                    <div style="
+                      background-color: #22c55e;
+                      width: 28px;
+                      height: 28px;
+                      border-radius: 50%;
+                      border: 3px solid white;
+                      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: white;
+                      font-size: 14px;
+                      font-weight: 700;
+                    ">
+                      P
+                    </div>
+                  `,
+                  iconSize: [28, 28],
+                  iconAnchor: [14, 14],
+                  popupAnchor: [0, -20],
                 })}
               >
                 <Popup>
