@@ -97,10 +97,12 @@ export default function ContactsPage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <p className="text-muted-foreground text-sm">Home → Contacts</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
+          <div className="text-sm text-muted-foreground">Home → Contacts</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Contacts
+          </h1>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
