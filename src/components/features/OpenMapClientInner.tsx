@@ -77,9 +77,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     setOsmError(false);
     try {
       const bounds = mapRef.current.getBounds();
-      const pois = await fetchOsmPois(bounds, activeCategories);
+      const { pois, totalFound } = await fetchOsmPois(bounds, activeCategories);
       setOsmPois(pois);
-      toast.success(`${pois.length} OSM-POIs geladen`);
+      toast.success(`${totalFound} OSM-POIs geladen`);
     } catch (err: any) {
       showError(err.message || "OSM-POIs konnten nicht geladen werden");
       setOsmError(true);
