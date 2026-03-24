@@ -33,6 +33,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [isSearching, setIsSearching] = useState(false);
   const [activeCategories, setActiveCategories] = useState(Object.keys(poiCategories));
   const [filterMessage, setFilterMessage] = useState("");
+  const [lastLoadTime, setLastLoadTime] = useState(0);
 
   const queryClient = useQueryClient();
 
@@ -86,6 +87,32 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   useEffect(() => {
     if (showOsm) loadOsmPois();
   }, [showOsm, activeCategories]);
+
+  // Dynamic POI loading on map move/zoom
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const handleMapChange = () => {
+      const now = Date.now();
+      if (now - lastLoadTime < 800) return;
+
+      const zoom = mapRef.current.getZoom();
+      if (zoom < 12) return;
+
+      setLastLoadTime(now);
+      loadOsmPois();
+    };
+
+    mapRef.current.on('moveend', handleMapChange);
+    mapRef.current.on('zoomend', handleMapChange);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.off('moveend', handleMapChange);
+        mapRef.current.off('zoomend', handleMapChange);
+      }
+    };
+  }, [lastLoadTime, activeCategories]);
 
   const resetView = () => {
     if (mapRef.current && initialCompanies.length > 0) {
