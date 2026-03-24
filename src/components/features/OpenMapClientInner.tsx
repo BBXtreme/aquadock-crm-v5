@@ -396,6 +396,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         <Button
           variant="secondary"
           size="icon"
+          disabled={true}
           className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
