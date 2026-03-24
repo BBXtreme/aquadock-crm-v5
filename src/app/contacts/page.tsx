@@ -8,7 +8,6 @@ import { z } from "zod";
 
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ContactEditForm from "@/components/features/ContactEditForm";
-import AppLayout from "@/components/layout/AppLayout";
 import ContactsTable from "@/components/tables/ContactsTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -97,102 +96,100 @@ export default function ContactsPage() {
   const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Contacts</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>New Contact</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Contact</DialogTitle>
-              </DialogHeader>
-              <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-muted-foreground text-sm">Home → Contacts</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Contacts</h1>
         </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>New Contact</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Contact</DialogTitle>
+            </DialogHeader>
+            <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error.message}</span>
-              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
-                Retry
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>{error.message}</span>
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">
-                {loading ? <Skeleton className="h-8 w-16" /> : companiesWithContacts}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
+          </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
-              </div>
-            ) : (
-              <ContactsTable
-                contacts={contacts}
-                globalFilter={globalFilter}
-                onGlobalFilterChange={setGlobalFilter}
-                onEdit={handleEdit}
-                onDelete={(id) => deleteMutation.mutate(id)}
-              />
-            )}
+            <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
           </CardContent>
         </Card>
-
-        {editContact && (
-          <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Contact</DialogTitle>
-              </DialogHeader>
-              <ContactEditForm
-                contact={editContact}
-                onSuccess={() => {
-                  setEditContact(null);
-                  queryClient.invalidateQueries({ queryKey: ["contacts"] });
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl">
+              {loading ? <Skeleton className="h-8 w-16" /> : companiesWithContacts}
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </AppLayout>
+
+      <Card>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full" />
+              <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
+            </div>
+          ) : (
+            <ContactsTable
+              contacts={contacts}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              onEdit={handleEdit}
+              onDelete={(id) => deleteMutation.mutate(id)}
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      {editContact && (
+        <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Contact</DialogTitle>
+            </DialogHeader>
+            <ContactEditForm
+              contact={editContact}
+              onSuccess={() => {
+                setEditContact(null);
+                queryClient.invalidateQueries({ queryKey: ["contacts"] });
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
   );
 }
