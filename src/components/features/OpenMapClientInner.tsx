@@ -1,24 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
+
+import Link from "next/link";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
-
+import { poiCategories } from "@/lib/constants/map-poi-config";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
-import { poiCategories } from "@/lib/constants/map-poi-config";
 
 type PoiCategoryKey = keyof typeof poiCategories;
 
@@ -32,7 +34,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [osmError, setOsmError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [activeCategories, setActiveCategories] = useState<PoiCategoryKey[]>(Object.keys(poiCategories) as PoiCategoryKey[]);
+  const [activeCategories, setActiveCategories] = useState<PoiCategoryKey[]>(
+    Object.keys(poiCategories) as PoiCategoryKey[],
+  );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
 
@@ -195,9 +199,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   };
 
   const toggleCategory = (key: PoiCategoryKey) => {
-    setActiveCategories((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+    setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
   // Legend items
@@ -234,9 +236,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   }
 
   const newPoiCount = useMemo(() => {
-    return osmPois.filter((poi) => 
-      !initialCompanies.some((c) => c.osm === `${poi.type}/${poi.id}`)
-    ).length;
+    return osmPois.filter((poi) => !initialCompanies.some((c) => c.osm === `${poi.type}/${poi.id}`)).length;
   }, [osmPois, initialCompanies]);
 
   return (
@@ -253,7 +253,12 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               placeholder="Adresse suchen (z.B. Hamburg Hafen)"
               className="bg-background/95 backdrop-blur-sm border shadow-md text-foreground"
             />
-            <Button onClick={handleGeocode} disabled={isSearching} size="icon" className="bg-card border shadow-md text-foreground hover:bg-card">
+            <Button
+              onClick={handleGeocode}
+              disabled={isSearching}
+              size="icon"
+              className="bg-card border shadow-md text-foreground hover:bg-card"
+            >
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </div>
@@ -406,9 +411,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
           <div className="flex items-center gap-2">
             {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
             <span>
-              {loadingOsm ? "POIs werden geladen..." : 
-               currentZoom < 12 ? "Zoom näher heran für POIs" : 
-               `${osmPois.length} POIs geladen (${newPoiCount} neue)`}
+              {loadingOsm
+                ? "POIs werden geladen..."
+                : currentZoom < 12
+                  ? "Zoom näher heran für POIs"
+                  : `${osmPois.length} POIs geladen (${newPoiCount} neue)`}
             </span>
           </div>
         </Card>
