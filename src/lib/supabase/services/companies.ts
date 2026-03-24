@@ -123,7 +123,7 @@ export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyFo
   return data ?? [];
 }
 
-export async function importOsmPoi(poiData: any, userId: string) {
+export async function importOsmPoi(poi: any, userId: string = "") {
   const supabase = createClient();
 
   const kundentypMap: Record<string, string> = {
@@ -137,26 +137,30 @@ export async function importOsmPoi(poiData: any, userId: string) {
     boat_rental: "bootsverleih",
   };
 
-  const values = {
-    firmenname: poiData.tags?.name || "Unbenannter POI",
-    kundentyp: kundentypMap[poiData.tags?.amenity] || "sonstige",
-    strasse: poiData.tags?.["addr:street"] || "",
-    plz: poiData.tags?.["addr:postcode"] || "",
-    stadt: poiData.tags?.["addr:city"] || "",
+  const insertData = {
+    firmenname: poi.tags?.name || `POI ${poi.id}`,
+    kundentyp: kundentypMap[poi.tags?.amenity] || "sonstige",
+    strasse: poi.tags?.["addr:street"] || "",
+    plz: poi.tags?.["addr:postcode"] || "",
+    stadt: poi.tags?.["addr:city"] || "",
     land: "Deutschland",
-    telefon: poiData.tags?.phone || poiData.tags?.["contact:phone"] || "",
-    website: poiData.tags?.website || poiData.tags?.["contact:website"] || "",
-    lat: poiData.lat || poiData.center?.lat,
-    lon: poiData.lon || poiData.center?.lon,
-    osm: `${poiData.type}/${poiData.id}`,
-    status: "lead",
-    user_id: userId,
+    telefon: poi.tags?.phone || poi.tags?.["contact:phone"] || "",
+    website: poi.tags?.website || poi.tags?.["contact:website"] || "",
+    lat: poi.lat || poi.center?.lat,
+    lon: poi.lon || poi.center?.lon,
+    osm: `${poi.type}/${poi.id}`,
+    status: "lead" as const,
+    user_id: userId || "temp-user", // will be replaced with real auth later
   };
 
-  const { data, error } = await supabase.from("companies").insert(values).select().single();
+  const { data, error } = await supabase
+    .from("companies")
+    .insert(insertData)
+    .select()
+    .single();
 
-  if (error) throw handleSupabaseError(error, "Failed to import OSM POI");
+  if (error) throw handleSupabaseError(error, "importOsmPoi");
 
-  console.log(`[OpenMap] Imported OSM POI: ${data.firmenname}`);
+  console.log(`[OpenMap] Successfully imported POI: ${data.firmenname}`);
   return data;
 }
