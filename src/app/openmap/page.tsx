@@ -1,5 +1,5 @@
-import { getCompaniesForOpenMap, type CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { OpenMapClient } from "@/components/features/OpenMapClient";
+import { type CompanyForOpenMap, getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
 export default async function OpenMapPage() {
   let companies: CompanyForOpenMap[] = [];

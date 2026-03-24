@@ -1,17 +1,20 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import Link from "next/link";
+
 // import "react-leaflet-markercluster/dist/styles.min.css";
 import L from "leaflet";
-import { useEffect, useRef, useState, useMemo } from "react";
-import { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
-import { RefreshCw, MapPin, Loader2, Plus, Info } from "lucide-react";
-import { getStatusIcon, fetchOsmPois } from "@/lib/utils/map";
+import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import { fetchOsmPois, getStatusIcon } from "@/lib/utils/map";
 
 // Fix default Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -32,8 +35,8 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
     if (companies.length === 0) return;
 
     const validCoords = companies
-      .filter(c => typeof c.lat === "number" && typeof c.lon === "number")
-      .map(c => [c.lat!, c.lon!] as [number, number]);
+      .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
+      .map((c) => [c.lat!, c.lon!] as [number, number]);
 
     if (validCoords.length === 0) return;
 
@@ -85,17 +88,15 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     if (mapRef.current && initialCompanies.length > 0) {
       const bounds = L.latLngBounds(
         initialCompanies
-          .filter(c => typeof c.lat === "number" && typeof c.lon === "number")
-          .map(c => [c.lat!, c.lon!])
+          .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
+          .map((c) => [c.lat!, c.lon!]),
       );
       mapRef.current.fitBounds(bounds, { padding: [80, 80] });
     }
   };
 
   const validCompanies = useMemo(() => {
-    return initialCompanies.filter(
-      c => typeof c.lat === "number" && typeof c.lon === "number"
-    );
+    return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
   const isDarkMode = useMemo(() => {
@@ -124,20 +125,13 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
-        <TileLayer
-          attribution={attribution}
-          url={tileUrl}
-        />
+        <TileLayer attribution={attribution} url={tileUrl} />
 
         <MapController companies={initialCompanies} />
 
         <MarkerClusterGroup chunkedLoading maxClusterRadius={100}>
           {validCompanies.map((company) => (
-            <Marker
-              key={company.id}
-              position={[company.lat!, company.lon!]}
-              icon={getStatusIcon(company.status)}
-            >
+            <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
               <Popup>
                 <div className="min-w-[320px] space-y-4 text-sm">
                   <h3 className="font-semibold text-lg">{company.firmenname}</h3>
@@ -152,27 +146,37 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
                   </div>
 
                   <div className="text-muted-foreground">
-                    {company.stadt && <>{company.stadt}, </>}{company.land || "–"}
+                    {company.stadt && <>{company.stadt}, </>}
+                    {company.land || "–"}
                   </div>
 
                   {company.value && (
-                    <div className="font-medium">
-                      Potenzial: €{company.value.toLocaleString("de-DE")}
-                    </div>
+                    <div className="font-medium">Potenzial: €{company.value.toLocaleString("de-DE")}</div>
                   )}
 
                   <div className="pt-3 flex flex-wrap gap-2">
                     {company.telefon && (
-                      <a href={`tel:${company.telefon}`} className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md">
+                      <a
+                        href={`tel:${company.telefon}`}
+                        className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                      >
                         Anrufen
                       </a>
                     )}
                     {company.website && (
-                      <a href={company.website.startsWith("http") ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md">
+                      <a
+                        href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                      >
                         Website
                       </a>
                     )}
-                    <Link href={`/companies/${company.id}`} className="px-3 py-1.5 text-xs bg-accent hover:bg-accent/80 text-accent-foreground rounded-md">
+                    <Link
+                      href={`/companies/${company.id}`}
+                      className="px-3 py-1.5 text-xs bg-accent hover:bg-accent/80 text-accent-foreground rounded-md"
+                    >
                       Details öffnen
                     </Link>
                   </div>
@@ -181,34 +185,30 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
             </Marker>
           ))}
 
-          {showOsm && osmPois.map((poi: any) => (
-            <Marker
-              key={poi.id}
-              position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-              icon={L.divIcon({
-                className: "osm-poi",
-                html: '<div style="background:#22c55e;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">P</div>',
-                iconSize: [24, 24],
-                iconAnchor: [12, 12],
-              })}
-            >
-              <Popup>
-                <div className="min-w-[220px] space-y-2">
-                  <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
-                  <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleImportPoi(poi)}
-                    className="w-full"
-                  >
-                    <Plus className="h-3 w-3 mr-1" />
-                    Zu CRM hinzufügen
-                  </Button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {showOsm &&
+            osmPois.map((poi: any) => (
+              <Marker
+                key={poi.id}
+                position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
+                icon={L.divIcon({
+                  className: "osm-poi",
+                  html: '<div style="background:#22c55e;color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">P</div>',
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12],
+                })}
+              >
+                <Popup>
+                  <div className="min-w-[220px] space-y-2">
+                    <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
+                    <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
+                    <Button size="sm" variant="outline" onClick={() => handleImportPoi(poi)} className="w-full">
+                      <Plus className="h-3 w-3 mr-1" />
+                      Zu CRM hinzufügen
+                    </Button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
         </MarkerClusterGroup>
       </MapContainer>
 
@@ -218,27 +218,27 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           <h4 className="font-medium text-sm mb-2">Status Legende</h4>
           <div className="space-y-1 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-amber-500"></div>
+              <div className="w-4 h-4 rounded-full bg-amber-500" />
               Lead
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500"></div>
+              <div className="w-4 h-4 rounded-full bg-blue-500" />
               Qualifiziert
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500"></div>
+              <div className="w-4 h-4 rounded-full bg-purple-500" />
               Akquise
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-pink-500"></div>
+              <div className="w-4 h-4 rounded-full bg-pink-500" />
               Angebot
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500"></div>
+              <div className="w-4 h-4 rounded-full bg-green-500" />
               Gewonnen
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500"></div>
+              <div className="w-4 h-4 rounded-full bg-red-500" />
               Verloren
             </div>
           </div>
@@ -247,7 +247,12 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
 
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        <Button variant="secondary" size="icon" onClick={resetView} className="bg-background/90 backdrop-blur-sm shadow-md">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={resetView}
+          className="bg-background/90 backdrop-blur-sm shadow-md"
+        >
           <RefreshCw className="h-4 w-4" />
         </Button>
 

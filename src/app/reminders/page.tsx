@@ -176,11 +176,7 @@ export default function RemindersPage() {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="font-bold text-2xl">{openReminders}</div>
-            )}
+            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
           </CardContent>
         </Card>
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">

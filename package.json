@@ -14,9 +14,7 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{js,ts,jsx,tsx,json,jsonc}": [
-      "biome check --files-ignore-unknown=true --no-errors-on-unmatched --write"
-    ]
+    "*.{js,ts,jsx,tsx,json,jsonc}": ["biome check --files-ignore-unknown=true --no-errors-on-unmatched --write"]
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
