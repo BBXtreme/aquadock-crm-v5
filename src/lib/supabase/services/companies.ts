@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/browser";
-import { createServerClient } from "@/lib/supabase/server";
+
+import type { Database } from "@/lib/supabase/database.types";
 
 import type { Company, CompanyInsert } from "../types";
 import { handleSupabaseError } from "../utils";
@@ -89,7 +90,7 @@ export type CompanyForOpenMap = Pick<
 >;
 
 export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
-  const supabase = createServerClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from("companies")
