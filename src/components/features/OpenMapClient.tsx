@@ -7,15 +7,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
 
-// import "react-leaflet-markercluster/dist/styles.min.css";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import L from "leaflet";
 import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import { importOsmPoi } from "@/lib/supabase/services/companies";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois } from "@/lib/utils/map";
 
 // Fix default Leaflet icons
@@ -28,15 +27,15 @@ L.Icon.Default.mergeOptions({
 
 const getStatusIcon = (status?: string) => {
   const colorMap: Record<string, string> = {
-    lead: "#f59e0b",        // amber
-    qualifiziert: "#3b82f6", // blue
-    akquise: "#8b5cf6",     // violet
-    angebot: "#ec4899",     // pink
-    gewonnen: "#10b981",    // emerald
-    verloren: "#ef4444",    // red
-    kunde: "#14b8a6",       // teal
-    partner: "#6366f1",     // indigo
-    inaktiv: "#6b7280",     // gray
+    lead: "#f59e0b",
+    qualifiziert: "#3b82f6",
+    akquise: "#8b5cf6",
+    angebot: "#22c55e", // positive emerald
+    gewonnen: "#10b981",
+    verloren: "#ef4444",
+    kunde: "#14b8a6",
+    partner: "#6366f1",
+    inaktiv: "#6b7280",
   };
 
   const color = colorMap[status?.toLowerCase() || "lead"] || "#6b7280";
@@ -55,23 +54,23 @@ const getStatusIcon = (status?: string) => {
   });
 };
 
-const getOsmPoiIcon = () => {
-  return L.divIcon({
+const getOsmPoiIcon = () =>
+  L.divIcon({
     className: "osm-poi",
     html: `
-      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
-        <circle cx="16" cy="16" r="6" fill="#ffffff" />
-      </svg>
-    `,
+    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
+      <circle cx="16" cy="16" r="6" fill="#ffffff" />
+    </svg>
+  `,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -20],
   });
-};
 
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];
+  error?: string | null;
 };
 
 function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
@@ -79,7 +78,6 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
 
   useEffect(() => {
     if (companies.length === 0) return;
-
     const validCoords = companies
       .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
       .map((c) => [c.lat!, c.lon!] as [number, number]);
@@ -88,14 +86,10 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
 
     const bounds = L.latLngBounds(validCoords);
     map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
-    console.log(`[OpenMap] Auto-fitted to ${validCoords.length} locations`);
   }, [companies, map]);
 
-  // Handle resize when sidebar collapses
   useEffect(() => {
-    const handleResize = () => {
-      setTimeout(() => map.invalidateSize(), 300);
-    };
+    const handleResize = () => setTimeout(() => map.invalidateSize(), 300);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [map]);
@@ -103,7 +97,7 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
   return null;
 }
 
-export function OpenMapClient({ initialCompanies }: OpenMapProps) {
+export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
   const mapRef = useRef<L.Map>(null);
   const [showOsm, setShowOsm] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
@@ -115,11 +109,11 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
   const importMutation = useMutation({
     mutationFn: (poi: any) => importOsmPoi(poi),
     onSuccess: (newCompany, poi) => {
-      toast.success(`POI "${newCompany.firmenname}" imported successfully`);
+      toast.success(`"${newCompany.firmenname}" erfolgreich importiert`);
       queryClient.invalidateQueries({ queryKey: ["companiesForMap"] });
       setOsmPois((prev) => prev.filter((p) => p.id !== poi.id));
     },
-    onError: (err) => toast.error("Import failed", { description: err.message }),
+    onError: (err: any) => toast.error("Import fehlgeschlagen", { description: err.message }),
   });
 
   const loadOsmPois = async () => {
@@ -157,19 +151,11 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
+  const isDarkMode = useMemo(() => document.documentElement.classList.contains("dark"), []);
 
   const tileUrl = isDarkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"     // Carto Dark Matter
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";   // Carto Positron (clean light)
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
@@ -177,33 +163,41 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     importMutation.mutate(poi);
   };
 
-  // Invalidate size and re-center on dark mode change for better stability
+  // Theme change handling
   useEffect(() => {
     if (mapRef.current) {
       setTimeout(() => {
         mapRef.current?.invalidateSize();
-        // Re-center after theme change
         const bounds = L.latLngBounds(
           initialCompanies
             .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
             .map((c) => [c.lat!, c.lon!]),
         );
-        if (bounds.isValid()) {
-          mapRef.current?.fitBounds(bounds, { padding: [80, 80] });
-        }
-      }, 100);
+        if (bounds.isValid()) mapRef.current?.fitBounds(bounds, { padding: [80, 80] });
+      }, 150);
     }
   }, [isDarkMode, initialCompanies]);
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center bg-muted/40">
+        <div className="text-center">
+          <p className="text-lg font-medium text-red-600">Fehler beim Laden der Karte</p>
+          <p className="text-sm text-muted-foreground mt-2">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full">
       <MapContainer
-        key={isDarkMode ? 'dark' : 'light'}
+        key={isDarkMode ? "dark" : "light"}
         ref={mapRef}
         center={[51.1657, 10.4515]}
         zoom={6}
         style={{ height: "100%", width: "100%" }}
-        className={`z-0 ${isDarkMode ? "dark-map" : ""}`}
+        className="z-0"
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
@@ -217,12 +211,12 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
                   <h3 className="font-semibold text-lg">{company.firmenname}</h3>
 
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">
-                      {company.kundentyp || "–"}
-                    </span>
-                    <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">
-                      {company.status || "–"}
-                    </span>
+                    {company.kundentyp && (
+                      <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.kundentyp}</span>
+                    )}
+                    {company.status && (
+                      <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.status}</span>
+                    )}
                   </div>
 
                   <div className="text-muted-foreground">
@@ -276,7 +270,13 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
                   <div className="min-w-[220px] space-y-2">
                     <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
                     <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
-                    <Button size="sm" variant="outline" onClick={() => handleImportPoi(poi)} disabled={importMutation.isPending} className="w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleImportPoi(poi)}
+                      disabled={importMutation.isPending}
+                      className="w-full"
+                    >
                       <Plus className="h-3 w-3 mr-1" />
                       {importMutation.isPending ? "Importing..." : "Zu CRM hinzufügen"}
                     </Button>
@@ -287,10 +287,10 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
         </MarkerClusterGroup>
       </MapContainer>
 
-      {/* Loading overlay for OSM POIs */}
+      {/* OSM Loading Overlay */}
       {loadingOsm && (
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[1000]">
-          <div className="bg-background/90 backdrop-blur-sm border rounded-lg p-4 shadow-md">
+          <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
             <p className="text-sm text-center">Loading OSM POIs...</p>
           </div>
@@ -299,38 +299,32 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
 
       {/* Legend */}
       {showLegend && (
-        <div className="absolute top-20 right-4 z-[1000] bg-background/90 backdrop-blur-sm border rounded-lg p-3 shadow-md">
-          <h4 className="font-medium text-sm mb-2">Status Legende</h4>
-          <div className="space-y-1 text-xs">
+        <div className="absolute top-20 right-4 z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg p-3 shadow-md min-w-[160px]">
+          <h4 className="font-medium text-sm mb-3">Status Legende</h4>
+          <div className="space-y-2 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-amber-500" />
-              Lead
+              <div className="w-4 h-4 rounded-full bg-amber-500" /> Lead
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500" />
-              Qualifiziert
+              <div className="w-4 h-4 rounded-full bg-blue-500" /> Qualifiziert
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-violet-500" />
-              Akquise
+              <div className="w-4 h-4 rounded-full bg-violet-500" /> Akquise
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-emerald-500" />
-              Angebot
+              <div className="w-4 h-4 rounded-full bg-emerald-500" /> Angebot
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500" />
-              Gewonnen
+              <div className="w-4 h-4 rounded-full bg-green-500" /> Gewonnen
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500" />
-              Verloren
+              <div className="w-4 h-4 rounded-full bg-red-500" /> Verloren
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating Controls – visible in light & dark mode */}
+      {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
           variant="secondary"
