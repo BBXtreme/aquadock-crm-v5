@@ -43,7 +43,7 @@ interface CompaniesTableProps {
   onGlobalFilterChange?: (value: string) => void;
 }
 
-const columnHelper = createColumnHelper<any>();
+const columnHelper = createColumnHelper<Company>();
 
 export default function CompaniesTable({
   companies,
@@ -59,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<Company>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -114,7 +114,7 @@ export default function CompaniesTable({
       header: "Hauptkontakt",
       cell: (info) => {
         const contacts = info.row.original.contacts || [];
-        const primary = contacts.find((c: any) => c.is_primary);
+        const primary = contacts.find((c) => c.is_primary);
         if (!primary) return "—";
         return (
           <div className="flex flex-col">
@@ -126,12 +126,12 @@ export default function CompaniesTable({
       enableSorting: false,
     }),
     columnHelper.accessor("contacts", {
-      id: "kontakt_typ",
+      id: "kontaktanzahl",
       header: "Kontakte",
       cell: (info) => {
         const count = info.getValue()?.length || 0;
         if (count === 0) return <Badge variant="outline">Keine</Badge>;
-        const hasPrimary = info.getValue()?.some((c: any) => c.is_primary);
+        const hasPrimary = info.getValue()?.some((c) => c.is_primary);
         return (
           <Badge variant={hasPrimary ? "default" : "secondary"}>
             {count} {hasPrimary ? "(Primär)" : ""}
@@ -198,7 +198,7 @@ export default function CompaniesTable({
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({
+  const table = useReactTable<Company>({
     data: companies,
     columns,
     getCoreRowModel: getCoreRowModel(),
