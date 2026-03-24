@@ -34,6 +34,10 @@ export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
 ): Promise<{ pois: any[]; totalFound: number }> {
+  console.group("OpenMap OSM Query");
+  console.log("Current bounds:", bounds.toBBoxString());
+  console.log("Active categories:", activeCategories);
+
   const bbox = bounds.toBBoxString(); // "west,south,east,north"
   const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
@@ -76,6 +80,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
     out center;
   `;
 
+  console.log("Final query string:", query);
+
   const endpoints = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
@@ -113,6 +119,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       });
 
       console.log(`[OpenMap OSM] After deduplication: ${deduplicated.length} unique POIs`);
+      console.groupEnd();
 
       return { pois: deduplicated, totalFound: deduplicated.length };
     } catch (err: any) {
@@ -122,10 +129,12 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       }
       console.error(`[OpenMap OSM] ${endpoint} failed:`, err);
       if (endpoint === endpoints[endpoints.length - 1]) {
+        console.groupEnd();
         throw err; // last one, throw
       }
     }
   }
 
+  console.groupEnd();
   throw new Error("All Overpass endpoints failed");
 }
