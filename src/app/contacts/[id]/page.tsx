@@ -116,9 +116,7 @@ export default function ContactDetailPage() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("contacts")
-          .select(
-            "*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)",
-          )
+          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)")
           .eq("id", id)
           .single();
 
@@ -215,9 +213,7 @@ export default function ContactDetailPage() {
     <div className="container mx-auto p-6 space-y-8">
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">
-            Contacts → {contact.vorname} {contact.nachname}
-          </div>
+          <div className="text-sm text-muted-foreground">Contacts → {contact.vorname} {contact.nachname}</div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
           </h1>
@@ -393,15 +389,21 @@ export default function ContactDetailPage() {
                     className={cn(
                       contact.companies.status === "gewonnen" && "bg-emerald-600 text-white",
                       contact.companies.status === "lead" && "bg-amber-600 text-white",
-                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white",
+                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white"
                     )}
                   >
                     {contact.companies.status}
                   </Badge>
                 )}
-                {contact.companies.wassertyp && <Badge variant="outline">{contact.companies.wassertyp}</Badge>}
+                {contact.companies.wassertyp && (
+                  <Badge variant="outline">
+                    {contact.companies.wassertyp}
+                  </Badge>
+                )}
                 {contact.companies.wasserdistanz && (
-                  <Badge variant="outline">{contact.companies.wasserdistanz} m</Badge>
+                  <Badge variant="outline">
+                    {contact.companies.wasserdistanz} m
+                  </Badge>
                 )}
               </div>
 
@@ -479,18 +481,17 @@ export default function ContactDetailPage() {
             <DialogTitle>Change Linked Company</DialogTitle>
           </DialogHeader>
           <Select
-            onValueChange={(value) => {
+            onValueChange={async (value) => {
               const supabase = createClient();
-              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
-                .then(() => {
-                  toast.success("Company updated");
-                  queryClient.invalidateQueries({ queryKey: ["contact", id] }); // force refresh
-                  _fetchData();
-                  setChangeCompanyDialog(false);
-                })
-                .catch((err) => {
-                  toast.error("Update failed", { description: err.message });
-                });
+              try {
+                await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
+                toast.success("Company updated");
+                await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                await _fetchData();           // force fresh load
+                setChangeCompanyDialog(false);
+              } catch (err) {
+                toast.error("Update failed", { description: err.message });
+              }
             }}
             defaultValue={contact.company_id || "none"}
           >
