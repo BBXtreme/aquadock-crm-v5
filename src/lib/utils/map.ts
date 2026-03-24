@@ -90,47 +90,57 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
   for (const endpoint of endpoints) {
     console.log(`Trying endpoint: ${endpoint}`);
-    try {
-      const url = `${endpoint}?data=${encodeURIComponent(query)}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 50000); // 50s timeout for fetch
+    let retries = 0;
+    const maxRetries = 3;
 
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
+    while (retries < maxRetries) {
+      try {
+        const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 50000); // 50s timeout for fetch
 
-      if (!res.ok) {
-        if (res.status === 504) {
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const data = await res.json();
+          console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs from ${endpoint}`);
+
+          // Basic deduplication by OSM ID
+          const seen = new Set<string>();
+          const deduplicated = (data.elements || []).filter((poi: any) => {
+            const key = `${poi.type}/${poi.id}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+          console.log(`[OpenMap OSM] After deduplication: ${deduplicated.length} unique POIs`);
+          console.groupEnd();
+
+          return { pois: deduplicated, totalFound: deduplicated.length };
+        } else if (res.status === 429) {
+          retries++;
+          const delay = Math.pow(2, retries) * 1000; // exponential backoff
+          console.warn(`[OpenMap OSM] ${endpoint} returned 429, retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else if (res.status === 504) {
           console.warn(`[OpenMap OSM] ${endpoint} returned 504, trying next...`);
-          continue;
+          break; // try next endpoint
+        } else {
+          throw new Error(`Overpass API Fehler: ${res.status}`);
         }
-        throw new Error(`Overpass API Fehler: ${res.status}`);
-      }
-
-      const data = await res.json();
-      console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs from ${endpoint}`);
-
-      // Basic deduplication by OSM ID
-      const seen = new Set<string>();
-      const deduplicated = (data.elements || []).filter((poi: any) => {
-        const key = `${poi.type}/${poi.id}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      console.log(`[OpenMap OSM] After deduplication: ${deduplicated.length} unique POIs`);
-      console.groupEnd();
-
-      return { pois: deduplicated, totalFound: deduplicated.length };
-    } catch (err: any) {
-      if (err.name === "AbortError") {
-        console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
-        continue;
-      }
-      console.error(`[OpenMap OSM] ${endpoint} failed:`, err);
-      if (endpoint === endpoints[endpoints.length - 1]) {
-        console.groupEnd();
-        throw err; // last one, throw
+      } catch (err: any) {
+        if (err.name === "AbortError") {
+          console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
+          break;
+        }
+        console.error(`[OpenMap OSM] ${endpoint} failed:`, err);
+        if (endpoint === endpoints[endpoints.length - 1]) {
+          console.groupEnd();
+          throw err; // last one, throw
+        }
+        break; // try next endpoint
       }
     }
   }
