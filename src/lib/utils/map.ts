@@ -35,7 +35,7 @@ export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
   const query = `
-    [out:json][timeout:60];
+    [out:json][timeout:45];
     (
       node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
       way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
@@ -43,22 +43,43 @@ export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
     out center;
   `;
 
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    "https://overpass.osm.ch/api/interpreter",
+  ];
 
-  try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      if (res.status === 504) {
-        throw new Error("Overpass API ist gerade überlastet. Bitte versuche es in 10–20 Sekunden erneut.");
+  for (const endpoint of endpoints) {
+    try {
+      const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 50000); // 50s timeout for fetch
+
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        if (res.status === 504) {
+          console.warn(`[OpenMap OSM] ${endpoint} returned 504, trying next...`);
+          continue;
+        }
+        throw new Error(`Overpass API Fehler: ${res.status}`);
       }
-      throw new Error(`Overpass API Fehler: ${res.status}`);
-    }
 
-    const data = await res.json();
-    console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs`);
-    return data.elements || [];
-  } catch (err: any) {
-    console.error("[OpenMap OSM] Fetch failed:", err);
-    throw err; // let the caller handle the toast
+      const data = await res.json();
+      console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs from ${endpoint}`);
+      return data.elements || [];
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
+        continue;
+      }
+      console.error(`[OpenMap OSM] ${endpoint} failed:`, err);
+      if (endpoint === endpoints[endpoints.length - 1]) {
+        throw err; // last one, throw
+      }
+    }
   }
+
+  throw new Error("All Overpass endpoints failed");
 }
