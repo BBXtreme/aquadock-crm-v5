@@ -2,13 +2,18 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
-import { useMap } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
+import "leaflet/dist/leaflet.css";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
-import { fetchOsmPois, getStatusIcon } from "@/lib/utils/map";
+import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 
 export default function OpenMapClientInnerComponent({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
@@ -148,5 +153,170 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     return null;
   }
 
-  return <div>Inner component placeholder</div>;
+  return (
+    <div className="relative h-full w-full">
+      <MapContainer
+        key={isDarkMode ? "dark" : "light"}
+        ref={mapRef}
+        center={[51.1657, 10.4515]}
+        zoom={6}
+        style={{ height: "100%", width: "100%" }}
+        className="z-0"
+      >
+        <TileLayer attribution={attribution} url={tileUrl} />
+
+        <MapController companies={initialCompanies} />
+
+        <MarkerClusterGroup chunkedLoading maxClusterRadius={100}>
+          {initialCompanies
+            .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
+            .map((company) => (
+              <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
+                <Popup>
+                  <div className="min-w-[320px] space-y-4 text-sm">
+                    <h3 className="font-semibold text-lg">{company.firmenname}</h3>
+
+                    <div className="flex flex-wrap gap-2">
+                      {company.kundentyp && (
+                        <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.kundentyp}</span>
+                      )}
+                      {company.status && (
+                        <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.status}</span>
+                      )}
+                    </div>
+
+                    <div className="text-muted-foreground">
+                      {company.stadt && <>{company.stadt}, </>}
+                      {company.land || "–"}
+                    </div>
+
+                    {company.value && (
+                      <div className="font-medium">Potenzial: €{company.value.toLocaleString("de-DE")}</div>
+                    )}
+
+                    <div className="pt-3 flex flex-wrap gap-2">
+                      {company.telefon && (
+                        <a
+                          href={`tel:${company.telefon}`}
+                          className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                        >
+                          Anrufen
+                        </a>
+                      )}
+                      {company.website && (
+                        <a
+                          href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                        >
+                          Website
+                        </a>
+                      )}
+                      <Link
+                        href={`/companies/${company.id}`}
+                        className="px-3 py-1.5 text-xs bg-accent hover:bg-accent/80 text-accent-foreground rounded-md"
+                      >
+                        Details öffnen
+                      </Link>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+
+          {showOsm &&
+            osmPois.map((poi: any) => (
+              <Marker
+                key={poi.id}
+                position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
+                icon={getOsmPoiIcon()}
+              >
+                <Popup>
+                  <div className="min-w-[220px] space-y-2">
+                    <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
+                    <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
+                    <button
+                      onClick={() => handleImportPoi(poi)}
+                      className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md w-full"
+                    >
+                      <Plus className="h-3 w-3 mr-1 inline" />
+                      Zu CRM hinzufügen
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+        </MarkerClusterGroup>
+      </MapContainer>
+
+      {/* OSM Loading Overlay */}
+      {loadingOsm && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
+          <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+            <p className="text-sm text-center">Loading OSM POIs...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Legend */}
+      {showLegend && (
+        <div className="absolute top-20 right-4 z-101 bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-0">
+          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Status Legende
+          </h4>
+          <div className="space-y-2 text-sm">
+            {legendItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border-2 border-white" style={{ backgroundColor: item.color }} />
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Controls */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={resetView}
+          className="bg-card border shadow-md hover:bg-card text-foreground"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+
+        <Button
+          variant={showOsm ? "default" : "secondary"}
+          size="icon"
+          onClick={() => setShowOsm(!showOsm)}
+          disabled={loadingOsm}
+          className="bg-card border shadow-md hover:bg-card text-foreground"
+        >
+          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+        </Button>
+
+        <Button
+          variant={showLegend ? "default" : "secondary"}
+          size="icon"
+          onClick={() => setShowLegend(!showLegend)}
+          className="bg-card border shadow-md hover:bg-card text-foreground"
+        >
+          <Info className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {validCompanies.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/40">
+          <div className="text-center">
+            <p className="text-lg font-medium">Keine Firmen mit Geodaten gefunden</p>
+            <p className="text-sm text-muted-foreground">Firmen mit Breiten- und Längengrad werden hier angezeigt.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
