@@ -3,6 +3,7 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
@@ -26,12 +27,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }, []);
 
   return (
-    <div className="flex h-screen">
-      <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} onToggle={() => setIsCollapsed(!isCollapsed)} />
-      <div className="flex-1 flex flex-col" style={{ marginLeft: isCollapsed ? "4rem" : "10rem" }}>
-        <Header />
-        <main className="flex-1">{children}</main>
+    <ErrorBoundary>
+      <div className="flex h-screen">
+        <Sidebar isCollapsed={isCollapsed} isMobile={isMobile} onToggle={() => setIsCollapsed(!isCollapsed)} />
+        <div className="flex-1 flex flex-col" style={{ marginLeft: isCollapsed ? "4rem" : "10rem" }}>
+          <Header />
+          <main className="flex-1">{children}</main>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
