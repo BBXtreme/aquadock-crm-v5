@@ -384,10 +384,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
             } else {
               console.log("[OpenMap] Toggle ON");
               setShowOsm(true);
-              setTimeout(() => loadOsmPois(true), 300);
+              loadOsmPois(true);
             }
           }}
-          disabled={loadingOsm}
           className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
