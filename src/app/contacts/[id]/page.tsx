@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -63,6 +63,29 @@ export default function ContactDetailPage() {
 
   const queryClient = useQueryClient();
 
+  // Main contact data with joined company
+  const {
+    data: contact,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ["contact", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("contacts")
+        .select(
+          "*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)",
+        )
+        .eq("id", id)
+        .single();
+      if (error) throw error;
+      return data as Contact;
+    },
+    enabled: !!id,
+  });
+
+  // All companies for the selector
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
@@ -72,85 +95,6 @@ export default function ContactDetailPage() {
       return data;
     },
   });
-
-  const { data: contact, isLoading, error } = useQuery({
-    queryKey: ["contact", id],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)")
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const _fetchData = useCallback(async () => {
-    if (!id || id === "undefined") {
-      setError("Invalid contact ID");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/contacts/${id}`);
-      const data = await response.json();
-      if (data.success) {
-        setContact(data.contact);
-        setNotesValue(data.contact.notes || "");
-      } else {
-        setError(data.error || "Failed to load contact");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load contact");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 15000);
-
-    const loadData = async () => {
-      try {
-        if (!id || id === "undefined") {
-          setError("Invalid contact ID");
-          setLoading(false);
-          return;
-        }
-
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("contacts")
-          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)")
-          .eq("id", id)
-          .single();
-
-        if (error) {
-          setError(error.message);
-          return;
-        }
-
-        setContact(data);
-        setNotesValue(data.notes || "");
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load contact");
-      } finally {
-        setLoading(false);
-        clearTimeout(timeout);
-      }
-    };
-
-    loadData();
-
-    return () => clearTimeout(timeout);
-  }, [id]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -172,18 +116,19 @@ export default function ContactDetailPage() {
   };
 
   const handleSaveNotes = async () => {
+    if (!contact) return;
     try {
       const supabase = createClient();
-      await updateContact(contact?.id, { notes: notesValue }, supabase);
+      await updateContact(contact.id, { notes: notesValue }, supabase);
       toast.success("Notes updated");
       setEditingNotes(false);
-      _fetchData();
+      queryClient.invalidateQueries({ queryKey: ["contact", id] });
     } catch (error) {
-      toast.error("Failed to update notes", { description: error.message });
+      toast.error("Failed to update notes", { description: (error as Error).message });
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="container mx-auto p-6">
         <div className="animate-pulse">
@@ -195,12 +140,12 @@ export default function ContactDetailPage() {
     );
   }
 
-  if (error) {
+  if (error || !contact) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="text-gray-600">{error.message}</p>
+          <p className="text-gray-600">{error ? (error as Error).message : "Contact Not Found"}</p>
           <Button onClick={() => router.back()} className="mt-4">
             Go Back
           </Button>
@@ -209,22 +154,14 @@ export default function ContactDetailPage() {
     );
   }
 
-  if (!contact) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Contact Not Found</h1>
-          <Button onClick={() => router.push("/contacts")}>Back to Contacts</Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-6 space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">Contacts → {contact.vorname} {contact.nachname}</div>
+          <div className="text-sm text-muted-foreground">
+            Contacts → {contact.vorname} {contact.nachname}
+          </div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
           </h1>
@@ -254,14 +191,12 @@ export default function ContactDetailPage() {
             checked={contact.is_primary}
             onCheckedChange={(checked) => {
               const supabase = createClient();
-              updateContact(contact.id, { is_primary: checked }, supabase)
+              updateContact(contact.id, { is_primary: !!checked }, supabase)
                 .then(() => {
                   toast.success("Primary contact updated");
                   queryClient.invalidateQueries({ queryKey: ["contact", id] });
                 })
-                .catch((err) => {
-                  toast.error("Update failed", { description: err.message });
-                });
+                .catch((err) => toast.error("Update failed", { description: err.message }));
             }}
           />
           <label className="text-sm font-medium text-gray-700">Primary Contact</label>
@@ -400,21 +335,15 @@ export default function ContactDetailPage() {
                     className={cn(
                       contact.companies.status === "gewonnen" && "bg-emerald-600 text-white",
                       contact.companies.status === "lead" && "bg-amber-600 text-white",
-                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white"
+                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white",
                     )}
                   >
                     {contact.companies.status}
                   </Badge>
                 )}
-                {contact.companies.wassertyp && (
-                  <Badge variant="outline">
-                    {contact.companies.wassertyp}
-                  </Badge>
-                )}
+                {contact.companies.wassertyp && <Badge variant="outline">{contact.companies.wassertyp}</Badge>}
                 {contact.companies.wasserdistanz && (
-                  <Badge variant="outline">
-                    {contact.companies.wasserdistanz} m
-                  </Badge>
+                  <Badge variant="outline">{contact.companies.wasserdistanz} m</Badge>
                 )}
               </div>
 
@@ -498,10 +427,9 @@ export default function ContactDetailPage() {
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
                 toast.success("Company updated");
                 await queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                await _fetchData();           // force fresh load
                 setChangeCompanyDialog(false);
               } catch (err) {
-                toast.error("Update failed", { description: err.message });
+                toast.error("Update failed", { description: (err as Error).message });
               }
             }}
             defaultValue={contact.company_id || "none"}
@@ -549,7 +477,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
       toast.success("Contact updated");
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update contact", { description: error.message });
+      toast.error("Failed to update contact", { description: (error as Error).message });
     }
   });
 
