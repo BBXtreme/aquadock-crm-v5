@@ -24,6 +24,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [osmPois, setOsmPois] = useState<any[]>([]);
   const [showLegend, setShowLegend] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [osmError, setOsmError] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -55,6 +56,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const loadOsmPois = async () => {
     if (!mapRef.current) return;
     setLoadingOsm(true);
+    setOsmError(false);
     try {
       const bounds = mapRef.current.getBounds();
       const pois = await fetchOsmPois(bounds);
@@ -62,6 +64,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       toast.success(`${pois.length} OSM-POIs geladen`);
     } catch (err: any) {
       showError(err.message || "OSM-POIs konnten nicht geladen werden");
+      setOsmError(true);
       console.error("[OpenMap OSM]", err);
     } finally {
       setLoadingOsm(false);
@@ -305,6 +308,17 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
+
+        {osmError && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => loadOsmPois()}
+            className="bg-card border shadow-md hover:bg-card text-foreground"
+          >
+            Erneut versuchen
+          </Button>
+        )}
 
         <Button
           variant={showLegend ? "default" : "secondary"}
