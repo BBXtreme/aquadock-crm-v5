@@ -1,20 +1,23 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+
 import { OpenMapClient } from "@/components/features/OpenMapClient";
-import { type CompanyForOpenMap, getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
+import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
-export default async function OpenMapPage() {
-  let companies: CompanyForOpenMap[] = [];
+export default function OpenMapPage() {
+  const { data: companies = [], isLoading, error } = useQuery({
+    queryKey: ["companiesForMap"],
+    queryFn: () => getCompaniesForOpenMap(""), // temporary empty until auth is ready
+  });
 
-  try {
-    // For now we fetch without user filter (since no auth yet)
-    // Later we will add proper user_id filtering
-    companies = await getCompaniesForOpenMap(""); // temporary empty string
-  } catch (error) {
-    console.error("[OpenMap Page] Failed to load companies:", error);
+  if (isLoading) {
+    return <div className="h-[calc(100vh-4rem)] flex items-center justify-center">Loading map...</div>;
   }
 
-  return (
-    <div className="h-[calc(100vh-4rem)] w-full relative">
-      <OpenMapClient initialCompanies={companies} />
-    </div>
-  );
+  if (error) {
+    return <div className="h-[calc(100vh-4rem)] flex items-center justify-center text-red-600">Error loading companies</div>;
+  }
+
+  return <OpenMapClient initialCompanies={companies} />;
 }
