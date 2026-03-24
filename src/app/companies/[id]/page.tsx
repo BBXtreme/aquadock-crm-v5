@@ -221,7 +221,10 @@ export default function CompanyDetailPage() {
     queryKey: ["timeline", id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("timeline").select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)").eq("company_id", id);
+      const { data } = await supabase
+        .from("timeline")
+        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)")
+        .eq("company_id", id);
       return data || [];
     },
   });
@@ -453,9 +456,7 @@ export default function CompanyDetailPage() {
         >
           {company.status}
         </Badge>
-        {company.kundentyp && (
-          <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
-        )}
+        {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && (
           <Badge variant="outline">
             {company.firmentyp === "kette" ? "Chain" : company.firmentyp === "einzeln" ? "Single" : "—"}
