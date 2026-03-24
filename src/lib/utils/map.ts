@@ -21,7 +21,7 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
-export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
+export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<unknown[]> {
   const bbox = bounds.toBBoxString();
   const query = `[out:json][timeout:25];(node["amenity"~"restaurant|cafe|bar|hotel|hostel|marina|camp_site"]({{bbox}});way["amenity"~"restaurant|cafe|bar|hotel|hostel|marina|camp_site"]({{bbox}}););out center;`.replace("{{bbox}}", bbox);
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
