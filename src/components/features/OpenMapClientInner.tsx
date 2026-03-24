@@ -92,7 +92,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
     const handleMapChange = () => {
       const now = Date.now();
-      if (now - lastLoadTime < 800) return;
+      if (now - lastLoadTime < 1500) return;   // increased debounce
       setLastLoadTime(now);
       loadOsmPois();
     };
@@ -405,7 +405,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               }
               console.log("[OpenMap] Toggle ON");
               setShowOsm(true);
-              loadOsmPois(true);
+              setTimeout(() => loadOsmPois(true), 500); // small delay
             }
           }}
           disabled={loadingOsm}
