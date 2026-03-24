@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -318,6 +317,47 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </MarkerClusterGroup>
       </MapContainer>
 
+      {/* OSM Loading Overlay */}
+      {loadingOsm && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
+          <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+            <p className="text-sm text-center">POIs werden geladen...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Legend */}
+      {showLegend && (
+        <div className="absolute top-28 right-6 z-[1100] bg-background/95 backdrop-blur-sm border rounded-2xl p-5 shadow-2xl min-w-[240px]">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-semibold text-sm flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              Status Legende
+            </h4>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowLegend(false)}
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+            >
+              ✕
+            </Button>
+          </div>
+          <div className="space-y-2.5 text-sm">
+            {legendItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-3">
+                <div
+                  className="w-5 h-5 rounded-full border-2 border-white flex-shrink-0"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Live Info Panel */}
       <div className="absolute bottom-4 left-4 z-10">
         <Card className="bg-background/95 backdrop-blur-sm border shadow-md p-3 text-sm">
@@ -333,24 +373,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
           </div>
         </Card>
       </div>
-
-      {/* Legend */}
-      {showLegend && (
-        <div className="absolute top-20 right-4 z-[1001] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
-          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            Status Legende
-          </h4>
-          <div className="space-y-2 text-sm">
-            {legendItems.map((item) => (
-              <div key={item.key} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full border-2 border-white" style={{ backgroundColor: item.color }} />
-                <span>{item.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
