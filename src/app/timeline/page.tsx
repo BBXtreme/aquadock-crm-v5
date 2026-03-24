@@ -11,7 +11,6 @@ import { Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, T
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
-import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,172 +232,174 @@ export default function TimelinePage() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Timeline</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Loading timeline...</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SkeletonList count={10} />
-            </CardContent>
-          </Card>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div>
+          <p className="text-muted-foreground text-sm">Home → Timeline</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
         </div>
-      </AppLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading timeline...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SkeletonList count={10} />
+          </CardContent>
+        </Card>
+      </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Timeline</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Error loading timeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-red-500">{error.message}</p>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div>
+          <p className="text-muted-foreground text-sm">Home → Timeline</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
         </div>
-      </AppLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>Error loading timeline</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-500">{error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
-  }
+
+  if (timeline.length === 0)
+    return (
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div>
+          <p className="text-muted-foreground text-sm">Home → Timeline</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>No timeline entries yet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Timeline entries will appear here as activities occur.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Timeline</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
-          </div>
-          <Dialog
-            open={dialogOpen}
-            onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) setEditEntry(null);
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">Home → Timeline</p>
+        <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+      </div>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setEditEntry(null)}>New Entry</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
+            <DialogDescription>
+              {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
+            </DialogDescription>
+          </DialogHeader>
+          <TimelineEntryForm
+            onSubmit={(values) => {
+              if (editEntry) {
+                updateMutation.mutate({ id: editEntry.id, values });
+              } else {
+                createMutation.mutate(values);
+              }
             }}
-          >
-            <DialogTrigger asChild>
-              <Button onClick={() => setEditEntry(null)}>New Entry</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
-                <DialogDescription>
-                  {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
-                </DialogDescription>
-              </DialogHeader>
-              <TimelineEntryForm
-                onSubmit={(values) => {
-                  if (editEntry) {
-                    updateMutation.mutate({ id: editEntry.id, values });
-                  } else {
-                    createMutation.mutate(values);
-                  }
-                }}
-                isSubmitting={createMutation.isPending}
-                companies={companies}
-                contacts={contacts}
-                editEntry={editEntry}
-                onCancel={() => setDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
+            isSubmitting={createMutation.isPending}
+            companies={companies}
+            contacts={contacts}
+            editEntry={editEntry}
+            onCancel={() => setDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-        <div className="space-y-4">
-          {timeline.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>No timeline entries yet</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Timeline entries will appear here as activities occur.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            timeline.map((entry) => (
-              <Card key={entry.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className={`text-xs ${getActivityColor(entry.activity_type)}`}>
-                          {getActivityIcon(entry.activity_type)}
-                          {entry.activity_type}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
-                      <h3 className="font-medium text-lg mb-1">{entry.title}</h3>
-                      {entry.content && <p className="text-muted-foreground mb-3">{entry.content}</p>}
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <User className="h-4 w-4" />
-                          {entry.user_name}
-                        </div>
-                        {entry.company_id && (
-                          <div className="flex items-center gap-1">
-                            <Building className="h-4 w-4" />
-                            Company:{" "}
-                            <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">
-                              {entry.companies?.firmenname || "Unknown"}
-                            </Link>
-                          </div>
-                        )}
-                        {entry.contact_id && entry.contacts && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <User className="h-4 w-4" />
-                            Kontakt: {entry.contacts.vorname} {entry.contacts.nachname}
-                            {entry.contacts.position ? ` (${entry.contacts.position})` : ""}
-                          </div>
-                        )}
-                      </div>
+      <div className="space-y-4">
+        {timeline.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No timeline entries yet</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Timeline entries will appear here as activities occur.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          timeline.map((entry) => (
+            <Card key={entry.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className={`text-xs ${getActivityColor(entry.activity_type)}`}>
+                        {getActivityIcon(entry.activity_type)}
+                        {entry.activity_type}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                      </span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditEntry(entry);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm("Delete this timeline entry?")) {
-                            deleteMutation.mutate(entry.id);
-                          }
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                    <h3 className="font-medium text-lg mb-1">{entry.title}</h3>
+                    {entry.content && <p className="text-muted-foreground mb-3">{entry.content}</p>}
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        {entry.user_name}
+                      </div>
+                      {entry.company_id && (
+                        <div className="flex items-center gap-1">
+                          <Building className="h-4 w-4" />
+                          Company:{" "}
+                          <Link href={`/companies/${entry.company_id}`} className="text-blue-600 hover:underline">
+                            {entry.companies?.firmenname || "Unknown"}
+                          </Link>
+                        </div>
+                      )}
+                      {entry.contact_id && entry.contacts && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <User className="h-4 w-4" />
+                          Kontakt: {entry.contacts.vorname} {entry.contacts.nachname}
+                          {entry.contacts.position ? ` (${entry.contacts.position})` : ""}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditEntry(entry);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm("Delete this timeline entry?")) {
+                          deleteMutation.mutate(entry.id);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
-    </AppLayout>
+    </div>
   );
 }
