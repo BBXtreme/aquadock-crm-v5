@@ -64,6 +64,8 @@ export default function ContactDetailPage() {
   const [editCompanyDialog, setEditCompanyDialog] = useState(false);
   const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
 
+  const queryClient = useQueryClient();
+
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
@@ -114,7 +116,7 @@ export default function ContactDetailPage() {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("contacts")
-          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm)")
+          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)")
           .eq("id", id)
           .single();
 
@@ -385,37 +387,41 @@ export default function ContactDetailPage() {
                 {contact.companies.status && (
                   <Badge
                     className={cn(
-                      contact.companies.status === "gewonnen" && "bg-emerald-600",
-                      contact.companies.status === "lead" && "bg-amber-600",
-                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500"
+                      contact.companies.status === "gewonnen" && "bg-emerald-600 text-white",
+                      contact.companies.status === "lead" && "bg-amber-600 text-white",
+                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white"
                     )}
                   >
                     {contact.companies.status}
                   </Badge>
                 )}
-                {contact.companies.value && (
-                  <Badge variant="outline">
-                    €{contact.companies.value.toLocaleString("de-DE")}
-                  </Badge>
-                )}
               </div>
 
-              {contact.companies.stadt && contact.companies.land && (
-                <p className="text-sm text-muted-foreground">
-                  {contact.companies.stadt}, {contact.companies.land}
-                </p>
-              )}
-
-              {contact.companies.osm && (
-                <a
-                  href={contact.companies.osm}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  OSM Link
-                </a>
-              )}
+              <div className="text-sm text-muted-foreground space-y-1">
+                {contact.companies.wasserdistanz && (
+                  <p>Wasserdistanz: {contact.companies.wasserdistanz} m</p>
+                )}
+                {contact.companies.wassertyp && (
+                  <p>Wassertyp: {contact.companies.wassertyp}</p>
+                )}
+                {(contact.companies.stadt || contact.companies.land) && (
+                  <p>
+                    {contact.companies.stadt}
+                    {contact.companies.stadt && contact.companies.land && ", "}
+                    {contact.companies.land}
+                  </p>
+                )}
+                {contact.companies.osm && (
+                  <a
+                    href={contact.companies.osm}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline block"
+                  >
+                    OSM Link →
+                  </a>
+                )}
+              </div>
 
               <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
                 Change Company
@@ -476,7 +482,7 @@ export default function ContactDetailPage() {
               updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
                 .then(() => {
                   toast.success("Company updated");
-                  _fetchData();
+                  queryClient.invalidateQueries({ queryKey: ["contact", id] });
                   setChangeCompanyDialog(false);
                 })
                 .catch((err) => {
