@@ -203,7 +203,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   return (
     <div className="relative h-full w-full">
       {/* Top Controls Bar */}
-      <div className="absolute top-4 left-8 right-20 z-[1001] space-y-3">
+      <div className="absolute top-4 left-12 right-20 z-[1001] space-y-3">
         {/* POI Category Filters */}
         <div className="flex flex-wrap gap-2">
           {Object.entries(poiCategories).map(([key, category]) => (
