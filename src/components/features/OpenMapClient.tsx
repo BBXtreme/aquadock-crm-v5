@@ -203,7 +203,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
         center={[51.1657, 10.4515]}
         zoom={6}
         style={{ height: "100%", width: "100%" }}
-        className="z-0"
+        className={`z-0 ${isDarkMode ? "dark-map" : ""}`}
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
