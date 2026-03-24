@@ -13,8 +13,8 @@ import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
+import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois } from "@/lib/utils/map";
 
 // Fix default Leaflet icons
@@ -27,15 +27,15 @@ L.Icon.Default.mergeOptions({
 
 const getStatusIcon = (status?: string) => {
   const colorMap: Record<string, string> = {
-    lead: "#f59e0b",
-    qualifiziert: "#3b82f6",
-    akquise: "#8b5cf6",
-    angebot: "#22c55e", // positive emerald
-    gewonnen: "#10b981",
-    verloren: "#ef4444",
-    kunde: "#14b8a6",
-    partner: "#6366f1",
-    inaktiv: "#6b7280",
+    lead: "#f59e0b",        // amber
+    qualifiziert: "#3b82f6", // blue
+    akquise: "#8b5cf6",     // violet
+    angebot: "#ec4899",     // pink
+    gewonnen: "#10b981",    // emerald
+    verloren: "#ef4444",    // red
+    kunde: "#14b8a6",       // teal
+    partner: "#6366f1",     // indigo
+    inaktiv: "#6b7280",     // gray
   };
 
   const color = colorMap[status?.toLowerCase() || "lead"] || "#6b7280";
@@ -54,19 +54,20 @@ const getStatusIcon = (status?: string) => {
   });
 };
 
-const getOsmPoiIcon = () =>
-  L.divIcon({
+const getOsmPoiIcon = () => {
+  return L.divIcon({
     className: "osm-poi",
     html: `
-    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
-      <circle cx="16" cy="16" r="6" fill="#ffffff" />
-    </svg>
-  `,
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="6" fill="#ffffff" />
+      </svg>
+    `,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -20],
   });
+};
 
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];
@@ -78,6 +79,7 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
 
   useEffect(() => {
     if (companies.length === 0) return;
+
     const validCoords = companies
       .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
       .map((c) => [c.lat!, c.lon!] as [number, number]);
@@ -86,6 +88,7 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
 
     const bounds = L.latLngBounds(validCoords);
     map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+    console.log(`[OpenMap] Auto-fitted to ${validCoords.length} locations`);
   }, [companies, map]);
 
   useEffect(() => {
@@ -151,11 +154,19 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
     return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
-  const isDarkMode = useMemo(() => document.documentElement.classList.contains("dark"), []);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const tileUrl = isDarkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"     // Carto Dark Matter
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";   // Carto Positron (clean light)
 
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
@@ -168,6 +179,7 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
     if (mapRef.current) {
       setTimeout(() => {
         mapRef.current?.invalidateSize();
+        // Re-center after theme change
         const bounds = L.latLngBounds(
           initialCompanies
             .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
@@ -299,26 +311,47 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
 
       {/* Legend */}
       {showLegend && (
-        <div className="absolute top-20 right-4 z-[1000] bg-background/95 backdrop-blur-sm border rounded-lg p-3 shadow-md min-w-[160px]">
-          <h4 className="font-medium text-sm mb-3">Status Legende</h4>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-amber-500" /> Lead
+        <div className="absolute top-20 right-4 z-[1001] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
+          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Status Legende
+          </h4>
+          <div className="space-y-2 text-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-amber-500 flex-shrink-0" />
+              <span>Lead</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-blue-500" /> Qualifiziert
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-blue-500 flex-shrink-0" />
+              <span>Qualifiziert</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-violet-500" /> Akquise
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-violet-500 flex-shrink-0" />
+              <span>Akquise</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-emerald-500" /> Angebot
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span>Angebot</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-green-500" /> Gewonnen
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0" />
+              <span>Gewonnen</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full bg-red-500" /> Verloren
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-red-500 flex-shrink-0" />
+              <span>Verloren</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-teal-500 flex-shrink-0" />
+              <span>Kunde</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-indigo-500 flex-shrink-0" />
+              <span>Partner</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-5 h-5 rounded-full bg-zinc-500 flex-shrink-0" />
+              <span>Inaktiv</span>
             </div>
           </div>
         </div>
