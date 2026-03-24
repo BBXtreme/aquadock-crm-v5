@@ -5,6 +5,7 @@ import "./globals.css";
 import type React from "react";
 
 import ClientLayout from "@/components/layout/ClientLayout";
+import AppLayout from "@/components/layout/AppLayout";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
@@ -17,11 +18,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning>
       <body
-        className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-gradient-to-b from-background to-muted/30`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}
       >
-        <ClientLayout>{children}</ClientLayout>
+        <ClientLayout>
+          <AppLayout>{children}</AppLayout>
+        </ClientLayout>
       </body>
     </html>
   );
