@@ -395,15 +395,19 @@ export default function ContactDetailPage() {
                     {contact.companies.status}
                   </Badge>
                 )}
+                {contact.companies.wassertyp && (
+                  <Badge variant="outline">
+                    {contact.companies.wassertyp}
+                  </Badge>
+                )}
+                {contact.companies.wasserdistanz && (
+                  <Badge variant="outline">
+                    {contact.companies.wasserdistanz} m
+                  </Badge>
+                )}
               </div>
 
               <div className="text-sm text-muted-foreground space-y-1">
-                {contact.companies.wasserdistanz && (
-                  <p>Wasserdistanz: {contact.companies.wasserdistanz} m</p>
-                )}
-                {contact.companies.wassertyp && (
-                  <p>Wassertyp: {contact.companies.wassertyp}</p>
-                )}
                 {(contact.companies.stadt || contact.companies.land) && (
                   <p>
                     {contact.companies.stadt}
