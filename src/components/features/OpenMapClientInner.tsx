@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -105,7 +104,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         mapRef.current.off("zoomend", handleMapChange);
       }
     };
-  }, [lastLoadTime, activeCategories, showOsm]);
+  }, [showOsm, lastLoadTime, activeCategories]);
 
   const toggleCategory = (key: PoiCategoryKey) => {
     setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
