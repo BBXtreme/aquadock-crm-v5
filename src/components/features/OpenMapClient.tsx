@@ -299,7 +299,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           variant="secondary"
           size="icon"
           onClick={resetView}
-          className="bg-background/90 backdrop-blur-sm shadow-md"
+          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-background"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -309,7 +309,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           size="icon"
           onClick={() => setShowOsm(!showOsm)}
           disabled={loadingOsm}
-          className="bg-background/90 backdrop-blur-sm shadow-md"
+          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-background"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
@@ -318,7 +318,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
-          className="bg-background/90 backdrop-blur-sm shadow-md"
+          className="bg-background/95 backdrop-blur-sm border shadow-md hover:bg-background"
         >
           <Info className="h-4 w-4" />
         </Button>
