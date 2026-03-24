@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteReminder, getReminders } from "@/lib/supabase/services/reminders";
 import { cn } from "@/lib/utils";
