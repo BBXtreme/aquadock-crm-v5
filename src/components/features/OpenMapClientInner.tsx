@@ -417,7 +417,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
-          onClick={() => setShowLegend(!showLegend)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowLegend(!showLegend);
+          }}
           className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           <Info className="h-4 w-4" />
