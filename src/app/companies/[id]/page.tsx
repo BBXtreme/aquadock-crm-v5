@@ -1112,7 +1112,9 @@ export default function CompanyDetailPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editEntry ? "Edit Timeline Entry" : `Neuer Timeline-Eintrag für ${company?.firmenname}`}</DialogTitle>
+            <DialogTitle>
+              {editEntry ? "Edit Timeline Entry" : `Neuer Timeline-Eintrag für ${company?.firmenname}`}
+            </DialogTitle>
             <DialogDescription>
               {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
             </DialogDescription>
