@@ -21,20 +21,30 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
-export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<unknown[]> {
+export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const bbox = bounds.toBBoxString();
-  const query =
-    `[out:json][timeout:25];(node["amenity"~"restaurant|cafe|bar|hotel|hostel|marina|camp_site"]({{bbox}});way["amenity"~"restaurant|cafe|bar|hotel|hostel|marina|camp_site"]({{bbox}}););out center;`.replace(
-      "{{bbox}}",
-      bbox,
+
+  const query = `
+    [out:json][timeout:25];
+    (
+      node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"]({{bbox}});
+      way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"]({{bbox}});
     );
+    out center;
+  `.replace("{{bbox}}", bbox);
+
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+
   try {
     const res = await fetch(url);
+    if (!res.ok) throw new Error(`Overpass API error: ${res.status}`);
+
     const data = await res.json();
+    console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs`);
+
     return data.elements || [];
   } catch (err) {
-    console.warn("[OSM POI] Fetch failed", err);
+    console.error("[OpenMap OSM] Fetch failed:", err);
     return [];
   }
 }
