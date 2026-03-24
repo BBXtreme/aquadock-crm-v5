@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "isomorphic-dompurify";
 import { toast } from "sonner";
 
-import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -170,156 +169,154 @@ export default function MassEmailPage() {
   };
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Mass Email</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Mass Email</h1>
-          </div>
-          <Button className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">New Campaign</Button>
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-muted-foreground text-sm">Home → Mass Email</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Mass Email</h1>
         </div>
-
-        <div className="space-y-4">
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-            <CardHeader>
-              <CardTitle>Email Templates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Preview</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {templates.map((template) => (
-                    <TableRow key={template.id}>
-                      <TableCell>{template.name}</TableCell>
-                      <TableCell>{template.subject}</TableCell>
-                      <TableCell>{template.body?.substring(0, 50)}...</TableCell>
-                    </TableRow>
-                  ))}
-                  {!templates.length && (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
-                        No templates found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-              <CardHeader>
-                <CardTitle>Send Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select recipients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Companies</SelectItem>
-                    <SelectItem value="lead">Leads Only</SelectItem>
-                    <SelectItem value="won">Won Deals Only</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Search companies..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={handleSendTest}
-                    disabled={!selectedTemplate || sendLoading}
-                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
-                  >
-                    Send Test
-                  </Button>
-                  <Button
-                    onClick={handleSendToAll}
-                    disabled={!selectedTemplate || sendLoading}
-                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
-                  >
-                    Send to All
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {previewBody ? (
-                  <div
-                    className="prose prose-sm max-w-none"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
-                  />
-                ) : (
-                  <p className="text-muted-foreground">Select a template to preview</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-            <CardHeader>
-              <CardTitle>Send History ({history.length} sent)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent At</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {history.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>{log.recipient_email}</TableCell>
-                      <TableCell>{log.subject}</TableCell>
-                      <TableCell>{log.status}</TableCell>
-                      <TableCell>{log.sent_at}</TableCell>
-                    </TableRow>
-                  ))}
-                  {!history.length && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
-                        No send history found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
+        <Button className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">New Campaign</Button>
       </div>
-    </AppLayout>
+
+      <div className="space-y-4">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <CardHeader>
+            <CardTitle>Email Templates</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>Preview</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {templates.map((template) => (
+                  <TableRow key={template.id}>
+                    <TableCell>{template.name}</TableCell>
+                    <TableCell>{template.subject}</TableCell>
+                    <TableCell>{template.body?.substring(0, 50)}...</TableCell>
+                  </TableRow>
+                ))}
+                {!templates.length && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">
+                      No templates found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <CardHeader>
+              <CardTitle>Send Configuration</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={recipientFilter} onValueChange={setRecipientFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select recipients" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Companies</SelectItem>
+                  <SelectItem value="lead">Leads Only</SelectItem>
+                  <SelectItem value="won">Won Deals Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Search companies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <div className="flex space-x-2">
+                <Button
+                  onClick={handleSendTest}
+                  disabled={!selectedTemplate || sendLoading}
+                  className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
+                >
+                  Send Test
+                </Button>
+                <Button
+                  onClick={handleSendToAll}
+                  disabled={!selectedTemplate || sendLoading}
+                  className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
+                >
+                  Send to All
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center">Preview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {previewBody ? (
+                <div
+                  className="prose prose-sm max-w-none"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
+                />
+              ) : (
+                <p className="text-muted-foreground">Select a template to preview</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <CardHeader>
+            <CardTitle>Send History ({history.length} sent)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Recipient</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Sent At</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>{log.recipient_email}</TableCell>
+                    <TableCell>{log.subject}</TableCell>
+                    <TableCell>{log.status}</TableCell>
+                    <TableCell>{log.sent_at}</TableCell>
+                  </TableRow>
+                ))}
+                {!history.length && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No send history found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
