@@ -122,12 +122,23 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     toast.info(`Import von ${poi.tags?.name || "POI"} geplant`);
   };
 
-  // Invalidate size on dark mode change for better stability
+  // Invalidate size and re-center on dark mode change for better stability
   useEffect(() => {
     if (mapRef.current) {
-      mapRef.current.invalidateSize();
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+        // Re-center after theme change
+        const bounds = L.latLngBounds(
+          initialCompanies
+            .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
+            .map((c) => [c.lat!, c.lon!]),
+        );
+        if (bounds.isValid()) {
+          mapRef.current?.fitBounds(bounds, { padding: [80, 80] });
+        }
+      }, 100);
     }
-  }, [isDarkMode]);
+  }, [isDarkMode, initialCompanies]);
 
   return (
     <div className="relative h-full w-full">
