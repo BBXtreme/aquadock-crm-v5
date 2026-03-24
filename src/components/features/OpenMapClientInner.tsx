@@ -1,23 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
-
-import Link from "next/link";
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 
 export default function OpenMapClientInnerComponent({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<L.Map>(null);
@@ -316,10 +314,13 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
       {validCompanies.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/40">
-          <div className="text-center">
-            <p className="text-lg font-medium">Keine Firmen mit Geodaten gefunden</p>
-            <p className="text-sm text-muted-foreground">Firmen mit Breiten- und Längengrad werden hier angezeigt.</p>
-          </div>
+          <Card className="max-w-md">
+            <CardContent className="text-center">
+              <CardTitle className="mb-2">Keine Firmen mit Geodaten gefunden</CardTitle>
+              <p className="text-sm text-muted-foreground mb-4">Firmen mit Breiten- und Längengrad werden hier angezeigt.</p>
+              <Button onClick={() => window.location.reload()}>Retry</Button>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
