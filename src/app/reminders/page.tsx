@@ -169,12 +169,12 @@ export default function RemindersPage() {
           <DialogTrigger asChild>
             <Button>New Reminder</Button>
           </DialogTrigger>
-          <DialogContent>
+          <WideDialogContent size="xl">
             <DialogHeader>
               <DialogTitle>Create New Reminder</DialogTitle>
             </DialogHeader>
             <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
-          </DialogContent>
+          </WideDialogContent>
         </Dialog>
       </div>
 
@@ -279,12 +279,12 @@ export default function RemindersPage() {
 
       {editReminder && (
         <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
-          <DialogContent>
+          <WideDialogContent size="xl">
             <DialogHeader>
               <DialogTitle>Edit Reminder</DialogTitle>
             </DialogHeader>
             <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-          </DialogContent>
+          </WideDialogContent>
         </Dialog>
       )}
     </div>
