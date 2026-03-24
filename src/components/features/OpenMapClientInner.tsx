@@ -13,6 +13,7 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
@@ -31,8 +32,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [osmError, setOsmError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [activeCategories, setActiveCategories] = useState(Object.keys(poiCategories));
-  const [filterMessage, setFilterMessage] = useState("");
+  const [activeCategories, setActiveCategories] = useState<PoiCategoryKey[]>(Object.keys(poiCategories) as PoiCategoryKey[]);
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
 
@@ -63,62 +63,60 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     onError: (err: any) => showError("Import fehlgeschlagen", err.message),
   });
 
-  const loadOsmPois = async () => {
+  const loadOsmPois = async (force = false) => {
     if (!mapRef.current) return;
     const zoom = mapRef.current.getZoom();
-    if (zoom < 12) return;
+    if (zoom < 12 && !force) return;
 
     if (activeCategories.length === 0) {
-      setFilterMessage("Please select at least one POI category");
+      toast.info("Bitte wähle mindestens eine POI-Kategorie");
       return;
     }
-    setFilterMessage("");
+
     setLoadingOsm(true);
     setOsmError(false);
+
     try {
       const bounds = mapRef.current.getBounds();
-      const { pois, totalFound } = await fetchOsmPois(bounds, activeCategories);
-      setOsmPois(pois);
-      toast.success(`${totalFound} OSM-POIs geladen`);
+      const result = await fetchOsmPois(bounds, activeCategories);
+      setOsmPois(result.pois || []);
+      toast.success(`${result.totalFound} OSM-POIs geladen`);
     } catch (err: any) {
-      showError(err.message || "OSM-POIs konnten nicht geladen werden");
+      toast.error(err.message || "OSM-POIs konnten nicht geladen werden");
       setOsmError(true);
-      console.error("[OpenMap OSM]", err);
     } finally {
       setLoadingOsm(false);
     }
   };
 
-  useEffect(() => {
-    if (showOsm) loadOsmPois();
-  }, [showOsm, activeCategories]);
-
-  // Dynamic POI loading on map move/zoom
+  // Dynamic loading on zoom / pan
   useEffect(() => {
     if (!mapRef.current) return;
 
     const handleMapChange = () => {
       const now = Date.now();
       if (now - lastLoadTime < 800) return;
-
       const zoom = mapRef.current.getZoom();
       setCurrentZoom(zoom);
-      if (zoom < 12) return;
-
       setLastLoadTime(now);
       loadOsmPois();
     };
 
-    mapRef.current.on('moveend', handleMapChange);
-    mapRef.current.on('zoomend', handleMapChange);
+    mapRef.current.on("moveend", handleMapChange);
+    mapRef.current.on("zoomend", handleMapChange);
 
     return () => {
       if (mapRef.current) {
-        mapRef.current.off('moveend', handleMapChange);
-        mapRef.current.off('zoomend', handleMapChange);
+        mapRef.current.off("moveend", handleMapChange);
+        mapRef.current.off("zoomend", handleMapChange);
       }
     };
   }, [lastLoadTime, activeCategories]);
+
+  // Initial load when OSM is toggled
+  useEffect(() => {
+    if (showOsm) loadOsmPois(true);
+  }, [showOsm, activeCategories]);
 
   const resetView = () => {
     if (mapRef.current && initialCompanies.length > 0) {
@@ -197,7 +195,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   };
 
   const toggleCategory = (key: PoiCategoryKey) => {
-    setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+    setActiveCategories((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
   };
 
   // Legend items
@@ -234,31 +234,18 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   }
 
   const newPoiCount = useMemo(() => {
-    return osmPois.filter(poi => !initialCompanies.some(company => company.osm === `${poi.type}/${poi.id}`)).length;
+    return osmPois.filter((poi) => 
+      !initialCompanies.some((c) => c.osm === `${poi.type}/${poi.id}`)
+    ).length;
   }, [osmPois, initialCompanies]);
 
   return (
     <div className="relative h-full w-full">
-      {/* Top Controls Bar */}
-      <div className="absolute top-4 left-12 right-20 z-[1001] space-y-3">
-        {/* POI Category Filters */}
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(poiCategories).map(([key, category]) => (
-            <Button
-              key={key}
-              variant={activeCategories.includes(key as PoiCategoryKey) ? "default" : "outline"}
-              size="sm"
-              onClick={() => toggleCategory(key as PoiCategoryKey)}
-              className={`bg-background/95 backdrop-blur-sm border shadow-md whitespace-nowrap ${isDarkMode ? "text-white" : "text-black"} hover:bg-card`}
-            >
-              {category.icon} {category.name}
-            </Button>
-          ))}
-        </div>
-
+      {/* Top Controls */}
+      <div className="absolute top-4 left-12 right-20 z-[1001] flex items-start gap-6">
         {/* Search */}
-        <div className="flex">
-          <div className="relative flex gap-2 max-w-md">
+        <div className="flex-1 max-w-md">
+          <div className="relative flex gap-2">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -266,15 +253,25 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               placeholder="Adresse suchen (z.B. Hamburg Hafen)"
               className="bg-background/95 backdrop-blur-sm border shadow-md text-foreground"
             />
-            <Button
-              onClick={handleGeocode}
-              disabled={isSearching}
-              size="icon"
-              className={`bg-card border shadow-md ${isDarkMode ? "text-white" : "text-black"} hover:bg-card`}
-            >
+            <Button onClick={handleGeocode} disabled={isSearching} size="icon" className="bg-card border shadow-md text-foreground hover:bg-card">
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
           </div>
+        </div>
+
+        {/* Filters pushed right */}
+        <div className="flex flex-wrap gap-2 ml-auto">
+          {Object.entries(poiCategories).map(([key, category]) => (
+            <Button
+              key={key}
+              variant={activeCategories.includes(key as PoiCategoryKey) ? "default" : "outline"}
+              size="sm"
+              onClick={() => toggleCategory(key as PoiCategoryKey)}
+              className="text-xs bg-background/95 backdrop-blur-sm border shadow-md text-foreground hover:bg-card whitespace-nowrap"
+            >
+              {category.icon} {category.name}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -380,7 +377,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
           <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-            <p className="text-sm text-center">{filterMessage || "Loading OSM POIs..."}</p>
+            <p className="text-sm text-center">POIs werden geladen...</p>
           </div>
         </div>
       )}
@@ -407,25 +404,12 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       <div className="absolute bottom-4 left-4 z-10">
         <Card className="bg-background/95 backdrop-blur-sm border shadow-md p-3 text-sm">
           <div className="flex items-center gap-2">
-            {loadingOsm ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : currentZoom < 12 ? (
-              <MapPin className="h-4 w-4" />
-            ) : (
-              <MapPin className="h-4 w-4" />
-            )}
+            {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
             <span>
-              {loadingOsm
-                ? "Karte wird analysiert..."
-                : currentZoom < 12
-                  ? "Zoom näher heran für POIs"
-                  : osmPois.length > 0
-                    ? `${osmPois.length} POIs geladen`
-                    : "Keine POIs gefunden"}
+              {loadingOsm ? "POIs werden geladen..." : 
+               currentZoom < 12 ? "Zoom näher heran für POIs" : 
+               `${osmPois.length} POIs geladen (${newPoiCount} neue)`}
             </span>
-            {!loadingOsm && currentZoom >= 12 && newPoiCount > 0 && (
-              <span className="text-green-600">({newPoiCount} neue)</span>
-            )}
           </div>
         </Card>
       </div>
