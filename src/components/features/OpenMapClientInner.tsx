@@ -241,7 +241,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         ref={mapRef}
         center={[51.1657, 10.4515]}
         zoom={6}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", backgroundColor: isDarkMode ? 'black' : 'white' }}
         className="z-0"
       >
         <TileLayer attribution={attribution} url={tileUrl} />
