@@ -15,10 +15,14 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
-export const getOsmPoiIcon = () => {
+export const getOsmPoiIcon = (isDarkMode: boolean = false) => {
+  const bgColor = isDarkMode ? '#374151' : 'white';
+  const borderColor = isDarkMode ? '#9ca3af' : '#d1d5db';
+  const textColor = isDarkMode ? 'white' : '#374151';
+
   return L.divIcon({
     className: "osm-poi",
-    html: `<div style="background-color:white;width:32px;height:32px;border-radius:50%;border:3px solid #d1d5db;box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#374151;font-weight:bold;font-size:14px;">?</div>`,
+    html: `<div style="background-color:${bgColor};width:32px;height:32px;border-radius:50%;border:3px solid ${borderColor};box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:14px;">?</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -20],

@@ -304,7 +304,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               <Marker
                 key={poi.id}
                 position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-                icon={getOsmPoiIcon()}
+                icon={getOsmPoiIcon(isDarkMode)}
               >
                 <Popup>
                   <div className="min-w-[220px] space-y-2">
