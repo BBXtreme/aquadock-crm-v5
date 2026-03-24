@@ -29,15 +29,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Reminder } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
-const columnHelper = createColumnHelper<any>();
+const columnHelper = createColumnHelper<Reminder>();
 
 export const reminderColumns = (
-  handleEdit: (reminder: any) => void,
-  handleView: (reminder: any) => void,
+  handleEdit: (reminder: Reminder) => void,
+  handleView: (reminder: Reminder) => void,
   handleDelete: (id: string) => void,
-): ColumnDef<any>[] => [
+): ColumnDef<Reminder>[] => [
   columnHelper.display({
     id: "select",
     header: ({ table }) => (
@@ -135,11 +136,11 @@ export const reminderColumns = (
 ];
 
 interface RemindersTableProps {
-  reminders: any[];
+  reminders: Reminder[];
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
-  handleEdit: (reminder: any) => void;
-  handleView: (reminder: any) => void;
+  handleEdit: (reminder: Reminder) => void;
+  handleView: (reminder: Reminder) => void;
   handleDelete: (id: string) => void;
 }
 
