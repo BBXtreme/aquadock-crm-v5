@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteCompany } from "@/lib/supabase/services/companies";
+import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import type { Company } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -176,9 +176,7 @@ export default function CompanyDetailPage() {
     queryKey: ["company", id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
-      if (error) throw error;
-      return data;
+      return getCompanyById(id, supabase);
     },
   });
 
@@ -270,8 +268,7 @@ export default function CompanyDetailPage() {
   const handleDeleteCompany = async () => {
     if (confirm("Are you sure you want to delete this company?")) {
       try {
-        const supabase = createClient();
-        await deleteCompany(id, supabase);
+        await deleteCompany(id);
         router.push("/companies");
       } catch (_error) {
         toast.error("Failed to delete company");
