@@ -192,8 +192,20 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   return (
     <div className="relative h-full w-full">
       {/* POI Category Toggle and Search */}
-      <div className="absolute top-4 left-4 z-[1001] w-80 space-y-2">
-        <div className="flex flex-wrap gap-1">
+      <div className="absolute top-4 left-4 z-[1001] flex items-start gap-4">
+        <div className="relative flex gap-2">
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
+            placeholder="Adresse suchen (z.B. Hamburg Hafen)"
+            className="bg-background/95 backdrop-blur-sm border shadow-md w-80"
+          />
+          <Button onClick={handleGeocode} disabled={isSearching} size="icon" className="bg-card border shadow-md">
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-1 max-w-md">
           {Object.entries(poiCategories).map(([key, category]) => (
             <Button
               key={key}
@@ -204,23 +216,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
                   prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
                 );
               }}
-              className="text-xs"
+              className="text-xs bg-background/95 backdrop-blur-sm border shadow-md"
             >
               {category.icon} {category.name}
             </Button>
           ))}
-        </div>
-        <div className="relative flex gap-2">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
-            placeholder="Adresse suchen (z.B. Hamburg Hafen)"
-            className="bg-background/95 backdrop-blur-sm border shadow-md"
-          />
-          <Button onClick={handleGeocode} disabled={isSearching} size="icon" className="bg-card border shadow-md">
-            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          </Button>
         </div>
       </div>
 
