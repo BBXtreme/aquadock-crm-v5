@@ -27,6 +27,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   const queryClient = useQueryClient();
 
+  const showError = (message: string, description?: string) => {
+    toast.error(message, description ? { description } : undefined);
+  };
+
   // Safe Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -45,7 +49,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       queryClient.invalidateQueries({ queryKey: ["companiesForMap"] });
       setOsmPois((prev) => prev.filter((p) => p.id !== poi.id));
     },
-    onError: (err: any) => toast.error("Import fehlgeschlagen", { description: err.message }),
+    onError: (err: any) => showError("Import fehlgeschlagen", err.message),
   });
 
   const loadOsmPois = async () => {
@@ -57,7 +61,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       setOsmPois(pois);
       toast.success(`${pois.length} OSM-POIs geladen`);
     } catch (err) {
-      toast.error("OSM-POIs konnten nicht geladen werden");
+      showError("OSM-POIs konnten nicht geladen werden");
       console.error("[OpenMap OSM]", err);
     } finally {
       setLoadingOsm(false);
