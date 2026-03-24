@@ -133,9 +133,13 @@ export default function RemindersPage() {
   if (filteredReminders.length === 0)
     return (
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Follow-up Reminders</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Follow-up Reminders
+            </h1>
+          </div>
         </div>
         <Card>
           <CardHeader>
@@ -153,63 +157,55 @@ export default function RemindersPage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-        <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Follow-up Reminders</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Follow-up Reminders
+          </h1>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>New Reminder</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Reminder</DialogTitle>
+            </DialogHeader>
+            <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
+          </DialogContent>
+        </Dialog>
       </div>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button>New Reminder</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Reminder</DialogTitle>
-          </DialogHeader>
-          <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-            <Bell className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
-          </CardContent>
-        </Card>
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="font-bold text-2xl text-red-500">{overdue}</div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">This Week</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
-          </CardContent>
-        </Card>
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">High Priority</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Open Reminders"
+          value={isLoading ? <Skeleton className="h-8 w-20" /> : openReminders.toLocaleString("de-DE")}
+          icon={<Bell className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+8% from last month"
+        />
+        <StatCard
+          title="Overdue Today"
+          value={isLoading ? <Skeleton className="h-8 w-20" /> : overdue.toLocaleString("de-DE")}
+          icon={<AlertTriangle className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change={overdue > 0 ? "Needs attention" : "All good"}
+        />
+        <StatCard
+          title="This Week"
+          value={isLoading ? <Skeleton className="h-8 w-20" /> : thisWeek.toLocaleString("de-DE")}
+          icon={<Calendar className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+5% from last month"
+        />
+        <StatCard
+          title="High Priority"
+          value={isLoading ? <Skeleton className="h-8 w-20" /> : highPriority.toLocaleString("de-DE")}
+          icon={<Star className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+12% from last month"
+        />
       </div>
 
       <div className="flex space-x-2">
@@ -291,5 +287,29 @@ export default function RemindersPage() {
         </Dialog>
       )}
     </div>
+  );
+}
+
+// StatCard component
+function StatCard({ title, value, icon, className, change }: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  className?: string;
+  change?: string;
+}) {
+  return (
+    <Card className={cn("bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50", className)}>
+      <div className="hover:brightness-105 transition-all">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <div className="rounded-full bg-muted/50 p-3 flex items-center justify-center">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+          {change && <p className="text-xs text-green-600">{change}</p>}
+        </CardContent>
+      </div>
+    </Card>
   );
 }
