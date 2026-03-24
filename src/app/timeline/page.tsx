@@ -235,11 +235,15 @@ export default function TimelinePage() {
   if (isLoading)
     return (
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div>
-          <p className="text-muted-foreground text-sm">Home → Timeline</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Timeline</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Timeline
+            </h1>
+          </div>
         </div>
-        <Card>
+        <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
           <CardHeader>
             <CardTitle>Loading timeline...</CardTitle>
           </CardHeader>
@@ -253,11 +257,15 @@ export default function TimelinePage() {
   if (error)
     return (
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div>
-          <p className="text-muted-foreground text-sm">Home → Timeline</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Timeline</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Timeline
+            </h1>
+          </div>
         </div>
-        <Card>
+        <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
           <CardHeader>
             <CardTitle>Error loading timeline</CardTitle>
           </CardHeader>
@@ -271,11 +279,15 @@ export default function TimelinePage() {
   if (timeline.length === 0)
     return (
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div>
-          <p className="text-muted-foreground text-sm">Home → Timeline</p>
-          <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Timeline</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Timeline
+            </h1>
+          </div>
         </div>
-        <Card>
+        <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
           <CardHeader>
             <CardTitle>No timeline entries yet</CardTitle>
           </CardHeader>
@@ -288,41 +300,45 @@ export default function TimelinePage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">Home → Timeline</p>
-        <h1 className="font-semibold text-3xl tracking-tight">Timeline</h1>
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Timeline</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Timeline
+          </h1>
+        </div>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditEntry(null)}>New Entry</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
+              <DialogDescription>
+                {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
+              </DialogDescription>
+            </DialogHeader>
+            <TimelineEntryForm
+              onSubmit={(values) => {
+                if (editEntry) {
+                  updateMutation.mutate({ id: editEntry.id, values });
+                } else {
+                  createMutation.mutate(values);
+                }
+              }}
+              isSubmitting={createMutation.isPending}
+              companies={companies}
+              contacts={contacts}
+              editEntry={editEntry}
+              onCancel={() => setDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={() => setEditEntry(null)}>New Entry</Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
-            <DialogDescription>
-              {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
-            </DialogDescription>
-          </DialogHeader>
-          <TimelineEntryForm
-            onSubmit={(values) => {
-              if (editEntry) {
-                updateMutation.mutate({ id: editEntry.id, values });
-              } else {
-                createMutation.mutate(values);
-              }
-            }}
-            isSubmitting={createMutation.isPending}
-            companies={companies}
-            contacts={contacts}
-            editEntry={editEntry}
-            onCancel={() => setDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
 
       <div className="space-y-4">
         {timeline.length === 0 ? (
-          <Card>
+          <Card className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
             <CardHeader>
               <CardTitle>No timeline entries yet</CardTitle>
             </CardHeader>
@@ -332,7 +348,7 @@ export default function TimelinePage() {
           </Card>
         ) : (
           timeline.map((entry) => (
-            <Card key={entry.id} className="hover:shadow-md transition-shadow">
+            <Card key={entry.id} className="bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50 rounded-xl">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
