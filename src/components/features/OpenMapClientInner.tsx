@@ -299,27 +299,28 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
             </Marker>
           ))}
 
-          {osmPois.map((poi: any) => (
-            <Marker
-              key={poi.id}
-              position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-              icon={getOsmPoiIcon()}
-            >
-              <Popup>
-                <div className="min-w-[220px] space-y-2">
-                  <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
-                  <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
-                  <button
-                    onClick={() => handleImportPoi(poi)}
-                    className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md w-full"
-                  >
-                    <Plus className="h-3 w-3 mr-1 inline" />
-                    Zu CRM hinzufügen
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {showOsm &&
+            osmPois.map((poi: any) => (
+              <Marker
+                key={poi.id}
+                position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
+                icon={getOsmPoiIcon()}
+              >
+                <Popup>
+                  <div className="min-w-[220px] space-y-2">
+                    <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
+                    <p className="text-xs text-muted-foreground">{poi.tags?.amenity || poi.tags?.tourism || "–"}</p>
+                    <button
+                      onClick={() => handleImportPoi(poi)}
+                      className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md w-full"
+                    >
+                      <Plus className="h-3 w-3 mr-1 inline" />
+                      Zu CRM hinzufügen
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
         </MarkerClusterGroup>
       </MapContainer>
 
