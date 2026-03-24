@@ -18,7 +18,7 @@ export const getStatusIcon = (status?: string) => {
 export const getOsmPoiIcon = () => {
   return L.divIcon({
     className: "osm-poi",
-    html: `<div style="background-color:white;width:32px;height:32px;border-radius:50%;border:3px solid #d1d5db;box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#6b7280;font-weight:bold;font-size:14px;">?</div>`,
+    html: `<div style="background-color:white;width:32px;height:32px;border-radius:50%;border:3px solid #d1d5db;box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:#374151;font-weight:bold;font-size:14px;">?</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -20],
