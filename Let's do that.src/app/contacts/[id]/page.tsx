@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -87,71 +87,6 @@ export default function ContactDetailPage() {
     },
   });
 
-  const _fetchData = useCallback(async () => {
-    if (!id || id === "undefined") {
-      setError("Invalid contact ID");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/contacts/${id}`);
-      const data = await response.json();
-      if (data.success) {
-        setContact(data.contact);
-        setNotesValue(data.contact.notes || "");
-      } else {
-        setError(data.error || "Failed to load contact");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load contact");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    setLoading(true);
-    const timeout = setTimeout(() => setLoading(false), 15000);
-
-    const loadData = async () => {
-      try {
-        if (!id || id === "undefined") {
-          setError("Invalid contact ID");
-          setLoading(false);
-          return;
-        }
-
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .from("contacts")
-          .select("*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)")
-          .eq("id", id)
-          .single();
-
-        if (error) {
-          setError(error.message);
-          return;
-        }
-
-        setContact(data);
-        setNotesValue(data.notes || "");
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load contact");
-      } finally {
-        setLoading(false);
-        clearTimeout(timeout);
-      }
-    };
-
-    loadData();
-
-    return () => clearTimeout(timeout);
-  }, [id]);
-
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get("edit") === "true") {
@@ -177,7 +112,7 @@ export default function ContactDetailPage() {
       await updateContact(contact?.id, { notes: notesValue }, supabase);
       toast.success("Notes updated");
       setEditingNotes(false);
-      _fetchData();
+      queryClient.invalidateQueries({ queryKey: ["contact", id] });
     } catch (error) {
       toast.error("Failed to update notes", { description: error.message });
     }
@@ -498,7 +433,6 @@ export default function ContactDetailPage() {
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
                 toast.success("Company updated");
                 await queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                await _fetchData();           // force fresh load
                 setChangeCompanyDialog(false);
               } catch (err) {
                 toast.error("Update failed", { description: err.message });
