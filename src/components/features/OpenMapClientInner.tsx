@@ -205,7 +205,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       {/* Top Controls Bar */}
       <div className="absolute top-4 left-8 right-8 z-[1001] space-y-3">
         {/* POI Category Filters */}
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2">
           {Object.entries(poiCategories).map(([key, category]) => (
             <Button
               key={key}
@@ -220,7 +220,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </div>
 
         {/* Search */}
-        <div className="flex justify-center">
+        <div className="flex">
           <div className="relative flex gap-2 max-w-md">
             <Input
               value={searchQuery}
