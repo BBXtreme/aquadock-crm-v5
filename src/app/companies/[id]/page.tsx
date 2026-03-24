@@ -20,6 +20,7 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -1111,7 +1112,10 @@ export default function CompanyDetailPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
+            <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Neuer Timeline-Eintrag für {company?.firmenname}"}</DialogTitle>
+            <DialogDescription>
+              {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
+            </DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
             onSubmit={createTimelineMutation.mutate}
