@@ -1,25 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
 
 import Link from "next/link";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-
+import { poiCategories } from "@/lib/constants/map-poi-config";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
-import { poiCategories } from "@/lib/constants/map-poi-config";
 
 type PoiCategoryKey = keyof typeof poiCategories;
 
@@ -33,7 +34,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [activeCategories, setActiveCategories] = useState<PoiCategoryKey[]>(
-    Object.keys(poiCategories) as PoiCategoryKey[]
+    Object.keys(poiCategories) as PoiCategoryKey[],
   );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
@@ -106,9 +107,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   }, [lastLoadTime, activeCategories]);
 
   const toggleCategory = (key: PoiCategoryKey) => {
-    setActiveCategories((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+    setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
   const newPoiCount = useMemo(() => {
@@ -152,7 +151,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     if (!searchQuery.trim() || !mapRef.current) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`,
+      );
       const data = await res.json();
       if (data?.length > 0) {
         const { lat, lon, display_name } = data[0];
@@ -241,18 +242,45 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
                 <div className="min-w-[320px] space-y-4 text-sm">
                   <h3 className="font-semibold text-lg">{company.firmenname}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {company.kundentyp && <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.kundentyp}</span>}
-                    {company.status && <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.status}</span>}
+                    {company.kundentyp && (
+                      <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.kundentyp}</span>
+                    )}
+                    {company.status && (
+                      <span className="px-2 py-0.5 bg-muted rounded-full text-xs capitalize">{company.status}</span>
+                    )}
                   </div>
                   <div className="text-muted-foreground">
                     {company.stadt && <>{company.stadt}, </>}
                     {company.land || "–"}
                   </div>
-                  {company.value && <div className="font-medium">Potenzial: €{company.value.toLocaleString("de-DE")}</div>}
+                  {company.value && (
+                    <div className="font-medium">Potenzial: €{company.value.toLocaleString("de-DE")}</div>
+                  )}
                   <div className="pt-3 flex flex-wrap gap-2">
-                    {company.telefon && <a href={`tel:${company.telefon}`} className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md">Anrufen</a>}
-                    {company.website && <a href={company.website.startsWith("http") ? company.website : `https://${company.website}`} target="_blank" rel="noopener noreferrer" className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md">Website</a>}
-                    <Link href={`/companies/${company.id}`} className="px-3 py-1.5 text-xs bg-accent hover:bg-accent/80 text-accent-foreground rounded-md">Details öffnen</Link>
+                    {company.telefon && (
+                      <a
+                        href={`tel:${company.telefon}`}
+                        className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                      >
+                        Anrufen
+                      </a>
+                    )}
+                    {company.website && (
+                      <a
+                        href={company.website.startsWith("http") ? company.website : `https://${company.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md"
+                      >
+                        Website
+                      </a>
+                    )}
+                    <Link
+                      href={`/companies/${company.id}`}
+                      className="px-3 py-1.5 text-xs bg-accent hover:bg-accent/80 text-accent-foreground rounded-md"
+                    >
+                      Details öffnen
+                    </Link>
                   </div>
                 </div>
               </Popup>
@@ -301,7 +329,12 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        <Button variant="secondary" size="icon" onClick={resetView} className="bg-card border shadow-md hover:bg-card text-foreground">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={resetView}
+          className="bg-card border shadow-md hover:bg-card text-foreground"
+        >
           <RefreshCw className="h-4 w-4" />
         </Button>
 
