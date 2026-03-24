@@ -1,16 +1,9 @@
 import L from "leaflet";
 
+import { statusColors } from "@/lib/constants/status-colors";
+
 export const getStatusIcon = (status?: string) => {
-  const colorMap: Record<string, string> = {
-    lead: "#f59e0b",
-    qualifiziert: "#3b82f6",
-    akquise: "#8b5cf6",
-    angebot: "#ec4899",
-    gewonnen: "#10b981",
-    verloren: "#ef4444",
-    default: "#6b7280",
-  };
-  const color = colorMap[status || "default"] || "#6b7280";
+  const color = statusColors[status?.toLowerCase() || "lead"] || statusColors.lead;
 
   return L.divIcon({
     className: "custom-marker",
