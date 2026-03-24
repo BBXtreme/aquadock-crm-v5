@@ -26,6 +26,7 @@ type PoiCategoryKey = keyof typeof poiCategories;
 
 export default function OpenMapClientInnerComponent({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<L.Map>(null);
+  const hasFitted = useRef(false);
 
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<any[]>([]);
@@ -172,7 +173,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
     const map = useMap();
-    const hasFitted = useRef(false);
 
     useEffect(() => {
       if (hasFitted.current || companies.length === 0) return;
