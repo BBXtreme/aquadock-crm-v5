@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/lib/supabase/types";
 
@@ -311,7 +312,7 @@ export default function TimelinePage() {
           <DialogTrigger asChild>
             <Button onClick={() => setEditEntry(null)}>New Entry</Button>
           </DialogTrigger>
-          <DialogContent>
+          <WideDialogContent size="xl">
             <DialogHeader>
               <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
               <DialogDescription>
@@ -332,7 +333,7 @@ export default function TimelinePage() {
               editEntry={editEntry}
               onCancel={() => setDialogOpen(false)}
             />
-          </DialogContent>
+          </WideDialogContent>
         </Dialog>
       </div>
 
