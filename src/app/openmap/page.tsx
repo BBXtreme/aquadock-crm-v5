@@ -15,7 +15,7 @@ const DynamicOpenMap = dynamic(() => import("@/components/features/OpenMap"), {
 });
 
 export default async function OpenMapPage() {
-  const cookieStore = cookies();
+  const _cookieStore = cookies();
   const supabase = createServerClient();
 
   const {
