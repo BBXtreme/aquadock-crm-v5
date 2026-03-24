@@ -64,22 +64,37 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   });
 
   const loadOsmPois = async (force = false) => {
-    if (!mapRef.current || loadingOsm) return;
+    console.log("[OpenMap] loadOsmPois called", { force, loadingOsm });
+    if (!mapRef.current || loadingOsm) {
+      console.log("[OpenMap] loadOsmPois early return", { mapRef: !!mapRef.current, loadingOsm });
+      return;
+    }
 
     const zoom = mapRef.current.getZoom();
     setCurrentZoom(zoom);
-    if (zoom < 12 && !force) return;
+    console.log("[OpenMap] Current zoom:", zoom);
+    if (zoom < 12 && !force) {
+      console.log("[OpenMap] Zoom too low, not loading");
+      return;
+    }
 
-    if (activeCategories.length === 0) return;
+    if (activeCategories.length === 0) {
+      console.log("[OpenMap] No active categories");
+      return;
+    }
 
     setLoadingOsm(true);
+    console.log("[OpenMap] Starting OSM POI load");
 
     try {
       const bounds = mapRef.current.getBounds();
+      console.log("[OpenMap] Fetching bounds:", bounds.toBBoxString());
       const result = await fetchOsmPois(bounds, activeCategories);
       setOsmPois(result.pois || []);
+      console.log("[OpenMap] Loaded POIs:", result.totalFound);
       toast.success(`${result.totalFound || 0} OSM-POIs im Ausschnitt`);
     } catch (err: any) {
+      console.error("[OpenMap] Failed to load OSM POIs", err);
       if (err.message.includes("429")) {
         toast.error("API überlastet, bitte kurz warten");
       } else {
@@ -87,23 +102,31 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       }
     } finally {
       setLoadingOsm(false);
+      console.log("[OpenMap] Finished OSM POI load");
     }
   };
 
   // Dynamic POI loading when map is moved or zoomed (only when showOsm is true)
   useEffect(() => {
+    console.log("[OpenMap] Dynamic loading useEffect", { showOsm });
     if (!showOsm || !mapRef.current) return;
 
     const handleMapChange = () => {
       const now = Date.now();
-      if (now - lastLoadTime < 2000) return;
+      if (now - lastLoadTime < 2000) {
+        console.log("[OpenMap] Debounced map change");
+        return;
+      }
       setLastLoadTime(now);
 
       const zoom = mapRef.current!.getZoom();
       setCurrentZoom(zoom);
+      console.log("[OpenMap] Map changed, zoom:", zoom);
       if (zoom < 12) {
+        console.log("[OpenMap] Clearing POIs due to low zoom");
         setOsmPois([]);
       } else {
+        console.log("[OpenMap] Loading POIs due to map change");
         loadOsmPois();
       }
     };
