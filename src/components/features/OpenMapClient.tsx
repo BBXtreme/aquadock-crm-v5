@@ -99,8 +99,14 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
-  const isDarkMode = useMemo(() => {
-    return document.documentElement.classList.contains("dark");
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
   }, []);
 
   const tileUrl = isDarkMode
