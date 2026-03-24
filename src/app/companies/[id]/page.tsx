@@ -16,6 +16,7 @@ import { z } from "zod";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
+import ReminderEditForm from "@/components/features/ReminderEditForm";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1088,8 +1089,7 @@ export default function CompanyDetailPage() {
           <DialogHeader>
             <DialogTitle>Edit Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderCreateForm
-            companyId={company.id}
+          <ReminderEditForm
             reminder={editReminder}
             onSuccess={() => {
               setReminderDialogOpen(false);
@@ -1112,13 +1112,19 @@ export default function CompanyDetailPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Neuer Timeline-Eintrag für {company?.firmenname}"}</DialogTitle>
+            <DialogTitle>{editEntry ? "Edit Timeline Entry" : `Neuer Timeline-Eintrag für ${company?.firmenname}`}</DialogTitle>
             <DialogDescription>
               {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
             </DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
-            onSubmit={createTimelineMutation.mutate}
+            onSubmit={(values) => {
+              if (editEntry) {
+                updateMutation.mutate({ id: editEntry.id, values });
+              } else {
+                createTimelineMutation.mutate(values);
+              }
+            }}
             isSubmitting={createTimelineMutation.isPending}
             companies={[]} // vorerst leer – preselect übernimmt
             contacts={linkedContacts}
