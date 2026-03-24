@@ -88,10 +88,10 @@ export type CompanyForOpenMap = Pick<
   | "website"
 >;
 
-export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
+export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyForOpenMap[]> {
   const supabase = createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("companies")
     .select(`
       id,
@@ -107,10 +107,15 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
       telefon,
       website
     `)
-    .eq("user_id", userId)
     .not("lat", "is", null)
     .not("lon", "is", null)
     .order("firmenname", { ascending: true });
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw handleSupabaseError(error, "Failed to load companies for OpenMap");
 
