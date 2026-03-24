@@ -122,3 +122,45 @@ export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyFo
   console.log(`[OpenMap] Loaded ${data?.length ?? 0} companies with geo data`);
   return data ?? [];
 }
+
+export async function importOsmPoi(poiData: any, userId: string) {
+  const supabase = createClient();
+
+  const kundentypMap: Record<string, string> = {
+    restaurant: "restaurant",
+    cafe: "restaurant",
+    bar: "restaurant",
+    hotel: "hotel",
+    hostel: "hotel",
+    camp_site: "camping",
+    marina: "marina",
+    boat_rental: "bootsverleih",
+  };
+
+  const values = {
+    firmenname: poiData.tags?.name || "Unbenannter POI",
+    kundentyp: kundentypMap[poiData.tags?.amenity] || "sonstige",
+    strasse: poiData.tags?.["addr:street"] || "",
+    plz: poiData.tags?.["addr:postcode"] || "",
+    stadt: poiData.tags?.["addr:city"] || "",
+    land: "Deutschland",
+    telefon: poiData.tags?.phone || poiData.tags?.["contact:phone"] || "",
+    website: poiData.tags?.website || poiData.tags?.["contact:website"] || "",
+    lat: poiData.lat || poiData.center?.lat,
+    lon: poiData.lon || poiData.center?.lon,
+    osm: `${poiData.type}/${poiData.id}`,
+    status: "lead",
+    user_id: userId,
+  };
+
+  const { data, error } = await supabase
+    .from("companies")
+    .insert(values)
+    .select()
+    .single();
+
+  if (error) throw handleSupabaseError(error, "Failed to import OSM POI");
+
+  console.log(`[OpenMap] Imported OSM POI: ${data.firmenname}`);
+  return data;
+}
