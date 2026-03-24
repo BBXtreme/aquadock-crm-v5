@@ -66,6 +66,33 @@ const getStatusIcon = (status?: string) => {
   });
 };
 
+const getOsmPoiIcon = () => {
+  return L.divIcon({
+    className: "osm-poi",
+    html: `
+      <div style="
+        background-color: #22c55e;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+      ">
+        P
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    popupAnchor: [0, -20],
+  });
+};
+
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];
 };
@@ -266,30 +293,7 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
               <Marker
                 key={poi.id}
                 position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-                icon={L.divIcon({
-                  className: "osm-poi",
-                  html: `
-                    <div style="
-                      background-color: #22c55e;
-                      width: 28px;
-                      height: 28px;
-                      border-radius: 50%;
-                      border: 3px solid white;
-                      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      color: white;
-                      font-size: 14px;
-                      font-weight: 700;
-                    ">
-                      P
-                    </div>
-                  `,
-                  iconSize: [28, 28],
-                  iconAnchor: [14, 14],
-                  popupAnchor: [0, -20],
-                })}
+                icon={getOsmPoiIcon()}
               >
                 <Popup>
                   <div className="min-w-[220px] space-y-2">
