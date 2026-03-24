@@ -28,40 +28,29 @@ L.Icon.Default.mergeOptions({
 
 const getStatusIcon = (status?: string) => {
   const colorMap: Record<string, string> = {
-    lead: "#f59e0b",      // amber
+    lead: "#f59e0b",        // amber
     qualifiziert: "#3b82f6", // blue
-    akquise: "#8b5cf6",   // violet
-    angebot: "#ec4899",   // pink
-    gewonnen: "#10b981",  // emerald
-    verloren: "#ef4444",  // red
-    kunde: "#14b8a6",     // teal
-    partner: "#6366f1",   // indigo
+    akquise: "#8b5cf6",     // violet
+    angebot: "#ec4899",     // pink
+    gewonnen: "#10b981",    // emerald
+    verloren: "#ef4444",    // red
+    kunde: "#14b8a6",       // teal
+    partner: "#6366f1",     // indigo
+    inaktiv: "#6b7280",     // gray
   };
 
-  const color = colorMap[status || "lead"] || "#6b7280";
+  const color = colorMap[status?.toLowerCase() || "lead"] || "#6b7280";
 
   return L.divIcon({
-    className: "custom-marker",
+    className: "svg-marker",
     html: `
-      <div style="
-        background-color: ${color};
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-        font-weight: 700;
-      ">
-        •
-      </div>
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="${color}" stroke="#ffffff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="6" fill="#ffffff" />
+      </svg>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
     popupAnchor: [0, -20],
   });
 };
@@ -70,25 +59,13 @@ const getOsmPoiIcon = () => {
   return L.divIcon({
     className: "osm-poi",
     html: `
-      <div style="
-        background-color: #22c55e;
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 14px;
-        font-weight: 700;
-      ">
-        P
-      </div>
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="#ffffff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="6" fill="#ffffff" />
+      </svg>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
     popupAnchor: [0, -20],
   });
 };
