@@ -39,6 +39,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
+  const [mapReady, setMapReady] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -173,6 +174,15 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     return () => observer.disconnect();
   }, []);
 
+  // Automatic POI loading on mount
+  useEffect(() => {
+    if (!mapReady) return;
+    const zoom = mapRef.current!.getZoom();
+    if (zoom >= 12) {
+      loadOsmPois(true);
+    }
+  }, [mapReady]);
+
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
@@ -266,7 +276,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       </div>
 
       <MapContainer
-        ref={mapRef}
+        ref={(ref) => {
+          mapRef.current = ref;
+          if (ref) setMapReady(true);
+        }}
         center={[51.1657, 10.4515]}
         zoom={6}
         style={{ height: "100%", width: "100%", backgroundColor: isDarkMode ? "black" : "white" }}
