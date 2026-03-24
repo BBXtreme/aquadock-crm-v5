@@ -30,14 +30,19 @@ export const getOsmPoiIcon = () => {
   });
 };
 
-export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
+export async function fetchOsmPois(bounds: L.LatLngBounds, activeCategories: string[] = Object.keys(poiCategories)): Promise<any[]> {
   const bbox = bounds.toBBoxString(); // "west,south,east,north"
   const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
-  // Build tag groups from poiCategories
+  // Build tag groups from active poiCategories
   const tagGroups: Record<string, string[]> = {};
-  for (const category of Object.values(poiCategories)) {
+  const activePoiCategories = activeCategories.reduce((acc, key) => {
+    if (poiCategories[key]) acc[key] = poiCategories[key];
+    return acc;
+  }, {} as typeof poiCategories);
+
+  for (const category of Object.values(activePoiCategories)) {
     for (const tag of category.osmTags) {
       const [key, value] = tag.split('=');
       if (!tagGroups[key]) tagGroups[key] = [];

@@ -10,12 +10,14 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import { poiCategories } from "@/lib/constants/map-poi-config";
 
 export default function OpenMapClientInnerComponent({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<L.Map>(null);
@@ -25,6 +27,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [showLegend, setShowLegend] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [osmError, setOsmError] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [activeCategories, setActiveCategories] = useState(Object.keys(poiCategories));
 
   const queryClient = useQueryClient();
 
@@ -59,7 +64,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     setOsmError(false);
     try {
       const bounds = mapRef.current.getBounds();
-      const pois = await fetchOsmPois(bounds);
+      const pois = await fetchOsmPois(bounds, activeCategories);
       setOsmPois(pois);
       toast.success(`${pois.length} OSM-POIs geladen`);
     } catch (err: any) {
@@ -73,7 +78,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   useEffect(() => {
     if (showOsm) loadOsmPois();
-  }, [showOsm]);
+  }, [showOsm, activeCategories]);
 
   const resetView = () => {
     if (mapRef.current && initialCompanies.length > 0) {
@@ -128,6 +133,29 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     importMutation.mutate(poi);
   };
 
+  // Geocoding function
+  const handleGeocode = async () => {
+    if (!searchQuery.trim() || !mapRef.current) return;
+    setIsSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`
+      );
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        mapRef.current.flyTo([parseFloat(lat), parseFloat(lon)], 15, { duration: 1.5 });
+        toast.success(`Gefunden: ${display_name}`);
+      } else {
+        toast.error("Keine Ergebnisse gefunden");
+      }
+    } catch (err) {
+      toast.error("Geocoding fehlgeschlagen");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   // Legend items
   const legendItems = Object.entries(statusLabels).map(([key, label]) => ({
     key,
@@ -163,6 +191,39 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   return (
     <div className="relative h-full w-full">
+      {/* POI Category Toggle and Search */}
+      <div className="absolute top-4 left-4 z-[1001] w-80 space-y-2">
+        <div className="flex flex-wrap gap-1">
+          {Object.entries(poiCategories).map(([key, category]) => (
+            <Button
+              key={key}
+              variant={activeCategories.includes(key) ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setActiveCategories(prev =>
+                  prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                );
+              }}
+              className="text-xs"
+            >
+              {category.icon} {category.name}
+            </Button>
+          ))}
+        </div>
+        <div className="relative flex gap-2">
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleGeocode()}
+            placeholder="Adresse suchen (z.B. Hamburg Hafen)"
+            className="bg-background/95 backdrop-blur-sm border shadow-md"
+          />
+          <Button onClick={handleGeocode} disabled={isSearching} size="icon" className="bg-card border shadow-md">
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
       <MapContainer
         key={isDarkMode ? "dark" : "light"}
         ref={mapRef}
