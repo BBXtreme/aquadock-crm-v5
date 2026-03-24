@@ -9,7 +9,6 @@ import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/ReminderEditForm";
-import AppLayout from "@/components/layout/AppLayout";
 import RemindersTable from "@/components/tables/RemindersTable";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -106,25 +105,20 @@ export default function RemindersPage() {
 
   if (isLoading)
     return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
-            </div>
-            <Button>New Reminder</Button>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Loading reminders...</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SkeletonList count={10} />
-            </CardContent>
-          </Card>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
         </div>
-      </AppLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading reminders...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SkeletonList count={10} />
+          </CardContent>
+        </Card>
+      </div>
     );
 
   if (isError)
@@ -138,177 +132,168 @@ export default function RemindersPage() {
 
   if (filteredReminders.length === 0)
     return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
-            </div>
-            <Button>New Reminder</Button>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>No reminders yet</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Create your first reminder to stay on top of tasks.</p>
-              <Button className="mt-4" onClick={() => setDialogOpen(true)}>
-                New Reminder
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+          <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
         </div>
-      </AppLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>No reminders yet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Create your first reminder to stay on top of tasks.</p>
+            <Button className="mt-4" onClick={() => setDialogOpen(true)}>
+              New Reminder
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>New Reminder</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Reminder</DialogTitle>
-              </DialogHeader>
-              <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
-            </DialogContent>
-          </Dialog>
-        </div>
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">Home → Follow-up Reminders</p>
+        <h1 className="font-semibold text-3xl tracking-tight">Follow-up Reminders</h1>
+      </div>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button>New Reminder</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Reminder</DialogTitle>
+          </DialogHeader>
+          <ReminderCreateForm onSuccess={() => setDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="font-bold text-2xl">{openReminders}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-16" />
-              ) : (
-                <div className="font-bold text-2xl text-red-500">{overdue}</div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">This Week</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">High Priority</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex space-x-2">
-          <Button variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>
-            All
-          </Button>
-          <Button variant={filterType === "open" ? "default" : "outline"} onClick={() => setFilterType("open")}>
-            Open
-          </Button>
-          <Button variant={filterType === "overdue" ? "default" : "outline"} onClick={() => setFilterType("overdue")}>
-            Overdue
-          </Button>
-          <Button variant="outline">My Tasks</Button>
-        </div>
-
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardContent className="p-6">
-            <RemindersTable
-              reminders={filteredReminders}
-              globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
-              handleEdit={handleEdit}
-              handleView={handleView}
-              handleDelete={handleDelete}
-            />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="font-bold text-2xl">{openReminders}</div>
+            )}
           </CardContent>
         </Card>
+        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="font-bold text-2xl text-red-500">{overdue}</div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">This Week</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
+          </CardContent>
+        </Card>
+        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="font-medium text-sm">High Priority</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* View Dialog */}
-        <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+      <div className="flex space-x-2">
+        <Button variant={filterType === "all" ? "default" : "outline"} onClick={() => setFilterType("all")}>
+          All
+        </Button>
+        <Button variant={filterType === "open" ? "default" : "outline"} onClick={() => setFilterType("open")}>
+          Open
+        </Button>
+        <Button variant={filterType === "overdue" ? "default" : "outline"} onClick={() => setFilterType("overdue")}>
+          Overdue
+        </Button>
+        <Button variant="outline">My Tasks</Button>
+      </div>
+
+      <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
+        <CardContent className="p-6">
+          <RemindersTable
+            reminders={filteredReminders}
+            globalFilter={globalFilter}
+            onGlobalFilterChange={setGlobalFilter}
+            handleEdit={handleEdit}
+            handleView={handleView}
+            handleDelete={handleDelete}
+          />
+        </CardContent>
+      </Card>
+
+      {/* View Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>View Reminder</DialogTitle>
+            <DialogDescription>Details of the selected reminder.</DialogDescription>
+          </DialogHeader>
+          {selectedReminder && (
+            <div className="space-y-4">
+              <div>
+                <label className="font-medium">Title:</label>
+                <p>{selectedReminder.title || "—"}</p>
+              </div>
+              <div>
+                <label className="font-medium">Company:</label>
+                <p>{selectedReminder.companies?.firmenname || "—"}</p>
+              </div>
+              <div>
+                <label className="font-medium">Due Date:</label>
+                <p>
+                  {selectedReminder.due_date
+                    ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true })
+                    : "—"}
+                </p>
+              </div>
+              <div>
+                <label className="font-medium">Priority:</label>
+                <p>{selectedReminder.priority || "—"}</p>
+              </div>
+              <div>
+                <label className="font-medium">Status:</label>
+                <p>{selectedReminder.status || "—"}</p>
+              </div>
+              <div>
+                <label className="font-medium">Assigned To:</label>
+                <p>{selectedReminder.assigned_to || "—"}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {editReminder && (
+        <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>View Reminder</DialogTitle>
-              <DialogDescription>Details of the selected reminder.</DialogDescription>
+              <DialogTitle>Edit Reminder</DialogTitle>
             </DialogHeader>
-            {selectedReminder && (
-              <div className="space-y-4">
-                <div>
-                  <label className="font-medium">Title:</label>
-                  <p>{selectedReminder.title || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Company:</label>
-                  <p>{selectedReminder.companies?.firmenname || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Due Date:</label>
-                  <p>
-                    {selectedReminder.due_date
-                      ? formatDistanceToNow(new Date(selectedReminder.due_date), { addSuffix: true })
-                      : "—"}
-                  </p>
-                </div>
-                <div>
-                  <label className="font-medium">Priority:</label>
-                  <p>{selectedReminder.priority || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Status:</label>
-                  <p>{selectedReminder.status || "—"}</p>
-                </div>
-                <div>
-                  <label className="font-medium">Assigned To:</label>
-                  <p>{selectedReminder.assigned_to || "—"}</p>
-                </div>
-              </div>
-            )}
+            <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
           </DialogContent>
         </Dialog>
-
-        {editReminder && (
-          <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Reminder</DialogTitle>
-              </DialogHeader>
-              <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-    </AppLayout>
+      )}
+    </div>
   );
 }
