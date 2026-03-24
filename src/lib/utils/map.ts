@@ -1,6 +1,7 @@
 import L from "leaflet";
 
 import { statusColors } from "@/lib/constants/status-colors";
+import { poiCategories } from "@/lib/constants/map-poi-config";
 
 export const getStatusIcon = (status?: string) => {
   const color = statusColors[status?.toLowerCase() || "lead"] || statusColors.lead;
@@ -34,11 +35,24 @@ export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
+  // Build tag groups from poiCategories
+  const tagGroups: Record<string, string[]> = {};
+  for (const category of Object.values(poiCategories)) {
+    for (const tag of category.osmTags) {
+      const [key, value] = tag.split('=');
+      if (!tagGroups[key]) tagGroups[key] = [];
+      tagGroups[key].push(value);
+    }
+  }
+
+  // Create conditions for each tag group
+  const conditions = Object.entries(tagGroups).map(([key, values]) => `["${key}"~"${values.join('|')}"](${overpassBbox})`);
+
   const query = `
     [out:json][timeout:45];
     (
-      node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
-      way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
+${conditions.map(cond => `      node${cond};`).join('\n')}
+${conditions.map(cond => `      way${cond};`).join('\n')}
     );
     out center;
   `;
