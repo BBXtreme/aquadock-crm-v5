@@ -1,22 +1,13 @@
 import { getCompaniesForOpenMap, type CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { OpenMapClient } from "@/components/features/OpenMapClient";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default async function OpenMapPage() {
-  const supabase = createServerSupabaseClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/");
-  }
-
   let companies: CompanyForOpenMap[] = [];
 
   try {
-    companies = await getCompaniesForOpenMap(user.id);
+    // For now we fetch without user filter (since no auth yet)
+    // Later we will add proper user_id filtering
+    companies = await getCompaniesForOpenMap(""); // temporary empty string
   } catch (error) {
     console.error("[OpenMap Page] Failed to load companies:", error);
   }
