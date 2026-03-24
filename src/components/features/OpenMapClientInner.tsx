@@ -319,16 +319,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </MarkerClusterGroup>
       </MapContainer>
 
-      {/* OSM Loading Overlay */}
-      {loadingOsm && (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
-          <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-            <p className="text-sm text-center">POIs werden geladen...</p>
-          </div>
-        </div>
-      )}
-
       {/* Legend */}
       {showLegend && (
         <div className="absolute top-28 right-6 z-[1100] bg-background/95 backdrop-blur-sm border rounded-2xl p-5 shadow-2xl min-w-[240px]">
@@ -359,22 +349,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
           </div>
         </div>
       )}
-
-      {/* Live Info Panel */}
-      <div className="absolute bottom-4 left-4 z-10">
-        <Card className="bg-background/95 backdrop-blur-sm border shadow-md p-3 text-sm">
-          <div className="flex items-center gap-2">
-            {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-            <span>
-              {loadingOsm
-                ? "POIs werden geladen..."
-                : currentZoom < 12
-                  ? "Zoom näher heran für POIs"
-                  : `${osmPois.length} POIs geladen (${newPoiCount} neue)`}
-            </span>
-          </div>
-        </Card>
-      </div>
 
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
