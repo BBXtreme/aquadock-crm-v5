@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+
 import { AlertCircle, RefreshCw } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -19,20 +21,22 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
   };
 
   if (error) {
-    return fallback || (
-      <div className="h-full flex items-center justify-center bg-muted/40 p-8">
-        <div className="text-center max-w-md">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="font-semibold text-lg mb-2">Kartenfehler</h3>
-          <p className="text-sm text-muted-foreground mb-6">
-            Die Karte konnte nicht geladen werden. Bitte versuchen Sie es erneut.
-          </p>
-          <Button onClick={reset} variant="default">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Karte neu laden
-          </Button>
+    return (
+      fallback || (
+        <div className="h-full flex items-center justify-center bg-muted/40 p-8">
+          <div className="text-center max-w-md">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="font-semibold text-lg mb-2">Kartenfehler</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Die Karte konnte nicht geladen werden. Bitte versuchen Sie es erneut.
+            </p>
+            <Button onClick={reset} variant="default">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Karte neu laden
+            </Button>
+          </div>
         </div>
-      </div>
+      )
     );
   }
 

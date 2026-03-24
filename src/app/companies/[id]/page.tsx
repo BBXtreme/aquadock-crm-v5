@@ -1112,7 +1112,9 @@ export default function CompanyDetailPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editEntry ? "Edit Timeline Entry" : `Neuer Timeline-Eintrag für ${company?.firmenname}`}</DialogTitle>
+            <DialogTitle>
+              {editEntry ? "Edit Timeline Entry" : `Neuer Timeline-Eintrag für ${company?.firmenname}`}
+            </DialogTitle>
             <DialogDescription>
               {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
             </DialogDescription>
@@ -1130,17 +1132,21 @@ export default function CompanyDetailPage() {
             contacts={linkedContacts}
             editEntry={editEntry}
             preselectedCompanyId={preselectedCompanyId}
-            defaultValues={editEntry ? {
-              title: editEntry.title,
-              content: editEntry.content,
-              activity_type: editEntry.activity_type,
-              company_id: editEntry.company_id,
-              contact_id: editEntry.contact_id || "none",
-              user_name: editEntry.user_name,
-            } : {
-              company_id: company?.id || null,
-              contact_id: "none",
-            }}
+            defaultValues={
+              editEntry
+                ? {
+                    title: editEntry.title,
+                    content: editEntry.content,
+                    activity_type: editEntry.activity_type,
+                    company_id: editEntry.company_id,
+                    contact_id: editEntry.contact_id || "none",
+                    user_name: editEntry.user_name,
+                  }
+                : {
+                    company_id: company?.id || null,
+                    contact_id: "none",
+                  }
+            }
           />
         </DialogContent>
       </Dialog>

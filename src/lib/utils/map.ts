@@ -31,7 +31,7 @@ export const getOsmPoiIcon = () => {
 
 export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const bbox = bounds.toBBoxString(); // "west,south,east,north"
-  const [west, south, east, north] = bbox.split(',').map(Number);
+  const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
   const query = `

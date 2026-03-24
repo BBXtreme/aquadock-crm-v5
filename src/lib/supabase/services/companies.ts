@@ -123,7 +123,7 @@ export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyFo
   return data ?? [];
 }
 
-export async function importOsmPoi(poi: any, userId: string = "") {
+export async function importOsmPoi(poi: any, userId = "") {
   const supabase = createClient();
 
   const kundentypMap: Record<string, string> = {
@@ -153,11 +153,7 @@ export async function importOsmPoi(poi: any, userId: string = "") {
     user_id: userId || "temp-user", // will be replaced with real auth later
   };
 
-  const { data, error } = await supabase
-    .from("companies")
-    .insert(insertData)
-    .select()
-    .single();
+  const { data, error } = await supabase.from("companies").insert(insertData).select().single();
 
   if (error) throw handleSupabaseError(error, "importOsmPoi");
 

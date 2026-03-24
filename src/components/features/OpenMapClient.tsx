@@ -1,12 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 
-const OpenMapClientInner = dynamic(
-  () => import("./OpenMapClientInner"),
-  { ssr: false }
-);
+const OpenMapClientInner = dynamic(() => import("./OpenMapClientInner"), { ssr: false });
 
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];

@@ -4,6 +4,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
+
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 

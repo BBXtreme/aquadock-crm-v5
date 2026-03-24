@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ErrorBoundaryProps {
@@ -41,9 +40,7 @@ export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
             <CardTitle className="text-red-600">Something went wrong</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-center">
-            <p className="text-muted-foreground">
-              An unexpected error occurred. Please try again.
-            </p>
+            <p className="text-muted-foreground">An unexpected error occurred. Please try again.</p>
             {error && <p className="text-xs text-muted-foreground break-all">{error.message}</p>}
             <Button onClick={resetError} className="w-full">
               <RefreshCw className="mr-2 h-4 w-4" />
