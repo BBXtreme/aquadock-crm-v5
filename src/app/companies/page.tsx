@@ -12,6 +12,7 @@ import {
   Eye,
   Handshake,
   Palmtree,
+  RefreshCw,
   Sailboat,
   Ship,
   Sparkles,
@@ -53,53 +54,19 @@ export default function CompaniesPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
   const statusOptions = [
-    "lead",
-    "interessant",
-    "qualifiziert",
-    "akquise",
-    "angebot",
-    "gewonnen",
-    "verloren",
-    "kunde",
-    "partner",
-    "inaktiv",
+    "lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren", "kunde", "partner", "inaktiv",
   ];
 
   const kategorieOptions = [
-    "restaurant",
-    "hotel",
-    "resort",
-    "camping",
-    "marina",
-    "segelschule",
-    "segelverein",
-    "bootsverleih",
-    "neukunde",
-    "bestandskunde",
-    "interessent",
-    "partner",
-    "sonstige",
+    "restaurant", "hotel", "resort", "camping", "marina", "segelschule", "segelverein", "bootsverleih",
+    "neukunde", "bestandskunde", "interessent", "partner", "sonstige",
   ];
 
   const betriebstypOptions = ["kette", "einzeln"];
 
   const landOptions = [
-    "Deutschland",
-    "Österreich",
-    "Schweiz",
-    "Frankreich",
-    "Italien",
-    "Spanien",
-    "Niederlande",
-    "Belgien",
-    "Dänemark",
-    "Schweden",
-    "Norwegen",
-    "Polen",
-    "Ungarn",
-    "Griechenland",
-    "Portugal",
-    "Großbritannien",
+    "Deutschland", "Österreich", "Schweiz", "Frankreich", "Italien", "Spanien", "Niederlande", "Belgien",
+    "Dänemark", "Schweden", "Norwegen", "Polen", "Ungarn", "Griechenland", "Portugal", "Großbritannien",
   ];
 
   const statusIcons = {
@@ -164,11 +131,10 @@ export default function CompaniesPage() {
     onError: (err) => toast.error("Deletion failed", { description: err.message }),
   });
 
-  // Memo-isierte Statistiken – verhindert unnötige Neuberechnungen
   const stats = useMemo(() => {
     const total = companies.length;
     const leads = companies.filter((c) => c.status === "lead").length;
-    const won = companies.filter((c) => c.status === "won").length;
+    const won = companies.filter((c) => c.status === "gewonnen").length;
     const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
 
     return { total, leads, won, value };
@@ -193,19 +159,17 @@ export default function CompaniesPage() {
               <p className="text-muted-foreground text-sm">Home → Companies</p>
               <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
             </div>
-            <div className="flex gap-3">
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>New Company</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create New Company</DialogTitle>
-                  </DialogHeader>
-                  <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-                </DialogContent>
-              </Dialog>
-            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>New Company</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Company</DialogTitle>
+                </DialogHeader>
+                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
           </div>
 
           <Alert variant="destructive">
@@ -277,7 +241,7 @@ export default function CompaniesPage() {
           />
         </div>
 
-        {/* Tabelle / Ladezustand */}
+        {/* Table Section */}
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
@@ -287,12 +251,8 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
-                <div
-                  className={cn(
-                    "flex flex-wrap gap-2 items-center",
-                    Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-                  )}
-                >
+                {/* Filters */}
+                <div className={cn("flex flex-wrap gap-2 items-center", Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4")}>
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
                       <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
@@ -301,20 +261,13 @@ export default function CompaniesPage() {
                     )),
                   )}
                   {Object.values(activeFilters).flat().length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}>
                       Clear all
                     </Button>
                   )}
                 </div>
-                <Accordion
-                  type="single"
-                  collapsible
-                  className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}
-                >
+
+                <Accordion type="single" collapsible className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}>
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
@@ -409,6 +362,7 @@ export default function CompaniesPage() {
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
+
                 <CompaniesTable
                   companies={filteredCompanies}
                   globalFilter={globalFilter}
@@ -427,14 +381,8 @@ export default function CompaniesPage() {
   );
 }
 
-// Wiederverwendbare Statistik-Karte
-function StatCard({
-  title,
-  value,
-  icon,
-  className,
-  change,
-}: {
+// StatCard component remains the same
+function StatCard({ title, value, icon, className, change }: {
   title: string;
   value: React.ReactNode;
   icon: React.ReactNode;
@@ -442,12 +390,7 @@ function StatCard({
   change?: string;
 }) {
   return (
-    <Card
-      className={cn(
-        "bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50",
-        className,
-      )}
-    >
+    <Card className={cn("bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50", className)}>
       <div className="hover:brightness-105 transition-all">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
