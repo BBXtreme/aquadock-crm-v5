@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building, Users } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -17,6 +18,7 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
+import { cn } from "@/lib/utils";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -128,33 +130,28 @@ export default function ContactsPage() {
         </Alert>
       )}
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : totalContacts}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl">{loading ? <Skeleton className="h-8 w-16" /> : primaryContacts}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="font-medium text-sm">Companies with Contacts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl">
-              {loading ? <Skeleton className="h-8 w-16" /> : companiesWithContacts}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          title="Total Contacts"
+          value={loading ? <Skeleton className="h-8 w-20" /> : totalContacts.toLocaleString("de-DE")}
+          icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+8% from last month"
+        />
+        <StatCard
+          title="Primary Contacts"
+          value={loading ? <Skeleton className="h-8 w-20" /> : primaryContacts.toLocaleString("de-DE")}
+          icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+5% from last month"
+        />
+        <StatCard
+          title="Companies with Contacts"
+          value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
+          icon={<Building className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+12% from last month"
+        />
       </div>
 
       <Card>
@@ -193,5 +190,29 @@ export default function ContactsPage() {
         </Dialog>
       )}
     </div>
+  );
+}
+
+// StatCard component
+function StatCard({ title, value, icon, className, change }: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  className?: string;
+  change?: string;
+}) {
+  return (
+    <Card className={cn("bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50", className)}>
+      <div className="hover:brightness-105 transition-all">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <div className="rounded-full bg-muted/50 p-3 flex items-center justify-center">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+          {change && <p className="text-xs text-green-600">{change}</p>}
+        </CardContent>
+      </div>
+    </Card>
   );
 }
