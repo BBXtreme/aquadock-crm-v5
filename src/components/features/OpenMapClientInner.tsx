@@ -396,16 +396,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               setShowOsm(false);
               setOsmPois([]);
             } else {
-              if (mapRef.current) {
-                const zoom = mapRef.current.getZoom();
-                if (zoom < 12) {
-                  toast("Zoom näher heran für POIs");
-                  return;
-                }
-              }
               console.log("[OpenMap] Toggle ON");
               setShowOsm(true);
-              setTimeout(() => loadOsmPois(true), 500); // small delay
+              setTimeout(() => loadOsmPois(true), 300);
             }
           }}
           disabled={loadingOsm}
