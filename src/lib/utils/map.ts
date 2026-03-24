@@ -35,7 +35,7 @@ export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
   const query = `
-    [out:json][timeout:25];
+    [out:json][timeout:60];
     (
       node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
       way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
@@ -47,14 +47,18 @@ export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
 
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Overpass API error: ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 504) {
+        throw new Error("Overpass API ist gerade überlastet. Bitte versuche es in 10–20 Sekunden erneut.");
+      }
+      throw new Error(`Overpass API Fehler: ${res.status}`);
+    }
 
     const data = await res.json();
     console.log(`[OpenMap OSM] Fetched ${data.elements?.length || 0} POIs`);
-
     return data.elements || [];
-  } catch (err) {
+  } catch (err: any) {
     console.error("[OpenMap OSM] Fetch failed:", err);
-    return [];
+    throw err; // let the caller handle the toast
   }
 }
