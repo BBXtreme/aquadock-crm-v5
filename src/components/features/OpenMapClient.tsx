@@ -45,7 +45,7 @@ function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
   return null;
 }
 
-export function OpenMap({ initialCompanies }: OpenMapProps) {
+export function OpenMapClient({ initialCompanies }: OpenMapProps) {
   const mapRef = useRef<L.Map>(null);
   const [showOsm, setShowOsm] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
