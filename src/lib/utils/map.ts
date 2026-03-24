@@ -30,16 +30,18 @@ export const getOsmPoiIcon = () => {
 };
 
 export async function fetchOsmPois(bounds: L.LatLngBounds): Promise<any[]> {
-  const bbox = bounds.toBBoxString();
+  const bbox = bounds.toBBoxString(); // "west,south,east,north"
+  const [west, south, east, north] = bbox.split(',').map(Number);
+  const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
   const query = `
     [out:json][timeout:25];
     (
-      node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"]({{bbox}});
-      way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"]({{bbox}});
+      node["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
+      way["amenity"~"restaurant|cafe|bar|hotel|hostel|camp_site|marina|boat_rental"](${overpassBbox});
     );
     out center;
-  `.replace("{{bbox}}", bbox);
+  `;
 
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
