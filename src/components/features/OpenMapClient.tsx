@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
-import "react-leaflet-markercluster/dist/styles.min.css";
+// import "react-leaflet-markercluster/dist/styles.min.css";
 import L from "leaflet";
 import { useEffect, useRef, useState } from "react";
 import { CompanyForOpenMap } from "@/lib/supabase/services/companies";
