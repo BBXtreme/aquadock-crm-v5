@@ -1,23 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
+
+import Link from "next/link";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
+import { poiCategories } from "@/lib/constants/map-poi-config";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
-import { poiCategories } from "@/lib/constants/map-poi-config";
 
 type PoiCategoryKey = keyof typeof poiCategories;
 
@@ -164,9 +167,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   };
 
   const toggleCategory = (key: PoiCategoryKey) => {
-    setActiveCategories(prev =>
-      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-    );
+    setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
   // Legend items
@@ -220,9 +221,13 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               onClick={handleGeocode}
               disabled={isSearching}
               size="icon"
-              className={`bg-card border shadow-md ${isDarkMode ? 'text-white' : 'text-black'} hover:bg-card`}
+              className={`bg-card border shadow-md ${isDarkMode ? "text-white" : "text-black"} hover:bg-card`}
             >
-              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {isSearching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
@@ -235,7 +240,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
               variant={activeCategories.includes(key as PoiCategoryKey) ? "default" : "outline"}
               size="sm"
               onClick={() => toggleCategory(key as PoiCategoryKey)}
-              className={`bg-background/95 backdrop-blur-sm border shadow-md whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-black'} hover:bg-card`}
+              className={`bg-background/95 backdrop-blur-sm border shadow-md whitespace-nowrap ${isDarkMode ? "text-white" : "text-black"} hover:bg-card`}
             >
               {category.icon} {category.name}
             </Button>
