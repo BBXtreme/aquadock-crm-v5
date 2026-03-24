@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/browser";
-
 import type { Database } from "@/lib/supabase/database.types";
 
 import type { Company, CompanyInsert } from "../types";
