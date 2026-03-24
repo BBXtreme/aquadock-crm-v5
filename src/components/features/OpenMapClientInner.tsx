@@ -64,7 +64,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   });
 
   const loadOsmPois = async (force = false) => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || loadingOsm) return;
 
     const zoom = mapRef.current.getZoom();
     setCurrentZoom(zoom);
@@ -80,7 +80,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       setOsmPois(result.pois || []);
       toast.success(`${result.totalFound || 0} OSM-POIs im Ausschnitt`);
     } catch (err: any) {
-      toast.error(err.message || "POIs konnten nicht geladen werden");
+      if (err.message.includes("429")) {
+        toast.error("API überlastet, bitte kurz warten");
+      } else {
+        toast.error(err.message || "POIs konnten nicht geladen werden");
+      }
     } finally {
       setLoadingOsm(false);
     }
@@ -92,7 +96,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
     const handleMapChange = () => {
       const now = Date.now();
-      if (now - lastLoadTime < 1500) return;   // increased debounce
+      if (now - lastLoadTime < 2000) return;   // increased debounce
       setLastLoadTime(now);
       loadOsmPois();
     };
