@@ -154,13 +154,17 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
     return initialCompanies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number");
   }, [initialCompanies]);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
+    const updateDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    };
+
+    updateDarkMode(); // initial check
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
     return () => observer.disconnect();
   }, []);
 
