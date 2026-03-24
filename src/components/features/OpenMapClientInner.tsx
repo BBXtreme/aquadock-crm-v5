@@ -32,6 +32,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [activeCategories, setActiveCategories] = useState(Object.keys(poiCategories));
+  const [filterMessage, setFilterMessage] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -61,7 +62,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   });
 
   const loadOsmPois = async () => {
-    if (!mapRef.current) return;
+    if (activeCategories.length === 0) {
+      setFilterMessage("Please select at least one POI category");
+      return;
+    }
+    setFilterMessage("");
     setLoadingOsm(true);
     setOsmError(false);
     try {
@@ -340,7 +345,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-1000">
           <div className="bg-background/95 backdrop-blur-sm border rounded-lg p-4 shadow-md">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-            <p className="text-sm text-center">Loading OSM POIs...</p>
+            <p className="text-sm text-center">{filterMessage || "Loading OSM POIs..."}</p>
           </div>
         </div>
       )}
