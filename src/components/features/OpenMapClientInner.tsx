@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -38,6 +37,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
+  const [showOsm, setShowOsm] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -84,9 +84,9 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     }
   };
 
-  // Auto-load POIs when map is moved or zoomed (debounced)
+  // Dynamic POI loading when map is moved or zoomed (only when showOsm is true)
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!showOsm || !mapRef.current) return;
 
     const handleMapChange = () => {
       const now = Date.now();
@@ -104,7 +104,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         mapRef.current.off("zoomend", handleMapChange);
       }
     };
-  }, [lastLoadTime, activeCategories]);
+  }, [lastLoadTime, activeCategories, showOsm]);
 
   const toggleCategory = (key: PoiCategoryKey) => {
     setActiveCategories((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -327,6 +327,24 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </Card>
       </div>
 
+      {/* Legend */}
+      {showLegend && (
+        <div className="absolute top-20 right-4 z-[1001] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
+          <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            Status Legende
+          </h4>
+          <div className="space-y-2 text-sm">
+            {legendItems.map((item) => (
+              <div key={item.key} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full border-2 border-white" style={{ backgroundColor: item.color }} />
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
@@ -339,9 +357,19 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
         </Button>
 
         <Button
-          variant="secondary"
+          variant={showOsm ? "default" : "secondary"}
           size="icon"
-          onClick={() => loadOsmPois(true)}
+          onClick={() => {
+            if (showOsm) {
+              console.log("[OpenMap] Toggle OFF");
+              setShowOsm(false);
+              setOsmPois([]);
+            } else {
+              console.log("[OpenMap] Toggle ON");
+              setShowOsm(true);
+              loadOsmPois();
+            }
+          }}
           disabled={loadingOsm}
           className="bg-card border shadow-md hover:bg-card text-foreground"
         >
