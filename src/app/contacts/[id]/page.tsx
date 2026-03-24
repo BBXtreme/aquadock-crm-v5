@@ -62,6 +62,7 @@ export default function ContactDetailPage() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState("");
   const [editCompanyDialog, setEditCompanyDialog] = useState(false);
+  const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -404,9 +405,18 @@ export default function ContactDetailPage() {
                   {contact.companies.stadt}, {contact.companies.land}
                 </p>
               )}
+
+              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                Change Company
+              </Button>
             </div>
           ) : (
-            <p className="text-muted-foreground">No company linked yet.</p>
+            <div className="space-y-3">
+              <p className="text-muted-foreground">No company linked yet.</p>
+              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                Link Company
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -440,6 +450,42 @@ export default function ContactDetailPage() {
               _fetchData();
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Company Dialog */}
+      <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Linked Company</DialogTitle>
+          </DialogHeader>
+          <Select
+            onValueChange={(value) => {
+              const supabase = createClient();
+              updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase)
+                .then(() => {
+                  toast.success("Company updated");
+                  _fetchData();
+                  setChangeCompanyDialog(false);
+                })
+                .catch((err) => {
+                  toast.error("Update failed", { description: err.message });
+                });
+            }}
+            defaultValue={contact.company_id || "none"}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select company" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {companies.map((company) => (
+                <SelectItem key={company.id} value={company.id}>
+                  {company.firmenname}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </DialogContent>
       </Dialog>
     </div>
