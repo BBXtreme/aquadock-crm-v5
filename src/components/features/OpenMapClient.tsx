@@ -116,9 +116,17 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
     toast.info(`Import von ${poi.tags?.name || "POI"} geplant`);
   };
 
+  // Invalidate size on dark mode change for better stability
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.invalidateSize();
+    }
+  }, [isDarkMode]);
+
   return (
     <div className="relative h-full w-full">
       <MapContainer
+        key={isDarkMode ? 'dark' : 'light'}
         ref={mapRef}
         center={[51.1657, 10.4515]}
         zoom={6}
@@ -211,6 +219,16 @@ export function OpenMapClient({ initialCompanies }: OpenMapProps) {
             ))}
         </MarkerClusterGroup>
       </MapContainer>
+
+      {/* Loading overlay for OSM POIs */}
+      {loadingOsm && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-[1000]">
+          <div className="bg-background/90 backdrop-blur-sm border rounded-lg p-4 shadow-md">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+            <p className="text-sm text-center">Loading OSM POIs...</p>
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       {showLegend && (
