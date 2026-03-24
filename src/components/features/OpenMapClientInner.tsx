@@ -96,9 +96,16 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
     const handleMapChange = () => {
       const now = Date.now();
-      if (now - lastLoadTime < 2000) return;   // increased debounce
+      if (now - lastLoadTime < 2000) return;
       setLastLoadTime(now);
-      loadOsmPois();
+
+      const zoom = mapRef.current!.getZoom();
+      setCurrentZoom(zoom);
+      if (zoom < 12) {
+        setOsmPois([]);
+      } else {
+        loadOsmPois();
+      }
     };
 
     mapRef.current.on("moveend", handleMapChange);
