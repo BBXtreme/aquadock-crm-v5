@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 
 const OpenMapClientInner = dynamic(() => import("./OpenMapClientInner"), { ssr: false });
@@ -23,5 +24,9 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
     );
   }
 
-  return <OpenMapClientInner initialCompanies={initialCompanies} />;
+  return (
+    <ErrorBoundary>
+      <OpenMapClientInner initialCompanies={initialCompanies} />
+    </ErrorBoundary>
+  );
 }
