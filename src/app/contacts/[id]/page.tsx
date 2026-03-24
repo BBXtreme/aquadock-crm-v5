@@ -22,6 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/types";
@@ -63,10 +64,19 @@ export default function ContactDetailPage() {
 
   const queryClient = useQueryClient();
 
-  // Main contact data with joined company
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const {
     data: contact,
-    isLoading: loading,
+    isLoading,
     error,
   } = useQuery({
     queryKey: ["contact", id],
@@ -83,17 +93,6 @@ export default function ContactDetailPage() {
       return data as Contact;
     },
     enabled: !!id,
-  });
-
-  // All companies for the selector
-  const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
-      if (error) throw error;
-      return data;
-    },
   });
 
   useEffect(() => {
@@ -128,7 +127,7 @@ export default function ContactDetailPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="animate-pulse">
@@ -384,7 +383,7 @@ export default function ContactDetailPage() {
 
       {/* Edit Contact Dialog */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent>
+        <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
@@ -395,12 +394,12 @@ export default function ContactDetailPage() {
               queryClient.invalidateQueries({ queryKey: ["contact", id] });
             }}
           />
-        </DialogContent>
+        </WideDialogContent>
       </Dialog>
 
       {/* Edit Company Dialog */}
       <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
-        <DialogContent>
+        <WideDialogContent size="2xl">
           <DialogHeader>
             <DialogTitle>Edit Company</DialogTitle>
           </DialogHeader>
@@ -411,12 +410,12 @@ export default function ContactDetailPage() {
               queryClient.invalidateQueries({ queryKey: ["contact", id] });
             }}
           />
-        </DialogContent>
+        </WideDialogContent>
       </Dialog>
 
       {/* Change Company Dialog */}
       <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
-        <DialogContent>
+        <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>Change Linked Company</DialogTitle>
           </DialogHeader>
@@ -446,7 +445,7 @@ export default function ContactDetailPage() {
               ))}
             </SelectContent>
           </Select>
-        </DialogContent>
+        </WideDialogContent>
       </Dialog>
     </div>
   );
