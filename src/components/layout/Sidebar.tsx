@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Bell, Building, Clock, Home, Mail, Menu, Users } from "lucide-react";
+import { Bell, Building, Clock, Home, Mail, Map, Menu, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +18,7 @@ interface SidebarProps {
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/companies", label: "Companies", icon: Building },
+  { href: "/openmap", label: "OpenMap", icon: Map },
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/reminders", label: "Reminders", icon: Bell },
