@@ -39,7 +39,7 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   );
   const [lastLoadTime, setLastLoadTime] = useState(0);
   const [currentZoom, setCurrentZoom] = useState(6);
-  const [showOsm, setShowOsm] = useState(false);
+  const [showOsm, setShowOsm] = useState(true);
 
   const queryClient = useQueryClient();
 
