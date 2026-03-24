@@ -78,11 +78,12 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
   const endpoints = [
     "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    "https://overpass.osm.ch/api/interpreter",
   ];
 
   for (const endpoint of endpoints) {
+    console.log(`Trying endpoint: ${endpoint}`);
     try {
       const url = `${endpoint}?data=${encodeURIComponent(query)}`;
       const controller = new AbortController();
