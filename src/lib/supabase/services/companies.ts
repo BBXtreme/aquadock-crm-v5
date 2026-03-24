@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/browser";
+import { createServerClient } from "@/lib/supabase/server";
 
 import type { Company, CompanyInsert } from "../types";
 import { handleSupabaseError } from "../utils";
@@ -69,4 +70,50 @@ export async function deleteCompany(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("companies").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteCompany");
+}
+
+export type CompanyForOpenMap = Pick<
+  Database["public"]["Tables"]["companies"]["Row"],
+  | "id"
+  | "firmenname"
+  | "kundentyp"
+  | "status"
+  | "lat"
+  | "lon"
+  | "stadt"
+  | "land"
+  | "value"
+  | "osm"
+  | "telefon"
+  | "website"
+>;
+
+export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
+  const supabase = createServerClient();
+
+  const { data, error } = await supabase
+    .from("companies")
+    .select(`
+      id,
+      firmenname,
+      kundentyp,
+      status,
+      lat,
+      lon,
+      stadt,
+      land,
+      value,
+      osm,
+      telefon,
+      website
+    `)
+    .eq("user_id", userId)
+    .not("lat", "is", null)
+    .not("lon", "is", null)
+    .order("firmenname", { ascending: true });
+
+  if (error) throw handleSupabaseError(error, "Failed to load companies for OpenMap");
+
+  console.log(`[OpenMap] Loaded ${data?.length ?? 0} companies with geo data`);
+  return data ?? [];
 }
