@@ -30,17 +30,23 @@ export const getOsmPoiIcon = () => {
   });
 };
 
-export async function fetchOsmPois(bounds: L.LatLngBounds, activeCategories: string[] = Object.keys(poiCategories)): Promise<{ pois: any[], totalFound: number }> {
+export async function fetchOsmPois(
+  bounds: L.LatLngBounds,
+  activeCategories: string[] = Object.keys(poiCategories),
+): Promise<{ pois: any[]; totalFound: number }> {
   const bbox = bounds.toBBoxString(); // "west,south,east,north"
   const [west, south, east, north] = bbox.split(",").map(Number);
   const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
   // Build tag groups from active poiCategories
   const tagGroups: Record<string, string[]> = {};
-  const activePoiCategories = activeCategories.reduce((acc, key) => {
-    if (poiCategories[key]) acc[key] = poiCategories[key];
-    return acc;
-  }, {} as typeof poiCategories);
+  const activePoiCategories = activeCategories.reduce(
+    (acc, key) => {
+      if (poiCategories[key]) acc[key] = poiCategories[key];
+      return acc;
+    },
+    {} as typeof poiCategories,
+  );
 
   for (const category of Object.values(activePoiCategories)) {
     for (const tag of category.tags) {
@@ -57,13 +63,15 @@ export async function fetchOsmPois(bounds: L.LatLngBounds, activeCategories: str
   }
 
   // Create conditions for each tag group
-  const conditions = Object.entries(tagGroups).map(([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`);
+  const conditions = Object.entries(tagGroups).map(
+    ([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`,
+  );
 
   const query = `
     [out:json][timeout:45];
     (
-${conditions.map(cond => `      node${cond};`).join("\n")}
-${conditions.map(cond => `      way${cond};`).join("\n")}
+${conditions.map((cond) => `      node${cond};`).join("\n")}
+${conditions.map((cond) => `      way${cond};`).join("\n")}
     );
     out center;
   `;
@@ -107,7 +115,7 @@ ${conditions.map(cond => `      way${cond};`).join("\n")}
 
       return { pois: deduplicated, totalFound: deduplicated.length };
     } catch (err: any) {
-      if (err.name === 'AbortError') {
+      if (err.name === "AbortError") {
         console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
         continue;
       }
