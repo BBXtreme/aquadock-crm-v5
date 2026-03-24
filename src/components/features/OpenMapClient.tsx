@@ -7,28 +7,28 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 // import "react-leaflet-markercluster/dist/styles.min.css";
 import L from "leaflet";
 import { Info, Loader2, MapPin, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
-import { importOsmPoi } from "@/lib/supabase/services/companies";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois } from "@/lib/utils/map";
 
 const getStatusIcon = (status?: string) => {
   const colorMap: Record<string, string> = {
-    lead: "#f59e0b",        // amber
-    qualifiziert: "#3b82f6", // blue
-    akquise: "#8b5cf6",     // violet
-    angebot: "#ec4899",     // pink
-    gewonnen: "#10b981",    // emerald
-    verloren: "#ef4444",    // red
-    kunde: "#14b8a6",       // teal
-    partner: "#6366f1",     // indigo
-    inaktiv: "#6b7280",     // gray
+    lead: "#808080", // gray
+    qualifiziert: "#f59e0b", // orange
+    akquise: "#8b5cf6", // violet
+    angebot: "#ec4899", // pink
+    gewonnen: "#10b981", // emerald
+    verloren: "#ef4444", // red
+    kunde: "#14b8a6", // teal
+    partner: "#6366f1", // indigo
+    inaktiv: "#6b7280", // gray
   };
 
   const color = colorMap[status?.toLowerCase() || "lead"] || "#6b7280";
@@ -181,8 +181,8 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
   }, []);
 
   const tileUrl = isDarkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"     // Carto Dark Matter
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";   // Carto Positron (clean light)
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" // Carto Dark Matter
+    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"; // Carto Positron (clean light)
 
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
