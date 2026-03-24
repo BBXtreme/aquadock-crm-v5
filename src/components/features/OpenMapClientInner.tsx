@@ -172,15 +172,17 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
 
   function MapController({ companies }: { companies: CompanyForOpenMap[] }) {
     const map = useMap();
+    const hasFitted = useRef(false);
 
     useEffect(() => {
-      if (companies.length === 0) return;
+      if (hasFitted.current || companies.length === 0) return;
       const validCoords = companies
         .filter((c) => typeof c.lat === "number" && typeof c.lon === "number")
         .map((c) => [c.lat!, c.lon!] as [number, number]);
       if (validCoords.length === 0) return;
       const bounds = L.latLngBounds(validCoords);
       map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+      hasFitted.current = true;
     }, [companies, map]);
 
     return null;
@@ -232,7 +234,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
       </div>
 
       <MapContainer
-        key={isDarkMode ? "dark" : "light"}
         ref={mapRef}
         center={[51.1657, 10.4515]}
         zoom={6}
