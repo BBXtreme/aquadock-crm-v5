@@ -61,12 +61,12 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     onError: (err: any) => toast.error("Import fehlgeschlagen", { description: err.message }),
   });
 
-  const loadOsmPois = async () => {
+  const loadOsmPois = async (force = false) => {
     if (!mapRef.current) return;
 
     const zoom = mapRef.current.getZoom();
     setCurrentZoom(zoom);
-    if (zoom < 12) return;
+    if (zoom < 12 && !force) return;
 
     if (activeCategories.length === 0) return;
 
@@ -396,15 +396,11 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
             } else {
               console.log("[OpenMap] Toggle ON");
               setShowOsm(true);
-              loadOsmPois();
+              loadOsmPois(true);
             }
           }}
           disabled={loadingOsm}
-          className={
-            showOsm
-              ? "bg-primary border shadow-md hover:bg-primary/80 text-foreground"
-              : "bg-card border shadow-md hover:bg-card text-foreground"
-          }
+          className="bg-card border shadow-md hover:bg-card text-foreground"
         >
           {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
