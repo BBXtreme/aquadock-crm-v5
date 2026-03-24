@@ -1,32 +1,20 @@
-import dynamic from "next/dynamic";
+import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
+import { OpenMapClient } from "@/components/features/OpenMapClient";
+import { createServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { createServerClient } from "@/lib/supabase/server";
-import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
-
-const DynamicOpenMap = dynamic(() => import("@/components/features/OpenMap"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-muted/30">
-      <div className="animate-pulse text-muted-foreground">OpenMap wird geladen...</div>
-    </div>
-  ),
-});
-
 export default async function OpenMapPage() {
-  const _cookieStore = cookies();
+  const cookieStore = cookies();
   const supabase = createServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/");
   }
 
-  let companies = [];
+  let companies: any[] = [];
 
   try {
     companies = await getCompaniesForOpenMap(user.id);
@@ -36,7 +24,7 @@ export default async function OpenMapPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full relative">
-      <DynamicOpenMap initialCompanies={companies} />
+      <OpenMapClient initialCompanies={companies} />
     </div>
   );
 }
