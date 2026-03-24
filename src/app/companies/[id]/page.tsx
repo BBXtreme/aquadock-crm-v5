@@ -283,7 +283,7 @@ export default function CompanyDetailPage() {
     if (confirm("Are you sure you want to delete this contact?")) {
       try {
         const supabase = createClient();
-        await deleteContact(contactId, supabase);
+        await supabase.from("contacts").delete().eq("id", contactId);
         queryClient.invalidateQueries({ queryKey: ["contacts", id] });
       } catch (_error) {
         toast.error("Failed to delete contact");
@@ -295,7 +295,7 @@ export default function CompanyDetailPage() {
     if (confirm("Are you sure you want to delete this reminder?")) {
       try {
         const supabase = createClient();
-        await deleteReminder(reminderId, supabase);
+        await supabase.from("reminders").delete().eq("id", reminderId);
         queryClient.invalidateQueries({ queryKey: ["reminders", id] });
       } catch (_error) {
         toast.error("Failed to delete reminder");
@@ -456,7 +456,9 @@ export default function CompanyDetailPage() {
         >
           {company.status}
         </Badge>
-        {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
+        {company.kundentyp && (
+          <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
+        )}
         {company.firmentyp && (
           <Badge variant="outline">
             {company.firmentyp === "kette" ? "Chain" : company.firmentyp === "einzeln" ? "Single" : "—"}
@@ -849,7 +851,9 @@ export default function CompanyDetailPage() {
                       </Badge>
                     </td>
                     <td>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                        {reminder.status}
+                      </Badge>
                     </td>
                     <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">
@@ -902,8 +906,8 @@ export default function CompanyDetailPage() {
               <Plus className="h-4 w-4 mr-2" />
               New Timeline
             </Button>
-          </CardHeader>
-        </CardContent>
+          </div>
+        </CardHeader>
         <CardContent>
           {timeline.length === 0 ? (
             <p className="text-gray-500">No timeline entries for this company.</p>
