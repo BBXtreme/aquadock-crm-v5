@@ -17,7 +17,6 @@ import CompanyEditForm from "@/components/features/CompanyEditForm";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ReminderCreateForm from "@/components/features/ReminderCreateForm";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
-import AppLayout from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -222,10 +221,7 @@ export default function CompanyDetailPage() {
     queryKey: ["timeline", id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase
-        .from("timeline")
-        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)")
-        .eq("company_id", id);
+      const { data } = await supabase.from("timeline").select("*, companies!company_id(firmenname), contacts!contact_id(vorname, nachname)").eq("company_id", id);
       return data || [];
     },
   });
@@ -325,83 +321,75 @@ export default function CompanyDetailPage() {
 
   if (isLoading) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/3" />
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-1/3" />
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">{error.message}</p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                const referrer = document.referrer || "";
-                if (referrer.includes("/contacts")) {
-                  router.back(); // returns to contacts or contact detail
-                } else {
-                  router.push("/companies"); // fallback
-                }
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
-            </Button>
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+          <p className="text-gray-600">{error.message}</p>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const referrer = document.referrer || "";
+              if (referrer.includes("/contacts")) {
+                router.back(); // returns to contacts or contact detail
+              } else {
+                router.push("/companies"); // fallback
+              }
+            }}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+          </Button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!company) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
-            <Button
-              variant="outline"
-              onClick={() => {
-                const referrer = document.referrer || "";
-                if (referrer.includes("/contacts")) {
-                  router.back(); // return to contacts or contact detail
-                } else {
-                  router.push("/companies"); // fallback
-                }
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </Button>
-          </div>
+      <div className="container mx-auto p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Company Not Found</h1>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const referrer = document.referrer || "";
+              if (referrer.includes("/contacts")) {
+                router.back(); // return to contacts or contact detail
+              } else {
+                router.push("/companies"); // fallback
+              }
+            }}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (edit) {
     return (
-      <AppLayout>
-        <div className="container mx-auto p-6">
-          <CompanyEditForm
-            company={company}
-            onSuccess={() => {
-              setEdit(false);
-              queryClient.invalidateQueries({ queryKey: ["company", id] });
-            }}
-          />
-        </div>
-      </AppLayout>
+      <div className="container mx-auto p-6">
+        <CompanyEditForm
+          company={company}
+          onSuccess={() => {
+            setEdit(false);
+            queryClient.invalidateQueries({ queryKey: ["company", id] });
+          }}
+        />
+      </div>
     );
   }
 
@@ -414,736 +402,734 @@ export default function CompanyDetailPage() {
   ).length;
 
   return (
-    <AppLayout>
-      <div className="container mx-auto p-6 space-y-8">
-        {/* Breadcrumbs */}
-        <nav className="text-sm text-gray-600">
-          <Link href="/companies" className="hover:underline">
-            Companies
-          </Link>{" "}
-          &gt; {company.firmenname}
-        </nav>
+    <div className="container mx-auto p-6 space-y-8">
+      {/* Breadcrumbs */}
+      <nav className="text-sm text-gray-600">
+        <Link href="/companies" className="hover:underline">
+          Companies
+        </Link>{" "}
+        &gt; {company.firmenname}
+      </nav>
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{company.firmenname}</h1>
-            {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setPreselectedCompanyId(company.id);
-                setTimelineDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Timeline
-            </Button>
-            <Button onClick={() => setEdit(true)} variant="outline" size="sm">
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button onClick={handleDeleteCompany} variant="destructive" size="sm">
-              <Trash className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => router.push("/companies")} size="sm">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{company.firmenname}</h1>
+          {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
         </div>
-
-        {/* Status and Badges */}
-        <div className="flex items-center gap-4">
-          <Badge
-            className={cn(
-              company.status === "won" && "bg-emerald-600 text-white",
-              company.status === "lost" && "bg-rose-600 text-white",
-              company.status === "lead" && "bg-amber-600 text-white",
-              !["won", "lost", "lead"].includes(company.status) && "bg-zinc-500 text-white",
-            )}
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setPreselectedCompanyId(company.id);
+              setTimelineDialogOpen(true);
+            }}
           >
-            {company.status}
+            <Plus className="h-4 w-4 mr-2" />
+            Add Timeline
+          </Button>
+          <Button onClick={() => setEdit(true)} variant="outline" size="sm">
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleDeleteCompany} variant="destructive" size="sm">
+            <Trash className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => router.push("/companies")} size="sm">
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Status and Badges */}
+      <div className="flex items-center gap-4">
+        <Badge
+          className={cn(
+            company.status === "won" && "bg-emerald-600 text-white",
+            company.status === "lost" && "bg-rose-600 text-white",
+            company.status === "lead" && "bg-amber-600 text-white",
+            !["won", "lost", "lead"].includes(company.status) && "bg-zinc-500 text-white",
+          )}
+        >
+          {company.status}
+        </Badge>
+        {company.kundentyp && (
+          <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
+        )}
+        {company.firmentyp && (
+          <Badge variant="outline">
+            {company.firmentyp === "kette" ? "Chain" : company.firmentyp === "einzeln" ? "Single" : "—"}
           </Badge>
-          {company.kundentyp && (
-            <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>
-          )}
-          {company.firmentyp && (
-            <Badge variant="outline">
-              {company.firmentyp === "kette" ? "Chain" : company.firmentyp === "einzeln" ? "Single" : "—"}
-            </Badge>
-          )}
-          {company.wassertyp && (
-            <Badge variant="outline">
-              <Waves className="w-3 h-3 mr-1" />
-              {company.wassertyp}
-            </Badge>
-          )}
-          {company.created_at && (
-            <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
-          )}
-          {company.updated_at && (
-            <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
-          )}
-        </div>
+        )}
+        {company.wassertyp && (
+          <Badge variant="outline">
+            <Waves className="w-3 h-3 mr-1" />
+            {company.wassertyp}
+          </Badge>
+        )}
+        {company.created_at && (
+          <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
+        )}
+        {company.updated_at && (
+          <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+        )}
+      </div>
 
-        {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">{totalContacts}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">{primaryContacts}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl">{openReminders}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="font-medium text-sm">Overdue Reminders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="font-bold text-2xl text-red-600">{overdueReminders}</div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Total Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl">{totalContacts}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Primary Contacts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl">{primaryContacts}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl">{openReminders}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-medium text-sm">Overdue Reminders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="font-bold text-2xl text-red-600">{overdueReminders}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Sections in two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Firmendaten */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="w-5 h-5" />
-                  Firmendaten
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setEditFirmendaten(true)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Firmenname</label>
-                  <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Rechtsform</label>
-                  <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Kundentyp</label>
-                  <p className="text-sm text-gray-900">
-                    {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : "—"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Firmentyp</label>
-                  <p className="text-sm text-gray-900">
-                    {company.firmentyp === "kette" ? "Kette" : company.firmentyp === "einzeln" ? "Einzelbetrieb" : "—"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Website</label>
-                  <p className="text-sm text-gray-900">
-                    {company.website ? (
-                      <a
-                        href={company.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {company.website}
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Telefon</label>
-                  <p className="text-sm text-gray-900">
-                    {company.telefon ? (
-                      <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
-                        {company.telefon}
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Email</label>
-                  <p className="text-sm text-gray-900">
-                    {company.email ? (
-                      <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
-                        {company.email}
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Adresse */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Adresse
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setEditAdresse(true)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Strasse</label>
-                  <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">PLZ</label>
-                  <p className="text-sm text-gray-900">{company.plz || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Stadt</label>
-                  <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Bundesland</label>
-                  <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Land</label>
-                  <p className="text-sm text-gray-900">{company.land || "—"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* AquaDock Daten */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Waves className="w-5 h-5" />
-                  AquaDock Daten
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setEditAquaDock(true)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
-                  <p className="text-sm text-gray-900">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Wassertyp</label>
-                  <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Latitude</label>
-                  <p className="text-sm text-gray-900">{company.lat || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Longitude</label>
-                  <p className="text-sm text-gray-900">{company.lon || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">OSM</label>
-                  <p className="text-sm text-gray-900">
-                    {company.osm ? (
-                      <a
-                        href={company.osm}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {company.osm}
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* CRM Informationen */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart className="w-5 h-5" />
-                  CRM Informationen
-                </CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setEditCRM(true)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Status</label>
-                  <p className="text-sm text-gray-900">{company.status || "—"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Value</label>
-                  <p className="text-sm text-gray-900">
-                    {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
-                  </p>
-                </div>
-                <div className="lg:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">Notes</label>
-                  <p className="text-sm text-gray-900">{company.notes || "—"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Linked Contacts */}
+      {/* Sections in two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Firmendaten */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Linked Contacts ({contacts.length})
+                <Building className="w-5 h-5" />
+                Firmendaten
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setAddContactDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Contact
+              <Button variant="ghost" size="sm" onClick={() => setEditFirmendaten(true)}>
+                <Edit className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            {contacts.length === 0 ? (
-              <p className="text-gray-500">No contacts linked to this company.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Name</th>
-                    <th className="text-left">Position</th>
-                    <th className="text-left">Email</th>
-                    <th className="text-left">Phone</th>
-                    <th className="text-left">Primary</th>
-                    <th className="text-right w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contacts.map((contact) => (
-                    <tr key={contact.id}>
-                      <td>
-                        <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                          {contact.vorname} {contact.nachname}
-                        </Link>
-                      </td>
-                      <td>{contact.position || "—"}</td>
-                      <td>{contact.email || "—"}</td>
-                      <td>{contact.telefon || "—"}</td>
-                      <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setEditContact(contact);
-                              setContactDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteContact(contact.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Firmenname</label>
+                <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Rechtsform</label>
+                <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Kundentyp</label>
+                <p className="text-sm text-gray-900">
+                  {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : "—"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Firmentyp</label>
+                <p className="text-sm text-gray-900">
+                  {company.firmentyp === "kette" ? "Kette" : company.firmentyp === "einzeln" ? "Einzelbetrieb" : "—"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Website</label>
+                <p className="text-sm text-gray-900">
+                  {company.website ? (
+                    <a
+                      href={company.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {company.website}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Telefon</label>
+                <p className="text-sm text-gray-900">
+                  {company.telefon ? (
+                    <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
+                      {company.telefon}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <p className="text-sm text-gray-900">
+                  {company.email ? (
+                    <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
+                      {company.email}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Reminders */}
+        {/* Adresse */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5" />
-                Reminders ({reminders.length})
+                <MapPin className="w-5 h-5" />
+                Adresse
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setAddReminderDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Reminder
+              <Button variant="ghost" size="sm" onClick={() => setEditAdresse(true)}>
+                <Edit className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
-            {reminders.length === 0 ? (
-              <p className="text-gray-500">No reminders for this company.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Title</th>
-                    <th className="text-left">Due Date</th>
-                    <th className="text-left">Priority</th>
-                    <th className="text-left">Status</th>
-                    <th className="text-left">Assigned To</th>
-                    <th className="text-right w-24">Actions</th>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Strasse</label>
+                <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">PLZ</label>
+                <p className="text-sm text-gray-900">{company.plz || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Stadt</label>
+                <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Bundesland</label>
+                <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Land</label>
+                <p className="text-sm text-gray-900">{company.land || "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AquaDock Daten */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Waves className="w-5 h-5" />
+                AquaDock Daten
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setEditAquaDock(true)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
+                <p className="text-sm text-gray-900">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Wassertyp</label>
+                <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Latitude</label>
+                <p className="text-sm text-gray-900">{company.lat || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Longitude</label>
+                <p className="text-sm text-gray-900">{company.lon || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">OSM</label>
+                <p className="text-sm text-gray-900">
+                  {company.osm ? (
+                    <a
+                      href={company.osm}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {company.osm}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CRM Informationen */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <BarChart className="w-5 h-5" />
+                CRM Informationen
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setEditCRM(true)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <p className="text-sm text-gray-900">{company.status || "—"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Value</label>
+                <p className="text-sm text-gray-900">
+                  {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
+                </p>
+              </div>
+              <div className="lg:col-span-2">
+                <label className="text-sm font-medium text-gray-700">Notes</label>
+                <p className="text-sm text-gray-900">{company.notes || "—"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Linked Contacts */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Linked Contacts ({contacts.length})
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setAddContactDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Contact
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {contacts.length === 0 ? (
+            <p className="text-gray-500">No contacts linked to this company.</p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left">Name</th>
+                  <th className="text-left">Position</th>
+                  <th className="text-left">Email</th>
+                  <th className="text-left">Phone</th>
+                  <th className="text-left">Primary</th>
+                  <th className="text-right w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contacts.map((contact) => (
+                  <tr key={contact.id}>
+                    <td>
+                      <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                        {contact.vorname} {contact.nachname}
+                      </Link>
+                    </td>
+                    <td>{contact.position || "—"}</td>
+                    <td>{contact.email || "—"}</td>
+                    <td>{contact.telefon || "—"}</td>
+                    <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
+                    <td className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditContact(contact);
+                            setContactDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteContact(contact.id)}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {reminders.map((reminder) => (
-                    <tr key={reminder.id}>
-                      <td className="font-medium">
-                        <button
-                          className="text-primary hover:underline cursor-pointer"
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reminders */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              Reminders ({reminders.length})
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setAddReminderDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Reminder
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {reminders.length === 0 ? (
+            <p className="text-gray-500">No reminders for this company.</p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left">Title</th>
+                  <th className="text-left">Due Date</th>
+                  <th className="text-left">Priority</th>
+                  <th className="text-left">Status</th>
+                  <th className="text-left">Assigned To</th>
+                  <th className="text-right w-24">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reminders.map((reminder) => (
+                  <tr key={reminder.id}>
+                    <td className="font-medium">
+                      <button
+                        className="text-primary hover:underline cursor-pointer"
+                        onClick={() => {
+                          setEditReminder(reminder);
+                          setReminderDialogOpen(true);
+                        }}
+                      >
+                        {reminder.title}
+                      </button>
+                    </td>
+                    <td>{new Date(reminder.due_date).toLocaleDateString()}</td>
+                    <td>
+                      <Badge
+                        className={
+                          reminder.priority === "hoch"
+                            ? "bg-orange-500 text-white"
+                            : reminder.priority === "normal"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-500 text-white"
+                        }
+                      >
+                        {reminder.priority}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                    </td>
+                    <td>{reminder.assigned_to || "—"}</td>
+                    <td className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => {
                             setEditReminder(reminder);
                             setReminderDialogOpen(true);
                           }}
                         >
-                          {reminder.title}
-                        </button>
-                      </td>
-                      <td>{new Date(reminder.due_date).toLocaleDateString()}</td>
-                      <td>
-                        <Badge
-                          className={
-                            reminder.priority === "hoch"
-                              ? "bg-orange-500 text-white"
-                              : reminder.priority === "normal"
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-500 text-white"
-                          }
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => handleDeleteReminder(reminder.id)}
                         >
-                          {reminder.priority}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
-                      </td>
-                      <td>{reminder.assigned_to || "—"}</td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setEditReminder(reminder);
-                              setReminderDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteReminder(reminder.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Timeline */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Timeline ({timeline.length})
-              </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setTimelineDialogOpen(true);
-                  setPreselectedCompanyId(company.id);
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Timeline
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {timeline.length === 0 ? (
-              <p className="text-gray-500">No timeline entries for this company.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Date</th>
-                    <th className="text-left">Event</th>
-                    <th className="text-left">Company</th>
-                    <th className="text-left">Contact</th>
-                    <th className="text-left">User</th>
-                    <th className="text-right">Actions</th>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {timeline.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>
-                        {entry.created_at
-                          ? new Date(entry.created_at).toLocaleString("de-DE", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })
-                          : "—"}
-                      </td>
-                      <td>
-                        {entry.title} ({entry.activity_type})
-                      </td>
-                      <td>{entry.companies?.firmenname || "—"}</td>
-                      <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
-                      <td>{entry.user_name || "—"}</td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setEditEntry(entry);
-                              setTimelineDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            onClick={() => {
-                              if (confirm("Delete this timeline entry?")) {
-                                deleteTimelineMutation.mutate(entry.id);
-                              }
-                            }}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </CardContent>
-        </Card>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Edit Firmendaten Dialog */}
-        <Dialog open={editFirmendaten} onOpenChange={setEditFirmendaten}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Firmendaten</DialogTitle>
-            </DialogHeader>
-            <FirmendatenForm
-              company={company}
-              onSuccess={() => {
-                setEditFirmendaten(false);
-                queryClient.invalidateQueries({ queryKey: ["company", id] });
+      {/* Timeline */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Timeline ({timeline.length})
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setTimelineDialogOpen(true);
+                setPreselectedCompanyId(company.id);
               }}
-            />
-          </DialogContent>
-        </Dialog>
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              New Timeline
+            </Button>
+          </CardHeader>
+        </CardContent>
+        <CardContent>
+          {timeline.length === 0 ? (
+            <p className="text-gray-500">No timeline entries for this company.</p>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-left">Date</th>
+                  <th className="text-left">Event</th>
+                  <th className="text-left">Company</th>
+                  <th className="text-left">Contact</th>
+                  <th className="text-left">User</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeline.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>
+                      {entry.created_at
+                        ? new Date(entry.created_at).toLocaleString("de-DE", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })
+                        : "—"}
+                    </td>
+                    <td>
+                      {entry.title} ({entry.activity_type})
+                    </td>
+                    <td>{entry.companies?.firmenname || "—"}</td>
+                    <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
+                    <td>{entry.user_name || "—"}</td>
+                    <td className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setEditEntry(entry);
+                            setTimelineDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            if (confirm("Delete this timeline entry?")) {
+                              deleteTimelineMutation.mutate(entry.id);
+                            }
+                          }}
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
 
-        {/* Edit Adresse Dialog */}
-        <Dialog open={editAdresse} onOpenChange={setEditAdresse}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Adresse</DialogTitle>
-            </DialogHeader>
-            <AdresseForm
-              company={company}
-              onSuccess={() => {
-                setEditAdresse(false);
-                queryClient.invalidateQueries({ queryKey: ["company", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Edit Firmendaten Dialog */}
+      <Dialog open={editFirmendaten} onOpenChange={setEditFirmendaten}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Firmendaten</DialogTitle>
+          </DialogHeader>
+          <FirmendatenForm
+            company={company}
+            onSuccess={() => {
+              setEditFirmendaten(false);
+              queryClient.invalidateQueries({ queryKey: ["company", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Edit AquaDock Dialog */}
-        <Dialog open={editAquaDock} onOpenChange={setEditAquaDock}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit AquaDock Daten</DialogTitle>
-            </DialogHeader>
-            <AquaDockForm
-              company={company}
-              onSuccess={() => {
-                setEditAquaDock(false);
-                queryClient.invalidateQueries({ queryKey: ["company", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Edit Adresse Dialog */}
+      <Dialog open={editAdresse} onOpenChange={setEditAdresse}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Adresse</DialogTitle>
+          </DialogHeader>
+          <AdresseForm
+            company={company}
+            onSuccess={() => {
+              setEditAdresse(false);
+              queryClient.invalidateQueries({ queryKey: ["company", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Edit CRM Dialog */}
-        <Dialog open={editCRM} onOpenChange={setEditCRM}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit CRM Informationen</DialogTitle>
-            </DialogHeader>
-            <CRMForm
-              company={company}
-              onSuccess={() => {
-                setEditCRM(false);
-                queryClient.invalidateQueries({ queryKey: ["company", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Edit AquaDock Dialog */}
+      <Dialog open={editAquaDock} onOpenChange={setEditAquaDock}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit AquaDock Daten</DialogTitle>
+          </DialogHeader>
+          <AquaDockForm
+            company={company}
+            onSuccess={() => {
+              setEditAquaDock(false);
+              queryClient.invalidateQueries({ queryKey: ["company", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Add Contact Dialog */}
-        <Dialog open={addContactDialog} onOpenChange={setAddContactDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Contact to {company.firmenname}</DialogTitle>
-            </DialogHeader>
-            <ContactCreateForm
-              companyId={company.id}
-              onSuccess={() => {
-                setAddContactDialog(false);
-                queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Edit CRM Dialog */}
+      <Dialog open={editCRM} onOpenChange={setEditCRM}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit CRM Informationen</DialogTitle>
+          </DialogHeader>
+          <CRMForm
+            company={company}
+            onSuccess={() => {
+              setEditCRM(false);
+              queryClient.invalidateQueries({ queryKey: ["company", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Add Reminder Dialog */}
-        <Dialog open={addReminderDialog} onOpenChange={setAddReminderDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Reminder for {company.firmenname}</DialogTitle>
-            </DialogHeader>
-            <ReminderCreateForm
-              companyId={company.id}
-              onSuccess={() => {
-                setAddReminderDialog(false);
-                queryClient.invalidateQueries({ queryKey: ["reminders", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Add Contact Dialog */}
+      <Dialog open={addContactDialog} onOpenChange={setAddContactDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Contact to {company.firmenname}</DialogTitle>
+          </DialogHeader>
+          <ContactCreateForm
+            companyId={company.id}
+            onSuccess={() => {
+              setAddContactDialog(false);
+              queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Edit Contact Dialog */}
-        <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Contact</DialogTitle>
-            </DialogHeader>
-            <ContactCreateForm
-              companyId={company.id}
-              contact={editContact}
-              onSuccess={() => {
-                setContactDialogOpen(false);
-                queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Add Reminder Dialog */}
+      <Dialog open={addReminderDialog} onOpenChange={setAddReminderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Reminder for {company.firmenname}</DialogTitle>
+          </DialogHeader>
+          <ReminderCreateForm
+            companyId={company.id}
+            onSuccess={() => {
+              setAddReminderDialog(false);
+              queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Edit Reminder Dialog */}
-        <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Reminder</DialogTitle>
-            </DialogHeader>
-            <ReminderCreateForm
-              companyId={company.id}
-              reminder={editReminder}
-              onSuccess={() => {
-                setReminderDialogOpen(false);
-                queryClient.invalidateQueries({ queryKey: ["reminders", id] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {/* Edit Contact Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact</DialogTitle>
+          </DialogHeader>
+          <ContactCreateForm
+            companyId={company.id}
+            contact={editContact}
+            onSuccess={() => {
+              setContactDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
-        {/* Add Timeline Dialog */}
-        <Dialog
-          open={timelineDialogOpen}
-          onOpenChange={(open) => {
-            setTimelineDialogOpen(open);
-            if (!open) {
-              setPreselectedCompanyId(null);
-              setEditEntry(null);
-            }
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
-            </DialogHeader>
-            <TimelineEntryForm
-              onSubmit={createTimelineMutation.mutate}
-              isSubmitting={createTimelineMutation.isPending}
-              companies={[]} // vorerst leer – preselect übernimmt
-              contacts={linkedContacts}
-              editEntry={editEntry}
-              preselectedCompanyId={preselectedCompanyId}
-              defaultValues={{
-                company_id: company?.id || null,
-                contact_id: "none",
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-    </AppLayout>
+      {/* Edit Reminder Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Reminder</DialogTitle>
+          </DialogHeader>
+          <ReminderCreateForm
+            companyId={company.id}
+            reminder={editReminder}
+            onSuccess={() => {
+              setReminderDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Timeline Dialog */}
+      <Dialog
+        open={timelineDialogOpen}
+        onOpenChange={(open) => {
+          setTimelineDialogOpen(open);
+          if (!open) {
+            setPreselectedCompanyId(null);
+            setEditEntry(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Neuer Timeline-Eintrag für {company?.firmenname}</DialogTitle>
+          </DialogHeader>
+          <TimelineEntryForm
+            onSubmit={createTimelineMutation.mutate}
+            isSubmitting={createTimelineMutation.isPending}
+            companies={[]} // vorerst leer – preselect übernimmt
+            contacts={linkedContacts}
+            editEntry={editEntry}
+            preselectedCompanyId={preselectedCompanyId}
+            defaultValues={{
+              company_id: company?.id || null,
+              contact_id: "none",
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
