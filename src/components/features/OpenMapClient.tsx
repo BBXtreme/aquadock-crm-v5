@@ -306,7 +306,7 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
 
       {/* Legend */}
       {showLegend && (
-        <div className="absolute top-20 right-4 z-[1001] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
+        <div className="absolute top-28 right-4 z-[1002] bg-background/95 backdrop-blur-sm border rounded-xl p-4 shadow-xl min-w-[200px]">
           <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <Info className="h-4 w-4" />
             Status Legende
@@ -314,7 +314,10 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
           <div className="space-y-2 text-sm">
             {Object.entries(statusLabels).map(([key, label]) => (
               <div key={key} className="flex items-center gap-3">
-                <div className="w-5 h-5 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors[key] }} />
+                <div 
+                  className="w-5 h-5 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: statusColors[key] }} 
+                />
                 <span>{label}</span>
               </div>
             ))}
