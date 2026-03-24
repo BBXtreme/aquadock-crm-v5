@@ -63,6 +63,10 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
   });
 
   const loadOsmPois = async () => {
+    if (!mapRef.current) return;
+    const zoom = mapRef.current.getZoom();
+    if (zoom < 12) return;
+
     if (activeCategories.length === 0) {
       setFilterMessage("Please select at least one POI category");
       return;
@@ -95,9 +99,6 @@ export default function OpenMapClientInnerComponent({ initialCompanies }: { init
     const handleMapChange = () => {
       const now = Date.now();
       if (now - lastLoadTime < 800) return;
-
-      const zoom = mapRef.current.getZoom();
-      if (zoom < 12) return;
 
       setLastLoadTime(now);
       loadOsmPois();
