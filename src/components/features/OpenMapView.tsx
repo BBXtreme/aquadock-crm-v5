@@ -69,13 +69,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setCurrentZoom(zoom);
         if (zoom < 13) return;
 
-        // Improved cache key based on center of bounds (more stable on small pans)
+        // Improved cache key based on center (more stable for small pans)
         const bounds = map.getBounds();
         const centerLat = Math.round(bounds.getCenter().lat * 4) / 4;
         const centerLon = Math.round(bounds.getCenter().lng * 4) / 4;
         const key = `${centerLat},${centerLon}`;
 
-        // Simple expiration (10 minutes)
+        // Check cache with 10-minute expiration
         const now = Date.now();
         const cacheEntry = poiCache.current.get(key);
         if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
@@ -83,19 +83,19 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           return;
         }
 
-        // Cache miss - fetch new
+        // Cache miss → fetch new, keep old POIs visible
         setLoadingOsm(true);
         fetchOsmPois(bounds)
           .then((result) => {
             const pois = result.pois || [];
             poiCache.current.set(key, { pois, timestamp: now });
-            
-            // Keep cache size reasonable (LRU style)
+
+            // Limit cache size (simple LRU)
             if (poiCache.current.size > 30) {
               const firstKey = poiCache.current.keys().next().value;
               poiCache.current.delete(firstKey);
             }
-            
+
             setOsmPois(pois);
           })
           .catch((err) => console.error("POI load error:", err))
