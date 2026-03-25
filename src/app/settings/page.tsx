@@ -392,15 +392,6 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-            <div className="space-y-2 pt-4 border-t">
-              <Label>Last / Current Overpass Query</Label>
-              <Textarea 
-                value={lastQuery || "No query generated yet. Zoom in on the map to generate one."} 
-                readOnly 
-                rows={6}
-                className="font-mono text-xs bg-muted/50"
-              />
-            </div>
             <div className="flex space-x-2">
               <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
                 {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
@@ -410,12 +401,6 @@ export default function SettingsPage() {
                 Clear POI Cache
               </Button>
             </div>
-            {lastQuery && (
-              <div className="space-y-2">
-                <Label>Last Successful Query</Label>
-                <Textarea value={lastQuery} readOnly rows={3} />
-              </div>
-            )}
           </CardContent>
         </Card>
 
