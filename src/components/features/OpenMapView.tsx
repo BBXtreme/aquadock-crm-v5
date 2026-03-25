@@ -29,6 +29,7 @@ interface CacheEntry {
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<OsmPoi[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -132,34 +133,35 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       .finally(() => setLoadingOsm(false));
   }, [autoLoadPois]);
 
-  // Set up map event listeners
+  // Set up map event listeners when map is ready
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
+    if (!mapReady || !mapRef.current) return;
 
     const debouncedHandleLoad = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(handleLoad, 500);
     };
 
-    map.on("zoomend", debouncedHandleLoad);
-    map.on("moveend", debouncedHandleLoad);
+    mapRef.current.on("zoomend", debouncedHandleLoad);
+    mapRef.current.on("moveend", debouncedHandleLoad);
 
     return () => {
-      map.off("zoomend", debouncedHandleLoad);
-      map.off("moveend", debouncedHandleLoad);
+      mapRef.current.off("zoomend", debouncedHandleLoad);
+      mapRef.current.off("moveend", debouncedHandleLoad);
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [handleLoad]);
+  }, [mapReady, handleLoad]);
 
-  // Initial load after mount delay
+  // Initial load after map is ready and delay
   useEffect(() => {
+    if (!mapReady) return;
+
     const timer = setTimeout(() => {
       handleLoad();
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [handleLoad]);
+  }, [mapReady, handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -204,6 +206,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
+        whenReady={() => setMapReady(true)}
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
