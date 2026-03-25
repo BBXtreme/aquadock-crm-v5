@@ -139,6 +139,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     }
   };
 
+  const clearPoiCache = () => {
+    poiCache.current.clear();
+    setOsmPois([]);
+    toast.success("POI cache cleared");
+  };
+
   if (!mounted) {
     return (
       <div className="h-full flex items-center justify-center">
