@@ -54,11 +54,6 @@ export default function SettingsPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // Mock auth - functionality will be implemented later
-    setUserId("dev-mock-user-11111111-2222-3333-4444-55555555555");
-  }, []);
-
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],
     queryFn: () => (userId ? getUserSettings(userId) : Promise.resolve([])),
@@ -108,13 +103,12 @@ export default function SettingsPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: SmtpForm) => {
-      if (!userId) throw new Error("User not authenticated");
       const promises = [
-        upsertUserSetting({ user_id: userId, key: "smtp_host", value: data.host }),
-        upsertUserSetting({ user_id: userId, key: "smtp_port", value: data.port.toString() }),
-        upsertUserSetting({ user_id: userId, key: "smtp_username", value: data.username }),
-        upsertUserSetting({ user_id: userId, key: "smtp_password", value: data.password }),
-        upsertUserSetting({ user_id: userId, key: "smtp_sender_name", value: data.senderName }),
+        upsertUserSetting({ user_id: userId!, key: "smtp_host", value: data.host }),
+        upsertUserSetting({ user_id: userId!, key: "smtp_port", value: data.port.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "smtp_username", value: data.username }),
+        upsertUserSetting({ user_id: userId!, key: "smtp_password", value: data.password }),
+        upsertUserSetting({ user_id: userId!, key: "smtp_sender_name", value: data.senderName }),
       ];
       await Promise.all(promises);
     },
@@ -129,12 +123,11 @@ export default function SettingsPage() {
 
   const openMapMutation = useMutation({
     mutationFn: async () => {
-      if (!userId) throw new Error("User not authenticated");
       const promises = [
-        upsertUserSetting({ user_id: userId, key: "overpass_endpoints", value: JSON.stringify(overpassEndpoints) }),
-        upsertUserSetting({ user_id: userId, key: "auto_load_pois", value: autoLoadPois.toString() }),
-        upsertUserSetting({ user_id: userId, key: "cache_duration", value: cacheDuration.toString() }),
-        upsertUserSetting({ user_id: userId, key: "max_cache_size", value: maxCacheSize.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "overpass_endpoints", value: JSON.stringify(overpassEndpoints) }),
+        upsertUserSetting({ user_id: userId!, key: "auto_load_pois", value: autoLoadPois.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "cache_duration", value: cacheDuration.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "max_cache_size", value: maxCacheSize.toString() }),
       ];
       await Promise.all(promises);
     },
@@ -426,7 +419,7 @@ export default function SettingsPage() {
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className "h-4 w-4" />}
                             </Button>
                           </div>
                         </FormControl>
