@@ -50,25 +50,49 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   }, []);
 
   useEffect(() => {
+    console.log("Setting up POI loading useEffect");
     const map = mapRef.current;
-    if (!map) return;
+    if (!map) {
+      console.log("Map not ready yet");
+      return;
+    }
 
     const handleLoad = () => {
       const zoom = map.getZoom();
+      console.log("handleLoad called, zoom:", zoom);
       if (zoom >= 12) {
+        console.log("Zoom >= 12, loading POIs");
         setLoadingOsm(true);
         fetchOsmPois(map.getBounds()).then(result => {
+          console.log("POI fetch result:", result);
           setOsmPois(result.pois || []);
-        }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
+        }).catch(err => {
+          console.error("POI load error:", err);
+        }).finally(() => {
+          console.log("POI loading finished");
+          setLoadingOsm(false);
+        });
+      } else {
+        console.log("Zoom < 12, not loading POIs");
       }
     };
 
     // Trigger on initial load and every zoom/move
-    const timer = setTimeout(handleLoad, 1000);
-    map.on("zoomend", handleLoad);
-    map.on("moveend", handleLoad);
+    const timer = setTimeout(() => {
+      console.log("Initial POI load timeout triggered");
+      handleLoad();
+    }, 1000);
+    map.on("zoomend", () => {
+      console.log("zoomend event");
+      handleLoad();
+    });
+    map.on("moveend", () => {
+      console.log("moveend event");
+      handleLoad();
+    });
 
     return () => {
+      console.log("Cleaning up POI loading");
       clearTimeout(timer);
       map.off("zoomend", handleLoad);
       map.off("moveend", handleLoad);
