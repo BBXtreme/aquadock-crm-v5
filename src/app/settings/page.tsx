@@ -345,19 +345,29 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications">Push Notifications</Label>
-              <Switch
+              <Toggle
                 id="notifications"
-                checked={notifications}
-                onCheckedChange={setNotifications}
-              />
+                pressed={notifications}
+                onPressedChange={(pressed) => setNotifications(pressed)}
+                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+              >
+                <div
+                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                />
+              </Toggle>
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="emailAlerts">Email Alerts</Label>
-              <Switch
+              <Toggle
                 id="emailAlerts"
-                checked={emailAlerts}
-                onCheckedChange={setEmailAlerts}
-              />
+                pressed={emailAlerts}
+                onPressedChange={(pressed) => setEmailAlerts(pressed)}
+                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+              >
+                <div
+                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                />
+              </Toggle>
             </div>
             <p className="text-muted-foreground text-sm">
               Configure how you receive notifications
@@ -495,11 +505,16 @@ export default function SettingsPage() {
               <Label htmlFor="autoLoadPois" className="text-sm font-medium">
                 Auto-load POIs at zoom 13+
               </Label>
-              <Switch
+              <Toggle
                 id="autoLoadPois"
-                checked={openMapSettings.autoLoadPois}
-                onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))}
-              />
+                pressed={openMapSettings.autoLoadPois}
+                onPressedChange={(pressed) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: pressed }))}
+                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+              >
+                <div
+                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                />
+              </Toggle>
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
