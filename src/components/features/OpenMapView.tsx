@@ -191,6 +191,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           onClick={resetView}
           className="bg-card border shadow-md text-foreground"
+          title="Show all companies on map"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
