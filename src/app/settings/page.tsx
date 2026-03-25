@@ -4,27 +4,57 @@ import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Settings, Shield, Trash2 } from "lucide-react";
+import {
+  Bell,
+  Eye,
+  EyeOff,
+  Mail,
+  MapPin,
+  Palette,
+  Send,
+  Settings,
+  Shield,
+  Trash2,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Toggle } from "@/components/ui/toggle";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser";
-import { getUserSettings, upsertUserSetting } from "@/lib/supabase/services/user-settings";
+import {
+  getUserSettings,
+  upsertUserSetting,
+} from "@/lib/supabase/services/user-settings";
 
 const smtpSchema = z.object({
   host: z.string().min(1, "Host is required"),
-  port: z.number().min(1, "Port must be at least 1").max(65535, "Port must be at most 65535"),
+  port: z
+    .number()
+    .min(1, "Port must be at least 1")
+    .max(65535, "Port must be at most 65535"),
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
   senderName: z.string().min(1, "Sender name is required"),
@@ -104,7 +134,9 @@ export default function SettingsPage() {
     const autoLoad = localStorage.getItem("openmap_autoLoadPois");
 
     setOpenMapSettings({
-      overpassEndpoints: endpoints ? JSON.parse(endpoints) : defaultOverpassEndpoints,
+      overpassEndpoints: endpoints
+        ? JSON.parse(endpoints)
+        : defaultOverpassEndpoints,
       autoLoadPois: autoLoad !== null ? autoLoad === "true" : true,
       cacheDuration: duration ? parseInt(duration, 10) : 10,
       maxCacheSize: maxSize ? parseInt(maxSize, 10) : 30,
@@ -132,15 +164,27 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settings) {
       form.reset({
-        host: (settings.find((s) => s.key === "smtp_host")?.value as string) || "",
-        port: parseInt((settings.find((s) => s.key === "smtp_port")?.value as string) || "587", 10),
-        username: (settings.find((s) => s.key === "smtp_username")?.value as string) || "",
-        password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
-        senderName: (settings.find((s) => s.key === "smtp_sender_name")?.value as string) || "",
+        host:
+          (settings.find((s) => s.key === "smtp_host")?.value as string) || "",
+        port: parseInt(
+          (settings.find((s) => s.key === "smtp_port")?.value as string) ||
+            "587",
+          10,
+        ),
+        username:
+          (settings.find((s) => s.key === "smtp_username")?.value as string) ||
+          "",
+        password:
+          (settings.find((s) => s.key === "smtp_password")?.value as string) ||
+          "",
+        senderName:
+          (settings.find((s) => s.key === "smtp_sender_name")
+            ?.value as string) || "",
       });
 
       // Load OpenMap settings
-      const endpointsStr = settings.find((s) => s.key === "overpass_endpoints")?.value as string;
+      const endpointsStr = settings.find((s) => s.key === "overpass_endpoints")
+        ?.value as string;
       if (endpointsStr) {
         try {
           setOpenMapSettings((prev) => ({
@@ -166,7 +210,8 @@ export default function SettingsPage() {
         ...prev,
         maxCacheSize: parseInt(size || "30", 10),
       }));
-      const query = settings.find((s) => s.key === "last_query")?.value as string;
+      const query = settings.find((s) => s.key === "last_query")
+        ?.value as string;
       setOpenMapSettings((prev) => ({ ...prev, lastQuery: query || "" }));
     }
 
@@ -218,11 +263,26 @@ export default function SettingsPage() {
   const openMapMutation = useMutation({
     mutationFn: async () => {
       // Mock saving maxCacheSize and cacheDuration
-      localStorage.setItem("openmap_maxCacheSize", openMapSettings.maxCacheSize.toString());
-      localStorage.setItem("openmap_cacheDuration", openMapSettings.cacheDuration.toString());
-      localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(openMapSettings.overpassEndpoints));
-      localStorage.setItem("openmap_autoLoadPois", openMapSettings.autoLoadPois.toString());
-      console.log("Saving overpassEndpoints:", openMapSettings.overpassEndpoints);
+      localStorage.setItem(
+        "openmap_maxCacheSize",
+        openMapSettings.maxCacheSize.toString(),
+      );
+      localStorage.setItem(
+        "openmap_cacheDuration",
+        openMapSettings.cacheDuration.toString(),
+      );
+      localStorage.setItem(
+        "openmap_overpassEndpoints",
+        JSON.stringify(openMapSettings.overpassEndpoints),
+      );
+      localStorage.setItem(
+        "openmap_autoLoadPois",
+        openMapSettings.autoLoadPois.toString(),
+      );
+      console.log(
+        "Saving overpassEndpoints:",
+        openMapSettings.overpassEndpoints,
+      );
       await Promise((resolve) => setTimeout(resolve, 500));
     },
     onSuccess: () => {
@@ -285,25 +345,29 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications">Push Notifications</Label>
-              <Toggle
+              <div
                 id="notifications"
-                pressed={notifications}
-                onPressedChange={(pressed) => setNotifications(pressed)}
-                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+                onClick={() => setNotifications(!notifications)}
+                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
+                data-state={notifications ? "on" : "off"}
               >
-                {notifications ? "ON" : "OFF"}
-              </Toggle>
+                <div
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
+                />
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="emailAlerts">Email Alerts</Label>
-              <Toggle
+              <div
                 id="emailAlerts"
-                pressed={emailAlerts}
-                onPressedChange={(pressed) => setEmailAlerts(pressed)}
-                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+                onClick={() => setEmailAlerts(!emailAlerts)}
+                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
+                data-state={emailAlerts ? "on" : "off"}
               >
-                {emailAlerts ? "ON" : "OFF"}
-              </Toggle>
+                <div
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
+                />
+              </div>
             </div>
             <p className="text-muted-foreground text-sm">
               Configure how you receive notifications
@@ -441,14 +505,16 @@ export default function SettingsPage() {
               <Label htmlFor="autoLoadPois" className="text-sm font-medium">
                 Auto-load POIs at zoom 13+
               </Label>
-              <Toggle
+              <div
                 id="autoLoadPois"
-                pressed={openMapSettings.autoLoadPois}
-                onPressedChange={(pressed) => setOpenMapSettings((prev) => ({ ...prev, autoLoadPois: pressed }))}
-                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+                onClick={() => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: !prev.autoLoadPois }))}
+                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
+                data-state={openMapSettings.autoLoadPois ? "on" : "off"}
               >
-                {openMapSettings.autoLoadPois ? "ON" : "OFF"}
-              </Toggle>
+                <div
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
