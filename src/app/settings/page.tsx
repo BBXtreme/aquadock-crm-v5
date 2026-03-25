@@ -249,7 +249,7 @@ export default function SettingsPage() {
         throw new Error(error.message || "Failed to send test email");
       }
     },
-    onSuccess: => {
+    onSuccess: () => {
       toast.success("Test email sent successfully");
       setTestRecipient("");
     },
@@ -305,7 +305,9 @@ export default function SettingsPage() {
                 {emailAlerts ? "ON" : "OFF"}
               </Toggle>
             </div>
-            <p className="text-muted-foreground text-sm">Configure how you receive notifications</p>
+            <p className="text-muted-foreground text-sm">
+              Configure how you receive notifications
+            </p>
           </CardContent>
         </Card>
 
@@ -343,7 +345,9 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">Customize your app appearance</p>
+            <p className="text-muted-foreground text-sm">
+              Customize your app appearance
+            </p>
           </CardContent>
         </Card>
 
@@ -364,12 +368,16 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>Data Export</Label>
-              <p className="text-muted-foreground text-sm">Download your data</p>
+              <p className="text-muted-foreground text-sm">
+                Download your data
+              </p>
               <Button variant="outline" size="sm">
                 Export Data
               </Button>
             </div>
-            <p className="text-muted-foreground text-sm">Manage your privacy and security settings</p>
+            <p className="text-muted-foreground text-sm">
+              Manage your privacy and security settings
+            </p>
           </CardContent>
         </Card>
 
@@ -383,19 +391,25 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>API Access</Label>
-              <p className="text-muted-foreground text-sm">Manage API keys and integrations</p>
+              <p className="text-muted-foreground text-sm">
+                Manage API keys and integrations
+              </p>
               <Button variant="outline" size="sm">
                 Manage API
               </Button>
             </div>
             <div className="space-y-2">
               <Label>Data Retention</Label>
-              <p className="text-muted-foreground text-sm">Configure data retention policies</p>
+              <p className="text-muted-foreground text-sm">
+                Configure data retention policies
+              </p>
               <Button variant="outline" size="sm">
                 Configure
               </Button>
             </div>
-            <p className="text-muted-foreground text-sm">Advanced settings for power users</p>
+            <p className="text-muted-foreground text-sm">
+              Advanced settings for power users
+            </p>
           </CardContent>
         </Card>
 
@@ -414,7 +428,9 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setOpenMapSettings((prev) => ({
                     ...prev,
-                    overpassEndpoints: e.target.value.split("\n").filter((line) => line.trim()),
+                    overpassEndpoints: e.target.value
+                      .split("\n")
+                      .filter((line) => line.trim()),
                   }))
                 }
                 placeholder="https://overpass-api.de/api/interpreter"
@@ -479,7 +495,9 @@ export default function SettingsPage() {
                     ...prev,
                     lastQuery: sampleQuery,
                   }));
-                  toast.success("Overpass query generated (sample for Central Europe)");
+                  toast.success(
+                    "Overpass query generated (sample for Central Europe)",
+                  );
                 }}
               >
                 Test Overpass Query
@@ -510,10 +528,19 @@ export default function SettingsPage() {
               )}
             </div>
             <div className="flex space-x-2">
-              <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
-                {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
+              <Button
+                onClick={() => openMapMutation.mutate()}
+                disabled={openMapMutation.isPending}
+              >
+                {openMapMutation.isPending
+                  ? "Saving..."
+                  : "Save OpenMap Settings"}
               </Button>
-              <Button variant="outline" onClick={clearCache} title="Clear all cached OSM POIs and force fresh load">
+              <Button
+                variant="outline"
+                onClick={clearCache}
+                title="Clear all cached OSM POIs and force fresh load"
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear POI Cache
               </Button>
@@ -530,7 +557,10 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => mutation.mutate(data))} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -555,7 +585,9 @@ export default function SettingsPage() {
                           <Input
                             type="number"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value, 10) || 0)
+                            }
                           />
                         </FormControl>
                         <FormMessage />
@@ -585,7 +617,10 @@ export default function SettingsPage() {
                         <FormLabel>Password</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input type={showPassword ? "text" : "password"} {...field} />
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              {...field}
+                            />
                             <Button
                               type="button"
                               variant="ghost"
@@ -593,7 +628,11 @@ export default function SettingsPage() {
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </Button>
                           </div>
                         </FormControl>
@@ -634,7 +673,9 @@ export default function SettingsPage() {
                   disabled={testEmailMutation.isPending || !testRecipient}
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {testEmailMutation.isPending ? "Sending..." : "Send Test Email"}
+                  {testEmailMutation.isPending
+                    ? "Sending..."
+                    : "Send Test Email"}
                 </Button>
               </div>
             </div>
@@ -649,7 +690,9 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Delete Account</Label>
-            <p className="text-muted-foreground text-sm">Permanently delete your account and all data</p>
+            <p className="text-muted-foreground text-sm">
+              Permanently delete your account and all data
+            </p>
             <Button variant="destructive" size="sm">
               Delete Account
             </Button>
