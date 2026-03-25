@@ -91,71 +91,75 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
-  // Auto POI loading with debouncing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const map = mapRef.current;
-      if (!map) return;
+  // Define handleLoad as useCallback at top level
+  const handleLoad = useCallback(() => {
+    if (!mapRef.current) return;
+    const zoom = mapRef.current.getZoom();
+    setCurrentZoom(zoom);
+    if (!autoLoadPois || zoom < 13) return;
 
-      const handleLoad = useCallback(() => {
-        if (!mapRef.current) return;
-        const zoom = mapRef.current.getZoom();
-        setCurrentZoom(zoom);
-        if (!autoLoadPois || zoom < 13) return;
+    const bounds = mapRef.current.getBounds();
+    const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
+    const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
+    const key = `${centerLat},${centerLon}`;
 
-        const bounds = mapRef.current.getBounds();
-        const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
-        const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
-        const key = `${centerLat},${centerLon}`;
+    const now = Date.now();
+    const cacheEntry = poiCache.current.get(key);
+    if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
+      setOsmPois(cacheEntry.pois);
+      return;
+    }
 
-        const now = Date.now();
-        const cacheEntry = poiCache.current.get(key);
-        if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
-          setOsmPois(cacheEntry.pois);
-          return;
+    setLoadingOsm(true);
+    fetchOsmPois(bounds)
+      .then(async (result) => {
+        const pois: OsmPoi[] = result.pois || [];
+        const newEntry = { pois, timestamp: now };
+        poiCache.current.set(key, newEntry);
+
+        // Save to localStorage
+        const cacheObj = Object.fromEntries(poiCache.current);
+        localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+
+        if (poiCache.current.size > 30) {
+          const firstKey = poiCache.current.keys().next().value;
+          poiCache.current.delete(firstKey);
         }
 
-        setLoadingOsm(true);
-        fetchOsmPois(bounds)
-          .then(async (result) => {
-            const pois: OsmPoi[] = result.pois || [];
-            const newEntry = { pois, timestamp: now };
-            poiCache.current.set(key, newEntry);
+        setOsmPois(pois);
+      })
+      .catch((err) => console.error("POI load error:", err))
+      .finally(() => setLoadingOsm(false));
+  }, [autoLoadPois]);
 
-            // Save to localStorage
-            const cacheObj = Object.fromEntries(poiCache.current);
-            localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+  // Set up map event listeners
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
 
-            if (poiCache.current.size > 30) {
-              const firstKey = poiCache.current.keys().next().value;
-              poiCache.current.delete(firstKey);
-            }
+    const debouncedHandleLoad = () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = setTimeout(handleLoad, 500);
+    };
 
-            setOsmPois(pois);
-          })
-          .catch((err) => console.error("POI load error:", err))
-          .finally(() => setLoadingOsm(false));
-      }, [autoLoadPois]);
+    map.on("zoomend", debouncedHandleLoad);
+    map.on("moveend", debouncedHandleLoad);
 
+    return () => {
+      map.off("zoomend", debouncedHandleLoad);
+      map.off("moveend", debouncedHandleLoad);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, [handleLoad]);
+
+  // Initial load after mount delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
       handleLoad();
-      map.on("zoomend", () => {
-        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-        debounceTimeout.current = setTimeout(handleLoad, 500);
-      });
-      map.on("moveend", () => {
-        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-        debounceTimeout.current = setTimeout(handleLoad, 500);
-      });
-
-      return () => {
-        map.off("zoomend", handleLoad);
-        map.off("moveend", handleLoad);
-        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      };
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [autoLoadPois]);
+  }, [handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
