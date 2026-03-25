@@ -188,7 +188,7 @@ export default function SettingsPage() {
       localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(openMapSettings.overpassEndpoints));
       localStorage.setItem("openmap_autoLoadPois", openMapSettings.autoLoadPois.toString());
       console.log("Saving overpassEndpoints:", openMapSettings.overpassEndpoints);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await Promise((resolve) => setTimeout(resolve, 500));
     },
     onSuccess: () => {
       loadFromLocalStorage();
@@ -365,7 +365,12 @@ export default function SettingsPage() {
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="autoLoadPois">Auto-load POIs at zoom 13+</Label>
-              <Switch id="autoLoadPois" checked={openMapSettings.autoLoadPois} onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} />
+              <Switch 
+                id="autoLoadPois" 
+                checked={openMapSettings.autoLoadPois} 
+                onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} 
+                className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-zinc-400 scale-110"
+              />
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
