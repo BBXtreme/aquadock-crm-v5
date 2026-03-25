@@ -1,7 +1,7 @@
 // src/components/features/map/CompanyMarkerPopup.tsx
 "use client";
 
-import { ExternalLink, Phone } from "lucide-react";
+import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
@@ -13,34 +13,69 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
   const statusColor = statusColors[statusKey] || statusColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
 
-  return (
-    <div className="min-w-[320px] space-y-4 text-sm p-1">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-base leading-tight tracking-tight">{company.firmenname}</div>
-          <div className="text-muted-foreground text-xs mt-1">
-            {company.stadt}, {company.land}
-          </div>
-        </div>
+  // Kundentyp with emoji
+  const kundentypEmoji: Record<string, string> = {
+    restaurant: "🍽️",
+    hotel: "🏨",
+    marina: "⚓",
+    camping: "🏕️",
+    bootsverleih: "⛵",
+    segelschule: "⛵",
+    resort: "🌴",
+  };
 
-        <div
-          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap flex-shrink-0"
-          style={{ backgroundColor: statusColor }}
-        >
-          {statusLabel}
-        </div>
+  const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
+
+  // Address
+  const addressLine = [company.stadt, company.land].filter(Boolean).join(", ");
+
+  return (
+    <div className="min-w-[340px] space-y-4 text-sm p-1">
+      {/* Header */}
+      <div>
+        <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
+        {addressLine && <div className="text-muted-foreground text-xs mt-1">{addressLine}</div>}
       </div>
 
-      {/* Value */}
-      {company.value && company.value > 0 && (
-        <div className="text-2xl font-semibold text-emerald-600 tabular-nums">
-          €{company.value.toLocaleString("de-DE")}
+      {/* Kundentyp Badge */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted/70 rounded-full text-xs font-medium">
+          <span>{emoji}</span>
+          <span>{company.kundentyp || "Sonstige"}</span>
+        </div>
+
+        {company.firmentyp && <div className="text-xs text-muted-foreground">• {company.firmentyp}</div>}
+      </div>
+
+      {/* Water Information */}
+      {(company.wassertyp || company.wasserdistanz) && (
+        <div className="flex items-center gap-3 text-xs">
+          {company.wassertyp && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-full">
+              💧 {company.wassertyp}
+            </div>
+          )}
+          {company.wasserdistanz && <div className="text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>}
+        </div>
+      )}
+
+      {/* OSM Link */}
+      {company.osm && (
+        <div className="text-xs">
+          <a
+            href={company.osm}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            OpenStreetMap Eintrag
+          </a>
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="flex gap-2 pt-3 border-t">
+      <div className="flex gap-2 pt-3 border-t border-border">
         <Button size="sm" variant="default" className="flex-1" onClick={() => onOpenDetail?.(company.id)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
