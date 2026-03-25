@@ -303,6 +303,23 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </MarkerClusterGroup>
       </MapContainer>
 
+      {/* POI Count Badge */}
+      {(currentZoom >= 13 || loadingOsm) && (
+        <div className="absolute top-4 left-4 z-[1000] bg-card/90 backdrop-blur-sm border rounded-md shadow-sm px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+          {loadingOsm ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : (
+            <>
+              <MapPin className="h-4 w-4" />
+              {osmPois.length} OSM POIs visible
+            </>
+          )}
+        </div>
+      )}
+
       {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
