@@ -69,7 +69,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setCurrentZoom(zoom);
         if (zoom < 13) return;
 
-        // Improved cache key based on center (more stable for small pans)
+        // Stable cache key based on center (0.25° = ~28km grid - good balance)
         const bounds = map.getBounds();
         const centerLat = Math.round(bounds.getCenter().lat * 4) / 4;
         const centerLon = Math.round(bounds.getCenter().lng * 4) / 4;
@@ -90,7 +90,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             const pois = result.pois || [];
             poiCache.current.set(key, { pois, timestamp: now });
 
-            // Limit cache size (simple LRU)
+            // Simple LRU size limit
             if (poiCache.current.size > 30) {
               const firstKey = poiCache.current.keys().next().value;
               poiCache.current.delete(firstKey);
