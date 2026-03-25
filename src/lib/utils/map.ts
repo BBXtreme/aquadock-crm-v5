@@ -34,7 +34,7 @@ export const getOsmPoiIcon = (isDarkMode = false) => {
 export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
-): Promise<{ pois: any[]; totalFound: number }> {
+): Promise<{ pois: any[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
   return new Promise((resolve, reject) => {
@@ -121,7 +121,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
               });
 
               console.groupEnd();
-              resolve({ pois: deduplicated, totalFound: deduplicated.length });
+              resolve({ pois: deduplicated, totalFound: deduplicated.length, query });
               return;
             }
 
@@ -144,7 +144,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
             if (endpoint === endpoints[endpoints.length - 1]) {
               console.groupEnd();
               console.error("All Overpass endpoints failed");
-              resolve({ pois: [], totalFound: 0 }); // silent fail
+              resolve({ pois: [], totalFound: 0, query }); // silent fail
               return;
             }
             break;
@@ -153,7 +153,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       }
 
       console.groupEnd();
-      resolve({ pois: [], totalFound: 0 }); // silent fail
+      resolve({ pois: [], totalFound: 0, query }); // silent fail
     }, 300);
   });
 }
