@@ -77,13 +77,13 @@ export async function fetchOsmPois(
       );
 
       const query = `
-        [out:json][timeout:45][maxsize:500k];
-        (
+  [out:json][timeout:60][maxsize:1Mi];
+  (
 ${conditions.map((cond) => `      node${cond};`).join("\n")}
 ${conditions.map((cond) => `      way${cond};`).join("\n")}
-        );
-        out center;
-      `;
+  );
+  out center;
+`;
 
       console.log("Final query string:", query);
 
