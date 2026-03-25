@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import { createClient } from "@/lib/supabase/browser";
 import { getUserSettings, upsertUserSetting } from "@/lib/supabase/services/user-settings";
 
 const smtpSchema = z.object({
@@ -369,7 +369,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="pt-6 border-t">
-              <Button 
+              <Button
                 onClick={() => {
                   // For now just simulate - later we can connect to real map state
                   const sampleQuery = generateSampleQuery();
@@ -383,20 +383,15 @@ export default function SettingsPage() {
               {lastQuery && (
                 <div className="mt-4 space-y-2">
                   <Label>Generated Overpass Query</Label>
-                  <Textarea 
-                    value={lastQuery} 
-                    readOnly 
-                    rows={8}
-                    className="font-mono text-xs bg-muted/50"
-                  />
+                  <Textarea value={lastQuery} readOnly rows={8} className="font-mono text-xs bg-muted/50" />
                 </div>
               )}
             </div>
             <div className="space-y-2 pt-4 border-t">
               <Label>Last / Current Overpass Query</Label>
-              <Textarea 
-                value={lastQuery || "No query generated yet. Zoom in on the map to generate one."} 
-                readOnly 
+              <Textarea
+                value={lastQuery || "No query generated yet. Zoom in on the map to generate one."}
+                readOnly
                 rows={6}
                 className="font-mono text-xs bg-muted/50"
               />
