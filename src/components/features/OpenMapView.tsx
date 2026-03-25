@@ -9,7 +9,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
 
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
+import { Info, Loader2, MapPin, Plus, RefreshCw, Search, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -192,7 +192,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : currentZoom < 13 ? (
-            <span className="text-xs text-muted-foreground">Zoom</span>
+            <ZoomIn className="h-5 w-5 text-muted-foreground" />
           ) : (
             <MapPin className="h-5 w-5 text-muted-foreground" />
           )}
