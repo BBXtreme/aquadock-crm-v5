@@ -1,41 +1,74 @@
 // src/components/features/map/OsmPoiMarkerPopup.tsx
 "use client";
 
-import { ExternalLink, Plus } from "lucide-react";
+import { useState } from "react";
+
+import { ExternalLink, MapPin, Phone, Plus, Wifi } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
 import type { OsmPoiMarkerPopupProps } from "./types";
 
 export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
+  const [isImporting, setIsImporting] = useState(false);
+
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
   const phone = poi.tags?.phone || poi.tags?.["contact:phone"];
   const website = poi.tags?.website || poi.tags?.["contact:website"];
+  const street = poi.tags?.["addr:street"];
+  const city = poi.tags?.["addr:city"];
+  const postcode = poi.tags?.["addr:postcode"];
 
   const osmId = `${poi.type}/${poi.id}`;
   const osmUrl = `https://www.openstreetmap.org/${osmId}`;
 
+  const handleImport = async () => {
+    setIsImporting(true);
+    try {
+      await onImport?.(poi);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
-    <div className="min-w-[300px] space-y-4 text-sm">
+    <div className="min-w-[320px] space-y-4 text-sm">
       <div>
         <div className="font-semibold text-base">{name}</div>
         <div className="text-xs text-muted-foreground mt-1 capitalize">{category}</div>
       </div>
 
+      {/* Address */}
+      {(street || city || postcode) && (
+        <div className="flex items-start gap-2 text-sm">
+          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+          <div className="text-muted-foreground">
+            {street && <div>{street}</div>}
+            {(city || postcode) && (
+              <div>
+                {postcode} {city}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Phone */}
       {phone && (
-        <div className="text-sm">
-          📞{" "}
+        <div className="flex items-center gap-2 text-sm">
+          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
             {phone}
           </a>
         </div>
       )}
 
+      {/* Website */}
       {website && (
-        <div className="text-sm">
-          🌐{" "}
-          <a href={website} target="_blank" rel="noopener" className="text-blue-600 hover:underline">
+        <div className="flex items-center gap-2 text-sm">
+          <Wifi className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <a href={website} target="_blank" rel="noopener" className="text-blue-600 hover:underline truncate">
             Website öffnen
           </a>
         </div>
@@ -51,10 +84,11 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
           size="sm"
           variant="default"
           className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-          onClick={() => onImport?.(poi)}
+          onClick={handleImport}
+          disabled={isImporting}
         >
           <Plus className="h-4 w-4 mr-2" />
-          In CRM importieren
+          {isImporting ? "Importiere..." : "In CRM importieren"}
         </Button>
       </div>
     </div>

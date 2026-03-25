@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 
+import { createClient } from "@/lib/supabase/browser";
 import type { OsmPoi } from "./types";
 
 async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
@@ -14,12 +15,26 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     restaurant: "restaurant",
     cafe: "restaurant",
     bar: "restaurant",
+    pub: "restaurant",
+    fast_food: "restaurant",
     hotel: "hotel",
     hostel: "hotel",
+    motel: "hotel",
+    guest_house: "hotel",
     camp_site: "camping",
+    caravan_site: "camping",
     marina: "marina",
     harbor: "marina",
     boat_rental: "bootsverleih",
+    boat_sharing: "bootsverleih",
+    fuel: "tankstelle",
+    charging_station: "tankstelle",
+    supermarket: "supermarkt",
+    shop: "shop",
+    bakery: "bäckerei",
+    pharmacy: "apotheke",
+    bank: "bank",
+    atm: "bank",
   };
 
   let kundentyp = "sonstige";
@@ -100,6 +115,30 @@ export function useMapPopupActions() {
         if (!userRes.ok) throw new Error("Authentication required");
         const { userId: fetchedUserId } = await userRes.json();
         userId = fetchedUserId;
+      }
+
+      // Check for duplicate by OSM URL
+      const osmUrl = `https://www.openstreetmap.org/${poi.type}/${poi.id}`;
+      const supabase = createClient();
+      const { data: existingCompanies, error: fetchError } = await supabase
+        .from("companies")
+        .select("id, firmenname")
+        .eq("osm", osmUrl)
+        .limit(1);
+
+      if (fetchError) {
+        console.warn("Failed to check for duplicates:", fetchError);
+      } else if (existingCompanies && existingCompanies.length > 0) {
+        const existing = existingCompanies[0];
+        toast.error(`"${name}" ist bereits importiert`, {
+          id: "osm-import",
+          description: `Firma "${existing.firmenname}" existiert bereits.`,
+          action: {
+            label: "Firma öffnen",
+            onClick: () => openCompanyDetail(existing.id),
+          },
+        });
+        return;
       }
 
       const result = await createCompanyFromOsmPoi(poi, userId);
