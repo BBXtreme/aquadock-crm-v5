@@ -67,19 +67,26 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         // Simple cache key based on rounded bounds
         const bounds = map.getBounds();
         const key = `${Math.round(bounds.getSouth() * 10) / 10},${Math.round(bounds.getWest() * 10) / 10}`;
+        console.log("POI Cache key:", key);
+        console.log("Cache has key:", poiCache.current.has(key));
 
         if (poiCache.current.has(key)) {
-          setOsmPois(poiCache.current.get(key) || []);
+          const cachedPois = poiCache.current.get(key) || [];
+          console.log("Cache hit, using cached POIs:", cachedPois.length);
+          setOsmPois(cachedPois);
           return;
         }
 
+        console.log("Cache miss, fetching new POIs");
         // Do NOT clear osmPois here — keep old ones visible while fetching new
         setLoadingOsm(true);
         fetchOsmPois(bounds)
           .then((result) => {
             const pois = result.pois || [];
+            console.log("Fetched POIs:", pois.length);
             setOsmPois(pois);
             poiCache.current.set(key, pois);
+            console.log("Cached POIs for key:", key, pois.length);
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
