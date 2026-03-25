@@ -1,7 +1,7 @@
 import L from "leaflet";
 
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { statusColors } from "@/lib/constants/status-colors";
+import { statusColors } from "@/lib/constants/map-status-colors";
 
 let poiFetchTimeout: NodeJS.Timeout | null = null;
 
