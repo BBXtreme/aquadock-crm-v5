@@ -49,6 +49,32 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const handleLoad = () => {
+      const zoom = map.getZoom();
+      if (zoom >= 12) {
+        // very basic call - no loading state yet
+        fetchOsmPois(map.getBounds()).then(result => {
+          setOsmPois(result.pois || []);
+        }).catch(() => {});
+      }
+    };
+
+    map.on("zoomend", handleLoad);
+    map.on("moveend", handleLoad);
+
+    // initial load after a short delay
+    setTimeout(handleLoad, 800);
+
+    return () => {
+      map.off("zoomend", handleLoad);
+      map.off("moveend", handleLoad);
+    };
+  }, []);
+
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
@@ -98,6 +124,20 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
                     {company.stadt}, {company.land}
                   </div>
                   {company.value && <div className="font-medium">€{company.value.toLocaleString("de-DE")}</div>}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+          {osmPois.map((poi: any) => (
+            <Marker
+              key={poi.id}
+              position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
+              icon={getOsmPoiIcon(isDarkMode)}
+            >
+              <Popup>
+                <div className="min-w-[200px]">
+                  <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
                 </div>
               </Popup>
             </Marker>
