@@ -15,10 +15,10 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
-export const getOsmPoiIcon = (isDarkMode: boolean = false) => {
-  const bgColor = isDarkMode ? '#374151' : 'white';
-  const borderColor = isDarkMode ? '#9ca3af' : '#d1d5db';
-  const textColor = isDarkMode ? 'white' : '#374151';
+export const getOsmPoiIcon = (isDarkMode = false) => {
+  const bgColor = isDarkMode ? "#374151" : "white";
+  const borderColor = isDarkMode ? "#9ca3af" : "#d1d5db";
+  const textColor = isDarkMode ? "white" : "#374151";
 
   return L.divIcon({
     className: "osm-poi",
@@ -118,11 +118,12 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
           console.groupEnd();
 
           return { pois: deduplicated, totalFound: deduplicated.length };
-        } else if (res.status === 429) {
+        }
+        if (res.status === 429) {
           retries++;
-          const delay = Math.pow(2, retries) * 1000; // exponential backoff
+          const delay = 2 ** retries * 1000; // exponential backoff
           console.warn(`[OpenMap OSM] ${endpoint} returned 429, retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         } else if (res.status === 504) {
           console.warn(`[OpenMap OSM] ${endpoint} returned 504, trying next...`);
           break; // try next endpoint
