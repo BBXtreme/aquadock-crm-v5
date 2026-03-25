@@ -182,12 +182,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4" />
         </Button>
 
-        {/* Clean indicator with hint */}
+        {/* 3-state indicator */}
         <div className="flex items-center justify-center w-10 h-10 bg-card border rounded-md shadow-sm">
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : mapRef.current && mapRef.current.getZoom() < 13 ? (
+            <span className="text-xs text-muted-foreground">Zoom</span>
           ) : (
-            <span className="text-xs text-muted-foreground">Zoom in</span>
+            <MapPin className="h-5 w-5 text-muted-foreground" />
           )}
         </div>
       </div>
