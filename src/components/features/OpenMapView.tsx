@@ -28,7 +28,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
-  const poiCache = useRef(new Map<string, any[]>());
+  const poiCache = useRef(new Map<string, { pois: any[]; timestamp: number }>());
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -64,29 +64,34 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setCurrentZoom(zoom);
         if (zoom < 13) return;
 
-        // Simple cache key based on rounded bounds
+        // Improved cache key based on center of bounds (more stable on small pans)
         const bounds = map.getBounds();
-        const key = `${Math.round(bounds.getSouth() * 10) / 10},${Math.round(bounds.getWest() * 10) / 10}`;
-        console.log("POI Cache key:", key);
-        console.log("Cache has key:", poiCache.current.has(key));
+        const centerLat = Math.round(bounds.getCenter().lat * 4) / 4;
+        const centerLon = Math.round(bounds.getCenter().lng * 4) / 4;
+        const key = `${centerLat},${centerLon}`;
 
-        if (poiCache.current.has(key)) {
-          const cachedPois = poiCache.current.get(key) || [];
-          console.log("Cache hit, using cached POIs:", cachedPois.length);
-          setOsmPois(cachedPois);
+        // Simple expiration (10 minutes)
+        const now = Date.now();
+        const cacheEntry = poiCache.current.get(key);
+        if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
+          setOsmPois(cacheEntry.pois);
           return;
         }
 
-        console.log("Cache miss, fetching new POIs");
-        // Do NOT clear osmPois here — keep old ones visible while fetching new
+        // Cache miss - fetch new
         setLoadingOsm(true);
         fetchOsmPois(bounds)
           .then((result) => {
             const pois = result.pois || [];
-            console.log("Fetched POIs:", pois.length);
+            poiCache.current.set(key, { pois, timestamp: now });
+            
+            // Keep cache size reasonable (LRU style)
+            if (poiCache.current.size > 30) {
+              const firstKey = poiCache.current.keys().next().value;
+              poiCache.current.delete(firstKey);
+            }
+            
             setOsmPois(pois);
-            poiCache.current.set(key, pois);
-            console.log("Cached POIs for key:", key, pois.length);
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
