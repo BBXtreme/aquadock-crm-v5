@@ -20,6 +20,11 @@ import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
+interface CacheEntry {
+  pois: any[];
+  timestamp: number;
+}
+
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
@@ -28,7 +33,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
-  const poiCache = useRef(new Map<string, { pois: any[]; timestamp: number }>());
+  const poiCache = useRef(new Map<string, CacheEntry>());
 
   // Safe Leaflet icon fix
   useEffect(() => {
