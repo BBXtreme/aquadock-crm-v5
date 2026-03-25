@@ -142,19 +142,19 @@ export default function SettingsPage() {
       const endpointsStr = settings.find((s) => s.key === "overpass_endpoints")?.value as string;
       if (endpointsStr) {
         try {
-          setOpenMapSettings(prev => ({ ...prev, overpassEndpoints: JSON.parse(endpointsStr) }));
+          setOpenMapSettings((prev) => ({ ...prev, overpassEndpoints: JSON.parse(endpointsStr) }));
         } catch (e) {
           // ignore
         }
       }
       const autoLoad = settings.find((s) => s.key === "auto_load_pois")?.value;
-      setOpenMapSettings(prev => ({ ...prev, autoLoadPois: autoLoad === "true" }));
+      setOpenMapSettings((prev) => ({ ...prev, autoLoadPois: autoLoad === "true" }));
       const duration = settings.find((s) => s.key === "cache_duration")?.value;
-      setOpenMapSettings(prev => ({ ...prev, cacheDuration: parseInt(duration || "10", 10) }));
+      setOpenMapSettings((prev) => ({ ...prev, cacheDuration: parseInt(duration || "10", 10) }));
       const size = settings.find((s) => s.key === "max_cache_size")?.value;
-      setOpenMapSettings(prev => ({ ...prev, maxCacheSize: parseInt(size || "30", 10) }));
+      setOpenMapSettings((prev) => ({ ...prev, maxCacheSize: parseInt(size || "30", 10) }));
       const query = settings.find((s) => s.key === "last_query")?.value as string;
-      setOpenMapSettings(prev => ({ ...prev, lastQuery: query || "" }));
+      setOpenMapSettings((prev) => ({ ...prev, lastQuery: query || "" }));
     }
 
     loadFromLocalStorage();
@@ -192,7 +192,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       loadFromLocalStorage();
-      window.dispatchEvent(new CustomEvent('openmap-settings-changed'));
+      window.dispatchEvent(new CustomEvent("openmap-settings-changed"));
       toast.success("OpenMap settings saved successfully");
     },
     onError: (error) => {
