@@ -192,7 +192,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : currentZoom < 13 ? (
-            <span className="text-xs text-muted-foreground">Zoom in</span>
+            <span className="text-xs text-muted-foreground">Zoom</span>
           ) : (
             <MapPin className="h-5 w-5 text-muted-foreground" />
           )}
