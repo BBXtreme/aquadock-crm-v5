@@ -217,9 +217,10 @@ export default function SettingsPage() {
   });
 
   const clearCache = () => {
-    // Note: This clears localStorage cache, but in-memory cache in OpenMapView needs page reload
     localStorage.removeItem("openmap-poi-cache");
-    toast.success("POI cache cleared (reload page for full effect)");
+    if (confirm("Clear POI cache and reload the page to apply changes?")) {
+      window.location.reload();
+    }
   };
 
   return (
