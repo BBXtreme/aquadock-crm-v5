@@ -52,9 +52,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       setAutoLoadPois(saved !== null ? saved === "true" : true);
     };
 
-    window.addEventListener('openmap-settings-changed', handleSettingsChange);
+    window.addEventListener("openmap-settings-changed", handleSettingsChange);
 
-    return () => window.removeEventListener('openmap-settings-changed', handleSettingsChange);
+    return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
   }, []);
 
   const supabase = createClient();
@@ -189,7 +189,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
           polygonOptions={{
-            color: isDarkMode ? '#4b5563' : '#9ca3af',
+            color: isDarkMode ? "#4b5563" : "#9ca3af",
             weight: 2,
             opacity: 0.6,
             fillOpacity: 0.15,
