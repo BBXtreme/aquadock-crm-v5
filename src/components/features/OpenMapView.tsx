@@ -26,6 +26,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -114,10 +115,32 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
-        <Button variant="secondary" size="icon" className="bg-card border shadow-md text-foreground">
+        <Button
+          variant={showLegend ? "default" : "secondary"}
+          size="icon"
+          onClick={() => setShowLegend(!showLegend)}
+          className="bg-card border shadow-md text-foreground"
+        >
           <Info className="h-4 w-4" />
         </Button>
       </div>
+
+      {showLegend && (
+        <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
+          <div className="font-medium mb-3 flex items-center justify-between">
+            Status Legende
+            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+          </div>
+          <div className="space-y-2">
+            {Object.entries(statusLabels).map(([key, label]) => (
+              <div key={key} className="flex items-center gap-3">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: statusColors[key] || "#6b7280" }} />
+                <span>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
