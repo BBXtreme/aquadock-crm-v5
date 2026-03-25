@@ -67,7 +67,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         if (!map) return;
         const zoom = map.getZoom();
         setCurrentZoom(zoom);
-        if (zoom < 13) return;
+        if (zoom < 12) return;
 
         // Stable cache key based on center (0.25° = ~28km grid - good balance)
         const bounds = map.getBounds();
