@@ -55,14 +55,9 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUserId(user?.id || null);
-    };
-    getUser();
-  }, [supabase.auth]);
+    // Mock auth - functionality will be implemented later
+    setUserId("dev-mock-user-11111111-2222-3333-4444-55555555555");
+  }, []);
 
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],

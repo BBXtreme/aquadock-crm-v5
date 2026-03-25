@@ -19,6 +19,8 @@ import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
+import { createClient } from "@/lib/supabase/browser";
+import { upsertUserSetting } from "@/lib/supabase/services/user-settings";
 
 interface CacheEntry {
   pois: any[];
@@ -34,6 +36,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    // Mock auth - functionality will be implemented later
+    setUserId("dev-mock-user-11111111-2222-3333-4444-55555555555");
+  }, []);
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -85,7 +95,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         // Cache miss → fetch new, keep old POIs visible
         setLoadingOsm(true);
         fetchOsmPois(bounds)
-          .then((result) => {
+          .then(async (result) => {
             const pois = result.pois || [];
             poiCache.current.set(key, { pois, timestamp: now });
 
@@ -96,6 +106,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             }
 
             setOsmPois(pois);
+
+            // Save last query for debugging
+            if (userId && result.query) {
+              try {
+                await upsertUserSetting({ user_id: userId, key: "last_query", value: result.query });
+              } catch (e) {
+                console.error("Failed to save last query:", e);
+              }
+            }
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
@@ -112,7 +131,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [userId]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -198,17 +217,28 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <Button
           variant="secondary"
           size="icon"
-          onClick={() => {
+          onClick={async () => {
             poiCache.current.clear();
             const map = mapRef.current;
             if (map && map.getZoom() >= 13) {
               setLoadingOsm(true);
-              fetchOsmPois(map.getBounds())
-                .then((result) => {
-                  setOsmPois(result.pois || []);
-                })
-                .catch(() => {})
-                .finally(() => setLoadingOsm(false));
+              try {
+                const result = await fetchOsmPois(map.getBounds());
+                setOsmPois(result.pois || []);
+
+                // Save last query for debugging
+                if (userId && result.query) {
+                  try {
+                    await upsertUserSetting({ user_id: userId, key: "last_query", value: result.query });
+                  } catch (e) {
+                    console.error("Failed to save last query:", e);
+                  }
+                }
+              } catch (e) {
+                console.error("POI reload error:", e);
+              } finally {
+                setLoadingOsm(false);
+              }
             }
           }}
           className="bg-card border shadow-md text-foreground"
