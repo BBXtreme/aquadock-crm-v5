@@ -37,6 +37,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
   const [userId, setUserId] = useState<string | null>(null);
+  const [autoLoadPois, setAutoLoadPois] = useState(true);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("openmap_autoLoadPois");
+    if (saved !== null) {
+      setAutoLoadPois(saved === "true");
+    }
+  }, []);
 
   const supabase = createClient();
 
@@ -167,7 +176,18 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
-        <MarkerClusterGroup chunkedLoading maxClusterRadius={100}>
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={120}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          polygonOptions={{
+            color: isDarkMode ? '#4b5563' : '#9ca3af',
+            weight: 2,
+            opacity: 0.6,
+            fillOpacity: 0.15,
+          }}
+        >
           {validCompanies.map((company) => (
             <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
               <Popup>
