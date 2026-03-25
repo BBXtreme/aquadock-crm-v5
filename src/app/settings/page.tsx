@@ -394,8 +394,8 @@ export default function SettingsPage() {
               >
                 Test Overpass Query
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => {
                   if (lastQuery) {
                     navigator.clipboard.writeText(lastQuery);
