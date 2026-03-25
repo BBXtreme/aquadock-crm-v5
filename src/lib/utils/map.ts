@@ -3,6 +3,8 @@ import L from "leaflet";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { statusColors } from "@/lib/constants/status-colors";
 
+let poiFetchTimeout: NodeJS.Timeout | null = null;
+
 export const getStatusIcon = (status?: string) => {
   const color = statusColors[status?.toLowerCase() || "lead"] || statusColors.lead;
 
@@ -33,115 +35,119 @@ export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
 ): Promise<{ pois: any[]; totalFound: number }> {
-  console.group("OpenMap OSM Query");
-  console.log("Current bounds:", bounds.toBBoxString());
-  console.log("Active categories:", activeCategories);
+  if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
-  const bbox = bounds.toBBoxString(); // "west,south,east,north"
-  const [west, south, east, north] = bbox.split(",").map(Number);
-  const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
+  return new Promise((resolve, reject) => {
+    poiFetchTimeout = setTimeout(async () => {
+      console.group("OpenMap OSM Query");
+      console.log("Current bounds:", bounds.toBBoxString());
+      console.log("Active categories:", activeCategories);
 
-  // Build tag groups from active poiCategories
-  const tagGroups: Record<string, string[]> = {};
-  const activePoiCategories = activeCategories.reduce(
-    (acc, key) => {
-      if (poiCategories[key]) acc[key] = poiCategories[key];
-      return acc;
-    },
-    {} as typeof poiCategories,
-  );
+      const bbox = bounds.toBBoxString(); // "west,south,east,north"
+      const [west, south, east, north] = bbox.split(",").map(Number);
+      const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
 
-  for (const category of Object.values(activePoiCategories)) {
-    for (const tag of category.tags) {
-      if (tag.includes("=")) {
-        const [key, value] = tag.split("=");
-        if (!tagGroups[key]) tagGroups[key] = [];
-        tagGroups[key].push(value);
-      } else {
-        // assume amenity
-        if (!tagGroups["amenity"]) tagGroups["amenity"] = [];
-        tagGroups["amenity"].push(tag);
+      // Build tag groups from active poiCategories
+      const tagGroups: Record<string, string[]> = {};
+      const activePoiCategories = activeCategories.reduce(
+        (acc, key) => {
+          if (poiCategories[key]) acc[key] = poiCategories[key];
+          return acc;
+        },
+        {} as typeof poiCategories,
+      );
+
+      for (const category of Object.values(activePoiCategories)) {
+        for (const tag of category.tags) {
+          if (tag.includes("=")) {
+            const [key, value] = tag.split("=");
+            if (!tagGroups[key]) tagGroups[key] = [];
+            tagGroups[key].push(value);
+          } else {
+            // assume amenity
+            if (!tagGroups["amenity"]) tagGroups["amenity"] = [];
+            tagGroups["amenity"].push(tag);
+          }
+        }
       }
-    }
-  }
 
-  // Create conditions for each tag group
-  const conditions = Object.entries(tagGroups).map(
-    ([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`,
-  );
+      // Create conditions for each tag group
+      const conditions = Object.entries(tagGroups).map(
+        ([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`,
+      );
 
-  const query = `
-    [out:json][timeout:45];
-    (
+      const query = `
+        [out:json][timeout:45];
+        (
 ${conditions.map((cond) => `      node${cond};`).join("\n")}
 ${conditions.map((cond) => `      way${cond};`).join("\n")}
-    );
-    out center;
-  `;
+        );
+        out center;
+      `;
 
-  console.log("Final query string:", query);
+      console.log("Final query string:", query);
 
-  const endpoints = [
-    "https://overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
-    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  ];
+      const endpoints = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+      ];
 
-  // Basic deduplication by OSM ID
-  const seen = new Set<string>();
+      // Basic deduplication by OSM ID
+      const seen = new Set<string>();
 
-  for (const endpoint of endpoints) {
-    console.log(`Trying endpoint: ${endpoint}`);
-    let retries = 0;
-    const maxRetries = 4;
+      for (const endpoint of endpoints) {
+        let retries = 0;
+        const maxRetries = 2;
 
-    while (retries < maxRetries) {
-      try {
-        const url = `${endpoint}?data=${encodeURIComponent(query)}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
+        while (retries < maxRetries) {
+          try {
+            const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
 
-        if (res.ok) {
-          const data = await res.json();
-          const deduplicated = (data.elements || []).filter((poi: any) => {
-            const key = `${poi.type}/${poi.id}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
+            if (res.ok) {
+              const data = await res.json();
+              const deduplicated = (data.elements || []).filter((poi: any) => {
+                const key = `${poi.type}/${poi.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
 
-          console.groupEnd();
-          return { pois: deduplicated, totalFound: deduplicated.length };
+              console.groupEnd();
+              resolve({ pois: deduplicated, totalFound: deduplicated.length });
+              return;
+            }
+
+            if (res.status === 429) {
+              retries++;
+              const delay = Math.pow(2, retries) * 1000; // gentler backoff
+              await new Promise(r => setTimeout(r, delay));
+            } else if (res.status === 403 || res.status === 504) {
+              break;
+            } else {
+              throw new Error(`Overpass API Fehler: ${res.status}`);
+            }
+          } catch (err: any) {
+            if (err.name === "AbortError") {
+              break;
+            }
+            if (endpoint === endpoints[endpoints.length - 1]) {
+              console.groupEnd();
+              reject(err);
+              return;
+            }
+            break;
+          }
         }
-
-        if (res.status === 429) {
-          retries++;
-          const delay = Math.pow(2, retries) * 2000; // longer backoff
-          console.warn(`[OpenMap OSM] ${endpoint} 429, retrying in ${delay}ms...`);
-          await new Promise(r => setTimeout(r, delay));
-        } else if (res.status === 403 || res.status === 504) {
-          console.warn(`[OpenMap OSM] ${endpoint} ${res.status}, trying next...`);
-          break;
-        } else {
-          throw new Error(`Overpass API Fehler: ${res.status}`);
-        }
-      } catch (err: any) {
-        if (err.name === "AbortError") {
-          console.warn(`[OpenMap OSM] ${endpoint} timed out, trying next...`);
-          break;
-        }
-        if (endpoint === endpoints[endpoints.length - 1]) {
-          console.groupEnd();
-          throw err;
-        }
-        break;
       }
-    }
-  }
 
-  console.groupEnd();
-  throw new Error("All Overpass endpoints failed");
+      console.groupEnd();
+      reject(new Error("All Overpass endpoints failed"));
+    }, 300);
+  });
 }
