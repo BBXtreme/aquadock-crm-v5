@@ -37,6 +37,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const debouncedHandleLoadRef = useRef<() => void>();
   const [autoLoadPois, setAutoLoadPois] = useState(true);
 
   const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
@@ -137,19 +138,32 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
 
-    const debouncedHandleLoad = () => {
+    debouncedHandleLoadRef.current = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(handleLoad, 500);
     };
 
-    mapRef.current.on("zoomend", debouncedHandleLoad);
-    mapRef.current.on("moveend", debouncedHandleLoad);
+    mapRef.current.on("zoomend", debouncedHandleLoadRef.current);
+    mapRef.current.on("moveend", debouncedHandleLoadRef.current);
 
     return () => {
-      mapRef.current.off("zoomend", debouncedHandleLoad);
-      mapRef.current.off("moveend", debouncedHandleLoad);
+      if (mapRef.current) {
+        mapRef.current.off("zoomend", debouncedHandleLoadRef.current);
+        mapRef.current.off("moveend", debouncedHandleLoadRef.current);
+      }
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
+  }, [mapReady, handleLoad]);
+
+  // Initial load after map is ready with small delay
+  useEffect(() => {
+    if (!mapReady) return;
+
+    const timer = setTimeout(() => {
+      handleLoad();
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [mapReady, handleLoad]);
 
   const tileUrl = isDarkMode
