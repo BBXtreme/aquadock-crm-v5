@@ -419,7 +419,7 @@ export default function SettingsPage() {
               <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
                 {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
               </Button>
-              <Button variant="outline" onClick={clearCache}>
+              <Button variant="outline" onClick={clearCache} title="Clear all cached OSM POIs and force fresh load">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear POI Cache
               </Button>
