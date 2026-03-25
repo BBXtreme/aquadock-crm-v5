@@ -57,9 +57,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       const zoom = map.getZoom();
       if (zoom >= 12) {
         // very basic call - no loading state yet
-        fetchOsmPois(map.getBounds()).then(result => {
-          setOsmPois(result.pois || []);
-        }).catch(() => {});
+        fetchOsmPois(map.getBounds())
+          .then((result) => {
+            setOsmPois(result.pois || []);
+          })
+          .catch(() => {});
       }
     };
 
@@ -176,7 +178,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             Status Legende
-            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">
+              ✕
+            </button>
           </div>
           <div className="space-y-2">
             {Object.entries(statusLabels).map(([key, label]) => (
