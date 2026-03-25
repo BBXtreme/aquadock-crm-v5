@@ -3,23 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import L from "leaflet";
-
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-
 import MarkerClusterGroup from "react-leaflet-markercluster";
 
 import "leaflet/dist/leaflet.css";
 
 import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 
-import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
-
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
-
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
 interface CacheEntry {
