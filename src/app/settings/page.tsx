@@ -369,7 +369,8 @@ export default function SettingsPage() {
                 id="autoLoadPois" 
                 checked={openMapSettings.autoLoadPois} 
                 onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} 
-                className="data-[state=checked]:bg-emerald-600/80 data-[state=unchecked]:bg-zinc-400/80 backdrop-blur-sm scale-110 shadow-lg"
+                className="scale-125 data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-zinc-300 
+                           shadow-sm transition-all duration-200 hover:scale-130 focus:ring-2 focus:ring-emerald-500/50"
               />
             </div>
             <div className="space-y-2">
