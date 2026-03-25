@@ -92,7 +92,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         map.off("zoomend", handleLoad);
         map.off("moveend", handleLoad);
       };
-    }, 800);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
