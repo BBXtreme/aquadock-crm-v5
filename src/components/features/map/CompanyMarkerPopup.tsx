@@ -34,7 +34,12 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
-        {addressLine && <div className="text-muted-foreground text-xs mt-1">{addressLine}</div>}
+        {addressLine && (
+          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
+            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>{addressLine}</span>
+          </div>
+        )}
       </div>
 
       {/* Kundentyp Badge */}
@@ -56,6 +61,31 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
             </div>
           )}
           {company.wasserdistanz && <div className="text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>}
+        </div>
+      )}
+
+      {/* Phone */}
+      {company.telefon && (
+        <div className="flex items-center gap-2 text-sm">
+          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <a href={`tel:${company.telefon}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+            {company.telefon}
+          </a>
+        </div>
+      )}
+
+      {/* Website */}
+      {company.website && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">🌐</span>
+          <a
+            href={company.website}
+            target="_blank"
+            rel="noopener"
+            className="text-blue-600 dark:text-blue-400 hover:underline truncate"
+          >
+            Website öffnen
+          </a>
         </div>
       )}
 
