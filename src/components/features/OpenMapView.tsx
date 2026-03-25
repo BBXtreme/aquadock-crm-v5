@@ -262,9 +262,27 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={120}
-          spiderfyOnMaxZoom={false}
-          spiderfyDistance={0}
+          spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
+          iconCreateFunction={(cluster) => {
+            const count = cluster.getChildCount();
+            if (count <= 10) {
+              // For small clusters, don't show cluster icon - markers remain individual
+              return L.divIcon({
+                html: "",
+                className: "empty-cluster",
+                iconSize: [0, 0],
+              });
+            } else {
+              // For larger clusters, show count and enable spiderfy
+              return L.divIcon({
+                html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:40px;height:40px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">${count}</div>`,
+                className: "cluster-icon",
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
+              });
+            }
+          }}
           polygonOptions={{
             color: isDarkMode ? "#4b5563" : "#9ca3af",
             weight: 2,
