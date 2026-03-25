@@ -116,19 +116,19 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Button
-          variant="secondary"
-          size="icon"
-          className="bg-card border shadow-md text-foreground"
-        >
-          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-        </Button>
-        <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
           className="bg-card border shadow-md text-foreground"
         >
           <Info className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="bg-card border shadow-md text-foreground"
+        >
+          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
         </Button>
       </div>
 
