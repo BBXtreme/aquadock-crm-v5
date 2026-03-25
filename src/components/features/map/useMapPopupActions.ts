@@ -59,8 +59,8 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
 
   const responseData = await res.json().catch(() => ({}));
 
-  if (!res.ok) {
-    console.error("❌ API Response Error:", responseData);
+  if (!res.ok || !responseData.success) {
+    console.error("❌ API Response Error - Full response:", { status: res.status, statusText: res.statusText, data: responseData });
     throw new Error(responseData.error || `HTTP ${res.status} - ${JSON.stringify(responseData)}`);
   }
 
@@ -93,7 +93,7 @@ export function useMapPopupActions() {
       const result = await createCompanyFromOsmPoi(poi, userId);
 
       // Sichere ID-Extraktion – funktioniert mit verschiedenen API-Antwort-Formaten
-      const newCompanyId = result.id || result.data?.id || result[0]?.id;
+      const newCompanyId = result.id;
 
       if (!newCompanyId) {
         throw new Error("Keine Firmen-ID zurückgegeben");
