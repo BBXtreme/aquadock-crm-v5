@@ -1,19 +1,18 @@
 "use client";
 
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-markercluster";
-
 import Link from "next/link";
 
 import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useOpenMap } from "@/hooks/useOpenMap";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { useOpenMap } from "@/hooks/useOpenMap";
 
 type PoiCategoryKey = keyof typeof poiCategories;
 
