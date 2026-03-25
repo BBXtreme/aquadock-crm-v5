@@ -387,9 +387,10 @@ export default function SettingsPage() {
             <div className="pt-6 border-t">
               <Button
                 onClick={() => {
+                  // For now just simulate - later we can connect to real map state
                   const sampleQuery = generateSampleQuery();
                   setLastQuery(sampleQuery);
-                  toast.success("Overpass query generated (sample for Central Europe)");
+                  toast.success("Sample Overpass query generated");
                 }}
               >
                 Test Overpass Query
@@ -501,7 +502,7 @@ export default function SettingsPage() {
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className "h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
                           </div>
                         </FormControl>
