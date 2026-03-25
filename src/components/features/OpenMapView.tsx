@@ -188,7 +188,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </Button>
 
         {/* 3-state indicator */}
-        <div className="flex items-center justify-center w-10 h-10 bg-card border rounded-md shadow-sm">
+        <div className="flex items-center justify-center w-10 h-10 bg-card/80 backdrop-blur-sm border rounded-md shadow-sm">
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : currentZoom < 13 ? (
