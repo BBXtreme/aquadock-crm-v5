@@ -144,6 +144,14 @@ export default function SettingsPage() {
     if (maxSize) setMaxCacheSize(parseInt(maxSize, 10));
     const duration = localStorage.getItem("openmap_cacheDuration");
     if (duration) setCacheDuration(parseInt(duration, 10));
+    const endpoints = localStorage.getItem("openmap_overpassEndpoints");
+    if (endpoints) {
+      try {
+        setOverpassEndpoints(JSON.parse(endpoints));
+      } catch (e) {
+        // ignore
+      }
+    }
   }, [settings, form]);
 
   const mutation = useMutation({
@@ -171,6 +179,8 @@ export default function SettingsPage() {
       // Mock saving maxCacheSize and cacheDuration
       localStorage.setItem("openmap_maxCacheSize", maxCacheSize.toString());
       localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
+      localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(overpassEndpoints));
+      console.log("Saving overpassEndpoints:", overpassEndpoints);
       await new Promise(resolve => setTimeout(resolve, 500));
     },
     onSuccess: () => {
