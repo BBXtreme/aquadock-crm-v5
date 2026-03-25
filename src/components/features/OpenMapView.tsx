@@ -49,55 +49,34 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
+  // Auto POI loading
   useEffect(() => {
-    console.log("Setting up POI loading useEffect");
-    const map = mapRef.current;
-    if (!map) {
-      console.log("Map not ready yet");
-      return;
-    }
-
-    const handleLoad = () => {
-      const zoom = map.getZoom();
-      console.log("handleLoad called, zoom:", zoom);
-      if (zoom >= 12) {
-        console.log("Zoom >= 12, loading POIs");
-        setLoadingOsm(true);
-        fetchOsmPois(map.getBounds()).then(result => {
-          console.log("POI fetch result:", result);
-          setOsmPois(result.pois || []);
-        }).catch(err => {
-          console.error("POI load error:", err);
-        }).finally(() => {
-          console.log("POI loading finished");
-          setLoadingOsm(false);
-        });
-      } else {
-        console.log("Zoom < 12, not loading POIs");
-      }
-    };
-
-    // Trigger on initial load and every zoom/move
     const timer = setTimeout(() => {
-      console.log("Initial POI load timeout triggered");
-      handleLoad();
-    }, 1000);
-    map.on("zoomend", () => {
-      console.log("zoomend event");
-      handleLoad();
-    });
-    map.on("moveend", () => {
-      console.log("moveend event");
-      handleLoad();
-    });
+      const map = mapRef.current;
+      if (!map) return;
 
-    return () => {
-      console.log("Cleaning up POI loading");
-      clearTimeout(timer);
-      map.off("zoomend", handleLoad);
-      map.off("moveend", handleLoad);
-    };
-  }, [mapRef]);   // important: depend on mapRef
+      const handleLoad = () => {
+        const zoom = map.getZoom();
+        if (zoom >= 12) {
+          setLoadingOsm(true);
+          fetchOsmPois(map.getBounds()).then(result => {
+            setOsmPois(result.pois || []);
+          }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
+        }
+      };
+
+      handleLoad(); // initial
+      map.on("zoomend", handleLoad);
+      map.on("moveend", handleLoad);
+
+      return () => {
+        map.off("zoomend", handleLoad);
+        map.off("moveend", handleLoad);
+      };
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -189,12 +168,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4" />
         </Button>
 
-        {/* Clean indicator */}
+        {/* Clean indicator with hint */}
         <div className="flex items-center justify-center w-10 h-10 bg-card border rounded-md shadow-sm">
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           ) : (
-            <MapPin className="h-5 w-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Zoom in</span>
           )}
         </div>
       </div>
