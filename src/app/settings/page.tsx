@@ -369,7 +369,7 @@ export default function SettingsPage() {
                 id="autoLoadPois" 
                 checked={openMapSettings.autoLoadPois} 
                 onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} 
-                className="data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-zinc-400 scale-110"
+                className="data-[state=checked]:bg-emerald-600/80 data-[state=unchecked]:bg-zinc-400/80 backdrop-blur-sm scale-110 shadow-lg"
               />
             </div>
             <div className="space-y-2">
@@ -510,7 +510,7 @@ export default function SettingsPage() {
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className "h-4 w-4" />}
                             </Button>
                           </div>
                         </FormControl>
