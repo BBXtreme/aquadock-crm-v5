@@ -110,7 +110,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       <MapContainer
         ref={mapRef}
         center={[50.1109, 8.6821]}
-        zoom={8}
+        zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
