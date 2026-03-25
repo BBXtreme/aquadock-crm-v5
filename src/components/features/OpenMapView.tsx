@@ -152,17 +152,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     };
   }, [mapReady, handleLoad]);
 
-  // Initial load after map is ready and delay
-  useEffect(() => {
-    if (!mapReady) return;
-
-    const timer = setTimeout(() => {
-      handleLoad();
-    }, 2500);
-
-    return () => clearTimeout(timer);
-  }, [mapReady, handleLoad]);
-
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
