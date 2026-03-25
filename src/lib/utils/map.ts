@@ -97,6 +97,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       const seen = new Set<string>();
 
       for (const endpoint of endpoints) {
+        console.log(`[OpenMap OSM] Trying ${endpoint}`);
         let retries = 0;
         const maxRetries = 2;
 
@@ -104,7 +105,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
           try {
             const url = `${endpoint}?data=${encodeURIComponent(query)}`;
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s max
 
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
@@ -125,20 +126,24 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
             if (res.status === 429) {
               retries++;
-              const delay = 2 ** retries * 1000; // gentler backoff
+              const delay = 2 ** retries * 1200;
               await new Promise((r) => setTimeout(r, delay));
             } else if (res.status === 403 || res.status === 504) {
+              console.warn(`[OpenMap OSM] ${endpoint} ${res.status} - skipping`);
               break;
             } else {
-              throw new Error(`Overpass API Fehler: ${res.status}`);
+              console.warn(`[OpenMap OSM] ${endpoint} error ${res.status}`);
+              break;
             }
           } catch (err: any) {
             if (err.name === "AbortError") {
+              console.warn(`[OpenMap OSM] ${endpoint} timeout`);
               break;
             }
             if (endpoint === endpoints[endpoints.length - 1]) {
               console.groupEnd();
-              reject(err);
+              console.error("All Overpass endpoints failed");
+              resolve({ pois: [], totalFound: 0 }); // silent fail
               return;
             }
             break;
@@ -147,7 +152,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       }
 
       console.groupEnd();
-      reject(new Error("All Overpass endpoints failed"));
+      resolve({ pois: [], totalFound: 0 }); // silent fail
     }, 300);
   });
 }
