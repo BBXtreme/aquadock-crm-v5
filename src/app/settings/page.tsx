@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser";
 import { getUserSettings, upsertUserSetting } from "@/lib/supabase/services/user-settings";
 
@@ -29,6 +30,44 @@ const smtpSchema = z.object({
 });
 
 type SmtpForm = z.infer<typeof smtpSchema>;
+
+const generateSampleQuery = () => {
+  const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
+  const [west, south, east, north] = bbox.split(",").map(Number);
+  const overpassBbox = `${south},${west},${north},${east}`;
+
+  // Build tag groups from poiCategories
+  const tagGroups: Record<string, string[]> = {};
+  for (const category of Object.values(poiCategories)) {
+    for (const tag of category.tags) {
+      if (tag.includes("=")) {
+        const [key, value] = tag.split("=");
+        if (!tagGroups[key]) tagGroups[key] = [];
+        tagGroups[key].push(value);
+      } else {
+        // assume amenity
+        if (!tagGroups["amenity"]) tagGroups["amenity"] = [];
+        tagGroups["amenity"].push(tag);
+      }
+    }
+  }
+
+  // Create conditions
+  const conditions = Object.entries(tagGroups).map(
+    ([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`,
+  );
+
+  const query = `
+[out:json][timeout:60][maxsize:1Mi];
+(
+${conditions.map((cond) => `      node${cond};`).join("\n")}
+${conditions.map((cond) => `      way${cond};`).join("\n")}
+);
+out center;
+`;
+
+  return query.trim();
+};
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
@@ -348,12 +387,24 @@ export default function SettingsPage() {
             <div className="pt-6 border-t">
               <Button
                 onClick={() => {
-                  const sampleQuery = `[out:json][timeout:60][maxsize:1Mi];\n(\n  node["amenity"~"restaurant|cafe|bar"](50.0,8.0,51.0,9.0);\n  way["amenity"~"restaurant|cafe|bar"](50.0,8.0,51.0,9.0);\n);\nout center;`;
+                  const sampleQuery = generateSampleQuery();
                   setLastQuery(sampleQuery);
                   toast.success("Overpass query generated (sample for Central Europe)");
                 }}
               >
                 Test Overpass Query
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  if (lastQuery) {
+                    navigator.clipboard.writeText(lastQuery);
+                    toast.success("Query copied to clipboard");
+                  }
+                }}
+                disabled={!lastQuery}
+              >
+                Copy Query
               </Button>
 
               {lastQuery && (
