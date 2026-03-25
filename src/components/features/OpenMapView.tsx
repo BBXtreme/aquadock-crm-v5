@@ -9,7 +9,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
 
-import { Info, Loader2, MapPin, Plus, RefreshCw, Search, ZoomIn } from "lucide-react";
+import { Building, Info, Loader2, MapPin, Plus, RefreshCw, Search, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -193,7 +193,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           className="bg-card border shadow-md text-foreground"
           title="Show all companies on map"
         >
-          <RefreshCw className="h-4 w-4" />
+          <Building className="h-4 w-4" />
         </Button>
         <Button
           variant="secondary"
