@@ -24,10 +24,10 @@ export const getOsmPoiIcon = (isDarkMode = false) => {
 
   return L.divIcon({
     className: "osm-poi",
-    html: `<div style="background-color:${bgColor};width:32px;height:32px;border-radius:50%;border:3px solid ${borderColor};box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:14px;">?</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -20],
+    html: `<div style="background-color:${bgColor};width:24px;height:24px;border-radius:50%;border:2px solid ${borderColor};box-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:12px;">?</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -15],
   });
 };
 

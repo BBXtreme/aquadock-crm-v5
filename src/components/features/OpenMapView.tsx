@@ -262,7 +262,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={120}
-          spiderfyOnMaxZoom={true}
+          spiderfyOnMaxZoom={false}
+          spiderfyDistance={0}
           showCoverageOnHover={false}
           polygonOptions={{
             color: isDarkMode ? "#4b5563" : "#9ca3af",
