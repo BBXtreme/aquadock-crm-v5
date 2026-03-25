@@ -387,6 +387,7 @@ export default function SettingsPage() {
             </div>
             <div className="pt-6 border-t">
               <Button
+                title="Generate a sample Overpass query for testing"
                 onClick={() => {
                   const sampleQuery = generateSampleQuery();
                   setLastQuery(sampleQuery);
