@@ -41,7 +41,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Toggle } from "@/components/ui/toggle";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser";
 import {
@@ -344,21 +343,21 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label htmlFor="notifications">Push Notifications</Label>
+              <Label htmlFor="notifications" className="text-sm font-medium">Push Notifications</Label>
               <Switch
                 id="notifications"
                 checked={notifications}
                 onCheckedChange={setNotifications}
-                className="[&>span]:bg-gray-600"
+                className="data-[state=checked]:bg-emerald-500"
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="emailAlerts">Email Alerts</Label>
+              <Label htmlFor="emailAlerts" className="text-sm font-medium">Email Alerts</Label>
               <Switch
                 id="emailAlerts"
                 checked={emailAlerts}
                 onCheckedChange={setEmailAlerts}
-                className="[&>span]:bg-gray-600"
+                className="data-[state=checked]:bg-emerald-500"
               />
             </div>
             <p className="text-muted-foreground text-sm">
@@ -501,7 +500,7 @@ export default function SettingsPage() {
                 id="autoLoadPois"
                 checked={openMapSettings.autoLoadPois}
                 onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))}
-                className="[&>span]:bg-gray-600"
+                className="data-[state=checked]:bg-emerald-500"
               />
             </div>
             <div className="space-y-2">
