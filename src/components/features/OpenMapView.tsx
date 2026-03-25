@@ -285,7 +285,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {osmPois.map((poi) => {
             const posLat = poi.lat || poi.center?.lat;
             const posLon = poi.lon || poi.center?.lon;
-            if (!posLat || !posLon) return null;
+            if (!posLat || !posLon || isNaN(posLat) || isNaN(posLon)) return null;
 
             return (
               <Marker key={`${poi.type}-${poi.id}`} position={[posLat, posLon]} icon={getOsmPoiIcon(isDarkMode)}>
