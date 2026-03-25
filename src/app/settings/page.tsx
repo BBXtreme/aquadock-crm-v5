@@ -345,29 +345,19 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications">Push Notifications</Label>
-              <div
+              <Switch
                 id="notifications"
-                onClick={() => setNotifications(!notifications)}
-                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
-                data-state={notifications ? "on" : "off"}
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
-                />
-              </div>
+                checked={notifications}
+                onCheckedChange={setNotifications}
+              />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="emailAlerts">Email Alerts</Label>
-              <div
+              <Switch
                 id="emailAlerts"
-                onClick={() => setEmailAlerts(!emailAlerts)}
-                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
-                data-state={emailAlerts ? "on" : "off"}
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
-                />
-              </div>
+                checked={emailAlerts}
+                onCheckedChange={setEmailAlerts}
+              />
             </div>
             <p className="text-muted-foreground text-sm">
               Configure how you receive notifications
@@ -505,16 +495,11 @@ export default function SettingsPage() {
               <Label htmlFor="autoLoadPois" className="text-sm font-medium">
                 Auto-load POIs at zoom 13+
               </Label>
-              <div
+              <Switch
                 id="autoLoadPois"
-                onClick={() => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: !prev.autoLoadPois }))}
-                className="bg-zinc-200 dark:bg-zinc-800 data-[state=on]:bg-emerald-500 h-6 w-11 rounded-full relative transition-all duration-200 shadow-inner border border-zinc-300 dark:border-zinc-700 cursor-pointer"
-                data-state={openMapSettings.autoLoadPois ? "on" : "off"}
-              >
-                <div
-                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow transition-all duration-200 data-[state=on]:translate-x-5"
-                />
-              </div>
+                checked={openMapSettings.autoLoadPois}
+                onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
