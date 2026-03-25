@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Toggle } from "@/components/ui/toggle";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser";
 import {
@@ -489,12 +490,19 @@ export default function SettingsPage() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="autoLoadPois" className="text-sm font-medium">Auto-load POIs at zoom 13+</Label>
-              <Switch
+              <Label htmlFor="autoLoadPois" className="text-sm font-medium">
+                Auto-load POIs at zoom 13+
+              </Label>
+              <Toggle
                 id="autoLoadPois"
-                checked={openMapSettings.autoLoadPois}
-                onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))}
-              />
+                pressed={openMapSettings.autoLoadPois}
+                onPressedChange={(pressed) => 
+                  setOpenMapSettings(prev => ({ ...prev, autoLoadPois: pressed }))
+                }
+                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+              >
+                {openMapSettings.autoLoadPois ? "ON" : "OFF"}
+              </Toggle>
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
