@@ -1,22 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import Link from "next/link";
+
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "leaflet/dist/leaflet.css";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { poiCategories } from "@/lib/constants/map-poi-config";
+import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { poiCategories } from "@/lib/constants/map-poi-config";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
 
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<any>(null);
@@ -52,12 +54,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
-  const validCompanies = useMemo(() => 
-    (initialCompanies || []).filter((c) => typeof c.lat === "number" && typeof c.lon === "number"), 
-  [initialCompanies]);
+  const validCompanies = useMemo(
+    () => (initialCompanies || []).filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
+    [initialCompanies],
+  );
 
   if (!mounted) {
-    return <div className="h-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -73,11 +80,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
         <MarkerClusterGroup chunkedLoading maxClusterRadius={100}>
           {validCompanies.map((company) => (
-            <Marker 
-              key={company.id} 
-              position={[company.lat!, company.lon!]} 
-              icon={getStatusIcon(company.status)}
-            >
+            <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
               <Popup>
                 <div className="min-w-[280px] space-y-3 text-sm">
                   <h3 className="font-semibold">{company.firmenname}</h3>
