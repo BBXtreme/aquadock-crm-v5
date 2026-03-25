@@ -27,6 +27,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [osmPois, setOsmPois] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
+  const poiCache = useRef(new Map<string, any[]>());
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -56,16 +57,26 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       if (!map) return;
 
       const handleLoad = () => {
+        const map = mapRef.current;
+        if (!map) return;
         const zoom = map.getZoom();
-        if (zoom >= 12) {
-          setLoadingOsm(true);
-          fetchOsmPois(map.getBounds())
-            .then((result) => {
-              setOsmPois(result.pois || []);
-            })
-            .catch((err) => console.error("POI load error:", err))
-            .finally(() => setLoadingOsm(false));
+        if (zoom < 13) return;
+
+        // Simple cache key based on rounded bounds
+        const bounds = map.getBounds();
+        const key = `${Math.round(bounds.getSouth()*2)/2},${Math.round(bounds.getWest()*2)/2}`;
+
+        if (poiCache.current.has(key)) {
+          setOsmPois(poiCache.current.get(key) || []);
+          return;
         }
+
+        setLoadingOsm(true);
+        fetchOsmPois(bounds).then(result => {
+          const pois = result.pois || [];
+          setOsmPois(pois);
+          poiCache.current.set(key, pois);
+        }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
       };
 
       handleLoad(); // initial
