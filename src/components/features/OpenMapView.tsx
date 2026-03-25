@@ -54,12 +54,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     if (!map) return;
 
     const handleLoad = () => {
+      const map = mapRef.current;
+      if (!map) return;
       const zoom = map.getZoom();
       if (zoom >= 12) {
         setLoadingOsm(true);
         fetchOsmPois(map.getBounds()).then(result => {
           setOsmPois(result.pois || []);
-        }).catch(() => {}).finally(() => setLoadingOsm(false));
+        }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
       }
     };
 
@@ -166,11 +168,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4" />
         </Button>
         <div className="flex items-center justify-center w-10 h-10">
-          {loadingOsm ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : (
-            <MapPin className="h-5 w-5 text-muted-foreground" />
-          )}
+          {loadingOsm ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : <MapPin className="h-5 w-5 text-muted-foreground" />}
         </div>
       </div>
 
