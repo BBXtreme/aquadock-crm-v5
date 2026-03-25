@@ -125,8 +125,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
             if (res.status === 429) {
               retries++;
-              const delay = Math.pow(2, retries) * 1000; // gentler backoff
-              await new Promise(r => setTimeout(r, delay));
+              const delay = 2 ** retries * 1000; // gentler backoff
+              await new Promise((r) => setTimeout(r, delay));
             } else if (res.status === 403 || res.status === 504) {
               break;
             } else {
