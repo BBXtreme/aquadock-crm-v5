@@ -66,7 +66,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
         // Simple cache key based on rounded bounds
         const bounds = map.getBounds();
-        const key = `${Math.round(bounds.getSouth() * 4) / 4},${Math.round(bounds.getWest() * 4) / 4}`;
+        const key = `${Math.round(bounds.getSouth() * 10) / 10},${Math.round(bounds.getWest() * 10) / 10}`;
 
         if (poiCache.current.has(key)) {
           setOsmPois(poiCache.current.get(key) || []);
