@@ -203,9 +203,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             const map = mapRef.current;
             if (map && map.getZoom() >= 12) {
               setLoadingOsm(true);
-              fetchOsmPois(map.getBounds()).then(result => {
-                setOsmPois(result.pois || []);
-              }).catch(() => {}).finally(() => setLoadingOsm(false));
+              fetchOsmPois(map.getBounds())
+                .then((result) => {
+                  setOsmPois(result.pois || []);
+                })
+                .catch(() => {})
+                .finally(() => setLoadingOsm(false));
             }
           }}
           className="bg-card border shadow-md text-foreground"
