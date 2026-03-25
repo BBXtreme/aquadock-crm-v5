@@ -27,6 +27,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [osmPois, setOsmPois] = useState<any[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, any[]>());
 
   // Safe Leaflet icon fix
@@ -60,6 +61,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         const map = mapRef.current;
         if (!map) return;
         const zoom = map.getZoom();
+        setCurrentZoom(zoom);
         if (zoom < 13) return;
 
         // Simple cache key based on rounded bounds
@@ -189,8 +191,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <div className="flex items-center justify-center w-10 h-10 bg-card border rounded-md shadow-sm">
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : mapRef.current && mapRef.current.getZoom() < 13 ? (
-            <span className="text-xs text-muted-foreground">Zoom</span>
+          ) : currentZoom < 13 ? (
+            <span className="text-xs text-muted-foreground">Zoom in</span>
           ) : (
             <MapPin className="h-5 w-5 text-muted-foreground" />
           )}
