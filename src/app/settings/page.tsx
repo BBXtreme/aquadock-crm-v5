@@ -138,6 +138,12 @@ export default function SettingsPage() {
       const query = settings.find((s) => s.key === "last_query")?.value as string;
       setLastQuery(query || "");
     }
+
+    // Load from localStorage for cache settings
+    const maxSize = localStorage.getItem("openmap_maxCacheSize");
+    if (maxSize) setMaxCacheSize(parseInt(maxSize, 10));
+    const duration = localStorage.getItem("openmap_cacheDuration");
+    if (duration) setCacheDuration(parseInt(duration, 10));
   }, [settings, form]);
 
   const mutation = useMutation({
@@ -162,7 +168,9 @@ export default function SettingsPage() {
 
   const openMapMutation = useMutation({
     mutationFn: async () => {
-      // Mock saving - auth not implemented yet
+      // Mock saving maxCacheSize and cacheDuration
+      localStorage.setItem("openmap_maxCacheSize", maxCacheSize.toString());
+      localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
       await new Promise(resolve => setTimeout(resolve, 500));
     },
     onSuccess: () => {
