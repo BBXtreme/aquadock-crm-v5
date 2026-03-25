@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 
-import { ExternalLink, MapPin, Phone, Plus, Wifi } from "lucide-react";
+import { ExternalLink, Loader2, MapPin, Phone, Plus, Wifi } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -17,6 +17,7 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
   const phone = poi.tags?.phone || poi.tags?.["contact:phone"];
   const website = poi.tags?.website || poi.tags?.["contact:website"];
   const street = poi.tags?.["addr:street"];
+  const housenumber = poi.tags?.["addr:housenumber"];
   const city = poi.tags?.["addr:city"];
   const postcode = poi.tags?.["addr:postcode"];
 
@@ -33,18 +34,25 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
   };
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm">
-      <div>
-        <div className="font-semibold text-base">{name}</div>
-        <div className="text-xs text-muted-foreground mt-1 capitalize">{category}</div>
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-base leading-tight tracking-tight">{name}</div>
+          <div className="text-muted-foreground text-xs mt-1 capitalize">{category}</div>
+        </div>
       </div>
 
       {/* Address */}
-      {(street || city || postcode) && (
+      {(street || housenumber || city || postcode) && (
         <div className="flex items-start gap-2 text-sm">
           <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div className="text-muted-foreground">
-            {street && <div>{street}</div>}
+            {(street || housenumber) && (
+              <div>
+                {street} {housenumber}
+              </div>
+            )}
             {(city || postcode) && (
               <div>
                 {postcode} {city}
@@ -74,7 +82,8 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
         </div>
       )}
 
-      <div className="flex gap-2 pt-2 border-t">
+      {/* Quick Actions */}
+      <div className="flex gap-2 pt-3 border-t">
         <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           In OSM ansehen
@@ -87,8 +96,17 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
           onClick={handleImport}
           disabled={isImporting}
         >
-          <Plus className="h-4 w-4 mr-2" />
-          {isImporting ? "Importiere..." : "In CRM importieren"}
+          {isImporting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Importiere...
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" />
+              In CRM importieren
+            </>
+          )}
         </Button>
       </div>
     </div>
