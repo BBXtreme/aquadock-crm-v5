@@ -63,11 +63,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       }
     };
 
+    // Initial load with delay
+    setTimeout(() => {
+      handleLoad();
+    }, 1200);
+
     map.on("zoomend", handleLoad);
     map.on("moveend", handleLoad);
-
-    // initial load after a short delay
-    setTimeout(handleLoad, 800);
 
     return () => {
       map.off("zoomend", handleLoad);
@@ -107,8 +109,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
       <MapContainer
         ref={mapRef}
-        center={[51.1657, 10.4515]}
-        zoom={6}
+        center={[50.1109, 8.6821]}
+        zoom={8}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
