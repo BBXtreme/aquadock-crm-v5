@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { Info, Loader2, MapPin, Plus, RefreshCw, Search } from "lucide-react";
@@ -17,6 +18,8 @@ import { getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 type PoiCategoryKey = keyof typeof poiCategories;
 
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
+  const [mounted, setMounted] = useState(false);
+
   const {
     loadingOsm,
     osmPois,
@@ -42,6 +45,18 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     setMapReady,
     MapController,
   } = useOpenMap(initialCompanies);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="h-full flex items-center justify-center bg-muted/40">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full w-full">
