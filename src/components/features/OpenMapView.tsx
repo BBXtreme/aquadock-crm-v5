@@ -63,14 +63,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       if (!map) return;
 
       const handleLoad = () => {
-        const map = mapRef.current;
-        if (!map) return;
-        const zoom = map.getZoom();
+        if (!mapRef.current) return;
+        const zoom = mapRef.current.getZoom();
         setCurrentZoom(zoom);
         if (zoom < 12) return;
 
         // Stable cache key based on center (0.25° = ~28km grid - good balance)
-        const bounds = map.getBounds();
+        const bounds = mapRef.current.getBounds();
         const centerLat = Math.round(bounds.getCenter().lat * 4) / 4;
         const centerLon = Math.round(bounds.getCenter().lng * 4) / 4;
         const key = `${centerLat},${centerLon}`;
@@ -208,11 +207,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         {/* 3-state indicator with tooltip */}
         <div
           className="flex items-center justify-center w-10 h-10 bg-card/80 backdrop-blur-sm border rounded-md shadow-sm relative group"
-          title={currentZoom < 13 ? "Zoom in to load nearby POIs" : "POIs loaded"}
+          title={currentZoom < 12 ? "Zoom in to load nearby POIs" : "POIs loaded"}
         >
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : currentZoom < 13 ? (
+          ) : currentZoom < 12 ? (
             <ZoomIn className="h-5 w-5 text-amber-500" />
           ) : (
             <MapPin className="h-5 w-5 text-muted-foreground" />
