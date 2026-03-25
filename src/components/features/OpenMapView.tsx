@@ -93,7 +93,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       const bounds = L.latLngBounds(validCompanies.map((c) => [c.lat!, c.lon!]));
       mapRef.current.fitBounds(bounds, { padding: [80, 80] });
     } else if (mapRef.current) {
-      mapRef.current.flyTo([51.1657, 10.4515], 6);
+      mapRef.current.flyTo([51.1657, 10.4515], 7);
     }
   };
 
