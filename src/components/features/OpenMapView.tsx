@@ -61,7 +61,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const resetView = () => {
     if (mapRef.current && validCompanies.length > 0) {
-      const bounds = L.latLngBounds(validCompanies.map(c => [c.lat!, c.lon!]));
+      const bounds = L.latLngBounds(validCompanies.map((c) => [c.lat!, c.lon!]));
       mapRef.current.fitBounds(bounds, { padding: [80, 80] });
     } else if (mapRef.current) {
       mapRef.current.flyTo([51.1657, 10.4515], 6);
@@ -106,7 +106,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
       {/* Simple floating controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        <Button variant="secondary" size="icon" onClick={resetView} className="bg-card border shadow-md text-foreground">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={resetView}
+          className="bg-card border shadow-md text-foreground"
+        >
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Button variant="secondary" size="icon" className="bg-card border shadow-md text-foreground">
