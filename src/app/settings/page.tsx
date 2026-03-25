@@ -349,10 +349,10 @@ export default function SettingsPage() {
                 id="notifications"
                 pressed={notifications}
                 onPressedChange={(pressed) => setNotifications(pressed)}
-                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+                className="relative h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
               >
                 <div
-                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
                 />
               </Toggle>
             </div>
@@ -362,10 +362,10 @@ export default function SettingsPage() {
                 id="emailAlerts"
                 pressed={emailAlerts}
                 onPressedChange={(pressed) => setEmailAlerts(pressed)}
-                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+                className="relative h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
               >
                 <div
-                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
                 />
               </Toggle>
             </div>
@@ -509,10 +509,10 @@ export default function SettingsPage() {
                 id="autoLoadPois"
                 pressed={openMapSettings.autoLoadPois}
                 onPressedChange={(pressed) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: pressed }))}
-                className="h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
+                className="relative h-6 w-11 rounded-full bg-zinc-200 dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 shadow-inner transition-all duration-300 data-[state=on]:bg-emerald-500 data-[state=on]:border-emerald-600"
               >
                 <div
-                  className="h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
+                  className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white dark:bg-zinc-900 shadow-md transition-all duration-300 translate-x-0.5 data-[state=on]:translate-x-[22px]"
                 />
               </Toggle>
             </div>
