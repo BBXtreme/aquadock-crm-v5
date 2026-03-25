@@ -88,7 +88,11 @@ export type CompanyForOpenMap = Pick<
   | "website"
 >;
 
-export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyForOpenMap[]> {
+export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
+  if (!userId) {
+    throw new Error("User ID is required for RLS compliance");
+  }
+
   const supabase = createClient();
 
   let query = supabase
@@ -109,11 +113,8 @@ export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyFo
     `)
     .not("lat", "is", null)
     .not("lon", "is", null)
+    .eq("user_id", userId)
     .order("firmenname", { ascending: true });
-
-  if (userId) {
-    query = query.eq("user_id", userId);
-  }
 
   const { data, error } = await query;
 
@@ -123,7 +124,11 @@ export async function getCompaniesForOpenMap(userId?: string): Promise<CompanyFo
   return data ?? [];
 }
 
-export async function importOsmPoi(poi: any, userId = "") {
+export async function importOsmPoi(poi: any, userId: string) {
+  if (!userId) {
+    throw new Error("User ID is required for RLS compliance");
+  }
+
   const supabase = createClient();
 
   const kundentypMap: Record<string, string> = {
@@ -150,7 +155,7 @@ export async function importOsmPoi(poi: any, userId = "") {
     lon: poi.lon || poi.center?.lon,
     osm: `${poi.type}/${poi.id}`,
     status: "lead" as const,
-    user_id: userId || "temp-user", // will be replaced with real auth later
+    user_id: userId,
   };
 
   const { data, error } = await supabase.from("companies").insert(insertData).select().single();

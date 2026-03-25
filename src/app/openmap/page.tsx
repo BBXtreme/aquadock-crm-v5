@@ -1,4 +1,5 @@
 import { OpenMapClient } from "@/components/features/OpenMapClient";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { type CompanyForOpenMap, getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
 export default async function OpenMapPage() {
@@ -6,14 +7,19 @@ export default async function OpenMapPage() {
   let error: string | null = null;
 
   try {
-    // TODO: Replace with real user.id once authentication is implemented
-    // Example: const user = await getUser(); companies = await getCompaniesForOpenMap(user.id);
-    companies = await getCompaniesForOpenMap("");
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      throw new Error("Authentication required. Please log in to access the map.");
+    }
+
+    companies = await getCompaniesForOpenMap(user.id);
 
     console.log(`[OpenMap Page] Successfully loaded ${companies.length} companies with geo data`);
   } catch (err: any) {
     console.error("[OpenMap Page] Failed to load companies:", err);
-    error = "Could not load map data. Please try refreshing the page.";
+    error = err.message || "Could not load map data. Please try refreshing the page.";
   }
 
   return (

@@ -3,20 +3,61 @@ import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
-  const supabase = await createServerSupabaseClient();
-  const body = await request.json();
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  const { data, error } = await supabase.from("companies").insert(body).select().single();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  if (error) {
-    console.error(`API error [companies]:`, error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const body = await request.json();
+
+    // Ensure user_id is set for RLS
+    body.user_id = user.id;
+
+    console.log("[API POST /companies] Received body:", body);
+
+    const { data, error } = await supabase.from("companies").insert(body).select().single();
+
+    if (error) {
+      console.error("[API POST /companies] Supabase Error:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          details: error,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!data?.id) {
+      console.error("[API POST /companies] No ID returned from Supabase");
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Keine ID von der Datenbank zurückgegeben",
+        },
+        { status: 500 },
+      );
+    }
+
+    console.log("[API POST /companies] SUCCESS - New ID:", data.id);
+
+    return NextResponse.json({
+      success: true,
+      id: data.id,
+      data,
+    });
+  } catch (err: any) {
+    console.error("[API POST /companies] Unexpected error:", err);
+    return NextResponse.json(
+      {
+        success: false,
+        error: err.message || "Interner Serverfehler",
+      },
+      { status: 500 },
+    );
   }
-
-  console.log("API success:", { method: request.method, id: "create" });
-  return NextResponse.json({ success: true, company: data }, { status: 201 });
 }

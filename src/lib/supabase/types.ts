@@ -62,83 +62,77 @@ export interface Database {
       };
 
       timeline: {
-        Row: Database["public"]["Tables"]["timeline"]["Row"];
-        Insert: Database["public"]["Tables"]["timeline"]["Insert"];
-        Update: Database["public"]["Tables"]["timeline"]["Update"];
+        Row: {
+          id: string;
+          company_id: string | null;
+          user_id: string;
+          event_type: string;
+          title: string;
+          description: string | null;
+          metadata: Record<string, any> | null;
+          created_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;
       };
 
-      // Then keep or add your derived / joined types:
-      export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
+      email_log: {
+        Row: {
+          id: string;
+          recipient_email: string;
+          subject: string;
+          content: string;
+          status: string;
+          sent_at: string | null;
+          created_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["email_log"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["email_log"]["Update"]>;
+      };
 
-      export type TimelineEntryWithCompany = TimelineEntry & {
-        companies?: Pick<Company, "id" | "firmenname"> | null;
-        contacts?: Pick<Contact, "id" | "name"> | null;  // optional future join
-      }
+      email_templates: {
+        Row: {
+          id: string;
+          name: string;
+          subject: string;
+          content: string;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["email_templates"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["email_templates"]["Update"]>;
+      };
 
-  email_log: {
-    Row: {
-      id: string;
-      recipient_email: string;
-      subject: string;
-      content: string;
-      status: string;
-      sent_at: string | null;
-      created_at: string | null;
-    };
-    Insert: Partial<Database["public"]["Tables"]["email_log"]["Row"]>;
-    Update: Partial<Database["public"]["Tables"]["email_log"]["Row"]>;
-  };
-
-  email_templates: {
-    Row: {
-      id: string;
-      name: string;
-      subject: string;
-      content: string;
-      created_at: string | null;
-      updated_at: string | null;
-    };
-    Insert: Partial<Database["public"]["Tables"]["email_templates"]["Row"]>;
-    Update: Partial<Database["public"]["Tables"]["email_templates"]["Row"]>;
-  };
-
-  user_settings: {
-    Row: {
-      id: string;
-      user_id: string;
-      key: string;
-      value: unknown; // jsonb – e.g. string[] for column order
-      created_at: string | null;
-      updated_at: string | null;
-    };
-    Insert: {
-      user_id: string;
-      key: string;
-      value: unknown;
-      created_at?: string | null;
-      updated_at?: string | null;
-    };
-    Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
-  };
-}
-// biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-{
-}
-// biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-{
-}
-// biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-{
-}
-}
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          key: string;
+          value: unknown; // jsonb – e.g. string[] for column order
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          key: string;
+          value: unknown;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
+      };
+    }
+  }
 }
 
 // Export table types
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
-export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
+export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
+export type TimelineEntryWithCompany = TimelineEntry & {
   companies?: Pick<Company, "id" | "firmenname"> | null;
+  contacts?: Pick<Contact, "id" | "name"> | null;  // optional future join
 };
 export type TimelineEntryInsert = Database["public"]["Tables"]["timeline"]["Insert"];
 export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Update"];

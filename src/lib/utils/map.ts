@@ -34,14 +34,16 @@ export const getOsmPoiIcon = (isDarkMode = false) => {
 export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
+  retryCount = 0,
 ): Promise<{ pois: any[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     poiFetchTimeout = setTimeout(async () => {
       console.group("OpenMap OSM Query");
       console.log("Current bounds:", bounds.toBBoxString());
       console.log("Active categories:", activeCategories);
+      console.log("Retry count:", retryCount);
 
       const bbox = bounds.toBBoxString(); // "west,south,east,north"
       const [west, south, east, north] = bbox.split(",").map(Number);
@@ -99,8 +101,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
       for (const endpoint of endpoints) {
         console.log(`[OpenMap OSM] Trying ${endpoint}`);
-        let retries = 0;
-        const maxRetries = 2;
+        let retries = retryCount;
+        const maxRetries = 3;
 
         while (retries < maxRetries) {
           try {
@@ -128,6 +130,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
             if (res.status === 429) {
               retries++;
               const delay = 2 ** retries * 800;
+              console.warn(`[OpenMap OSM] ${endpoint} 429 - retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
               await new Promise((r) => setTimeout(r, delay));
             } else if (res.status === 403 || res.status === 504) {
               console.warn(`[OpenMap OSM] ${endpoint} ${res.status} - skipping`);
@@ -141,10 +144,10 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
               console.warn(`[OpenMap OSM] ${endpoint} timeout`);
               break;
             }
-            if (endpoint === endpoints[endpoints.length - 1]) {
+            if (endpoint === endpoints[endpoints.length - 1] && retries >= maxRetries - 1) {
               console.groupEnd();
-              console.error("All Overpass endpoints failed");
-              resolve({ pois: [], totalFound: 0, query }); // silent fail
+              console.error("All Overpass endpoints failed after retries");
+              reject(new Error("Failed to fetch OSM POIs after all retries"));
               return;
             }
             break;
@@ -153,7 +156,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
       }
 
       console.groupEnd();
-      resolve({ pois: [], totalFound: 0, query }); // silent fail
+      reject(new Error("Failed to fetch OSM POIs"));
     }, 300);
   });
 }

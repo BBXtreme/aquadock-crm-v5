@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import type { OsmPoi } from "./types";
 
-async function createCompanyFromOsmPoi(poi: OsmPoi) {
+async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
 
   const kundentypMap: Record<string, string> = {
@@ -44,7 +44,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi) {
     lat: (poi.lat || poi.center?.lat) as number,
     lon: (poi.lon || poi.center?.lon) as number,
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
-    user_id: null, // wichtig für deine aktuelle Setup
+    user_id: userId, // Now required
     value: 0,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
@@ -85,7 +85,12 @@ export function useMapPopupActions() {
     try {
       toast.loading(`"${name}" wird importiert...`, { id: "osm-import" });
 
-      const result = await createCompanyFromOsmPoi(poi);
+      // Get user ID from auth context or API
+      const userRes = await fetch("/api/auth/user");
+      if (!userRes.ok) throw new Error("Authentication required");
+      const { userId } = await userRes.json();
+
+      const result = await createCompanyFromOsmPoi(poi, userId);
 
       // Sichere ID-Extraktion – funktioniert mit verschiedenen API-Antwort-Formaten
       const newCompanyId = result.id || result.data?.id || result[0]?.id;

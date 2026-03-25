@@ -35,9 +35,23 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
 
   const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
+
+  // Load POI cache from localStorage on mount
+  useEffect(() => {
+    const savedCache = localStorage.getItem("openmap-poi-cache");
+    if (savedCache) {
+      try {
+        const parsed = JSON.parse(savedCache);
+        poiCache.current = new Map(Object.entries(parsed));
+      } catch (e) {
+        console.warn("Failed to load POI cache from localStorage:", e);
+      }
+    }
+  }, []);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -77,13 +91,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
-  // Auto POI loading
+  // Auto POI loading with debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
       const map = mapRef.current;
       if (!map) return;
 
-      const handleLoad = () => {
+      const handleLoad = useCallback(() => {
         if (!mapRef.current) return;
         const zoom = mapRef.current.getZoom();
         setCurrentZoom(zoom);
@@ -105,7 +119,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         fetchOsmPois(bounds)
           .then(async (result) => {
             const pois: OsmPoi[] = result.pois || [];
-            poiCache.current.set(key, { pois, timestamp: now });
+            const newEntry = { pois, timestamp: now };
+            poiCache.current.set(key, newEntry);
+
+            // Save to localStorage
+            const cacheObj = Object.fromEntries(poiCache.current);
+            localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
 
             if (poiCache.current.size > 30) {
               const firstKey = poiCache.current.keys().next().value;
@@ -116,15 +135,22 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
-      };
+      }, [autoLoadPois]);
 
       handleLoad();
-      map.on("zoomend", handleLoad);
-      map.on("moveend", handleLoad);
+      map.on("zoomend", () => {
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(handleLoad, 500);
+      });
+      map.on("moveend", () => {
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(handleLoad, 500);
+      });
 
       return () => {
         map.off("zoomend", handleLoad);
         map.off("moveend", handleLoad);
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       };
     }, 2500);
 
@@ -237,6 +263,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           onClick={async () => {
             poiCache.current.clear();
+            localStorage.removeItem("openmap-poi-cache");
             const map = mapRef.current;
             if (map && map.getZoom() >= 13) {
               setLoadingOsm(true);
