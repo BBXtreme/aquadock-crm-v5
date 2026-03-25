@@ -178,15 +178,16 @@ export default function SettingsPage() {
 
   const openMapMutation = useMutation({
     mutationFn: async () => {
-      // Mock saving maxCacheSize and cacheDuration
-      localStorage.setItem("openmap_maxCacheSize", maxCacheSize.toString());
-      localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
-      localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(overpassEndpoints));
-      localStorage.setItem("openmap_autoLoadPois", autoLoadPois.toString());
-      console.log("Saving overpassEndpoints:", overpassEndpoints);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const promises = [
+        upsertUserSetting({ user_id: userId!, key: "overpass_endpoints", value: JSON.stringify(overpassEndpoints) }),
+        upsertUserSetting({ user_id: userId!, key: "auto_load_pois", value: autoLoadPois.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "cache_duration", value: cacheDuration.toString() }),
+        upsertUserSetting({ user_id: userId!, key: "max_cache_size", value: maxCacheSize.toString() }),
+      ];
+      await Promise.all(promises);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-settings", userId] });
       toast.success("OpenMap settings saved successfully");
     },
     onError: (error) => {
@@ -216,11 +217,9 @@ export default function SettingsPage() {
   });
 
   const clearCache = () => {
+    // Note: This clears localStorage cache, but in-memory cache in OpenMapView needs page reload
     localStorage.removeItem("openmap-poi-cache");
-    // Simple way to clear in-memory cache: reload the page
-    if (confirm("Clear POI cache and reload page?")) {
-      window.location.reload();
-    }
+    toast.success("POI cache cleared (reload page for full effect)");
   };
 
   return (
@@ -388,10 +387,9 @@ export default function SettingsPage() {
             <div className="pt-6 border-t">
               <Button
                 onClick={() => {
-                  // For now just simulate - later we can connect to real map state
                   const sampleQuery = generateSampleQuery();
                   setLastQuery(sampleQuery);
-                  toast.success("Sample Overpass query generated");
+                  toast.success("Overpass query generated (sample for Central Europe)");
                 }}
               >
                 Test Overpass Query
@@ -503,7 +501,7 @@ export default function SettingsPage() {
                               className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                               onClick={() => setShowPassword(!showPassword)}
                             >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className "h-4 w-4" />}
                             </Button>
                           </div>
                         </FormControl>
