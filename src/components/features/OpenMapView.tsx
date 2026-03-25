@@ -73,16 +73,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           return;
         }
 
+        // Do NOT clear osmPois here — keep old ones visible while fetching new
         setLoadingOsm(true);
         fetchOsmPois(bounds)
           .then((result) => {
             const pois = result.pois || [];
             setOsmPois(pois);
             poiCache.current.set(key, pois);
-            if (poiCache.current.size > 20) {
-              const firstKey = poiCache.current.keys().next().value;
-              poiCache.current.delete(firstKey);
-            }
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
