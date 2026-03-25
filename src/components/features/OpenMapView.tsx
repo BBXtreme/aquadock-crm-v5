@@ -39,6 +39,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const debouncedHandleLoadRef = useRef<() => void>();
   const [autoLoadPois, setAutoLoadPois] = useState(true);
+  const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
 
@@ -71,6 +73,50 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     window.addEventListener("openmap-settings-changed", handleSettingsChange);
     return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
   }, []);
+
+  // Listen for company import events to refresh company markers
+  useEffect(() => {
+    const handleCompanyImported = () => {
+      setRefreshTrigger((prev) => prev + 1);
+    };
+
+    window.addEventListener("company-imported", handleCompanyImported);
+    return () => window.removeEventListener("company-imported", handleCompanyImported);
+  }, []);
+
+  // Refresh companies when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger === 0) return; // Skip initial render
+
+    const fetchCompanies = async () => {
+      const supabase = (await import("@/lib/supabase/browser")).createClient();
+      const isDevelopment = process.env.NODE_ENV === "development";
+      const isMockUser = true; // No auth in development
+
+      let query = supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp, status, lat, lon, stadt, land, value, osm, telefon, website")
+        .not("lat", "is", null)
+        .not("lon", "is", null);
+
+      if (!isDevelopment || !isMockUser) {
+        // In production, would filter by user_id
+        // query = query.eq("user_id", userId);
+      }
+
+      query = query.order("firmenname", { ascending: true });
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Failed to refresh companies:", error);
+        return;
+      }
+
+      setCompanies(data || []);
+    };
+
+    fetchCompanies();
+  }, [refreshTrigger]);
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -173,8 +219,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
   const validCompanies = useMemo(
-    () => (initialCompanies || []).filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
-    [initialCompanies],
+    () => (companies || []).filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
+    [companies],
   );
 
   const resetView = () => {

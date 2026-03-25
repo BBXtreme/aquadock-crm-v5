@@ -159,7 +159,8 @@ export function useMapPopupActions() {
         },
       });
 
-      window.dispatchEvent(new CustomEvent("osm-poi-imported"));
+      // Dispatch event to refresh company markers
+      window.dispatchEvent(new CustomEvent("company-imported"));
     } catch (err: any) {
       console.error("Import failed:", err);
       toast.error(`Import von "${name}" fehlgeschlagen`, {
