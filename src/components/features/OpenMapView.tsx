@@ -63,8 +63,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       }
     };
 
-    // Initial load + map events
-    const timer = setTimeout(handleLoad, 800);
+    // Trigger on initial load and every zoom/move
+    const timer = setTimeout(handleLoad, 1000);
     map.on("zoomend", handleLoad);
     map.on("moveend", handleLoad);
 
@@ -73,7 +73,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       map.off("zoomend", handleLoad);
       map.off("moveend", handleLoad);
     };
-  }, []);
+  }, [mapRef]);   // important: depend on mapRef
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
