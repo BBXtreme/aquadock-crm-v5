@@ -2,24 +2,24 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import Link from "next/link";
-
 import L from "leaflet";
+
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+
 import MarkerClusterGroup from "react-leaflet-markercluster";
+
 import "leaflet/dist/leaflet.css";
 
-import { Building, Info, Loader2, MapPin, Plus, RefreshCw, Search, ZoomIn } from "lucide-react";
+import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { poiCategories } from "@/lib/constants/map-poi-config";
+
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
-import { createClient } from "@/lib/supabase/browser";
+
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-import { importOsmPoi } from "@/lib/supabase/services/companies";
-import { upsertUserSetting } from "@/lib/supabase/services/user-settings";
+
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
 interface CacheEntry {
@@ -36,7 +36,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
-  const [userId, setUserId] = useState<string | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
 
   // Load from localStorage on mount
@@ -56,8 +55,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
   }, []);
-
-  const supabase = createClient();
 
   // Safe Leaflet icon fix
   useEffect(() => {
@@ -156,12 +153,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     } else if (mapRef.current) {
       mapRef.current.flyTo([51.1657, 10.4515], 7);
     }
-  };
-
-  const clearPoiCache = () => {
-    poiCache.current.clear();
-    setOsmPois([]);
-    toast.success("POI cache cleared");
   };
 
   if (!mounted) {
@@ -288,7 +279,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             Status Legende
-            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">
+            <button
+              type="button"
+              onClick={() => setShowLegend(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
               ✕
             </button>
           </div>
