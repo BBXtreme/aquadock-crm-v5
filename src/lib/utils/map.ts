@@ -37,7 +37,7 @@ export async function fetchOsmPois(
 ): Promise<{ pois: any[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     poiFetchTimeout = setTimeout(async () => {
       console.group("OpenMap OSM Query");
       console.log("Current bounds:", bounds.toBBoxString());
@@ -65,8 +65,8 @@ export async function fetchOsmPois(
             tagGroups[key].push(value);
           } else {
             // assume amenity
-            if (!tagGroups["amenity"]) tagGroups["amenity"] = [];
-            tagGroups["amenity"].push(tag);
+            if (!tagGroups.amenity) tagGroups.amenity = [];
+            tagGroups.amenity.push(tag);
           }
         }
       }

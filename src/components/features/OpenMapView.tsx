@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
@@ -15,8 +15,14 @@ import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
+// ✅ Correct imports from the map/ subfolder
+import CompanyMarkerPopup from "./map/CompanyMarkerPopup";
+import OsmPoiMarkerPopup from "./map/OsmPoiMarkerPopup";
+import type { OsmPoi } from "./map/types";
+import { useMapPopupActions } from "./map/useMapPopupActions";
+
 interface CacheEntry {
-  pois: any[];
+  pois: OsmPoi[];
   timestamp: number;
 }
 
@@ -24,12 +30,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const mapRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
-  const [osmPois, setOsmPois] = useState<any[]>([]);
+  const [osmPois, setOsmPois] = useState<OsmPoi[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
   const [autoLoadPois, setAutoLoadPois] = useState(true);
+
+  const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -45,7 +53,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     };
 
     window.addEventListener("openmap-settings-changed", handleSettingsChange);
-
     return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
   }, []);
 
@@ -82,13 +89,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setCurrentZoom(zoom);
         if (!autoLoadPois || zoom < 13) return;
 
-        // Stable cache key based on center (0.5° = ~56km grid - coarser balance)
         const bounds = mapRef.current.getBounds();
         const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
         const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
         const key = `${centerLat},${centerLon}`;
 
-        // Check cache with 10-minute expiration
         const now = Date.now();
         const cacheEntry = poiCache.current.get(key);
         if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
@@ -96,14 +101,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           return;
         }
 
-        // Cache miss → fetch new, keep old POIs visible
         setLoadingOsm(true);
         fetchOsmPois(bounds)
           .then(async (result) => {
-            const pois = result.pois || [];
+            const pois: OsmPoi[] = result.pois || [];
             poiCache.current.set(key, { pois, timestamp: now });
 
-            // Simple LRU size limit
             if (poiCache.current.size > 30) {
               const firstKey = poiCache.current.keys().next().value;
               poiCache.current.delete(firstKey);
@@ -115,7 +118,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           .finally(() => setLoadingOsm(false));
       };
 
-      handleLoad(); // initial
+      handleLoad();
       map.on("zoomend", handleLoad);
       map.on("moveend", handleLoad);
 
@@ -148,6 +151,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     }
   };
 
+  const handleImportOsmPoi = useCallback(
+    async (poi: OsmPoi) => {
+      await importOsmPoi(poi);
+    },
+    [importOsmPoi],
+  );
+
   if (!mounted) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -179,47 +189,49 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             fillOpacity: 0.15,
           }}
         >
+          {/* CRM Company Markers */}
           {validCompanies.map((company) => (
             <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
               <Popup>
-                <div className="min-w-[280px] space-y-3 text-sm">
-                  <h3 className="font-semibold">{company.firmenname}</h3>
-                  <div className="text-muted-foreground">
-                    {company.stadt}, {company.land}
-                  </div>
-                  {company.value && <div className="font-medium">€{company.value.toLocaleString("de-DE")}</div>}
-                </div>
+                <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
               </Popup>
             </Marker>
           ))}
 
-          {osmPois.map((poi: any) => (
-            <Marker
-              key={poi.id}
-              position={[poi.lat || poi.center?.lat, poi.lon || poi.center?.lon]}
-              icon={getOsmPoiIcon(isDarkMode)}
-            >
-              <Popup>
-                <div className="min-w-[200px]">
-                  <h4 className="font-medium">{poi.tags?.name || "Unbenannter POI"}</h4>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {/* OSM POI Markers */}
+          {osmPois.map((poi) => {
+            const posLat = poi.lat || poi.center?.lat;
+            const posLon = poi.lon || poi.center?.lon;
+            if (!posLat || !posLon) return null;
+
+            return (
+              <Marker key={`${poi.type}-${poi.id}`} position={[posLat, posLon]} icon={getOsmPoiIcon(isDarkMode)}>
+                <Popup>
+                  <OsmPoiMarkerPopup
+                    poi={poi}
+                    isDarkMode={isDarkMode}
+                    onImport={handleImportOsmPoi}
+                    onViewInOsm={viewInOsm}
+                  />
+                </Popup>
+              </Marker>
+            );
+          })}
         </MarkerClusterGroup>
       </MapContainer>
 
-      {/* Simple floating controls */}
+      {/* Floating Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
           onClick={resetView}
           className="bg-card border shadow-md text-foreground"
-          title="Show all companies on map"
+          title="Alle Firmen anzeigen"
         >
           <Building className="h-4 w-4" />
         </Button>
+
         <Button
           variant="secondary"
           size="icon"
@@ -239,7 +251,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             }
           }}
           className="bg-card border shadow-md text-foreground"
-          title="Clear cache and reload POIs"
+          title="Cache leeren und POIs neu laden"
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -253,10 +265,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4" />
         </Button>
 
-        {/* 3-state indicator with tooltip */}
         <div
           className="flex items-center justify-center w-10 h-10 bg-card/80 backdrop-blur-sm border rounded-md shadow-sm relative group"
-          title={currentZoom < 13 ? "Zoom in to load nearby POIs" : "POIs loaded"}
+          title={currentZoom < 13 ? "Reinzoomen um POIs zu laden (Zoom ≥ 13)" : "POIs geladen"}
         >
           {loadingOsm ? (
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -268,6 +279,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </div>
       </div>
 
+      {/* Legend */}
       {showLegend && (
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
