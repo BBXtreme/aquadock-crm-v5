@@ -40,11 +40,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const supabase = createClient();
 
-  useEffect(() => {
-    // Mock auth - functionality will be implemented later
-    setUserId("dev-mock-user-11111111-2222-3333-4444-55555555555");
-  }, []);
-
   // Safe Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -106,15 +101,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             }
 
             setOsmPois(pois);
-
-            // Save last query for debugging
-            if (userId && result.query) {
-              try {
-                await upsertUserSetting({ user_id: userId, key: "last_query", value: result.query });
-              } catch (e) {
-                console.error("Failed to save last query:", e);
-              }
-            }
           })
           .catch((err) => console.error("POI load error:", err))
           .finally(() => setLoadingOsm(false));
@@ -131,7 +117,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [userId]);
+  }, []);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -225,15 +211,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
               try {
                 const result = await fetchOsmPois(map.getBounds());
                 setOsmPois(result.pois || []);
-
-                // Save last query for debugging
-                if (userId && result.query) {
-                  try {
-                    await upsertUserSetting({ user_id: userId, key: "last_query", value: result.query });
-                  } catch (e) {
-                    console.error("Failed to save last query:", e);
-                  }
-                }
               } catch (e) {
                 console.error("POI reload error:", e);
               } finally {
