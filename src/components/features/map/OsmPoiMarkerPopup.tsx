@@ -34,7 +34,7 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
   };
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-4 bg-card/90 backdrop-blur-sm border rounded-md shadow-sm">
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
