@@ -68,10 +68,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setCurrentZoom(zoom);
         if (zoom < 13) return;
 
-        // Stable cache key based on center (0.25° = ~28km grid - good balance)
+        // Stable cache key based on center (0.5° = ~56km grid - coarser balance)
         const bounds = mapRef.current.getBounds();
-        const centerLat = Math.round(bounds.getCenter().lat * 4) / 4;
-        const centerLon = Math.round(bounds.getCenter().lng * 4) / 4;
+        const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
+        const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
         const key = `${centerLat},${centerLon}`;
 
         // Check cache with 10-minute expiration
