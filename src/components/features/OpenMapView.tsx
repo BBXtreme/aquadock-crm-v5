@@ -160,6 +160,27 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Button
+          variant="secondary"
+          size="icon"
+          onClick={async () => {
+            const map = mapRef.current;
+            if (!map) return;
+            setLoadingOsm(true);
+            try {
+              const result = await fetchOsmPois(map.getBounds());
+              setOsmPois(result.pois || []);
+              toast.success(`Loaded ${result.totalFound || 0} POIs`);
+            } catch (err) {
+              toast.error("Failed to load POIs");
+            } finally {
+              setLoadingOsm(false);
+            }
+          }}
+          className="bg-card border shadow-md text-foreground"
+        >
+          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+        </Button>
+        <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
