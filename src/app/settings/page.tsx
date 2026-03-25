@@ -192,6 +192,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       loadFromLocalStorage();
+      window.dispatchEvent(new CustomEvent('openmap-settings-changed'));
       toast.success("OpenMap settings saved successfully");
     },
     onError: (error) => {
@@ -322,7 +323,7 @@ export default function SettingsPage() {
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Settings className="mr-2 h-5 w-5" />
+              <Settings className "mr-2 h-5 w-5" />
               Advanced
             </CardTitle>
           </CardHeader>

@@ -42,9 +42,19 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("openmap_autoLoadPois");
-    if (saved !== null) {
-      setAutoLoadPois(saved === "true");
-    }
+    setAutoLoadPois(saved !== null ? saved === "true" : true);
+  }, []);
+
+  // Listen for settings changes
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      const saved = localStorage.getItem("openmap_autoLoadPois");
+      setAutoLoadPois(saved !== null ? saved === "true" : true);
+    };
+
+    window.addEventListener('openmap-settings-changed', handleSettingsChange);
+
+    return () => window.removeEventListener('openmap-settings-changed', handleSettingsChange);
   }, []);
 
   const supabase = createClient();
@@ -76,14 +86,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       const map = mapRef.current;
       if (!map) return;
 
-      const autoLoad = localStorage.getItem("openmap_autoLoadPois") === "true";
-      if (!autoLoad) return;
-
       const handleLoad = () => {
         if (!mapRef.current) return;
         const zoom = mapRef.current.getZoom();
         setCurrentZoom(zoom);
-        if (zoom < 13) return;
+        if (!autoLoadPois || zoom < 13) return;
 
         // Stable cache key based on center (0.5° = ~56km grid - coarser balance)
         const bounds = mapRef.current.getBounds();
@@ -129,7 +136,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [autoLoadPois]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
