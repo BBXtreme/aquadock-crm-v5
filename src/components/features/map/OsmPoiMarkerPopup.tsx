@@ -38,7 +38,7 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-base leading-tight tracking-tight text-foreground">{name}</div>
+          <div className="font-semibold text-base leading-tight tracking-tight">{name}</div>
           <div className="text-muted-foreground text-xs mt-1 capitalize">{category}</div>
         </div>
       </div>
@@ -66,7 +66,7 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
       {phone && (
         <div className="flex items-center gap-2 text-sm">
           <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a href={`tel:${phone}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+          <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
             {phone}
           </a>
         </div>
@@ -76,14 +76,14 @@ export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInO
       {website && (
         <div className="flex items-center gap-2 text-sm">
           <Wifi className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a href={website} target="_blank" rel="noopener" className="text-blue-600 dark:text-blue-400 hover:underline truncate">
+          <a href={website} target="_blank" rel="noopener" className="text-blue-600 hover:underline truncate">
             Website öffnen
           </a>
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="flex gap-2 pt-3 border-t border-border">
+      <div className="flex gap-2 pt-3 border-t">
         <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           In OSM ansehen
