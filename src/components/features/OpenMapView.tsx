@@ -64,7 +64,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
         // Simple cache key based on rounded bounds
         const bounds = map.getBounds();
-        const key = `${Math.round(bounds.getSouth()*2)/2},${Math.round(bounds.getWest()*2)/2}`;
+        const key = `${Math.round(bounds.getSouth() * 2) / 2},${Math.round(bounds.getWest() * 2) / 2}`;
 
         if (poiCache.current.has(key)) {
           setOsmPois(poiCache.current.get(key) || []);
@@ -72,11 +72,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         }
 
         setLoadingOsm(true);
-        fetchOsmPois(bounds).then(result => {
-          const pois = result.pois || [];
-          setOsmPois(pois);
-          poiCache.current.set(key, pois);
-        }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
+        fetchOsmPois(bounds)
+          .then((result) => {
+            const pois = result.pois || [];
+            setOsmPois(pois);
+            poiCache.current.set(key, pois);
+          })
+          .catch((err) => console.error("POI load error:", err))
+          .finally(() => setLoadingOsm(false));
       };
 
       handleLoad(); // initial
