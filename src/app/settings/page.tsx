@@ -93,6 +93,23 @@ export default function SettingsPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
+  const loadFromLocalStorage = () => {
+    const maxSize = localStorage.getItem("openmap_maxCacheSize");
+    if (maxSize) setMaxCacheSize(parseInt(maxSize, 10));
+    const duration = localStorage.getItem("openmap_cacheDuration");
+    if (duration) setCacheDuration(parseInt(duration, 10));
+    const endpoints = localStorage.getItem("openmap_overpassEndpoints");
+    if (endpoints) {
+      try {
+        setOverpassEndpoints(JSON.parse(endpoints));
+      } catch (e) {
+        // ignore
+      }
+    }
+    const autoLoad = localStorage.getItem("openmap_autoLoadPois");
+    if (autoLoad !== null) setAutoLoadPois(autoLoad === "true");
+  };
+
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],
     queryFn: () => (userId ? getUserSettings(userId) : Promise.resolve([])),
@@ -139,21 +156,7 @@ export default function SettingsPage() {
       setLastQuery(query || "");
     }
 
-    // Load from localStorage for cache settings
-    const maxSize = localStorage.getItem("openmap_maxCacheSize");
-    if (maxSize) setMaxCacheSize(parseInt(maxSize, 10));
-    const duration = localStorage.getItem("openmap_cacheDuration");
-    if (duration) setCacheDuration(parseInt(duration, 10));
-    const endpoints = localStorage.getItem("openmap_overpassEndpoints");
-    if (endpoints) {
-      try {
-        setOverpassEndpoints(JSON.parse(endpoints));
-      } catch (e) {
-        // ignore
-      }
-    }
-    const autoLoad = localStorage.getItem("openmap_autoLoadPois");
-    if (autoLoad !== null) setAutoLoadPois(autoLoad === "true");
+    loadFromLocalStorage();
   }, [settings, form]);
 
   const mutation = useMutation({
@@ -188,6 +191,7 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-settings", userId] });
+      loadFromLocalStorage();
       toast.success("OpenMap settings saved successfully");
     },
     onError: (error) => {
