@@ -13,7 +13,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
   const statusColor = statusColors[statusKey] || statusColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
 
-  // Kundentyp with emoji
   const kundentypEmoji: Record<string, string> = {
     restaurant: "🍽️",
     hotel: "🏨",
@@ -26,7 +25,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
   const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
 
-  // Address
   const addressLine = [company.stadt, company.land].filter(Boolean).join(", ");
 
   return (
@@ -42,14 +40,15 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         )}
       </div>
 
-      {/* Badges */}
+      {/* Badges Row */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Qualified Badge */}
-        {company.status === "qualified" && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
-            ✓ Qualified
-          </div>
-        )}
+        {/* Status Badge */}
+        <div
+          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          style={{ backgroundColor: statusColor }}
+        >
+          {statusLabel}
+        </div>
 
         {/* Kundentyp Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted/70 rounded-full text-xs font-medium">
@@ -67,34 +66,9 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         {company.firmentyp && <div className="text-xs text-muted-foreground">• {company.firmentyp}</div>}
       </div>
 
-      {/* Water Distance */}
+      {/* Wasserdistanz */}
       {company.wasserdistanz && (
         <div className="text-xs text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>
-      )}
-
-      {/* Phone */}
-      {company.telefon && (
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a href={`tel:${company.telefon}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-            {company.telefon}
-          </a>
-        </div>
-      )}
-
-      {/* Website */}
-      {company.website && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">🌐</span>
-          <a
-            href={company.website}
-            target="_blank"
-            rel="noopener"
-            className="text-blue-600 dark:text-blue-400 hover:underline truncate"
-          >
-            Website öffnen
-          </a>
-        </div>
       )}
 
       {/* OSM Link */}
