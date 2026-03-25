@@ -89,9 +89,10 @@ export type CompanyForOpenMap = Pick<
 >;
 
 export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
-  if (!userId) {
-    throw new Error("User ID is required for RLS compliance");
-  }
+  // DEVELOPMENT ONLY: Allow fetching without user_id filter for mock user
+  // TODO: Enforce user_id filter when auth is implemented
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555";
 
   const supabase = createClient();
 
@@ -112,9 +113,13 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
       website
     `)
     .not("lat", "is", null)
-    .not("lon", "is", null)
-    .eq("user_id", userId)
-    .order("firmenname", { ascending: true });
+    .not("lon", "is", null);
+
+  if (!isDevelopment || !isMockUser) {
+    query = query.eq("user_id", userId);
+  }
+
+  query = query.order("firmenname", { ascending: true });
 
   const { data, error } = await query;
 
@@ -125,9 +130,10 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
 }
 
 export async function importOsmPoi(poi: any, userId: string) {
-  if (!userId) {
-    throw new Error("User ID is required for RLS compliance");
-  }
+  // DEVELOPMENT ONLY: Allow inserts without user_id for mock user
+  // TODO: Enforce user_id when auth is implemented
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555";
 
   const supabase = createClient();
 
@@ -155,7 +161,7 @@ export async function importOsmPoi(poi: any, userId: string) {
     lon: poi.lon || poi.center?.lon,
     osm: `${poi.type}/${poi.id}`,
     status: "lead" as const,
-    user_id: userId,
+    ...(isDevelopment && isMockUser ? {} : { user_id: userId }),
   };
 
   const { data, error } = await supabase.from("companies").insert(insertData).select().single();

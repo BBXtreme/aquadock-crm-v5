@@ -90,10 +90,17 @@ export function useMapPopupActions() {
     try {
       toast.loading(`"${name}" wird importiert...`, { id: "osm-import" });
 
-      // Get user ID from auth context or API
-      const userRes = await fetch("/api/auth/user");
-      if (!userRes.ok) throw new Error("Authentication required");
-      const { userId } = await userRes.json();
+      // DEVELOPMENT ONLY: Use mock user ID for now
+      // TODO: Get user ID from auth context when implemented
+      const isDevelopment = process.env.NODE_ENV === "development";
+      let userId = "dev-mock-user-11111111-2222-3333-4444-555555555555"; // Mock user ID
+
+      if (!isDevelopment) {
+        const userRes = await fetch("/api/auth/user");
+        if (!userRes.ok) throw new Error("Authentication required");
+        const { userId: fetchedUserId } = await userRes.json();
+        userId = fetchedUserId;
+      }
 
       const result = await createCompanyFromOsmPoi(poi, userId);
 
