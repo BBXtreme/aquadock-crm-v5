@@ -123,13 +123,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         >
           <Info className="h-4 w-4" />
         </Button>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="bg-card border shadow-md text-foreground"
-        >
-          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-        </Button>
+        <div className="flex items-center justify-center w-10 h-10">
+          {loadingOsm ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : (
+            <MapPin className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
       </div>
 
       {showLegend && (
