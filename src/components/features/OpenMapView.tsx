@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { statusColors, statusLabels } from "@/lib/constants/status-colors";
+import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
