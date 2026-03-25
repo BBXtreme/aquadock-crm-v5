@@ -16,11 +16,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { createClient } from "@/lib/supabase/browser";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { importOsmPoi } from "@/lib/supabase/services/companies";
-import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
-import { createClient } from "@/lib/supabase/browser";
 import { upsertUserSetting } from "@/lib/supabase/services/user-settings";
+import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
 interface CacheEntry {
   pois: any[];
