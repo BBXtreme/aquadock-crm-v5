@@ -181,7 +181,7 @@ export default function SettingsPage() {
       localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
       localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(overpassEndpoints));
       console.log("Saving overpassEndpoints:", overpassEndpoints);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     },
     onSuccess: () => {
       toast.success("OpenMap settings saved successfully");
