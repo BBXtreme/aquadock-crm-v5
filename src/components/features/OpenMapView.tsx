@@ -147,7 +147,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     mapRef.current.on("moveend", debouncedHandleLoadRef.current);
 
     return () => {
-      if (mapRef.current) {
+      if (mapRef.current && debouncedHandleLoadRef.current) {
         mapRef.current.off("zoomend", debouncedHandleLoadRef.current);
         mapRef.current.off("moveend", debouncedHandleLoadRef.current);
       }
