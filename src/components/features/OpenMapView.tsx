@@ -54,8 +54,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     if (!map) return;
 
     const handleLoad = () => {
-      const map = mapRef.current;
-      if (!map) return;
       const zoom = map.getZoom();
       if (zoom >= 12) {
         setLoadingOsm(true);
@@ -65,15 +63,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       }
     };
 
-    // Initial load with delay
-    setTimeout(() => {
-      handleLoad();
-    }, 1200);
-
+    // Initial load + map events
+    const timer = setTimeout(handleLoad, 800);
     map.on("zoomend", handleLoad);
     map.on("moveend", handleLoad);
 
     return () => {
+      clearTimeout(timer);
       map.off("zoomend", handleLoad);
       map.off("moveend", handleLoad);
     };
@@ -160,27 +156,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <RefreshCw className="h-4 w-4" />
         </Button>
         <Button
-          variant="secondary"
-          size="icon"
-          onClick={async () => {
-            const map = mapRef.current;
-            if (!map) return;
-            setLoadingOsm(true);
-            try {
-              const result = await fetchOsmPois(map.getBounds());
-              setOsmPois(result.pois || []);
-              toast.success(`Loaded ${result.totalFound || 0} POIs`);
-            } catch (err) {
-              toast.error("Failed to load POIs");
-            } finally {
-              setLoadingOsm(false);
-            }
-          }}
-          className="bg-card border shadow-md text-foreground"
-        >
-          {loadingOsm ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-        </Button>
-        <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
@@ -189,7 +164,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4" />
         </Button>
         <div className="flex items-center justify-center w-10 h-10">
-          {loadingOsm ? <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /> : <MapPin className="h-5 w-5 text-muted-foreground" />}
+          {loadingOsm ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : mapRef.current && mapRef.current.getZoom() < 12 ? (
+            <span className="text-xs text-muted-foreground">Zoom in</span>
+          ) : (
+            <MapPin className="h-5 w-5 text-muted-foreground" />
+          )}
         </div>
       </div>
 
