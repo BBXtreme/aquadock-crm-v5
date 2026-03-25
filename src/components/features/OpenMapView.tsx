@@ -259,6 +259,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
+        {/* CRM Company Markers - Always visible, no clustering */}
+        {validCompanies.map((company) => (
+          <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
+            <Popup>
+              <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
+            </Popup>
+          </Marker>
+        ))}
+
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={120}
@@ -290,15 +299,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             fillOpacity: 0.15,
           }}
         >
-          {/* CRM Company Markers */}
-          {validCompanies.map((company) => (
-            <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
-              <Popup>
-                <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
-              </Popup>
-            </Marker>
-          ))}
-
           {/* OSM POI Markers */}
           {osmPois.map((poi) => {
             const posLat = poi.lat || poi.center?.lat;
