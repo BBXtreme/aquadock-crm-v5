@@ -329,6 +329,30 @@ export default function SettingsPage() {
                 max={100}
               />
             </div>
+            <div className="pt-6 border-t">
+              <Button 
+                onClick={() => {
+                  // For now just simulate - later we can connect to real map state
+                  const sampleQuery = `[out:json][timeout:60][maxsize:1Mi];\n(\n  node["amenity"~"restaurant|cafe|bar"](50.0,8.0,51.0,9.0);\n  way["amenity"~"restaurant|cafe|bar"](50.0,8.0,51.0,9.0);\n);\nout center;`;
+                  setLastQuery(sampleQuery);
+                  toast.success("Sample Overpass query generated");
+                }}
+              >
+                Test Overpass Query
+              </Button>
+
+              {lastQuery && (
+                <div className="mt-4 space-y-2">
+                  <Label>Generated Overpass Query</Label>
+                  <Textarea 
+                    value={lastQuery} 
+                    readOnly 
+                    rows={8}
+                    className="font-mono text-xs bg-muted/50"
+                  />
+                </div>
+              )}
+            </div>
             <div className="space-y-2 pt-4 border-t">
               <Label>Last / Current Overpass Query</Label>
               <Textarea 
