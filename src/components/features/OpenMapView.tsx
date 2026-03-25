@@ -67,6 +67,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       const map = mapRef.current;
       if (!map) return;
 
+      const autoLoad = localStorage.getItem("openmap_autoLoadPois") === "true";
+      if (!autoLoad) return;
+
       const handleLoad = () => {
         if (!mapRef.current) return;
         const zoom = mapRef.current.getZoom();
