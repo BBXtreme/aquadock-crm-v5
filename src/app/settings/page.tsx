@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, Mail, Palette, Send, Settings, Shield } from "lucide-react";
+import { Bell, Eye, EyeOff, Mail, Palette, Send, Settings, Shield, MapPin, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { getUserSettings, upsertUserSetting } from "@/lib/supabase/services/user-settings";
 
@@ -37,6 +38,18 @@ export default function SettingsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [testRecipient, setTestRecipient] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // OpenMap settings
+  const [overpassEndpoints, setOverpassEndpoints] = useState([
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://overpass.osm.ch/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  ]);
+  const [autoLoadPois, setAutoLoadPois] = useState(true);
+  const [cacheDuration, setCacheDuration] = useState(10);
+  const [maxCacheSize, setMaxCacheSize] = useState(30);
+  const [lastQuery, setLastQuery] = useState("");
 
   const supabase = createClient();
   const queryClient = useQueryClient();
@@ -77,6 +90,24 @@ export default function SettingsPage() {
         password: (settings.find((s) => s.key === "smtp_password")?.value as string) || "",
         senderName: (settings.find((s) => s.key === "smtp_sender_name")?.value as string) || "",
       });
+
+      // Load OpenMap settings
+      const endpointsStr = settings.find((s) => s.key === "overpass_endpoints")?.value as string;
+      if (endpointsStr) {
+        try {
+          setOverpassEndpoints(JSON.parse(endpointsStr));
+        } catch (e) {
+          // ignore
+        }
+      }
+      const autoLoad = settings.find((s) => s.key === "auto_load_pois")?.value;
+      setAutoLoadPois(autoLoad === "true");
+      const duration = settings.find((s) => s.key === "cache_duration")?.value;
+      setCacheDuration(parseInt(duration || "10", 10));
+      const size = settings.find((s) => s.key === "max_cache_size")?.value;
+      setMaxCacheSize(parseInt(size || "30", 10));
+      const query = settings.find((s) => s.key === "last_query")?.value as string;
+      setLastQuery(query || "");
     }
   }, [settings, form]);
 
@@ -101,6 +132,26 @@ export default function SettingsPage() {
     },
   });
 
+  const openMapMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId) throw new Error("User not authenticated");
+      const promises = [
+        upsertUserSetting({ user_id: userId, key: "overpass_endpoints", value: JSON.stringify(overpassEndpoints) }),
+        upsertUserSetting({ user_id: userId, key: "auto_load_pois", value: autoLoadPois.toString() }),
+        upsertUserSetting({ user_id: userId, key: "cache_duration", value: cacheDuration.toString() }),
+        upsertUserSetting({ user_id: userId, key: "max_cache_size", value: maxCacheSize.toString() }),
+      ];
+      await Promise.all(promises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-settings", userId] });
+      toast.success("OpenMap settings saved successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to save OpenMap settings", { description: error.message });
+    },
+  });
+
   const testEmailMutation = useMutation({
     mutationFn: async (recipient: string) => {
       const response = await fetch("/api/send-test-email", {
@@ -121,6 +172,12 @@ export default function SettingsPage() {
       toast.error("Failed to send test email", { description: error.message });
     },
   });
+
+  const clearCache = () => {
+    // Note: This clears localStorage cache, but in-memory cache in OpenMapView needs page reload
+    localStorage.removeItem("openmap-poi-cache");
+    toast.success("POI cache cleared (reload page for full effect)");
+  };
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -237,6 +294,68 @@ export default function SettingsPage() {
               </Button>
             </div>
             <p className="text-muted-foreground text-sm">Advanced settings for power users</p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MapPin className="mr-2 h-5 w-5" />
+              OpenMap Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Overpass Endpoints (one per line)</Label>
+              <Textarea
+                value={overpassEndpoints.join("\n")}
+                onChange={(e) => setOverpassEndpoints(e.target.value.split("\n").filter((line) => line.trim()))}
+                placeholder="https://overpass-api.de/api/interpreter"
+                rows={4}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="autoLoadPois">Auto-load POIs at zoom 13</Label>
+              <Switch id="autoLoadPois" checked={autoLoadPois} onCheckedChange={setAutoLoadPois} />
+            </div>
+            <div className="space-y-2">
+              <Label>Cache Duration (minutes)</Label>
+              <Select value={cacheDuration.toString()} onValueChange={(v) => setCacheDuration(parseInt(v, 10))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 minutes</SelectItem>
+                  <SelectItem value="10">10 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Max Cache Size</Label>
+              <Input
+                type="number"
+                value={maxCacheSize}
+                onChange={(e) => setMaxCacheSize(parseInt(e.target.value, 10) || 30)}
+                min={1}
+                max={100}
+              />
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
+                {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
+              </Button>
+              <Button variant="outline" onClick={clearCache}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear POI Cache
+              </Button>
+            </div>
+            {lastQuery && (
+              <div className="space-y-2">
+                <Label>Last Successful Query</Label>
+                <Textarea value={lastQuery} readOnly rows={3} />
+              </div>
+            )}
           </CardContent>
         </Card>
 
