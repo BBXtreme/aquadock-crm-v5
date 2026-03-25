@@ -7,14 +7,17 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // DEVELOPMENT ONLY: Allow inserts with user_id: null for testing OSM POI import
+    // TODO: Remove this when auth is fully implemented
+    const isDevelopment = process.env.NODE_ENV === "development";
+    if (!isDevelopment && (authError || !user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
 
-    // Ensure user_id is set for RLS
-    body.user_id = user.id;
+    // Ensure user_id is set for RLS (or null in development)
+    body.user_id = user?.id || null;
 
     console.log("[API POST /companies] Received body:", body);
 

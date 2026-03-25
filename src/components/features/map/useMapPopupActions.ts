@@ -44,7 +44,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     lat: (poi.lat || poi.center?.lat) as number,
     lon: (poi.lon || poi.center?.lon) as number,
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
-    user_id: userId, // Now required
+    user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
@@ -60,7 +60,12 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const responseData = await res.json().catch(() => ({}));
 
   if (!res.ok || !responseData.success) {
-    console.error("❌ API Response Error - Full response:", { status: res.status, statusText: res.statusText, data: responseData });
+    console.error("❌ API Response Error - Full response:", {
+      status: res.status,
+      statusText: res.statusText,
+      data: responseData,
+      fullError: responseData.details || responseData.error || "Unknown error",
+    });
     throw new Error(responseData.error || `HTTP ${res.status} - ${JSON.stringify(responseData)}`);
   }
 
