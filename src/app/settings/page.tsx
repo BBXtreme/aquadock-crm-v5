@@ -101,7 +101,7 @@ out center;
 
 export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(false);
+  const [emailAlerts, setEmailAlerts] = useState(true);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
   const [userId, setUserId] = useState<string | null>(null);
@@ -348,7 +348,7 @@ export default function SettingsPage() {
                 id="notifications"
                 checked={notifications}
                 onCheckedChange={setNotifications}
-                className="data-[state=checked]:bg-emerald-500"
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-emerald-500"
               />
             </div>
             <div className="flex items-center justify-between">
@@ -357,7 +357,7 @@ export default function SettingsPage() {
                 id="emailAlerts"
                 checked={emailAlerts}
                 onCheckedChange={setEmailAlerts}
-                className="data-[state=checked]:bg-emerald-500"
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-emerald-500"
               />
             </div>
             <p className="text-muted-foreground text-sm">
@@ -500,7 +500,7 @@ export default function SettingsPage() {
                 id="autoLoadPois"
                 checked={openMapSettings.autoLoadPois}
                 onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))}
-                className="data-[state=checked]:bg-emerald-500"
+                className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-emerald-500"
               />
             </div>
             <div className="space-y-2">
