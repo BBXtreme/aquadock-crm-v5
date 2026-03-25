@@ -33,6 +33,8 @@ export async function getUserSettings(userId: string): Promise<UserSetting[]> {
 }
 
 export async function upsertUserSetting(setting: UserSettingInsert): Promise<UserSetting> {
+  if (!setting.user_id) throw new Error("User ID is required for user settings");
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("user_settings")
