@@ -56,12 +56,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const handleLoad = () => {
       const zoom = map.getZoom();
       if (zoom >= 12) {
-        // very basic call - no loading state yet
-        fetchOsmPois(map.getBounds())
-          .then((result) => {
-            setOsmPois(result.pois || []);
-          })
-          .catch(() => {});
+        setLoadingOsm(true);
+        fetchOsmPois(map.getBounds()).then(result => {
+          setOsmPois(result.pois || []);
+        }).catch(() => {}).finally(() => setLoadingOsm(false));
       }
     };
 
