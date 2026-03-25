@@ -77,7 +77,7 @@ export async function fetchOsmPois(
       );
 
       const query = `
-        [out:json][timeout:45];
+        [out:json][timeout:45][maxsize:500k];
         (
 ${conditions.map((cond) => `      node${cond};`).join("\n")}
 ${conditions.map((cond) => `      way${cond};`).join("\n")}
