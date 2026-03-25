@@ -309,12 +309,14 @@ export default function SettingsPage() {
         throw new Error(error.message || "Failed to send test email");
       }
     },
-    onSuccess: () => {
+    onSuccess: => {
       toast.success("Test email sent successfully");
       setTestRecipient("");
     },
     onError: (error) => {
-      toast.error("Failed to send test email", { description: error.message });
+      toast.error("Failed to send test email", {
+        description: error.message,
+      });
     },
   });
 
@@ -343,19 +345,25 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications">Push Notifications</Label>
-              <Switch
+              <Toggle
                 id="notifications"
-                checked={notifications}
-                onCheckedChange={setNotifications}
-              />
+                pressed={notifications}
+                onPressedChange={(pressed) => setNotifications(pressed)}
+                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+              >
+                {notifications ? "ON" : "OFF"}
+              </Toggle>
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="emailAlerts">Email Alerts</Label>
-              <Switch
+              <Toggle
                 id="emailAlerts"
-                checked={emailAlerts}
-                onCheckedChange={setEmailAlerts}
-              />
+                pressed={emailAlerts}
+                onPressedChange={(pressed) => setEmailAlerts(pressed)}
+                className="data-[state=on]:bg-emerald-600 data-[state=off]:bg-zinc-400 scale-110"
+              >
+                {emailAlerts ? "ON" : "OFF"}
+              </Toggle>
             </div>
             <p className="text-muted-foreground text-sm">
               Configure how you receive notifications
