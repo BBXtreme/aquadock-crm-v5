@@ -78,36 +78,37 @@ export default function SettingsPage() {
   const [testRecipient, setTestRecipient] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // OpenMap settings
-  const [overpassEndpoints, setOverpassEndpoints] = useState([
+  const defaultOverpassEndpoints = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
     "https://overpass.osm.ch/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  ]);
-  const [autoLoadPois, setAutoLoadPois] = useState(true);
-  const [cacheDuration, setCacheDuration] = useState(10);
-  const [maxCacheSize, setMaxCacheSize] = useState(30);
-  const [lastQuery, setLastQuery] = useState("");
+  ];
+
+  const [openMapSettings, setOpenMapSettings] = useState({
+    overpassEndpoints: defaultOverpassEndpoints,
+    autoLoadPois: true,
+    cacheDuration: 10,
+    maxCacheSize: 30,
+    lastQuery: "",
+  });
 
   const supabase = createClient();
   const queryClient = useQueryClient();
 
   const loadFromLocalStorage = () => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
-    if (maxSize) setMaxCacheSize(parseInt(maxSize, 10));
     const duration = localStorage.getItem("openmap_cacheDuration");
-    if (duration) setCacheDuration(parseInt(duration, 10));
     const endpoints = localStorage.getItem("openmap_overpassEndpoints");
-    if (endpoints) {
-      try {
-        setOverpassEndpoints(JSON.parse(endpoints));
-      } catch (e) {
-        // ignore
-      }
-    }
     const autoLoad = localStorage.getItem("openmap_autoLoadPois");
-    if (autoLoad !== null) setAutoLoadPois(autoLoad === "true");
+
+    setOpenMapSettings({
+      overpassEndpoints: endpoints ? JSON.parse(endpoints) : defaultOverpassEndpoints,
+      autoLoadPois: autoLoad !== null ? autoLoad === "true" : true,
+      cacheDuration: duration ? parseInt(duration, 10) : 10,
+      maxCacheSize: maxSize ? parseInt(maxSize, 10) : 30,
+      lastQuery: "",
+    });
   };
 
   const { data: settings } = useQuery({
@@ -141,19 +142,19 @@ export default function SettingsPage() {
       const endpointsStr = settings.find((s) => s.key === "overpass_endpoints")?.value as string;
       if (endpointsStr) {
         try {
-          setOverpassEndpoints(JSON.parse(endpointsStr));
+          setOpenMapSettings(prev => ({ ...prev, overpassEndpoints: JSON.parse(endpointsStr) }));
         } catch (e) {
           // ignore
         }
       }
       const autoLoad = settings.find((s) => s.key === "auto_load_pois")?.value;
-      setAutoLoadPois(autoLoad === "true");
+      setOpenMapSettings(prev => ({ ...prev, autoLoadPois: autoLoad === "true" }));
       const duration = settings.find((s) => s.key === "cache_duration")?.value;
-      setCacheDuration(parseInt(duration || "10", 10));
+      setOpenMapSettings(prev => ({ ...prev, cacheDuration: parseInt(duration || "10", 10) }));
       const size = settings.find((s) => s.key === "max_cache_size")?.value;
-      setMaxCacheSize(parseInt(size || "30", 10));
+      setOpenMapSettings(prev => ({ ...prev, maxCacheSize: parseInt(size || "30", 10) }));
       const query = settings.find((s) => s.key === "last_query")?.value as string;
-      setLastQuery(query || "");
+      setOpenMapSettings(prev => ({ ...prev, lastQuery: query || "" }));
     }
 
     loadFromLocalStorage();
@@ -182,11 +183,11 @@ export default function SettingsPage() {
   const openMapMutation = useMutation({
     mutationFn: async () => {
       // Mock saving maxCacheSize and cacheDuration
-      localStorage.setItem("openmap_maxCacheSize", maxCacheSize.toString());
-      localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
-      localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(overpassEndpoints));
-      localStorage.setItem("openmap_autoLoadPois", autoLoadPois.toString());
-      console.log("Saving overpassEndpoints:", overpassEndpoints);
+      localStorage.setItem("openmap_maxCacheSize", openMapSettings.maxCacheSize.toString());
+      localStorage.setItem("openmap_cacheDuration", openMapSettings.cacheDuration.toString());
+      localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(openMapSettings.overpassEndpoints));
+      localStorage.setItem("openmap_autoLoadPois", openMapSettings.autoLoadPois.toString());
+      console.log("Saving overpassEndpoints:", openMapSettings.overpassEndpoints);
       await new Promise((resolve) => setTimeout(resolve, 500));
     },
     onSuccess: () => {
@@ -355,19 +356,19 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Overpass Endpoints (one per line)</Label>
               <Textarea
-                value={overpassEndpoints.join("\n")}
-                onChange={(e) => setOverpassEndpoints(e.target.value.split("\n").filter((line) => line.trim()))}
+                value={openMapSettings.overpassEndpoints.join("\n")}
+                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, overpassEndpoints: e.target.value.split("\n").filter((line) => line.trim()) }))}
                 placeholder="https://overpass-api.de/api/interpreter"
                 rows={4}
               />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="autoLoadPois">Auto-load POIs at zoom 13+</Label>
-              <Switch id="autoLoadPois" checked={autoLoadPois} onCheckedChange={setAutoLoadPois} />
+              <Switch id="autoLoadPois" checked={openMapSettings.autoLoadPois} onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} />
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
-              <Select value={cacheDuration.toString()} onValueChange={(v) => setCacheDuration(parseInt(v, 10))}>
+              <Select value={openMapSettings.cacheDuration.toString()} onValueChange={(v) => setOpenMapSettings(prev => ({ ...prev, cacheDuration: parseInt(v, 10) }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -382,8 +383,8 @@ export default function SettingsPage() {
               <Label>Max Cache Size</Label>
               <Input
                 type="number"
-                value={maxCacheSize}
-                onChange={(e) => setMaxCacheSize(parseInt(e.target.value, 10) || 30)}
+                value={openMapSettings.maxCacheSize}
+                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, maxCacheSize: parseInt(e.target.value, 10) || 30 }))}
                 min={1}
                 max={100}
               />
@@ -393,7 +394,7 @@ export default function SettingsPage() {
                 title="Generate a sample Overpass query for testing"
                 onClick={() => {
                   const sampleQuery = generateSampleQuery();
-                  setLastQuery(sampleQuery);
+                  setOpenMapSettings(prev => ({ ...prev, lastQuery: sampleQuery }));
                   toast.success("Overpass query generated (sample for Central Europe)");
                 }}
               >
@@ -402,20 +403,20 @@ export default function SettingsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (lastQuery) {
-                    navigator.clipboard.writeText(lastQuery);
+                  if (openMapSettings.lastQuery) {
+                    navigator.clipboard.writeText(openMapSettings.lastQuery);
                     toast.success("Query copied to clipboard");
                   }
                 }}
-                disabled={!lastQuery}
+                disabled={!openMapSettings.lastQuery}
               >
                 Copy Query
               </Button>
 
-              {lastQuery && (
+              {openMapSettings.lastQuery && (
                 <div className="mt-4 space-y-2">
                   <Label>Generated Overpass Query</Label>
-                  <Textarea value={lastQuery} readOnly rows={8} className="font-mono text-xs bg-muted/50" />
+                  <Textarea value={openMapSettings.lastQuery} readOnly rows={8} className="font-mono text-xs bg-muted/50" />
                 </div>
               )}
             </div>
