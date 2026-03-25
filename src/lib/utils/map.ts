@@ -89,7 +89,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
       const endpoints = [
         "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+        "https://overpass.osm.ch/api/interpreter",
         "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
       ];
 
@@ -126,7 +127,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
             if (res.status === 429) {
               retries++;
-              const delay = 2 ** retries * 1200;
+              const delay = 2 ** retries * 800;
               await new Promise((r) => setTimeout(r, delay));
             } else if (res.status === 403 || res.status === 504) {
               console.warn(`[OpenMap OSM] ${endpoint} ${res.status} - skipping`);
