@@ -152,6 +152,8 @@ export default function SettingsPage() {
         // ignore
       }
     }
+    const autoLoad = localStorage.getItem("openmap_autoLoadPois");
+    if (autoLoad !== null) setAutoLoadPois(autoLoad === "true");
   }, [settings, form]);
 
   const mutation = useMutation({
@@ -180,6 +182,7 @@ export default function SettingsPage() {
       localStorage.setItem("openmap_maxCacheSize", maxCacheSize.toString());
       localStorage.setItem("openmap_cacheDuration", cacheDuration.toString());
       localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(overpassEndpoints));
+      localStorage.setItem("openmap_autoLoadPois", autoLoadPois.toString());
       console.log("Saving overpassEndpoints:", overpassEndpoints);
       await new Promise((resolve) => setTimeout(resolve, 500));
     },
