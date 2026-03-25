@@ -59,9 +59,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         const zoom = map.getZoom();
         if (zoom >= 12) {
           setLoadingOsm(true);
-          fetchOsmPois(map.getBounds()).then(result => {
-            setOsmPois(result.pois || []);
-          }).catch(err => console.error("POI load error:", err)).finally(() => setLoadingOsm(false));
+          fetchOsmPois(map.getBounds())
+            .then((result) => {
+              setOsmPois(result.pois || []);
+            })
+            .catch((err) => console.error("POI load error:", err))
+            .finally(() => setLoadingOsm(false));
         }
       };
 
