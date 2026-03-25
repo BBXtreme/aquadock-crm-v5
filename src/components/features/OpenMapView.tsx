@@ -195,6 +195,24 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => {
+            poiCache.current.clear();
+            const map = mapRef.current;
+            if (map && map.getZoom() >= 12) {
+              setLoadingOsm(true);
+              fetchOsmPois(map.getBounds()).then(result => {
+                setOsmPois(result.pois || []);
+              }).catch(() => {}).finally(() => setLoadingOsm(false));
+            }
+          }}
+          className="bg-card border shadow-md text-foreground"
+          title="Clear cache and reload POIs"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
 
         <Button
           variant={showLegend ? "default" : "secondary"}
