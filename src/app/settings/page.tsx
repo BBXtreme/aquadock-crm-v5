@@ -362,7 +362,7 @@ export default function SettingsPage() {
               />
             </div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="autoLoadPois">Auto-load POIs at zoom 13</Label>
+              <Label htmlFor="autoLoadPois">Auto-load POIs at zoom 13+</Label>
               <Switch id="autoLoadPois" checked={autoLoadPois} onCheckedChange={setAutoLoadPois} />
             </div>
             <div className="space-y-2">
