@@ -42,26 +42,34 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         )}
       </div>
 
-      {/* Kundentyp Badge */}
+      {/* Badges */}
       <div className="flex items-center gap-2 flex-wrap">
+        {/* Qualified Badge */}
+        {company.status === "qualified" && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
+            ✓ Qualified
+          </div>
+        )}
+
+        {/* Kundentyp Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted/70 rounded-full text-xs font-medium">
           <span>{emoji}</span>
           <span>{company.kundentyp || "Sonstige"}</span>
         </div>
 
+        {/* Wassertyp Badge */}
+        {company.wassertyp && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-full text-xs font-medium">
+            💧 {company.wassertyp}
+          </div>
+        )}
+
         {company.firmentyp && <div className="text-xs text-muted-foreground">• {company.firmentyp}</div>}
       </div>
 
-      {/* Water Information */}
-      {(company.wassertyp || company.wasserdistanz) && (
-        <div className="flex items-center gap-3 text-xs">
-          {company.wassertyp && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-full">
-              💧 {company.wassertyp}
-            </div>
-          )}
-          {company.wasserdistanz && <div className="text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>}
-        </div>
+      {/* Water Distance */}
+      {company.wasserdistanz && (
+        <div className="text-xs text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>
       )}
 
       {/* Phone */}
