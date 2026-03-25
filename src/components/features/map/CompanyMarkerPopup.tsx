@@ -14,11 +14,11 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
   const statusLabel = statusLabels[statusKey] || "Lead";
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-1">
+    <div className="min-w-[320px] space-y-4 text-sm p-4 bg-card/90 backdrop-blur-sm border rounded-md shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-base leading-tight tracking-tight">{company.firmenname}</div>
+          <div className="font-semibold text-base leading-tight tracking-tight text-foreground">{company.firmenname}</div>
           <div className="text-muted-foreground text-xs mt-1">
             {company.stadt}, {company.land}
           </div>
@@ -34,13 +34,13 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
       {/* Value */}
       {company.value && company.value > 0 && (
-        <div className="text-2xl font-semibold text-emerald-600 tabular-nums">
+        <div className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
           €{company.value.toLocaleString("de-DE")}
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="flex gap-2 pt-3 border-t">
+      <div className="flex gap-2 pt-3 border-t border-border">
         <Button size="sm" variant="default" className="flex-1" onClick={() => onOpenDetail?.(company.id)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
