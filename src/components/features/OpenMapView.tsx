@@ -365,19 +365,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         >
           <Info className="h-4 w-4" />
         </Button>
-
-        <div
-          className="flex items-center justify-center w-10 h-10 bg-card/80 backdrop-blur-sm border rounded-md shadow-sm relative group"
-          title={currentZoom < 13 ? "Reinzoomen um POIs zu laden (Zoom ≥ 13)" : "POIs geladen"}
-        >
-          {loadingOsm ? (
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          ) : currentZoom < 13 ? (
-            <ZoomIn className="h-5 w-5 text-amber-500" />
-          ) : (
-            <MapPin className="h-5 w-5 text-muted-foreground" />
-          )}
-        </div>
       </div>
 
       {/* Legend */}
