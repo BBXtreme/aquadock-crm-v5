@@ -1,6 +1,7 @@
 "use client";
 
 import L from "leaflet";
+import type MarkerCluster from "leaflet.markercluster";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -280,7 +281,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           maxClusterRadius={100}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
-          iconCreateFunction={(cluster) => {
+          iconCreateFunction={(cluster: MarkerCluster) => {
             const count = cluster.getChildCount();
             return L.divIcon({
               html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
@@ -299,7 +300,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {osmPois.map((poi) => {
             const lat = poi.lat || poi.center?.lat;
             const lon = poi.lon || poi.center?.lon;
-            if (!lat || !lon || Number.isNaN(lat) || Number.isNaN(lon)) return null;
+            if (typeof lat !== "number" || typeof lon !== "number" || Number.isNaN(lat) || Number.isNaN(lon)) return null;
 
             return (
               <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
