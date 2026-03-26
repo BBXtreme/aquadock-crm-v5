@@ -45,18 +45,15 @@ export default function ReminderEditForm({
 }) {
   const queryClient = useQueryClient();
 
-  if (!reminder) {
-    return <div>Loading reminder...</div>;
-  }
-
-  const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
-      if (error) throw error;
-      return data;
+  const mutation = useMutation({
+    mutationFn: (data) => updateReminder(reminder?.id!, data, createClient()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success("Reminder updated");
+      form.reset();
+      onSuccess?.();
     },
+    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const form = useForm<ReminderFormValues>({
@@ -72,15 +69,19 @@ export default function ReminderEditForm({
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data) => updateReminder(reminder.id, data, createClient()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success("Reminder updated");
-      form.reset();
-      onSuccess?.();
+  // Now the early return
+  if (!reminder) {
+    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
+  }
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
