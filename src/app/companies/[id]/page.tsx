@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Database } from "@/lib/supabase/database.types";
+import type { Company, Database } from "@/lib/supabase/types";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
