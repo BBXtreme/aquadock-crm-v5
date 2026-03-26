@@ -1,3 +1,4 @@
+// src/components/features/map/CompanyMarkerPopup.tsx
 "use client";
 
 import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
@@ -90,7 +91,7 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
       {/* Quick Actions */}
       <div className="flex gap-2 pt-3 border-t border-border">
-        <Button size="sm" variant="default" className="flex-1" onClick={() => onOpenDetail?.(company.id)}>
+        <Button size="sm" variant="default" className="flex-1" onClick={() => window.open(`/companies/${company.id}`, "_blank")}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
         </Button>
