@@ -26,8 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
+import type { Company, Database } from "@/lib/supabase/database.types";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
-import type { Company, Database } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -202,7 +202,7 @@ export default function CompanyDetailPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, vorname, nachname, email, telefon, position")
+        .select("*")
         .eq("company_id", id)
         .order("nachname")
         .order("vorname");
