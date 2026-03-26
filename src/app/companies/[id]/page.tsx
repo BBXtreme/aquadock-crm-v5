@@ -249,6 +249,26 @@ export default function CompanyDetailPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, values }: { id: string; values: { title: string; content?: string; company_id: string; activity_type?: string } }) => {
+      const res = await fetch(`/api/timeline/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      queryClient.invalidateQueries({ queryKey: ["company", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      toast.success("Timeline-Eintrag aktualisiert");
+      setTimelineDialogOpen(false);
+      setEditEntry(null);
+    },
+  });
+
   const deleteTimelineMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/timeline/${id}`, {
