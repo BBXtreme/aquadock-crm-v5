@@ -1146,11 +1146,11 @@ export default function CompanyDetailPage() {
             </DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
-            onSubmit={(values) => {
+            onSubmit={async (values) => {
               if (editEntry) {
-                updateMutation.mutate({ id: editEntry.id, values });
+                await updateMutation.mutateAsync({ id: editEntry.id, values });
               } else {
-                createTimelineMutation.mutate(values);
+                await createTimelineMutation.mutateAsync(values);
               }
             }}
             isSubmitting={createTimelineMutation.isPending}
