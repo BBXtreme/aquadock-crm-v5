@@ -1133,7 +1133,13 @@ export default function CompanyDetailPage() {
                 ? {
                     title: editEntry.title,
                     content: editEntry.content ?? "",
-                    activity_type: editEntry.activity_type as "email" | "note" | "other" | "reminder" | "call" | "meeting",
+                    activity_type: editEntry.activity_type as
+                      | "email"
+                      | "note"
+                      | "other"
+                      | "reminder"
+                      | "call"
+                      | "meeting",
                     company_id: editEntry.company_id,
                     contact_id: editEntry.contact_id || "none",
                     user_name: editEntry.user_name,
