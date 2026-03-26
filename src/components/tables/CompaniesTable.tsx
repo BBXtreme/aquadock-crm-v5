@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Company } from "@/lib/supabase/types";
+import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
@@ -111,7 +111,7 @@ export default function CompaniesTable({
       id: "hauptkontakt",
       header: "Hauptkontakt",
       cell: (info) => {
-        const contacts = info.row.original.contacts || [];
+        const contacts = (info.row.original.contacts || []) as Company["contacts"];
         const primary = contacts.find((c) => c.is_primary);
         if (!primary) return "—";
         return (
@@ -127,9 +127,10 @@ export default function CompaniesTable({
       id: "kontaktanzahl",
       header: "Kontakte",
       cell: (info) => {
-        const count = info.getValue()?.length || 0;
+        const contacts = (info.row.original.contacts || []) as Company["contacts"];
+        const count = contacts.length;
         if (count === 0) return <Badge variant="outline">Keine</Badge>;
-        const hasPrimary = info.getValue()?.some((c) => c.is_primary);
+        const hasPrimary = contacts.some((c) => c.is_primary);
         return (
           <Badge variant={hasPrimary ? "default" : "secondary"}>
             {count} {hasPrimary ? "(Primär)" : ""}

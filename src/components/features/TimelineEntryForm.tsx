@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, TimelineEntry } from "@/lib/supabase/types";
+import type { Company, TimelineEntry } from "@/lib/supabase/database.types";
 
 const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),
@@ -56,7 +56,7 @@ export default function TimelineEntryForm({
   isSubmitting,
   companies,
   contacts,
-  _editEntry,
+  editEntry,
   onCancel,
   preselectedCompanyId,
   defaultValues,

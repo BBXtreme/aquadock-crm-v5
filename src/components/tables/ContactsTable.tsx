@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Contact } from "@/lib/supabase/types";
+import type { Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
 interface ContactsTableProps {
@@ -49,7 +49,7 @@ export default function ContactsTable({
   onGlobalFilterChange: propOnGlobalFilterChange,
 }: ContactsTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({ anrede: false });
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
