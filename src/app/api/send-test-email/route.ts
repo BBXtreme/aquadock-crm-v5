@@ -7,7 +7,7 @@ import { getUserSettings } from "@/lib/supabase/services/user-settings";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const {
       data: { user },
       error: authError,
