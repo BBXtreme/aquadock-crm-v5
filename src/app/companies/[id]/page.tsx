@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
-import type { Company, Database } from "@/lib/supabase/types";
+import type { Company, Database } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
