@@ -179,7 +179,6 @@ export default function CompaniesPage() {
     const leads = companies.filter((c) => c.status === "lead").length;
     const won = companies.filter((c) => c.status === "gewonnen").length;
     const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
-
     return { total, leads, won, value };
   }, [companies]);
 
@@ -330,11 +329,7 @@ export default function CompaniesPage() {
                   )}
                 </div>
 
-                <Accordion
-                  type="single"
-                  collapsible
-                  className={Object.values(activeFilters).flat().length === 0 ? "mb-2" : "mb-4"}
-                >
+                <Accordion type="single" collapsible defaultValue="filters" className="mb-4">
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
