@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateCompany } from "@/lib/supabase/services/companies";
-import type { Company } from "@/lib/supabase/types";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
