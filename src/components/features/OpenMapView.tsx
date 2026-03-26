@@ -15,7 +15,6 @@ import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
-// ✅ Correct imports from the map/ subfolder
 import CompanyMarkerPopup from "./map/CompanyMarkerPopup";
 import OsmPoiMarkerPopup from "./map/OsmPoiMarkerPopup";
 import type { OsmPoi } from "./map/types";
@@ -29,7 +28,6 @@ interface CacheEntry {
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<OsmPoi[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -37,80 +35,51 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-  const debouncedHandleLoadRef = useRef<() => void>();
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
 
   const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
 
-  // Load POI cache from localStorage on mount
+  // Load POI cache from localStorage
   useEffect(() => {
-    const savedCache = localStorage.getItem("openmap-poi-cache");
-    if (savedCache) {
+    const saved = localStorage.getItem("openmap-poi-cache");
+    if (saved) {
       try {
-        const parsed = JSON.parse(savedCache);
+        const parsed = JSON.parse(saved);
         poiCache.current = new Map(Object.entries(parsed));
       } catch (e) {
-        console.warn("Failed to load POI cache from localStorage:", e);
+        console.warn("Failed to load POI cache", e);
       }
     }
   }, []);
 
-  // Load from localStorage on mount
+  // Auto-load setting
   useEffect(() => {
     const saved = localStorage.getItem("openmap_autoLoadPois");
     setAutoLoadPois(saved !== null ? saved === "true" : true);
   }, []);
 
-  // Listen for settings changes
+  // Settings listener
   useEffect(() => {
-    const handleSettingsChange = () => {
+    const handler = () => {
       const saved = localStorage.getItem("openmap_autoLoadPois");
       setAutoLoadPois(saved !== null ? saved === "true" : true);
     };
-
-    window.addEventListener("openmap-settings-changed", handleSettingsChange);
-    return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
+    window.addEventListener("openmap-settings-changed", handler);
+    return () => window.removeEventListener("openmap-settings-changed", handler);
   }, []);
 
-  // Listen for company import events to refresh company markers
+  // Company import refresh
   useEffect(() => {
-    const fetchCompanies = async () => {
-      const supabase = (await import("@/lib/supabase/browser")).createClient();
-      const isDevelopment = process.env.NODE_ENV === "development";
-      const isMockUser = true; // No auth in development
-
-      let query = supabase
-        .from("companies")
-        .select("id, firmenname, kundentyp, status, lat, lon, strasse, plz, stadt, land, value, osm, telefon, website, firmentyp, wassertyp, wasserdistanz")
-        .not("lat", "is", null)
-        .not("lon", "is", null);
-
-      if (!isDevelopment || !isMockUser) {
-        // In production, would filter by user_id
-        // query = query.eq("user_id", userId);
-      }
-
-      query = query.order("firmenname", { ascending: true });
-
-      const { data, error } = await query;
-      if (error) {
-        console.error("Failed to refresh companies:", error);
-        return;
-      }
-
-      setCompanies(data || []);
+    const handler = () => {
+      // Simple full refresh for now – can be optimized later
+      window.location.reload(); // or implement proper soft refresh if needed
     };
-
-    const handleCompanyImported = () => {
-      fetchCompanies();
-    };
-
-    window.addEventListener("company-imported", handleCompanyImported);
-    return () => window.removeEventListener("company-imported", handleCompanyImported);
+    window.addEventListener("company-imported", handler);
+    return () => window.removeEventListener("company-imported", handler);
   }, []);
 
-  // Safe Leaflet icon fix
+  // Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
     delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -131,11 +100,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
-  // Define handleLoad as useCallback at top level
+  // Main POI load handler with debounce
   const handleLoad = useCallback(() => {
     if (!mapRef.current) return;
+
     const zoom = mapRef.current.getZoom();
     setCurrentZoom(zoom);
+
     if (!autoLoadPois || zoom < 13) return;
 
     const bounds = mapRef.current.getBounds();
@@ -145,26 +116,28 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     const now = Date.now();
     const cacheEntry = poiCache.current.get(key);
+
     if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
       setOsmPois(cacheEntry.pois);
       return;
     }
 
     setLoadingOsm(true);
+
     fetchOsmPois(bounds)
-      .then(async (result) => {
+      .then((result) => {
         const pois: OsmPoi[] = result.pois || [];
-        const newEntry = { pois, timestamp: now };
-        poiCache.current.set(key, newEntry);
+        poiCache.current.set(key, { pois, timestamp: now });
 
-        // Save to localStorage
-        const cacheObj = Object.fromEntries(poiCache.current);
-        localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
-
+        // Limit cache size
         if (poiCache.current.size > 30) {
           const firstKey = poiCache.current.keys().next().value;
           poiCache.current.delete(firstKey);
         }
+
+        // Save to localStorage (debounced in real use)
+        const cacheObj = Object.fromEntries(poiCache.current);
+        localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
 
         setOsmPois(pois);
       })
@@ -172,37 +145,32 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       .finally(() => setLoadingOsm(false));
   }, [autoLoadPois]);
 
-  // Set up map event listeners when map is ready
+  // Debounced map events
   useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
+    if (!mapRef.current) return;
 
-    debouncedHandleLoadRef.current = () => {
+    const debounced = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       debounceTimeout.current = setTimeout(handleLoad, 500);
     };
 
-    mapRef.current.on("zoomend", debouncedHandleLoadRef.current);
-    mapRef.current.on("moveend", debouncedHandleLoadRef.current);
+    mapRef.current.on("zoomend", debounced);
+    mapRef.current.on("moveend", debounced);
 
     return () => {
-      if (mapRef.current && debouncedHandleLoadRef.current) {
-        mapRef.current.off("zoomend", debouncedHandleLoadRef.current);
-        mapRef.current.off("moveend", debouncedHandleLoadRef.current);
+      if (mapRef.current) {
+        mapRef.current.off("zoomend", debounced);
+        mapRef.current.off("moveend", debounced);
       }
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [mapReady, handleLoad]);
+  }, [handleLoad]);
 
-  // Initial load after map is ready with small delay
+  // Initial load
   useEffect(() => {
-    if (!mapReady) return;
-
-    const timer = setTimeout(() => {
-      handleLoad();
-    }, 1000);
-
+    const timer = setTimeout(handleLoad, 800);
     return () => clearTimeout(timer);
-  }, [mapReady, handleLoad]);
+  }, [handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -211,7 +179,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
 
   const validCompanies = useMemo(
-    () => (companies || []).filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
+    () => companies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
     [companies],
   );
 
@@ -247,11 +215,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
-        whenReady={() => setMapReady(true)}
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
-        {/* CRM Company Markers - Always visible, no clustering */}
+        {/* Company Markers - Always visible, separate from clustering */}
         {validCompanies.map((company) => (
           <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
             <Popup>
@@ -260,45 +227,37 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           </Marker>
         ))}
 
+        {/* OSM POI Cluster Group */}
         <MarkerClusterGroup
           chunkedLoading
-          maxClusterRadius={120}
+          maxClusterRadius={100}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
           iconCreateFunction={(cluster) => {
             const count = cluster.getChildCount();
             if (count <= 10) {
-              // For small clusters, don't show cluster icon - markers remain individual
-              return L.divIcon({
-                html: "",
-                className: "empty-cluster",
-                iconSize: [0, 0],
-              });
-            } else {
-              // For larger clusters, show count and enable spiderfy
-              return L.divIcon({
-                html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:40px;height:40px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;">${count}</div>`,
-                className: "cluster-icon",
-                iconSize: [40, 40],
-                iconAnchor: [20, 20],
-              });
+              return L.divIcon({ html: "", className: "", iconSize: [0, 0] });
             }
+            return L.divIcon({
+              html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
+              className: "custom-cluster",
+              iconSize: [36, 36],
+            });
           }}
           polygonOptions={{
             color: isDarkMode ? "#4b5563" : "#9ca3af",
             weight: 2,
-            opacity: 0.6,
-            fillOpacity: 0.15,
+            opacity: 0.5,
+            fillOpacity: 0.1,
           }}
         >
-          {/* OSM POI Markers */}
           {osmPois.map((poi) => {
-            const posLat = poi.lat || poi.center?.lat;
-            const posLon = poi.lon || poi.center?.lon;
-            if (!posLat || !posLon || isNaN(posLat) || isNaN(posLon)) return null;
+            const lat = poi.lat || poi.center?.lat;
+            const lon = poi.lon || poi.center?.lon;
+            if (!lat || !lon || isNaN(lat) || isNaN(lon)) return null;
 
             return (
-              <Marker key={`${poi.type}-${poi.id}`} position={[posLat, posLon]} icon={getOsmPoiIcon(isDarkMode)}>
+              <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
                 <Popup>
                   <OsmPoiMarkerPopup
                     poi={poi}
@@ -313,30 +272,30 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </MarkerClusterGroup>
       </MapContainer>
 
-      {/* POI Count Badge */}
+      {/* POI Count */}
       {(currentZoom >= 13 || loadingOsm) && (
-        <div className="absolute top-4 left-4 z-[1000] bg-card/90 backdrop-blur-sm border rounded-md shadow-sm px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
+        <div className="absolute top-4 left-4 z-[1000] bg-card/90 backdrop-blur border rounded-md px-3 py-1.5 text-sm text-muted-foreground flex items-center gap-2 shadow-sm">
           {loadingOsm ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading...
+              Loading POIs...
             </>
           ) : (
             <>
               <MapPin className="h-4 w-4" />
-              {osmPois.length} OSM POIs visible
+              {osmPois.length} OSM POIs
             </>
           )}
         </div>
       )}
 
-      {/* Floating Controls */}
+      {/* Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
           onClick={resetView}
-          className="bg-card border shadow-md text-foreground"
+          className="bg-card border shadow-md"
           title="Alle Firmen anzeigen"
         >
           <Building className="h-4 w-4" />
@@ -348,20 +307,19 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           onClick={async () => {
             poiCache.current.clear();
             localStorage.removeItem("openmap-poi-cache");
-            const map = mapRef.current;
-            if (map && map.getZoom() >= 13) {
+            if (mapRef.current && mapRef.current.getZoom() >= 13) {
               setLoadingOsm(true);
               try {
-                const result = await fetchOsmPois(map.getBounds());
+                const result = await fetchOsmPois(mapRef.current.getBounds());
                 setOsmPois(result.pois || []);
               } catch (e) {
-                console.error("POI reload error:", e);
+                console.error(e);
               } finally {
                 setLoadingOsm(false);
               }
             }
           }}
-          className="bg-card border shadow-md text-foreground"
+          className="bg-card border shadow-md"
           title="Cache leeren und POIs neu laden"
         >
           <RefreshCw className="h-4 w-4" />
@@ -371,22 +329,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
-          className="bg-card border shadow-md text-foreground"
+          className="bg-card border shadow-md"
         >
           <Info className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Legend */}
       {showLegend && (
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             Status Legende
-            <button
-              type="button"
-              onClick={() => setShowLegend(false)}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">
               ✕
             </button>
           </div>
