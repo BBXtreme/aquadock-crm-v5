@@ -14,7 +14,10 @@ export default async function OpenMapPage() {
 
     if (!isDevelopment) {
       const supabase = await createServerSupabaseClient();
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (authError || !user) {
         throw new Error("Authentication required. Please log in to access the map.");
