@@ -299,7 +299,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           className="bg-card border shadow-md"
           title="Alle Firmen anzeigen"
         >
-          <Building className="h-4 w-4" />
+          <Building className="h-4 w-4 text-foreground" />
         </Button>
 
         <Button
@@ -323,7 +323,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           className="bg-card border shadow-md"
           title="Cache leeren und POIs neu laden"
         >
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="h-4 w-4 text-foreground" />
         </Button>
 
         <Button
@@ -332,7 +332,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           onClick={() => setShowLegend(!showLegend)}
           className="bg-card border shadow-md"
         >
-          <Info className="h-4 w-4" />
+          <Info className="h-4 w-4 text-foreground" />
         </Button>
       </div>
 
