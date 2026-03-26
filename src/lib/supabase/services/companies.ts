@@ -80,12 +80,17 @@ export type CompanyForOpenMap = Pick<
   | "status"
   | "lat"
   | "lon"
+  | "strasse"
   | "stadt"
   | "land"
+  | "plz"
   | "value"
   | "osm"
   | "telefon"
   | "website"
+  | "firmentyp"
+  | "wassertyp"
+  | "wasserdistanz"
 >;
 
 export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
@@ -105,12 +110,17 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
       status,
       lat,
       lon,
+      strasse,
       stadt,
       land,
+      plz,
       value,
       osm,
       telefon,
-      website
+      website,
+      firmentyp,
+      wassertyp,
+      wasserdistanz
     `)
     .not("lat", "is", null)
     .not("lon", "is", null);
