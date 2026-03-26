@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Settings, Shield, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -95,7 +95,7 @@ export default function SettingsPage() {
   const _supabase = createClient();
   const queryClient = useQueryClient();
 
-  const loadFromLocalStorage = () => {
+  const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
     const duration = localStorage.getItem("openmap_cacheDuration");
     const endpoints = localStorage.getItem("openmap_overpassEndpoints");
@@ -108,7 +108,7 @@ export default function SettingsPage() {
       maxCacheSize: maxSize ? parseInt(maxSize, 10) : 30,
       lastQuery: "",
     });
-  };
+  }, []);
 
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],
@@ -169,7 +169,7 @@ export default function SettingsPage() {
     }
 
     loadFromLocalStorage();
-  }, [settings, form, loadFromLocalStorage]);
+  }, [settings, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: SmtpForm) => {
