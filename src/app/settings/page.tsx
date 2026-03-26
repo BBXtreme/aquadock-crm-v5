@@ -169,7 +169,7 @@ export default function SettingsPage() {
     }
 
     loadFromLocalStorage();
-  }, [settings, form]);
+  }, [settings, form, loadFromLocalStorage]);
 
   const mutation = useMutation({
     mutationFn: async (data: SmtpForm) => {
