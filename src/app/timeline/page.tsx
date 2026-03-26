@@ -302,8 +302,75 @@ export default function TimelinePage() {
         </Dialog>
       </div>
 
-      {/* Rest of your UI (cards, list, etc.) remains unchanged – only the onSubmit was made async */}
-      {/* ... your existing timeline rendering code ... */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Timeline Entries</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {timeline.length === 0 ? (
+            <p className="text-muted-foreground">No timeline entries yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {timeline.map((entry) => (
+                <div key={entry.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        {getActivityIcon(entry.activity_type || "note")}
+                        <h3 className="font-semibold">{entry.title}</h3>
+                        <Badge variant="outline" className={getActivityColor(entry.activity_type || "note")}>
+                          {entry.activity_type || "note"}
+                        </Badge>
+                      </div>
+                      {entry.content && <p className="text-sm text-muted-foreground mb-2">{entry.content}</p>}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        {entry.companies && (
+                          <div className="flex items-center gap-1">
+                            <Building className="h-3 w-3" />
+                            <Link href={`/companies/${entry.company_id}`} className="hover:underline">
+                              {entry.companies.firmenname}
+                            </Link>
+                          </div>
+                        )}
+                        {entry.contacts && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            <Link href={`/contacts/${entry.contact_id}`} className="hover:underline">
+                              {entry.contacts.vorname} {entry.contacts.nachname}
+                            </Link>
+                          </div>
+                        )}
+                        <span>{formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}</span>
+                        <span>by {entry.user_name || "Unknown"}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditEntry(entry);
+                          setDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteMutation.mutate(entry.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
