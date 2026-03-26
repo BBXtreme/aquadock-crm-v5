@@ -464,11 +464,11 @@ export default function CompanyDetailPage() {
             {company.wassertyp}
           </Badge>
         )}
-        {company.created_at && (
-          <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
+        {(company as any).created_at && (
+          <span className="text-sm text-gray-500">Created: {new Date((company as any).created_at).toLocaleDateString()}</span>
         )}
-        {company.updated_at && (
-          <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+        {(company as any).updated_at && (
+          <span className="text-sm text-gray-500">Updated: {new Date((company as any).updated_at).toLocaleDateString()}</span>
         )}
       </div>
 
