@@ -48,7 +48,10 @@ export default function ReminderEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data) => updateReminder(reminder?.id!, data, createClient()),
+    mutationFn: (data) => {
+      if (!reminder) throw new Error("Reminder not loaded");
+      return updateReminder(reminder.id, data, createClient());
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder updated");
