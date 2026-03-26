@@ -120,7 +120,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // @ts-ignore
+    // @ts-expect-error
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: "/leaflet/marker-icon-2x.png",
