@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Building, Clock, Home, Mail, Map, Menu, Users } from "lucide-react";
+import { Bell, Building, Clock, Home, Mail, Map as MapIcon, Menu, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,7 +21,7 @@ const navItems = [
   { href: "/timeline", label: "Timeline", icon: Clock },
   { href: "/reminders", label: "Reminders", icon: Bell },
   { href: "/mass-email", label: "Mass Email", icon: Mail },
-  { href: "/openmap", label: "OpenMap", icon: Map },
+  { href: "/openmap", label: "OpenMap", icon: MapIcon },
 ];
 
 export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
