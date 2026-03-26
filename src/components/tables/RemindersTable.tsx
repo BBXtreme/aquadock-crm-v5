@@ -58,26 +58,32 @@ export const reminderColumns = (
     header: "Title",
     cell: (info) => (
       <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
-        {String(info.getValue())}
+        {String(info.getValue() ?? "")}
       </button>
     ),
   }),
-  columnHelper.accessor("companies.firmenname", {
+  columnHelper.display({
     id: "company",
     header: "Company",
-    cell: (info) => (
-      <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-        {String(info.getValue())}
-      </Link>
-    ),
+    cell: (info) => {
+      const reminder = info.row.original;
+      const companyName = (reminder as any).companies?.firmenname || "Unknown";
+      return (
+        <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+          {companyName}
+        </Link>
+      );
+    },
   }),
   columnHelper.accessor("due_date", {
     header: "Due Date",
     cell: (info) => {
-      const isOverdue = isAfter(new Date(), new Date(info.getValue() as string));
+      const value = info.getValue() as string | null;
+      if (!value) return "No date";
+      const isOverdue = isAfter(new Date(), new Date(value));
       return (
         <span className={isOverdue ? "text-rose-500" : ""}>
-          {formatDistanceToNow(new Date(info.getValue() as string), {
+          {formatDistanceToNow(new Date(value), {
             addSuffix: true,
           })}
         </span>
@@ -96,7 +102,7 @@ export const reminderColumns = (
               : "bg-gray-500 text-white"
         }
       >
-        {String(info.getValue())}
+        {String(info.getValue() ?? "")}
       </Badge>
     ),
   }),
@@ -104,13 +110,13 @@ export const reminderColumns = (
     header: "Status",
     cell: (info) => (
       <Badge className={info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
-        {String(info.getValue())}
+        {String(info.getValue() ?? "")}
       </Badge>
     ),
   }),
   columnHelper.accessor("assigned_to", {
     header: "Assigned To",
-    cell: (info) => String(info.getValue()),
+    cell: (info) => String(info.getValue() ?? ""),
   }),
   columnHelper.display({
     id: "actions",
@@ -130,7 +136,7 @@ export const reminderColumns = (
     ),
     enableSorting: false,
   }),
-];
+] satisfies ColumnDef<Reminder>[];
 
 interface RemindersTableProps {
   reminders: Reminder[];
@@ -187,7 +193,7 @@ export default function RemindersTable({
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {table.getFilteredSelectedRowModel().rows.length} selected
+              {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} selected
             </span>
           )}
         </div>
