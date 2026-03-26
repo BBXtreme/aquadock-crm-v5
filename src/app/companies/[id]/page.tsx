@@ -526,27 +526,27 @@ export default function CompanyDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Firmenname</label>
+                <div className="text-sm font-medium text-gray-700">Firmenname</div>
                 <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Rechtsform</label>
+                <div className="text-sm font-medium text-gray-700">Rechtsform</div>
                 <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Kundentyp</label>
+                <div className="text-sm font-medium text-gray-700">Kundentyp</div>
                 <p className="text-sm text-gray-900">
                   {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : "—"}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Firmentyp</label>
+                <div className="text-sm font-medium text-gray-700">Firmentyp</div>
                 <p className="text-sm text-gray-900">
                   {company.firmentyp === "kette" ? "Kette" : company.firmentyp === "einzeln" ? "Einzelbetrieb" : "—"}
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Website</label>
+                <div className="text-sm font-medium text-gray-700">Website</div>
                 <p className="text-sm text-gray-900">
                   {company.website ? (
                     <a
@@ -563,7 +563,7 @@ export default function CompanyDetailPage() {
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Telefon</label>
+                <div className="text-sm font-medium text-gray-700">Telefon</div>
                 <p className="text-sm text-gray-900">
                   {company.telefon ? (
                     <a href={`tel:${company.telefon}`} className="text-blue-600 hover:underline">
@@ -575,7 +575,7 @@ export default function CompanyDetailPage() {
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Email</label>
+                <div className="text-sm font-medium text-gray-700">Email</div>
                 <p className="text-sm text-gray-900">
                   {company.email ? (
                     <a href={`mailto:${company.email}`} className="text-blue-600 hover:underline">
@@ -606,23 +606,23 @@ export default function CompanyDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Strasse</label>
+                <div className="text-sm font-medium text-gray-700">Strasse</div>
                 <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">PLZ</label>
+                <div className="text-sm font-medium text-gray-700">PLZ</div>
                 <p className="text-sm text-gray-900">{company.plz || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Stadt</label>
+                <div className="text-sm font-medium text-gray-700">Stadt</div>
                 <p className="text-sm text-gray-900">{company.stadt || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Bundesland</label>
+                <div className="text-sm font-medium text-gray-700">Bundesland</div>
                 <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Land</label>
+                <div className="text-sm font-medium text-gray-700">Land</div>
                 <p className="text-sm text-gray-900">{company.land || "—"}</p>
               </div>
             </div>
@@ -645,23 +645,23 @@ export default function CompanyDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Wasserdistanz</label>
+                <div className="text-sm font-medium text-gray-700">Wasserdistanz</div>
                 <p className="text-sm text-gray-900">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Wassertyp</label>
+                <div className="text-sm font-medium text-gray-700">Wassertyp</div>
                 <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Latitude</label>
+                <div className="text-sm font-medium text-gray-700">Latitude</div>
                 <p className="text-sm text-gray-900">{company.lat || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Longitude</label>
+                <div className="text-sm font-medium text-gray-700">Longitude</div>
                 <p className="text-sm text-gray-900">{company.lon || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">OSM</label>
+                <div className="text-sm font-medium text-gray-700">OSM</div>
                 <p className="text-sm text-gray-900">
                   {company.osm ? (
                     <a
@@ -697,17 +697,17 @@ export default function CompanyDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <div className="text-sm font-medium text-gray-700">Status</div>
                 <p className="text-sm text-gray-900">{company.status || "—"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Value</label>
+                <div className="text-sm font-medium text-gray-700">Value</div>
                 <p className="text-sm text-gray-900">
                   {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
                 </p>
               </div>
               <div className="lg:col-span-2">
-                <label className="text-sm font-medium text-gray-700">Notes</label>
+                <div className="text-sm font-medium text-gray-700">Notes</div>
                 <p className="text-sm text-gray-900">{company.notes || "—"}</p>
               </div>
             </div>
