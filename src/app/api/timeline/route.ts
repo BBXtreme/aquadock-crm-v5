@@ -54,17 +54,17 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error: unknown) {
-    const isErrorWithProperty = (e: unknown, prop: string): e is Record<string, unknown> =>
-      typeof e === "object" && e !== null && prop in e;
+    const hasProperty = (obj: unknown, prop: string): obj is Record<string, unknown> =>
+      typeof obj === "object" && obj !== null && prop in obj;
 
     const errorDetails = {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
-      code: isErrorWithProperty(error, "code") ? error.code : undefined,
-      details: isErrorWithProperty(error, "details") ? error.details : undefined,
-      hint: isErrorWithProperty(error, "hint") ? error.hint : undefined,
-      cause: isErrorWithProperty(error, "cause") ? error.cause : undefined,
+      code: hasProperty(error, "code") ? error.code : undefined,
+      details: hasProperty(error, "details") ? error.details : undefined,
+      hint: hasProperty(error, "hint") ? error.hint : undefined,
+      cause: hasProperty(error, "cause") ? error.cause : undefined,
       bodyReceived: body !== null ? body : "not parsed",
     };
 
