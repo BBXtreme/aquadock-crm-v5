@@ -61,9 +61,20 @@ export default function TimelineEntryForm({
   preselectedCompanyId,
   defaultValues,
 }: Props) {
-  console.log("[TimelineEntryForm] Preselected company_id:", preselectedCompanyId);
-
   const [localCompanies, setLocalCompanies] = useState<Company[]>([]);
+
+  // All hooks first (AIDER-RULES.md)
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: defaultValues || {
+      title: "",
+      content: "",
+      activity_type: "note",
+      company_id: preselectedCompanyId || "none",
+      contact_id: "none",
+      user_name: "",
+    },
+  });
 
   useEffect(() => {
     setLocalCompanies((prev) => {
@@ -93,19 +104,7 @@ export default function TimelineEntryForm({
       };
       fetchCompany();
     }
-  }, [preselectedCompanyId, localCompanies]);
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultValues || {
-      title: "",
-      content: "",
-      activity_type: "note",
-      company_id: preselectedCompanyId || "none",
-      contact_id: "none",
-      user_name: "",
-    },
-  });
+  }, [preselectedCompanyId]);
 
   useEffect(() => {
     if (defaultValues) {
@@ -114,20 +113,13 @@ export default function TimelineEntryForm({
   }, [defaultValues, form]);
 
   useEffect(() => {
-    if (defaultValues?.company_id && defaultValues.company_id !== "none") {
-      form.setValue("company_id", defaultValues.company_id, {
-        shouldValidate: true,
-      });
-    } else if (!form.getValues("company_id")) {
-      form.setValue("company_id", "none");
-    }
-  }, [defaultValues?.company_id, form]);
-
-  useEffect(() => {
     if (preselectedCompanyId) {
       form.setValue("company_id", preselectedCompanyId);
     }
   }, [preselectedCompanyId, form]);
+
+  // Early return AFTER all hooks
+  if (!companies) return null;
 
   return (
     <Form {...form}>
