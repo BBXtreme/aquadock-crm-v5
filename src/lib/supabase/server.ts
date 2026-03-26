@@ -33,7 +33,7 @@ export async function createServerSupabaseClient() {
     throw new Error("Supabase key is missing");
   }
 
-  return createServerClient(supabaseUrl, key, {
+  return createServerClient(supabaseUrl!, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

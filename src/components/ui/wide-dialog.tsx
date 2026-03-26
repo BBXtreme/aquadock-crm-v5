@@ -1,6 +1,6 @@
-import { DialogContent, type DialogContentProps } from "@/components/ui/dialog";
+import { DialogContent } from "@/components/ui/dialog";
 
-interface WideDialogContentProps extends DialogContentProps {
+interface WideDialogContentProps extends React.ComponentProps<typeof DialogContent> {
   size?: "default" | "lg" | "xl" | "2xl";
 }
 

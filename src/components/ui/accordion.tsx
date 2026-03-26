@@ -31,7 +31,9 @@ function AccordionItem({ className, children, ...props }: React.HTMLAttributes<H
 
   return (
     <div className={cn("border-b", className)} {...props}>
-      {React.Children.map(children, (child) => React.cloneElement(child as React.ReactElement, { open, setOpen }))}
+      {React.Children.map(children, (child) =>
+        React.cloneElement(child as React.ReactElement<any>, { open, setOpen }),
+      )}
     </div>
   );
 }

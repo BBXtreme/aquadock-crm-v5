@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "../server";
-import type { TimelineEntry, TimelineEntryInsert } from "../types";
+import type { TimelineEntry, TimelineEntryInsert } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 /**
@@ -45,7 +45,7 @@ export async function createTimelineEntry(values: TimelineEntryInsert & { user_i
       hint: error.hint,
       valuesAttempted: values,
     });
-    throw handleSupabaseError(error);
+    throw handleSupabaseError(error, "createTimelineEntry");
   }
   return data;
 }

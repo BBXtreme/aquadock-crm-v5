@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/browser";
-import type { UserSetting, UserSettingInsert } from "@/lib/supabase/types";
+import type { UserSetting, UserSettingInsert } from "@/lib/supabase/database.types";
 import { handleSupabaseError } from "@/lib/supabase/utils";
 
 export async function getUserColumnOrder(): Promise<string[] | null> {

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 
-import type { Company, CompanyInsert } from "../types";
+import type { Company, CompanyInsert } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 /**
@@ -169,7 +169,7 @@ export async function importOsmPoi(poi: OsmPoi, userId: string) {
 
   const insertData = {
     firmenname: poi.tags?.name || `POI ${poi.id}`,
-    kundentyp: kundentypMap[poi.tags?.amenity] || "sonstige",
+    kundentyp: kundentypMap[poi.tags?.amenity || ""] || "sonstige",
     strasse: poi.tags?.["addr:street"] || "",
     plz: poi.tags?.["addr:postcode"] || "",
     stadt: poi.tags?.["addr:city"] || "",

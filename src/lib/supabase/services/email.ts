@@ -8,7 +8,7 @@ import type {
   EmailTemplate,
   EmailTemplateInsert,
   EmailTemplateUpdate,
-} from "../types";
+} from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 /**

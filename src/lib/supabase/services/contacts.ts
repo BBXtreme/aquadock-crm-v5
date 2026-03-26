@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Contact, ContactInsert, ContactUpdate } from "../types";
+import type { Contact, ContactInsert, ContactUpdate } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 /**

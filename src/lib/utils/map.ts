@@ -31,6 +31,15 @@ export const getOsmPoiIcon = (isDarkMode = false) => {
   });
 };
 
+type OsmPoi = {
+  id: string;
+  type: string;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+};
+
 export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
@@ -56,7 +65,7 @@ export async function fetchOsmPois(
           if (poiCategories[key]) acc[key] = poiCategories[key];
           return acc;
         },
-        {} as typeof poiCategories,
+        {} as Record<string, typeof poiCategories[keyof typeof poiCategories]>,
       );
 
       for (const category of Object.values(activePoiCategories)) {

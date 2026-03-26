@@ -67,7 +67,7 @@ export const reminderColumns = (
     header: "Company",
     cell: (info) => (
       <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-        {info.getValue()}
+        {String(info.getValue())}
       </Link>
     ),
   }),
@@ -110,7 +110,7 @@ export const reminderColumns = (
   }),
   columnHelper.accessor("assigned_to", {
     header: "Assigned To",
-    cell: (info) => info.getValue(),
+    cell: (info) => String(info.getValue()),
   }),
   columnHelper.display({
     id: "actions",
