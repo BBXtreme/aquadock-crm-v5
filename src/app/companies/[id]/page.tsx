@@ -197,15 +197,44 @@ export default function CompanyDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p>
-              <strong>Firmenname:</strong> {company.firmenname}
-            </p>
-            <p>
-              <strong>Rechtsform:</strong> {company.rechtsform || "—"}
-            </p>
-            <p>
-              <strong>Kundentyp:</strong> {company.kundentyp || "—"}
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <p>
+                <strong>Firmenname:</strong> {company.firmenname}
+              </p>
+              <p>
+                <strong>Rechtsform:</strong> {company.rechtsform || "—"}
+              </p>
+              <p>
+                <strong>Kundentyp:</strong> {company.kundentyp || "—"}
+              </p>
+              <p>
+                <strong>Firmentyp:</strong> {company.firmentyp || "—"}
+              </p>
+              <p>
+                <strong>Status:</strong> {company.status || "—"}
+              </p>
+              <p>
+                <strong>Value:</strong> {company.value ? `${company.value} €` : "—"}
+              </p>
+              <p>
+                <strong>Latitude:</strong> {company.lat ? company.lat.toString() : "—"}
+              </p>
+              <p>
+                <strong>Longitude:</strong> {company.lon ? company.lon.toString() : "—"}
+              </p>
+              <p>
+                <strong>OSM:</strong> {company.osm || "—"}
+              </p>
+              <p>
+                <strong>User ID:</strong> {company.user_id || "—"}
+              </p>
+              <p>
+                <strong>Created At:</strong> {company.created_at ? new Date(company.created_at).toLocaleString() : "—"}
+              </p>
+              <p>
+                <strong>Updated At:</strong> {company.updated_at ? new Date(company.updated_at).toLocaleString() : "—"}
+              </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -296,9 +325,7 @@ export default function CompanyDetailPage() {
                       >
                         {reminder.priority}
                       </Badge>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                        {reminder.status}
-                      </Badge>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
                     </div>
                     {reminder.description && (
                       <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
