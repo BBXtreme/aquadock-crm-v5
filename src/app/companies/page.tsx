@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
-import type { Company } from "@/lib/supabase/types";
+import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
 export default function CompaniesPage() {
@@ -153,7 +153,10 @@ export default function CompaniesPage() {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated");
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Update failed", { description: message });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -162,7 +165,10 @@ export default function CompaniesPage() {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Deletion failed", { description: message });
+    },
   });
 
   const stats = useMemo(() => {
