@@ -29,13 +29,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Reminder } from "@/lib/supabase/database.types";
 
-const columnHelper = createColumnHelper<Reminder>();
+type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
+
+const columnHelper = createColumnHelper<ReminderWithCompany>();
 
 export const reminderColumns = (
-  handleEdit: (reminder: Reminder) => void,
-  handleView: (reminder: Reminder) => void,
+  handleEdit: (reminder: ReminderWithCompany) => void,
+  handleView: (reminder: ReminderWithCompany) => void,
   handleDelete: (id: string) => void,
-): ColumnDef<Reminder>[] =>
+): ColumnDef<ReminderWithCompany>[] =>
   [
     columnHelper.display({
       id: "select",
@@ -68,10 +70,11 @@ export const reminderColumns = (
       header: "Company",
       cell: (info) => {
         const reminder = info.row.original;
-        const companyName = (reminder as any).companies?.firmenname || "Unknown";
+        const company = reminder.companies;
+        if (!company) return "Unknown";
         return (
           <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
-            {companyName}
+            {company.firmenname}
           </Link>
         );
       },
@@ -146,14 +149,14 @@ export const reminderColumns = (
       ),
       enableSorting: false,
     }),
-  ] satisfies ColumnDef<Reminder>[];
+  ] satisfies ColumnDef<ReminderWithCompany>[];
 
 interface RemindersTableProps {
-  reminders: Reminder[];
+  reminders: ReminderWithCompany[];
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
-  handleEdit: (reminder: Reminder) => void;
-  handleView: (reminder: Reminder) => void;
+  handleEdit: (reminder: ReminderWithCompany) => void;
+  handleView: (reminder: ReminderWithCompany) => void;
   handleDelete: (id: string) => void;
 }
 

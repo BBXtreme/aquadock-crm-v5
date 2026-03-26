@@ -59,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<CompanyWithContacts>[] = [
+  const columns = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -196,7 +196,7 @@ export default function CompaniesTable({
       ),
       enableSorting: false,
     }),
-  ];
+  ] satisfies ColumnDef<CompanyWithContacts>[];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
@@ -229,7 +229,7 @@ export default function CompaniesTable({
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
+      const link = document.createElement("a";
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
@@ -250,7 +250,7 @@ export default function CompaniesTable({
       const blob = new Blob([json], {
         type: "application/json;charset=utf-8;",
       });
-      const link = document.createElement("a");
+      const link = document.createElement("a";
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.json`);

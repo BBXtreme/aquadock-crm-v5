@@ -33,14 +33,6 @@ import { cn } from "@/lib/utils";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
-interface ContactsTableProps {
-  contacts: ContactWithCompany[];
-  onEdit?: (contact: ContactWithCompany) => void;
-  onDelete?: (id: string) => void;
-  globalFilter?: string;
-  onGlobalFilterChange?: (value: string) => void;
-}
-
 const columnHelper = createColumnHelper<ContactWithCompany>();
 
 export default function ContactsTable({
@@ -57,7 +49,7 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<ContactWithCompany>[] = [
+  const columns = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -176,7 +168,7 @@ export default function ContactsTable({
       ),
       enableSorting: false,
     }),
-  ];
+  ] satisfies ColumnDef<ContactWithCompany>[];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
@@ -206,7 +198,7 @@ export default function ContactsTable({
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
+      const link = document.createElement("a";
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.csv`);
@@ -227,7 +219,7 @@ export default function ContactsTable({
       const blob = new Blob([json], {
         type: "application/json;charset=utf-8;",
       });
-      const link = document.createElement("a");
+      const link = document.createElement("a";
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.json`);
@@ -386,4 +378,12 @@ export default function ContactsTable({
       </div>
     </div>
   );
+}
+
+interface ContactsTableProps {
+  contacts: ContactWithCompany[];
+  onEdit?: (contact: ContactWithCompany) => void;
+  onDelete?: (id: string) => void;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
 }
