@@ -263,12 +263,20 @@ export default function CompanyDetailPage() {
       values,
     }: {
       id: string;
-      values: { title: string; content?: string; company_id: string; activity_type?: string };
+      values: { 
+        title: string; 
+        content?: string; 
+        company_id?: string | null; 
+        activity_type?: string;
+      };
     }) => {
       const res = await fetch(`/api/timeline/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          company_id: values.company_id || editEntry?.company_id, // fallback
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
@@ -1279,16 +1287,17 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
                     <SelectValue placeholder="Select company type" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
-                  {firmentypOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
+                  <SelectContent>
+                    {firmentypOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           )}
         />
         <FormField
