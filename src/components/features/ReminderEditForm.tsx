@@ -40,10 +40,14 @@ export default function ReminderEditForm({
   reminder,
   onSuccess,
 }: {
-  reminder: Database["public"]["Tables"]["reminders"]["Row"];
+  reminder: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
+
+  if (!reminder) {
+    return <div>Loading reminder...</div>;
+  }
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
