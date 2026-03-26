@@ -227,7 +227,7 @@ export default function CompanyDetailPage() {
   });
 
   const createTimelineMutation = useMutation({
-    mutationFn: async (values: unknown) => {
+    mutationFn: async (values: { title: string; content?: string; company_id: string; activity_type?: string }) => {
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
