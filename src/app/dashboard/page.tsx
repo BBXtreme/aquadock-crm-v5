@@ -107,7 +107,7 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <FunnelChart>
                     <Funnel dataKey="value" data={funnelData} isAnimationActive labelLine={false} stroke="none">
-                      {funnelData.map((entry, index) => (
+                      {funnelData.map((entry, _index) => (
                         <Cell key={entry.name} fill={entry.fill} />
                       ))}
                       {/* Left: numbers */}
@@ -179,7 +179,7 @@ export default function DashboardPage() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {pieData.map((entry, index) => (
+                    {pieData.map((entry, _index) => (
                       <Cell key={entry.name} fill={entry.fill} />
                     ))}
                   </Pie>
