@@ -67,12 +67,12 @@ export default function TimelineEntryForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
-      title: "",
-      content: "",
-      activity_type: "note",
-      company_id: preselectedCompanyId || "none",
-      contact_id: "none",
-      user_name: "",
+      title: editEntry?.title || "",
+      content: editEntry?.content || "",
+      activity_type: editEntry?.activity_type || "note",
+      company_id: editEntry?.company_id || preselectedCompanyId || "none",
+      contact_id: editEntry?.contact_id || "none",
+      user_name: editEntry?.user_name || "",
     },
   });
 
