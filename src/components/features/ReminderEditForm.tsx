@@ -84,22 +84,22 @@ export default function ReminderEditForm({
     },
   });
 
+  useEffect(() => {
+    form.reset({
+      title: reminder?.title || "",
+      company_id: reminder?.company_id || "",
+      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+      priority: reminder?.priority || "normal",
+      status: reminder?.status || "open",
+      assigned_to: reminder?.assigned_to || "",
+      notes: reminder?.notes || "",
+    });
+  }, [reminder, form]);
+
   // Early return for null/undefined
   if (!reminder) {
     return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
   }
-
-  useEffect(() => {
-    form.reset({
-      title: reminder.title || "",
-      company_id: reminder.company_id || "",
-      due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder.priority || "normal",
-      status: reminder.status || "open",
-      assigned_to: reminder.assigned_to || "",
-      notes: reminder.notes || "",
-    });
-  }, [reminder, form]);
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
