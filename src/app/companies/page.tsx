@@ -41,11 +41,14 @@ import type { Company } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
+type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
+
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
-  const [activeFilters, setActiveFilters] = useState({
+
+  const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>({
     status: [],
     kategorie: [],
     betriebstyp: [],
@@ -64,7 +67,7 @@ export default function CompaniesPage() {
     "kunde",
     "partner",
     "inaktiv",
-  ];
+  ] as const;
 
   const kategorieOptions = [
     "restaurant",
@@ -80,9 +83,9 @@ export default function CompaniesPage() {
     "interessent",
     "partner",
     "sonstige",
-  ];
+  ] as const;
 
-  const betriebstypOptions = ["kette", "einzeln"];
+  const betriebstypOptions = ["kette", "einzeln"] as const;
 
   const landOptions = [
     "Deutschland",
@@ -101,15 +104,15 @@ export default function CompaniesPage() {
     "Griechenland",
     "Portugal",
     "Großbritannien",
-  ];
+  ] as const;
 
-  const statusIcons = {
+  const statusIcons: Record<string, React.ComponentType<any> | null> = {
     lead: Sparkles,
     gewonnen: Trophy,
     verloren: XCircle,
   };
 
-  const kategorieIcons = {
+  const kategorieIcons: Record<string, React.ComponentType<any> | null> = {
     restaurant: Utensils,
     hotel: Building2,
     resort: Palmtree,
@@ -125,7 +128,7 @@ export default function CompaniesPage() {
     sonstige: null,
   };
 
-  const toggleFilter = (group: string, value: string) => {
+  const toggleFilter = (group: FilterGroup, value: string) => {
     setActiveFilters((prev) => ({
       ...prev,
       [group]: prev[group].includes(value) ? prev[group].filter((v) => v !== value) : [...prev[group], value],
@@ -182,10 +185,10 @@ export default function CompaniesPage() {
 
   const filteredCompanies = useMemo(() => {
     return companies.filter((c) => {
-      if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status)) return false;
-      if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp)) return false;
-      if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp)) return false;
-      if (activeFilters.land.length > 0 && !activeFilters.land.includes(c.land)) return false;
+      if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status ?? "")) return false;
+      if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp ?? "")) return false;
+      if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp ?? "")) return false;
+      if (activeFilters.land.length > 0 && !activeFilters.land.includes(c.land ?? "")) return false;
       return true;
     });
   }, [companies, activeFilters]);
@@ -291,7 +294,7 @@ export default function CompaniesPage() {
               </div>
             ) : (
               <>
-                {/* Filters */}
+                {/* Active Filters Badges */}
                 <div
                   className={cn(
                     "flex flex-wrap gap-2 items-center",
@@ -300,7 +303,11 @@ export default function CompaniesPage() {
                 >
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
-                      <Badge key={v} variant="secondary" onClick={() => toggleFilter(group, v)}>
+                      <Badge
+                        key={`${group}-${v}`}
+                        variant="secondary"
+                        onClick={() => toggleFilter(group as FilterGroup, v)}
+                      >
                         {v} ×
                       </Badge>
                     )),
@@ -331,18 +338,20 @@ export default function CompaniesPage() {
                   <AccordionItem value="filters">
                     <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
                     <AccordionContent>
+                      {/* Status */}
                       <div className="mb-4">
-                        <h4 className="font-normal">Status</h4>
+                        <h4 className="font-normal mb-2">Status</h4>
                         <div className="flex flex-wrap gap-2">
                           {statusOptions.map((s) => {
                             const Icon = statusIcons[s];
+                            const isActive = activeFilters.status.includes(s);
                             return (
                               <Button
                                 key={s}
-                                variant={activeFilters.status.includes(s) ? "secondary" : "ghost"}
+                                variant={isActive ? "secondary" : "ghost"}
                                 size="sm"
                                 className={
-                                  activeFilters.status.includes(s)
+                                  isActive
                                     ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                     : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                                 }
@@ -355,18 +364,21 @@ export default function CompaniesPage() {
                           })}
                         </div>
                       </div>
+
+                      {/* Kategorie */}
                       <div className="mb-4">
-                        <h4 className="font-normal">Kategorie</h4>
+                        <h4 className="font-normal mb-2">Kategorie</h4>
                         <div className="flex flex-wrap gap-2">
                           {kategorieOptions.map((k) => {
                             const Icon = kategorieIcons[k];
+                            const isActive = activeFilters.kategorie.includes(k);
                             return (
                               <Button
                                 key={k}
-                                variant={activeFilters.kategorie.includes(k) ? "secondary" : "ghost"}
+                                variant={isActive ? "secondary" : "ghost"}
                                 size="sm"
                                 className={
-                                  activeFilters.kategorie.includes(k)
+                                  isActive
                                     ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                     : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                                 }
@@ -379,44 +391,54 @@ export default function CompaniesPage() {
                           })}
                         </div>
                       </div>
+
+                      {/* Betriebstyp */}
                       <div className="mb-4">
-                        <h4 className="font-normal">Betriebstyp</h4>
+                        <h4 className="font-normal mb-2">Betriebstyp</h4>
                         <div className="flex flex-wrap gap-2">
-                          {betriebstypOptions.map((b) => (
-                            <Button
-                              key={b}
-                              variant={activeFilters.betriebstyp.includes(b) ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                activeFilters.betriebstyp.includes(b)
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("betriebstyp", b)}
-                            >
-                              {b.charAt(0).toUpperCase() + b.slice(1)}
-                            </Button>
-                          ))}
+                          {betriebstypOptions.map((b) => {
+                            const isActive = activeFilters.betriebstyp.includes(b);
+                            return (
+                              <Button
+                                key={b}
+                                variant={isActive ? "secondary" : "ghost"}
+                                size="sm"
+                                className={
+                                  isActive
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("betriebstyp", b)}
+                              >
+                                {b.charAt(0).toUpperCase() + b.slice(1)}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
+
+                      {/* Land */}
                       <div>
-                        <h4 className="font-normal">Land</h4>
+                        <h4 className="font-normal mb-2">Land</h4>
                         <div className="flex flex-wrap gap-2">
-                          {landOptions.map((l) => (
-                            <Button
-                              key={l}
-                              variant={activeFilters.land.includes(l) ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                activeFilters.land.includes(l)
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("land", l)}
-                            >
-                              {l}
-                            </Button>
-                          ))}
+                          {landOptions.map((l) => {
+                            const isActive = activeFilters.land.includes(l);
+                            return (
+                              <Button
+                                key={l}
+                                variant={isActive ? "secondary" : "ghost"}
+                                size="sm"
+                                className={
+                                  isActive
+                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                }
+                                onClick={() => toggleFilter("land", l)}
+                              >
+                                {l}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                     </AccordionContent>
@@ -428,7 +450,10 @@ export default function CompaniesPage() {
                   globalFilter={globalFilter}
                   onGlobalFilterChange={setGlobalFilter}
                   onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
-                  onDelete={(id) => deleteMutation.mutate(id)}
+                  onDelete={(companyOrId) => {
+                    const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                    deleteMutation.mutate(id);
+                  }}
                 />
               </>
             )}
@@ -441,7 +466,6 @@ export default function CompaniesPage() {
   );
 }
 
-// StatCard component remains the same
 function StatCard({
   title,
   value,

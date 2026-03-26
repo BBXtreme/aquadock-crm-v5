@@ -120,37 +120,40 @@ const wassertypOptions = [
   { value: "Stausee", label: "Stausee" },
 ];
 
-export default function CompanyEditForm({ company, onSuccess }: { company: Company; onSuccess?: () => void }) {
+export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      firmenname: company.firmenname || "",
-      rechtsform: company.rechtsform || "",
-      kundentyp: company.kundentyp || "",
-      firmentyp: company.firmentyp || "",
-      strasse: company.strasse || "",
-      plz: company.plz || "",
-      stadt: company.stadt || "",
-      bundesland: company.bundesland || "",
-      land: company.land || "Deutschland",
-      website: company.website || "",
-      telefon: company.telefon || "",
-      email: company.email || "",
-      wasserdistanz: company.wasserdistanz ?? undefined,
-      wassertyp: company.wassertyp || "",
-      lat: company.lat ?? undefined,
-      lon: company.lon ?? undefined,
-      osm: company.osm || "",
-      status: (company.status as CompanyFormValues["status"]) || "lead",
-      value: company.value ?? undefined,
-      notes: company.notes || "",
+      firmenname: company?.firmenname || "",
+      rechtsform: company?.rechtsform || "",
+      kundentyp: company?.kundentyp || "",
+      firmentyp: company?.firmentyp || "",
+      strasse: company?.strasse || "",
+      plz: company?.plz || "",
+      stadt: company?.stadt || "",
+      bundesland: company?.bundesland || "",
+      land: company?.land || "Deutschland",
+      website: company?.website || "",
+      telefon: company?.telefon || "",
+      email: company?.email || "",
+      wasserdistanz: company?.wasserdistanz ?? undefined,
+      wassertyp: company?.wassertyp || "",
+      lat: company?.lat ?? undefined,
+      lon: company?.lon ?? undefined,
+      osm: company?.osm || "",
+      status: (company?.status as CompanyFormValues["status"]) || "lead",
+      value: company?.value ?? undefined,
+      notes: company?.notes || "",
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormValues) => updateCompany(company.id, data as Partial<Company>),
+    mutationFn: (data: CompanyFormValues) => {
+      if (!company) throw new Error("Company is null");
+      return updateCompany(company.id, data as Partial<Company>);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated successfully");
@@ -161,6 +164,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       toast.error("Failed to update company", { description: message });
     },
   });
+
+  // Early return AFTER all hooks
+  if (!company) return null;
 
   const onSubmit = form.handleSubmit((data) => {
     updateMutation.mutate(data);
@@ -210,20 +216,20 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Kundentyp</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select customer type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {kundentypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {kundentypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -234,20 +240,20 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Firmentyp</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select company type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {firmentypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {firmentypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -359,20 +365,20 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Land</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select country" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {landOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {landOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -397,6 +403,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                         <Input
                           type="number"
                           {...field}
+                          value={field.value ?? ""}
                           onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                         />
                       </FormControl>
@@ -410,20 +417,20 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Wassertyp</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select water type" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {wassertypOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {wassertypOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -493,20 +500,20 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || "lead"}>
-                        <FormControl>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value || "lead"}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            {statusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -518,7 +525,12 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     <FormItem>
                       <FormLabel>Value</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
+                        <Input
+                          type="number"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

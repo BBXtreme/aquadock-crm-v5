@@ -83,24 +83,13 @@ export default function ContactDetailPage() {
       const { data, error } = await supabase
         .from("contacts")
         .select(
-          "*, companies!company_id(id, firmenname, kundentyp, status, value, stadt, land, osm, wasserdistanz, wassertyp)",
+          "*, companies!company_id(*)", // ← FULL company row (fixes the type mismatch)
         )
         .eq("id", id)
         .single();
       if (error) throw error;
       return data as Contact & {
-        companies?: {
-          id: string;
-          firmenname: string;
-          kundentyp?: string;
-          status?: string;
-          value?: number;
-          stadt?: string;
-          land?: string;
-          osm?: string;
-          wasserdistanz?: number;
-          wassertyp?: string;
-        };
+        companies?: Company | null;
       };
     },
     enabled: !!id,
@@ -325,7 +314,7 @@ export default function ContactDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Linked Company - Safe optional chaining */}
+      {/* Linked Company */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -420,7 +409,7 @@ export default function ContactDetailPage() {
         </WideDialogContent>
       </Dialog>
 
-      {/* Edit Company Dialog - Fixed: pass null-safe company */}
+      {/* Edit Company Dialog - now safe (full Company type) */}
       <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
         <WideDialogContent size="2xl">
           <DialogHeader>

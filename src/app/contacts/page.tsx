@@ -16,9 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
+import type { Contact } from "@/lib/supabase/database.types";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";
-import type { Contact } from "@/lib/supabase/database.types";
 
 const _contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),

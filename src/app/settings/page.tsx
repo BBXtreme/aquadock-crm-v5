@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Settings, Shield, Trash2 } from "lucide-react";
+import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -79,7 +79,7 @@ export default function SettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
-  const [userId, setUserId] = useState<string | null>(null);
+  const [_userId, _setUserId] = useState<string | null>(null);
   const [testRecipient, setTestRecipient] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -199,8 +199,8 @@ export default function SettingsPage() {
       const endpoint = openMapSettings.overpassEndpoints[0];
       if (!endpoint) throw new Error("No Overpass endpoint configured");
       const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `data=${encodeURIComponent(query)}`,
       });
       if (!response.ok) throw new Error("Overpass test failed");
@@ -216,7 +216,7 @@ export default function SettingsPage() {
   });
 
   // Fixed tagGroups building - safe indexing
-  const tagGroups: Record<string, string[]> = useMemo(() => {
+  const _tagGroups: Record<string, string[]> = useMemo(() => {
     const groups: Record<string, string[]> = {};
     for (const [key, value] of Object.entries(settings)) {
       const groupKey = key.split("_")[0];
@@ -353,8 +353,13 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>Overpass Endpoints</Label>
               <Textarea
-                value={openMapSettings.overpassEndpoints.join('\n')}
-                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, overpassEndpoints: e.target.value.split('\n').filter(Boolean) }))}
+                value={openMapSettings.overpassEndpoints.join("\n")}
+                onChange={(e) =>
+                  setOpenMapSettings((prev) => ({
+                    ...prev,
+                    overpassEndpoints: e.target.value.split("\n").filter(Boolean),
+                  }))
+                }
                 placeholder="One endpoint per line"
                 rows={4}
               />
@@ -363,14 +368,20 @@ export default function SettingsPage() {
               <Label htmlFor="autoLoadPois" className="text-sm font-medium">
                 Auto Load POIs
               </Label>
-              <Switch id="autoLoadPois" checked={openMapSettings.autoLoadPois} onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} />
+              <Switch
+                id="autoLoadPois"
+                checked={openMapSettings.autoLoadPois}
+                onCheckedChange={(checked) => setOpenMapSettings((prev) => ({ ...prev, autoLoadPois: checked }))}
+              />
             </div>
             <div className="space-y-2">
               <Label>Cache Duration (minutes)</Label>
               <Input
                 type="number"
                 value={openMapSettings.cacheDuration}
-                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, cacheDuration: parseInt(e.target.value) || 10 }))}
+                onChange={(e) =>
+                  setOpenMapSettings((prev) => ({ ...prev, cacheDuration: parseInt(e.target.value, 10) || 10 }))
+                }
               />
             </div>
             <div className="space-y-2">
@@ -378,16 +389,14 @@ export default function SettingsPage() {
               <Input
                 type="number"
                 value={openMapSettings.maxCacheSize}
-                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, maxCacheSize: parseInt(e.target.value) || 30 }))}
+                onChange={(e) =>
+                  setOpenMapSettings((prev) => ({ ...prev, maxCacheSize: parseInt(e.target.value, 10) || 30 }))
+                }
               />
             </div>
             <div className="space-y-2">
               <Label>Sample Overpass Query</Label>
-              <Textarea
-                value={generateSampleQuery()}
-                readOnly
-                rows={10}
-              />
+              <Textarea value={generateSampleQuery()} readOnly rows={10} />
             </div>
             <div className="flex gap-2">
               <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
@@ -397,7 +406,11 @@ export default function SettingsPage() {
                 <Trash2 className="mr-2 h-4 w-4" />
                 Clear POI Cache
               </Button>
-              <Button variant="outline" onClick={() => testOverpassMutation.mutate()} disabled={testOverpassMutation.isPending}>
+              <Button
+                variant="outline"
+                onClick={() => testOverpassMutation.mutate()}
+                disabled={testOverpassMutation.isPending}
+              >
                 {testOverpassMutation.isPending ? "Testing..." : "Test Overpass"}
               </Button>
             </div>
@@ -439,7 +452,7 @@ export default function SettingsPage() {
                           type="number"
                           placeholder="587"
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 587)}
+                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 587)}
                         />
                       </FormControl>
                       <FormMessage />
@@ -467,11 +480,7 @@ export default function SettingsPage() {
                       <FormLabel>SMTP Password</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="your-password"
-                            {...field}
-                          />
+                          <Input type={showPassword ? "text" : "password"} placeholder="your-password" {...field} />
                           <Button
                             type="button"
                             variant="ghost"
