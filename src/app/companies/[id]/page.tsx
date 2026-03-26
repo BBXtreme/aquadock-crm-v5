@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
-import type { Company, Contact } from "@/lib/supabase/types";
+import type { Company, Contact, Database } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -165,9 +165,9 @@ export default function CompanyDetailPage() {
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
-  const [editContact, setEditContact] = useState(null);
+  const [editContact, setEditContact] = useState<any>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
-  const [editReminder, setEditReminder] = useState(null);
+  const [editReminder, setEditReminder] = useState<any>(null);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
@@ -294,60 +294,6 @@ export default function CompanyDetailPage() {
       toast.success("Timeline-Eintrag gelöscht");
     },
   });
-
-  const handleDeleteCompany = async () => {
-    if (confirm("Are you sure you want to delete this company?")) {
-      try {
-        await deleteCompany(id);
-        router.push("/companies");
-      } catch (_error) {
-        toast.error("Failed to delete company");
-      }
-    }
-  };
-
-  const handleDeleteContact = async (contactId: string) => {
-    if (confirm("Are you sure you want to delete this contact?")) {
-      try {
-        const supabase = createClient();
-        await supabase.from("contacts").delete().eq("id", contactId);
-        queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-      } catch (_error) {
-        toast.error("Failed to delete contact");
-      }
-    }
-  };
-
-  const handleDeleteReminder = async (reminderId: string) => {
-    if (confirm("Are you sure you want to delete this reminder?")) {
-      try {
-        const supabase = createClient();
-        await supabase.from("reminders").delete().eq("id", reminderId);
-        queryClient.invalidateQueries({ queryKey: ["reminders", id] });
-      } catch (_error) {
-        toast.error("Failed to delete reminder");
-      }
-    }
-  };
-
-  const getKundentypLabel = (t: string) => {
-    const map = {
-      restaurant: "🍽 Restaurant",
-      hotel: "🏨 Hotel",
-      resort: "🌴 Resort",
-      camping: "⛺ Camping",
-      marina: "⚓ Marina",
-      segelschule: "⛵ Segelschule",
-      segelverein: "🏆 Segelverein",
-      bootsverleih: "🚤 Bootsverleih",
-      neukunde: "🆕 Neukunde",
-      bestandskunde: "⭐ Bestandskunde",
-      interessent: "👁 Interessent",
-      partner: "🤝 Partner",
-      sonstige: "Sonstige",
-    };
-    return map[t.toLowerCase() as keyof typeof map] || t;
-  };
 
   if (isLoading) {
     return (
@@ -1183,6 +1129,60 @@ export default function CompanyDetailPage() {
       </Dialog>
     </div>
   );
+
+  function handleDeleteCompany() {
+    if (confirm("Are you sure you want to delete this company?")) {
+      try {
+        deleteCompany(id);
+        router.push("/companies");
+      } catch (_error) {
+        toast.error("Failed to delete company");
+      }
+    }
+  }
+
+  function handleDeleteContact(contactId: string) {
+    if (confirm("Are you sure you want to delete this contact?")) {
+      try {
+        const supabase = createClient();
+        supabase.from("contacts").delete().eq("id", contactId);
+        queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      } catch (_error) {
+        toast.error("Failed to delete contact");
+      }
+    }
+  }
+
+  function handleDeleteReminder(reminderId: string) {
+    if (confirm("Are you sure you want to delete this reminder?")) {
+      try {
+        const supabase = createClient();
+        supabase.from("reminders").delete().eq("id", reminderId);
+        queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+      } catch (_error) {
+        toast.error("Failed to delete reminder");
+      }
+    }
+  }
+
+  function getKundentypLabel(t: string) {
+    const map = {
+      restaurant: "🍽 Restaurant",
+      hotel: "🏨 Hotel",
+      resort: "🌴 Resort",
+      camping: "⛺ Camping",
+      marina: "⚓ Marina",
+      segelschule: "⛵ Segelschule",
+      segelverein: "🏆 Segelverein",
+      bootsverleih: "🚤 Bootsverleih",
+      neukunde: "🆕 Neukunde",
+      bestandskunde: "⭐ Bestandskunde",
+      interessent: "👁 Interessent",
+      partner: "🤝 Partner",
+      sonstige: "Sonstige",
+    };
+    return map[t.toLowerCase() as keyof typeof map] || t;
+  }
 }
 
 function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: () => void }) {
