@@ -320,12 +320,12 @@ export default function ContactsTable({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : (
+                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
                         className={cn(
                           "flex items-center gap-2 w-full h-full p-4 text-left font-medium",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
+                          "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
@@ -333,6 +333,10 @@ export default function ContactsTable({
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
                       </button>
+                    ) : (
+                      <div className="flex items-center gap-2 w-full h-full p-4 text-left font-medium">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </div>
                     )}
                   </TableHead>
                 ))}
