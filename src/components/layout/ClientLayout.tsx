@@ -1,8 +1,7 @@
 "use client";
 
-import type React from "react";
-
 import { ThemeProvider } from "next-themes";
+import type React from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";

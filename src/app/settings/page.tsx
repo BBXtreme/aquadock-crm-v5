@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Settings, Shield, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -427,7 +426,12 @@ export default function SettingsPage() {
               <Switch
                 id="autoLoadPois"
                 checked={openMapSettings.autoLoadPois}
-                onCheckedChange={(checked) => setOpenMapSettings((prev) => ({ ...prev, autoLoadPois: checked }))}
+                onCheckedChange={(checked) =>
+                  setOpenMapSettings((prev) => ({
+                    ...prev,
+                    autoLoadPois: checked,
+                  }))
+                }
                 className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-emerald-500"
               />
             </div>

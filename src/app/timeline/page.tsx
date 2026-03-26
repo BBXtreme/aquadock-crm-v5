@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
@@ -124,7 +122,11 @@ export default function TimelinePage() {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
       const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
       queryClient.setQueryData(["timeline"], (old = []) => [
-        { ...newEntry, id: `temp-${Date.now()}`, created_at: new Date().toISOString() },
+        {
+          ...newEntry,
+          id: `temp-${Date.now()}`,
+          created_at: new Date().toISOString(),
+        },
         ...old,
       ]);
       return { previous };
@@ -355,7 +357,10 @@ export default function TimelinePage() {
                         {entry.activity_type}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
-                        {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                        {entry.created_at &&
+                          formatDistanceToNow(new Date(entry.created_at), {
+                            addSuffix: true,
+                          })}
                       </span>
                     </div>
                     <h3 className="font-medium text-lg mb-1">{entry.title}</h3>

@@ -1,10 +1,6 @@
 // Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
 "use client";
 
-import { useState } from "react";
-
-import Link from "next/link";
-
 import {
   type ColumnDef,
   createColumnHelper,
@@ -16,7 +12,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
+import Link from "next/link";
 import Papa from "papaparse";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -206,7 +204,10 @@ export default function CompaniesTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getRowId: (row) => row.id,
-    initialState: { sorting: [{ id: "firmenname", desc: false }], pagination: { pageSize: 20 } },
+    initialState: {
+      sorting: [{ id: "firmenname", desc: false }],
+      pagination: { pageSize: 20 },
+    },
     state: {
       globalFilter,
       columnVisibility,
@@ -243,7 +244,9 @@ export default function CompaniesTable({
     try {
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+      const blob = new Blob([json], {
+        type: "application/json;charset=utf-8;",
+      });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);

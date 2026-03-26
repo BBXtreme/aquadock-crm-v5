@@ -1,12 +1,11 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useState } from "react";
-
-import { useRouter } from "next/navigation";
-
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { LogOut, User } from "lucide-react";
+
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";

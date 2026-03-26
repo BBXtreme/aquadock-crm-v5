@@ -1,1 +1,17 @@
-src/app/globals.css
+# Build outputs
+.next
+dist
+build
+out
+
+# Dependencies
+node_modules
+
+# Coverage & temp
+coverage
+.turbo
+*.min.js
+**/*.generated.*
+
+# Misc
+.DS_Store

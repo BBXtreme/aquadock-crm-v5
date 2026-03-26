@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import Image from "next/image";
-import Link from "next/link";
-
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

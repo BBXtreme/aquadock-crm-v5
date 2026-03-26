@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
-import Link from "next/link";
-
 import {
   type ColumnDef,
   createColumnHelper,
@@ -16,6 +12,8 @@ import {
 } from "@tanstack/react-table";
 import { formatDistanceToNow, isAfter } from "date-fns";
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Edit, Eye, Trash } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,7 +162,10 @@ export default function RemindersTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: { sorting: [{ id: "due_date", desc: false }], pagination: { pageSize: 20 } },
+    initialState: {
+      sorting: [{ id: "due_date", desc: false }],
+      pagination: { pageSize: 20 },
+    },
     state: { rowSelection, columnVisibility, globalFilter },
     onRowSelectionChange: setRowSelection,
     onColumnVisibilityChange: setColumnVisibility,

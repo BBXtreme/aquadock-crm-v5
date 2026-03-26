@@ -1,9 +1,8 @@
 "use client";
 
-import type * as React from "react";
-
 // Corrected Radix import
 import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 

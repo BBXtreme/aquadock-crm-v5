@@ -1,11 +1,10 @@
 // Fixed: corrected radix-ui imports for Vercel build
 "use client";
 
-import type * as React from "react";
-
 // Fixed Radix import
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 

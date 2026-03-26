@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -38,7 +37,14 @@ interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
   companies: Company[];
-  contacts: { id: string; vorname: string; nachname: string; email?: string; telefon?: string; position?: string }[];
+  contacts: {
+    id: string;
+    vorname: string;
+    nachname: string;
+    email?: string;
+    telefon?: string;
+    position?: string;
+  }[];
   editEntry?: TimelineEntry | null;
   onCancel?: () => void;
   preselectedCompanyId?: string | null;
@@ -109,7 +115,9 @@ export default function TimelineEntryForm({
 
   useEffect(() => {
     if (defaultValues?.company_id && defaultValues.company_id !== "none") {
-      form.setValue("company_id", defaultValues.company_id, { shouldValidate: true });
+      form.setValue("company_id", defaultValues.company_id, {
+        shouldValidate: true,
+      });
     } else if (!form.getValues("company_id")) {
       form.setValue("company_id", "none");
     }

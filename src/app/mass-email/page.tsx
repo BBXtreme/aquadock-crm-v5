@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "isomorphic-dompurify";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -275,7 +274,9 @@ export default function MassEmailPage() {
                 <div
                   className="prose prose-sm max-w-none"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(previewBody),
+                  }}
                 />
               ) : (
                 <p className="text-muted-foreground">Select a template to preview</p>

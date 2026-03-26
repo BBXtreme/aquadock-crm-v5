@@ -123,7 +123,11 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
               });
 
               console.groupEnd();
-              resolve({ pois: deduplicated, totalFound: deduplicated.length, query });
+              resolve({
+                pois: deduplicated,
+                totalFound: deduplicated.length,
+                query,
+              });
               return;
             }
 

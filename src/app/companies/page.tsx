@@ -1,8 +1,5 @@
 "use client";
 
-import type React from "react";
-import { useMemo, useState } from "react";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Anchor,
@@ -23,6 +20,8 @@ import {
   Utensils,
   XCircle,
 } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -304,7 +303,14 @@ export default function CompaniesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setActiveFilters({ status: [], kategorie: [], betriebstyp: [], land: [] })}
+                      onClick={() =>
+                        setActiveFilters({
+                          status: [],
+                          kategorie: [],
+                          betriebstyp: [],
+                          land: [],
+                        })
+                      }
                     >
                       Clear all
                     </Button>

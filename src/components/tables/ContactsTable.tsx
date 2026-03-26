@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
-import Link from "next/link";
-
 import {
   type ColumnDef,
   createColumnHelper,
@@ -15,7 +11,9 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
+import Link from "next/link";
 import Papa from "papaparse";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -224,7 +222,9 @@ export default function ContactsTable({
     try {
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+      const blob = new Blob([json], {
+        type: "application/json;charset=utf-8;",
+      });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
