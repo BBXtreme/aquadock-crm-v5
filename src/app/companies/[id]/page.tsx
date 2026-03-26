@@ -1,34 +1,20 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAfter } from "date-fns";
-import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import CompanyEditForm from "@/components/features/CompanyEditForm";
-import ContactCreateForm from "@/components/features/ContactCreateForm";
-import ContactEditForm from "@/components/features/ContactEditForm";
-import ReminderCreateForm from "@/components/features/ReminderCreateForm";
-import ReminderEditForm from "@/components/features/ReminderEditForm";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact, Database, TimelineEntry } from "@/lib/supabase/database.types";
-import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
-import { cn } from "@/lib/utils";
+import { getCompanyById } from "@/lib/supabase/services/companies";
 
 const firmendatenSchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
@@ -80,7 +66,7 @@ type AdresseFormValues = z.infer<typeof adresseSchema>;
 type AquaDockFormValues = z.infer<typeof aquaDockSchema>;
 type CRMFormValues = z.infer<typeof crmSchema>;
 
-const kundentypOptions = [
+const _kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
   { value: "hotel", label: "Hotel" },
   { value: "resort", label: "Resort" },
@@ -96,12 +82,12 @@ const kundentypOptions = [
   { value: "sonstige", label: "Sonstige" },
 ];
 
-const firmentypOptions = [
+const _firmentypOptions = [
   { value: "kette", label: "Kette" },
   { value: "einzeln", label: "Einzelbetrieb" },
 ];
 
-const statusOptions = [
+const _statusOptions = [
   { value: "lead", label: "Lead" },
   { value: "interessant", label: "Interessant" },
   { value: "qualifiziert", label: "Qualifiziert" },
@@ -114,7 +100,7 @@ const statusOptions = [
   { value: "inaktiv", label: "Inaktiv" },
 ];
 
-const landOptions = [
+const _landOptions = [
   { value: "Deutschland", label: "Deutschland" },
   { value: "Österreich", label: "Österreich" },
   { value: "Schweiz", label: "Schweiz" },
@@ -133,7 +119,7 @@ const landOptions = [
   { value: "Großbritannien", label: "Großbritannien" },
 ];
 
-const wassertypOptions = [
+const _wassertypOptions = [
   { value: "Küste / Meer", label: "Küste / Meer" },
   { value: "Fluss", label: "Fluss" },
   { value: "Badesee", label: "Badesee" },
@@ -156,19 +142,19 @@ export default function CompanyDetailPage() {
   const id = params.id as string;
 
   const [edit, setEdit] = useState(false);
-  const [addContactDialog, setAddContactDialog] = useState(false);
-  const [addReminderDialog, setAddReminderDialog] = useState(false);
-  const [editFirmendaten, setEditFirmendaten] = useState(false);
-  const [editAdresse, setEditAdresse] = useState(false);
-  const [editAquaDock, setEditAquaDock] = useState(false);
-  const [editCRM, setEditCRM] = useState(false);
+  const [_addContactDialog, _setAddContactDialog] = useState(false);
+  const [_addReminderDialog, _setAddReminderDialog] = useState(false);
+  const [_editFirmendaten, _setEditFirmendaten] = useState(false);
+  const [_editAdresse, _setEditAdresse] = useState(false);
+  const [_editAquaDock, _setEditAquaDock] = useState(false);
+  const [_editCRM, _setEditCRM] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
-  const [editContact, setEditContact] = useState<Database["public"]["Tables"]["contacts"]["Row"] | null>(null);
-  const [contactDialogOpen, setContactDialogOpen] = useState(false);
-  const [editReminder, setEditReminder] = useState<Database["public"]["Tables"]["reminders"]["Row"] | null>(null);
-  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [_editContact, _setEditContact] = useState<Database["public"]["Tables"]["contacts"]["Row"] | null>(null);
+  const [_contactDialogOpen, _setContactDialogOpen] = useState(false);
+  const [_editReminder, _setEditReminder] = useState<Database["public"]["Tables"]["reminders"]["Row"] | null>(null);
+  const [_reminderDialogOpen, _setReminderDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -294,7 +280,7 @@ export default function CompanyDetailPage() {
     },
   });
 
-  const deleteTimelineMutation = useMutation({
+  const _deleteTimelineMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/timeline/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
@@ -374,10 +360,10 @@ export default function CompanyDetailPage() {
     );
   }
 
-  const totalContacts = contacts.length;
-  const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const openReminders = reminders.filter((r) => r.status === "open").length;
-  const overdueReminders = reminders.filter(
+  const _totalContacts = contacts.length;
+  const _primaryContacts = contacts.filter((c) => c.is_primary).length;
+  const _openReminders = reminders.filter((r) => r.status === "open").length;
+  const _overdueReminders = reminders.filter(
     (r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date)),
   ).length;
 
