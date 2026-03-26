@@ -219,6 +219,7 @@ export default function ContactDetailPage() {
 				</div>
 				<div className="flex items-center gap-2">
 					<Checkbox
+						id="primary-contact"
 						checked={contact.is_primary}
 						onCheckedChange={(checked) => {
 							const supabase = createClient();
@@ -232,7 +233,7 @@ export default function ContactDetailPage() {
 								);
 						}}
 					/>
-					<label className="text-sm font-medium text-gray-700">
+					<label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">
 						Primary Contact
 					</label>
 				</div>
@@ -249,31 +250,31 @@ export default function ContactDetailPage() {
 				<CardContent className="space-y-4">
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Vorname
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Nachname
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Anrede
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Position
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">{contact.position || "—"}</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">Email</label>
+							<div className="text-sm font-medium text-gray-700">Email</div>
 							<p className="text-sm text-gray-900">
 								{contact.email ? (
 									<a
@@ -288,9 +289,9 @@ export default function ContactDetailPage() {
 							</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Telefon
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">
 								{contact.telefon ? (
 									<a
@@ -305,7 +306,7 @@ export default function ContactDetailPage() {
 							</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">Mobil</label>
+							<div className="text-sm font-medium text-gray-700">Mobil</div>
 							<p className="text-sm text-gray-900">
 								{contact.mobil ? (
 									<a
@@ -320,15 +321,15 @@ export default function ContactDetailPage() {
 							</p>
 						</div>
 						<div>
-							<label className="text-sm font-medium text-gray-700">
+							<div className="text-sm font-medium text-gray-700">
 								Durchwahl
-							</label>
+							</div>
 							<p className="text-sm text-gray-900">
 								{contact.durchwahl || "—"}
 							</p>
 						</div>
 						<div className="md:col-span-2">
-							<label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+							<div className="text-sm font-medium text-gray-700 flex items-center gap-2">
 								Notes
 								<Button
 									variant="ghost"
@@ -337,7 +338,7 @@ export default function ContactDetailPage() {
 								>
 									<Edit className="h-4 w-4" />
 								</Button>
-							</label>
+							</div>
 							{editingNotes ? (
 								<div>
 									<Textarea

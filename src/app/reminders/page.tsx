@@ -306,15 +306,15 @@ export default function RemindersPage() {
 					{selectedReminder && (
 						<div className="space-y-4">
 							<div>
-								<label className="font-medium">Title:</label>
+								<div className="font-medium">Title:</div>
 								<p>{selectedReminder.title || "—"}</p>
 							</div>
 							<div>
-								<label className="font-medium">Company:</label>
+								<div className="font-medium">Company:</div>
 								<p>{selectedReminder.companies?.firmenname || "—"}</p>
 							</div>
 							<div>
-								<label className="font-medium">Due Date:</label>
+								<div className="font-medium">Due Date:</div>
 								<p>
 									{selectedReminder.due_date
 										? formatDistanceToNow(new Date(selectedReminder.due_date), {
@@ -324,15 +324,15 @@ export default function RemindersPage() {
 								</p>
 							</div>
 							<div>
-								<label className="font-medium">Priority:</label>
+								<div className="font-medium">Priority:</div>
 								<p>{selectedReminder.priority || "—"}</p>
 							</div>
 							<div>
-								<label className="font-medium">Status:</label>
+								<div className="font-medium">Status:</div>
 								<p>{selectedReminder.status || "—"}</p>
 							</div>
 							<div>
-								<label className="font-medium">Assigned To:</label>
+								<div className="font-medium">Assigned To:</div>
 								<p>{selectedReminder.assigned_to || "—"}</p>
 							</div>
 						</div>
