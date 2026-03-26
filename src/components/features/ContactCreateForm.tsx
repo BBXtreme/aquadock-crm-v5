@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
+import type { Database } from "@/lib/supabase/database.types";
 import { createContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
@@ -69,7 +70,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: (data) => createContact(data, createClient()),
+    mutationFn: async (data: ContactFormValues) => createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact created");
