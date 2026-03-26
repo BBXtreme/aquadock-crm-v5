@@ -62,21 +62,21 @@ export async function fetchOsmPois(
       const tagGroups: Record<string, string[]> = {};
       const activePoiCategories = activeCategories.reduce(
         (acc, key) => {
-          if (poiCategories[key]) acc[key] = poiCategories[key];
+          if ((poiCategories as Record<string, any>)[key]) acc[key] = (poiCategories as Record<string, any>)[key];
           return acc;
         },
-        {} as Record<string, (typeof poiCategories)[keyof typeof poiCategories]>,
+        {} as Record<string, any>,
       );
 
       for (const category of Object.values(activePoiCategories)) {
         for (const tag of category.tags) {
           if (tag.includes("=")) {
             const [key, value] = tag.split("=");
-            if (!tagGroups[key]) tagGroups[key] = [];
+            tagGroups[key] ??= [];
             tagGroups[key].push(value);
           } else {
             // assume amenity
-            if (!tagGroups.amenity) tagGroups.amenity = [];
+            tagGroups.amenity ??= [];
             tagGroups.amenity.push(tag);
           }
         }

@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Reminder } from "@/lib/supabase/types";
+import type { Reminder } from "@/lib/supabase/database.types";
 
 const columnHelper = createColumnHelper<Reminder>();
 
@@ -58,7 +58,7 @@ export const reminderColumns = (
     header: "Title",
     cell: (info) => (
       <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
-        {info.getValue()}
+        {String(info.getValue())}
       </button>
     ),
   }),
@@ -96,7 +96,7 @@ export const reminderColumns = (
               : "bg-gray-500 text-white"
         }
       >
-        {info.getValue()}
+        {String(info.getValue())}
       </Badge>
     ),
   }),
@@ -104,7 +104,7 @@ export const reminderColumns = (
     header: "Status",
     cell: (info) => (
       <Badge className={info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
-        {info.getValue()}
+        {String(info.getValue())}
       </Badge>
     ),
   }),
