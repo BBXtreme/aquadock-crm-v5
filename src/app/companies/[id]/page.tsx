@@ -315,7 +315,7 @@ export default function CompanyDetailPage() {
       partner: "🤝 Partner",
       sonstige: "Sonstige",
     };
-    return map[t.toLowerCase()] || t;
+    return map[t.toLowerCase() as keyof typeof map] || t;
   };
 
   if (isLoading) {
