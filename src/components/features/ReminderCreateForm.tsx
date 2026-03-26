@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/browser";
+import type { Database } from "@/lib/supabase/database.types";
 import { createReminder } from "@/lib/supabase/services/reminders";
 
 const reminderSchema = z.object({
@@ -19,7 +20,7 @@ const reminderSchema = z.object({
   due_date: z.string().min(1, "Due date is required"),
   priority: z.string().optional(),
   status: z.string().optional(),
-  assigned_to: z.string().optional(),
+  assigned_to: z.string(),
   description: z.string().optional(),
 });
 
