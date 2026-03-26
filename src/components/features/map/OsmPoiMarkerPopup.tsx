@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 import type { OsmPoiMarkerPopupProps } from "./types";
 
-export default function OsmPoiMarkerPopup({ poi, isDarkMode, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
+export default function OsmPoiMarkerPopup({ poi, _isDarkMode, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
