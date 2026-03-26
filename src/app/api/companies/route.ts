@@ -5,7 +5,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     // DEVELOPMENT ONLY: Allow inserts with user_id: null for testing OSM POI import
     // TODO: Remove this when auth is fully implemented

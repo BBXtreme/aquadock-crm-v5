@@ -79,7 +79,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     let query = supabase
       .from("companies")
-      .select("id, firmenname, kundentyp, status, lat, lon, strasse, plz, stadt, land, value, osm, telefon, website, firmentyp, wassertyp, wasserdistanz")
+      .select(
+        "id, firmenname, kundentyp, status, lat, lon, strasse, plz, stadt, land, value, osm, telefon, website, firmentyp, wassertyp, wasserdistanz",
+      )
       .not("lat", "is", null)
       .not("lon", "is", null);
 

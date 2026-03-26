@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { DialogContent, type DialogContentProps } from "@/components/ui/dialog";
 
 interface WideDialogContentProps extends DialogContentProps {

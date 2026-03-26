@@ -121,8 +121,8 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["user_settings"]["Insert"]>;
       };
-    }
-  }
+    };
+  };
 }
 
 // Export table types
@@ -132,7 +132,7 @@ export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type TimelineEntryWithCompany = TimelineEntry & {
   companies?: Pick<Company, "id" | "firmenname"> | null;
-  contacts?: Pick<Contact, "id" | "name"> | null;  // optional future join
+  contacts?: Pick<Contact, "id" | "name"> | null; // optional future join
 };
 export type TimelineEntryInsert = Database["public"]["Tables"]["timeline"]["Insert"];
 export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Update"];

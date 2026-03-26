@@ -304,9 +304,7 @@ export default function SettingsPage() {
                 className="data-[state=unchecked]:bg-gray-300 data-[state=checked]:bg-emerald-500"
               />
             </div>
-            <p className="text-muted-foreground text-sm">
-              Configure how you receive notifications
-            </p>
+            <p className="text-muted-foreground text-sm">Configure how you receive notifications</p>
           </CardContent>
         </Card>
 
@@ -344,9 +342,7 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Customize your app appearance
-            </p>
+            <p className="text-muted-foreground text-sm">Customize your app appearance</p>
           </CardContent>
         </Card>
 
@@ -367,16 +363,12 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>Data Export</Label>
-              <p className="text-muted-foreground text-sm">
-                Download your data
-              </p>
+              <p className="text-muted-foreground text-sm">Download your data</p>
               <Button variant="outline" size="sm">
                 Export Data
               </Button>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Manage your privacy and security settings
-            </p>
+            <p className="text-muted-foreground text-sm">Manage your privacy and security settings</p>
           </CardContent>
         </Card>
 
@@ -390,25 +382,19 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>API Access</Label>
-              <p className="text-muted-foreground text-sm">
-                Manage API keys and integrations
-              </p>
+              <p className="text-muted-foreground text-sm">Manage API keys and integrations</p>
               <Button variant="outline" size="sm">
                 Manage API
               </Button>
             </div>
             <div className="space-y-2">
               <Label>Data Retention</Label>
-              <p className="text-muted-foreground text-sm">
-                Configure data retention policies
-              </p>
+              <p className="text-muted-foreground text-sm">Configure data retention policies</p>
               <Button variant="outline" size="sm">
                 Configure
               </Button>
             </div>
-            <p className="text-muted-foreground text-sm">
-              Advanced settings for power users
-            </p>
+            <p className="text-muted-foreground text-sm">Advanced settings for power users</p>
           </CardContent>
         </Card>
 
