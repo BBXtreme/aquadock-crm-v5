@@ -58,7 +58,7 @@ export const reminderColumns = (
   columnHelper.accessor("title", {
     header: "Title",
     cell: (info) => (
-      <button className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
+      <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
         {info.getValue()}
       </button>
     ),
@@ -251,7 +251,15 @@ export default function RemindersTable({
                           "flex items-center space-x-2 select-none",
                           header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
+                        role="button"
+                        tabIndex={0}
                         onClick={header.column.getToggleSortingHandler()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            header.column.getToggleSortingHandler()?.();
+                          }
+                        }}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
