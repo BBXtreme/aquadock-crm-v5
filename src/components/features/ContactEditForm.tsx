@@ -49,7 +49,10 @@ export default function ContactEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data) => updateContact(contact?.id!, data, createClient()),
+    mutationFn: (data) => {
+      if (!contact) throw new Error("Contact not loaded");
+      return updateContact(contact.id, data, createClient());
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact updated");
@@ -76,11 +79,6 @@ export default function ContactEditForm({
     },
   });
 
-  // Early return AFTER all hooks
-  if (!contact) {
-    return <div className="p-6 text-center text-gray-500">Loading contact...</div>;
-  }
-
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
@@ -90,6 +88,11 @@ export default function ContactEditForm({
       return data;
     },
   });
+
+  // Early return AFTER all hooks
+  if (!contact) {
+    return <div className="p-6 text-center text-gray-500">Loading contact...</div>;
+  }
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
