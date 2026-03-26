@@ -326,7 +326,8 @@ export default function ContactsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : (
-                      <div
+                      <button
+                        type="button"
                         className={cn(
                           "flex items-center space-x-2 select-none",
                           header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
@@ -339,7 +340,7 @@ export default function ContactsTable({
                         {header.column.getIsSorted() === false && header.column.getCanSort() && (
                           <ArrowUpDown className="h-4 w-4" />
                         )}
-                      </div>
+                      </button>
                     )}
                   </TableHead>
                 ))}
