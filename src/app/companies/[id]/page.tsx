@@ -26,8 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import type { Company, Database } from "@/lib/supabase/types";
+import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -235,13 +235,18 @@ export default function CompanyDetailPage() {
   });
 
   const createTimelineMutation = useMutation({
-    mutationFn: async (values: { title: string; content?: string; company_id: string; activity_type?: string }) => {
+    mutationFn: async (values: { 
+      title: string; 
+      content?: string; 
+      company_id?: string | null; 
+      activity_type?: string 
+    }) => {
       const res = await fetch("/api/timeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
-          company_id: preselectedCompanyId || values.company_id,
+          company_id: preselectedCompanyId || values.company_id || "", 
           user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",
         }),
       });
