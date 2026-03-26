@@ -193,6 +193,28 @@ export default function SettingsPage() {
     },
   });
 
+  const testOverpassMutation = useMutation({
+    mutationFn: async () => {
+      const query = generateSampleQuery();
+      const endpoint = openMapSettings.overpassEndpoints[0];
+      if (!endpoint) throw new Error("No Overpass endpoint configured");
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      if (!response.ok) throw new Error("Overpass test failed");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success("Overpass test successful");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Overpass test failed", { description: message });
+    },
+  });
+
   // Fixed tagGroups building - safe indexing
   const tagGroups: Record<string, string[]> = useMemo(() => {
     const groups: Record<string, string[]> = {};
@@ -319,7 +341,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* OpenMap Settings Card - unchanged except safe tagGroups */}
+        {/* OpenMap Settings Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -328,14 +350,57 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* ... your existing OpenMap UI ... */}
-            <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
-              {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
-            </Button>
-            <Button variant="outline" onClick={clearCache}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Clear POI Cache
-            </Button>
+            <div className="space-y-2">
+              <Label>Overpass Endpoints</Label>
+              <Textarea
+                value={openMapSettings.overpassEndpoints.join('\n')}
+                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, overpassEndpoints: e.target.value.split('\n').filter(Boolean) }))}
+                placeholder="One endpoint per line"
+                rows={4}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="autoLoadPois" className="text-sm font-medium">
+                Auto Load POIs
+              </Label>
+              <Switch id="autoLoadPois" checked={openMapSettings.autoLoadPois} onCheckedChange={(checked) => setOpenMapSettings(prev => ({ ...prev, autoLoadPois: checked }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Cache Duration (minutes)</Label>
+              <Input
+                type="number"
+                value={openMapSettings.cacheDuration}
+                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, cacheDuration: parseInt(e.target.value) || 10 }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max Cache Size (MB)</Label>
+              <Input
+                type="number"
+                value={openMapSettings.maxCacheSize}
+                onChange={(e) => setOpenMapSettings(prev => ({ ...prev, maxCacheSize: parseInt(e.target.value) || 30 }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Sample Overpass Query</Label>
+              <Textarea
+                value={generateSampleQuery()}
+                readOnly
+                rows={10}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
+                {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
+              </Button>
+              <Button variant="outline" onClick={clearCache}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Clear POI Cache
+              </Button>
+              <Button variant="outline" onClick={() => testOverpassMutation.mutate()} disabled={testOverpassMutation.isPending}>
+                {testOverpassMutation.isPending ? "Testing..." : "Test Overpass"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
