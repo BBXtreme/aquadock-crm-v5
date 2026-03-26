@@ -4,7 +4,13 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Accordion({ type, collapsible = false, className, children, ...props }: any) {
+function Accordion({
+  type,
+  collapsible = false,
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { type?: string; collapsible?: boolean }) {
   return (
     <div className={cn("w-full", className)} {...props}>
       {children}
@@ -12,7 +18,7 @@ function Accordion({ type, collapsible = false, className, children, ...props }:
   );
 }
 
-function AccordionItem({ className, children, ...props }: any) {
+function AccordionItem({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -22,7 +28,13 @@ function AccordionItem({ className, children, ...props }: any) {
   );
 }
 
-function AccordionTrigger({ className, children, open, setOpen, ...props }: any) {
+function AccordionTrigger({
+  className,
+  children,
+  open,
+  setOpen,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { open: boolean; setOpen: (open: boolean) => void }) {
   return (
     <button
       className={cn(
@@ -38,7 +50,13 @@ function AccordionTrigger({ className, children, open, setOpen, ...props }: any)
   );
 }
 
-function AccordionContent({ className, children, open, setOpen, ...props }: any) {
+function AccordionContent({
+  className,
+  children,
+  open,
+  setOpen,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { open: boolean; setOpen: (open: boolean) => void }) {
   return (
     <div className={cn("overflow-hidden text-sm transition-all", open ? "max-h-96" : "max-h-0", className)} {...props}>
       <div className="pb-4 pt-0">{children}</div>
