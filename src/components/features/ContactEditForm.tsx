@@ -48,18 +48,15 @@ export default function ContactEditForm({
 }) {
   const queryClient = useQueryClient();
 
-  if (!contact) {
-    return <div>Loading contact...</div>;
-  }
-
-  const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
-      if (error) throw error;
-      return data;
+  const mutation = useMutation({
+    mutationFn: (data) => updateContact(contact?.id!, data, createClient()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Contact updated");
+      form.reset();
+      onSuccess?.();
     },
+    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const form = useForm<ContactFormValues>({
@@ -79,15 +76,19 @@ export default function ContactEditForm({
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data) => updateContact(contact.id, data, createClient()),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success("Contact updated");
-      form.reset();
-      onSuccess?.();
+  // Early return AFTER all hooks
+  if (!contact) {
+    return <div className="p-6 text-center text-gray-500">Loading contact...</div>;
+  }
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
