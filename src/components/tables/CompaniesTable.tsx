@@ -11,7 +11,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
 import { useState } from "react";
@@ -352,7 +352,7 @@ export default function CompaniesTable({
                         type="button"
                         className={cn(
                           "flex items-center gap-2 w-full h-full p-4 text-left font-medium",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
