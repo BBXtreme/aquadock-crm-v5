@@ -43,12 +43,14 @@ export default function ContactEditForm({
   contact,
   onSuccess,
 }: {
-  contact?: Database["public"]["Tables"]["contacts"]["Row"];
+  contact: Database["public"]["Tables"]["contacts"]["Row"] | null;
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
 
-  if (!contact) return null;
+  if (!contact) {
+    return <div>Loading contact...</div>;
+  }
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
