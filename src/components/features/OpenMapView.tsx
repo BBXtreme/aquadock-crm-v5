@@ -28,6 +28,7 @@ interface CacheEntry {
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<OsmPoi[]>([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -147,7 +148,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Debounced map events
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapReady || !mapRef.current) return;
 
     const debounced = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -164,13 +165,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       }
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [handleLoad]);
+  }, [mapReady, handleLoad]);
 
   // Initial load
   useEffect(() => {
+    if (!mapReady) return;
+
     const timer = setTimeout(handleLoad, 800);
     return () => clearTimeout(timer);
-  }, [handleLoad]);
+  }, [mapReady, handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -215,6 +218,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
+        whenReady={() => setMapReady(true)}
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
