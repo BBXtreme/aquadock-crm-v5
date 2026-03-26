@@ -851,6 +851,7 @@ export default function CompanyDetailPage() {
                   <tr key={reminder.id}>
                     <td className="font-medium">
                       <button
+                        type="button"
                         className="text-primary hover:underline cursor-pointer"
                         onClick={() => {
                           setEditReminder(reminder);
