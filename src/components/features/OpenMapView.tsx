@@ -72,14 +72,40 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   }, []);
 
   // Company import refresh
+  const fetchCompanies = useCallback(async () => {
+    const supabase = (await import("@/lib/supabase/browser")).createClient();
+    const isDevelopment = process.env.NODE_ENV === "development";
+    const isMockUser = true; // No auth in development
+
+    let query = supabase
+      .from("companies")
+      .select("id, firmenname, kundentyp, status, lat, lon, strasse, plz, stadt, land, value, osm, telefon, website, firmentyp, wassertyp, wasserdistanz")
+      .not("lat", "is", null)
+      .not("lon", "is", null);
+
+    if (!isDevelopment || !isMockUser) {
+      // In production, would filter by user_id
+      // query = query.eq("user_id", userId);
+    }
+
+    query = query.order("firmenname", { ascending: true });
+
+    const { data, error } = await query;
+    if (error) {
+      console.error("Failed to refresh companies:", error);
+      return;
+    }
+
+    setCompanies(data || []);
+  }, []);
+
   useEffect(() => {
     const handler = () => {
-      // Simple full refresh for now – can be optimized later
-      window.location.reload(); // or implement proper soft refresh if needed
+      fetchCompanies();
     };
     window.addEventListener("company-imported", handler);
     return () => window.removeEventListener("company-imported", handler);
-  }, []);
+  }, [fetchCompanies]);
 
   // Save cache on unmount
   useEffect(() => {
@@ -287,7 +313,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       </MapContainer>
 
       {/* POI Count */}
-      {(currentZoom >= 13 || loadingOsm) && (
+      {currentZoom >= 13 && (
         <div className="absolute top-4 left-4 z-[1000] bg-card/90 backdrop-blur border rounded-md px-3 py-1.5 text-sm text-muted-foreground flex items-center gap-2 shadow-sm">
           {loadingOsm ? (
             <>
