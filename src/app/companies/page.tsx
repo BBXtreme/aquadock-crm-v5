@@ -47,6 +47,7 @@ export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
+  const [accordionOpen, setAccordionOpen] = useState(false);
 
   const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>({
     status: [],
@@ -329,10 +330,12 @@ export default function CompaniesPage() {
                   )}
                 </div>
 
-                <Accordion type="single" collapsible defaultValue="filters" className="mb-4">
-                  <AccordionItem value="filters">
-                    <AccordionTrigger>Filters ({Object.values(activeFilters).flat().length})</AccordionTrigger>
-                    <AccordionContent>
+                <Accordion type="single" collapsible className="mb-4">
+                  <AccordionItem>
+                    <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
+                      Filters ({Object.values(activeFilters).flat().length})
+                    </AccordionTrigger>
+                    <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
                       {/* Status */}
                       <div className="mb-4">
                         <h4 className="font-normal mb-2">Status</h4>
