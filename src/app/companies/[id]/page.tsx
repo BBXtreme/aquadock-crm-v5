@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Contact, Reminder, TimelineEntry, Database } from "@/lib/supabase/database.types";
+import type { Company, Contact, Database, TimelineEntry } from "@/lib/supabase/database.types";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
@@ -455,14 +455,10 @@ export default function CompanyDetailPage() {
           </Badge>
         )}
         {company.created_at && (
-          <span className="text-sm text-gray-500">
-            Created: {new Date(company.created_at).toLocaleDateString()}
-          </span>
+          <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
         )}
         {company.updated_at && (
-          <span className="text-sm text-gray-500">
-            Updated: {new Date(company.updated_at).toLocaleDateString()}
-          </span>
+          <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
         )}
       </div>
 
@@ -1647,7 +1643,11 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
             <FormItem>
               <FormLabel>Value</FormLabel>
               <FormControl>
-                <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} />
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

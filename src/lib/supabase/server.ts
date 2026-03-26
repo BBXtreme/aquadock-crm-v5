@@ -25,9 +25,7 @@ export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
   const key =
-    process.env.NODE_ENV === "development" && supabaseServiceRoleKey
-      ? supabaseServiceRoleKey
-      : supabaseAnonKey;
+    process.env.NODE_ENV === "development" && supabaseServiceRoleKey ? supabaseServiceRoleKey : supabaseAnonKey;
 
   if (!key) {
     throw new Error("Supabase key is missing");

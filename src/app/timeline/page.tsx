@@ -16,7 +16,7 @@ import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } f
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Contact, TimelineEntry, Database } from "@/lib/supabase/database.types";
+import type { Company, Contact, TimelineEntry } from "@/lib/supabase/database.types";
 
 type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "firmenname"> | null;
