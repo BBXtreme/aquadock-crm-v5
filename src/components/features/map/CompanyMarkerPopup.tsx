@@ -1,4 +1,3 @@
-// src/components/features/map/CompanyMarkerPopup.tsx
 "use client";
 
 import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
@@ -26,17 +25,19 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
   const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
 
   // Full address with Straße, PLZ, Stadt, Land
-  const addressLine = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean).join(", ");
+  const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
+
+  const fullAddress = addressParts.join(", ");
 
   return (
     <div className="min-w-[340px] space-y-4 text-sm p-1">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
-        {addressLine && (
+        {fullAddress && (
           <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
             <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{addressLine}</span>
+            <span>{fullAddress}</span>
           </div>
         )}
       </div>
@@ -72,31 +73,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         <div className="text-xs text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>
       )}
 
-      {/* Phone */}
-      {company.telefon && (
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-          <a href={`tel:${company.telefon}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-            {company.telefon}
-          </a>
-        </div>
-      )}
-
-      {/* Website */}
-      {company.website && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">🌐</span>
-          <a
-            href={company.website}
-            target="_blank"
-            rel="noopener"
-            className="text-blue-600 dark:text-blue-400 hover:underline truncate"
-          >
-            Website öffnen
-          </a>
-        </div>
-      )}
-
       {/* OSM Link */}
       {company.osm && (
         <div className="text-xs">
@@ -112,7 +88,7 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         </div>
       )}
 
-      {/* Actions */}
+      {/* Quick Actions */}
       <div className="flex gap-2 pt-3 border-t border-border">
         <Button size="sm" variant="default" className="flex-1" onClick={() => onOpenDetail?.(company.id)}>
           <ExternalLink className="h-4 w-4 mr-2" />
