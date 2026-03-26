@@ -308,6 +308,25 @@ export default function CompanyDetailPage() {
     },
   });
 
+  const handleSubmit = async (values: {
+    title: string;
+    activity_type: "email" | "note" | "reminder" | "call" | "meeting" | "other";
+    user_name: string;
+    company_id?: string | null;
+    content?: string;
+    contact_id?: string | null;
+  }) => {
+    await createTimelineMutation.mutateAsync(values);
+  };
+
+  const handleUpdate = async (id: string, data: Parameters<typeof updateTimelineEntry>[1]) => {
+    await updateMutation.mutateAsync({ id, data });
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteTimelineMutation.mutateAsync(id);
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
