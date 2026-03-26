@@ -25,7 +25,7 @@ interface CacheEntry {
 }
 
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<L.Map | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
@@ -120,7 +120,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
-    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    // @ts-ignore
+    delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: "/leaflet/marker-icon-2x.png",
       iconUrl: "/leaflet/marker-icon.png",
@@ -231,7 +232,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const resetView = () => {
     if (mapRef.current && validCompanies.length > 0) {
-      const bounds = L.latLngBounds(validCompanies.map((c) => [c.lat!, c.lon!]));
+      const bounds = L.latLngBounds(validCompanies.map((c) => [c.lat ?? 0, c.lon ?? 0]));
       mapRef.current.fitBounds(bounds, { padding: [80, 80] });
     } else if (mapRef.current) {
       mapRef.current.flyTo([51.1657, 10.4515], 7);
@@ -267,7 +268,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
         {/* Company Markers - Always visible, separate from clustering */}
         {validCompanies.map((company) => (
-          <Marker key={company.id} position={[company.lat!, company.lon!]} icon={getStatusIcon(company.status)}>
+          <Marker key={company.id} position={[company.lat ?? 0, company.lon ?? 0]} icon={getStatusIcon(company.status)}>
             <Popup>
               <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
             </Popup>
