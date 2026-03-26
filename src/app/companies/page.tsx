@@ -138,36 +138,18 @@ export default function CompaniesPage() {
     }));
   };
 
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) throw error;
-      return user;
-    },
-  });
-
   const {
     data: companies = [],
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies", user?.id],
+    queryKey: ["companies"],
     queryFn: async () => {
-      if (!user?.id) return [];
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*, contacts!company_id(*)")
-        .eq("user_id", user.id);
+      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
       if (error) throw error;
       return data as CompanyWithContacts[];
     },
-    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
