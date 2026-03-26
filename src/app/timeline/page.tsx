@@ -55,7 +55,7 @@ export default function TimelinePage() {
         .select("id, firmenname, kundentyp")
         .order("firmenname", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Company[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -340,9 +340,7 @@ export default function TimelinePage() {
                             </Link>
                           </div>
                         )}
-                        <span>
-                          {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
-                        </span>
+                        <span>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</span>
                         <span>by {entry.user_name || "Unknown"}</span>
                       </div>
                     </div>
