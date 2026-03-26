@@ -173,29 +173,32 @@ export default function SettingsPage() {
 
   const mutation = useMutation({
     mutationFn: async (data: SmtpForm) => {
+      if (!userId) {
+        throw new Error("User ID is required");
+      }
       const promises = [
         upsertUserSetting({
-          user_id: userId!,
+          user_id: userId,
           key: "smtp_host",
           value: data.host,
         }),
         upsertUserSetting({
-          user_id: userId!,
+          user_id: userId,
           key: "smtp_port",
           value: data.port.toString(),
         }),
         upsertUserSetting({
-          user_id: userId!,
+          user_id: userId,
           key: "smtp_username",
           value: data.username,
         }),
         upsertUserSetting({
-          user_id: userId!,
+          user_id: userId,
           key: "smtp_password",
           value: data.password,
         }),
         upsertUserSetting({
-          user_id: userId!,
+          user_id: userId,
           key: "smtp_sender_name",
           value: data.senderName,
         }),
