@@ -415,7 +415,104 @@ export default function SettingsPage() {
           <CardContent>
             <Form {...smtpForm}>
               <form onSubmit={onSmtpSubmit} className="space-y-4">
-                {/* Your existing SMTP form fields - unchanged */}
+                <FormField
+                  control={smtpForm.control}
+                  name="host"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SMTP Host</FormLabel>
+                      <FormControl>
+                        <Input placeholder="smtp.example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={smtpForm.control}
+                  name="port"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SMTP Port</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="587"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 587)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={smtpForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SMTP Username</FormLabel>
+                      <FormControl>
+                        <Input placeholder="your-username" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={smtpForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SMTP Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="your-password"
+                            {...field}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={smtpForm.control}
+                  name="from_email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>From Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="noreply@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={smtpForm.control}
+                  name="from_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>From Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your App Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" disabled={smtpMutation.isPending}>
                   {smtpMutation.isPending ? "Saving..." : "Save SMTP Settings"}
                 </Button>
