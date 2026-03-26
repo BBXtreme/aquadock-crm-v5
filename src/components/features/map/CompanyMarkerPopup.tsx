@@ -25,7 +25,7 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
   const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
 
-  const addressLine = [company.stadt, company.land].filter(Boolean).join(", ");
+  const addressLine = [company.plz, company.stadt, company.land].filter(Boolean).join(", ");
 
   return (
     <div className="min-w-[340px] space-y-4 text-sm p-1">
@@ -71,27 +71,24 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         <div className="text-xs text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>
       )}
 
-      {/* OSM Link */}
-      {company.osm && (
-        <div className="text-xs">
-          <a
-            href={company.osm}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            OpenStreetMap Eintrag
-          </a>
-        </div>
-      )}
-
       {/* Quick Actions */}
       <div className="flex gap-2 pt-3 border-t border-border">
         <Button size="sm" variant="default" className="flex-1" onClick={() => onOpenDetail?.(company.id)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
         </Button>
+
+        {company.osm && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1"
+            onClick={() => window.open(company.osm!, "_blank", "noopener,noreferrer")}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            In OSM ansehen
+          </Button>
+        )}
 
         {company.telefon && (
           <Button size="sm" variant="outline" asChild>
