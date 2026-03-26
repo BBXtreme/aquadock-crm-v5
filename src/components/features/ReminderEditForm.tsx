@@ -48,9 +48,14 @@ export default function ReminderEditForm({
 }) {
   const queryClient = useQueryClient();
 
+  // Early return for null/undefined
+  if (!reminder) {
+    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
+  }
+
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
     mutationFn: (data: ReminderFormValues) => {
-      return updateReminder(reminder?.id, data, createClient());
+      return updateReminder(reminder.id, data, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
@@ -86,20 +91,15 @@ export default function ReminderEditForm({
 
   useEffect(() => {
     form.reset({
-      title: reminder?.title || "",
-      company_id: reminder?.company_id || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder?.priority || "normal",
-      status: reminder?.status || "open",
-      assigned_to: reminder?.assigned_to || "",
-      description: reminder?.description || "",
+      title: reminder.title || "",
+      company_id: reminder.company_id || "",
+      due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+      priority: reminder.priority || "normal",
+      status: reminder.status || "open",
+      assigned_to: reminder.assigned_to || "",
+      description: reminder.description || "",
     });
   }, [reminder, form]);
-
-  // Early return for null/undefined
-  if (!reminder) {
-    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
-  }
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
@@ -125,7 +125,7 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company" />
@@ -162,7 +162,7 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -186,7 +186,7 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
