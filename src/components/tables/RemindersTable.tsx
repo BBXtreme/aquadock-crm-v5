@@ -249,17 +249,14 @@ export default function RemindersTable({
                       <button
                         type="button"
                         className={cn(
-                          "flex items-center space-x-2 select-none",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
+                          "flex items-center gap-2 w-full h-full p-4 text-left font-medium",
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
-                        {header.column.getIsSorted() === false && header.column.getCanSort() && (
-                          <ArrowUpDown className="h-4 w-4" />
-                        )}
                       </button>
                     )}
                   </TableHead>
