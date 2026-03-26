@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Database } from "@/lib/supabase/database.types";
+import type { Company, Contact, Reminder, TimelineEntry, Database } from "@/lib/supabase/database.types";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +49,10 @@ const adresseSchema = z.object({
 });
 
 const aquaDockSchema = z.object({
-  wasserdistanz: z.number().optional(),
+  wasserdistanz: z.number().nullable(),
   wassertyp: z.string().optional(),
-  lat: z.number().optional(),
-  lon: z.number().optional(),
+  lat: z.number().nullable(),
+  lon: z.number().nullable(),
   osm: z.string().optional(),
 });
 
@@ -71,7 +71,7 @@ const crmSchema = z.object({
       "inaktiv",
     ])
     .optional(),
-  value: z.number().optional(),
+  value: z.number().nullable(),
   notes: z.string().optional(),
 });
 
@@ -145,12 +145,9 @@ const wassertypOptions = [
   { value: "Stausee", label: "Stausee" },
 ];
 
-type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
+type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "firmenname"> | null;
-  contacts?: {
-    vorname: string | null;
-    nachname: string | null;
-  } | null;
+  contacts?: Pick<Contact, "vorname" | "nachname"> | null;
 };
 
 export default function CompanyDetailPage() {
@@ -167,7 +164,7 @@ export default function CompanyDetailPage() {
   const [editCRM, setEditCRM] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
-  const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
+  const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
   const [editContact, setEditContact] = useState<Database["public"]["Tables"]["contacts"]["Row"] | null>(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState<Database["public"]["Tables"]["reminders"]["Row"] | null>(null);
@@ -457,14 +454,14 @@ export default function CompanyDetailPage() {
             {company.wassertyp}
           </Badge>
         )}
-        {(company as any).created_at && (
+        {company.created_at && (
           <span className="text-sm text-gray-500">
-            Created: {new Date((company as any).created_at).toLocaleDateString()}
+            Created: {new Date(company.created_at).toLocaleDateString()}
           </span>
         )}
-        {(company as any).updated_at && (
+        {company.updated_at && (
           <span className="text-sm text-gray-500">
-            Updated: {new Date((company as any).updated_at).toLocaleDateString()}
+            Updated: {new Date(company.updated_at).toLocaleDateString()}
           </span>
         )}
       </div>
@@ -700,12 +697,12 @@ export default function CompanyDetailPage() {
               <div>
                 <div className="text-sm font-medium text-gray-700">Value</div>
                 <p className="text-sm text-gray-900">
-                  {(company as any).value ? `€${(company as any).value.toLocaleString("de-DE")}` : "—"}
+                  {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
                 </p>
               </div>
               <div className="lg:col-span-2">
                 <div className="text-sm font-medium text-gray-700">Notes</div>
-                <p className="text-sm text-gray-900">{(company as any).notes || "—"}</p>
+                <p className="text-sm text-gray-900">{company.notes || "—"}</p>
               </div>
             </div>
           </CardContent>
@@ -1473,10 +1470,10 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
   const form = useForm<AquaDockFormValues>({
     resolver: zodResolver(aquaDockSchema),
     defaultValues: {
-      wasserdistanz: company.wasserdistanz || 0,
+      wasserdistanz: company.wasserdistanz,
       wassertyp: company.wassertyp || "",
-      lat: company.lat || 0,
-      lon: company.lon || 0,
+      lat: company.lat,
+      lon: company.lon,
       osm: company.osm || "",
     },
   });
@@ -1507,7 +1504,7 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
                 <Input
                   type="number"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                 />
               </FormControl>
               <FormMessage />
@@ -1549,7 +1546,7 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
                   type="number"
                   step="any"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                 />
               </FormControl>
               <FormMessage />
@@ -1567,7 +1564,7 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
                   type="number"
                   step="any"
                   {...field}
-                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                  onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                 />
               </FormControl>
               <FormMessage />
@@ -1598,7 +1595,7 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
     resolver: zodResolver(crmSchema),
     defaultValues: {
       status: company.status || "",
-      value: company.value || 0,
+      value: company.value,
       notes: company.notes || "",
     },
   });
@@ -1650,7 +1647,7 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
             <FormItem>
               <FormLabel>Value</FormLabel>
               <FormControl>
-                <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value) || 0)} />
+                <Input type="number" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)} />
               </FormControl>
               <FormMessage />
             </FormItem>
