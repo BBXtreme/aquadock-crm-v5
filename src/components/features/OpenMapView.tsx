@@ -7,7 +7,7 @@ import MarkerClusterGroup from "react-leaflet-markercluster";
 
 import "leaflet/dist/leaflet.css";
 
-import { Building, Info, Loader2, MapPin, RefreshCw, ZoomIn } from "lucide-react";
+import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
@@ -298,7 +298,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {osmPois.map((poi) => {
             const lat = poi.lat || poi.center?.lat;
             const lon = poi.lon || poi.center?.lon;
-            if (!lat || !lon || isNaN(lat) || isNaN(lon)) return null;
+            if (!lat || !lon || Number.isNaN(lat) || Number.isNaN(lon)) return null;
 
             return (
               <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
