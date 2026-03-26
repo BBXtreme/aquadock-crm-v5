@@ -16,7 +16,7 @@ import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } f
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { TimelineEntry } from "@/lib/supabase/types";
+import type { TimelineEntry } from "@/lib/supabase/database.types";
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
