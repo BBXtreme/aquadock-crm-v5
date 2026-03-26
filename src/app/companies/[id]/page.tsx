@@ -1,11 +1,13 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
+
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAfter } from "date-fns";
 import { ArrowLeft, BarChart, Bell, Building, Calendar, Edit, MapPin, Plus, Trash, User, Waves } from "lucide-react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,7 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany } from "@/lib/supabase/services/companies";
-import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/types";
+import type { Company, Contact, Reminder, TimelineEntry } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -260,8 +262,7 @@ export default function CompanyDetailPage() {
   const handleDeleteCompany = async () => {
     if (confirm("Are you sure you want to delete this company?")) {
       try {
-        const supabase = createClient();
-        await deleteCompany(id, supabase);
+        await deleteCompany(id);
         router.push("/companies");
       } catch (_error) {
         toast.error("Failed to delete company");
@@ -273,7 +274,7 @@ export default function CompanyDetailPage() {
     if (confirm("Are you sure you want to delete this contact?")) {
       try {
         const supabase = createClient();
-        await deleteContact(contactId, supabase);
+        await supabase.from("contacts").delete().eq("id", contactId);
         fetchData();
       } catch (_error) {
         toast.error("Failed to delete contact");
@@ -285,7 +286,7 @@ export default function CompanyDetailPage() {
     if (confirm("Are you sure you want to delete this reminder?")) {
       try {
         const supabase = createClient();
-        await deleteReminder(reminderId, supabase);
+        await supabase.from("reminders").delete().eq("id", reminderId);
         fetchData();
       } catch (_error) {
         toast.error("Failed to delete reminder");
@@ -294,7 +295,7 @@ export default function CompanyDetailPage() {
   };
 
   const getKundentypLabel = (t: string) => {
-    const map = {
+    const map: Record<string, string> = {
       restaurant: "🍽 Restaurant",
       hotel: "🏨 Hotel",
       resort: "🌴 Resort",
@@ -789,8 +790,8 @@ export default function CompanyDetailPage() {
                             reminder.priority === "hoch"
                               ? "bg-orange-500 text-white"
                               : reminder.priority === "normal"
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-500 text-white"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-500 text-white"
                           }
                         >
                           {reminder.priority}
@@ -987,8 +988,8 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
       if (error) throw error;
       toast.success("Firmendaten updated");
       onSuccess();
-    } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+    } catch (error: unknown) {
+      toast.error("Failed to update", { description: (error as Error).message });
     }
   });
 
@@ -1133,8 +1134,8 @@ function AdresseForm({ company, onSuccess }: { company: Company; onSuccess: () =
       if (error) throw error;
       toast.success("Adresse updated");
       onSuccess();
-    } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+    } catch (error: unknown) {
+      toast.error("Failed to update", { description: (error as Error).message });
     }
   });
 
@@ -1242,8 +1243,8 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
       if (error) throw error;
       toast.success("AquaDock Daten updated");
       onSuccess();
-    } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+    } catch (error: unknown) {
+      toast.error("Failed to update", { description: (error as Error).message });
     }
   });
 
@@ -1363,8 +1364,8 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
       if (error) throw error;
       toast.success("CRM Informationen updated");
       onSuccess();
-    } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+    } catch (error: unknown) {
+      toast.error("Failed to update", { description: (error as Error).message });
     }
   });
 
