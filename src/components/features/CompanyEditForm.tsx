@@ -137,7 +137,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
-    defaultValues: () => ({
+    defaultValues: {
       firmenname: company?.firmenname ?? "",
       rechtsform: company?.rechtsform ?? "",
       kundentyp: company?.kundentyp ?? "",
@@ -158,7 +158,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       status: company?.status ?? "lead",
       value: company?.value ?? 0,
       notes: company?.notes ?? "",
-    }),
+    },
   });
 
   if (!company) return null;
