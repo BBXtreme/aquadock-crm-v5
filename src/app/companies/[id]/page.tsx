@@ -187,7 +187,7 @@ export default function CompanyDetailPage() {
         </Card>
       </div>
 
-      {/* Basic Info */}
+      {/* Company Information Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -197,44 +197,21 @@ export default function CompanyDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <p>
-                <strong>Firmenname:</strong> {company.firmenname}
-              </p>
-              <p>
-                <strong>Rechtsform:</strong> {company.rechtsform || "—"}
-              </p>
-              <p>
-                <strong>Kundentyp:</strong> {company.kundentyp || "—"}
-              </p>
-              <p>
-                <strong>Firmentyp:</strong> {company.firmentyp || "—"}
-              </p>
-              <p>
-                <strong>Status:</strong> {company.status || "—"}
-              </p>
-              <p>
-                <strong>Value:</strong> {company.value ? `${company.value} €` : "—"}
-              </p>
-              <p>
-                <strong>Latitude:</strong> {company.lat ? company.lat.toString() : "—"}
-              </p>
-              <p>
-                <strong>Longitude:</strong> {company.lon ? company.lon.toString() : "—"}
-              </p>
-              <p>
-                <strong>OSM:</strong> {company.osm || "—"}
-              </p>
-              <p>
-                <strong>User ID:</strong> {company.user_id || "—"}
-              </p>
-              <p>
-                <strong>Created At:</strong> {company.created_at ? new Date(company.created_at).toLocaleString() : "—"}
-              </p>
-              <p>
-                <strong>Updated At:</strong> {company.updated_at ? new Date(company.updated_at).toLocaleString() : "—"}
-              </p>
-            </div>
+            <p>
+              <strong>Firmenname:</strong> {company.firmenname}
+            </p>
+            <p>
+              <strong>Rechtsform:</strong> {company.rechtsform || "—"}
+            </p>
+            <p>
+              <strong>Kundentyp:</strong> {company.kundentyp || "—"}
+            </p>
+            <p>
+              <strong>Firmentyp:</strong> {company.firmentyp || "—"}
+            </p>
+            <p>
+              <strong>Status:</strong> {company.status || "—"}
+            </p>
           </CardContent>
         </Card>
 
@@ -252,6 +229,62 @@ export default function CompanyDetailPage() {
             <p>
               <strong>Wassertyp:</strong> {company.wassertyp || "—"}
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Financial
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p>
+              <strong>Value:</strong> {company.value ? `${company.value} €` : "—"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p>
+              <strong>Latitude:</strong> {company.lat ? company.lat.toString() : "—"}
+            </p>
+            <p>
+              <strong>Longitude:</strong> {company.lon ? company.lon.toString() : "—"}
+            </p>
+            <p>
+              <strong>OSM:</strong> {company.osm || "—"}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              Metadata
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <p>
+                <strong>User ID:</strong> {company.user_id || "—"}
+              </p>
+              <p>
+                <strong>Created At:</strong> {company.created_at ? new Date(company.created_at).toLocaleString() : "—"}
+              </p>
+              <p>
+                <strong>Updated At:</strong> {company.updated_at ? new Date(company.updated_at).toLocaleString() : "—"}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -277,6 +310,7 @@ export default function CompanyDetailPage() {
                     </p>
                     {contact.position && <p className="text-sm text-muted-foreground">{contact.position}</p>}
                     {contact.email && <p className="text-sm">{contact.email}</p>}
+                    {contact.telefon && <p className="text-sm">{contact.telefon}</p>}
                   </div>
                   <Button
                     onClick={() => {
@@ -409,6 +443,91 @@ export default function CompanyDetailPage() {
           <Plus className="mr-2 h-4 w-4" /> Add Timeline
         </Button>
       </div>
+
+      {/* Company Edit Dialog */}
+      <Dialog open={edit} onOpenChange={setEdit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Company</DialogTitle>
+            <DialogDescription>Update company details.</DialogDescription>
+          </DialogHeader>
+          <CompanyEditForm company={company} onSuccess={() => setEdit(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Contact Dialog */}
+      <Dialog open={addContactDialog} onOpenChange={setAddContactDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Contact</DialogTitle>
+            <DialogDescription>Add a new contact for {company.firmenname}.</DialogDescription>
+          </DialogHeader>
+          <ContactCreateForm
+            companyId={company.id}
+            onSuccess={() => {
+              setAddContactDialog(false);
+              queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={contactDialogOpen} onOpenChange={setContactDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogDescription>Update contact details.</DialogDescription>
+          </DialogHeader>
+          {editContact && (
+            <ContactEditForm
+              contact={editContact}
+              onSuccess={() => {
+                setContactDialogOpen(false);
+                setEditContact(null);
+                queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Reminder Dialog */}
+      <Dialog open={addReminderDialog} onOpenChange={setAddReminderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Reminder</DialogTitle>
+            <DialogDescription>Add a new reminder for {company.firmenname}.</DialogDescription>
+          </DialogHeader>
+          <ReminderCreateForm
+            companyId={company.id}
+            onSuccess={() => {
+              setAddReminderDialog(false);
+              queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Reminder Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Reminder</DialogTitle>
+            <DialogDescription>Update reminder details.</DialogDescription>
+          </DialogHeader>
+          {editReminder && (
+            <ReminderEditForm
+              reminder={editReminder}
+              onSuccess={() => {
+                setReminderDialogOpen(false);
+                setEditReminder(null);
+                queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Timeline Dialog */}
       <Dialog open={timelineDialogOpen} onOpenChange={setTimelineDialogOpen}>
