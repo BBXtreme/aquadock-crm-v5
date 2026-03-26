@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Contact } from "@/lib/supabase/database.types";
+import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";
 
