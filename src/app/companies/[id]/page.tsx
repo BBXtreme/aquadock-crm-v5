@@ -147,7 +147,10 @@ const wassertypOptions = [
 
 type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
   companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname"> | null;
+  contacts?: {
+    vorname: string | null;
+    nachname: string | null;
+  } | null;
 };
 
 export default function CompanyDetailPage() {
