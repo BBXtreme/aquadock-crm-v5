@@ -38,25 +38,34 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 		}
 
-		// Explicit required fields check
-		if (!body.title || !body.activity_type) {
-			console.warn("[POST /api/timeline] Missing required fields:", {
-				title: !!body.title,
-				activity_type: !!body.activity_type,
+		// Type guard for body
+		const isBodyObject = (obj: unknown): obj is Record<string, unknown> => {
+			return typeof obj === "object" && obj !== null;
+		};
+
+		if (!isBodyObject(body)) {
+			return NextResponse.json({ error: "Body must be an object" }, { status: 400 });
+		}
+
+		// Explicit required fields check with type validation
+		if (typeof body.title !== "string" || typeof body.activity_type !== "string") {
+			console.warn("[POST /api/timeline] Invalid or missing required fields:", {
+				title: typeof body.title,
+				activity_type: typeof body.activity_type,
 			});
 			return NextResponse.json(
-				{ error: "Title and activity_type are required" },
+				{ error: "title and activity_type must be strings" },
 				{ status: 400 },
 			);
 		}
 
 		const payload = {
 			title: body.title,
-			content: body.content ?? null,
+			content: typeof body.content === "string" ? body.content : null,
 			activity_type: body.activity_type,
-			company_id: body.company_id ?? null,
-			contact_id: body.contact_id ?? null,
-			user_name: body.user_name ?? "BangLee (fallback)",
+			company_id: typeof body.company_id === "string" ? body.company_id : null,
+			contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
+			user_name: typeof body.user_name === "string" ? body.user_name : "BangLee (fallback)",
 			user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7", // Marco's real user ID – must exist in auth.users
 		};
 
