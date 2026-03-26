@@ -8,7 +8,7 @@ import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
-export default function CompanyMarkerPopup({ company, _onOpenDetail }: CompanyMarkerPopupProps) {
+export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMarkerPopupProps) {
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof statusColors;
   const statusColor = statusColors[statusKey] || statusColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
