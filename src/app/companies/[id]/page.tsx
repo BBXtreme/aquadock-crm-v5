@@ -465,10 +465,14 @@ export default function CompanyDetailPage() {
           </Badge>
         )}
         {(company as any).created_at && (
-          <span className="text-sm text-gray-500">Created: {new Date((company as any).created_at).toLocaleDateString()}</span>
+          <span className="text-sm text-gray-500">
+            Created: {new Date((company as any).created_at).toLocaleDateString()}
+          </span>
         )}
         {(company as any).updated_at && (
-          <span className="text-sm text-gray-500">Updated: {new Date((company as any).updated_at).toLocaleDateString()}</span>
+          <span className="text-sm text-gray-500">
+            Updated: {new Date((company as any).updated_at).toLocaleDateString()}
+          </span>
         )}
       </div>
 
