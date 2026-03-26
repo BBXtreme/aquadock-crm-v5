@@ -108,7 +108,7 @@ export default function SettingsPage() {
       maxCacheSize: maxSize ? parseInt(maxSize, 10) : 30,
       lastQuery: "",
     });
-  }, []);
+  }, [defaultOverpassEndpoints]);
 
   const { data: settings } = useQuery({
     queryKey: ["user-settings", userId],
