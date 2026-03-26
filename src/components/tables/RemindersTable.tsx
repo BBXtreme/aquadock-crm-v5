@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { formatDistanceToNow, isAfter } from "date-fns";
-import { ArrowDown, ArrowUp, ArrowUpDown, Columns, Edit, Eye, Trash } from "lucide-react";
+import { ArrowDown, ArrowUp, Columns, Edit, Eye, Trash } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -250,7 +250,7 @@ export default function RemindersTable({
                         type="button"
                         className={cn(
                           "flex items-center gap-2 w-full h-full p-4 text-left font-medium",
-                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50"
+                          header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
                       >
