@@ -6,7 +6,7 @@ export default async function OpenMapPage() {
   let error: string | null = null;
 
   try {
-    companies = await getCompaniesForOpenMap("dev-mock-user-11111111-2222-3333-4444-555555555555");
+    companies = await getCompaniesForOpenMap("");
 
     console.log(`[OpenMap Page] Successfully loaded ${companies.length} companies with geo data`);
   } catch (err: any) {

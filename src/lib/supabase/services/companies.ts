@@ -97,7 +97,7 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
   // DEVELOPMENT ONLY: Allow fetching without user_id filter for mock user
   // TODO: Enforce user_id filter when auth is implemented
   const isDevelopment = process.env.NODE_ENV === "development";
-  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555";
+  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555" || !userId;
 
   const supabase = createClient();
 
@@ -143,7 +143,7 @@ export async function importOsmPoi(poi: any, userId: string) {
   // DEVELOPMENT ONLY: Allow inserts without user_id for mock user
   // TODO: Enforce user_id when auth is implemented
   const isDevelopment = process.env.NODE_ENV === "development";
-  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555";
+  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555" || !userId;
 
   const supabase = createClient();
 

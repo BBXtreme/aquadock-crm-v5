@@ -39,7 +39,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const debouncedHandleLoadRef = useRef<() => void>();
   const [autoLoadPois, setAutoLoadPois] = useState(true);
-  const companies = initialCompanies;
+  const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
 
   const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
 
@@ -71,6 +71,43 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     window.addEventListener("openmap-settings-changed", handleSettingsChange);
     return () => window.removeEventListener("openmap-settings-changed", handleSettingsChange);
+  }, []);
+
+  // Listen for company import events to refresh company markers
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      const supabase = (await import("@/lib/supabase/browser")).createClient();
+      const isDevelopment = process.env.NODE_ENV === "development";
+      const isMockUser = true; // No auth in development
+
+      let query = supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp, status, lat, lon, strasse, plz, stadt, land, value, osm, telefon, website, firmentyp, wassertyp, wasserdistanz")
+        .not("lat", "is", null)
+        .not("lon", "is", null);
+
+      if (!isDevelopment || !isMockUser) {
+        // In production, would filter by user_id
+        // query = query.eq("user_id", userId);
+      }
+
+      query = query.order("firmenname", { ascending: true });
+
+      const { data, error } = await query;
+      if (error) {
+        console.error("Failed to refresh companies:", error);
+        return;
+      }
+
+      setCompanies(data || []);
+    };
+
+    const handleCompanyImported = () => {
+      fetchCompanies();
+    };
+
+    window.addEventListener("company-imported", handleCompanyImported);
+    return () => window.removeEventListener("company-imported", handleCompanyImported);
   }, []);
 
   // Safe Leaflet icon fix
