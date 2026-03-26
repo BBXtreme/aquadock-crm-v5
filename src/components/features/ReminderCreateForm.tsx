@@ -17,8 +17,8 @@ const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),
   company_id: z.string().min(1, "Company is required"),
   due_date: z.string().min(1, "Due date is required"),
-  priority: z.enum(["hoch", "normal", "niedrig"]).optional(),
-  status: z.enum(["open", "closed"]).optional(),
+  priority: z.string().optional(),
+  status: z.string().optional(),
   assigned_to: z.string().optional(),
   description: z.string().optional(),
 });
