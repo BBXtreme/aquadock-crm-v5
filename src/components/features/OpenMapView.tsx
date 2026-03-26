@@ -296,25 +296,28 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             fillOpacity: 0.1,
           }}
         >
-          {/* OSM POI Markers */}
-          {osmPois.map((poi) => {
-            const lat = poi.lat || poi.center?.lat;
-            const lon = poi.lon || poi.center?.lon;
-            if (typeof lat !== "number" || typeof lon !== "number" || Number.isNaN(lat) || Number.isNaN(lon)) return null;
-
-            return (
-              <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
-                <Popup>
-                  <OsmPoiMarkerPopup
-                    poi={poi}
-                    isDarkMode={isDarkMode}
-                    onImport={handleImportOsmPoi}
-                    onViewInOsm={viewInOsm}
-                  />
-                </Popup>
-              </Marker>
-            );
-          })}
+          {osmPois
+            .filter((poi) => {
+              const lat = poi.lat || poi.center?.lat;
+              const lon = poi.lon || poi.center?.lon;
+              return typeof lat === "number" && typeof lon === "number" && !Number.isNaN(lat) && !Number.isNaN(lon);
+            })
+            .map((poi) => {
+              const lat = poi.lat || poi.center?.lat;
+              const lon = poi.lon || poi.center?.lon;
+              return (
+                <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
+                  <Popup>
+                    <OsmPoiMarkerPopup
+                      poi={poi}
+                      isDarkMode={isDarkMode}
+                      onImport={handleImportOsmPoi}
+                      onViewInOsm={viewInOsm}
+                    />
+                  </Popup>
+                </Marker>
+              );
+            })}
         </MarkerClusterGroup>
       </MapContainer>
 
