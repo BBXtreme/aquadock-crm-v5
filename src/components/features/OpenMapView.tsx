@@ -305,6 +305,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <Button
           variant="secondary"
           size="icon"
+          disabled={currentZoom < 13}
           onClick={async () => {
             poiCache.current.clear();
             localStorage.removeItem("openmap-poi-cache");
