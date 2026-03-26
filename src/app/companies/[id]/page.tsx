@@ -1232,7 +1232,8 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
       toast.success("Firmendaten updated");
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to update", { description: message });
     }
   });
 
@@ -1378,7 +1379,8 @@ function AdresseForm({ company, onSuccess }: { company: Company; onSuccess: () =
       toast.success("Adresse updated");
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to update", { description: message });
     }
   });
 
@@ -1487,7 +1489,8 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
       toast.success("AquaDock Daten updated");
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to update", { description: message });
     }
   });
 
@@ -1608,7 +1611,8 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
       toast.success("CRM Informationen updated");
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update", { description: error.message });
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to update", { description: message });
     }
   });
 
