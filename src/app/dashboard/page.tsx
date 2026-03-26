@@ -152,7 +152,7 @@ export default function DashboardPage() {
 											stroke="none"
 										>
 											{funnelData.map((entry, index) => (
-												<Cell key={`cell-${index}`} fill={entry.fill} />
+												<Cell key={entry.name} fill={entry.fill} />
 											))}
 											{/* Left: numbers */}
 											<LabelList
@@ -229,7 +229,7 @@ export default function DashboardPage() {
 										dataKey="value"
 									>
 										{pieData.map((entry, index) => (
-											<Cell key={`cell-${index}`} fill={entry.fill} />
+											<Cell key={entry.name} fill={entry.fill} />
 										))}
 									</Pie>
 									<Tooltip />
