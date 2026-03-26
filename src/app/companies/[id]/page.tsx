@@ -26,8 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Database } from "@/lib/supabase/types";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
+import type { Company, Database } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -1132,7 +1132,7 @@ export default function CompanyDetailPage() {
               editEntry
                 ? {
                     title: editEntry.title,
-                    content: editEntry.content ?? "",           // safe fallback
+                    content: editEntry.content ?? "", // safe fallback
                     activity_type: editEntry.activity_type,
                     company_id: editEntry.company_id,
                     contact_id: editEntry.contact_id || "none",
