@@ -17,7 +17,7 @@ export async function GET(_request: NextRequest) {
 // POST /api/timeline
 // Create new timeline entry
 export async function POST(request: NextRequest) {
-  let body: unknown;
+  let body: unknown = null;
   try {
     try {
       body = await request.json();
@@ -54,16 +54,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error: unknown) {
+    const isErrorWithProperty = (e: unknown, prop: string): e is Record<string, unknown> =>
+      typeof e === "object" && e !== null && prop in e;
+
     const errorDetails = {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
-      code: error && typeof error === "object" && "code" in error ? (error as { code: unknown }).code : undefined,
-      details:
-        error && typeof error === "object" && "details" in error ? (error as { details: unknown }).details : undefined,
-      hint: error && typeof error === "object" && "hint" in error ? (error as { hint: unknown }).hint : undefined,
-      cause: error && typeof error === "object" && "cause" in error ? (error as { cause: unknown }).cause : undefined,
-      bodyReceived: body || "not parsed",
+      code: isErrorWithProperty(error, "code") ? error.code : undefined,
+      details: isErrorWithProperty(error, "details") ? error.details : undefined,
+      hint: isErrorWithProperty(error, "hint") ? error.hint : undefined,
+      cause: isErrorWithProperty(error, "cause") ? error.cause : undefined,
+      bodyReceived: body !== null ? body : "not parsed",
     };
 
     console.error("[POST /api/timeline] FULL CRASH:", JSON.stringify(errorDetails, null, 2));

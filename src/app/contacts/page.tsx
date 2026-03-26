@@ -145,7 +145,7 @@ export default function ContactsPage() {
         />
         <StatCard
           title="Companies with Contacts"
-          value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
+          value={loading ? <Skeleton className="h-5 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
           icon={<Building className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
           change="+12% from last month"
