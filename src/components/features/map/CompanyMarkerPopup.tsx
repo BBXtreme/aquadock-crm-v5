@@ -70,8 +70,10 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
       </div>
 
       {/* Wasserdistanz */}
-      {company.wasserdistanz && (
-        <div className="text-xs text-muted-foreground">{company.wasserdistanz} m zum Wasser</div>
+      {company.wasserdistanz !== null && company.wasserdistanz !== undefined && (
+        <div className="text-xs text-muted-foreground">
+          {company.wasserdistanz === 0 ? "?" : company.wasserdistanz} m zum Wasser
+        </div>
       )}
 
       {/* OSM Link */}
