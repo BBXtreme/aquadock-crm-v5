@@ -17,8 +17,8 @@ export async function GET(_request: NextRequest) {
 // POST /api/timeline
 // Create new timeline entry
 export async function POST(request: NextRequest) {
+  let body: unknown;
   try {
-    let body: unknown;
     try {
       body = await request.json();
       console.log("[POST /api/timeline] Raw received body:", JSON.stringify(body, null, 2));
@@ -58,10 +58,10 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
-      code: (error as any)?.code,
-      details: (error as any)?.details,
-      hint: (error as any)?.hint,
-      cause: (error as any)?.cause,
+      code: error && typeof error === 'object' && 'code' in error ? (error as { code: unknown }).code : undefined,
+      details: error && typeof error === 'object' && 'details' in error ? (error as { details: unknown }).details : undefined,
+      hint: error && typeof error === 'object' && 'hint' in error ? (error as { hint: unknown }).hint : undefined,
+      cause: error && typeof error === 'object' && 'cause' in error ? (error as { cause: unknown }).cause : undefined,
       bodyReceived: body || "not parsed",
     };
 

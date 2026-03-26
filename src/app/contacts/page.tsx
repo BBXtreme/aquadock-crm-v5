@@ -20,7 +20,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";
 
-const contactSchema = z.object({
+const _contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
   nachname: z.string().min(1, "Nachname is required"),
   anrede: z.string().optional(),
