@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteCompany, getCompanyById } from "@/lib/supabase/services/companies";
-import type { Company } from "@/lib/supabase/types";
+import type { Company, Contact } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
 const firmendatenSchema = z.object({
@@ -145,6 +145,11 @@ const wassertypOptions = [
   { value: "Stausee", label: "Stausee" },
 ];
 
+type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"] & {
+  companies?: Pick<Company, "firmenname"> | null;
+  contacts?: Pick<Contact, "vorname" | "nachname"> | null;
+};
+
 export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -159,7 +164,7 @@ export default function CompanyDetailPage() {
   const [editCRM, setEditCRM] = useState(false);
   const [timelineDialogOpen, setTimelineDialogOpen] = useState(false);
   const [preselectedCompanyId, setPreselectedCompanyId] = useState<string | null>(null);
-  const [editEntry, setEditEntry] = useState(null);
+  const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
   const [editContact, setEditContact] = useState(null);
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState(null);
@@ -1147,7 +1152,7 @@ export default function CompanyDetailPage() {
           </DialogHeader>
           <TimelineEntryForm
             onSubmit={async (values) => {
-              if (editEntry) {
+              if (editEntry?.id) {
                 await updateMutation.mutateAsync({ id: editEntry.id, values });
               } else {
                 await createTimelineMutation.mutateAsync(values);
