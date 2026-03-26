@@ -147,7 +147,7 @@ const wassertypOptions = [
 
 type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname"> | null;
+  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
 };
 
 export default function CompanyDetailPage() {
@@ -236,6 +236,7 @@ export default function CompanyDetailPage() {
       title: string;
       content?: string;
       company_id?: string | null;
+      contact_id?: string | null;
       activity_type?: string;
     }) => {
       const res = await fetch("/api/timeline", {
@@ -1284,7 +1285,7 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Kundentyp</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select customer type" />
@@ -1308,7 +1309,7 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Firmentyp</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company type" />
@@ -1457,7 +1458,7 @@ function AdresseForm({ company, onSuccess }: { company: Company; onSuccess: () =
           render={({ field }) => (
             <FormItem>
               <FormLabel>Land</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select country" />
@@ -1532,7 +1533,7 @@ function AquaDockForm({ company, onSuccess }: { company: Company; onSuccess: () 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Wassertyp</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select water type" />
@@ -1637,7 +1638,7 @@ function CRMForm({ company, onSuccess }: { company: Company; onSuccess: () => vo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
