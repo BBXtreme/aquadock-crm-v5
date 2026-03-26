@@ -47,14 +47,9 @@ export default function ReminderEditForm({
 }) {
   const queryClient = useQueryClient();
 
-  // Now the early return
-  if (!reminder) {
-    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
-  }
-
   const mutation = useMutation({
     mutationFn: (data) => {
-      return updateReminder(reminder.id, data, createClient());
+      return updateReminder(reminder!.id, data, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
@@ -87,6 +82,11 @@ export default function ReminderEditForm({
       return data;
     },
   });
+
+  // Now the early return
+  if (!reminder) {
+    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
+  }
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
