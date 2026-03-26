@@ -227,6 +227,149 @@ export default function CompanyDetailPage() {
         </Card>
       </div>
 
+      {/* Contacts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Contacts ({contacts.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {contacts.length === 0 ? (
+            <p className="text-muted-foreground">No contacts yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {contacts.map((contact) => (
+                <div key={contact.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-medium">
+                      {contact.vorname} {contact.nachname}
+                    </p>
+                    {contact.position && <p className="text-sm text-muted-foreground">{contact.position}</p>}
+                    {contact.email && <p className="text-sm">{contact.email}</p>}
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditContact(contact);
+                      setContactDialogOpen(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reminders */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Reminders ({reminders.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reminders.length === 0 ? (
+            <p className="text-muted-foreground">No reminders yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {reminders.map((reminder) => (
+                <div key={reminder.id} className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold">{reminder.title}</h3>
+                      <Badge
+                        className={
+                          reminder.priority === "hoch"
+                            ? "bg-orange-500 text-white"
+                            : reminder.priority === "normal"
+                              ? "bg-blue-500 text-white"
+                              : "bg-gray-500 text-white"
+                        }
+                      >
+                        {reminder.priority}
+                      </Badge>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                        {reminder.status}
+                      </Badge>
+                    </div>
+                    {reminder.description && (
+                      <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditReminder(reminder);
+                      setReminderDialogOpen(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Timeline ({timeline.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {timeline.length === 0 ? (
+            <p className="text-muted-foreground">No timeline entries yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {timeline.map((entry) => (
+                <div key={entry.id} className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold">{entry.activity_type}</h3>
+                      <Badge variant="outline">{new Date(entry.created_at).toLocaleDateString()}</Badge>
+                    </div>
+                    {entry.notes && <p className="text-sm text-muted-foreground mb-2">{entry.notes}</p>}
+                    {entry.contacts && (
+                      <p className="text-sm">
+                        Contact: {entry.contacts.vorname} {entry.contacts.nachname}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditEntry(entry);
+                      setTimelineDialogOpen(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => setAddContactDialog(true)}>
