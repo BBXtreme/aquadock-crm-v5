@@ -121,9 +121,9 @@ export const reminderColumns = (
     header: "Assigned To",
     cell: (info) => String(info.getValue() ?? ""),
   }) as ColumnDef<ReminderWithCompany>,
-  columnHelper.accessor("notes", {
-    id: "notes",
-    header: "Notes",
+  columnHelper.accessor("description", {
+    id: "description",
+    header: "Description",
     cell: (info) => info.getValue() || "—",
   }) as ColumnDef<ReminderWithCompany>,
   columnHelper.display({

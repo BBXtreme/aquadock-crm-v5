@@ -23,7 +23,7 @@ const reminderSchema = z.object({
   priority: z.enum(["hoch", "normal", "niedrig"]).optional(),
   status: z.enum(["open", "closed"]).optional(),
   assigned_to: z.string().optional(),
-  notes: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
@@ -50,7 +50,7 @@ export default function ReminderEditForm({
 
   const mutation = useMutation({
     mutationFn: (data) => {
-      return updateReminder(reminder.id, data, createClient());
+      return updateReminder(reminder!.id, data, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
@@ -70,7 +70,7 @@ export default function ReminderEditForm({
       priority: "normal",
       status: "open",
       assigned_to: "",
-      notes: "",
+      description: "",
     },
   });
 
@@ -92,7 +92,7 @@ export default function ReminderEditForm({
       priority: reminder?.priority || "normal",
       status: reminder?.status || "open",
       assigned_to: reminder?.assigned_to || "",
-      notes: reminder?.notes || "",
+      description: reminder?.description || "",
     });
   }, [reminder, form]);
 
@@ -219,10 +219,10 @@ export default function ReminderEditForm({
         />
         <FormField
           control={form.control}
-          name="notes"
+          name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>

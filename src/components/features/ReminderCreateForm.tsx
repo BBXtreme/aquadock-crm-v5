@@ -20,6 +20,7 @@ const reminderSchema = z.object({
   priority: z.enum(["hoch", "normal", "niedrig"]).optional(),
   status: z.enum(["open", "closed"]).optional(),
   assigned_to: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
@@ -57,6 +58,7 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
       priority: "normal",
       status: "open",
       assigned_to: "",
+      description: "",
     },
   });
 
@@ -180,6 +182,19 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
