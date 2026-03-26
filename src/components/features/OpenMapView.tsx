@@ -72,7 +72,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   }, []);
 
   // Company import refresh
-  const fetchCompanies = useCallback(async () => {
+  const refreshCompanies = useCallback(async () => {
     const supabase = (await import("@/lib/supabase/browser")).createClient();
     const isDevelopment = process.env.NODE_ENV === "development";
     const isMockUser = true; // No auth in development
@@ -101,11 +101,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   useEffect(() => {
     const handler = () => {
-      fetchCompanies();
+      refreshCompanies();
     };
     window.addEventListener("company-imported", handler);
     return () => window.removeEventListener("company-imported", handler);
-  }, [fetchCompanies]);
+  }, [refreshCompanies]);
 
   // Save cache on unmount
   useEffect(() => {
@@ -270,7 +270,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           </Marker>
         ))}
 
-        {/* OSM POI Cluster Group */}
         <MarkerClusterGroup
           chunkedLoading
           maxClusterRadius={100}
@@ -291,6 +290,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             fillOpacity: 0.1,
           }}
         >
+          {/* OSM POI Markers */}
           {osmPois.map((poi) => {
             const lat = poi.lat || poi.center?.lat;
             const lon = poi.lon || poi.center?.lon;
