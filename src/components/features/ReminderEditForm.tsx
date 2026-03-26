@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -49,7 +50,7 @@ export default function ReminderEditForm({
 
   const mutation = useMutation({
     mutationFn: (data) => {
-      return updateReminder(reminder!.id, data, createClient());
+      return updateReminder(reminder.id, data, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
@@ -63,13 +64,13 @@ export default function ReminderEditForm({
   const form = useForm<ReminderFormValues>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
-      title: reminder?.title || "",
-      company_id: reminder?.company_id || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder?.priority || "normal",
-      status: reminder?.status || "open",
-      assigned_to: reminder?.assigned_to || "",
-      notes: reminder?.notes || "",
+      title: "",
+      company_id: "",
+      due_date: "",
+      priority: "normal",
+      status: "open",
+      assigned_to: "",
+      notes: "",
     },
   });
 
@@ -83,10 +84,22 @@ export default function ReminderEditForm({
     },
   });
 
-  // Now the early return
+  // Early return for null/undefined
   if (!reminder) {
     return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
   }
+
+  useEffect(() => {
+    form.reset({
+      title: reminder.title || "",
+      company_id: reminder.company_id || "",
+      due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+      priority: reminder.priority || "normal",
+      status: reminder.status || "open",
+      assigned_to: reminder.assigned_to || "",
+      notes: reminder.notes || "",
+    });
+  }, [reminder, form]);
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
