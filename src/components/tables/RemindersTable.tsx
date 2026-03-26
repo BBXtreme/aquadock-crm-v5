@@ -112,11 +112,7 @@ export const reminderColumns = (
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => (
-      <Badge
-        className={
-          info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-        }
-      >
+      <Badge className={info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
         {String(info.getValue() ?? "")}
       </Badge>
     ),
@@ -315,7 +311,13 @@ export default function RemindersTable({
           >
             Previous
           </Button>
-          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
             Next
           </Button>
         </div>
