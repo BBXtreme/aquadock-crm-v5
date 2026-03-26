@@ -16,13 +16,18 @@ import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } f
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { TimelineEntry } from "@/lib/supabase/database.types";
+import type { Company, Contact, TimelineEntry, Database } from "@/lib/supabase/database.types";
+
+type TimelineEntryWithJoins = TimelineEntry & {
+  companies?: Pick<Company, "firmenname"> | null;
+  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
+};
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
   const _router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editEntry, setEditEntry] = useState<TimelineEntry | null>(null);
+  const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
 
   // TODO: use useSession or Server Component auth
   // const { userId } = useAuth();
@@ -45,7 +50,7 @@ export default function TimelinePage() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
-      return response.json() as Promise<TimelineEntry[]>;
+      return response.json() as Promise<TimelineEntryWithJoins[]>;
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -92,7 +97,14 @@ export default function TimelinePage() {
   // }, [error, router]);
 
   const createMutation = useMutation({
-    mutationFn: async (values: { title: string; content?: string; company_id: string; activity_type?: string }) => {
+    mutationFn: async (values: {
+      title: string;
+      content?: string;
+      company_id?: string | null;
+      contact_id?: string | null;
+      activity_type?: string;
+      user_name?: string;
+    }) => {
       const payload = {
         title: values.title.trim() || "Untitled entry",
         content: values.content?.trim() || null,
@@ -120,7 +132,7 @@ export default function TimelinePage() {
     },
     onMutate: async (newEntry) => {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
-      const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
+      const previous = queryClient.getQueryData<TimelineEntryWithJoins[]>(["timeline"]);
       queryClient.setQueryData(["timeline"], (old = []) => [
         {
           ...newEntry,
@@ -154,7 +166,14 @@ export default function TimelinePage() {
       values,
     }: {
       id: string;
-      values: { title: string; content?: string; company_id: string; activity_type?: string };
+      values: {
+        title: string;
+        content?: string;
+        company_id?: string | null;
+        contact_id?: string | null;
+        activity_type?: string;
+        user_name?: string;
+      };
     }) => {
       const res = await fetch(`/api/timeline/${id}`, {
         method: "PUT",
@@ -184,7 +203,7 @@ export default function TimelinePage() {
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
-      const previous = queryClient.getQueryData<TimelineEntry[]>(["timeline"]);
+      const previous = queryClient.getQueryData<TimelineEntryWithJoins[]>(["timeline"]);
       queryClient.setQueryData(["timeline"], (old = []) => old.filter((e) => e.id !== id));
       return { previous };
     },
