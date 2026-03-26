@@ -37,119 +37,118 @@ export const reminderColumns = (
   handleEdit: (reminder: ReminderWithCompany) => void,
   handleView: (reminder: ReminderWithCompany) => void,
   handleDelete: (id: string) => void,
-): ColumnDef<ReminderWithCompany>[] =>
-  [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-    }),
-    columnHelper.accessor("title", {
-      header: "Title",
-      cell: (info) => (
-        <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
-          {String(info.getValue() ?? "")}
-        </button>
-      ),
-    }),
-    columnHelper.display({
-      id: "company",
-      header: "Company",
-      cell: (info) => {
-        const reminder = info.row.original;
-        const company = reminder.companies;
-        if (!company) return "Unknown";
-        return (
-          <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
-            {company.firmenname}
-          </Link>
-        );
-      },
-    }),
-    columnHelper.accessor("due_date", {
-      header: "Due Date",
-      cell: (info) => {
-        const value = info.getValue();
-        if (!value) return "No date";
-        const isOverdue = isAfter(new Date(), new Date(value));
-        return (
-          <span className={isOverdue ? "text-rose-500" : ""}>
-            {formatDistanceToNow(new Date(value), {
-              addSuffix: true,
-            })}
-          </span>
-        );
-      },
-    }),
-    columnHelper.accessor("priority", {
-      header: "Priority",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "hoch"
-              ? "bg-orange-500 text-white"
-              : info.getValue() === "normal"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-500 text-white"
-          }
-        >
-          {String(info.getValue() ?? "")}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => (
-        <Badge
-          className={
-            info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-          }
-        >
-          {String(info.getValue() ?? "")}
-        </Badge>
-      ),
-    }),
-    columnHelper.accessor("assigned_to", {
-      header: "Assigned To",
-      cell: (info) => String(info.getValue() ?? ""),
-    }),
-    columnHelper.accessor("notes", {
-      id: "notes",
-      header: "Notes",
-      cell: (info) => info.getValue() || "—",
-    }),
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" type="button" onClick={() => handleView(info.row.original)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" type="button" onClick={() => handleEdit(info.row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(info.row.original.id)}>
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-      enableSorting: false,
-    }),
-  ];
+): ColumnDef<ReminderWithCompany>[] => [
+  columnHelper.display({
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("title", {
+    header: "Title",
+    cell: (info) => (
+      <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
+        {String(info.getValue() ?? "")}
+      </button>
+    ),
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.display({
+    id: "company",
+    header: "Company",
+    cell: (info) => {
+      const reminder = info.row.original;
+      const company = reminder.companies;
+      if (!company) return "Unknown";
+      return (
+        <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+          {company.firmenname}
+        </Link>
+      );
+    },
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("due_date", {
+    header: "Due Date",
+    cell: (info) => {
+      const value = info.getValue();
+      if (!value) return "No date";
+      const isOverdue = isAfter(new Date(), new Date(value));
+      return (
+        <span className={isOverdue ? "text-rose-500" : ""}>
+          {formatDistanceToNow(new Date(value), {
+            addSuffix: true,
+          })}
+        </span>
+      );
+    },
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("priority", {
+    header: "Priority",
+    cell: (info) => (
+      <Badge
+        className={
+          info.getValue() === "hoch"
+            ? "bg-orange-500 text-white"
+            : info.getValue() === "normal"
+              ? "bg-blue-500 text-white"
+              : "bg-gray-500 text-white"
+        }
+      >
+        {String(info.getValue() ?? "")}
+      </Badge>
+    ),
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("status", {
+    header: "Status",
+    cell: (info) => (
+      <Badge
+        className={
+          info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
+        }
+      >
+        {String(info.getValue() ?? "")}
+      </Badge>
+    ),
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("assigned_to", {
+    header: "Assigned To",
+    cell: (info) => String(info.getValue() ?? ""),
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.accessor("notes", {
+    id: "notes",
+    header: "Notes",
+    cell: (info) => info.getValue() || "—",
+  }) as ColumnDef<ReminderWithCompany>,
+  columnHelper.display({
+    id: "actions",
+    header: "Actions",
+    cell: (info) => (
+      <div className="flex space-x-2">
+        <Button variant="ghost" size="sm" type="button" onClick={() => handleView(info.row.original)}>
+          <Eye className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm" type="button" onClick={() => handleEdit(info.row.original)}>
+          <Edit className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(info.row.original.id)}>
+          <Trash className="h-4 w-4" />
+        </Button>
+      </div>
+    ),
+    enableSorting: false,
+  }) as ColumnDef<ReminderWithCompany>,
+];
 
 interface RemindersTableProps {
   reminders: ReminderWithCompany[];
