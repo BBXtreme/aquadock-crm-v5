@@ -385,7 +385,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             Status Legende
-            <button onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">
+            <button type="button" onClick={() => setShowLegend(false)} className="text-muted-foreground hover:text-foreground">
               ✕
             </button>
           </div>
