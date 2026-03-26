@@ -49,9 +49,9 @@ export default function ContactEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data: ContactFormValues) => {
       if (!contact) throw new Error("Contact not loaded");
-      return updateContact(contact.id, data, createClient());
+      return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
