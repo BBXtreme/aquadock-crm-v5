@@ -26,8 +26,6 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     caravan_site: "camping",
     marina: "marina",
     harbor: "marina",
-    boat_rental: "bootsverleih",
-    boat_sharing: "bootsverleih",
     fuel: "tankstelle",
     charging_station: "tankstelle",
     supermarket: "supermarkt",
@@ -162,11 +160,11 @@ export function useMapPopupActions() {
 
       // Dispatch event to refresh company markers
       window.dispatchEvent(new CustomEvent("company-imported"));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Import failed:", err);
       toast.error(`Import von "${name}" fehlgeschlagen`, {
         id: "osm-import",
-        description: err.message || "Unbekannter Fehler",
+        description: err instanceof Error ? err.message : "Unbekannter Fehler",
       });
     }
   };

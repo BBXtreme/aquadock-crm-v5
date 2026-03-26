@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/browser";
 import { updateReminder } from "@/lib/supabase/services/reminders";
+import type { Database } from "@/lib/supabase/database.types";
 
 const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -35,7 +36,7 @@ const statusOptions = [
   { value: "closed", label: "Closed" },
 ];
 
-export default function ReminderEditForm({ reminder, onSuccess }: { reminder: any; onSuccess?: () => void }) {
+export default function ReminderEditForm({ reminder, onSuccess }: { reminder: Database["public"]["Tables"]["reminders"]["Row"]; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({

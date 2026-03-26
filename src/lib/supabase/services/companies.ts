@@ -139,7 +139,16 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
   return data ?? [];
 }
 
-export async function importOsmPoi(poi: any, userId: string) {
+type OsmPoi = {
+  tags?: Record<string, string>;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  type: string;
+  id: string;
+};
+
+export async function importOsmPoi(poi: OsmPoi, userId: string) {
   // DEVELOPMENT ONLY: Allow inserts without user_id for mock user
   // TODO: Enforce user_id when auth is implemented
   const isDevelopment = process.env.NODE_ENV === "development";
