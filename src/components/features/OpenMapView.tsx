@@ -36,6 +36,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [currentZoom, setCurrentZoom] = useState(7);
   const poiCache = useRef(new Map<string, CacheEntry>());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
 
@@ -80,6 +81,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => window.removeEventListener("company-imported", handler);
   }, []);
 
+  // Save cache on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout.current) clearTimeout(saveTimeout.current);
+      const cacheObj = Object.fromEntries(poiCache.current);
+      localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+    };
+  }, []);
+
   // Leaflet icon fix
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -113,7 +123,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const bounds = mapRef.current.getBounds();
     const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
     const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
-    const key = `${centerLat},${centerLon}`;
+    const key = `${zoom}-${centerLat},${centerLon}`;
 
     const now = Date.now();
     const cacheEntry = poiCache.current.get(key);
@@ -131,14 +141,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         poiCache.current.set(key, { pois, timestamp: now });
 
         // Limit cache size
-        if (poiCache.current.size > 30) {
+        if (poiCache.current.size > 15) {
           const firstKey = poiCache.current.keys().next().value;
           poiCache.current.delete(firstKey);
         }
 
-        // Save to localStorage (debounced in real use)
-        const cacheObj = Object.fromEntries(poiCache.current);
-        localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+        // Debounced save to localStorage
+        if (saveTimeout.current) clearTimeout(saveTimeout.current);
+        saveTimeout.current = setTimeout(() => {
+          const cacheObj = Object.fromEntries(poiCache.current);
+          localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+        }, 3000);
 
         setOsmPois(pois);
       })
