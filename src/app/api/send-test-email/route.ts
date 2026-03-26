@@ -2,12 +2,12 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import nodemailer from "nodemailer";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getUserSettings } from "@/lib/supabase/services/user-settings";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient();
+    const supabase = createServerSupabaseClient();
     const {
       data: { user },
       error: authError,
