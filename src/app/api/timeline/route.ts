@@ -74,20 +74,30 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json(timelineEntry, { status: 201 });
 	} catch (error: unknown) {
-		const hasProperty = (
-			obj: unknown,
-			prop: string,
-		): obj is Record<string, unknown> =>
-			typeof obj === "object" && obj !== null && prop in obj;
+		function hasCode(obj: unknown): obj is { code: unknown } {
+			return typeof obj === "object" && obj !== null && "code" in obj;
+		}
+
+		function hasDetails(obj: unknown): obj is { details: unknown } {
+			return typeof obj === "object" && obj !== null && "details" in obj;
+		}
+
+		function hasHint(obj: unknown): obj is { hint: unknown } {
+			return typeof obj === "object" && obj !== null && "hint" in obj;
+		}
+
+		function hasCause(obj: unknown): obj is { cause: unknown } {
+			return typeof obj === "object" && obj !== null && "cause" in obj;
+		}
 
 		const errorDetails = {
 			message: error instanceof Error ? error.message : "Unknown error",
 			stack: error instanceof Error ? error.stack : undefined,
 			name: error instanceof Error ? error.name : undefined,
-			code: hasProperty(error, "code") ? error.code : undefined,
-			details: hasProperty(error, "details") ? error.details : undefined,
-			hint: hasProperty(error, "hint") ? error.hint : undefined,
-			cause: hasProperty(error, "cause") ? error.cause : undefined,
+			code: hasCode(error) ? error.code : undefined,
+			details: hasDetails(error) ? error.details : undefined,
+			hint: hasHint(error) ? error.hint : undefined,
+			cause: hasCause(error) ? error.cause : undefined,
 			bodyReceived: body !== null ? body : "not parsed",
 		};
 
