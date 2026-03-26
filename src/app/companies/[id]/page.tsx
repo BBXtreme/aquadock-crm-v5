@@ -1290,17 +1290,16 @@ function FirmendatenForm({ company, onSuccess }: { company: Company; onSuccess: 
                     <SelectValue placeholder="Select company type" />
                   </SelectTrigger>
                 </FormControl>
-                  <SelectContent>
-                    {firmentypOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+                <SelectContent>
+                  {firmentypOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )}
         />
         <FormField
