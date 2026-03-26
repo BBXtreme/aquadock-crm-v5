@@ -198,7 +198,7 @@ export default function ContactsTable({
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a";
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.csv`);
@@ -219,7 +219,7 @@ export default function ContactsTable({
       const blob = new Blob([json], {
         type: "application/json;charset=utf-8;",
       });
-      const link = document.createElement("a";
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `contacts-export-${new Date().toISOString().split("T")[0]}.json`);
