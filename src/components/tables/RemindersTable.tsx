@@ -58,7 +58,7 @@ export const reminderColumns = (
     header: "Title",
     cell: (info) => (
       <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
-        {String(info.getValue() ?? "")}
+        {String((info.getValue() as string) ?? "")}
       </button>
     ),
   }),
@@ -95,28 +95,33 @@ export const reminderColumns = (
     cell: (info) => (
       <Badge
         className={
-          info.getValue() === "hoch"
+          (info.getValue() as string | null) === "hoch"
             ? "bg-orange-500 text-white"
-            : info.getValue() === "normal"
+            : (info.getValue() as string | null) === "normal"
               ? "bg-blue-500 text-white"
               : "bg-gray-500 text-white"
         }
       >
-        {String(info.getValue() ?? "")}
+        {String((info.getValue() as string | null) ?? "")}
       </Badge>
     ),
   }),
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => (
-      <Badge className={info.getValue() === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
-        {String(info.getValue() ?? "")}
+      <Badge className={(info.getValue() as string | null) === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"}>
+        {String((info.getValue() as string | null) ?? "")}
       </Badge>
     ),
   }),
   columnHelper.accessor("assigned_to", {
     header: "Assigned To",
-    cell: (info) => String(info.getValue() ?? ""),
+    cell: (info) => String((info.getValue() as string | null) ?? ""),
+  }),
+  columnHelper.accessor("notes", {
+    id: "notes",
+    header: "Notes",
+    cell: (info) => (info.getValue() as string | null) || "—",
   }),
   columnHelper.display({
     id: "actions",
