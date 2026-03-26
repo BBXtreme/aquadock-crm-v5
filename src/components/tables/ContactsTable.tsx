@@ -79,26 +79,26 @@ export default function ContactsTable({
     columnHelper.accessor("vorname", {
       id: "vorname",
       header: "Vorname",
-      cell: (info) => info.getValue(),
+      cell: (info) => info.getValue() as string,
     }),
     columnHelper.accessor("nachname", {
       id: "nachname",
       header: "Nachname",
       cell: (info) => (
         <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-          {info.getValue()}
+          {info.getValue() as string}
         </Link>
       ),
     }),
     columnHelper.accessor("is_primary", {
       id: "is_primary",
       header: "Primary",
-      cell: (info) => (info.getValue() ? <Badge variant="secondary">Primary</Badge> : "—"),
+      cell: (info) => ((info.getValue() as boolean) ? <Badge variant="secondary">Primary</Badge> : "—"),
     }),
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.accessor("position", {
       id: "position",
@@ -121,27 +121,27 @@ export default function ContactsTable({
     columnHelper.accessor("email", {
       id: "email",
       header: "Email",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.accessor("telefon", {
       id: "telefon",
       header: "Telefon",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.accessor("mobil", {
       id: "mobil",
       header: "Mobil",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.accessor("durchwahl", {
       id: "durchwahl",
       header: "Durchwahl",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.accessor("notes", {
       id: "notes",
       header: "Notes",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
     columnHelper.display({
       id: "actions",

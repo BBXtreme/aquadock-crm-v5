@@ -29,19 +29,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Company } from "@/lib/supabase/database.types";
+import type { Company, Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
+type CompanyWithContacts = Company & { contacts?: Contact[] };
+
 interface CompaniesTableProps {
-  companies: Company[];
-  onEdit?: (company: Company) => void;
-  onDelete?: (company: Company) => void;
+  companies: CompanyWithContacts[];
+  onEdit?: (company: CompanyWithContacts) => void;
+  onDelete?: (company: CompanyWithContacts) => void;
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
 }
 
-const columnHelper = createColumnHelper<Company>();
+const columnHelper = createColumnHelper<CompanyWithContacts>();
 
 export default function CompaniesTable({
   companies,
@@ -57,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<Company>[] = [
+  const columns: ColumnDef<CompanyWithContacts>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -111,7 +113,7 @@ export default function CompaniesTable({
       id: "hauptkontakt",
       header: "Hauptkontakt",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []) as Company["contacts"];
+        const contacts = (info.row.original.contacts || []) as Contact[];
         const primary = contacts.find((c) => c.is_primary);
         if (!primary) return "—";
         return (
@@ -127,7 +129,7 @@ export default function CompaniesTable({
       id: "kontaktanzahl",
       header: "Kontakte",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []) as Company["contacts"];
+        const contacts = (info.row.original.contacts || []) as Contact[];
         const count = contacts.length;
         if (count === 0) return <Badge variant="outline">Keine</Badge>;
         const hasPrimary = contacts.some((c) => c.is_primary);
@@ -197,7 +199,7 @@ export default function CompaniesTable({
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable<Company>({
+  const table = useReactTable<CompanyWithContacts>({
     data: companies,
     columns,
     getCoreRowModel: getCoreRowModel(),
