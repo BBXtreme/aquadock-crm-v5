@@ -62,8 +62,8 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data) => createReminder(data, createClient()),
+  const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
+    mutationFn: (data: ReminderFormValues) => createReminder(data, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder created");
