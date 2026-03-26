@@ -1084,7 +1084,6 @@ export default function CompanyDetailPage() {
             <DialogTitle>Add Reminder for {company.firmenname}</DialogTitle>
           </DialogHeader>
           <ReminderCreateForm
-            companyId={company.id}
             onSuccess={() => {
               setAddReminderDialog(false);
               queryClient.invalidateQueries({ queryKey: ["reminders", id] });
