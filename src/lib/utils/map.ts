@@ -65,7 +65,7 @@ export async function fetchOsmPois(
           if (poiCategories[key]) acc[key] = poiCategories[key];
           return acc;
         },
-        {} as Record<string, typeof poiCategories[keyof typeof poiCategories]>,
+        {} as Record<string, (typeof poiCategories)[keyof typeof poiCategories]>,
       );
 
       for (const category of Object.values(activePoiCategories)) {
