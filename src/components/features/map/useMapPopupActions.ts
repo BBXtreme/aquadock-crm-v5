@@ -112,7 +112,7 @@ export function useMapPopupActions() {
       if (!isDevelopment) {
         const userRes = await fetch("/api/auth/user");
         if (!userRes.ok) throw new Error("Authentication required");
-        const { userId: fetchedUserId } = userRes.json();
+        const { userId: fetchedUserId } = await userRes.json();
         userId = fetchedUserId;
       }
 
@@ -129,14 +129,16 @@ export function useMapPopupActions() {
         console.warn("Failed to check for duplicates:", fetchError);
       } else if (existingCompanies && existingCompanies.length > 0) {
         const existing = existingCompanies[0];
-        toast.error(`"${name}" ist bereits importiert`, {
-          id: "osm-import",
-          description: `Firma "${existing.firmenname}" existiert bereits.`,
-          action: {
-            label: "Firma öffnen",
-            onClick: () => openCompanyDetail(existing.id),
-          },
-        });
+        if (existing) {
+          toast.error(`"${name}" ist bereits importiert`, {
+            id: "osm-import",
+            description: `Firma "${existing.firmenname}" existiert bereits.`,
+            action: {
+              label: "Firma öffnen",
+              onClick: () => openCompanyDetail(existing.id),
+            },
+          });
+        }
         return;
       }
 
