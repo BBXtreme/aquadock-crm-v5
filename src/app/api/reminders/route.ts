@@ -5,7 +5,7 @@ import { createReminder, getReminders } from "@/lib/supabase/services/reminders"
 
 export async function GET() {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const reminders = await getReminders(supabase);
     return NextResponse.json(reminders);
   } catch (error) {
@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const reminder = await createReminder(body, supabase);
     return NextResponse.json(reminder, { status: 201 });
   } catch (error) {
