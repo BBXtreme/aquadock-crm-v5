@@ -246,20 +246,13 @@ export default function RemindersTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : (
-                      <div
+                      <button
+                        type="button"
                         className={cn(
                           "flex items-center space-x-2 select-none",
                           header.column.getCanSort() && "cursor-pointer hover:bg-muted/50",
                         )}
-                        role="button"
-                        tabIndex={0}
                         onClick={header.column.getToggleSortingHandler()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            header.column.getToggleSortingHandler()?.();
-                          }
-                        }}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
@@ -267,7 +260,7 @@ export default function RemindersTable({
                         {header.column.getIsSorted() === false && header.column.getCanSort() && (
                           <ArrowUpDown className="h-4 w-4" />
                         )}
-                      </div>
+                      </button>
                     )}
                   </TableHead>
                 ))}
