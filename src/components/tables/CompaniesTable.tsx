@@ -59,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<CompanyWithContacts>[] = [
+  const columns = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -77,24 +77,24 @@ export default function CompaniesTable({
         />
       ),
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("firmenname", {
       id: "firmenname",
       header: "Firmenname",
       cell: (info) => (
         <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
-          {safeDisplay(info.getValue() as string)}
+          {safeDisplay(info.getValue())}
         </Link>
       ),
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("kundentyp", {
       header: "Kundentyp",
-      cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue() as string)}</Badge>,
-    }) as ColumnDef<CompanyWithContacts>,
+      cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
+    }),
     columnHelper.accessor("status", {
       header: "Status",
       cell: (info) => {
-        const value = info.getValue() as string;
+        const value = info.getValue();
         return (
           <Badge
             className={cn(
@@ -108,12 +108,12 @@ export default function CompaniesTable({
           </Badge>
         );
       },
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("contacts", {
       id: "hauptkontakt",
       header: "Hauptkontakt",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []) as Contact[];
+        const contacts = (info.row.original.contacts || []);
         const primary = contacts.find((c) => c.is_primary);
         if (!primary) return "—";
         return (
@@ -124,12 +124,12 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("contacts", {
       id: "kontaktanzahl",
       header: "Kontakte",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []) as Contact[];
+        const contacts = (info.row.original.contacts || []);
         const count = contacts.length;
         if (count === 0) return <Badge variant="outline">Keine</Badge>;
         const hasPrimary = contacts.some((c) => c.is_primary);
@@ -140,11 +140,11 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("value", {
       header: "Value",
-      cell: (info) => formatCurrency(info.getValue() as number | null),
-    }) as ColumnDef<CompanyWithContacts>,
+      cell: (info) => formatCurrency(info.getValue()),
+    }),
     columnHelper.accessor("stadt", {
       id: "ort",
       header: "Ort",
@@ -154,15 +154,15 @@ export default function CompaniesTable({
         const stadt = row.stadt || "";
         return `${plz}${stadt}` || "—";
       },
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("land", {
       header: "Land",
-      cell: (info) => safeDisplay(info.getValue() as string),
-    }) as ColumnDef<CompanyWithContacts>,
+      cell: (info) => safeDisplay(info.getValue()),
+    }),
     columnHelper.accessor("created_at", {
       header: "Created",
-      cell: (info) => formatDateDistance(info.getValue() as string | null),
-    }) as ColumnDef<CompanyWithContacts>,
+      cell: (info) => formatDateDistance(info.getValue()),
+    }),
     columnHelper.display({
       id: "actions",
       header: "Actions",
@@ -196,8 +196,8 @@ export default function CompaniesTable({
         </div>
       ),
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-  ];
+    }),
+  ] satisfies ColumnDef<CompanyWithContacts>[];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
@@ -405,13 +405,7 @@ export default function CompaniesTable({
           >
             Previous
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
