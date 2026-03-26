@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Bell, Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
@@ -25,7 +25,7 @@ type TimelineEntryWithJoins = TimelineEntry & {
 
 export default function TimelinePage() {
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const _router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
 
@@ -340,7 +340,11 @@ export default function TimelinePage() {
                             </Link>
                           </div>
                         )}
-                        <span>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</span>
+                        <span>
+                          {entry.created_at
+                            ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })
+                            : "—"}
+                        </span>
                         <span>by {entry.user_name || "Unknown"}</span>
                       </div>
                     </div>

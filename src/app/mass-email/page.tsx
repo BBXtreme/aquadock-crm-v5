@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -41,7 +40,7 @@ export default function MassEmailPage() {
     setIsSending(true);
     try {
       // TODO: Implement mass email sending
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
       toast.success(`Email sent to ${selectedContacts.length} contacts`);
       setSelectedContacts([]);
       setSubject("");
@@ -55,7 +54,7 @@ export default function MassEmailPage() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedContacts(contacts.map(c => c.id));
+      setSelectedContacts(contacts.map((c) => c.id));
     } else {
       setSelectedContacts([]);
     }
@@ -63,14 +62,14 @@ export default function MassEmailPage() {
 
   const handleSelectContact = (contactId: string, checked: boolean) => {
     if (checked) {
-      setSelectedContacts(prev => [...prev, contactId]);
+      setSelectedContacts((prev) => [...prev, contactId]);
     } else {
-      setSelectedContacts(prev => prev.filter(id => id !== contactId));
+      setSelectedContacts((prev) => prev.filter((id) => id !== contactId));
     }
   };
 
   const handleTemplateSelect = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
+    const template = templates.find((t) => t.id === templateId);
     if (template) {
       setSelectedTemplate(templateId);
       setSubject(template.subject || "");
@@ -98,7 +97,7 @@ export default function MassEmailPage() {
                 <Label htmlFor="select-all">Select All</Label>
               </div>
               <div className="max-h-64 overflow-y-auto space-y-2">
-                {contacts.map(contact => (
+                {contacts.map((contact) => (
                   <div key={contact.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={contact.id}
@@ -127,7 +126,7 @@ export default function MassEmailPage() {
                   <SelectValue placeholder="Select a template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map(template => (
+                  {templates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
                     </SelectItem>

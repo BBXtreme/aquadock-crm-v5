@@ -307,7 +307,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
               const lat = poi.lat || poi.center?.lat;
               const lon = poi.lon || poi.center?.lon;
               return (
-                <Marker key={`${poi.type}-${poi.id}`} position={[lat as number, lon as number]} icon={getOsmPoiIcon(isDarkMode)}>
+                <Marker
+                  key={`${poi.type}-${poi.id}`}
+                  position={[lat as number, lon as number]}
+                  icon={getOsmPoiIcon(isDarkMode)}
+                >
                   <Popup>
                     <OsmPoiMarkerPopup
                       poi={poi}

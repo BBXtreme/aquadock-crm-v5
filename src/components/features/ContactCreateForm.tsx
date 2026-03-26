@@ -70,7 +70,8 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: ContactFormValues) => createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], createClient()),
+    mutationFn: async (data: ContactFormValues) =>
+      createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact created");

@@ -26,62 +26,71 @@ All `*EditForm`, `*CreateForm`, and similar components **MUST** follow this exac
 
 ### 3. Biome Best Practices (Enforced on Every Change)
 
-**Hooks Rules**
-- All hooks at top level, unconditional.
+**Hooks Rules**  
+- All hooks at top level, unconditional.  
 - Respect `useExhaustiveDependencies` — wrap unstable objects in `useMemo` when needed.
 
-**Null Safety**
-- No `!` assertions.
-- Prefer `?? ""`, `||`, and optional chaining.
+**Null Safety**  
+- No `!` assertions.  
+- Prefer `??`, `||`, and optional chaining.
 
-**Button & a11y**
-- Non-submit buttons: always `type="button"`.
+**Button & a11y**  
+- Non-submit buttons: always `type="button"`.  
 - Never use `<div role="button">` — use real `<button type="button">`.
 
-**Static Skeletons**
+**Static Skeletons**  
 - No `key` prop on root skeleton elements.
 
 ### 4. Type Management – Single Source of Truth
 
-- `src/lib/supabase/database.types.ts` is the **only** source of truth (auto-generated).
-- Always import from `"@/lib/supabase/database.types"`.
-- Use `Database["public"]["Tables"]["table"]["Row"]` for database rows.
-- Edit forms state: `| null` + early return after hooks.
+- `src/lib/supabase/database.types.ts` is the **only** source of truth (auto-generated).  
+- Always import from `"@/lib/supabase/database.types"`.  
+- Use `Database["public"]["Tables"]["table"]["Row"]` for database rows.  
+- Edit forms state: `| null` + early return after hooks.  
 - After any type change: always run `pnpm build`.
 
 ### 5. Supabase Client Rules (Critical – Protected)
 
-**Never edit these files** unless explicitly instructed:
-- `src/lib/supabase/server.ts`
-- `src/lib/supabase/browser.ts`
+**Never edit these files** unless explicitly instructed:  
+- `src/lib/supabase/server.ts`  
+- `src/lib/supabase/browser.ts`  
 - `src/lib/supabase/database.types.ts`
 
-**Rules:**
-- Use `createServerSupabaseClient()` and `createClient()` exclusively.
-- No `!` on environment variables.
-- Always use the shared `handleSupabaseError` from `./utils`.
-- Service role key only in development.
-- All data operations must go through `src/lib/supabase/services/*.ts`.
+**Rules:**  
+- Use `createServerSupabaseClient()` and `createClient()` exclusively.  
+- No `!` on environment variables.  
+- Always use the shared `handleSupabaseError` from `./utils`.  
+- Service role key only in development.  
+- All data operations must go through `src/lib/supabase/services/*.ts`.  
 - RLS must be respected.
 
 ### 6. Companies Page & Core – Protected
 
-- Central heart of the CRM.
-- Extend only via services layer (`src/lib/supabase/services/companies.ts`).
-- Never put raw queries in pages/components.
+- Central heart of the CRM.  
+- Extend only via services layer (`src/lib/supabase/services/companies.ts`).  
+- Never put raw queries in pages/components.  
 - Use `satisfies ColumnDef<Company>[]` for tables (see react-table-v8-ts-tricks.md).
 
-### 7. General Rules
+### 7. TanStack React Table v8 Type Rules (Important)
 
-- No unsafe `!` assertions.
-- No commented-out old code.
-- When user says “follow standards”, “clean up”, “update rules”, or “improve aider rules” → replace the file with the current version of this document.
+- Always follow patterns from `react-table-v8-ts-tricks.md`.  
+- Prefer `satisfies ColumnDef<T>[]` when possible.  
+- For complex columns (joins, computed cells, `getValue()`), use explicit cast: `as ColumnDef<T>`.  
+- Never leave `info.getValue()` as `unknown` — cast safely or use helper functions (`safeDisplay`, `formatCurrency`, `formatDateDistance`).  
+- Define extended types (e.g. `CompanyWithContacts`) when joins are needed.  
+- All interactive buttons in cells must have `type="button"`.
+
+### 8. General Rules
+
+- No unsafe `!` assertions.  
+- No commented-out old code.  
+- When user says “follow standards”, “clean up”, “update rules”, or “improve aider rules” → replace the file with the current version of this document.  
 - Always verify with `pnpm typecheck` + `pnpm build` (Biome alone is insufficient).
 
-### 8. Biome vs Type Checking (Critical)
+### 9. Biome vs Type Checking (Critical)
 
-- `biome check` = fast linting + partial type inference.
-- `pnpm typecheck` (`tsc --noEmit`) and `pnpm build` = full TypeScript compiler (source of truth).
+- `biome check` = fast linting + partial type inference.  
+- `pnpm typecheck` (`tsc --noEmit`) and `pnpm build` = full TypeScript compiler (source of truth).  
 - Always run `pnpm build` after type-related changes.
 
 **Recommended package.json scripts:**
@@ -95,17 +104,24 @@ All `*EditForm`, `*CreateForm`, and similar components **MUST** follow this exac
 }
 ```
 
-### 9. Supabase Schema & Architecture Reference
+### 10. Development Dependencies & Tooling
+
+- Vitest config (vitest.config.ts) must have @vitejs/plugin-react installed as dev dependency.
+- If you see "Cannot find module '@vitejs/plugin-react'", run pnpm add -D @vitejs/plugin-react.
+- Keep dev dependencies clean and only add what is actually needed for testing.
+
+### 11. Supabase Schema & Architecture Reference
 
 - See SUPABASE_SCHEMA.md for current table structure and RLS.
 - See architecture.md for data flow and component patterns.
-- See react-table-v8-ts-tricks.md for TanStack Table v8 patterns (satisfies preferred).
+- See react-table-v8-ts-tricks.md for TanStack Table v8 patterns.
 
-### 10. Development Dependencies & Tooling
+### 12. React Hook Form + Zod Gotchas
 
-- Vitest config (`vitest.config.ts`) must have `@vitejs/plugin-react` installed as dev dependency.
-- If you see "Cannot find module '@vitejs/plugin-react'", run `pnpm add -D @vitejs/plugin-react`.
-- Keep dev dependencies clean and only add what is actually needed for testing.
+- Always use `useForm<z.infer<typeof schema>>` (or your explicit FormValues type).
+- When you see "never" on `name="xxx"` in FormField → the generic on useForm is misaligned with the Zod schema.
+- Prefer explicit `CompanyFormValues = z.infer<typeof companySchema>` and pass it to useForm.
+- For nullable numbers: use `.nullable()` in Zod and handle with `?? null` in defaultValues + onChange.
 
 **Last updated**: March 2026 (Hardened Edit Form Pattern, Supabase Client Rules, Type Strategy, Biome vs Build, and Single Source of Truth)
 

@@ -37,8 +37,8 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import type { Company } from "@/lib/supabase/database.types";
+import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
 export default function CompaniesPage() {

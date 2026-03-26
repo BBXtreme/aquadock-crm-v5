@@ -63,16 +63,17 @@ export default function TimelineEntryForm({
 }: Props) {
   const [localCompanies, setLocalCompanies] = useState<Company[]>([]);
 
-  // All hooks first (AIDER-RULES.md)
-  const form = useForm({
+  // ALL HOOKS FIRST — strict AIDER-RULES.md compliance
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: defaultValues || {
-      title: editEntry?.title || "",
-      content: editEntry?.content || "",
-      activity_type: editEntry?.activity_type || "note",
+    defaultValues: {
+      title: editEntry?.title || defaultValues?.title || "",
+      content: editEntry?.content || defaultValues?.content || "",
+      activity_type:
+        (editEntry?.activity_type as FormValues["activity_type"]) || defaultValues?.activity_type || "note",
       company_id: editEntry?.company_id || preselectedCompanyId || "none",
-      contact_id: editEntry?.contact_id || "none",
-      user_name: editEntry?.user_name || "",
+      contact_id: editEntry?.contact_id || defaultValues?.contact_id || "none",
+      user_name: editEntry?.user_name || defaultValues?.user_name || "",
     },
   });
 
@@ -104,7 +105,7 @@ export default function TimelineEntryForm({
       };
       fetchCompany();
     }
-  }, [preselectedCompanyId]);
+  }, [preselectedCompanyId, localCompanies.find]);
 
   useEffect(() => {
     if (defaultValues) {
@@ -123,7 +124,7 @@ export default function TimelineEntryForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((values) => onSubmit(values as FormValues))} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="title"
@@ -137,6 +138,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="content"
@@ -150,6 +152,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="activity_type"
@@ -175,6 +178,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="user_name"
@@ -188,6 +192,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="company_id"
@@ -219,6 +224,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="contact_id"
@@ -249,6 +255,7 @@ export default function TimelineEntryForm({
             </FormItem>
           )}
         />
+
         <div className="flex gap-2">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit"}

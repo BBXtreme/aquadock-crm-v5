@@ -5,7 +5,13 @@
     "source.fixAll.biome": "explicit",
     "source.organizeImports.biome": "explicit"
   },
-  "typescript.preferences.importModuleSpecifier": "relative",
+
+  // TypeScript & Import preferences (updated to non-deprecated keys)
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.preferences.importModuleSpecifierEnding": "minimal",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+
+  // Tailwind CSS IntelliSense (important for Tailwind 4 + cn/cva)
   "tailwindCSS.experimental.classRegex": [
     ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
@@ -13,5 +19,13 @@
   ],
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+
+  // Error display improvements
+  "errorLens.enabled": true,
+  "errorLens.delay": 300,
+
+  // Biome specific
+  "biome.enabled": true,
+  "biome.requireConfiguration": false
 }

@@ -113,7 +113,7 @@ export default function CompaniesTable({
       id: "hauptkontakt",
       header: "Hauptkontakt",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []);
+        const contacts = info.row.original.contacts || [];
         const primary = contacts.find((c) => c.is_primary);
         if (!primary) return "—";
         return (
@@ -129,7 +129,7 @@ export default function CompaniesTable({
       id: "kontaktanzahl",
       header: "Kontakte",
       cell: (info) => {
-        const contacts = (info.row.original.contacts || []);
+        const contacts = info.row.original.contacts || [];
         const count = contacts.length;
         if (count === 0) return <Badge variant="outline">Keine</Badge>;
         const hasPrimary = contacts.some((c) => c.is_primary);
@@ -405,7 +405,13 @@ export default function CompaniesTable({
           >
             Previous
           </Button>
-          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
             Next
           </Button>
         </div>

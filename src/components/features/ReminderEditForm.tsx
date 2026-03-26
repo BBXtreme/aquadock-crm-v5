@@ -50,7 +50,7 @@ export default function ReminderEditForm({
 
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
     mutationFn: (data: ReminderFormValues) => {
-      return updateReminder(reminder!.id, data, createClient());
+      return updateReminder(reminder?.id, data, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });

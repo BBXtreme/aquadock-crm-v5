@@ -2,14 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart, Building, MapPin, Waves } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Database } from "@/lib/supabase/database.types";
@@ -55,7 +53,7 @@ const companySchema = z.object({
 
 type CompanyFormValues = z.infer<typeof companySchema>;
 
-const kundentypOptions = [
+const _kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
   { value: "hotel", label: "Hotel" },
   { value: "resort", label: "Resort" },
@@ -71,7 +69,7 @@ const kundentypOptions = [
   { value: "sonstige", label: "Sonstige" },
 ];
 
-const firmentypOptions = [
+const _firmentypOptions = [
   { value: "kette", label: "Kette" },
   { value: "einzeln", label: "Einzelbetrieb" },
 ];
@@ -89,7 +87,7 @@ const statusOptions = [
   { value: "inaktiv", label: "Inaktiv" },
 ];
 
-const landOptions = [
+const _landOptions = [
   { value: "Deutschland", label: "Deutschland" },
   { value: "Österreich", label: "Österreich" },
   { value: "Schweiz", label: "Schweiz" },
@@ -108,7 +106,7 @@ const landOptions = [
   { value: "Großbritannien", label: "Großbritannien" },
 ];
 
-const wassertypOptions = [
+const _wassertypOptions = [
   { value: "Küste / Meer", label: "Küste / Meer" },
   { value: "Fluss", label: "Fluss" },
   { value: "Badesee", label: "Badesee" },
@@ -150,7 +148,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormValues) => updateCompany(company!.id, data as Partial<Company>),
+    mutationFn: (data: CompanyFormValues) => updateCompany(company?.id, data as Partial<Company>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated successfully");

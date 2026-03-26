@@ -8,7 +8,7 @@ import ReminderEditForm from "@/components/features/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
@@ -18,7 +18,7 @@ export default function RemindersPage() {
   const queryClient = useQueryClient();
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
-  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+  const [_selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
 
   const {
     data: reminders = [],
@@ -143,9 +143,7 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                          {reminder.status}
-                        </Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
@@ -188,9 +186,7 @@ export default function RemindersPage() {
         <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
-            <DialogDescription>
-              {editReminder ? "Edit the reminder." : "Add a new reminder."}
-            </DialogDescription>
+            <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
           </DialogHeader>
           <ReminderEditForm
             reminder={editReminder}

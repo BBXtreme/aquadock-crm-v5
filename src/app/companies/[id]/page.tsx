@@ -309,7 +309,7 @@ export default function CompanyDetailPage() {
     },
   });
 
-  const handleSubmit = async (values: {
+  const _handleSubmit = async (values: {
     title: string;
     activity_type: "email" | "note" | "reminder" | "call" | "meeting" | "other";
     user_name: string;
@@ -320,11 +320,11 @@ export default function CompanyDetailPage() {
     await createTimelineMutation.mutateAsync(values);
   };
 
-  const handleUpdate = async (id: string, data: Parameters<typeof updateTimelineEntry>[1]) => {
+  const _handleUpdate = async (id: string, data: Parameters<typeof updateTimelineEntry>[1]) => {
     await updateMutation.mutateAsync({ id, data });
   };
 
-  const handleDelete = async (id: string) => {
+  const _handleDelete = async (id: string) => {
     await deleteTimelineMutation.mutateAsync(id);
   };
 
