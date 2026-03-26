@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import { updateContact } from "@/lib/supabase/services/contacts";
-import { Database } from "@/lib/supabase/database.types";
+import type { Database } from "@/lib/supabase/database.types";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
