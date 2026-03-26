@@ -55,7 +55,7 @@ export default function TimelinePage() {
         .select("id, firmenname, kundentyp")
         .order("firmenname", { ascending: true });
       if (error) throw error;
-      return data as Company[];
+      return data ?? [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -161,10 +161,10 @@ export default function TimelinePage() {
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
     },
-    onMutate: async (id) => {
+    onMutate: async (id: string) => {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
       const previous = queryClient.getQueryData<TimelineEntryWithJoins[]>(["timeline"]);
-      queryClient.setQueryData(["timeline"], (old: TimelineEntryWithJoins[] = []) => old.filter((e: TimelineEntryWithJoins) => e.id !== id));
+      queryClient.setQueryData(["timeline"], (old: TimelineEntryWithJoins[] = []) => old.filter((e) => e.id !== id));
       return { previous };
     },
     onError: (_err, _id, context) => {
@@ -283,7 +283,7 @@ export default function TimelinePage() {
             </DialogHeader>
             <TimelineEntryForm
               onSubmit={async (values) => {
-                if (editEntry) {
+                if (editEntry?.id) {
                   await updateMutation.mutateAsync({ id: editEntry.id, values });
                 } else {
                   await createMutation.mutateAsync(values);
@@ -340,7 +340,9 @@ export default function TimelinePage() {
                             </Link>
                           </div>
                         )}
-                        <span>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</span>
+                        <span>
+                          {entry.created_at && formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                        </span>
                         <span>by {entry.user_name || "Unknown"}</span>
                       </div>
                     </div>
