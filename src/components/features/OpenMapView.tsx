@@ -1,7 +1,6 @@
 "use client";
 
 import L from "leaflet";
-import type MarkerCluster from "leaflet.markercluster";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -169,13 +168,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     fetchOsmPois(bounds)
       .then((result) => {
-        const pois: OsmPoi[] = result.pois || [];
+        const pois: OsmPoi[] = (result.pois || []) as OsmPoi[];
         poiCache.current.set(key, { pois, timestamp: now });
 
         // Limit cache size
         if (poiCache.current.size > 15) {
           const firstKey = poiCache.current.keys().next().value;
-          poiCache.current.delete(firstKey);
+          if (firstKey) {
+            poiCache.current.delete(firstKey);
+          }
         }
 
         // Debounced save to localStorage
@@ -281,7 +282,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           maxClusterRadius={100}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
-          iconCreateFunction={(cluster: MarkerCluster) => {
+          iconCreateFunction={(cluster: any) => {
             const count = cluster.getChildCount();
             return L.divIcon({
               html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
@@ -306,7 +307,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
               const lat = poi.lat || poi.center?.lat;
               const lon = poi.lon || poi.center?.lon;
               return (
-                <Marker key={`${poi.type}-${poi.id}`} position={[lat, lon]} icon={getOsmPoiIcon(isDarkMode)}>
+                <Marker key={`${poi.type}-${poi.id}`} position={[lat as number, lon as number]} icon={getOsmPoiIcon(isDarkMode)}>
                   <Popup>
                     <OsmPoiMarkerPopup
                       poi={poi}
@@ -361,7 +362,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
               setLoadingOsm(true);
               try {
                 const result = await fetchOsmPois(mapRef.current.getBounds());
-                setOsmPois(result.pois || []);
+                setOsmPois((result.pois || []) as OsmPoi[]);
               } catch (e) {
                 console.error(e);
               } finally {

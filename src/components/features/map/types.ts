@@ -12,7 +12,7 @@ export type MapCompany = CompanyForOpenMap;
 
 export interface OsmPoi {
   id: number | string;
-  type: "node" | "way" | "relation";
+  type: string; // Changed from union to string to match fetchOsmPois return type
   lat?: number;
   lon?: number;
   center?: { lat: number; lon: number };
