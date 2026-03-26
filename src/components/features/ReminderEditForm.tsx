@@ -71,11 +71,6 @@ export default function ReminderEditForm({
     },
   });
 
-  // Now the early return
-  if (!reminder) {
-    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
-  }
-
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
@@ -85,6 +80,11 @@ export default function ReminderEditForm({
       return data;
     },
   });
+
+  // Now the early return
+  if (!reminder) {
+    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
+  }
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
