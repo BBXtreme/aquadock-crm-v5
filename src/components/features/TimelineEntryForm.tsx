@@ -56,7 +56,7 @@ export default function TimelineEntryForm({
   isSubmitting,
   companies,
   contacts,
-  editEntry,
+  _editEntry,
   onCancel,
   preselectedCompanyId,
   defaultValues,
