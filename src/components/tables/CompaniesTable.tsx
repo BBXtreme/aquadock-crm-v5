@@ -59,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns = [
+  const columns: ColumnDef<CompanyWithContacts>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -77,7 +77,7 @@ export default function CompaniesTable({
         />
       ),
       enableSorting: false,
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("firmenname", {
       id: "firmenname",
       header: "Firmenname",
@@ -86,11 +86,11 @@ export default function CompaniesTable({
           {safeDisplay(info.getValue() as string)}
         </Link>
       ),
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("kundentyp", {
       header: "Kundentyp",
       cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue() as string)}</Badge>,
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("status", {
       header: "Status",
       cell: (info) => {
@@ -108,7 +108,7 @@ export default function CompaniesTable({
           </Badge>
         );
       },
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("contacts", {
       id: "hauptkontakt",
       header: "Hauptkontakt",
@@ -124,7 +124,7 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("contacts", {
       id: "kontaktanzahl",
       header: "Kontakte",
@@ -140,11 +140,11 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("value", {
       header: "Value",
       cell: (info) => formatCurrency(info.getValue() as number | null),
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("stadt", {
       id: "ort",
       header: "Ort",
@@ -154,31 +154,32 @@ export default function CompaniesTable({
         const stadt = row.stadt || "";
         return `${plz}${stadt}` || "—";
       },
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("land", {
       header: "Land",
       cell: (info) => safeDisplay(info.getValue() as string),
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.accessor("created_at", {
       header: "Created",
       cell: (info) => formatDateDistance(info.getValue() as string | null),
-    }),
+    }) as ColumnDef<CompanyWithContacts>,
     columnHelper.display({
       id: "actions",
       header: "Actions",
       cell: (info) => (
         <div className="flex space-x-2">
           <Link href={`/companies/${info.row.original.id}`}>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" type="button">
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
+          <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            type="button"
             onClick={() => {
               if (confirm("Are you sure you want to delete this company?")) {
                 try {
@@ -195,8 +196,8 @@ export default function CompaniesTable({
         </div>
       ),
       enableSorting: false,
-    }),
-  ] satisfies ColumnDef<CompanyWithContacts>[];
+    }) as ColumnDef<CompanyWithContacts>,
+  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
@@ -293,7 +294,7 @@ export default function CompaniesTable({
           </select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Download className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -308,7 +309,7 @@ export default function CompaniesTable({
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Upload className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -319,7 +320,7 @@ export default function CompaniesTable({
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -398,12 +399,13 @@ export default function CompaniesTable({
           <Button
             variant="outline"
             size="sm"
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             Previous
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>

@@ -56,7 +56,7 @@ export const reminderColumns = (
         />
       ),
       enableSorting: false,
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("title", {
       header: "Title",
       cell: (info) => (
@@ -64,7 +64,7 @@ export const reminderColumns = (
           {String((info.getValue() as string) ?? "")}
         </button>
       ),
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.display({
       id: "company",
       header: "Company",
@@ -78,7 +78,7 @@ export const reminderColumns = (
           </Link>
         );
       },
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("due_date", {
       header: "Due Date",
       cell: (info) => {
@@ -93,7 +93,7 @@ export const reminderColumns = (
           </span>
         );
       },
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("priority", {
       header: "Priority",
       cell: (info) => (
@@ -109,7 +109,7 @@ export const reminderColumns = (
           {String((info.getValue() as string | null) ?? "")}
         </Badge>
       ),
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("status", {
       header: "Status",
       cell: (info) => (
@@ -121,35 +121,35 @@ export const reminderColumns = (
           {String((info.getValue() as string | null) ?? "")}
         </Badge>
       ),
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("assigned_to", {
       header: "Assigned To",
       cell: (info) => String((info.getValue() as string | null) ?? ""),
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.accessor("notes", {
       id: "notes",
       header: "Notes",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ReminderWithCompany>,
     columnHelper.display({
       id: "actions",
       header: "Actions",
       cell: (info) => (
         <div className="flex space-x-2">
-          <Button variant="ghost" size="sm" onClick={() => handleView(info.row.original)}>
+          <Button variant="ghost" size="sm" type="button" onClick={() => handleView(info.row.original)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(info.row.original)}>
+          <Button variant="ghost" size="sm" type="button" onClick={() => handleEdit(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(info.row.original.id)}>
+          <Button variant="ghost" size="sm" type="button" onClick={() => handleDelete(info.row.original.id)}>
             <Trash className="h-4 w-4" />
           </Button>
         </div>
       ),
       enableSorting: false,
-    }),
-  ] satisfies ColumnDef<ReminderWithCompany>[];
+    }) as ColumnDef<ReminderWithCompany>,
+  ];
 
 interface RemindersTableProps {
   reminders: ReminderWithCompany[];
@@ -173,7 +173,7 @@ export default function RemindersTable({
 
   const columns = reminderColumns(handleEdit, handleView, handleDelete);
 
-  const table = useReactTable({
+  const table = useReactTable<ReminderWithCompany>({
     data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
@@ -226,13 +226,13 @@ export default function RemindersTable({
             </SelectContent>
           </Select>
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <Button variant="destructive" size="sm">
+            <Button variant="destructive" size="sm" type="button">
               Delete Selected
             </Button>
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -311,12 +311,13 @@ export default function RemindersTable({
           <Button
             variant="outline"
             size="sm"
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             Previous
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>

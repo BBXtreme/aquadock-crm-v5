@@ -49,7 +49,7 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns = [
+  const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -67,12 +67,12 @@ export default function ContactsTable({
         />
       ),
       enableSorting: false,
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("vorname", {
       id: "vorname",
       header: "Vorname",
       cell: (info) => info.getValue() as string,
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("nachname", {
       id: "nachname",
       header: "Nachname",
@@ -81,22 +81,22 @@ export default function ContactsTable({
           {info.getValue() as string}
         </Link>
       ),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("is_primary", {
       id: "is_primary",
       header: "Primary",
       cell: (info) => ((info.getValue() as boolean) ? <Badge variant="secondary">Primary</Badge> : "—"),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("position", {
       id: "position",
       header: "Position",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "company",
       header: "Firma",
@@ -109,48 +109,49 @@ export default function ContactsTable({
           </Link>
         );
       },
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("email", {
       id: "email",
       header: "Email",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("telefon", {
       id: "telefon",
       header: "Telefon",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("mobil", {
       id: "mobil",
       header: "Mobil",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("durchwahl", {
       id: "durchwahl",
       header: "Durchwahl",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("notes", {
       id: "notes",
       header: "Notes",
       cell: (info) => (info.getValue() as string | null) || "—",
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "actions",
       header: "Actions",
       cell: (info) => (
         <div className="flex space-x-2">
           <Link href={`/contacts/${info.row.original.id}`}>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" type="button">
               <Eye className="h-4 w-4" />
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" onClick={() => onEdit?.(info.row.original)}>
+          <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            type="button"
             onClick={() => {
               if (confirm("Are you sure you want to delete this contact?")) {
                 try {
@@ -167,8 +168,8 @@ export default function ContactsTable({
         </div>
       ),
       enableSorting: false,
-    }),
-  ] satisfies ColumnDef<ContactWithCompany>[];
+    }) as ColumnDef<ContactWithCompany>,
+  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
@@ -262,7 +263,7 @@ export default function ContactsTable({
           </select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Download className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -277,7 +278,7 @@ export default function ContactsTable({
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Upload className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -288,7 +289,7 @@ export default function ContactsTable({
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" type="button">
                 <Columns className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -366,12 +367,13 @@ export default function ContactsTable({
           <Button
             variant="outline"
             size="sm"
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             Previous
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button variant="outline" size="sm" type="button" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </Button>
         </div>
