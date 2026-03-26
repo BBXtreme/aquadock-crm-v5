@@ -143,7 +143,7 @@ export default function CompaniesPage() {
       const supabase = createClient();
       const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
       if (error) throw error;
-      return data as any[];
+      return data as Company[];
     },
     staleTime: 5 * 60 * 1000,
   });

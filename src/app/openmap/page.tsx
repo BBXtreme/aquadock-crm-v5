@@ -9,9 +9,9 @@ export default async function OpenMapPage() {
     companies = await getCompaniesForOpenMap("");
 
     console.log(`[OpenMap Page] Successfully loaded ${companies.length} companies with geo data`);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[OpenMap Page] Failed to load companies:", err);
-    error = err.message || "Could not load map data. Please try refreshing the page.";
+    error = err instanceof Error ? err.message : "Could not load map data. Please try refreshing the page.";
   }
 
   return (

@@ -34,8 +34,6 @@ const contactSchema = z.object({
   is_primary: z.boolean().optional(),
 });
 
-type ContactFormValues = z.infer<typeof contactSchema>;
-
 const _anredeOptions = [
   { value: "Herr", label: "Herr" },
   { value: "Frau", label: "Frau" },

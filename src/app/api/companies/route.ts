@@ -56,12 +56,12 @@ export async function POST(request: Request) {
       id: data.id,
       data,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[API POST /companies] Unexpected error:", err);
     return NextResponse.json(
       {
         success: false,
-        error: err.message || "Interner Serverfehler",
+        error: err instanceof Error ? err.message : "Interner Serverfehler",
       },
       { status: 500 },
     );

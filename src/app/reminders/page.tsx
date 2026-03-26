@@ -34,7 +34,7 @@ export default function RemindersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedReminder, setSelectedReminder] = useState<any>(null);
+  const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
   const [_columnVisibility, _setColumnVisibility] = useState({});
   const [filterType, setFilterType] = useState<"all" | "open" | "overdue">("all");
 
@@ -75,7 +75,7 @@ export default function RemindersPage() {
     [deleteMutation],
   );
 
-  const handleView = useCallback((reminder: any) => {
+  const handleView = useCallback((reminder: Reminder) => {
     setSelectedReminder(reminder);
     setIsViewOpen(true);
   }, []);

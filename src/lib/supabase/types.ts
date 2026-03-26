@@ -69,7 +69,7 @@ export interface Database {
           event_type: string;
           title: string;
           description: string | null;
-          metadata: Record<string, any> | null;
+          metadata: Record<string, unknown> | null;
           created_at: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["timeline"]["Row"]>;

@@ -35,7 +35,7 @@ export async function fetchOsmPois(
   bounds: L.LatLngBounds,
   activeCategories: string[] = Object.keys(poiCategories),
   retryCount = 0,
-): Promise<{ pois: any[]; totalFound: number; query: string }> {
+): Promise<{ pois: OsmPoi[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
   return new Promise((resolve, reject) => {
@@ -115,7 +115,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
             if (res.ok) {
               const data = await res.json();
-              const deduplicated = (data.elements || []).filter((poi: any) => {
+              const deduplicated = (data.elements || []).filter((poi: OsmPoi) => {
                 const key = `${poi.type}/${poi.id}`;
                 if (seen.has(key)) return false;
                 seen.add(key);
@@ -139,8 +139,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
               console.warn(`[OpenMap OSM] ${endpoint} error ${res.status}`);
               break;
             }
-          } catch (err: any) {
-            if (err.name === "AbortError") {
+          } catch (err: unknown) {
+            if (err instanceof Error && err.name === "AbortError") {
               console.warn(`[OpenMap OSM] ${endpoint} timeout`);
               break;
             }

@@ -124,8 +124,9 @@ export default function DashboardPage() {
                       <LabelList
                         position="right"
                         offset={20}
-                        formatter={(value: number, entry: any) => {
-                          const name = entry?.payload?.name ?? "Stage";
+                        formatter={(value: number, entry: unknown) => {
+                          const payload = entry as { payload?: { name?: string } };
+                          const name = payload?.payload?.name ?? "Stage";
                           const percent = Math.round((value / (funnelData[0]?.value || 1)) * 100);
                           return `${name} ${percent}%`;
                         }}
