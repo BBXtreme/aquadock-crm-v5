@@ -13,8 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
-import { updateContact } from "@/lib/supabase/services/contacts";
 import type { Database } from "@/lib/supabase/database.types";
+import { updateContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -39,7 +39,13 @@ const anredeOptions = [
   { value: "Prof.", label: "Prof." },
 ];
 
-export default function ContactEditForm({ contact, onSuccess }: { contact: Database["public"]["Tables"]["contacts"]["Row"]; onSuccess?: () => void }) {
+export default function ContactEditForm({
+  contact,
+  onSuccess,
+}: {
+  contact: Database["public"]["Tables"]["contacts"]["Row"];
+  onSuccess?: () => void;
+}) {
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
