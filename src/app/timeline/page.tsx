@@ -92,7 +92,7 @@ export default function TimelinePage() {
   // }, [error, router]);
 
   const createMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: { title: string; content?: string; company_id: string; activity_type?: string }) => {
       const payload = {
         title: values.title.trim() || "Untitled entry",
         content: values.content?.trim() || null,
@@ -149,7 +149,7 @@ export default function TimelinePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: any }) => {
+    mutationFn: async ({ id, values }: { id: string; values: { title: string; content?: string; company_id: string; activity_type?: string } }) => {
       const res = await fetch(`/api/timeline/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
