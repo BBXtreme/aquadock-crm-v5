@@ -58,10 +58,11 @@ export async function POST(request: NextRequest) {
       message: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
-      code: error && typeof error === 'object' && 'code' in error ? (error as { code: unknown }).code : undefined,
-      details: error && typeof error === 'object' && 'details' in error ? (error as { details: unknown }).details : undefined,
-      hint: error && typeof error === 'object' && 'hint' in error ? (error as { hint: unknown }).hint : undefined,
-      cause: error && typeof error === 'object' && 'cause' in error ? (error as { cause: unknown }).cause : undefined,
+      code: error && typeof error === "object" && "code" in error ? (error as { code: unknown }).code : undefined,
+      details:
+        error && typeof error === "object" && "details" in error ? (error as { details: unknown }).details : undefined,
+      hint: error && typeof error === "object" && "hint" in error ? (error as { hint: unknown }).hint : undefined,
+      cause: error && typeof error === "object" && "cause" in error ? (error as { cause: unknown }).cause : undefined,
       bodyReceived: body || "not parsed",
     };
 
