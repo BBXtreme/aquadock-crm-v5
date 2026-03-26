@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Building, Edit, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -22,8 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import type { Contact } from "@/lib/supabase/database.types";
+import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";
 
 const contactSchema = z.object({
@@ -68,7 +68,7 @@ export default function ContactDetailPage() {
       const supabase = createClient();
       const { data, error } = await supabase.from("companies").select("id, firmenname");
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
@@ -88,7 +88,20 @@ export default function ContactDetailPage() {
         .eq("id", id)
         .single();
       if (error) throw error;
-      return data as Contact;
+      return data as Contact & {
+        companies?: {
+          id: string;
+          firmenname: string;
+          kundentyp?: string;
+          status?: string;
+          value?: number;
+          stadt?: string;
+          land?: string;
+          osm?: string;
+          wasserdistanz?: number;
+          wassertyp?: string;
+        };
+      };
     },
     enabled: !!id,
   });
@@ -194,15 +207,16 @@ export default function ContactDetailPage() {
         <div className="flex items-center gap-2">
           <Checkbox
             id="primary-contact"
-            checked={contact.is_primary}
-            onCheckedChange={(checked) => {
+            checked={contact.is_primary || false}
+            onCheckedChange={async (checked) => {
               const supabase = createClient();
-              updateContact(contact.id, { is_primary: !!checked }, supabase)
-                .then(() => {
-                  toast.success("Primary contact updated");
-                  queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                })
-                .catch((err) => toast.error("Update failed", { description: (err as Error).message }));
+              try {
+                await updateContact(contact.id, { is_primary: !!checked }, supabase);
+                toast.success("Primary contact updated");
+                queryClient.invalidateQueries({ queryKey: ["contact", id] });
+              } catch (err) {
+                toast.error("Update failed", { description: (err as Error).message });
+              }
             }}
           />
           <label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">
@@ -311,7 +325,7 @@ export default function ContactDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Linked Company */}
+      {/* Linked Company - Safe optional chaining */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -406,14 +420,14 @@ export default function ContactDetailPage() {
         </WideDialogContent>
       </Dialog>
 
-      {/* Edit Company Dialog */}
+      {/* Edit Company Dialog - Fixed: pass null-safe company */}
       <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
         <WideDialogContent size="2xl">
           <DialogHeader>
             <DialogTitle>Edit Company</DialogTitle>
           </DialogHeader>
           <CompanyEditForm
-            company={contact.companies}
+            company={contact.companies || null}
             onSuccess={() => {
               setEditCompanyDialog(false);
               queryClient.invalidateQueries({ queryKey: ["contact", id] });
@@ -434,9 +448,7 @@ export default function ContactDetailPage() {
               try {
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
                 toast.success("Company updated");
-                await queryClient.invalidateQueries({
-                  queryKey: ["contact", id],
-                });
+                await queryClient.invalidateQueries({ queryKey: ["contact", id] });
                 setChangeCompanyDialog(false);
               } catch (err) {
                 toast.error("Update failed", {
