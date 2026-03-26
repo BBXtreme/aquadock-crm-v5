@@ -120,37 +120,11 @@ const wassertypOptions = [
   { value: "Stausee", label: "Stausee" },
 ];
 
-export default function CompanyEditForm({ company, onSuccess }: { company: Company; onSuccess?: () => void }) {
+export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
-  const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema),
-    defaultValues: {
-      firmenname: company.firmenname ?? "",
-      rechtsform: company.rechtsform ?? "",
-      kundentyp: company.kundentyp ?? "",
-      firmentyp: company.firmentyp ?? "",
-      strasse: company.strasse ?? "",
-      plz: company.plz ?? "",
-      stadt: company.stadt ?? "",
-      bundesland: company.bundesland ?? "",
-      land: company.land ?? "Deutschland",
-      website: company.website ?? "",
-      telefon: company.telefon ?? "",
-      email: company.email ?? "",
-      wasserdistanz: company.wasserdistanz ?? 0,
-      wassertyp: company.wassertyp ?? "",
-      lat: company.lat ?? 0,
-      lon: company.lon ?? 0,
-      osm: company.osm ?? "",
-      status: company.status ?? "lead",
-      value: company.value ?? 0,
-      notes: company.notes ?? "",
-    },
-  });
-
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormValues) => updateCompany(company.id, data as Partial<Company>),
+    mutationFn: (data: any) => updateCompany(company!.id, data as Partial<Company>),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated successfully");
@@ -160,6 +134,34 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       toast.error("Failed to update company", { description: error.message });
     },
   });
+
+  const form = useForm({
+    resolver: zodResolver(companySchema),
+    defaultValues: () => ({
+      firmenname: company?.firmenname ?? "",
+      rechtsform: company?.rechtsform ?? "",
+      kundentyp: company?.kundentyp ?? "",
+      firmentyp: company?.firmentyp ?? "",
+      strasse: company?.strasse ?? "",
+      plz: company?.plz ?? "",
+      stadt: company?.stadt ?? "",
+      bundesland: company?.bundesland ?? "",
+      land: company?.land ?? "Deutschland",
+      website: company?.website ?? "",
+      telefon: company?.telefon ?? "",
+      email: company?.email ?? "",
+      wasserdistanz: company?.wasserdistanz ?? 0,
+      wassertyp: company?.wassertyp ?? "",
+      lat: company?.lat ?? 0,
+      lon: company?.lon ?? 0,
+      osm: company?.osm ?? "",
+      status: company?.status ?? "lead",
+      value: company?.value ?? 0,
+      notes: company?.notes ?? "",
+    }),
+  });
+
+  if (!company) return null;
 
   const onSubmit = form.handleSubmit((data) => {
     updateMutation.mutate(data);
