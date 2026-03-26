@@ -195,6 +195,16 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* OpenMap Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle>OpenMap Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>OpenMap configuration options will be added here.</p>
+        </CardContent>
+      </Card>
+
       {/* Other Settings */}
       {Object.entries(tagGroups).map(([group, values]) => (
         <Card key={group}>
