@@ -63,7 +63,7 @@ export default function SettingsPage() {
   const tagGroups: Record<string, string[]> = {};
   for (const [key, value] of Object.entries(settings)) {
     const groupKey = key.split("_")[0];
-    if (!tagGroups[groupKey]) tagGroups[groupKey] = [];
+    tagGroups[groupKey] = tagGroups[groupKey] || [];
     tagGroups[groupKey].push(value);
   }
 
@@ -196,25 +196,20 @@ export default function SettingsPage() {
       </Card>
 
       {/* Other Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Other Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Object.entries(tagGroups).map(([group, values]) => (
-              <div key={group}>
-                <h3 className="font-semibold capitalize">{group}</h3>
-                <ul className="list-disc list-inside">
-                  {values.map((value, index) => (
-                    <li key={index}>{value}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {Object.entries(tagGroups).map(([group, values]) => (
+        <Card key={group}>
+          <CardHeader>
+            <CardTitle>{group.charAt(0).toUpperCase() + group.slice(1)} Settings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside">
+              {values.map((value, index) => (
+                <li key={index}>{value}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
