@@ -55,7 +55,7 @@ export default function TimelinePage() {
         .select("id, firmenname, kundentyp")
         .order("firmenname", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return data as Company[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -164,7 +164,7 @@ export default function TimelinePage() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["timeline"] });
       const previous = queryClient.getQueryData<TimelineEntryWithJoins[]>(["timeline"]);
-      queryClient.setQueryData(["timeline"], (old = []) => old.filter((e) => e.id !== id));
+      queryClient.setQueryData(["timeline"], (old: TimelineEntryWithJoins[] = []) => old.filter((e: TimelineEntryWithJoins) => e.id !== id));
       return { previous };
     },
     onError: (_err, _id, context) => {
@@ -340,7 +340,7 @@ export default function TimelinePage() {
                             </Link>
                           </div>
                         )}
-                        <span>{formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}</span>
+                        <span>{entry.created_at ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true }) : "—"}</span>
                         <span>by {entry.user_name || "Unknown"}</span>
                       </div>
                     </div>
