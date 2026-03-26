@@ -31,15 +31,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
+type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
+
 interface ContactsTableProps {
-  contacts: Contact[];
-  onEdit?: (contact: Contact) => void;
+  contacts: ContactWithCompany[];
+  onEdit?: (contact: ContactWithCompany) => void;
   onDelete?: (id: string) => void;
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
 }
 
-const columnHelper = createColumnHelper<Contact>();
+const columnHelper = createColumnHelper<ContactWithCompany>();
 
 export default function ContactsTable({
   contacts,
@@ -55,7 +57,7 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<Contact>[] = [
+  const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -101,9 +103,9 @@ export default function ContactsTable({
     columnHelper.accessor("position", {
       id: "position",
       header: "Position",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => (info.getValue() as string | null) || "—",
     }),
-    columnHelper.accessor("companies.firmenname", {
+    columnHelper.display({
       id: "company",
       header: "Firma",
       cell: (info) => {
@@ -177,7 +179,7 @@ export default function ContactsTable({
   ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable<Contact>({
+  const table = useReactTable<ContactWithCompany>({
     data: contacts,
     columns,
     getCoreRowModel: getCoreRowModel(),
