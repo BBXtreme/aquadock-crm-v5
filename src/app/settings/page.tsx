@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Settings, Shield, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -77,12 +77,12 @@ export default function SettingsPage() {
   const [testRecipient, setTestRecipient] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const defaultOverpassEndpoints = [
+  const defaultOverpassEndpoints = useMemo(() => [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
     "https://overpass.osm.ch/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  ];
+  ], []);
 
   const [openMapSettings, setOpenMapSettings] = useState({
     overpassEndpoints: defaultOverpassEndpoints,
