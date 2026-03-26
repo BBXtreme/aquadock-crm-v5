@@ -33,7 +33,7 @@ export async function createContact(contact: ContactInsert, client: SupabaseClie
 /**
  * Update a contact
  */
-export async function updateContact(id: string, updates: ContactUpdate, client: SupabaseClient): Promise<Contact> {
+export async function updateContact(id: string, updates: Partial<Contact>, client: SupabaseClient): Promise<Contact> {
   const { data, error } = await client.from("contacts").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateContact");
   return data as Contact;

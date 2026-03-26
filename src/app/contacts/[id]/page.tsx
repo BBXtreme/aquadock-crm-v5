@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
-import type { Contact } from "@/lib/supabase/types";
+import type { Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 
 const contactSchema = z.object({
@@ -99,6 +99,12 @@ export default function ContactDetailPage() {
       setEditDialog(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (contact) {
+      setNotesValue(contact.notes || "");
+    }
+  }, [contact]);
 
   const handleDeleteContact = async () => {
     if (confirm("Are you sure you want to delete this contact?")) {
@@ -196,7 +202,7 @@ export default function ContactDetailPage() {
                   toast.success("Primary contact updated");
                   queryClient.invalidateQueries({ queryKey: ["contact", id] });
                 })
-                .catch((err) => toast.error("Update failed", { description: err.message }));
+                .catch((err) => toast.error("Update failed", { description: (err as Error).message }));
             }}
           />
           <label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">

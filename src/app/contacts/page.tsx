@@ -68,7 +68,7 @@ export default function ContactsPage() {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: err.message }),
+    onError: (err) => toast.error("Deletion failed", { description: (err as Error).message }),
   });
 
   const _handleBulkDelete = useCallback(async () => {
@@ -81,7 +81,7 @@ export default function ContactsPage() {
       toast.success(`${selectedIds.length} contacts deleted`);
       setRowSelection({});
     } catch (error) {
-      toast.error("Bulk delete failed", { description: error.message });
+      toast.error("Bulk delete failed", { description: (error as Error).message });
     }
   }, [rowSelection, queryClient]);
 
@@ -120,7 +120,7 @@ export default function ContactsPage() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription className="flex items-center justify-between gap-4">
-            <span>{error.message}</span>
+            <span>{(error as Error).message}</span>
             <Button onClick={() => window.location.reload()} variant="outline" size="sm">
               Retry
             </Button>
