@@ -121,7 +121,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyFormValues>({
-    resolver: zodResolver(companySchema as any),
+    resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: "",
       rechtsform: "",
