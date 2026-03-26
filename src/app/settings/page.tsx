@@ -41,9 +41,14 @@ const generateSampleQuery = () => {
   for (const category of Object.values(poiCategories)) {
     for (const tag of category.tags) {
       if (tag.includes("=")) {
-        const [key, value] = tag.split("=");
-        if (!tagGroups[key]) tagGroups[key] = [];
-        tagGroups[key].push(value);
+        const parts = tag.split("=");
+        if (parts.length === 2) {
+          const [key, value] = parts;
+          if (key && value) {
+            if (!tagGroups[key]) tagGroups[key] = [];
+            tagGroups[key].push(value);
+          }
+        }
       } else {
         // assume amenity
         if (!tagGroups.amenity) tagGroups.amenity = [];
@@ -193,10 +198,12 @@ export default function SettingsPage() {
     const groups: Record<string, string[]> = {};
     for (const [key, value] of Object.entries(settings)) {
       const groupKey = key.split("_")[0];
-      if (!groups[groupKey]) {
-        groups[groupKey] = [];
+      if (groupKey) {
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+        groups[groupKey].push(String(value));
       }
-      groups[groupKey].push(String(value));
     }
     return groups;
   }, [settings]);

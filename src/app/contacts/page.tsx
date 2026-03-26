@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";
+import type { Contact } from "@/lib/supabase/database.types";
 
 const _contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -45,7 +46,7 @@ export default function ContactsPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
-  const [editContact, setEditContact] = useState(null);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -84,7 +85,7 @@ export default function ContactsPage() {
     }
   }, [rowSelection, queryClient]);
 
-  const handleEdit = useCallback((contact) => {
+  const handleEdit = useCallback((contact: Contact | null) => {
     if (contact) {
       setEditContact(contact);
     }
