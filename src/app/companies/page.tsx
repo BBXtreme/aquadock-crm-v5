@@ -37,11 +37,13 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company } from "@/lib/supabase/database.types";
+import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
+
+type CompanyWithContacts = Company & { contacts?: Contact[] };
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
@@ -136,18 +138,33 @@ export default function CompaniesPage() {
     }));
   };
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+  });
+
   const {
     data: companies = [],
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies"],
+    queryKey: ["companies", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*, contacts!company_id(*)")
+        .eq("user_id", user.id);
       if (error) throw error;
-      return data as Company[];
+      return data as CompanyWithContacts[];
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 
