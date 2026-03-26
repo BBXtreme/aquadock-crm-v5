@@ -707,12 +707,12 @@ export default function CompanyDetailPage() {
               <div>
                 <div className="text-sm font-medium text-gray-700">Value</div>
                 <p className="text-sm text-gray-900">
-                  {company.value ? `€${company.value.toLocaleString("de-DE")}` : "—"}
+                  {(company as any).value ? `€${(company as any).value.toLocaleString("de-DE")}` : "—"}
                 </p>
               </div>
               <div className="lg:col-span-2">
                 <div className="text-sm font-medium text-gray-700">Notes</div>
-                <p className="text-sm text-gray-900">{company.notes || "—"}</p>
+                <p className="text-sm text-gray-900">{(company as any).notes || "—"}</p>
               </div>
             </div>
           </CardContent>
