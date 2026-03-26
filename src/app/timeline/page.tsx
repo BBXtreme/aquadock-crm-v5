@@ -149,7 +149,13 @@ export default function TimelinePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: { title: string; content?: string; company_id: string; activity_type?: string } }) => {
+    mutationFn: async ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: { title: string; content?: string; company_id: string; activity_type?: string };
+    }) => {
       const res = await fetch(`/api/timeline/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
