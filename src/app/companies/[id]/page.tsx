@@ -1110,7 +1110,10 @@ export default function CompanyDetailPage() {
           <TimelineEntryForm
             onSubmit={async (values) => {
               if (editEntry?.id) {
-                await updateMutation.mutateAsync({ id: editEntry.id, values });
+                await updateMutation.mutateAsync({
+                  id: editEntry.id,
+                  values: { ...values, company_id: values.company_id || editEntry?.company_id || "" },
+                });
               } else {
                 await createTimelineMutation.mutateAsync(values);
               }
