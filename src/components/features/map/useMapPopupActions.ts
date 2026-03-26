@@ -112,7 +112,7 @@ export function useMapPopupActions() {
       if (!isDevelopment) {
         const userRes = await fetch("/api/auth/user");
         if (!userRes.ok) throw new Error("Authentication required");
-        const { userId: fetchedUserId } = await userRes.json();
+        const { userId: fetchedUserId } = userRes.json();
         userId = fetchedUserId;
       }
 
