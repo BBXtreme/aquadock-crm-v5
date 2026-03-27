@@ -6,48 +6,22 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/browser";
+import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
+import { determineWassertyp } from "@/lib/constants/wassertyp";
 
 import type { OsmPoi } from "./types";
 
 async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
 
-  const kundentypMap: Record<string, string> = {
-    restaurant: "restaurant",
-    cafe: "restaurant",
-    bar: "restaurant",
-    pub: "restaurant",
-    fast_food: "restaurant",
-    hotel: "hotel",
-    hostel: "hotel",
-    motel: "hotel",
-    guest_house: "hotel",
-    camp_site: "camping",
-    caravan_site: "camping",
-    marina: "marina",
-    harbor: "marina",
-    fuel: "tankstelle",
-    charging_station: "tankstelle",
-    supermarket: "supermarkt",
-    shop: "shop",
-    bakery: "bäckerei",
-    pharmacy: "apotheke",
-    bank: "bank",
-    atm: "bank",
-  };
-
-  let kundentyp = "sonstige";
-  const amenity = (poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "").toLowerCase();
-  for (const [key, value] of Object.entries(kundentypMap)) {
-    if (amenity.includes(key)) {
-      kundentyp = value;
-      break;
-    }
-  }
+  const kundentyp = determineKundentyp(poi.tags) || "sonstige";
+  const firmentyp = determineFirmentyp(poi.tags);
+  const wassertyp = determineWassertyp(poi.tags) || "";
 
   const formData = {
     firmenname: name,
     kundentyp,
+    firmentyp,
     status: "lead",
     strasse: poi.tags?.["addr:street"] || "",
     plz: poi.tags?.["addr:postcode"] || "",
@@ -60,6 +34,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
     user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
+    wassertyp,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
 

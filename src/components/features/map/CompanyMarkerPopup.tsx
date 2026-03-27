@@ -5,6 +5,7 @@ import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
@@ -12,18 +13,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
-
-  const kundentypEmoji: Record<string, string> = {
-    restaurant: "🍽️",
-    hotel: "🏨",
-    marina: "⚓",
-    camping: "🏕️",
-    bootsverleih: "⛵",
-    segelschule: "⛵",
-    resort: "🌴",
-  };
-
-  const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
 
   // Full address with Straße, PLZ, Stadt, Land
   const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
@@ -61,8 +50,7 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
           style={{ backgroundColor: kundentypColor }}
         >
-          <span>{emoji}</span>
-          <span>{company.kundentyp || "Sonstige"}</span>
+          <span>{getKundentypLabel(company.kundentyp?.toLowerCase() || "sonstige")}</span>
         </div>
 
         {/* Wassertyp Badge */}
@@ -75,7 +63,7 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           </div>
         )}
 
-        {company.firmentyp && <div className="text-xs text-muted-foreground">• {company.firmentyp}</div>}
+        {company.firmentyp && <div className="text-xs text-muted-foreground">• {getFirmentypLabel(company.firmentyp)}</div>}
       </div>
 
       {/* Wasserdistanz */}
