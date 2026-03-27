@@ -72,11 +72,11 @@ export async function fetchOsmPois(
         for (const tag of category.tags) {
           if (tag.includes("=")) {
             const [key, value] = tag.split("=");
-            if (!tagGroups[key]) tagGroups[key] = [];
+            tagGroups[key] = tagGroups[key] || [];
             tagGroups[key].push(value);
           } else {
             // assume amenity
-            if (!tagGroups.amenity) tagGroups.amenity = [];
+            tagGroups.amenity = tagGroups.amenity || [];
             tagGroups.amenity.push(tag);
           }
         }
