@@ -27,7 +27,6 @@ export default function ProfilePage() {
     <AppLayout>
       <div className="container mx-auto space-y-8 p-6 lg:p-8">
         <div>
-          <p className="text-muted-foreground text-sm">{"Home > Profile"}</p>
           <h1 className="font-semibold text-3xl tracking-tight">Profile</h1>
         </div>
 
