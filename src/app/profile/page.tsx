@@ -1,11 +1,8 @@
 "use client";
 
-import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { LogOut, User } from "lucide-react";
 
-import { useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,93 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser";
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [displayName, setDisplayName] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const router = useRouter();
-
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) {
-          setError(error.message);
-        } else if (user) {
-          setUser(user);
-          setDisplayName(user.user_metadata?.display_name || "");
-        } else {
-          setError("No user found");
-        }
-      } catch {
-        setError("Failed to load user data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    getUser();
-  }, []);
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({
-        data: { display_name: displayName },
-      });
-
-      if (error) {
-        setMessage(error.message);
-      } else {
-        setMessage("Profile updated successfully!");
-      }
-    } catch {
-      setMessage("An error occurred");
-    } finally {
-      setLoading(false);
-    }
+  // Dummy user data for mockup
+  const user = {
+    email: "user@example.com",
+    user_metadata: {
+      display_name: "John Doe",
+      avatar_url: "/placeholder-avatar.jpg",
+    },
   };
-
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6 lg:p-8">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container mx-auto p-6 lg:p-8">
-        <Alert>
-          <AlertDescription>No user data available. Please try logging in again.</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
+  const displayName = user.user_metadata?.display_name || "";
 
   return (
     <AppLayout>
@@ -137,7 +58,7 @@ export default function ProfilePage() {
               <CardTitle>Update Profile</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <form className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="displayName">Display Name</Label>
                   <Input
@@ -145,7 +66,7 @@ export default function ProfilePage() {
                     type="text"
                     placeholder="Enter your display name"
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
@@ -153,15 +74,10 @@ export default function ProfilePage() {
                   <Input id="profilePicture" type="file" accept="image/*" disabled />
                   <p className="text-muted-foreground text-sm">Upload functionality placeholder</p>
                 </div>
-                <Button type="submit" className="bg-[#24BACC] text-white hover:bg-[#1da0a8]" disabled={loading}>
-                  {loading ? "Updating..." : "Update Profile"}
+                <Button type="submit" className="bg-[#24BACC] text-white hover:bg-[#1da0a8]" disabled>
+                  Update Profile
                 </Button>
               </form>
-              {message && (
-                <Alert className="mt-4">
-                  <AlertDescription>{message}</AlertDescription>
-                </Alert>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -171,7 +87,7 @@ export default function ProfilePage() {
             <CardTitle>Account Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={handleLogout} variant="destructive" className="flex items-center">
+            <Button variant="destructive" className="flex items-center" disabled>
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </Button>
