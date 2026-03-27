@@ -1,17 +1,44 @@
 "use client";
 import { Calendar, Edit, Plus, Trash } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/lib/supabase/database.types";
 
 interface Props {
-  timeline?: TimelineEntryWithJoins[];
-  onAdd: () => void;
-  onEdit: (entry: TimelineEntryWithJoins) => void;
-  onDelete: (id: string) => void;
+  companyId: string;
 }
 
-export default function TimelineCard({ timeline = [], onAdd, onEdit, onDelete }: Props) {
+export default function TimelineCard({ companyId }: Props) {
+  const { data: timeline = [] } = useQuery({
+    queryKey: ["timeline", companyId],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("timeline")
+        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname,nachname,position)")
+        .eq("company_id", companyId);
+      if (error) throw error;
+      return data as TimelineEntryWithJoins[];
+    },
+  });
+
+  const handleAdd = () => {
+    // TODO: implement add timeline entry
+    console.log("Add timeline entry");
+  };
+
+  const handleEdit = (entry: TimelineEntryWithJoins) => {
+    // TODO: implement edit timeline entry
+    console.log("Edit timeline entry", entry);
+  };
+
+  const handleDelete = (id: string) => {
+    // TODO: implement delete timeline entry
+    console.log("Delete timeline entry", id);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -20,7 +47,7 @@ export default function TimelineCard({ timeline = [], onAdd, onEdit, onDelete }:
             <Calendar className="w-5 h-5" />
             Timeline ({timeline.length})
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={onAdd}>
+          <Button variant="outline" size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             New Timeline
           </Button>
@@ -57,14 +84,14 @@ export default function TimelineCard({ timeline = [], onAdd, onEdit, onDelete }:
                   <td>{entry.user_name || "—"}</td>
                   <td className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(entry)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(entry)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600 hover:text-red-700"
-                        onClick={() => onDelete(entry.id)}
+                        onClick={() => handleDelete(entry.id)}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>

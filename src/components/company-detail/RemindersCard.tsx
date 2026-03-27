@@ -1,18 +1,45 @@
 "use client";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 
 interface Props {
-  reminders?: Database["public"]["Tables"]["reminders"]["Row"][];
-  onAdd: () => void;
-  onEdit: (reminder: any) => void;
-  onDelete: (id: string) => void;
+  companyId: string;
 }
 
-export default function RemindersCard({ reminders = [], onAdd, onEdit, onDelete }: Props) {
+export default function RemindersCard({ companyId }: Props) {
+  const { data: reminders = [] } = useQuery({
+    queryKey: ["reminders", companyId],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("reminders")
+        .select("*")
+        .eq("company_id", companyId);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const handleAdd = () => {
+    // TODO: implement add reminder
+    console.log("Add reminder");
+  };
+
+  const handleEdit = (reminder: any) => {
+    // TODO: implement edit reminder
+    console.log("Edit reminder", reminder);
+  };
+
+  const handleDelete = (id: string) => {
+    // TODO: implement delete reminder
+    console.log("Delete reminder", id);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -21,7 +48,7 @@ export default function RemindersCard({ reminders = [], onAdd, onEdit, onDelete 
             <Bell className="w-5 h-5" />
             Reminders ({reminders.length})
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={onAdd}>
+          <Button variant="outline" size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Add Reminder
           </Button>
@@ -49,7 +76,7 @@ export default function RemindersCard({ reminders = [], onAdd, onEdit, onDelete 
                     <button
                       type="button"
                       className="text-primary hover:underline cursor-pointer"
-                      onClick={() => onEdit(reminder)}
+                      onClick={() => handleEdit(reminder)}
                     >
                       {reminder.title}
                     </button>
@@ -74,14 +101,14 @@ export default function RemindersCard({ reminders = [], onAdd, onEdit, onDelete 
                   <td>{reminder.assigned_to || "—"}</td>
                   <td className="text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(reminder)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(reminder)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-red-600 hover:text-red-700"
-                        onClick={() => onDelete(reminder.id)}
+                        onClick={() => handleDelete(reminder.id)}
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
