@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Company } from "@/lib/supabase/database.types";
+import FirmendatenEditForm from "@/components/features/FirmendatenEditForm";
 
 interface Props {
   company: Company;
@@ -62,11 +63,14 @@ export default function FirmendatenCard({ company }: Props) {
         </CardContent>
       </Card>
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Firmendaten</DialogTitle>
           </DialogHeader>
-          <p>Edit form not implemented yet.</p>
+          <FirmendatenEditForm
+            company={company}
+            onSuccess={() => setEditDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
