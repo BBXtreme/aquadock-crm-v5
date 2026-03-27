@@ -55,13 +55,12 @@ export default function ContactEditForm({
     mutationFn: async (data: ContactFormValues) => {
       if (contact) {
         return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
-      } else {
-        // create
-        const supabase = createClient();
-        const { data: newData, error } = await supabase.from("contacts").insert(data).select().single();
-        if (error) throw error;
-        return newData;
       }
+      // create
+      const supabase = createClient();
+      const { data: newData, error } = await supabase.from("contacts").insert(data).select().single();
+      if (error) throw error;
+      return newData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
@@ -289,7 +288,13 @@ export default function ContactEditForm({
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? (contact ? "Updating..." : "Creating...") : (contact ? "Update Contact" : "Create Contact")}
+          {mutation.isPending
+            ? contact
+              ? "Updating..."
+              : "Creating..."
+            : contact
+              ? "Update Contact"
+              : "Create Contact"}
         </Button>
       </form>
     </Form>

@@ -48,7 +48,13 @@ const firmentypOptions = [
   { value: "einzeln", label: "Einzelbetrieb" },
 ];
 
-export default function FirmendatenEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
+export default function FirmendatenEditForm({
+  company,
+  onSuccess,
+}: {
+  company: Company | null;
+  onSuccess?: () => void;
+}) {
   const queryClient = useQueryClient();
 
   const form = useForm<FirmendatenFormValues>({

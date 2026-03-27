@@ -1,12 +1,11 @@
 "use client";
 import { Building, Edit } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import FirmendatenEditForm from "@/components/features/FirmendatenEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Company } from "@/lib/supabase/database.types";
-import FirmendatenEditForm from "@/components/features/FirmendatenEditForm";
 
 interface Props {
   company: Company;
@@ -19,12 +18,7 @@ export default function FirmendatenCard({ company }: Props) {
     if (!website) return "—";
     const url = website.startsWith("http") ? website : `https://${website}`;
     return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:underline"
-      >
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
         {website}
       </a>
     );
@@ -101,10 +95,7 @@ export default function FirmendatenCard({ company }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Firmendaten</DialogTitle>
           </DialogHeader>
-          <FirmendatenEditForm
-            company={company}
-            onSuccess={() => setEditDialogOpen(false)}
-          />
+          <FirmendatenEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>

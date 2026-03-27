@@ -150,7 +150,12 @@ export default function CompaniesPage() {
       if (error) throw error;
       return data as CompanyWithContacts[];
     },
-    staleTime: 5 * 60 * 1000,
+    // Reliable refresh behavior (exactly like TimelineCard)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    // Keep cache for fast navigation, but always fetch fresh on hard refresh
+    gcTime: 5 * 60 * 1000,
   });
 
   const updateMutation = useMutation({

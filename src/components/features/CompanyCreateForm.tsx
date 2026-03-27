@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
 import { createCompany } from "@/lib/supabase/services/companies";
 
 const companySchema = z.object({
@@ -103,18 +104,6 @@ const landOptions = [
   { value: "Griechenland", label: "Griechenland" },
   { value: "Portugal", label: "Portugal" },
   { value: "Großbritannien", label: "Großbritannien" },
-];
-
-const wassertypOptions = [
-  { value: "Küste / Meer", label: "Küste / Meer" },
-  { value: "Fluss", label: "Fluss" },
-  { value: "Badesee", label: "Badesee" },
-  { value: "See", label: "See" },
-  { value: "Hafen", label: "Hafen" },
-  { value: "Bach", label: "Bach" },
-  { value: "Kanal", label: "Kanal" },
-  { value: "Teich", label: "Teich" },
-  { value: "Stausee", label: "Stausee" },
 ];
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {

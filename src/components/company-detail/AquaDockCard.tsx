@@ -86,7 +86,7 @@ export default function AquaDockCard({ company }: Props) {
                     if (company.lat && company.lon) {
                       router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);
                     } else {
-                      router.push('/openmap');
+                      router.push("/openmap");
                     }
                   }}
                 >

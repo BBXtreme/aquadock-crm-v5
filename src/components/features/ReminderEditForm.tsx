@@ -52,13 +52,12 @@ export default function ReminderEditForm({
     mutationFn: async (data: ReminderFormValues) => {
       if (reminder) {
         return updateReminder(reminder.id, data, createClient());
-      } else {
-        // create
-        const supabase = createClient();
-        const { data: newData, error } = await supabase.from("reminders").insert(data).select().single();
-        if (error) throw error;
-        return newData;
       }
+      // create
+      const supabase = createClient();
+      const { data: newData, error } = await supabase.from("reminders").insert(data).select().single();
+      if (error) throw error;
+      return newData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
@@ -236,7 +235,13 @@ export default function ReminderEditForm({
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? (reminder ? "Updating..." : "Creating...") : (reminder ? "Update Reminder" : "Create Reminder")}
+          {mutation.isPending
+            ? reminder
+              ? "Updating..."
+              : "Creating..."
+            : reminder
+              ? "Update Reminder"
+              : "Create Reminder"}
         </Button>
       </form>
     </Form>

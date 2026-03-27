@@ -1,3 +1,4 @@
+// Utility functions for Supabase-related operations - src/lib/supabase/utils.ts
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 

@@ -1,14 +1,14 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { toast } from "sonner";
 import type { TimelineEntryWithJoins } from "@/lib/supabase/database.types";
-import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 
 interface Props {
   companyId: string;
@@ -69,7 +69,7 @@ export default function TimelineCard({ companyId }: Props) {
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").update(data).eq("id", editEntry!.id);
+      const { error } = await supabase.from("timeline").update(data).eq("id", editEntry?.id);
       if (error) throw error;
     },
     onSuccess: () => {

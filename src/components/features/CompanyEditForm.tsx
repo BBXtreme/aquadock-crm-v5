@@ -11,9 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { wassertypOptions } from "@/lib/constants";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
-import { wassertypOptions } from "@/lib/utils/water-types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 

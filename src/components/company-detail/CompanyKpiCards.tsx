@@ -13,10 +13,7 @@ export default function CompanyKpiCards({ company }: Props) {
     queryKey: ["contacts", company.id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("id, is_primary")
-        .eq("company_id", company.id);
+      const { data, error } = await supabase.from("contacts").select("id, is_primary").eq("company_id", company.id);
       if (error) throw error;
       return data;
     },
@@ -38,9 +35,7 @@ export default function CompanyKpiCards({ company }: Props) {
   const totalContacts = contacts.length;
   const primaryContacts = contacts.filter((c) => c.is_primary).length;
   const openReminders = reminders.filter((r) => r.status === "open").length;
-  const overdueReminders = reminders.filter(
-    (r) => r.status === "open" && new Date(r.due_date) < new Date()
-  ).length;
+  const overdueReminders = reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date()).length;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
