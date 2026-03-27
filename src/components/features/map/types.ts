@@ -21,6 +21,8 @@ export interface OsmPoi {
   osmUrl?: string;
   phone?: string;
   website?: string;
+  wasserdistanz?: number | null;
+  wassertyp?: string | null;
 }
 
 export interface CompanyMarkerPopupProps {
