@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, Waves } from "lucide-react";
+import { Edit, MapPin, Waves } from "lucide-react";
 import { useState } from "react";
 import AquaDockEditForm from "@/components/features/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export default function AquaDockCard({ company }: Props) {
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-medium break-all"
       >
-        <span className="text-base">🗺</span>
+        <MapPin className="w-4 h-4" />
         <span className="font-mono text-sm">{company.osm}</span>
       </a>
     );
