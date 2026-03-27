@@ -131,6 +131,8 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                   <Input
                     type="number"
                     step="any"
+                    min="-90"
+                    max="90"
                     {...field}
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
@@ -150,6 +152,8 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                   <Input
                     type="number"
                     step="any"
+                    min="-180"
+                    max="180"
                     {...field}
                     value={field.value ?? ""}
                     onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
