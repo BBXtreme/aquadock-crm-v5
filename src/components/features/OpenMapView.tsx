@@ -1,3 +1,4 @@
+// src/components/features/OpenMapView.tsx
 "use client";
 
 import L from "leaflet";
@@ -73,8 +74,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Company import refresh
   const refreshCompanies = useCallback(async () => {
     const supabase = (await import("@/lib/supabase/browser")).createClient();
-    const isDevelopment = process.env.NODE_ENV === "development";
-    const isMockUser = true; // No auth in development
 
     let query = supabase
       .from("companies")
@@ -83,11 +82,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       )
       .not("lat", "is", null)
       .not("lon", "is", null);
-
-    if (!isDevelopment || !isMockUser) {
-      // In production, would filter by user_id
-      // query = query.eq("user_id", userId);
-    }
 
     query = query.order("firmenname", { ascending: true });
 
@@ -171,15 +165,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         const pois: OsmPoi[] = (result.pois || []) as OsmPoi[];
         poiCache.current.set(key, { pois, timestamp: now });
 
-        // Limit cache size
         if (poiCache.current.size > 15) {
           const firstKey = poiCache.current.keys().next().value;
-          if (firstKey) {
-            poiCache.current.delete(firstKey);
-          }
+          if (firstKey) poiCache.current.delete(firstKey);
         }
 
-        // Debounced save to localStorage
         if (saveTimeout.current) clearTimeout(saveTimeout.current);
         saveTimeout.current = setTimeout(() => {
           const cacheObj = Object.fromEntries(poiCache.current);
@@ -216,7 +206,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Initial load
   useEffect(() => {
     if (!mapReady) return;
-
     const timer = setTimeout(handleLoad, 800);
     return () => clearTimeout(timer);
   }, [mapReady, handleLoad]);
@@ -268,7 +257,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
-        {/* Company Markers - Always visible, separate from clustering */}
+        {/* Company Markers */}
         {validCompanies.map((company) => (
           <Marker key={company.id} position={[company.lat ?? 0, company.lon ?? 0]} icon={getStatusIcon(company.status)}>
             <Popup>
@@ -282,7 +271,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           maxClusterRadius={100}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
-          iconCreateFunction={(cluster: any) => {
+          iconCreateFunction={(cluster: L.MarkerCluster) => {
             const count = cluster.getChildCount();
             return L.divIcon({
               html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
@@ -351,6 +340,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           onClick={resetView}
           className="bg-card border shadow-md"
           title="Alle Firmen anzeigen"
+          type="button"
         >
           <Building className="h-4 w-4 text-foreground" />
         </Button>
@@ -376,6 +366,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           }}
           className="bg-card border shadow-md"
           title="Cache leeren und POIs neu laden"
+          type="button"
         >
           <RefreshCw className="h-4 w-4 text-foreground" />
         </Button>
@@ -385,6 +376,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
           className="bg-card border shadow-md"
+          type="button"
         >
           <Info className="h-4 w-4 text-foreground" />
         </Button>
