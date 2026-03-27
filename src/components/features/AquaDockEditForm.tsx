@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
+import { wassertypOptions } from "@/lib/utils/water-types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -32,18 +33,6 @@ const aquadockSchema = z.object({
 });
 
 type AquaDockFormValues = z.infer<typeof aquadockSchema>;
-
-const wassertypOptions = [
-  { value: "Küste / Meer", label: "Küste / Meer" },
-  { value: "Fluss", label: "Fluss" },
-  { value: "Badesee", label: "Badesee" },
-  { value: "See", label: "See" },
-  { value: "Hafen", label: "Hafen" },
-  { value: "Bach", label: "Bach" },
-  { value: "Kanal", label: "Kanal" },
-  { value: "Teich", label: "Teich" },
-  { value: "Stausee", label: "Stausee" },
-];
 
 export default function AquaDockEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();

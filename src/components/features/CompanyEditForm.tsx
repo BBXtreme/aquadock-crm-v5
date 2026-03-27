@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
+import { wassertypOptions } from "@/lib/utils/water-types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -105,18 +106,6 @@ const landOptions = [
   { value: "Griechenland", label: "Griechenland" },
   { value: "Portugal", label: "Portugal" },
   { value: "Großbritannien", label: "Großbritannien" },
-];
-
-const wassertypOptions = [
-  { value: "Küste / Meer", label: "Küste / Meer" },
-  { value: "Fluss", label: "Fluss" },
-  { value: "Badesee", label: "Badesee" },
-  { value: "See", label: "See" },
-  { value: "Hafen", label: "Hafen" },
-  { value: "Bach", label: "Bach" },
-  { value: "Kanal", label: "Kanal" },
-  { value: "Teich", label: "Teich" },
-  { value: "Stausee", label: "Stausee" },
 ];
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
