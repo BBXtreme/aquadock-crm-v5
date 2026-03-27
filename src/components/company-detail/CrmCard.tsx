@@ -1,16 +1,14 @@
 "use client";
-import { BarChart, Edit } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BarChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Company } from "@/lib/supabase/database.types";
 import CRMForm from "./CRMForm";
 
 interface Props {
   company: Company;
-  onEdit?: () => void;
 }
 
-export default function CrmCard({ company, onEdit }: Props) {
+export default function CrmCard({ company }: Props) {
   return (
     <Card>
       <CardHeader>
@@ -19,9 +17,6 @@ export default function CrmCard({ company, onEdit }: Props) {
             <BarChart className="w-5 h-5" />
             CRM Informationen
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onEdit}>
-            <Edit className="h-4 w-4" />
-          </Button>
         </div>
       </CardHeader>
       <CardContent>
