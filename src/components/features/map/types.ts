@@ -35,6 +35,7 @@ export interface OsmPoiMarkerPopupProps {
   isDarkMode?: boolean;
   onImport?: (poi: OsmPoi) => void | Promise<void>;
   onViewInOsm?: (osmUrl: string) => void;
+  onCalculateWater?: (poi: OsmPoi) => void | Promise<void>;
 }
 
 export interface OsmPoiCacheEntry {

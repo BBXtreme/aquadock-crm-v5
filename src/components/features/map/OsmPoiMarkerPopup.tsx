@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 import type { OsmPoiMarkerPopupProps } from "./types";
 
-export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
+export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalculateWater }: OsmPoiMarkerPopupProps) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
@@ -66,6 +66,13 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         </div>
       )}
 
+      {poi.wasserdistanz !== undefined && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          💧 {poi.wasserdistanz === 0 ? "–" : poi.wasserdistanz + " m"} zum Wasser
+          {poi.wassertyp && <span className="font-medium">({poi.wassertyp})</span>}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex gap-2 pt-3 border-t border-border">
         <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
@@ -75,6 +82,10 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
 
         <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
           In CRM importieren
+        </Button>
+
+        <Button size="sm" variant="outline" onClick={() => onCalculateWater?.(poi)} type="button">
+          💧 Wasser-Info berechnen
         </Button>
       </div>
     </div>
