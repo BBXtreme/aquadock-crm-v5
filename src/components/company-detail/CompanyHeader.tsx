@@ -10,7 +10,7 @@ import { getKundentypLabel } from "./utils";
 interface Props {
   company: Company;
   id: string;
-  router: any;
+  router: { push: (href: string) => void };
 }
 
 export default function CompanyHeader({ company, id, router }: Props) {
