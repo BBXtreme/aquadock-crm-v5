@@ -1,5 +1,6 @@
 "use client";
 import { Building, Edit } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,39 @@ interface Props {
 
 export default function FirmendatenCard({ company }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const formatWebsite = (website: string | null) => {
+    if (!website) return "—";
+    const url = website.startsWith("http") ? website : `https://${website}`;
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 hover:underline"
+      >
+        {website}
+      </a>
+    );
+  };
+
+  const formatTelefon = (telefon: string | null) => {
+    if (!telefon) return "—";
+    return (
+      <a href={`tel:${telefon}`} className="text-blue-600 hover:underline">
+        {telefon}
+      </a>
+    );
+  };
+
+  const formatEmail = (email: string | null) => {
+    if (!email) return "—";
+    return (
+      <a href={`mailto:${email}`} className="text-blue-600 hover:underline">
+        {email}
+      </a>
+    );
+  };
 
   return (
     <>
@@ -49,15 +83,15 @@ export default function FirmendatenCard({ company }: Props) {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Website</div>
-              <p className="text-sm text-gray-900">{company.website || "—"}</p>
+              <p className="text-sm text-gray-900">{formatWebsite(company.website)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Telefon</div>
-              <p className="text-sm text-gray-900">{company.telefon || "—"}</p>
+              <p className="text-sm text-gray-900">{formatTelefon(company.telefon)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Email</div>
-              <p className="text-sm text-gray-900">{company.email || "—"}</p>
+              <p className="text-sm text-gray-900">{formatEmail(company.email)}</p>
             </div>
           </div>
         </CardContent>
