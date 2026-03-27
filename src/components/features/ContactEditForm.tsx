@@ -43,23 +43,30 @@ export default function ContactEditForm({
   contact,
   onSuccess,
 }: {
-  contact: Database["public"]["Tables"]["contacts"]["Row"] | null;
+  contact?: Database["public"]["Tables"]["contacts"]["Row"] | null;
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (data: ContactFormValues) => {
-      if (!contact) throw new Error("Contact not loaded");
-      return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
+      if (contact) {
+        return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
+      } else {
+        // create
+        const supabase = createClient();
+        const { data: newData, error } = await supabase.from("contacts").insert(data).select().single();
+        if (error) throw error;
+        return newData;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success("Contact updated");
+      toast.success(contact ? "Contact updated" : "Contact created");
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
+    onError: (err) => toast.error("Operation failed", { description: err.message }),
   });
 
   const form = useForm<ContactFormValues>({
@@ -88,11 +95,6 @@ export default function ContactEditForm({
       return data;
     },
   });
-
-  // Early return AFTER all hooks
-  if (!contact) {
-    return <div className="p-6 text-center text-gray-500">Loading contact...</div>;
-  }
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
@@ -266,7 +268,7 @@ export default function ContactEditForm({
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Updating..." : "Update Contact"}
+          {mutation.isPending ? (contact ? "Updating..." : "Creating...") : (contact ? "Update Contact" : "Create Contact")}
         </Button>
       </form>
     </Form>

@@ -1,7 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/lib/supabase/database.types";
+import ContactEditForm from "@/components/features/ContactEditForm";
 
 interface Props {
   companyId: string;
@@ -16,6 +16,7 @@ interface Props {
 
 export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const { data: contacts = [] } = useQuery({
     queryKey: ["contacts", companyId],
     queryFn: async () => {
@@ -26,6 +27,19 @@ export default function LinkedContactsCard({ companyId }: Props) {
     },
   });
 
+  const handleAdd = () => {
+    setAddDialogOpen(true);
+  };
+
+  const handleEdit = (contact: Contact) => {
+    setEditContact(contact);
+  };
+
+  const handleDelete = (id: string) => {
+    // TODO: implement delete contact
+    console.log("Delete contact", id);
+  };
+
   return (
     <>
       <Card>
@@ -35,7 +49,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
               <User className="w-5 h-5" />
               Linked Contacts ({contacts.length})
             </CardTitle>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" /> Add Contact
             </Button>
           </div>
@@ -59,9 +73,9 @@ export default function LinkedContactsCard({ companyId }: Props) {
                 {contacts.map((contact) => (
                   <tr key={contact.id}>
                     <td>
-                      <Link href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                      <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
                         {contact.vorname} {contact.nachname}
-                      </Link>
+                      </a>
                     </td>
                     <td>{contact.position || "—"}</td>
                     <td>{contact.email || "—"}</td>
@@ -69,10 +83,15 @@ export default function LinkedContactsCard({ companyId }: Props) {
                     <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditContact(contact)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-600 hover:text-red-700">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          onClick={() => handleDelete(contact.id)}
+                        >
                           <Trash className="h-4 w-4" />
                         </Button>
                       </div>
@@ -89,8 +108,15 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
-          <p>Edit contact form not implemented yet.</p>
-          <Button onClick={() => setEditContact(null)}>Close</Button>
+          <ContactEditForm contact={editContact} onSuccess={() => setEditContact(null)} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Contact</DialogTitle>
+          </DialogHeader>
+          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
