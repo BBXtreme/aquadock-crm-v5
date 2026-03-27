@@ -4,13 +4,13 @@
 import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
 export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMarkerPopupProps) {
-  const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof statusColors;
-  const statusColor = statusColors[statusKey] || statusColors.lead;
+  const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
+  const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
 
   const kundentypEmoji: Record<string, string> = {
@@ -30,8 +30,11 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
   const fullAddress = addressParts.join(", ");
 
+  const kundentypColor = badgeColors[company.kundentyp?.toLowerCase()] || badgeColors.sonstige;
+  const wassertypColor = "#22c55e";
+
   return (
-    <div className="min-w-[340px] space-y-4 text-sm p-1">
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
@@ -54,14 +57,20 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
         </div>
 
         {/* Kundentyp Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted/70 rounded-full text-xs font-medium">
+        <div
+          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          style={{ backgroundColor: kundentypColor }}
+        >
           <span>{emoji}</span>
           <span>{company.kundentyp || "Sonstige"}</span>
         </div>
 
         {/* Wassertyp Badge */}
         {company.wassertyp && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-full text-xs font-medium">
+          <div
+            className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+            style={{ backgroundColor: wassertypColor }}
+          >
             💧 {company.wassertyp}
           </div>
         )}

@@ -21,3 +21,15 @@ export const statusLabels: Record<string, string> = {
   partner: "Partner",
   inaktiv: "Inaktiv",
 };
+
+export const badgeColors: Record<string, string> = {
+  ...statusColors,
+  restaurant: "#f59e0b",
+  hotel: "#3b82f6",
+  marina: "#8b5cf6",
+  camping: "#22c55e",
+  bootsverleih: "#10b981",
+  segelschule: "#14b8a6",
+  resort: "#6366f1",
+  sonstige: "#6b7280",
+};
