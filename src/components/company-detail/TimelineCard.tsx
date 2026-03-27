@@ -33,6 +33,26 @@ export default function TimelineCard({ companyId }: Props) {
     },
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("contacts").select("id, vorname, nachname, position, email, telefon");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
@@ -44,6 +64,20 @@ export default function TimelineCard({ companyId }: Props) {
       toast.success("Timeline entry deleted");
     },
     onError: (err) => toast.error("Delete failed", { description: err.message }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("timeline").update(data).eq("id", editEntry!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      toast.success("Timeline entry updated");
+      setEditEntry(null);
+    },
+    onError: (err) => toast.error("Update failed", { description: err.message }),
   });
 
   const createTimelineMutation = useMutation({
@@ -73,6 +107,10 @@ export default function TimelineCard({ companyId }: Props) {
     if (confirm("Delete this timeline entry?")) {
       deleteMutation.mutate(id);
     }
+  };
+
+  const handleUpdate = async (values: any) => {
+    await updateMutation.mutateAsync(values);
   };
 
   const handleTimelineSubmit = async (values: any) => {
@@ -174,8 +212,15 @@ export default function TimelineCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Timeline Entry</DialogTitle>
           </DialogHeader>
-          <p>Edit timeline entry form not implemented yet.</p>
-          <Button onClick={() => setEditEntry(null)}>Close</Button>
+          <TimelineEntryForm
+            key={editEntry?.id}
+            editEntry={editEntry}
+            onSubmit={handleUpdate}
+            isSubmitting={updateMutation.isPending}
+            companies={companies}
+            contacts={contacts}
+            onCancel={() => setEditEntry(null)}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -186,8 +231,8 @@ export default function TimelineCard({ companyId }: Props) {
           <TimelineEntryForm
             onSubmit={handleTimelineSubmit}
             isSubmitting={isSubmitting}
-            companies={[]} // TODO: fetch companies
-            contacts={[]} // TODO: fetch contacts
+            companies={companies}
+            contacts={contacts}
             preselectedCompanyId={companyId}
           />
         </DialogContent>
