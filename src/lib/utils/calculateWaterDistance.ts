@@ -1,5 +1,5 @@
-import L from 'leaflet';
-import { determineWassertyp } from '@/lib/constants/wassertyp';
+import L from "leaflet";
+import { determineWassertyp } from "@/lib/constants/wassertyp";
 
 /**
  * Calculates the distance to the nearest water feature and determines its type using Overpass API.
@@ -10,7 +10,7 @@ import { determineWassertyp } from '@/lib/constants/wassertyp';
  */
 export async function calculateWaterDistance(
   lat: number,
-  lon: number
+  lon: number,
 ): Promise<{ distance: number | null; wassertyp: string | null }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 25000);
@@ -30,8 +30,8 @@ export async function calculateWaterDistance(
       out geom;
     `;
 
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
+    const response = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
       body: query,
       signal: controller.signal,
     });
@@ -52,7 +52,7 @@ export async function calculateWaterDistance(
     const point = L.latLng(lat, lon);
 
     for (const element of data.elements) {
-      if (element.type === 'way' && element.geometry) {
+      if (element.type === "way" && element.geometry) {
         for (const geom of element.geometry) {
           const geomPoint = L.latLng(geom.lat, geom.lon);
           const dist = point.distanceTo(geomPoint);
@@ -70,7 +70,7 @@ export async function calculateWaterDistance(
 
     return { distance: Math.round(minDistance), wassertyp: bestWassertyp };
   } catch (error) {
-    console.warn('Error calculating water distance:', error);
+    console.warn("Error calculating water distance:", error);
     return { distance: null, wassertyp: null };
   } finally {
     clearTimeout(timeoutId);
