@@ -109,13 +109,13 @@ export default function CompaniesPage() {
     "Großbritannien",
   ] as const;
 
-  const statusIcons: Record<string, React.ComponentType<any> | null> = {
+  const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
     lead: Sparkles,
     gewonnen: Trophy,
     verloren: XCircle,
   };
 
-  const kategorieIcons: Record<string, React.ComponentType<any> | null> = {
+  const kategorieIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
     restaurant: Utensils,
     hotel: Building2,
     resort: Palmtree,
