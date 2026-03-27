@@ -1,7 +1,7 @@
 // src/components/features/map/CompanyMarkerPopup.tsx
 "use client";
 
-import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
+import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
@@ -9,18 +9,24 @@ import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
-export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMarkerPopupProps) {
+export default function CompanyMarkerPopup({ company, _onOpenDetail }: CompanyMarkerPopupProps) {
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
 
-  // Full address with Straße, PLZ, Stadt, Land
+  // Full address
   const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
-
   const fullAddress = addressParts.join(", ");
 
   const kundentypColor = badgeColors[company.kundentyp?.toLowerCase()] || badgeColors.sonstige;
   const wassertypColor = "#22c55e";
+
+  // Website with https:// fallback
+  const websiteUrl = company.website
+    ? company.website.startsWith("http")
+      ? company.website
+      : `https://${company.website}`
+    : null;
 
   return (
     <div className="min-w-[320px] space-y-4 text-sm p-1">
@@ -37,7 +43,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
       {/* Badges */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Status Badge */}
         <div
           className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
           style={{ backgroundColor: statusColor }}
@@ -45,7 +50,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           {statusLabel}
         </div>
 
-        {/* Kundentyp Badge */}
         <div
           className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
           style={{ backgroundColor: kundentypColor }}
@@ -53,7 +57,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           <span>{getKundentypLabel(company.kundentyp?.toLowerCase() || "sonstige")}</span>
         </div>
 
-        {/* Wassertyp Badge */}
         {company.wassertyp && (
           <div
             className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
@@ -74,6 +77,32 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           {company.wasserdistanz === 0 ? "?" : company.wasserdistanz} m zum Wasser
         </div>
       )}
+
+      {/* Contact Info – Email + Website */}
+      <div className="space-y-2">
+        {company.email && (
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <a href={`mailto:${company.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+              {company.email}
+            </a>
+          </div>
+        )}
+
+        {company.website && (
+          <div className="flex items-center gap-2 text-sm">
+            <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <a
+              href={websiteUrl || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline truncate"
+            >
+              Website öffnen
+            </a>
+          </div>
+        )}
+      </div>
 
       {/* OSM Link */}
       {company.osm && (
@@ -97,13 +126,14 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           variant="default"
           className="flex-1"
           onClick={() => window.open(`/companies/${company.id}`, "_blank")}
+          type="button"
         >
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
         </Button>
 
         {company.telefon && (
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="outline" asChild type="button">
             <a href={`tel:${company.telefon}`} title="Anrufen">
               <Phone className="h-4 w-4" />
             </a>

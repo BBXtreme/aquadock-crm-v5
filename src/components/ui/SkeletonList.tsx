@@ -11,8 +11,9 @@ interface SkeletonListProps {
 export function SkeletonList({ count, className = "space-y-2", itemClassName = "h-14 w-full" }: SkeletonListProps) {
   return (
     <div className={className}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Skeleton key={`skeleton-list-${i}`} className={itemClassName} />
+      {Array.from({ length: count }).map((_, _i) => (
+        // biome-ignore lint/correctness/useJsxKeyInIterable: static skeleton – no key per AIDER-RULES.md
+        <Skeleton className={itemClassName} />
       ))}
     </div>
   );

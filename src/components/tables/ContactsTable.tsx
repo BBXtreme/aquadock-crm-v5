@@ -314,17 +314,17 @@ export default function ContactsTable({
         </div>
       </div>
       <div className="overflow-x-auto rounded-md border shadow-sm">
-        <Table>
+        <Table className="[&>thead>tr>th]:!text-left">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="text-left">
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
                         className={cn(
-                          "flex items-center gap-2 w-full h-full p-4 text-left font-medium",
+                          "flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium", // ← justify-start added
                           "cursor-pointer hover:bg-muted/50",
                         )}
                         onClick={header.column.getToggleSortingHandler()}
@@ -334,7 +334,7 @@ export default function ContactsTable({
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
                       </button>
                     ) : (
-                      <div className="flex items-center gap-2 w-full h-full p-4 text-left font-medium">
+                      <div className="flex items-center justify-start! gap-2 w-full h-full p-4 text-left font-medium">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                       </div>
                     )}

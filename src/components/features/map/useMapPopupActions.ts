@@ -14,9 +14,10 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
 
   // Filter out undefined values to match expected type
-  const tags = Object.fromEntries(
-    Object.entries(poi.tags || {}).filter(([_, v]) => v !== undefined)
-  ) as Record<string, string>;
+  const tags = Object.fromEntries(Object.entries(poi.tags || {}).filter(([_, v]) => v !== undefined)) as Record<
+    string,
+    string
+  >;
 
   const kundentyp = determineKundentyp(tags) || "sonstige";
   const firmentyp = determineFirmentyp(tags);

@@ -1,3 +1,4 @@
+// src/lib/supabase/services/companies.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { determineFirmentyp, determineKundentyp, determineWassertyp } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/browser";
@@ -84,6 +85,7 @@ export type CompanyForOpenMap = Pick<
   | "value"
   | "osm"
   | "telefon"
+  | "email"
   | "website"
   | "firmentyp"
   | "wassertyp"
@@ -109,6 +111,7 @@ export async function getCompaniesForOpenMap(): Promise<CompanyForOpenMap[]> {
       value,
       osm,
       telefon,
+      email,
       website,
       firmentyp,
       wassertyp,
