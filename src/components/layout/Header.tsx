@@ -88,7 +88,7 @@ export default function Header() {
             />
           </div>
         </Link>
-        <span className="font-semibold text-lg">CRM v5.0.1</span>
+        <span className="font-semibold text-lg">CRM</span>
       </div>
       <div className="mx-4 max-w-md flex-1">
         <div className="relative">
