@@ -1,3 +1,4 @@
+// This component is adapted from the Radix UI Accordion component: https://www.radix-ui.com/docs/primitives/components/accordion src/components/ui/accordion.tsx
 import { ChevronDownIcon } from "lucide-react";
 import * as React from "react";
 
@@ -31,7 +32,12 @@ function AccordionItem({ className, children, ...props }: React.HTMLAttributes<H
 
   return (
     <div className={cn("border-b", className)} {...props}>
-      {React.Children.map(children, (child) => React.cloneElement(child as React.ReactElement<any>, { open, setOpen }))}
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, { open, setOpen });
+        }
+        return child;
+      })}
     </div>
   );
 }
@@ -39,6 +45,7 @@ function AccordionItem({ className, children, ...props }: React.HTMLAttributes<H
 function AccordionTrigger({ className, children, open, setOpen, ...props }: AccordionTriggerProps) {
   return (
     <button
+      type="button"
       className={cn(
         "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline",
         className,

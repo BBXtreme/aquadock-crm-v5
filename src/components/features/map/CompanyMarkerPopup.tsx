@@ -1,37 +1,35 @@
 // src/components/features/map/CompanyMarkerPopup.tsx
 "use client";
 
-import { ExternalLink, Globe, MapPin, Phone } from "lucide-react";
+import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
-export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMarkerPopupProps) {
-  const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof statusColors;
-  const statusColor = statusColors[statusKey] || statusColors.lead;
+export default function CompanyMarkerPopup({ company, _onOpenDetail }: CompanyMarkerPopupProps) {
+  const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
+  const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";
 
-  const kundentypEmoji: Record<string, string> = {
-    restaurant: "🍽️",
-    hotel: "🏨",
-    marina: "⚓",
-    camping: "🏕️",
-    bootsverleih: "⛵",
-    segelschule: "⛵",
-    resort: "🌴",
-  };
-
-  const emoji = kundentypEmoji[company.kundentyp?.toLowerCase()] || "🏢";
-
-  // Full address with Straße, PLZ, Stadt, Land
+  // Full address
   const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
-
   const fullAddress = addressParts.join(", ");
 
+  const kundentypColor = badgeColors[company.kundentyp?.toLowerCase()] || badgeColors.sonstige;
+  const wassertypColor = "#22c55e";
+
+  // Website with https:// fallback
+  const websiteUrl = company.website
+    ? company.website.startsWith("http")
+      ? company.website
+      : `https://${company.website}`
+    : null;
+
   return (
-    <div className="min-w-[340px] space-y-4 text-sm p-1">
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
@@ -45,7 +43,6 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
 
       {/* Badges */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Status Badge */}
         <div
           className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
           style={{ backgroundColor: statusColor }}
@@ -53,20 +50,25 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           {statusLabel}
         </div>
 
-        {/* Kundentyp Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted/70 rounded-full text-xs font-medium">
-          <span>{emoji}</span>
-          <span>{company.kundentyp || "Sonstige"}</span>
+        <div
+          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          style={{ backgroundColor: kundentypColor }}
+        >
+          <span>{getKundentypLabel(company.kundentyp?.toLowerCase() || "sonstige")}</span>
         </div>
 
-        {/* Wassertyp Badge */}
         {company.wassertyp && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 rounded-full text-xs font-medium">
+          <div
+            className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+            style={{ backgroundColor: wassertypColor }}
+          >
             💧 {company.wassertyp}
           </div>
         )}
 
-        {company.firmentyp && <div className="text-xs text-muted-foreground">• {company.firmentyp}</div>}
+        {company.firmentyp && (
+          <div className="text-xs text-muted-foreground">• {getFirmentypLabel(company.firmentyp)}</div>
+        )}
       </div>
 
       {/* Wasserdistanz */}
@@ -75,6 +77,32 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           {company.wasserdistanz === 0 ? "?" : company.wasserdistanz} m zum Wasser
         </div>
       )}
+
+      {/* Contact Info – Email + Website */}
+      <div className="space-y-2">
+        {company.email && (
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <a href={`mailto:${company.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+              {company.email}
+            </a>
+          </div>
+        )}
+
+        {company.website && (
+          <div className="flex items-center gap-2 text-sm">
+            <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <a
+              href={websiteUrl || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline truncate"
+            >
+              Website öffnen
+            </a>
+          </div>
+        )}
+      </div>
 
       {/* OSM Link */}
       {company.osm && (
@@ -98,13 +126,14 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           variant="default"
           className="flex-1"
           onClick={() => window.open(`/companies/${company.id}`, "_blank")}
+          type="button"
         >
           <ExternalLink className="h-4 w-4 mr-2" />
           Firma öffnen
         </Button>
 
         {company.telefon && (
-          <Button size="sm" variant="outline" asChild>
+          <Button size="sm" variant="outline" asChild type="button">
             <a href={`tel:${company.telefon}`} title="Anrufen">
               <Phone className="h-4 w-4" />
             </a>

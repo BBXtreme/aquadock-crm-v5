@@ -4,7 +4,8 @@
 import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
-
+import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
+import { determineWassertyp } from "@/lib/constants/wassertyp";
 import { createClient } from "@/lib/supabase/browser";
 
 import type { OsmPoi } from "./types";
@@ -12,42 +13,20 @@ import type { OsmPoi } from "./types";
 async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
 
-  const kundentypMap: Record<string, string> = {
-    restaurant: "restaurant",
-    cafe: "restaurant",
-    bar: "restaurant",
-    pub: "restaurant",
-    fast_food: "restaurant",
-    hotel: "hotel",
-    hostel: "hotel",
-    motel: "hotel",
-    guest_house: "hotel",
-    camp_site: "camping",
-    caravan_site: "camping",
-    marina: "marina",
-    harbor: "marina",
-    fuel: "tankstelle",
-    charging_station: "tankstelle",
-    supermarket: "supermarkt",
-    shop: "shop",
-    bakery: "bäckerei",
-    pharmacy: "apotheke",
-    bank: "bank",
-    atm: "bank",
-  };
+  // Filter out undefined values to match expected type
+  const tags = Object.fromEntries(Object.entries(poi.tags || {}).filter(([_, v]) => v !== undefined)) as Record<
+    string,
+    string
+  >;
 
-  let kundentyp = "sonstige";
-  const amenity = (poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "").toLowerCase();
-  for (const [key, value] of Object.entries(kundentypMap)) {
-    if (amenity.includes(key)) {
-      kundentyp = value;
-      break;
-    }
-  }
+  const kundentyp = determineKundentyp(tags) || "sonstige";
+  const firmentyp = determineFirmentyp(tags);
+  const wassertyp = determineWassertyp(tags) || "";
 
   const formData = {
     firmenname: name,
     kundentyp,
+    firmentyp,
     status: "lead",
     strasse: poi.tags?.["addr:street"] || "",
     plz: poi.tags?.["addr:postcode"] || "",
@@ -60,6 +39,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
     user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
+    wassertyp,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
 
@@ -104,17 +84,8 @@ export function useMapPopupActions() {
     try {
       toast.loading(`"${name}" wird importiert...`, { id: "osm-import" });
 
-      // DEVELOPMENT ONLY: Use mock user ID for now
-      // TODO: Get user ID from auth context when implemented
-      const isDevelopment = process.env.NODE_ENV === "development";
-      let userId = "dev-mock-user-11111111-2222-3333-4444-555555555555"; // Mock user ID
-
-      if (!isDevelopment) {
-        const userRes = await fetch("/api/auth/user");
-        if (!userRes.ok) throw new Error("Authentication required");
-        const { userId: fetchedUserId } = await userRes.json();
-        userId = fetchedUserId;
-      }
+      // Always use mock user ID for now
+      const userId = "dev-mock-user-11111111-2222-3333-4444-555555555555";
 
       // Check for duplicate by OSM URL
       const osmUrl = `https://www.openstreetmap.org/${poi.type}/${poi.id}`;

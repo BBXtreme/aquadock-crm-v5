@@ -3,6 +3,15 @@ import L from "leaflet";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { statusColors } from "@/lib/constants/map-status-colors";
 
+// ─────────────────────────────────────────────────────────────
+// Type for POI category config (derived from map-poi-config.ts)
+// Matches the exact readonly shape used in the constants file.
+// ─────────────────────────────────────────────────────────────
+type PoiCategory = {
+  tags: readonly string[];
+  // label, icon, color, etc. can be added later if needed
+};
+
 let poiFetchTimeout: NodeJS.Timeout | null = null;
 
 export const getStatusIcon = (status?: string) => {
@@ -42,7 +51,7 @@ type OsmPoi = {
 
 export async function fetchOsmPois(
   bounds: L.LatLngBounds,
-  activeCategories: string[] = Object.keys(poiCategories),
+  activeCategories: (keyof typeof poiCategories)[] = Object.keys(poiCategories) as (keyof typeof poiCategories)[],
   retryCount = 0,
 ): Promise<{ pois: OsmPoi[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
@@ -60,20 +69,28 @@ export async function fetchOsmPois(
 
       // Build tag groups from active poiCategories
       const tagGroups: Record<string, string[]> = {};
-      const activePoiCategories = activeCategories.reduce(
-        (acc, key) => {
-          if ((poiCategories as Record<string, any>)[key]) acc[key] = (poiCategories as Record<string, any>)[key];
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
+
+      // ─────────────────────────────────────────────────────────────
+      // PERFECTLY TYPED REDUCE – no assertion, no `any`, matches readonly tags
+      // ─────────────────────────────────────────────────────────────
+      const activePoiCategories = activeCategories.reduce<Record<string, PoiCategory>>((acc, key) => {
+        const category = poiCategories[key];
+        if (category) {
+          acc[key] = category;
+        }
+        return acc;
+      }, {});
 
       for (const category of Object.values(activePoiCategories)) {
         for (const tag of category.tags) {
           if (tag.includes("=")) {
             const [key, value] = tag.split("=");
-            tagGroups[key] ??= [];
-            tagGroups[key].push(value);
+            // EXPLICIT narrowing required by strict TS (noUncheckedIndexedAccess)
+            // This satisfies TS2538 without using any `!` assertion
+            if (key) {
+              tagGroups[key] ??= [];
+              tagGroups[key].push(value ?? "");
+            }
           } else {
             // assume amenity
             tagGroups.amenity ??= [];

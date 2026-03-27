@@ -1,3 +1,4 @@
+// This file is a wrapper around the Supabase client for server-side usage in Next.js. src/lib/supabase/server.ts
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -31,7 +32,7 @@ export async function createServerSupabaseClient() {
     throw new Error("Supabase key is missing");
   }
 
-  return createServerClient(supabaseUrl!, key, {
+  return createServerClient(supabaseUrl as string, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
