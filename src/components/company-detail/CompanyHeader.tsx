@@ -19,6 +19,28 @@ interface Props {
   router: { push: (href: string) => void };
 }
 
+const getCountryFlag = (country: string | null) => {
+  const flagMap: Record<string, string> = {
+    Deutschland: "🇩🇪",
+    Österreich: "🇦🇹",
+    Schweiz: "🇨🇭",
+    Frankreich: "🇫🇷",
+    Italien: "🇮🇹",
+    Spanien: "🇪🇸",
+    Niederlande: "🇳🇱",
+    Belgien: "🇧🇪",
+    Dänemark: "🇩🇰",
+    Schweden: "🇸🇪",
+    Norwegen: "🇳🇴",
+    Polen: "🇵🇱",
+    Ungarn: "🇭🇺",
+    Griechenland: "🇬🇷",
+    Portugal: "🇵🇹",
+    "Großbritannien": "🇬🇧",
+  };
+  return country ? flagMap[country] || "🏳️" : null;
+};
+
 export default function CompanyHeader({ company, id, router }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
@@ -72,6 +94,8 @@ export default function CompanyHeader({ company, id, router }: Props) {
       setIsSubmitting(false);
     }
   };
+
+  const countryFlag = getCountryFlag(company.land);
 
   return (
     <>
@@ -132,6 +156,11 @@ export default function CompanyHeader({ company, id, router }: Props) {
         {company.wassertyp && (
           <Badge variant="outline">
             <Waves className="w-3 h-3 mr-1" /> {company.wassertyp}
+          </Badge>
+        )}
+        {countryFlag && (
+          <Badge variant="outline" className="text-lg">
+            {countryFlag}
           </Badge>
         )}
         {company.created_at && (
