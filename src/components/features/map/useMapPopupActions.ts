@@ -1,11 +1,13 @@
 // src/components/features/map/useMapPopupActions.ts
 "use client";
 
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
+import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import { createClient } from "@/lib/supabase/browser";
 
 import type { OsmPoi } from "./types";
@@ -39,7 +41,8 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
     user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
-    wassertyp,
+    wassertyp: poi.wassertyp ?? wassertyp,
+    wasserdistanz: poi.wasserdistanz ?? null,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
 
@@ -77,6 +80,28 @@ export function useMapPopupActions() {
   const viewInOsm = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const calculateWaterForPoi = useCallback(async (poi: OsmPoi) => {
+    const lat = poi.lat || poi.center?.lat;
+    const lon = poi.lon || poi.center?.lon;
+    if (!lat || !lon) {
+      toast.error("Keine Koordinaten für Wasserberechnung");
+      return;
+    }
+    toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
+    try {
+      const { distance, wassertyp } = await calculateWaterDistance(lat, lon);
+      poi.wasserdistanz = distance;
+      poi.wassertyp = wassertyp;
+      if (distance !== null) {
+        toast.success(`Wasser-Info berechnet: ${distance} m`, { id: "water-calc" });
+      } else {
+        toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
+      }
+    } catch (error) {
+      toast.error("Fehler bei Wasserberechnung", { id: "water-calc" });
+    }
+  }, []);
 
   const importOsmPoi = async (poi: OsmPoi) => {
     const name = poi.tags?.name || "POI";
@@ -142,5 +167,5 @@ export function useMapPopupActions() {
     }
   };
 
-  return { openCompanyDetail, importOsmPoi, viewInOsm };
+  return { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi };
 }
