@@ -71,7 +71,9 @@ export default function FirmendatenEditForm({ company, onSuccess }: { company: C
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      if (company) {
+        queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      }
       toast.success("Firmendaten updated successfully");
       onSuccess?.();
     },
