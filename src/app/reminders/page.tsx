@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { Pencil, Trash2 } from "lucide-react";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ export default function RemindersPage() {
   const queryClient = useQueryClient();
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
-  const [_selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
 
   const {
     data: reminders = [],
@@ -49,10 +49,6 @@ export default function RemindersPage() {
       toast.error("Failed to delete reminder", { description: error.message });
     },
   });
-
-  const handleView = useCallback((reminder: Reminder) => {
-    setSelectedReminder(reminder);
-  }, []);
 
   const handleEdit = useCallback((reminder: Reminder) => {
     setEditReminder(reminder);
@@ -154,11 +150,8 @@ export default function RemindersPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleView(reminder)}>
-                        View
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(reminder)}>
-                        Edit
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(reminder)} type="button">
+                        <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -169,8 +162,9 @@ export default function RemindersPage() {
                           }
                         }}
                         disabled={deleteMutation.isPending}
+                        type="button"
                       >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
