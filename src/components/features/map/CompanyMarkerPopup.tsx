@@ -63,7 +63,9 @@ export default function CompanyMarkerPopup({ company, onOpenDetail }: CompanyMar
           </div>
         )}
 
-        {company.firmentyp && <div className="text-xs text-muted-foreground">• {getFirmentypLabel(company.firmentyp)}</div>}
+        {company.firmentyp && (
+          <div className="text-xs text-muted-foreground">• {getFirmentypLabel(company.firmentyp)}</div>
+        )}
       </div>
 
       {/* Wasserdistanz */}

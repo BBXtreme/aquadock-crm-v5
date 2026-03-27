@@ -1,10 +1,6 @@
 "use client";
 
 import { LogOut, User } from "lucide-react";
-
-import type React from "react";
-
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

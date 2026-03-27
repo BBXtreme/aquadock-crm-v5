@@ -13,9 +13,14 @@ import type { OsmPoi } from "./types";
 async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
 
-  const kundentyp = determineKundentyp(poi.tags) || "sonstige";
-  const firmentyp = determineFirmentyp(poi.tags);
-  const wassertyp = determineWassertyp(poi.tags) || "";
+  // Filter out undefined values to match expected type
+  const tags = Object.fromEntries(
+    Object.entries(poi.tags || {}).filter(([_, v]) => v !== undefined)
+  ) as Record<string, string>;
+
+  const kundentyp = determineKundentyp(tags) || "sonstige";
+  const firmentyp = determineFirmentyp(tags);
+  const wassertyp = determineWassertyp(tags) || "";
 
   const formData = {
     firmenname: name,
