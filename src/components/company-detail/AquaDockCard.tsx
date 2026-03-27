@@ -1,6 +1,7 @@
 "use client";
 
 import { Edit, MapPin, Waves } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AquaDockEditForm from "@/components/features/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function AquaDockCard({ company }: Props) {
+  const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const formatOsmLink = () => {
@@ -47,9 +49,20 @@ export default function AquaDockCard({ company }: Props) {
               <Waves className="w-5 h-5" />
               AquaDock Daten
             </CardTitle>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
-              <Edit className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => router.push('/openmap')}
+              >
+                <MapPin className="h-4 w-4 mr-2" />
+                Show in OpenMap
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
