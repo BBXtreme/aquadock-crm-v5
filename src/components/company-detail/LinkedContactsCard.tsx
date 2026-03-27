@@ -1,9 +1,11 @@
 "use client";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/lib/supabase/database.types";
 
 interface Props {
@@ -11,8 +13,18 @@ interface Props {
 }
 
 export default function LinkedContactsCard({ companyId }: Props) {
-  // contacts data comes from parent query – for now we assume it is passed or fetched inside
-  const contacts: Contact[] = []; // replace with real data from parent if needed
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts", companyId],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", companyId);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   return (
     <Card>
