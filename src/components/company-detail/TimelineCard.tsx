@@ -1,12 +1,14 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
+import { toast } from "sonner";
 import type { TimelineEntryWithJoins } from "@/lib/supabase/database.types";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 
 interface Props {
   companyId: string;
@@ -14,6 +16,10 @@ interface Props {
 
 export default function TimelineCard({ companyId }: Props) {
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
   const { data: timeline = [], isLoading } = useQuery({
     queryKey: ["timeline", companyId],
     queryFn: async () => {
@@ -27,9 +33,36 @@ export default function TimelineCard({ companyId }: Props) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("timeline").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      toast.success("Timeline entry deleted");
+    },
+    onError: (err) => toast.error("Delete failed", { description: err.message }),
+  });
+
+  const createTimelineMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("timeline").insert(data);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      setAddDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error creating timeline entry:", error);
+    },
+  });
+
   const handleAdd = () => {
-    // TODO: implement add timeline entry
-    console.log("Add timeline entry");
+    setAddDialogOpen(true);
   };
 
   const handleEdit = (entry: TimelineEntryWithJoins) => {
@@ -37,8 +70,18 @@ export default function TimelineCard({ companyId }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    // TODO: implement delete timeline entry
-    console.log("Delete timeline entry", id);
+    if (confirm("Delete this timeline entry?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleTimelineSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    try {
+      await createTimelineMutation.mutateAsync(values);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -133,6 +176,20 @@ export default function TimelineCard({ companyId }: Props) {
           </DialogHeader>
           <p>Edit timeline entry form not implemented yet.</p>
           <Button onClick={() => setEditEntry(null)}>Close</Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Timeline Entry</DialogTitle>
+          </DialogHeader>
+          <TimelineEntryForm
+            onSubmit={handleTimelineSubmit}
+            isSubmitting={isSubmitting}
+            companies={[]} // TODO: fetch companies
+            contacts={[]} // TODO: fetch contacts
+            preselectedCompanyId={companyId}
+          />
         </DialogContent>
       </Dialog>
     </>

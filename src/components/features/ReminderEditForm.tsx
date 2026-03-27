@@ -43,41 +43,58 @@ export default function ReminderEditForm({
   reminder,
   onSuccess,
 }: {
-  reminder: Database["public"]["Tables"]["reminders"]["Row"] | null;
+  reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
 
-  // Early return for null/undefined
-  if (!reminder) {
-    return <div className="p-6 text-center text-gray-500">Loading reminder...</div>;
-  }
-
-  const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
-    mutationFn: (data: ReminderFormValues) => {
-      return updateReminder(reminder.id, data, createClient());
+  const mutation = useMutation({
+    mutationFn: async (data: ReminderFormValues) => {
+      if (reminder) {
+        return updateReminder(reminder.id, data, createClient());
+      } else {
+        // create
+        const supabase = createClient();
+        const { data: newData, error } = await supabase.from("reminders").insert(data).select().single();
+        if (error) throw error;
+        return newData;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success("Reminder updated");
+      toast.success(reminder ? "Reminder updated" : "Reminder created");
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
+    onError: (err) => toast.error("Operation failed", { description: err.message }),
   });
 
   const form = useForm<ReminderFormValues>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
-      title: "",
-      company_id: "",
-      due_date: "",
-      priority: "normal",
-      status: "open",
-      assigned_to: "",
-      description: "",
+      title: reminder?.title || "",
+      company_id: reminder?.company_id || "",
+      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+      priority: reminder?.priority || "normal",
+      status: reminder?.status || "open",
+      assigned_to: reminder?.assigned_to || "",
+      description: reminder?.description || "",
     },
   });
+
+  useEffect(() => {
+    if (reminder) {
+      form.reset({
+        title: reminder.title || "",
+        company_id: reminder.company_id || "",
+        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+        priority: reminder.priority || "normal",
+        status: reminder.status || "open",
+        assigned_to: reminder.assigned_to || "",
+        description: reminder.description || "",
+      });
+    }
+  }, [reminder, form]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -88,18 +105,6 @@ export default function ReminderEditForm({
       return data;
     },
   });
-
-  useEffect(() => {
-    form.reset({
-      title: reminder.title || "",
-      company_id: reminder.company_id || "",
-      due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder.priority || "normal",
-      status: reminder.status || "open",
-      assigned_to: reminder.assigned_to || "",
-      description: reminder.description || "",
-    });
-  }, [reminder, form]);
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
@@ -231,7 +236,7 @@ export default function ReminderEditForm({
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Updating..." : "Update Reminder"}
+          {mutation.isPending ? (reminder ? "Updating..." : "Creating...") : (reminder ? "Update Reminder" : "Create Reminder")}
         </Button>
       </form>
     </Form>

@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
+import { toast } from "sonner";
+import ReminderEditForm from "@/components/features/ReminderEditForm";
 
 interface Props {
   companyId: string;
@@ -14,6 +16,9 @@ interface Props {
 
 export default function RemindersCard({ companyId }: Props) {
   const [editReminder, setEditReminder] = useState<any>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+
   const { data: reminders = [], isLoading } = useQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
@@ -24,9 +29,21 @@ export default function RemindersCard({ companyId }: Props) {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("reminders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+      toast.success("Reminder deleted");
+    },
+    onError: (err) => toast.error("Delete failed", { description: err.message }),
+  });
+
   const handleAdd = () => {
-    // TODO: implement add reminder
-    console.log("Add reminder");
+    setAddDialogOpen(true);
   };
 
   const handleEdit = (reminder: any) => {
@@ -34,8 +51,9 @@ export default function RemindersCard({ companyId }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    // TODO: implement delete reminder
-    console.log("Delete reminder", id);
+    if (confirm("Delete this reminder?")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   if (isLoading) {
@@ -141,8 +159,15 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Reminder</DialogTitle>
           </DialogHeader>
-          <p>Edit reminder form not implemented yet.</p>
-          <Button onClick={() => setEditReminder(null)}>Close</Button>
+          <ReminderEditForm reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Reminder</DialogTitle>
+          </DialogHeader>
+          <ReminderEditForm reminder={null} onSuccess={() => setAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
