@@ -11,7 +11,7 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { getKundentypLabel, getStatusLabel, getFirmentypLabel, getCountryFlag } from "./utils";
+import { getKundentypLabel, getStatusLabel, getFirmentypLabel, getCountryFlag } from "../../lib/utils";
 
 interface Props {
   company: Company;
