@@ -17,7 +17,7 @@ interface Props {
 export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const { data: contacts = [], isLoading } = useQuery({
+  const { data: contacts = [], isLoading, error } = useQuery({
     queryKey: ["contacts", companyId],
     queryFn: async () => {
       const supabase = createClient();
@@ -57,6 +57,22 @@ export default function LinkedContactsCard({ companyId }: Props) {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Linked Contacts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">Error loading contacts: {error.message}</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Card>
@@ -91,9 +107,13 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   <tr key={contact.id}>
                     <td>
                       <div>
-                        <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                          {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
-                        </a>
+                        {contact.id ? (
+                          <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                            {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
+                          </a>
+                        ) : (
+                          <span>{contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}</span>
+                        )}
                         {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
                       </div>
                     </td>
