@@ -49,20 +49,9 @@ export default function AquaDockCard({ company }: Props) {
               <Waves className="w-5 h-5" />
               AquaDock Daten
             </CardTitle>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/openmap')}
-              >
-                <MapPin className="h-4 w-4 mr-2" />
-                Show in OpenMap
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
-                <Edit className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
+              <Edit className="h-4 w-4" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -84,8 +73,21 @@ export default function AquaDockCard({ company }: Props) {
               <p className="text-sm text-gray-900">{company.lon ?? "—"}</p>
             </div>
             <div className="lg:col-span-2">
-              <div className="text-sm font-medium text-gray-700">OSM ID</div>
-              <p className="text-sm text-gray-900">{formatOsmLink()}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-medium text-gray-700">OSM ID</div>
+                  <p className="text-sm text-gray-900">{formatOsmLink()}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/openmap')}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Show in OpenMap
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
