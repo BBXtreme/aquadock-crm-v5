@@ -271,7 +271,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           maxClusterRadius={100}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
-          iconCreateFunction={(cluster: any) => {
+          iconCreateFunction={(cluster: { getChildCount: () => number }) => {
             const count = cluster.getChildCount();
             return L.divIcon({
               html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
