@@ -36,7 +36,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
-  companies: { id: string; firmenname: string }[];
+  companies: { id: string; firmenname: string; kundentyp?: string }[];
   contacts: {
     id: string;
     vorname: string;
@@ -61,7 +61,7 @@ export default function TimelineEntryForm({
   preselectedCompanyId,
   defaultValues,
 }: Props) {
-  const [localCompanies, setLocalCompanies] = useState<Company[]>([]);
+  const [localCompanies, setLocalCompanies] = useState<{ id: string; firmenname: string; kundentyp?: string }[]>([]);
 
   // ALL HOOKS FIRST — strict AIDER-RULES.md compliance
   const form = useForm<FormValues>({
@@ -97,7 +97,7 @@ export default function TimelineEntryForm({
         if (data) {
           setLocalCompanies((prev) => {
             if (!prev.find((c) => c.id === data.id)) {
-              return [...prev, data];
+              return [...prev, { id: data.id, firmenname: data.firmenname, kundentyp: data.kundentyp }];
             }
             return prev;
           });

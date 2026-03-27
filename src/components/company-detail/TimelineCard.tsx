@@ -37,7 +37,7 @@ export default function TimelineCard({ companyId }: Props) {
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      const { data, error } = await supabase.from("companies").select("id, firmenname, kundentyp");
       if (error) throw error;
       return data;
     },
