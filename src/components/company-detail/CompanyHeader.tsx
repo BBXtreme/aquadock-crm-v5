@@ -1,8 +1,11 @@
 "use client";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import CompanyEditForm from "@/components/features/CompanyEditForm";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { getKundentypLabel } from "./utils";
@@ -14,6 +17,8 @@ interface Props {
 }
 
 export default function CompanyHeader({ company, id, router }: Props) {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
   return (
     <>
       <nav className="text-sm text-gray-600">
@@ -38,7 +43,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
           >
             <Plus className="h-4 w-4 mr-2" /> Add Timeline
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
             <Edit className="w-4 h-4" />
           </Button>
           <Button
@@ -84,6 +89,17 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
         )}
       </div>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Company</DialogTitle>
+          </DialogHeader>
+          <CompanyEditForm
+            company={company}
+            onSuccess={() => setEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
