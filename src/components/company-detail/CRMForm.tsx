@@ -1,9 +1,11 @@
+// This component is responsible for rendering a form to update CRM-related information for a company. -  status, value, and notes. It uses react-hook-form for form state management and validation with zod. Upon submission, it updates the company data in the Supabase database and provides user feedback with toast notifications.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -56,7 +58,8 @@ export default function CRMForm({ company, onSuccess }: Props) {
   const form = useForm<CRMFormValues>({
     resolver: zodResolver(crmSchema),
     defaultValues: {
-      status: company.status as any,
+      // Proper type-safe default (no `any`)
+      status: company.status as CRMFormValues["status"],
       value: company.value ?? null,
       notes: company.notes || "",
     },

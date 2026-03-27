@@ -74,8 +74,9 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
       toast.success("AquaDock Daten aktualisiert");
       onSuccess?.();
     },
-    onError: (error: any) => {
-      toast.error("Fehler beim Speichern", { description: error.message });
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Fehler beim Speichern", { description: message });
     },
   });
 
@@ -123,8 +124,9 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
       } else {
         setValidationResult({ valid: false, message: "❌ OSM-Element nicht gefunden" });
       }
-    } catch (err: any) {
-      setValidationResult({ valid: false, message: `Fehler: ${err.message}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      setValidationResult({ valid: false, message: `Fehler: ${message}` });
     } finally {
       setIsValidating(false);
     }

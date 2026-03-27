@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
 
 export default function MassEmailPage() {
@@ -156,7 +156,7 @@ export default function MassEmailPage() {
               />
             </div>
 
-            <Button onClick={handleSend} disabled={isSending} className="w-full">
+            <Button onClick={handleSend} disabled={isSending} className="w-full" type="button">
               {isSending ? "Sending..." : `Send to ${selectedContacts.length} contacts`}
             </Button>
           </CardContent>

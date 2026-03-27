@@ -1,3 +1,4 @@
+// This component displays a timeline of events related to a specific company. It allows users to view, add, edit, and delete timeline entries. Each entry can be associated with a company, contact, and user. The component uses React Query for data fetching and mutations, and Supabase as the backend database. It also includes loading states and error handling with toast notifications.  - source:
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
+import type { Reminder } from "@/lib/supabase/database.types";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel } from "@/lib/utils";
 
 interface Props {
@@ -16,7 +18,7 @@ interface Props {
 }
 
 export default function RemindersCard({ companyId }: Props) {
-  const [editReminder, setEditReminder] = useState<any>(null);
+  const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -60,11 +62,14 @@ export default function RemindersCard({ companyId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
       toast.success("Reminder deleted");
     },
-    onError: (err) => toast.error("Delete failed", { description: err.message }),
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Delete failed", { description: message });
+    },
   });
 
   const handleAdd = () => setAddDialogOpen(true);
-  const handleEdit = (reminder: any) => setEditReminder(reminder);
+  const handleEdit = (reminder: Reminder) => setEditReminder(reminder);
   const handleDelete = (id: string) => {
     if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
   };
@@ -95,7 +100,7 @@ export default function RemindersCard({ companyId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-red-500">Error loading reminders: {error.message}</div>
+          <div className="text-red-500">Error loading reminders: {(error as Error).message}</div>
         </CardContent>
       </Card>
     );
@@ -110,7 +115,7 @@ export default function RemindersCard({ companyId }: Props) {
               <Bell className="w-5 h-5" />
               Reminders ({reminders.length})
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAdd}>
+            <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
               Add Reminder
             </Button>
@@ -165,13 +170,20 @@ export default function RemindersCard({ companyId }: Props) {
                     <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(reminder)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          type="button"
+                          onClick={() => handleEdit(reminder)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700"
+                          type="button"
                           onClick={() => handleDelete(reminder.id)}
                         >
                           <Trash className="h-4 w-4" />
