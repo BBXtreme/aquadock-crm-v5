@@ -35,7 +35,7 @@ export default function CompanyDetailPage() {
     return (
       <div className="container mx-auto p-6 text-center">
         <h1 className="text-2xl font-bold text-red-600">Company not found</h1>
-        <button onClick={() => router.push("/companies")} className="mt-4 text-blue-600 hover:underline">
+        <button type="button" onClick={() => router.push("/companies")} className="mt-4 text-blue-600 hover:underline">
           Back to Companies
         </button>
       </div>
