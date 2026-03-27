@@ -15,12 +15,20 @@ import { updateCompany } from "@/lib/supabase/services/companies";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
+// ==================== OSM VALIDATION ====================
+const OSM_REGEX = /^(node|way|relation)\/\d+$/;
+
 const aquadockSchema = z.object({
   wasserdistanz: z.number().optional(),
   wassertyp: z.string().optional(),
   lat: z.number().optional(),
   lon: z.number().optional(),
-  osm: z.string().optional(),
+  osm: z
+    .string()
+    .optional()
+    .refine((val) => !val || OSM_REGEX.test(val.trim()), {
+      message: "OSM-ID muss im Format node/12345, way/12345 oder relation/12345 sein",
+    }),
 });
 
 type AquaDockFormValues = z.infer<typeof aquadockSchema>;
@@ -44,41 +52,51 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
     resolver: zodResolver(aquadockSchema),
     defaultValues: {
       wasserdistanz: company?.wasserdistanz ?? undefined,
-      wassertyp: company?.wassertyp || "",
+      wassertyp: company?.wassertyp ?? "",
       lat: company?.lat ?? undefined,
       lon: company?.lon ?? undefined,
-      osm: company?.osm || "",
+      osm: company?.osm ?? "",
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: AquaDockFormValues) => {
-      if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      if (!company?.id) throw new Error("Company ID ist erforderlich");
+      // Trim OSM before sending
+      const cleanData = {
+        ...data,
+        osm: data.osm?.trim() || null,
+      };
+      return updateCompany(company.id, cleanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      queryClient.invalidateQueries({ queryKey: ["company", company.id] });
-      toast.success("AquaDock data updated successfully");
+      if (company?.id) queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      toast.success("AquaDock Daten aktualisiert");
       onSuccess?.();
     },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to update AquaDock data", { description: message });
+    onError: (error: any) => {
+      toast.error("Fehler beim Speichern", { description: error.message });
     },
   });
 
-  // Early return AFTER all hooks
+  // Early return AFTER all hooks (AIDER RULE #2)
   if (!company) return null;
 
-  const onSubmit = form.handleSubmit((data) => {
-    updateMutation.mutate(data);
-  });
+  const onSubmit = form.handleSubmit((data) => updateMutation.mutate(data));
+
+  // Live preview of OSM link
+  const osmValue = form.watch("osm")?.trim();
+  const previewUrl =
+    osmValue && OSM_REGEX.test(osmValue)
+      ? `https://www.openstreetmap.org/${osmValue}#map=17/${(company.lat ?? 50.43).toFixed(5)}/${(company.lon ?? 9.18).toFixed(5)}`
+      : null;
 
   return (
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* existing fields unchanged */}
           <FormField
             control={form.control}
             name="wasserdistanz"
@@ -106,7 +124,7 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select water type" />
+                      <SelectValue placeholder="Wassertyp auswählen" />
                     </SelectTrigger>
                     <SelectContent>
                       {wassertypOptions.map((option) => (
@@ -163,6 +181,8 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
               </FormItem>
             )}
           />
+
+          {/* OSM FIELD WITH VALIDATION + PREVIEW */}
           <FormField
             control={form.control}
             name="osm"
@@ -170,9 +190,30 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
               <FormItem className="md:col-span-2">
                 <FormLabel>OSM ID</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    placeholder="z. B. way/108139952 oder node/123456"
+                    onBlur={() => field.onChange(field.value?.trim())}
+                  />
                 </FormControl>
                 <FormMessage />
+                {previewUrl && (
+                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                    <span>🗺 Vorschau:</span>
+                    <a
+                      href={previewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline font-mono"
+                    >
+                      {field.value}
+                    </a>
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Format: <span className="font-mono">node/12345</span> • <span className="font-mono">way/12345</span> •{" "}
+                  <span className="font-mono">relation/12345</span>
+                </p>
               </FormItem>
             )}
           />
@@ -180,10 +221,10 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Cancel
+            Abbrechen
           </Button>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+          <Button type="submit" disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? "Wird gespeichert..." : "Änderungen speichern"}
           </Button>
         </div>
       </form>
