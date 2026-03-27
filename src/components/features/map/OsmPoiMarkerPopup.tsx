@@ -68,7 +68,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalcul
 
       {poi.wasserdistanz !== undefined && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
-          💧 {poi.wasserdistanz === 0 ? "–" : poi.wasserdistanz + " m"} zum Wasser
+          💧 {poi.wasserdistanz === 0 ? "–" : `${poi.wasserdistanz} m`} zum Wasser
           {poi.wassertyp && <span className="font-medium">({poi.wassertyp})</span>}
         </div>
       )}

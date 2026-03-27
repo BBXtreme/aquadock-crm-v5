@@ -1,3 +1,4 @@
+// This file defines the categories of points of interest (POIs) that are relevant for the application.  src/lib/constants/map-poi-config.ts
 export const poiCategories = {
   restaurant: {
     icon: "🍽️",
