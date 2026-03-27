@@ -36,7 +36,6 @@ const KUNDENTYP_MAP: Record<string, string> = {
   hotel: "hotel",
   motel: "hotel",
   guest_house: "hotel",
-  hostel: "hotel",
   apartment: "hotel",
   camp_site: "camping",
   caravan_site: "camping",
@@ -62,7 +61,6 @@ const KUNDENTYP_MAP: Record<string, string> = {
   boat: "bootsverleih",
   outdoor: "sonstige",
   surf: "segelschule",
-  diving: "segelschule",
   fishing: "sonstige",
 
   // sport
@@ -72,26 +70,6 @@ const KUNDENTYP_MAP: Record<string, string> = {
   kayaking: "bootsverleih",
   kitesurfing: "segelschule",
   diving: "segelschule",
-};
-
-const WASSERTYP_MAP: Record<string, string> = {
-  marina: "Hafen",
-  dock: "Hafen",
-  boatyard: "Hafen",
-  harbour: "Hafen",
-  canal: "Kanal",
-  river: "Fluss",
-  stream: "Bach",
-  sea: "Küste / Meer",
-  bay: "Küste / Meer",
-  ocean: "Küste / Meer",
-  lake: "See",
-  water: "See",
-  swimming_area: "Badesee",
-  water_park: "Badesee",
-  reservoir: "Stausee",
-  pond: "Teich",
-  beach: "Küste / Meer",
 };
 
 /* ============================================= */
