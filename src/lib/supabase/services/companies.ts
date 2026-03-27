@@ -90,13 +90,10 @@ export type CompanyForOpenMap = Pick<
   | "wasserdistanz"
 >;
 
-export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
-  const isDevelopment = process.env.NODE_ENV === "development";
-  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555" || !userId;
-
+export async function getCompaniesForOpenMap(): Promise<CompanyForOpenMap[]> {
   const supabase = createClient();
 
-  let query = supabase
+  const { data, error } = await supabase
     .from("companies")
     .select(`
       id,
@@ -118,15 +115,8 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
       wasserdistanz
     `)
     .not("lat", "is", null)
-    .not("lon", "is", null);
-
-  if (!isDevelopment || !isMockUser) {
-    query = query.eq("user_id", userId);
-  }
-
-  query = query.order("firmenname", { ascending: true });
-
-  const { data, error } = await query;
+    .not("lon", "is", null)
+    .order("firmenname", { ascending: true });
 
   if (error) throw handleSupabaseError(error, "Failed to load companies for OpenMap");
 
@@ -137,20 +127,14 @@ export async function getCompaniesForOpenMap(userId: string): Promise<CompanyFor
 /**
  * Optimierte OSM-POI Import-Funktion mit firmentyp-Auto-Mapping
  */
-export async function importOsmPoi(
-  poi: {
-    tags?: Record<string, string>;
-    lat?: number;
-    lon?: number;
-    center?: { lat: number; lon: number };
-    type: string;
-    id: string;
-  },
-  userId: string,
-) {
-  const isDevelopment = process.env.NODE_ENV === "development";
-  const isMockUser = userId === "dev-mock-user-11111111-2222-3333-4444-555555555555" || !userId;
-
+export async function importOsmPoi(poi: {
+  tags?: Record<string, string>;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  type: string;
+  id: string;
+}) {
   const supabase = createClient();
 
   const tags = poi.tags || {};
@@ -164,7 +148,7 @@ export async function importOsmPoi(
 
   const firmenname = tags.name || tags["name:de"] || tags["name:en"] || `POI ${poi.id}`;
 
-  const insertData: CompanyInsert & { user_id?: string } = {
+  const insertData: CompanyInsert = {
     firmenname: firmenname.trim(),
     kundentyp,
     wassertyp,
@@ -179,7 +163,6 @@ export async function importOsmPoi(
     lon: poi.lon ?? center.lon ?? null,
     osm: osmId,
     status: "lead",
-    ...(isDevelopment && isMockUser ? {} : { user_id: userId }),
   };
 
   const { data, error } = await supabase.from("companies").insert(insertData).select().single();

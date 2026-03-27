@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version"; // ← this line was missing
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -29,11 +30,14 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
+      {/* Header / Toggle */}
       <div className="p-4">
         <Button variant="ghost" onClick={onToggle} className="mb-4">
           <Menu className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Navigation */}
       <nav className="flex-1 px-4">
         <ul className="space-y-2">
           {navItems.map((item) => (
@@ -54,6 +58,25 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
           ))}
         </ul>
       </nav>
+
+      {/* VERSION BADGE – BOTTOM OF SIDEBAR */}
+      <div className="mt-auto border-t p-4">
+        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+          {!isCollapsed && (
+            <>
+              <span>v{APP_VERSION}</span>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
+                {isCollapsed ? "→" : "←"}
+              </Button>
+            </>
+          )}
+          {isCollapsed && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
+              →
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 
