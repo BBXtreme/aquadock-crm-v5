@@ -78,7 +78,6 @@ export default function LinkedContactsCard({ companyId }: Props) {
               <thead>
                 <tr>
                   <th className="text-left">Name</th>
-                  <th className="text-left">Position</th>
                   <th className="text-left">Email</th>
                   <th className="text-left">Phone</th>
                   <th className="text-left">Mobil</th>
@@ -90,11 +89,13 @@ export default function LinkedContactsCard({ companyId }: Props) {
                 {contacts.map((contact) => (
                   <tr key={contact.id}>
                     <td>
-                      <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                        {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
-                      </a>
+                      <div>
+                        <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                          {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
+                        </a>
+                        {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
+                      </div>
                     </td>
-                    <td>{contact.position || "—"}</td>
                     <td>{contact.email || "—"}</td>
                     <td>{contact.telefon || "—"}</td>
                     <td>{contact.mobil || "—"}</td>
