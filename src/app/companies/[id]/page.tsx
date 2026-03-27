@@ -19,6 +19,8 @@ export default function CompanyDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
+  console.log("Company page id:", id);
+
   const {
     data: company,
     isLoading,

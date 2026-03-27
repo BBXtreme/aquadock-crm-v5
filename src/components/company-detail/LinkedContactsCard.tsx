@@ -18,6 +18,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
+  console.log("LinkedContactsCard companyId:", companyId);
+
   const {
     data: contacts = [],
     isLoading,
@@ -143,8 +145,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           </Button>
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"
                             onClick={() => handleDelete(contact.id)}
                           >
                             <Trash className="h-4 w-4" />
@@ -174,7 +175,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} />
+          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} preselectedCompanyId={companyId} />
         </DialogContent>
       </Dialog>
     </>

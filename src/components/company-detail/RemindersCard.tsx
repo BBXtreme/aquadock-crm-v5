@@ -20,6 +20,8 @@ export default function RemindersCard({ companyId }: Props) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  console.log("RemindersCard companyId:", companyId);
+
   const {
     data: reminders = [],
     isLoading,
@@ -168,8 +170,7 @@ export default function RemindersCard({ companyId }: Props) {
                         </Button>
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
+                          size="icon" className="h-8 w-8 text-red-600 hover:text-red-700"
                           onClick={() => handleDelete(reminder.id)}
                         >
                           <Trash className="h-4 w-4" />
