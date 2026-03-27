@@ -65,7 +65,9 @@ export default function AdresseEditForm({ company, onSuccess }: { company: Compa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      if (company) {
+        queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      }
       toast.success("Adresse updated successfully");
       onSuccess?.();
     },
