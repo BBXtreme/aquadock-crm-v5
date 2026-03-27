@@ -1,13 +1,12 @@
 "use client";
-import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Database } from "@/lib/supabase/database.types";
 
 interface Props {
   companyId: string;
@@ -19,10 +18,7 @@ export default function RemindersCard({ companyId }: Props) {
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("reminders")
-        .select("*")
-        .eq("company_id", companyId);
+      const { data, error } = await supabase.from("reminders").select("*").eq("company_id", companyId);
       if (error) throw error;
       return data;
     },

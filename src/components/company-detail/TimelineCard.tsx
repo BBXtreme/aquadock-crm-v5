@@ -1,6 +1,6 @@
 "use client";
-import { Calendar, Edit, Plus, Trash } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { Calendar, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,7 +76,10 @@ export default function TimelineCard({ companyId }: Props) {
                   <tr key={entry.id}>
                     <td>
                       {entry.created_at
-                        ? new Date(entry.created_at).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })
+                        ? new Date(entry.created_at).toLocaleString("de-DE", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })
                         : "—"}
                     </td>
                     <td>

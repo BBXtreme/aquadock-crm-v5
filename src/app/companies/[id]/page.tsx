@@ -12,7 +12,6 @@ import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
 import RemindersCard from "@/components/company-detail/RemindersCard";
 import TimelineCard from "@/components/company-detail/TimelineCard";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company } from "@/lib/supabase/database.types";
 import { getCompanyById } from "@/lib/supabase/services/companies";
 
 export default function CompanyDetailPage() {

@@ -1,7 +1,7 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
     queryKey: ["contacts", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select("*")
-        .eq("company_id", companyId);
+      const { data, error } = await supabase.from("contacts").select("*").eq("company_id", companyId);
       if (error) throw error;
       return data;
     },

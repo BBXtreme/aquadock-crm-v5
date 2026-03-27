@@ -27,5 +27,6 @@
 
   // Biome specific
   "biome.enabled": true,
-  "biome.requireConfiguration": false
+  "biome.requireConfiguration": false,
+  "cSpell.words": ["Adresse", "Firmendaten"]
 }
