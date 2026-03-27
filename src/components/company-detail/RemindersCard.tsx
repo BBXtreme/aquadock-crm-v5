@@ -19,12 +19,13 @@ export default function RemindersCard({ companyId }: Props) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: reminders = [], isLoading } = useQuery({
+  const { data: reminders = [], isLoading, error } = useQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("reminders").select("*").eq("company_id", companyId);
       if (error) throw error;
+      console.log("Fetched reminders for company", companyId, ":", data);
       return data;
     },
   });
@@ -67,6 +68,22 @@ export default function RemindersCard({ companyId }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-gray-500">Loading reminders...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">Error loading reminders: {error.message}</div>
         </CardContent>
       </Card>
     );
