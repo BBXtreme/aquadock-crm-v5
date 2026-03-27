@@ -1,14 +1,15 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import ReminderEditForm from "@/components/features/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { toast } from "sonner";
-import ReminderEditForm from "@/components/features/ReminderEditForm";
+import { formatDateDE, getPriorityLabel, getReminderStatusLabel } from "@/lib/utils";
 
 interface Props {
   companyId: string;
@@ -19,15 +20,32 @@ export default function RemindersCard({ companyId }: Props) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: reminders = [], isLoading, error } = useQuery({
+  const {
+    data: reminders = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("reminders").select("*").eq("company_id", companyId);
+      const { data, error } = await supabase
+        .from("reminders")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("due_date", { ascending: true });
+
       if (error) throw error;
-      console.log("Fetched reminders for company", companyId, ":", data);
+
+      console.log("🔍 RemindersCard - RAW data from Supabase for company", companyId);
+      console.table(data);
+      if (data && data.length > 0) {
+        console.log("📋 First reminder full object:", data[0]);
+      }
       return data;
     },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   const deleteMutation = useMutation({
@@ -43,18 +61,10 @@ export default function RemindersCard({ companyId }: Props) {
     onError: (err) => toast.error("Delete failed", { description: err.message }),
   });
 
-  const handleAdd = () => {
-    setAddDialogOpen(true);
-  };
-
-  const handleEdit = (reminder: any) => {
-    setEditReminder(reminder);
-  };
-
+  const handleAdd = () => setAddDialogOpen(true);
+  const handleEdit = (reminder: any) => setEditReminder(reminder);
   const handleDelete = (id: string) => {
-    if (confirm("Delete this reminder?")) {
-      deleteMutation.mutate(id);
-    }
+    if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
   };
 
   if (isLoading) {
@@ -128,10 +138,10 @@ export default function RemindersCard({ companyId }: Props) {
                         className="text-primary hover:underline cursor-pointer"
                         onClick={() => handleEdit(reminder)}
                       >
-                        {reminder.title}
+                        {reminder.title || "—"}
                       </button>
                     </td>
-                    <td>{new Date(reminder.due_date).toLocaleDateString()}</td>
+                    <td>{formatDateDE(reminder.due_date)}</td>
                     <td>
                       <Badge
                         className={
@@ -142,11 +152,13 @@ export default function RemindersCard({ companyId }: Props) {
                               : "bg-gray-500 text-white"
                         }
                       >
-                        {reminder.priority}
+                        {getPriorityLabel(reminder.priority)}
                       </Badge>
                     </td>
                     <td>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                        {getReminderStatusLabel(reminder.status)}
+                      </Badge>
                     </td>
                     <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">
@@ -171,6 +183,7 @@ export default function RemindersCard({ companyId }: Props) {
           )}
         </CardContent>
       </Card>
+
       <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
         <DialogContent>
           <DialogHeader>
@@ -179,6 +192,7 @@ export default function RemindersCard({ companyId }: Props) {
           <ReminderEditForm key={editReminder?.id} reminder={editReminder} onSuccess={() => setEditReminder(null)} />
         </DialogContent>
       </Dialog>
+
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>

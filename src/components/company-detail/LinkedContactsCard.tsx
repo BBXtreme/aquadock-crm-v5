@@ -2,13 +2,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
+import ContactEditForm from "@/components/features/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/lib/supabase/database.types";
-import ContactEditForm from "@/components/features/ContactEditForm";
 
 interface Props {
   companyId: string;
@@ -17,29 +17,38 @@ interface Props {
 export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const { data: contacts = [], isLoading, error } = useQuery({
+
+  const {
+    data: contacts = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["contacts", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("contacts").select("*").eq("company_id", companyId);
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("nachname", { ascending: true });
+
       if (error) throw error;
-      console.log("Fetched contacts for company", companyId, ":", data);
+
+      console.log("🔍 LinkedContactsCard - RAW data from Supabase for company", companyId);
+      console.table(data);
+      if (data && data.length > 0) {
+        console.log("📋 First contact full object:", data[0]);
+      }
       return data;
     },
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
-  const handleAdd = () => {
-    setAddDialogOpen(true);
-  };
-
-  const handleEdit = (contact: Contact) => {
-    setEditContact(contact);
-  };
-
-  const handleDelete = (id: string) => {
-    // TODO: implement delete contact
-    console.log("Delete contact", id);
-  };
+  const handleAdd = () => setAddDialogOpen(true);
+  const handleEdit = (contact: Contact) => setEditContact(contact);
+  const handleDelete = (id: string) => console.log("Delete contact", id);
 
   if (isLoading) {
     return (
@@ -103,46 +112,54 @@ export default function LinkedContactsCard({ companyId }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {contacts.map((contact) => (
-                  <tr key={contact.id}>
-                    <td>
-                      <div>
-                        {contact.id ? (
-                          <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                            {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
-                          </a>
-                        ) : (
-                          <span>{contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}</span>
-                        )}
-                        {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
-                      </div>
-                    </td>
-                    <td>{contact.email || "—"}</td>
-                    <td>{contact.telefon || "—"}</td>
-                    <td>{contact.mobil || "—"}</td>
-                    <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
-                    <td className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
-                          onClick={() => handleDelete(contact.id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {contacts.map((contact) => {
+                  const displayName =
+                    [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
+                      .filter(Boolean)
+                      .join(" ") || "—";
+
+                  return (
+                    <tr key={contact.id}>
+                      <td>
+                        <div>
+                          {contact.id ? (
+                            <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                              {displayName}
+                            </a>
+                          ) : (
+                            <span>{displayName}</span>
+                          )}
+                          {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
+                        </div>
+                      </td>
+                      <td>{contact.email || "—"}</td>
+                      <td>{contact.telefon || "—"}</td>
+                      <td>{contact.mobil || "—"}</td>
+                      <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
+                      <td className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(contact.id)}
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
         </CardContent>
       </Card>
+
       <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
         <DialogContent>
           <DialogHeader>
@@ -151,12 +168,13 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <ContactEditForm key={editContact?.id} contact={editContact} onSuccess={() => setEditContact(null)} />
         </DialogContent>
       </Dialog>
+
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} preselectedCompanyId={companyId} />
+          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
