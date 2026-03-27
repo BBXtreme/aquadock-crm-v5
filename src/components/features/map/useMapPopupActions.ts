@@ -1,14 +1,14 @@
 // src/components/features/map/useMapPopupActions.ts
 "use client";
 
-import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
-import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import { createClient } from "@/lib/supabase/browser";
+import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";
 
@@ -98,7 +98,7 @@ export function useMapPopupActions() {
       } else {
         toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Fehler bei Wasserberechnung", { id: "water-calc" });
     }
   }, []);
