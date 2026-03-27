@@ -14,7 +14,7 @@ interface Props {
 
 export default function RemindersCard({ companyId }: Props) {
   const [editReminder, setEditReminder] = useState<any>(null);
-  const { data: reminders = [] } = useQuery({
+  const { data: reminders = [], isLoading } = useQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
@@ -37,6 +37,22 @@ export default function RemindersCard({ companyId }: Props) {
     // TODO: implement delete reminder
     console.log("Delete reminder", id);
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-gray-500">Loading reminders...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>

@@ -14,7 +14,7 @@ interface Props {
 
 export default function TimelineCard({ companyId }: Props) {
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
-  const { data: timeline = [] } = useQuery({
+  const { data: timeline = [], isLoading } = useQuery({
     queryKey: ["timeline", companyId],
     queryFn: async () => {
       const supabase = createClient();
@@ -40,6 +40,22 @@ export default function TimelineCard({ companyId }: Props) {
     // TODO: implement delete timeline entry
     console.log("Delete timeline entry", id);
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Timeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-gray-500">Loading timeline...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>

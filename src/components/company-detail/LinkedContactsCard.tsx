@@ -17,7 +17,7 @@ interface Props {
 export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const { data: contacts = [] } = useQuery({
+  const { data: contacts = [], isLoading } = useQuery({
     queryKey: ["contacts", companyId],
     queryFn: async () => {
       const supabase = createClient();
@@ -39,6 +39,22 @@ export default function LinkedContactsCard({ companyId }: Props) {
     // TODO: implement delete contact
     console.log("Delete contact", id);
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Linked Contacts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-gray-500">Loading contacts...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
