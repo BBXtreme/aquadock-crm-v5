@@ -36,7 +36,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface Props {
   onSubmit: (values: FormValues) => Promise<void>;
   isSubmitting: boolean;
-  companies: Company[];
+  companies: { id: string; firmenname: string }[];
   contacts: {
     id: string;
     vorname: string;
