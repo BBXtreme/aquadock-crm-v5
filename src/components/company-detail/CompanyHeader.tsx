@@ -11,7 +11,7 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { getKundentypLabel } from "./utils";
+import { getKundentypLabel, getStatusLabel, getFirmentypLabel } from "./utils";
 
 interface Props {
   company: Company;
@@ -123,11 +123,11 @@ export default function CompanyHeader({ company, id, router }: Props) {
             company.status === "lead" && "bg-amber-600 text-white",
           )}
         >
-          {company.status}
+          {getStatusLabel(company.status)}
         </Badge>
         {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && (
-          <Badge variant="outline">{company.firmentyp === "kette" ? "Kette" : "Einzelbetrieb"}</Badge>
+          <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>
         )}
         {company.wassertyp && (
           <Badge variant="outline">

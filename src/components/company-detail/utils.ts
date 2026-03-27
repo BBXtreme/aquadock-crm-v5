@@ -16,3 +16,24 @@ export function getKundentypLabel(t: string): string {
   };
   return map[t.toLowerCase()] || t;
 }
+
+export function getStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    gewonnen: "✅ Gewonnen",
+    verloren: "❌ Verloren",
+    lead: "🔍 Lead",
+    interessant: "👀 Interessant",
+    qualifiziert: "⭐ Qualifiziert",
+    akquise: "🎯 Akquise",
+    angebot: "📄 Angebot",
+    kunde: "👤 Kunde",
+    partner: "🤝 Partner",
+    inaktiv: "⏸ Inaktiv",
+  };
+  return map[status.toLowerCase()] || status;
+}
+
+export function getFirmentypLabel(firmentyp: string): string {
+  if (firmentyp.toLowerCase() === "kette") return "🏢 Kette";
+  return "🏠 Einzelbetrieb";
+}
