@@ -15,7 +15,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/companies", label: "Companies", icon: Building },
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/timeline", label: "Timeline", icon: Clock },
