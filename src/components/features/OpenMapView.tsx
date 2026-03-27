@@ -40,7 +40,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
 
-  const { openCompanyDetail, importOsmPoi, viewInOsm } = useMapPopupActions();
+  const { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi } = useMapPopupActions();
 
   // Load POI cache from localStorage
   useEffect(() => {
@@ -307,6 +307,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
                       isDarkMode={isDarkMode}
                       onImport={handleImportOsmPoi}
                       onViewInOsm={viewInOsm}
+                      onCalculateWater={async (poi) => {
+                        await calculateWaterForPoi(poi);
+                        setOsmPois((prev) =>
+                          prev.map((p) => (p.id === poi.id && p.type === poi.type ? { ...p, ...poi } : p)),
+                        );
+                      }}
                     />
                   </Popup>
                 </Marker>
