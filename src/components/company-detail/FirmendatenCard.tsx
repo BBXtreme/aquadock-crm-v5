@@ -3,7 +3,6 @@ import { Building, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Company } from "@/lib/supabase/database.types";
-import FirmendatenForm from "./FirmendatenForm"; // you can keep the form in a separate file or inline
 
 interface Props {
   company: Company;
