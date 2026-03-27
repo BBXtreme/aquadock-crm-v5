@@ -42,7 +42,7 @@ type OsmPoi = {
 
 export async function fetchOsmPois(
   bounds: L.LatLngBounds,
-  activeCategories: string[] = Object.keys(poiCategories),
+  activeCategories: (keyof typeof poiCategories)[] = Object.keys(poiCategories) as (keyof typeof poiCategories)[],
   retryCount = 0,
 ): Promise<{ pois: OsmPoi[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
@@ -65,18 +65,18 @@ export async function fetchOsmPois(
           if (poiCategories[key]) acc[key] = poiCategories[key];
           return acc;
         },
-        {} as Record<string, (typeof poiCategories)[keyof typeof poiCategories]>,
+        {} as Record<string, typeof poiCategories[keyof typeof poiCategories]>,
       );
 
       for (const category of Object.values(activePoiCategories)) {
         for (const tag of category.tags) {
           if (tag.includes("=")) {
             const [key, value] = tag.split("=");
-            tagGroups[key] ??= [];
+            if (!tagGroups[key]) tagGroups[key] = [];
             tagGroups[key].push(value);
           } else {
             // assume amenity
-            tagGroups.amenity ??= [];
+            if (!tagGroups.amenity) tagGroups.amenity = [];
             tagGroups.amenity.push(tag);
           }
         }
