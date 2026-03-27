@@ -11,35 +11,13 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { getKundentypLabel, getStatusLabel, getFirmentypLabel } from "./utils";
+import { getKundentypLabel, getStatusLabel, getFirmentypLabel, getCountryFlag } from "./utils";
 
 interface Props {
   company: Company;
   id: string;
   router: { push: (href: string) => void };
 }
-
-const getCountryFlag = (country: string | null) => {
-  const flagMap: Record<string, string> = {
-    Deutschland: "🇩🇪",
-    Österreich: "🇦🇹",
-    Schweiz: "🇨🇭",
-    Frankreich: "🇫🇷",
-    Italien: "🇮🇹",
-    Spanien: "🇪🇸",
-    Niederlande: "🇳🇱",
-    Belgien: "🇧🇪",
-    Dänemark: "🇩🇰",
-    Schweden: "🇸🇪",
-    Norwegen: "🇳🇴",
-    Polen: "🇵🇱",
-    Ungarn: "🇭🇺",
-    Griechenland: "🇬🇷",
-    Portugal: "🇵🇹",
-    "Großbritannien": "🇬🇧",
-  };
-  return country ? flagMap[country] || "🏳️" : null;
-};
 
 export default function CompanyHeader({ company, id, router }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);

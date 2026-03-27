@@ -37,3 +37,25 @@ export function getFirmentypLabel(firmentyp: string): string {
   if (firmentyp.toLowerCase() === "kette") return "🏢 Kette";
   return "🏠 Einzelbetrieb";
 }
+
+export function getCountryFlag(country: string | null): string | null {
+  const flagMap: Record<string, string> = {
+    Deutschland: "🇩🇪",
+    Österreich: "🇦🇹",
+    Schweiz: "🇨🇭",
+    Frankreich: "🇫🇷",
+    Italien: "🇮🇹",
+    Spanien: "🇪🇸",
+    Niederlande: "🇳🇱",
+    Belgien: "🇧🇪",
+    Dänemark: "🇩🇰",
+    Schweden: "🇸🇪",
+    Norwegen: "🇳🇴",
+    Polen: "🇵🇱",
+    Ungarn: "🇭🇺",
+    Griechenland: "🇬🇷",
+    Portugal: "🇵🇹",
+    "Großbritannien": "🇬🇧",
+  };
+  return country ? flagMap[country] || "🏳️" : null;
+}
