@@ -1,11 +1,14 @@
 "use client";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
+import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { getKundentypLabel } from "./utils";
@@ -18,6 +21,57 @@ interface Props {
 
 export default function CompanyHeader({ company, id, router }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("contacts").select("id, vorname, nachname, position, email, telefon");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createTimelineMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("timeline").insert(data);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timeline", id] });
+      setAddTimelineDialogOpen(false);
+    },
+    onError: (error) => {
+      console.error("Error creating timeline entry:", error);
+    },
+  });
+
+  const handleAddTimeline = () => {
+    setAddTimelineDialogOpen(true);
+  };
+
+  const handleTimelineSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    try {
+      await createTimelineMutation.mutateAsync(values);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -37,9 +91,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              /* timeline dialog is handled in TimelineCard */
-            }}
+            onClick={handleAddTimeline}
           >
             <Plus className="h-4 w-4 mr-2" /> Add Timeline
           </Button>
@@ -97,6 +149,20 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <CompanyEditForm
             company={company}
             onSuccess={() => setEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Timeline Entry</DialogTitle>
+          </DialogHeader>
+          <TimelineEntryForm
+            onSubmit={handleTimelineSubmit}
+            isSubmitting={isSubmitting}
+            companies={companies}
+            contacts={contacts}
+            preselectedCompanyId={id}
           />
         </DialogContent>
       </Dialog>
