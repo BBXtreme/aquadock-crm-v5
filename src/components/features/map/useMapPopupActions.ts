@@ -4,10 +4,9 @@
 import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
-
-import { createClient } from "@/lib/supabase/browser";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
+import { createClient } from "@/lib/supabase/browser";
 
 import type { OsmPoi } from "./types";
 
