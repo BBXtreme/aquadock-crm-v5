@@ -1,30 +1,39 @@
 "use client";
+
 import { Edit, Waves } from "lucide-react";
 import { useState } from "react";
+import AquaDockEditForm from "@/components/features/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Company } from "@/lib/supabase/database.types";
-import AquaDockEditForm from "@/components/features/AquaDockEditForm";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface Props {
   company: Company;
-  onEdit?: () => void;
 }
 
-export default function AquaDockCard({ company, onEdit }: Props) {
+export default function AquaDockCard({ company }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  const formatOsm = (osm: string | null) => {
-    if (!osm) return "—";
+  const formatOsmLink = () => {
+    if (!company.osm) return "—";
+
+    const zoom = 16;
+    const lat = company.lat ?? 50.0;
+    const lon = company.lon ?? 9.0;
+    const url = `https://www.openstreetmap.org/${company.osm}#map=${zoom}/${lat}/${lon}`;
+
     return (
       <a
-        href={`https://www.openstreetmap.org/node/${osm}`}
+        href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-blue-600 hover:underline"
+        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-medium break-all"
       >
-        {osm}
+        <span className="text-base">🗺</span>
+        <span className="font-mono text-sm">{company.osm}</span>
       </a>
     );
   };
@@ -38,7 +47,7 @@ export default function AquaDockCard({ company, onEdit }: Props) {
               <Waves className="w-5 h-5" />
               AquaDock Daten
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
               <Edit className="h-4 w-4" />
             </Button>
           </div>
@@ -55,28 +64,27 @@ export default function AquaDockCard({ company, onEdit }: Props) {
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Latitude</div>
-              <p className="text-sm text-gray-900">{company.lat || "—"}</p>
+              <p className="text-sm text-gray-900">{company.lat ?? "—"}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Longitude</div>
-              <p className="text-sm text-gray-900">{company.lon || "—"}</p>
+              <p className="text-sm text-gray-900">{company.lon ?? "—"}</p>
             </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">OSM</div>
-              <p className="text-sm text-gray-900">{formatOsm(company.osm)}</p>
+            <div className="lg:col-span-2">
+              <div className="text-sm font-medium text-gray-700">OSM ID</div>
+              <p className="text-sm text-gray-900">{formatOsmLink()}</p>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit AquaDock Daten</DialogTitle>
+            <DialogTitle>AquaDock Daten bearbeiten</DialogTitle>
           </DialogHeader>
-          <AquaDockEditForm
-            company={company}
-            onSuccess={() => setEditDialogOpen(false)}
-          />
+          <AquaDockEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>
