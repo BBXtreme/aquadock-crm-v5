@@ -81,6 +81,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   <th className="text-left">Position</th>
                   <th className="text-left">Email</th>
                   <th className="text-left">Phone</th>
+                  <th className="text-left">Mobil</th>
                   <th className="text-left">Primary</th>
                   <th className="text-right w-24">Actions</th>
                 </tr>
@@ -90,12 +91,13 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   <tr key={contact.id}>
                     <td>
                       <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                        {contact.vorname} {contact.nachname}
+                        {contact.anrede ? `${contact.anrede} ` : ""}{contact.vorname} {contact.nachname}
                       </a>
                     </td>
                     <td>{contact.position || "—"}</td>
                     <td>{contact.email || "—"}</td>
                     <td>{contact.telefon || "—"}</td>
+                    <td>{contact.mobil || "—"}</td>
                     <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
