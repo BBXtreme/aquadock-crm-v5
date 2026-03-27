@@ -54,8 +54,8 @@ export default function CompanyDetailPage() {
         <CrmCard company={company} />
       </div>
       <LinkedContactsCard companyId={id} />
-      <RemindersCard companyId={id} />
-      <TimelineCard companyId={id} />
+      <RemindersCard reminders={[]} onAdd={() => {}} onEdit={() => {}} onDelete={() => {}} />
+      <TimelineCard timeline={[]} onAdd={() => {}} onEdit={() => {}} onDelete={() => {}} />
     </div>
   );
 }
