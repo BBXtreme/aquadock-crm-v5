@@ -1,6 +1,6 @@
-import { createClient, handleSupabaseError } from "../client";
-// Use ../types.ts (re-exports + custom Insert/Update types) instead of raw database.types.ts
-import type { Database } from "../types";
+import { createClient } from "../browser";
+import type { Database } from "../database.types";
+import { handleSupabaseError } from "../utils";
 
 type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];

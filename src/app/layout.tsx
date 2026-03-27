@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import type React from "react";
 
+import AppLayout from "@/components/layout/AppLayout";
 import ClientLayout from "@/components/layout/ClientLayout";
 
 export const metadata: Metadata = {
@@ -17,9 +18,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <ClientLayout>{children}</ClientLayout>
+    <html lang="de" suppressHydrationWarning>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}>
+        <ClientLayout>
+          <AppLayout>{children}</AppLayout>
+        </ClientLayout>
       </body>
     </html>
   );

@@ -1,6 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-// Use ../types.ts (re-exports + custom Insert/Update types) instead of raw database.types.ts
 import type {
   EmailLog,
   EmailLogInsert,
@@ -8,7 +6,7 @@ import type {
   EmailTemplate,
   EmailTemplateInsert,
   EmailTemplateUpdate,
-} from "../types";
+} from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 /**

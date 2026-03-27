@@ -1,15 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Reminder, ReminderInsert, ReminderUpdate } from "../types";
+import type { Reminder, ReminderInsert, ReminderUpdate } from "../database.types";
 import { handleSupabaseError } from "../utils";
+
+type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
 
 /**
  * Get all reminders with joined company data
  */
-export async function getReminders(client: SupabaseClient): Promise<Reminder[]> {
+export async function getReminders(client: SupabaseClient): Promise<ReminderWithCompany[]> {
   const { data, error } = await client.from("reminders").select("*, companies!company_id (firmenname)");
   if (error) throw handleSupabaseError(error, "getReminders");
-  return (data ?? []) as Reminder[];
+  return (data ?? []) as ReminderWithCompany[];
 }
 
 /**

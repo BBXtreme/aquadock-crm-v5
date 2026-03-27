@@ -1,0 +1,175 @@
+import L from "leaflet";
+
+import { poiCategories } from "@/lib/constants/map-poi-config";
+import { statusColors } from "@/lib/constants/map-status-colors";
+
+let poiFetchTimeout: NodeJS.Timeout | null = null;
+
+export const getStatusIcon = (status?: string) => {
+  const color = statusColors[status?.toLowerCase() || "lead"] || statusColors.lead;
+
+  return L.divIcon({
+    className: "custom-marker",
+    html: `<div style="background-color:${color};width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 3px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;">${(status?.charAt(0) || "?").toUpperCase()}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+  });
+};
+
+export const getOsmPoiIcon = (isDarkMode = false) => {
+  const bgColor = isDarkMode ? "#374151" : "white";
+  const borderColor = isDarkMode ? "#9ca3af" : "#d1d5db";
+  const textColor = isDarkMode ? "white" : "#374151";
+
+  return L.divIcon({
+    className: "osm-poi",
+    html: `<div style="background-color:${bgColor};width:24px;height:24px;border-radius:50%;border:2px solid ${borderColor};box-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:12px;">?</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -15],
+  });
+};
+
+type OsmPoi = {
+  id: string;
+  type: string;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+};
+
+export async function fetchOsmPois(
+  bounds: L.LatLngBounds,
+  activeCategories: string[] = Object.keys(poiCategories),
+  retryCount = 0,
+): Promise<{ pois: OsmPoi[]; totalFound: number; query: string }> {
+  if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
+
+  return new Promise((resolve, reject) => {
+    poiFetchTimeout = setTimeout(async () => {
+      console.group("OpenMap OSM Query");
+      console.log("Current bounds:", bounds.toBBoxString());
+      console.log("Active categories:", activeCategories);
+      console.log("Retry count:", retryCount);
+
+      const bbox = bounds.toBBoxString(); // "west,south,east,north"
+      const [west, south, east, north] = bbox.split(",").map(Number);
+      const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
+
+      // Build tag groups from active poiCategories
+      const tagGroups: Record<string, string[]> = {};
+      const activePoiCategories = activeCategories.reduce(
+        (acc, key) => {
+          if ((poiCategories as Record<string, any>)[key]) acc[key] = (poiCategories as Record<string, any>)[key];
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
+
+      for (const category of Object.values(activePoiCategories)) {
+        for (const tag of category.tags) {
+          if (tag.includes("=")) {
+            const [key, value] = tag.split("=");
+            tagGroups[key] ??= [];
+            tagGroups[key].push(value);
+          } else {
+            // assume amenity
+            tagGroups.amenity ??= [];
+            tagGroups.amenity.push(tag);
+          }
+        }
+      }
+
+      // Create conditions for each tag group
+      const conditions = Object.entries(tagGroups).map(
+        ([key, values]) => `["${key}"~"${values.join("|")}"](${overpassBbox})`,
+      );
+
+      const query = `
+  [out:json][timeout:60][maxsize:1Mi];
+  (
+${conditions.map((cond) => `      node${cond};`).join("\n")}
+${conditions.map((cond) => `      way${cond};`).join("\n")}
+  );
+  out center;
+`;
+
+      console.log("Final query string:", query);
+
+      const endpoints = [
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.private.coffee/api/interpreter",
+        "https://overpass.osm.ch/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+      ];
+
+      // Basic deduplication by OSM ID
+      const seen = new Set<string>();
+
+      for (const endpoint of endpoints) {
+        console.log(`[OpenMap OSM] Trying ${endpoint}`);
+        let retries = retryCount;
+        const maxRetries = 3;
+
+        while (retries < maxRetries) {
+          try {
+            const url = `${endpoint}?data=${encodeURIComponent(query)}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s max
+
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+              const data = await res.json();
+              const deduplicated = (data.elements || []).filter((poi: OsmPoi) => {
+                const key = `${poi.type}/${poi.id}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              });
+
+              console.groupEnd();
+              resolve({
+                pois: deduplicated,
+                totalFound: deduplicated.length,
+                query,
+              });
+              return;
+            }
+
+            if (res.status === 429) {
+              retries++;
+              const delay = 2 ** retries * 800;
+              console.warn(`[OpenMap OSM] ${endpoint} 429 - retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
+              await new Promise((r) => setTimeout(r, delay));
+            } else if (res.status === 403 || res.status === 504) {
+              console.warn(`[OpenMap OSM] ${endpoint} ${res.status} - skipping`);
+              break;
+            } else {
+              console.warn(`[OpenMap OSM] ${endpoint} error ${res.status}`);
+              break;
+            }
+          } catch (err: unknown) {
+            if (err instanceof Error && err.name === "AbortError") {
+              console.warn(`[OpenMap OSM] ${endpoint} timeout`);
+              break;
+            }
+            if (endpoint === endpoints[endpoints.length - 1] && retries >= maxRetries - 1) {
+              console.groupEnd();
+              console.error("All Overpass endpoints failed after retries");
+              reject(new Error("Failed to fetch OSM POIs after all retries"));
+              return;
+            }
+            break;
+          }
+        }
+      }
+
+      console.groupEnd();
+      reject(new Error("Failed to fetch OSM POIs"));
+    }, 300);
+  });
+}

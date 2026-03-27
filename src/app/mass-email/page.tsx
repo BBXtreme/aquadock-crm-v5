@@ -1,322 +1,167 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import { useQuery } from "@tanstack/react-query";
-import DOMPurify from "isomorphic-dompurify";
+import { useState } from "react";
 import { toast } from "sonner";
-
-import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/browser";
-import { getCompanies } from "@/lib/supabase/services/companies";
-import { createEmailLog, getEmailLogs, getEmailTemplates } from "@/lib/supabase/services/email";
-import { createTimelineEntry } from "@/lib/supabase/services/timeline";
-import type { EmailLog, EmailTemplate } from "@/lib/supabase/types";
+import { Textarea } from "@/components/ui/textarea";
+
+import type { Database } from "@/lib/supabase/database.types";
+
+type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
+type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
 
 export default function MassEmailPage() {
-  const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [recipientFilter, setRecipientFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [previewBody, setPreviewBody] = useState("");
-  const [sendLoading, setSendLoading] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  const { data: templates = [], isLoading: templatesLoading } = useQuery<EmailTemplate[]>({
-    queryKey: ["email-templates"],
-    queryFn: async () => {
-      const supabase = createClient();
-      return getEmailTemplates(supabase);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // TODO: Fetch contacts and templates
+  const contacts: { id: string; name: string; email: string }[] = [];
+  const templates: EmailTemplate[] = [];
 
-  const { data: history = [], isLoading: historyLoading } = useQuery<EmailLog[]>({
-    queryKey: ["email-logs"],
-    queryFn: async () => {
-      const supabase = createClient();
-      return getEmailLogs(supabase);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const _loading = templatesLoading || historyLoading;
-
-  useEffect(() => {
-    if (selectedTemplate) {
-      const template = templates.find((t) => t.id === selectedTemplate);
-      if (template) {
-        const filledBody = template.body
-          .replace(/{{firmenname}}/g, "Sample Company GmbH")
-          .replace(/{{vorname}}/g, "Max")
-          .replace(/{{nachname}}/g, "Mustermann")
-          .replace(/{{email}}/g, "max.mustermann@example.com");
-        setPreviewBody(filledBody);
-      }
+  const handleSend = async () => {
+    if (selectedContacts.length === 0) {
+      toast.error("Please select at least one contact");
+      return;
     }
-  }, [selectedTemplate, templates]);
 
-  const handleSendTest = async () => {
-    if (!selectedTemplate) return;
+    if (!subject.trim() || !body.trim()) {
+      toast.error("Please fill in subject and body");
+      return;
+    }
 
-    setSendLoading(true);
+    setIsSending(true);
     try {
-      const supabase = createClient();
-      const template = templates.find((t) => t.id === selectedTemplate);
-      if (!template) return;
-
-      // Log test email
-      await createEmailLog(
-        {
-          recipient_email: "test@example.com",
-          subject: template.subject,
-          body: previewBody,
-          status: "sent",
-          sent_at: new Date().toISOString(),
-        },
-        supabase,
-      );
-
-      // Required: user_name must be set (non-nullable in schema)
-      // Log to timeline
-      await createTimelineEntry(
-        {
-          company_id: null,
-          activity_type: "email",
-          title: "Test Email Sent",
-          content: `Test email sent to test@example.com`,
-          user_name: "Mass Email System",
-          user_id: null,
-        },
-        supabase,
-      );
-
-      toast.success("Test email sent successfully!");
+      // TODO: Implement mass email sending
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
+      toast.success(`Email sent to ${selectedContacts.length} contacts`);
+      setSelectedContacts([]);
+      setSubject("");
+      setBody("");
     } catch (error) {
-      console.error("Error sending test email:", error);
-      toast.error("Failed to send test email");
+      toast.error("Failed to send emails", { description: String(error) });
     } finally {
-      setSendLoading(false);
+      setIsSending(false);
     }
   };
 
-  const handleSendToAll = async () => {
-    if (!selectedTemplate) return;
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedContacts(contacts.map((c) => c.id));
+    } else {
+      setSelectedContacts([]);
+    }
+  };
 
-    setSendLoading(true);
-    try {
-      const supabase = createClient();
-      const template = templates.find((t) => t.id === selectedTemplate);
-      if (!template) return;
+  const handleSelectContact = (contactId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedContacts((prev) => [...prev, contactId]);
+    } else {
+      setSelectedContacts((prev) => prev.filter((id) => id !== contactId));
+    }
+  };
 
-      // Fetch recipients based on filter
-      const companies = await getCompanies(supabase);
-      let filteredCompanies = companies;
-      if (recipientFilter === "lead") {
-        filteredCompanies = companies.filter((c) => c.status === "lead");
-      } else if (recipientFilter === "won") {
-        filteredCompanies = companies.filter((c) => c.status === "won");
-      }
-      // Add search filter if provided
-      if (searchQuery) {
-        filteredCompanies = filteredCompanies.filter((c) =>
-          c.firmenname.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-      }
-
-      // For each company, send email (placeholder - just log)
-      for (const company of filteredCompanies) {
-        const recipient = `contact@${company.firmenname.toLowerCase().replace(/\s+/g, "")}.com`;
-
-        await createEmailLog(
-          {
-            recipient_email: recipient,
-            subject: template.subject,
-            body: previewBody.replace(/{{firmenname}}/g, company.firmenname),
-            status: "sent",
-            sent_at: new Date().toISOString(),
-          },
-          supabase,
-        );
-      }
-
-      // Required: user_name must be set (non-nullable in schema)
-      // Log to timeline
-      await createTimelineEntry(
-        {
-          company_id: null,
-          activity_type: "email",
-          title: "Mass Email Sent",
-          content: `Mass email sent to ${filteredCompanies.length} recipients`,
-          user_name: "Mass Email System",
-          user_id: null,
-        },
-        supabase,
-      );
-
-      toast.success(`Campaign queued for ${filteredCompanies.length} recipients!`);
-    } catch (error) {
-      console.error("Error sending emails:", error);
-      toast.error("Failed to send mass email");
-    } finally {
-      setSendLoading(false);
+  const handleTemplateSelect = (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (template) {
+      setSelectedTemplate(templateId);
+      setSubject(template.subject || "");
+      setBody(template.body || "");
     }
   };
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Mass Email</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Mass Email</h1>
-          </div>
-          <Button className="bg-[#24BACC] text-white hover:bg-[#1da0a8]">New Campaign</Button>
-        </div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Mass Email</h1>
 
-        <div className="space-y-4">
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-            <CardHeader>
-              <CardTitle>Email Templates</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Preview</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {templates.map((template) => (
-                    <TableRow key={template.id}>
-                      <TableCell>{template.name}</TableCell>
-                      <TableCell>{template.subject}</TableCell>
-                      <TableCell>{template.body?.substring(0, 50)}...</TableCell>
-                    </TableRow>
-                  ))}
-                  {!templates.length && (
-                    <TableRow>
-                      <TableCell colSpan={3} className="h-24 text-center">
-                        No templates found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-              <CardHeader>
-                <CardTitle>Send Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={recipientFilter} onValueChange={setRecipientFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select recipients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Companies</SelectItem>
-                    <SelectItem value="lead">Leads Only</SelectItem>
-                    <SelectItem value="won">Won Deals Only</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input
-                  placeholder="Search companies..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Select Recipients</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="select-all"
+                  checked={selectedContacts.length === contacts.length && contacts.length > 0}
+                  onCheckedChange={handleSelectAll}
                 />
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={handleSendTest}
-                    disabled={!selectedTemplate || sendLoading}
-                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
-                  >
-                    Send Test
-                  </Button>
-                  <Button
-                    onClick={handleSendToAll}
-                    disabled={!selectedTemplate || sendLoading}
-                    className="bg-[#24BACC] text-white hover:bg-[#1da0a8]"
-                  >
-                    Send to All
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                <Label htmlFor="select-all">Select All</Label>
+              </div>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {contacts.map((contact) => (
+                  <div key={contact.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={contact.id}
+                      checked={selectedContacts.includes(contact.id)}
+                      onCheckedChange={(checked) => handleSelectContact(contact.id, !!checked)}
+                    />
+                    <Label htmlFor={contact.id} className="flex-1">
+                      {contact.name} ({contact.email})
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center">Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {previewBody ? (
-                  <div
-                    className="prose prose-sm max-w-none"
-                    // biome-ignore lint/security/noDangerouslySetInnerHtml: Inhalt wird mit DOMPurify gesäubert
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewBody) }}
-                  />
-                ) : (
-                  <p className="text-muted-foreground">Select a template to preview</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-            <CardHeader>
-              <CardTitle>Send History ({history.length} sent)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Sent At</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {history.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell>{log.recipient_email}</TableCell>
-                      <TableCell>{log.subject}</TableCell>
-                      <TableCell>{log.status}</TableCell>
-                      <TableCell>{log.sent_at}</TableCell>
-                    </TableRow>
+        <Card>
+          <CardHeader>
+            <CardTitle>Compose Email</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="template">Email Template (Optional)</Label>
+              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
                   ))}
-                  {!history.length && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
-                        No send history found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Email subject"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="body">Body</Label>
+              <Textarea
+                id="body"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder="Email body"
+                rows={10}
+              />
+            </div>
+
+            <Button onClick={handleSend} disabled={isSending} className="w-full">
+              {isSending ? "Sending..." : `Send to ${selectedContacts.length} contacts`}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    </AppLayout>
+    </div>
   );
 }

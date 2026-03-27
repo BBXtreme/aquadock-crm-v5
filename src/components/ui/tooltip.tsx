@@ -1,10 +1,9 @@
 // Fixed: corrected radix-ui imports for Vercel build
 "use client";
 
-import type * as React from "react";
-
 // Fixed Radix import
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 

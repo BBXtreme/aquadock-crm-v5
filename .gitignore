@@ -41,4 +41,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Aider configuration
+.aider.conf.yml
 .aider*
+aider*.md
+.env*.local

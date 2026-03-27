@@ -1,10 +1,11 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { Bell, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-
-import { Bell, Moon, Search, Settings, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +17,63 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Calculate start and end of current week (Monday to Sunday)
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  const { data: openRemindersCount = 0 } = useQuery({
+    queryKey: ["reminders-count-this-week"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from("reminders")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open")
+        .gte("due_date", startOfWeek.toISOString())
+        .lte("due_date", endOfWeek.toISOString());
+      return count || 0;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const { data: overdueRemindersCount = 0 } = useQuery({
+    queryKey: ["reminders-count-overdue"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from("reminders")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "open")
+        .lt("due_date", new Date().toISOString());
+      return count || 0;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   return (
-    <header className="flex h-18 items-center justify-between border-b p-0.5 pr-5 shadow-sm">
+    <header
+      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? "shadow-md" : "shadow-sm"}`}
+    >
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
@@ -36,7 +88,7 @@ export default function Header() {
             />
           </div>
         </Link>
-        <span className="font-semibold text-lg">CRM v5.0.1</span>
+        <span className="font-semibold text-lg">CRM</span>
       </div>
       <div className="mx-4 max-w-md flex-1">
         <div className="relative">
@@ -45,13 +97,36 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" className="relative">
-          <Bell className="h-4 w-4" />
-          <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">3</Badge>
-        </Button>
-        <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <Link href="/timeline?create=true">
+          <Button variant="ghost" size="icon" aria-label="Create new timeline entry">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </Link>
+        {overdueRemindersCount > 0 && (
+          <Link href="/reminders?status=overdue">
+            <Button variant="ghost" className="relative">
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white">
+                {overdueRemindersCount}
+              </Badge>
+            </Button>
+          </Link>
+        )}
+        {openRemindersCount > 0 && (
+          <Link href="/reminders?status=open">
+            <Button variant="ghost" className="relative">
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">{openRemindersCount}</Badge>
+            </Button>
+          </Link>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           <span className="sr-only">Toggle theme</span>
         </Button>
         <DropdownMenu>

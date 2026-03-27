@@ -1,8 +1,7 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
-
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {

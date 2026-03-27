@@ -1,199 +1,203 @@
 "use client";
 
-import Link from "next/link";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow, isAfter, isThisWeek } from "date-fns";
-import { AlertTriangle, Bell, Calendar, RefreshCw, Star } from "lucide-react";
-
-import AppLayout from "@/components/layout/AppLayout";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import ReminderEditForm from "@/components/features/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/SkeletonList";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { getReminders } from "@/lib/supabase/services/reminders";
+import type { Reminder } from "@/lib/supabase/database.types";
 
 export default function RemindersPage() {
+  const queryClient = useQueryClient();
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
+  const [editReminder, setEditReminder] = useState<Reminder | null>(null);
+  const [_selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+
   const {
-    data: allReminders = [],
-    isLoading: loading,
+    data: reminders = [],
+    isLoading,
     error,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
-      return getReminders(supabase);
+      const { data, error } = await supabase.from("reminders").select("*").order("due_date", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient();
+      const { error } = await supabase.from("reminders").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success("Reminder deleted");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete reminder", { description: error.message });
     },
   });
 
-  const reminders = allReminders.filter((r) => r.status === "open");
+  const handleView = useCallback((reminder: Reminder) => {
+    setSelectedReminder(reminder);
+  }, []);
 
-  const openReminders = allReminders.filter((r) => r.status === "open").length;
-  const overdue = allReminders.filter((r) => r.status === "open" && isAfter(new Date(), new Date(r.due_date))).length;
-  const thisWeek = allReminders.filter((r) => r.status === "open" && isThisWeek(new Date(r.due_date))).length;
-  const highPriority = allReminders.filter((r) => r.status === "open" && r.priority === "high").length;
+  const handleEdit = useCallback((reminder: Reminder) => {
+    setEditReminder(reminder);
+    setReminderDialogOpen(true);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Reminders</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Reminders
+            </h1>
+          </div>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading reminders...</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SkeletonList count={10} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="container mx-auto space-y-8 p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Home → Reminders</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
-            </div>
-            <Button>New Reminder</Button>
+      <div className="container mx-auto space-y-8 p-6 lg:p-8">
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">Home → Reminders</div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Reminders
+            </h1>
           </div>
-          <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{error.message}</span>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Erneut versuchen
-              </Button>
-            </AlertDescription>
-          </Alert>
         </div>
-      </AppLayout>
+        <Card>
+          <CardHeader>
+            <CardTitle>Error loading reminders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-500">{error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground text-sm">Home → Reminders</p>
-            <h1 className="font-semibold text-3xl tracking-tight">Reminders</h1>
-          </div>
-          <Button>New Reminder</Button>
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Reminders</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Reminders
+          </h1>
         </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Open Reminders</CardTitle>
-              <Bell className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{openReminders}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">Overdue Today</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{overdue}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">This Week</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{thisWeek}</div>}
-            </CardContent>
-          </Card>
-          <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="font-medium text-sm">High Priority</CardTitle>
-              <Star className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {loading ? <Skeleton className="h-8 w-16" /> : <div className="font-bold text-2xl">{highPriority}</div>}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex space-x-2">
-          <Button variant="outline">All</Button>
-          <Button variant="outline">Open</Button>
-          <Button variant="outline">Overdue</Button>
-          <Button variant="outline">My Tasks</Button>
-        </div>
-
-        <Card className="bg-card border border-border rounded-xl shadow-sm text-card-foreground">
-          <CardContent className="p-6">
-            {loading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-48" />
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map(() => (
-                    <Skeleton className="h-12 w-full" />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Assigned To</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reminders.map((reminder) => {
-                      const isOverdue = isAfter(new Date(), new Date(reminder.due_date));
-                      return (
-                        <TableRow key={reminder.id}>
-                          <TableCell>{reminder.title}</TableCell>
-                          <TableCell>
-                            <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
-                              {reminder.companies?.firmenname}
-                            </Link>
-                          </TableCell>
-                          <TableCell className={isOverdue ? "text-rose-500" : ""}>
-                            {formatDistanceToNow(new Date(reminder.due_date), {
-                              addSuffix: true,
-                            })}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={
-                                reminder.priority === "high" ? "bg-rose-600 text-white" : "bg-amber-600 text-white"
-                              }
-                            >
-                              {reminder.priority}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={
-                                reminder.status === "open" ? "bg-emerald-600 text-white" : "bg-zinc-500 text-white"
-                              }
-                            >
-                              {reminder.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{reminder.assigned_to}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {!reminders.length && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                          No results.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
       </div>
-    </AppLayout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Reminders ({reminders.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {reminders.length === 0 ? (
+            <p className="text-muted-foreground">No reminders yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {reminders.map((reminder) => (
+                <div key={reminder.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold">{reminder.title}</h3>
+                        <Badge
+                          className={
+                            reminder.priority === "hoch"
+                              ? "bg-orange-500 text-white"
+                              : reminder.priority === "normal"
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-500 text-white"
+                          }
+                        >
+                          {reminder.priority}
+                        </Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                      </div>
+                      {reminder.description && (
+                        <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
+                        <span>Assigned to: {reminder.assigned_to || "Unassigned"}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleView(reminder)}>
+                        View
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(reminder)}>
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm("Delete this reminder?")) {
+                            deleteMutation.mutate(reminder.id);
+                          }
+                        }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Reminder Dialog */}
+      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+        <WideDialogContent size="xl">
+          <DialogHeader>
+            <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
+            <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
+          </DialogHeader>
+          <ReminderEditForm
+            reminder={editReminder}
+            onSuccess={() => {
+              setReminderDialogOpen(false);
+              setEditReminder(null);
+              queryClient.invalidateQueries({ queryKey: ["reminders"] });
+            }}
+          />
+        </WideDialogContent>
+      </Dialog>
+    </div>
   );
 }

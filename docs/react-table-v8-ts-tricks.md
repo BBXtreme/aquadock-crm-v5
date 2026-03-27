@@ -1,4 +1,5 @@
-Markdown# TanStack React Table v8 – TypeScript Patterns & Gotchas  
+# Markdown# TanStack React Table v8 – TypeScript Patterns & Gotchas  
+
 **AquaDock CRM** – March 2026
 
 ## The Classic Type Error
@@ -49,6 +50,8 @@ TypeScriptconst columns: ColumnDef<Company>[] = [
   columnHelper.accessor("created_at",  { … }) as ColumnDef<Company>,
   columnHelper.display({ id: "actions", … }) as ColumnDef<Company>,
 ];
+```
+
 → Every column must receive the cast — verbose but eliminates inference fights.
 Pattern C – Quick & dirty (only when desperate)
 TypeScriptconst columns: ColumnDef<Company, unknown>[] = [ … ];
@@ -62,16 +65,15 @@ Quick Checklist – Before Committing Any Table Component
 tsc --noEmit passes cleanly
 next build completes without type errors
 
-Useful References
+## Useful References
 
-Official TanStack Table TypeScript Guide
+Official TanStack Table TypeScript Guide:
 https://tanstack.com/table/v8/docs/guide/typescript
-Related GitHub issues & discussions
+Related GitHub issues & discussions:
 https://github.com/TanStack/table/issues/4302
 https://github.com/TanStack/table/issues/4382
 https://github.com/TanStack/table/discussions/4241
 
-
-Last updated: 2026-03-20
+**Last updated: 2026-03-20**
 Applies to: @tanstack/react-table ^8.10 – ^8.20 (verify in package.json)
 AquaDock CRM rule: see also AIDER-RULES.md section 7

@@ -1,17 +1,32 @@
 {
-  "cSpell.words": [
-    "cmdk",
-    "deine",
-    "Erneut",
-    "Firmen",
-    "firmenname",
-    "Gesamt",
-    "keine",
-    "korrekter",
-    "papaparse",
-    "unparse",
-    "vaul",
-    "vercel",
-    "versuchen"
-  ]
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+
+  // TypeScript & Import preferences (updated to non-deprecated keys)
+  "js/ts.preferences.importModuleSpecifier": "non-relative",
+  "js/ts.preferences.importModuleSpecifierEnding": "minimal",
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+
+  // Tailwind CSS IntelliSense (important for Tailwind 4 + cn/cva)
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  // Error display improvements
+  "errorLens.enabled": true,
+  "errorLens.delay": 300,
+
+  // Biome specific
+  "biome.enabled": true,
+  "biome.requireConfiguration": false,
+  "cSpell.words": ["Adresse", "Firmendaten"]
 }
