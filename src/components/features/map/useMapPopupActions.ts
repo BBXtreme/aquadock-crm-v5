@@ -91,9 +91,10 @@ export function useMapPopupActions() {
     toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
     try {
       const { distance, wassertyp } = await calculateWaterDistance(lat, lon);
-      poi.wasserdistanz = distance;
-      poi.wassertyp = wassertyp;
+      Object.assign(poi, { wasserdistanz: distance, wassertyp });
+      console.log(`Calculated water distance: ${distance}m, type: ${wassertyp} for POI ${poi.id}`);
       if (distance !== null) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
         toast.success(`Wasser-Info berechnet: ${distance} m`, { id: "water-calc" });
       } else {
         toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
