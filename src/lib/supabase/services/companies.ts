@@ -49,7 +49,6 @@ const KUNDENTYP_MAP: Record<string, string> = {
   yacht_club: "segelverein",
   water_park: "sonstige",
   swimming_pool: "sonstige",
-  beach_resort: "resort",
   sports_centre: "sonstige",
 
   // waterway
@@ -121,7 +120,7 @@ export async function getCompanyById(/* ... */) { /* unchanged */ }
 export async function createCompany(/* ... */) { /* unchanged */ }
 export async function updateCompany(/* ... */) { /* unchanged */ }
 export async function deleteCompany(/* ... */) { /* unchanged */ }
-export type CompanyForOpenMap = /* unchanged */;
+export type CompanyForOpenMap = Pick<Company, 'id' | 'firmenname' | 'lat' | 'lon' | 'status'>;
 
 export async function getCompaniesForOpenMap(userId: string): Promise<CompanyForOpenMap[]> {
   /* unchanged */
