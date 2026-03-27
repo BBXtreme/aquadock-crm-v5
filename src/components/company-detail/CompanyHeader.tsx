@@ -1,17 +1,17 @@
 "use client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import CompanyEditForm from "@/components/features/CompanyEditForm";
-import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import CompanyEditForm from "@/components/features/CompanyEditForm";
+import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { getFirmentypLabel, getKundentypLabel, getStatusLabel } from "./utils";
+import { getKundentypLabel, getStatusLabel, getFirmentypLabel } from "./utils";
 
 interface Props {
   company: Company;
@@ -88,7 +88,11 @@ export default function CompanyHeader({ company, id, router }: Props) {
           {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={handleAddTimeline}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddTimeline}
+          >
             <Plus className="h-4 w-4 mr-2" /> Add Timeline
           </Button>
           <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
@@ -122,7 +126,9 @@ export default function CompanyHeader({ company, id, router }: Props) {
           {getStatusLabel(company.status)}
         </Badge>
         {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
-        {company.firmentyp && <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>}
+        {company.firmentyp && (
+          <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>
+        )}
         {company.wassertyp && (
           <Badge variant="outline">
             <Waves className="w-3 h-3 mr-1" /> {company.wassertyp}
@@ -136,11 +142,14 @@ export default function CompanyHeader({ company, id, router }: Props) {
         )}
       </div>
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Company</DialogTitle>
           </DialogHeader>
-          <CompanyEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
+          <CompanyEditForm
+            company={company}
+            onSuccess={() => setEditDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
