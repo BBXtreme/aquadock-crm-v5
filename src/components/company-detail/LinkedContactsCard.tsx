@@ -23,6 +23,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       const supabase = createClient();
       const { data, error } = await supabase.from("contacts").select("*").eq("company_id", companyId);
       if (error) throw error;
+      console.log("Fetched contacts for company", companyId, ":", data);
       return data;
     },
   });
