@@ -43,9 +43,11 @@ const anredeOptions = [
 export default function ContactEditForm({
   contact,
   onSuccess,
+  preselectedCompanyId,
 }: {
   contact?: Database["public"]["Tables"]["contacts"]["Row"] | null;
   onSuccess?: () => void;
+  preselectedCompanyId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -82,7 +84,7 @@ export default function ContactEditForm({
       mobil: contact?.mobil || "",
       durchwahl: contact?.durchwahl || "",
       notes: contact?.notes || "",
-      company_id: contact?.company_id || "",
+      company_id: contact?.company_id || preselectedCompanyId || "",
       is_primary: contact?.is_primary || false,
     },
   });

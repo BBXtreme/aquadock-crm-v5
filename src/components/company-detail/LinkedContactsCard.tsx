@@ -156,7 +156,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} />
+          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} preselectedCompanyId={companyId} />
         </DialogContent>
       </Dialog>
     </>
