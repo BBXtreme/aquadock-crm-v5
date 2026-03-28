@@ -17,7 +17,10 @@ import { toast } from "sonner";
  * Recommended: Keep SHOW_DEVTOOLS = true during active development.
  * Set to false before final production deployment.
  */
-const SHOW_DEVTOOLS = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_SHOW_QUERY_DEVTOOLS === "true";
+// Change this line to turn it ON or OFF
+const SHOW_DEVTOOLS = true;     // ← ON (shows the button)
+// or
+const SHOW_DEVTOOLS = false;    // ← OFF (hides the button completely)
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
