@@ -45,7 +45,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
     },
     staleTime: 0,
     gcTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
   });
