@@ -93,3 +93,8 @@ export function formatDateDE(dateStr: string | null | undefined): string {
     day: "2-digit",
   });
 }
+
+export function safeDisplay(value: unknown): string {
+  if (value == null) return "—";
+  return String(value);
+}
