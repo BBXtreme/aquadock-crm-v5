@@ -82,9 +82,9 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header: string) => header.toLowerCase().trim(),
-      complete: (results: ParseResult<Record<string, string>>) => {
+      complete: (results) => {
         if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${results.errors.map((e: ParseError) => e.message).join(", ")}`));
+          reject(new Error(`CSV parsing errors: ${results.errors.map((e) => e.message).join(", ")}`));
           return;
         }
 
@@ -161,7 +161,7 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
 
         resolve(parsedRows);
       },
-      error: (error: ParseError) => {
+      error: (error) => {
         reject(new Error(`CSV parsing failed: ${error.message}`));
       },
     });
