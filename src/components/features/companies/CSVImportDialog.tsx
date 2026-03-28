@@ -85,7 +85,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-screen h-screen max-w-none max-h-none overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import Companies from CSV</DialogTitle>
           <DialogDescription>
