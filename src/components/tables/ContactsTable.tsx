@@ -11,7 +11,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,11 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
+  }, [globalFilter, onPaginationChange, pagination.pageSize]);
+
   const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
       id: "select",
@@ -93,9 +98,7 @@ export default function ContactsTable({
         return (
           <div>
             <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-              <div>
-                {vorname} {nachname}
-              </div>
+              <div>{vorname} {nachname}</div>
             </Link>
             {position && <div className="text-xs text-gray-500">{position}</div>}
           </div>
