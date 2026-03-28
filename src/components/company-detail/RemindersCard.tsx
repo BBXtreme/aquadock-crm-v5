@@ -140,13 +140,16 @@ export default function RemindersCard({ companyId }: Props) {
                 {reminders.map((reminder) => (
                   <tr key={reminder.id}>
                     <td className="font-medium">
-                      <button
-                        type="button"
-                        className="text-primary hover:underline cursor-pointer"
-                        onClick={() => handleEdit(reminder)}
-                      >
-                        {safeDisplay(reminder.title)}
-                      </button>
+                      <div>
+                        <button
+                          type="button"
+                          className="text-primary hover:underline cursor-pointer"
+                          onClick={() => handleEdit(reminder)}
+                        >
+                          {safeDisplay(reminder.title)}
+                        </button>
+                        {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
+                      </div>
                     </td>
                     <td>{formatDateDE(reminder.due_date)}</td>
                     <td>
