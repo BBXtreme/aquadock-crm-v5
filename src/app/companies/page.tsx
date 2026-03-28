@@ -294,11 +294,13 @@ export default function CompaniesPage() {
               <DialogHeader>
                 <DialogTitle>Create New Company</DialogTitle>
               </DialogHeader>
-              <CompanyCreateForm onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ["companies"] });
-                queryClient.invalidateQueries({ queryKey: ["companies-stats"] });
-                setDialogOpen(false);
-              }} />
+              <CompanyCreateForm
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ["companies"] });
+                  queryClient.invalidateQueries({ queryKey: ["companies-stats"] });
+                  setDialogOpen(false);
+                }}
+              />
             </WideDialogContent>
           </Dialog>
         </div>
