@@ -18,11 +18,10 @@ import {
   Trophy,
   Users,
   Utensils,
-  X,
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -32,10 +31,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { LoadingState } from "@/components/ui/LoadingState";
-import { StatCard } from "@/components/ui/StatCard";
+import { SkeletonList } from "@/components/ui/SkeletonList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
@@ -47,29 +45,11 @@ type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-};
-
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
   const [accordionOpen, setAccordionOpen] = useState(false);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
-  const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
 
   const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>({
     status: [],
@@ -78,8 +58,6 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
-
-  const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
   const statusOptions = [
     "lead",
@@ -131,13 +109,13 @@ export default function CompaniesPage() {
     "Großbritannien",
   ] as const;
 
-  const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
+  const statusIcons: Record<string, React.ComponentType<any> | null> = {
     lead: Sparkles,
     gewonnen: Trophy,
     verloren: XCircle,
   };
 
-  const kategorieIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
+  const kategorieIcons: Record<string, React.ComponentType<any> | null> = {
     restaurant: Utensils,
     hotel: Building2,
     resort: Palmtree,
@@ -160,72 +138,17 @@ export default function CompaniesPage() {
     }));
   };
 
-  const removeFilter = (group: FilterGroup, value: string) => {
-    setActiveFilters((prev) => ({
-      ...prev,
-      [group]: prev[group].filter((v) => v !== value),
-    }));
-  };
-
   const {
-    data: companiesData,
+    data: companies = [],
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter],
+    queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      let query = supabase.from("companies").select(
-        `
-          *,
-          contacts (
-            id,
-            vorname,
-            nachname,
-            position,
-            is_primary
-          )
-        `,
-        { count: "exact" },
-      );
-
-      // Apply global filter
-      if (debouncedGlobalFilter) {
-        query = query.or(
-          `firmenname.ilike.%${debouncedGlobalFilter}%,strasse.ilike.%${debouncedGlobalFilter}%,stadt.ilike.%${debouncedGlobalFilter}%`,
-        );
-      }
-
-      // Apply active filters
-      if (activeFilters.status.length > 0) {
-        query = query.in("status", activeFilters.status);
-      }
-      if (activeFilters.kategorie.length > 0) {
-        query = query.in("kundentyp", activeFilters.kategorie);
-      }
-      if (activeFilters.betriebstyp.length > 0) {
-        query = query.in("firmentyp", activeFilters.betriebstyp);
-      }
-      if (activeFilters.land.length > 0) {
-        query = query.in("land", activeFilters.land);
-      }
-
-      // Apply sorting
-      if (sorting.length > 0) {
-        const sort = sorting[0];
-        if (sort) {
-          query = query.order(sort.id, { ascending: !sort.desc });
-        }
-      }
-
-      // Apply pagination
-      const from = pagination.pageIndex * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
+      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
       if (error) throw error;
-      return { companies: data ?? [], totalCount: count ?? 0 };
+      return data as CompanyWithContacts[];
     },
     // Reliable refresh behavior (exactly like TimelineCard)
     refetchOnWindowFocus: true,
@@ -235,107 +158,47 @@ export default function CompaniesPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const companies = companiesData?.companies || [];
-  const total = companiesData?.totalCount || 0;
-  const pageCount = Math.ceil(total / pagination.pageSize);
-
-  const { data: statsData } = useQuery({
-    queryKey: ["companies-stats"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data } = await supabase.from("companies").select("status, value");
-      const total = data?.length || 0;
-      const leads = data?.filter((c) => c.status === "lead").length || 0;
-      const won = data?.filter((c) => c.status === "gewonnen").length || 0;
-      const value = data?.reduce((sum, c) => sum + (c.value ?? 0), 0) || 0;
-      return { total, leads, won, value };
-    },
-  });
-
-  const stats = statsData || { total: 0, leads: 0, won: 0, value: 0 };
-
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
-      updateCompany(id, updates, createClient()),
-    onMutate: async ({ id, updates }) => {
-      const queryKey = [
-        "companies",
-        pagination.pageIndex,
-        pagination.pageSize,
-        activeFilters,
-        sorting,
-        debouncedGlobalFilter,
-      ];
-      await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
-      if (previousCompanies) {
-        queryClient.setQueryData(queryKey, {
-          ...previousCompanies,
-          companies: previousCompanies.companies.map((company) =>
-            company.id === id ? { ...company, ...updates } : company,
-          ),
-        });
-      }
-      return { previousCompanies, queryKey };
-    },
-    onError: (err, _variables, context) => {
-      const ctx = context as {
-        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
-        queryKey?: string[];
-      };
-      if (ctx?.previousCompanies && ctx.queryKey) {
-        queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
-      }
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      toast.error("Update failed", { description: message });
-    },
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated");
     },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Update failed", { description: message });
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCompany(id, createClient()),
-    onMutate: async (id) => {
-      const queryKey = [
-        "companies",
-        pagination.pageIndex,
-        pagination.pageSize,
-        activeFilters,
-        sorting,
-        debouncedGlobalFilter,
-      ];
-      await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
-      if (previousCompanies) {
-        queryClient.setQueryData(queryKey, {
-          companies: previousCompanies.companies.filter((company) => company.id !== id),
-          totalCount: previousCompanies.totalCount - 1,
-        });
-      }
-      return { previousCompanies, queryKey };
-    },
-    onError: (err, _id, context) => {
-      const ctx = context as {
-        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
-        queryKey?: string[];
-      };
-      if (ctx?.previousCompanies && ctx.queryKey) {
-        queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
-      }
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      toast.error("Deletion failed", { description: message });
-    },
+    mutationFn: deleteCompany,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
     },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Deletion failed", { description: message });
+    },
   });
+
+  const stats = useMemo(() => {
+    const total = companies.length;
+    const leads = companies.filter((c) => c.status === "lead").length;
+    const won = companies.filter((c) => c.status === "gewonnen").length;
+    const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
+    return { total, leads, won, value };
+  }, [companies]);
+
+  const filteredCompanies = useMemo(() => {
+    return companies.filter((c) => {
+      if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status ?? "")) return false;
+      if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp ?? "")) return false;
+      if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp ?? "")) return false;
+      if (activeFilters.land.length > 0 && !activeFilters.land.includes(c.land ?? "")) return false;
+      return true;
+    });
+  }, [companies, activeFilters]);
 
   if (queryError) {
     return (
@@ -432,7 +295,10 @@ export default function CompaniesPage() {
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
-              <LoadingState count={6} itemClassName="h-14 w-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-56" />
+                <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
+              </div>
             ) : (
               <>
                 {/* Active Filters Badges */}
@@ -444,9 +310,12 @@ export default function CompaniesPage() {
                 >
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
-                      <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-                        {v}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                      <Badge
+                        key={`${group}-${v}`}
+                        variant="secondary"
+                        onClick={() => toggleFilter(group as FilterGroup, v)}
+                      >
+                        {v} ×
                       </Badge>
                     )),
                   )}
@@ -582,7 +451,7 @@ export default function CompaniesPage() {
                 </Accordion>
 
                 <CompaniesTable
-                  companies={companies}
+                  companies={filteredCompanies}
                   globalFilter={globalFilter}
                   onGlobalFilterChange={setGlobalFilter}
                   onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
@@ -590,10 +459,6 @@ export default function CompaniesPage() {
                     const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
                     deleteMutation.mutate(id);
                   }}
-                  pageCount={pageCount}
-                  onPaginationChange={setPagination}
-                  sorting={sorting}
-                  onSortingChange={setSorting}
                 />
               </>
             )}
@@ -603,5 +468,39 @@ export default function CompaniesPage() {
         {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
     </div>
+  );
+}
+
+function StatCard({
+  title,
+  value,
+  icon,
+  className,
+  change,
+}: {
+  title: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  className?: string;
+  change?: string;
+}) {
+  return (
+    <Card
+      className={cn(
+        "bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm border border-border/50 shadow-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary/15 hover:bg-gradient-to-br hover:from-card hover:to-muted/50",
+        className,
+      )}
+    >
+      <div className="hover:brightness-105 transition-all">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <div className="rounded-full bg-muted/50 p-3 flex items-center justify-center">{icon}</div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+          {change && <p className="text-xs text-green-600">{change}</p>}
+        </CardContent>
+      </div>
+    </Card>
   );
 }
