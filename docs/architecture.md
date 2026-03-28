@@ -91,10 +91,10 @@ export async function getCompaniesForOpenMap() {
 
 ## 6. Helpers & Debugging
 
-- **Centralized data formatting**: safeDisplay(value) in lib/utils/data-format.ts for consistent "—" fallback on null/undefined/empty values (especially in tables and cards).
+- **Centralized safeDisplay from @/lib/utils/data-format.ts is the single source of truth for null/empty fallbacks. Never use ! assertions. Use static string keys for all skeleton loaders.**
 - **React Query Devtools**: Enabled in development only for inspecting queries, cache and mutations.
 - **Error handling**: Always use handleSupabaseError – centralized toasts + logging.
-- No non-null assertions (!). Always use safe checks or safeDisplay.  
+- No non-null assertions (!). Always use safe checks or safeDisplay. For static skeletons use static string keys to satisfy Biome noArrayIndexKey rule.
 - Static string keys for skeleton loaders to satisfy Biome noArrayIndexKey rule.
 
 ## 7. Styling & Theming

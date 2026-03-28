@@ -1,3 +1,4 @@
+// Utility functions for Supabase-related operations - src/lib/supabase/utils.ts
 import { toast } from "sonner";
 
 export function handleSupabaseError(error: unknown, context: string): Error {

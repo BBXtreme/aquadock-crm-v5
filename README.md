@@ -108,10 +108,10 @@ pnpm check:fix    # lint + auto-fix
 - Interactive components → "use client" at top
 - Data fetching → prefer Server Components + Supabase server client
 - Map/OSM logic → direct browser fetches to Overpass
-- All company logic must go through src/lib/supabase/services/companies.ts
 - Forms → react-hook-form + zod resolver
 - Tables → TanStack Table v8 with generated types + satisfies
-- Use safeDisplay from @/lib/utils/data-format for all null/empty fallbacks. Never use ! assertions. For static skeletons use static string keys.
+- Always use safeDisplay(value) from @/lib/utils/data-format for table cells and cards. Static skeletons must use predefined string keys (e.g. 'dashboard-skeleton-1') to satisfy Biome noArrayIndexKey rule.
+- Use safeDisplay from @/lib/utils/data-format.ts for all null/empty fallbacks. Never use ! assertions. For static skeletons use static string keys.
 - Strictly follow AIDER-RULES.md on every change
 
 ## 7. Folder Structure
