@@ -48,7 +48,7 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getContactById");
-  return (data as Contact | null) ?? null;
+  return (data as unknown as Contact | null) ?? null;
 }
 
 /**
