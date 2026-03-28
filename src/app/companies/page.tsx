@@ -164,6 +164,7 @@ export default function CompaniesPage() {
             id,
             vorname,
             nachname,
+            position,
             is_primary
           )
         `,
@@ -344,13 +345,7 @@ export default function CompaniesPage() {
               <DialogHeader>
                 <DialogTitle>Create New Company</DialogTitle>
               </DialogHeader>
-              <CompanyCreateForm
-                onSuccess={() => {
-                  queryClient.invalidateQueries({ queryKey: ["companies"] });
-                  queryClient.invalidateQueries({ queryKey: ["companies-stats"] });
-                  setDialogOpen(false);
-                }}
-              />
+              <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
             </WideDialogContent>
           </Dialog>
         </div>
