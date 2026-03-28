@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createClient } from "../browser";
 import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
@@ -84,7 +85,7 @@ export async function createCompany(company: CompanyInsert, supabase?: SupabaseC
   const supabaseClient = supabase || createClient();
 
   // Temporary fallback until auth is implemented
-  (company as any).user_id = null;
+  (company as { user_id: string | null }).user_id = null;
 
   // Log the full payload before insert
   if (process.env.NODE_ENV === "development") {
@@ -105,7 +106,7 @@ export async function updateCompany(id: string, updates: CompanyUpdate, supabase
   const { data, error } = await supabaseClient.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) {
-    throw new Error(`Update failed: ${error.message || error.details || "Unknown error"}`);
+    throw handleSupabaseError(error, "updateCompany");
   }
 
   return data;
