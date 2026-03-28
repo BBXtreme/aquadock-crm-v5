@@ -169,7 +169,7 @@ export default function CompaniesPage() {
       );
       return { previousCompanies };
     },
-    onError: (err, variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previousCompanies) {
         queryClient.setQueryData(["companies"], context.previousCompanies);
       }
@@ -193,7 +193,7 @@ export default function CompaniesPage() {
       );
       return { previousCompanies };
     },
-    onError: (err, id, context) => {
+    onError: (err, _id, context) => {
       if (context?.previousCompanies) {
         queryClient.setQueryData(["companies"], context.previousCompanies);
       }

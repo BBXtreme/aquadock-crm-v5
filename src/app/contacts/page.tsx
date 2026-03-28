@@ -74,7 +74,7 @@ export default function ContactsPage() {
       );
       return { previousContacts };
     },
-    onError: (err, id, context) => {
+    onError: (err, _id, context) => {
       if (context?.previousContacts) {
         queryClient.setQueryData(["contacts"], context.previousContacts);
       }
