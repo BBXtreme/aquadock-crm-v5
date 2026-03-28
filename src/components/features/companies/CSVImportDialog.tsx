@@ -3,7 +3,6 @@
 import { FileText, Loader2, Upload } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +20,7 @@ import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (result: { imported: number; errors: string[] }) => void;
 }
 
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
@@ -53,9 +52,8 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     try {
       const rows = await parseCSVFile(file);
       setParsedRows(rows);
-      toast.success(`Parsed ${rows.length} rows successfully`);
     } catch (error) {
-      toast.error(`Failed to parse CSV: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Parse error:", error);
     } finally {
       setIsParsing(false);
     }
@@ -67,16 +65,13 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     setIsImporting(true);
     try {
       const result = await importCompaniesFromCSV(parsedRows);
-      if (result.errors.length > 0) {
-        toast.error(`Import failed: ${result.errors.join(", ")}`);
-      } else {
-        onSuccess?.();
-        onOpenChange(false);
-        setFile(null);
-        setParsedRows([]);
-      }
+      onSuccess?.(result);
+      onOpenChange(false);
+      setFile(null);
+      setParsedRows([]);
     } catch (error) {
-      toast.error(`Import failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      console.error("Import error:", error);
+      onSuccess?.({ imported: 0, errors: [error instanceof Error ? error.message : "Unknown error"] });
     } finally {
       setIsImporting(false);
     }

@@ -38,10 +38,14 @@ export default function CompaniesPage() {
     setCsvDialogOpen(true);
   };
 
-  const handleImportSuccess = () => {
+  const handleImportSuccess = (result: { imported: number; errors: string[] }) => {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
     window.dispatchEvent(new CustomEvent("company-imported"));
-    toast.success("Companies imported successfully");
+    if (result.errors.length > 0) {
+      toast.error(`Import failed: ${result.errors.join(", ")}`);
+    } else {
+      toast.success(`Imported ${result.imported} companies successfully`);
+    }
   };
 
   if (isLoading) {
