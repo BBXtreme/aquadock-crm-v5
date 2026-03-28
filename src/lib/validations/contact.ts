@@ -5,10 +5,20 @@ import { z } from "zod";
 // Security: All string fields are trimmed and have max length limits
 export const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname ist erforderlich").trim().max(100, "Vorname darf maximal 100 Zeichen lang sein"),
-  nachname: z.string().min(1, "Nachname ist erforderlich").trim().max(100, "Nachname darf maximal 100 Zeichen lang sein"),
+  nachname: z
+    .string()
+    .min(1, "Nachname ist erforderlich")
+    .trim()
+    .max(100, "Nachname darf maximal 100 Zeichen lang sein"),
   anrede: z.string().optional().trim().max(20, "Anrede darf maximal 20 Zeichen lang sein"),
   position: z.string().optional().trim().max(100, "Position darf maximal 100 Zeichen lang sein"),
-  email: z.string().email("Ungültige E-Mail-Adresse").optional().or(z.literal("")).trim().max(254, "E-Mail darf maximal 254 Zeichen lang sein"),
+  email: z
+    .string()
+    .email("Ungültige E-Mail-Adresse")
+    .optional()
+    .or(z.literal(""))
+    .trim()
+    .max(254, "E-Mail darf maximal 254 Zeichen lang sein"),
   telefon: z.string().optional().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein"),
   mobil: z.string().optional().trim().max(50, "Mobil darf maximal 50 Zeichen lang sein"),
   durchwahl: z.string().optional().trim().max(10, "Durchwahl darf maximal 10 Zeichen lang sein"),
