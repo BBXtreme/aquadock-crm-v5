@@ -20,9 +20,12 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
           },
         },
         queryCache: new QueryCache({
-          onError: (error) => {
-            toast.error("Query failed", {
-              description: error instanceof Error ? `${error.name}: ${error.message}` : "An unexpected error occurred",
+          onError: (error, query) => {
+            const queryKey = query?.meta?.queryKey || query?.queryKey;
+            const context = queryKey ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` : "";
+            toast.error("An error occurred", {
+              description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
+              id: "query-error",
             });
           },
         }),
