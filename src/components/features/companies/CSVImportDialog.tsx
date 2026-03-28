@@ -69,8 +69,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
       if (result.errors.length > 0) {
         toast.error(`Import failed: ${result.errors.join(", ")}`);
       } else {
-        toast.success(`Imported ${result.imported} companies successfully`);
-        window.dispatchEvent(new CustomEvent("company-imported"));
         onSuccess?.();
         onOpenChange(false);
         setFile(null);
