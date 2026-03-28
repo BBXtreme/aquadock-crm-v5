@@ -1,5 +1,5 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
 import ContactEditForm from "@/components/features/ContactEditForm";
@@ -12,12 +12,12 @@ import type { Contact } from "@/lib/supabase/database.types";
 
 interface Props {
   companyId: string;
-  onEditSuccess?: () => void;
 }
 
-export default function LinkedContactsCard({ companyId, onEditSuccess }: Props) {
+export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   console.log("LinkedContactsCard companyId:", companyId);
 
@@ -183,7 +183,7 @@ export default function LinkedContactsCard({ companyId, onEditSuccess }: Props) 
             contact={editContact}
             onSuccess={() => {
               setEditContact(null);
-              onEditSuccess?.();
+              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
             }}
           />
         </DialogContent>
@@ -198,7 +198,7 @@ export default function LinkedContactsCard({ companyId, onEditSuccess }: Props) 
             contact={null}
             onSuccess={() => {
               setAddDialogOpen(false);
-              onEditSuccess?.();
+              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
             }}
             preselectedCompanyId={companyId}
           />
