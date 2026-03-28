@@ -1,65 +1,82 @@
-# Aider task – Create OpenMap Documentation
-
 # OpenMap Documentation (Aquadock CRM)
 
 ## Overview
-OpenMap is the interactive map view in Aquadock CRM. It shows:
-- Your own companies as colored markers (according to status)
-- OSM POIs from the public Overpass API as neutral gray ? markers
+**OpenMap** is the modern interactive map view in **Aquadock CRM v5**.  
+It displays:
+- **Your CRM companies** as colored status markers
+- **Public OSM POIs** (from Overpass API) as neutral gray `?` markers
 
-## Architecture (after refactor)
+Users can import POIs directly into the CRM with one click (becomes a company with `status: "lead"` and populated `osm` field).
 
-- `src/components/features/OpenMapClient.tsx` – Thin wrapper + ErrorBoundary
-- `src/hooks/useOpenMap.ts` – All business logic, state, loading, listeners
-- `src/components/features/OpenMapView.tsx` – Pure UI rendering
-- `src/lib/utils/map.ts` – Utility functions (icons, fetch)
-- `src/lib/constants/map-poi-config.ts` – Configurable POI categories
-- `src/lib/constants/status-colors.ts` – Legend colors
+**Last updated**: March 2026 (Full React + Leaflet refactor)
 
-## How it works
+## Architecture
 
-1. Open OpenMap from the sidebar
-2. The map automatically starts listening to zoom and pan
-3. When you zoom in to level **12 or higher**, OSM POIs load automatically in the background
-4. Gray ? markers = OSM POIs from public data
-5. Colored markers = your CRM companies (color by status)
-6. Click on a gray ? marker → "Zu CRM hinzufügen" button
-7. After import the POI becomes a company with status "lead" and colored marker
+| File                                            | Purpose                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `src/components/features/map/OpenMapClient.tsx` | Thin wrapper + ErrorBoundary + dynamic import (SSR-safe)     |
+| `src/components/features/map/OpenMapView.tsx`   | Main Leaflet map UI, state, clustering, dark mode            |
+| `src/lib/utils/map.ts`                          | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
+| `src/lib/constants/map-poi-config.ts`           | POI categories & Overpass tag definitions                    |
+| `src/lib/constants/map-status-colors.ts`        | Status colors + labels                                       |
+| `src/lib/constants/kundentyp.ts`                | OSM tag → `kundentyp` mapping                                |
+| `src/lib/constants/wassertyp.ts`                | Water type detection                                         |
+| `src/lib/utils/calculateWaterDistance.ts`       | Distance + type to nearest water body                        |
 
-## Controls
+**Key supporting files**: `CompanyMarkerPopup.tsx`, `OsmPoiMarkerPopup.tsx`
 
-- **Search bar** (top left) – Geocode any address
-- **Filter chips** (top) – Enable/disable POI categories (Restaurant, Camping, Marina, Boat Rental, Hotel, Resort, Sailing School, Ruderclub, Vereine)
-- **Floating buttons** (top right):
-  - Refresh – reset view to all CRM companies
-  - MapPin – visual loading indicator (spinner while loading)
-  - Info – toggle status legend
+## How It Works
 
-## Legend
-Colored markers represent your CRM companies:
-- Lead (amber)
-- Qualifiziert (blue)
-- Akquise (violet)
-- Angebot (emerald green)
-- Gewonnen (emerald)
-- Verloren (red)
-- Kunde (teal)
-- Partner (indigo)
-- Inaktiv (gray)
+1. Open **OpenMap** from the sidebar.
+2. Companies with `lat`/`lon` are fetched server-side and rendered as colored markers.
+3. When zoomed to **level 13 or higher**, OSM POIs load automatically (debounced, cached in localStorage).
+4. Gray `?` markers = public OSM data.
+5. Click a gray marker → rich popup with:
+   - Address, phone, website
+   - "In CRM importieren"
+   - "Wasser-Info berechnen"
+   - "In OSM ansehen"
+6. On import the POI becomes a new company (`status: "lead"`, `osm` field set, optional water data).
 
-## Technical Notes
+## Controls & Features
 
-- Minimum zoom level 12 for OSM POI loading (prevents slow queries and rate limits)
-- Multiple Overpass mirror servers with fallback
-- Debounced loading (2000ms) to respect API limits
-- Automatic deduplication of OSM IDs
-- Full dark/light mode support with Carto tiles
+- Auto POI loading at zoom ≥ 13 (configurable)
+- Smart caching (10 min per viewport + localStorage)
+- Multiple Overpass mirror servers with fallback + retry
+- Marker clustering for OSM POIs
+- Full dark/light mode support (Carto basemaps)
+- Status legend toggle
+- Refresh companies + Clear cache buttons
+- Water distance calculation with geometry sampling + containment fallback
 
-## Future Improvements (easy with new structure)
+## Technical Highlights
 
-- Save user filter preferences in Supabase
-- Admin settings page for POI categories
-- Better deduplication against existing companies
-- Export / bulk import
+- Direct browser `fetch` to Overpass (no API routes)
+- Debounced + cached queries (respects rate limits)
+- Deduplication by OSM `type/id`
+- Leaflet + react-leaflet with proper SSR handling
+- No `!` assertions, full null safety, strict TypeScript
+- Follows AIDER-RULES.md (hooks ordering, Biome compliance)
+- Event-driven refresh via custom `company-imported` event
 
-Last updated: March 2026
+## Why No `route.ts` API Routes?
+
+We deliberately do **not** use API routes for OpenMap because:
+
+1. **Companies** are loaded server-side in `app/openmap/page.tsx` using the service layer (`getCompaniesForOpenMap`). This is faster, more secure, and respects RLS natively.
+2. **OSM POIs** and water distance calculations are lightweight client-side operations — direct `fetch` to Overpass is simpler and more efficient.
+3. No unnecessary proxy layer, lower latency, better DX.
+4. Popup actions use the Supabase browser client + existing service layer.
+
+An API route would only be added if heavy server-side processing (e.g. bulk PostGIS operations) is introduced later.
+
+## Future Improvements
+
+- Extract business logic into dedicated `useOpenMap.ts` hook
+- Persist user settings (auto-load, filters) in `user_settings` table
+- Admin interface for POI categories
+- Fuzzy deduplication before import
+- Supabase Realtime marker updates
+
+**Status**: Production-ready, clean, and fully aligned with v5 architecture.
+

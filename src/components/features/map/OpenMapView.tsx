@@ -1,4 +1,4 @@
-// src/components/features/OpenMapView.tsx
+// src/components/features/map/OpenMapView.tsx
 "use client";
 
 import L from "leaflet";
@@ -15,10 +15,10 @@ import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
 
-import CompanyMarkerPopup from "./map/CompanyMarkerPopup";
-import OsmPoiMarkerPopup from "./map/OsmPoiMarkerPopup";
-import type { OsmPoi } from "./map/types";
-import { useMapPopupActions } from "./map/useMapPopupActions";
+import CompanyMarkerPopup from "./CompanyMarkerPopup";
+import OsmPoiMarkerPopup from "./OsmPoiMarkerPopup";
+import type { OsmPoi } from "./types";
+import { useMapPopupActions } from "./useMapPopupActions";
 
 interface CacheEntry {
   pois: OsmPoi[];

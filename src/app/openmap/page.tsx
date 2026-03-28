@@ -1,4 +1,4 @@
-import { OpenMapClient } from "@/components/features/OpenMapClient";
+import { OpenMapClient } from "@/components/features/map/OpenMapClient";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
