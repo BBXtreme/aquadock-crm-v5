@@ -9,7 +9,7 @@ import { handleSupabaseError } from "../utils";
 export async function getContacts(client: SupabaseClient): Promise<Contact[]> {
   const { data, error } = await client.from("contacts").select("*, companies!company_id(firmenname)");
   if (error) throw handleSupabaseError(error, "getContacts");
-  console.log('[DEBUG] Raw contacts data sample:', data?.slice(0,2));
+  console.log("[DEBUG] Raw contacts data sample:", data?.slice(0, 2));
   return (data ?? []) as Contact[];
 }
 
