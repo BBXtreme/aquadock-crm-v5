@@ -84,7 +84,11 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       complete: (results: unknown) => {
         const r = results as { errors: { message: string }[]; data: Record<string, string>[] };
         if (r.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${r.errors.map((e: unknown) => (e as { message: string }).message).join(", ")}`));
+          reject(
+            new Error(
+              `CSV parsing errors: ${r.errors.map((e: unknown) => (e as { message: string }).message).join(", ")}`,
+            ),
+          );
           return;
         }
 
