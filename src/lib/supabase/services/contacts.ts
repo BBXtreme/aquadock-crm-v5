@@ -1,3 +1,4 @@
+// src/lib/supabase/services/contacts.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Contact, ContactInsert } from "../database.types";
