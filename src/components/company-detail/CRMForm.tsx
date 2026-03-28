@@ -2,6 +2,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -55,6 +56,8 @@ interface Props {
 }
 
 export default function CRMForm({ company, onSuccess }: Props) {
+  const queryClient = useQueryClient();
+
   const form = useForm<CRMFormValues>({
     resolver: zodResolver(crmSchema),
     defaultValues: {
@@ -70,6 +73,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
       const supabase = createClient();
       const { error } = await supabase.from("companies").update(data).eq("id", company.id);
       if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       toast.success("CRM Informationen updated");
       onSuccess();
     } catch (err) {
