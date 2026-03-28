@@ -1,3 +1,4 @@
+// src/lib/react-query.tsx
 "use client";
 
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
