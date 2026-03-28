@@ -113,6 +113,8 @@ pnpm check:fix    # lint + auto-fix
 - Always use safeDisplay(value) from @/lib/utils/data-format for table cells and cards. Static skeletons must use predefined string keys (e.g. 'dashboard-skeleton-1') to satisfy Biome noArrayIndexKey rule.
 - Use safeDisplay from @/lib/utils/data-format.ts for all null/empty fallbacks. Never use ! assertions. For static skeletons use static string keys.
 - Strictly follow AIDER-RULES.md on every change
+- Input sanitization: All forms use Zod with .trim() and length limits. 
+- Static skeletons use predefined string keys. No ! assertions allowed.
 
 ## 7. Folder Structure
 

@@ -96,6 +96,8 @@ export async function getCompaniesForOpenMap() {
 - **Error handling**: Always use handleSupabaseError – centralized toasts + logging.
 - No non-null assertions (!). Always use safe checks or safeDisplay. For static skeletons use static string keys to satisfy Biome noArrayIndexKey rule.
 - Static string keys for skeleton loaders to satisfy Biome noArrayIndexKey rule.
+- Forms use React Hook Form + Zod schemas from @/lib/validations/ with input sanitization (.trim(), .max(), .enum()). 
+- Detail queries are optimized with selective column selection. Auth and RLS will be added later.
 
 ## 7. Styling & Theming
 
