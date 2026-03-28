@@ -229,7 +229,9 @@ export default function RemindersPage() {
                           >
                             {reminder.priority}
                           </Badge>
-                          <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                          <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                            {reminder.status}
+                          </Badge>
                         </div>
                         {reminder.description && (
                           <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
