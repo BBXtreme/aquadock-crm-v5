@@ -85,7 +85,7 @@ export async function createCompany(company: CompanyInsert, supabase?: SupabaseC
   const supabaseClient = supabase || createClient();
 
   // Temporary fallback until auth is implemented
-  (company as { user_id: string | null }).user_id = null;
+  company.user_id = null;
 
   // Log the full payload before insert
   if (process.env.NODE_ENV === "development") {

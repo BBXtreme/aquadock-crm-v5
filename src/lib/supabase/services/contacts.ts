@@ -59,7 +59,7 @@ export async function createContact(contact: ContactInsert, client?: SupabaseCli
   const supabaseClient = client || createClient();
 
   // Temporary fallback until auth is implemented
-  (contact as any).user_id = null;
+  contact.user_id = null;
 
   // Log the exact payload for debugging
   if (process.env.NODE_ENV === "development") {

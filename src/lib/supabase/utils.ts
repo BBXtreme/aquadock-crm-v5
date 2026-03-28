@@ -4,10 +4,13 @@ import { toast } from "sonner";
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.group(`🚨 Supabase Error in ${context}`);
   console.error("Full error:", error);
-  console.error("Message:", (error as any)?.message);
-  console.error("Code:", (error as any)?.code);
-  console.error("Details:", (error as any)?.details);
-  console.error("Hint:", (error as any)?.hint);
+  if (typeof error === "object" && error !== null) {
+    const err = error as Record<string, unknown>;
+    if (err.message) console.error("Message:", err.message);
+    if (err.code) console.error("Code:", err.code);
+    if (err.details) console.error("Details:", err.details);
+    if (err.hint) console.error("Hint:", err.hint);
+  }
   console.groupEnd();
 
   const errorMessage = error instanceof Error ? error.message : "An unknown database error occurred";
