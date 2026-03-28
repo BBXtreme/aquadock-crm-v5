@@ -70,7 +70,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   };
 
   return (
-    <div className="min-w-[320px] space-y-3 text-sm p-3">
+    <div className="min-w-[380px] space-y-3 text-sm p-3">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{name}</div>
