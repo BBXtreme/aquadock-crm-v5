@@ -237,11 +237,14 @@ export default function CompaniesPage() {
   const stats = statsData || { total: 0, leads: 0, won: 0, value: 0 };
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates, createClient()),
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
+      updateCompany(id, updates, createClient()),
     onMutate: async ({ id, updates }) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
+        queryKey,
+      );
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           ...previousCompanies,
@@ -253,7 +256,10 @@ export default function CompaniesPage() {
       return { previousCompanies, queryKey };
     },
     onError: (err, _variables, context) => {
-      const ctx = context as { previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number }, queryKey?: string[] };
+      const ctx = context as {
+        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
+        queryKey?: string[];
+      };
       if (ctx?.previousCompanies && ctx.queryKey) {
         queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
@@ -271,7 +277,9 @@ export default function CompaniesPage() {
     onMutate: async (id) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
+        queryKey,
+      );
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           companies: previousCompanies.companies.filter((company) => company.id !== id),
@@ -281,7 +289,10 @@ export default function CompaniesPage() {
       return { previousCompanies, queryKey };
     },
     onError: (err, _id, context) => {
-      const ctx = context as { previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number }, queryKey?: string[] };
+      const ctx = context as {
+        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
+        queryKey?: string[];
+      };
       if (ctx?.previousCompanies && ctx.queryKey) {
         queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
