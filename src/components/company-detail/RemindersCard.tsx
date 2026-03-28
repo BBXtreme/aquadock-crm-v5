@@ -64,6 +64,8 @@ export default function RemindersCard({ companyId }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
       queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
       toast.success("Reminder deleted");
     },
     onError: (err: unknown) => {
@@ -216,6 +218,8 @@ export default function RemindersCard({ companyId }: Props) {
             onSuccess={() => {
               setEditReminder(null);
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
             }}
           />
         </DialogContent>
@@ -231,6 +235,8 @@ export default function RemindersCard({ companyId }: Props) {
             onSuccess={() => {
               setAddDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
             }}
             preselectedCompanyId={companyId}
           />
