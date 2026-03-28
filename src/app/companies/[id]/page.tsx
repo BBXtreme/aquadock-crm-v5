@@ -1,8 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import AdresseCard from "@/components/company-detail/AdresseCard";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
