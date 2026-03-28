@@ -171,12 +171,13 @@ export default function CompaniesTable({
         header: "Adresse",
         cell: (info) => {
           const row = info.row.original;
+          const strasse = row.strasse || "";
           const plz = row.plz ? `${row.plz} ` : "";
           const stadt = row.stadt || "";
           const land = row.land || "";
           return (
             <div className="flex flex-col">
-              <span>{safeDisplay(`${plz}${stadt}`.trim())}</span>
+              <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
               {land && <span className="text-xs text-gray-500">{land}</span>}
             </div>
           );
