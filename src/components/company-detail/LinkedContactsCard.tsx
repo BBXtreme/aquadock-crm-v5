@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/lib/supabase/database.types";
-import { safeDisplay } from "@/lib/utils";
 
 interface Props {
   companyId: string;
