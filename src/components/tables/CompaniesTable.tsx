@@ -12,7 +12,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -66,11 +66,11 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const handleGlobalFilterChange = (value: string) => {
+  const handleGlobalFilterChange = useCallback((value: string) => {
     setGlobalFilter(value);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
-  };
+  }, [setGlobalFilter, onPaginationChange, pagination.pageSize]);
 
   const columns = useMemo<ColumnDef<CompanyWithContacts>[]>(
     () => [
