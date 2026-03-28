@@ -70,7 +70,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   };
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-1">
+    <div className="min-w-[320px] space-y-4 text-sm p-2">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{name}</div>
@@ -110,27 +110,39 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         </div>
       )}
 
-      {/* Water Info - shows immediately if cached or previously calculated */}
+      {/* Water Info - Prominent badge when available */}
       {hasWaterInfo && (
-        <div className="text-xs text-muted-foreground flex items-center gap-1 bg-muted/50 p-2 rounded-md">
-          💧 {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m`} zum Wasser
-          {localWater.wassertyp && <span className="font-medium">({localWater.wassertyp})</span>}
+        <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
+          <div className="flex items-center gap-2 font-medium text-blue-900 dark:text-blue-100">
+            <span className="text-lg">💧</span>
+            <span>
+              {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
+              {localWater.wassertyp && <span className="text-blue-700 dark:text-blue-300"> ({localWater.wassertyp})</span>}
+            </span>
+          </div>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 pt-3 border-t border-border">
+      <div className="flex gap-2 pt-2 border-t border-border">
         <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           In OSM ansehen
         </Button>
 
-        <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
-          In CRM importieren
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          onClick={handleCalculateWater}
+          disabled={hasWaterInfo}
+          type="button"
+        >
+          {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
         </Button>
 
-        <Button size="sm" variant="outline" onClick={handleCalculateWater} disabled={hasWaterInfo} type="button">
-          {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
+        <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
+          In CRM importieren
         </Button>
       </div>
     </div>
