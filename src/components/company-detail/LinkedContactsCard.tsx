@@ -2,6 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import ContactEditForm from "@/components/features/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -182,8 +183,9 @@ export default function LinkedContactsCard({ companyId }: Props) {
             key={editContact?.id}
             contact={editContact}
             onSuccess={() => {
-              setEditContact(null);
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              toast.success("Contact saved");
+              setEditContact(null);
             }}
           />
         </DialogContent>
@@ -197,8 +199,9 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <ContactEditForm
             contact={null}
             onSuccess={() => {
-              setAddDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              toast.success("Contact saved");
+              setAddDialogOpen(false);
             }}
             preselectedCompanyId={companyId}
           />
