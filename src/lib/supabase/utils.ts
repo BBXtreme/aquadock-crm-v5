@@ -2,17 +2,27 @@
 import { toast } from "sonner";
 
 export function handleSupabaseError(error: unknown, context: string): Error {
-  console.error(`Supabase error in ${context}:`, JSON.stringify(error, null, 2));
+  if (process.env.NODE_ENV === "development") {
+    console.group(`Supabase error in ${context}`);
+    console.error({
+      message: error instanceof Error ? error.message : String(error),
+      fullError: error,
+      code: (error as any)?.code,
+      details: (error as any)?.details,
+      hint: (error as any)?.hint,
+    });
+    console.groupEnd();
+  } else {
+    console.error(`Supabase error in ${context}:`, {
+      message: error instanceof Error ? error.message : String(error),
+      fullError: error,
+      code: (error as any)?.code,
+      details: (error as any)?.details,
+      hint: (error as any)?.hint,
+    });
+  }
 
   const errorMessage = error instanceof Error ? error.message : "An unknown database error occurred";
-
-  // Log additional details if available
-  if (typeof error === "object" && error !== null) {
-    const err = error as Record<string, unknown>;
-    if (err.code) console.error(`Error code: ${err.code}`);
-    if (err.details) console.error(`Error details: ${err.details}`);
-    if (err.hint) console.error(`Error hint: ${err.hint}`);
-  }
 
   if (typeof window !== "undefined") {
     toast.error(`Error in ${context}`, { description: errorMessage });
