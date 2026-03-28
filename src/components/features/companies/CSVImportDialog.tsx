@@ -30,7 +30,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 0) {
       setFile(acceptedFiles[0]);
       setParsedRows([]);
@@ -157,7 +157,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
                   </TableHeader>
                   <TableBody>
                     {parsedRows.slice(0, 10).map((row, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`preview-${row.firmenname}-${row.kundentyp}-${index}`}>
                         <TableCell>{row.firmenname}</TableCell>
                         <TableCell>{row.kundentyp}</TableCell>
                         <TableCell>{row.wasser_distanz ?? "-"}</TableCell>
