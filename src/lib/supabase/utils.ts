@@ -19,6 +19,11 @@ export function safeString(str: string | null | undefined): string {
   return str?.trim() ? str : "—";
 }
 
+export function safeDisplay(value: unknown): string {
+  if (value == null || value === '') return '—';
+  return String(value);
+}
+
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.error(`Supabase error in ${context}:`, error);
 
