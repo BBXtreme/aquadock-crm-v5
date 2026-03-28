@@ -81,15 +81,16 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header: string) => header.toLowerCase().trim(),
-      complete: (results: any) => {
-        if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${results.errors.map((e: any) => e.message).join(", ")}`));
+      complete: (results: unknown) => {
+        const r = results as { errors: { message: string }[]; data: Record<string, string>[] };
+        if (r.errors.length > 0) {
+          reject(new Error(`CSV parsing errors: ${r.errors.map((e: unknown) => (e as { message: string }).message).join(", ")}`));
           return;
         }
 
         const parsedRows: ParsedCompanyRow[] = [];
 
-        for (const row of results.data as Record<string, string>[]) {
+        for (const row of r.data) {
           const parsedRow: Partial<ParsedCompanyRow> = {};
 
           for (const [csvKey, csvValue] of Object.entries(row)) {
@@ -160,8 +161,9 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
 
         resolve(parsedRows);
       },
-      error: (error: any) => {
-        reject(new Error(`CSV parsing failed: ${error.message}`));
+      error: (error: unknown) => {
+        const err = error as { message: string };
+        reject(new Error(`CSV parsing failed: ${err.message}`));
       },
     });
   });
