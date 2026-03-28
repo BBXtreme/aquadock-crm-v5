@@ -117,9 +117,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
             <span className="text-lg">💧</span>
             <span>
               {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
-              {localWater.wassertyp && (
-                <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>
-              )}
+              {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
             </span>
           </div>
         </div>
