@@ -94,6 +94,8 @@ export async function getCompaniesForOpenMap() {
 - **Centralized data formatting**: safeDisplay(value) in lib/utils/data-format.ts for consistent "—" fallback on null/undefined/empty values (especially in tables and cards).
 - **React Query Devtools**: Enabled in development only for inspecting queries, cache and mutations.
 - **Error handling**: Always use handleSupabaseError – centralized toasts + logging.
+- No non-null assertions (!). Always use safe checks or safeDisplay.  
+- Static string keys for skeleton loaders to satisfy Biome noArrayIndexKey rule.
 
 ## 7. Styling & Theming
 

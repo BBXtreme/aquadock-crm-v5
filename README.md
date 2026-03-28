@@ -111,6 +111,7 @@ pnpm check:fix    # lint + auto-fix
 - All company logic must go through src/lib/supabase/services/companies.ts
 - Forms → react-hook-form + zod resolver
 - Tables → TanStack Table v8 with generated types + satisfies
+- Use safeDisplay from @/lib/utils/data-format for all null/empty fallbacks. Never use ! assertions. For static skeletons use static string keys.
 - Strictly follow AIDER-RULES.md on every change
 
 ## 7. Folder Structure
