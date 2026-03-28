@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
@@ -21,6 +21,7 @@ export default function RemindersPage() {
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed">("all");
 
   const {
     data: reminders = [],
@@ -36,6 +37,15 @@ export default function RemindersPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const filteredReminders = useMemo(() => {
+    if (statusFilter === "all") return reminders;
+    if (statusFilter === "open") return reminders.filter((r) => r.status === "open");
+    if (statusFilter === "closed") return reminders.filter((r) => r.status === "closed");
+    if (statusFilter === "overdue")
+      return reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date());
+    return reminders;
+  }, [reminders, statusFilter]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -56,6 +66,10 @@ export default function RemindersPage() {
     setEditReminder(reminder);
     setReminderDialogOpen(true);
   }, []);
+
+  const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed") => {
+    setStatusFilter(filter);
+  };
 
   if (isLoading) {
     return (
@@ -115,16 +129,50 @@ export default function RemindersPage() {
         <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
       </div>
 
+      <div className="flex items-center gap-2 pb-4">
+        <Button
+          variant={statusFilter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("all")}
+        >
+          All
+        </Button>
+        <Button
+          variant={statusFilter === "open" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("open")}
+        >
+          Open
+        </Button>
+        <Button
+          variant={statusFilter === "overdue" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("overdue")}
+        >
+          Overdue
+        </Button>
+        <Button
+          variant={statusFilter === "closed" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("closed")}
+        >
+          Closed
+        </Button>
+        <Button variant="outline" size="sm" disabled>
+          My Tasks
+        </Button>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Reminders ({reminders.length})</CardTitle>
+          <CardTitle>Reminders ({filteredReminders.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {reminders.length === 0 ? (
+          {filteredReminders.length === 0 ? (
             <p className="text-muted-foreground">No reminders yet.</p>
           ) : (
             <div className="space-y-4">
-              {reminders.map((reminder) => (
+              {filteredReminders.map((reminder) => (
                 <div key={reminder.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -141,7 +189,9 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
@@ -181,7 +231,9 @@ export default function RemindersPage() {
         <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
-            <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
+            <DialogDescription>
+              {editReminder ? "Edit the reminder." : "Add a new reminder."}
+            </DialogDescription>
           </DialogHeader>
           <ReminderEditForm
             reminder={editReminder}
