@@ -56,8 +56,11 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={`skeleton-${i}`} className="h-32 bg-muted animate-pulse rounded-lg" />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div 
+              key={`stat-card-skeleton-${index}`} 
+              className="h-32 bg-muted animate-pulse rounded-lg" 
+            />
           ))}
         </div>
       </div>
