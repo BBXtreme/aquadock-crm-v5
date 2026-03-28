@@ -82,6 +82,8 @@ export default function FirmendatenEditForm({
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       }
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       toast.success("Firmendaten updated successfully");
       onSuccess?.();
     },
