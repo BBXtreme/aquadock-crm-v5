@@ -72,9 +72,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={`card-${i}`} className="h-32 bg-muted animate-pulse rounded-lg" />
-          ))}
+          <LoadingState count={4} className="" itemClassName="h-32 bg-muted animate-pulse rounded-lg" />
         </div>
       </div>
     );
