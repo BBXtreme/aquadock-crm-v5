@@ -66,11 +66,14 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const handleGlobalFilterChange = useCallback((value: string) => {
-    setGlobalFilter(value);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
-  }, [setGlobalFilter, onPaginationChange, pagination.pageSize]);
+  const handleGlobalFilterChange = useCallback(
+    (value: string) => {
+      setGlobalFilter(value);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
+    },
+    [setGlobalFilter, onPaginationChange, pagination.pageSize],
+  );
 
   const columns = useMemo<ColumnDef<CompanyWithContacts>[]>(
     () => [
