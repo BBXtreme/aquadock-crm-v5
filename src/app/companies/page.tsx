@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
-  const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
@@ -35,7 +35,7 @@ export default function CompaniesPage() {
   });
 
   const handleImportCSV = () => {
-    setCsvImportOpen(true);
+    setCsvDialogOpen(true);
   };
 
   const handleImportSuccess = () => {
@@ -73,7 +73,7 @@ export default function CompaniesPage() {
         onSortingChange={setSorting}
       />
 
-      <CSVImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} onSuccess={handleImportSuccess} />
+      <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </div>
   );
 }

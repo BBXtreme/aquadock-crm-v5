@@ -154,7 +154,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {parsedRows.slice(0, 10).map((row, index) => (
+                    {parsedRows.slice(0, 10).map((row, _index) => (
                       <TableRow key={`preview-${row.firmenname}-${row.kundentyp}`}>
                         <TableCell>{row.firmenname}</TableCell>
                         <TableCell>{row.kundentyp}</TableCell>
