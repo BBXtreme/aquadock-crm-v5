@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { FileText, Loader2, Upload } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,17 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-
-import { parseCSVFile, type ParsedCompanyRow } from "@/lib/utils/csv-import";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { importCompaniesFromCSV } from "@/lib/supabase/services/companies";
+import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 
 interface CSVImportDialogProps {
   open: boolean;
@@ -120,13 +112,9 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             {isDragActive ? (
               <p className="text-lg font-medium">Drop the CSV file here...</p>
             ) : (
-              <p className="text-lg font-medium">
-                Drag & drop a CSV file here, or click to select
-              </p>
+              <p className="text-lg font-medium">Drag & drop a CSV file here, or click to select</p>
             )}
-            <p className="text-sm text-muted-foreground mt-2">
-              Only CSV files are accepted
-            </p>
+            <p className="text-sm text-muted-foreground mt-2">Only CSV files are accepted</p>
           </div>
 
           {/* File Name Display */}
@@ -134,9 +122,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
               <FileText className="h-5 w-5" />
               <span className="font-medium">{file.name}</span>
-              <span className="text-sm text-muted-foreground">
-                ({(file.size / 1024).toFixed(1)} KB)
-              </span>
+              <span className="text-sm text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           )}
 
