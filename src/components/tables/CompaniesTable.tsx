@@ -316,10 +316,16 @@ export default function CompaniesTable({
         </div>
         <div className="flex space-x-2">
           <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            value={pagination.pageSize}
+            onChange={(e) => {
+              const newSize = Number(e.target.value);
+              const newPagination = { ...pagination, pageIndex: 0, pageSize: newSize };
+              setPagination(newPagination);
+              onPaginationChange(newPagination);
+            }}
             className="px-2 py-1 border rounded"
           >
+            <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={30}>30</option>
             <option value={50}>50</option>
