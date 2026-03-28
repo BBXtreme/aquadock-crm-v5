@@ -209,7 +209,14 @@ export default function RemindersCard({ companyId, onEditSuccess }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm key={editReminder?.id} reminder={editReminder} onSuccess={() => { setEditReminder(null); onEditSuccess?.(); }} />
+          <ReminderEditForm
+            key={editReminder?.id}
+            reminder={editReminder}
+            onSuccess={() => {
+              setEditReminder(null);
+              onEditSuccess?.();
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -220,7 +227,10 @@ export default function RemindersCard({ companyId, onEditSuccess }: Props) {
           </DialogHeader>
           <ReminderEditForm
             reminder={null}
-            onSuccess={() => { setAddDialogOpen(false); onEditSuccess?.(); }}
+            onSuccess={() => {
+              setAddDialogOpen(false);
+              onEditSuccess?.();
+            }}
             preselectedCompanyId={companyId}
           />
         </DialogContent>

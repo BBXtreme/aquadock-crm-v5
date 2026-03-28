@@ -178,7 +178,14 @@ export default function LinkedContactsCard({ companyId, onEditSuccess }: Props) 
           <DialogHeader>
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm key={editContact?.id} contact={editContact} onSuccess={() => { setEditContact(null); onEditSuccess?.(); }} />
+          <ContactEditForm
+            key={editContact?.id}
+            contact={editContact}
+            onSuccess={() => {
+              setEditContact(null);
+              onEditSuccess?.();
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -187,7 +194,14 @@ export default function LinkedContactsCard({ companyId, onEditSuccess }: Props) 
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm contact={null} onSuccess={() => { setAddDialogOpen(false); onEditSuccess?.(); }} preselectedCompanyId={companyId} />
+          <ContactEditForm
+            contact={null}
+            onSuccess={() => {
+              setAddDialogOpen(false);
+              onEditSuccess?.();
+            }}
+            preselectedCompanyId={companyId}
+          />
         </DialogContent>
       </Dialog>
     </>
