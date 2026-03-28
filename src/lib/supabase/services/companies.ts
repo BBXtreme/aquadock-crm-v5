@@ -39,16 +39,18 @@ export async function getCompanies(
     console.groupEnd();
   }
 
-  if (error?.message) throw handleSupabaseError(error, "getCompanies");
+  if (error) throw handleSupabaseError(error, "getCompanies");
 
-  console.log("[DEBUG] Raw companies data sample:", data?.slice(0, 2));
+  if (process.env.NODE_ENV === "development") {
+    console.log('[DEBUG] Raw companies data sample:', data?.slice(0,2));
+  }
 
   return (data ?? []) as Company[];
 }
 
 export async function getCompanyById(id: string, client: SupabaseClient): Promise<Company | null> {
   const { data, error } = await client.from("companies").select("*").eq("id", id).single();
-  if (error?.message) throw handleSupabaseError(error, "getCompanyById");
+  if (error) throw handleSupabaseError(error, "getCompanyById");
   return (data as Company | null) ?? null;
 }
 
