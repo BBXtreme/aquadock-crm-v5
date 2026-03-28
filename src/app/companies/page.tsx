@@ -258,7 +258,14 @@ export default function CompaniesPage() {
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
       updateCompany(id, updates, createClient()),
     onMutate: async ({ id, updates }) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter];
+      const queryKey = [
+        "companies",
+        pagination.pageIndex,
+        pagination.pageSize,
+        activeFilters,
+        sorting,
+        debouncedGlobalFilter,
+      ];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
         queryKey,
@@ -293,7 +300,14 @@ export default function CompaniesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteCompany(id, createClient()),
     onMutate: async (id) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter];
+      const queryKey = [
+        "companies",
+        pagination.pageIndex,
+        pagination.pageSize,
+        activeFilters,
+        sorting,
+        debouncedGlobalFilter,
+      ];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
         queryKey,
