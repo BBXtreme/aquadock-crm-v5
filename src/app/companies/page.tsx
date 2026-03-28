@@ -42,6 +42,7 @@ import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
+import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -337,6 +338,12 @@ export default function CompaniesPage() {
     },
   });
 
+  const handleImportSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["companies"] });
+    window.dispatchEvent(new CustomEvent("company-imported"));
+    toast.success("Companies successfully imported from CSV");
+  };
+
   if (queryError) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -594,6 +601,7 @@ export default function CompaniesPage() {
                   onPaginationChange={setPagination}
                   sorting={sorting}
                   onSortingChange={setSorting}
+                  onImportCSV={() => setCsvDialogOpen(true)}
                 />
               </>
             )}
@@ -602,6 +610,11 @@ export default function CompaniesPage() {
 
         {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
+      <CSVImportDialog 
+        open={csvDialogOpen} 
+        onOpenChange={setCsvDialogOpen} 
+        onSuccess={handleImportSuccess} 
+      />
     </div>
   );
 }
