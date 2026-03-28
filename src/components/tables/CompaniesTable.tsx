@@ -167,18 +167,20 @@ export default function CompaniesTable({
         cell: (info) => formatCurrency(info.getValue()),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("stadt", {
-        id: "ort",
-        header: "Ort",
+        id: "adresse",
+        header: "Adresse",
         cell: (info) => {
           const row = info.row.original;
           const plz = row.plz ? `${row.plz} ` : "";
           const stadt = row.stadt || "";
-          return safeDisplay(`${plz}${stadt}`.trim());
+          const land = row.land || "";
+          return (
+            <div className="flex flex-col">
+              <span>{safeDisplay(`${plz}${stadt}`.trim())}</span>
+              {land && <span className="text-xs text-gray-500">{land}</span>}
+            </div>
+          );
         },
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("land", {
-        header: "Land",
-        cell: (info) => safeDisplay(info.getValue()),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("created_at", {
         header: "Created",
