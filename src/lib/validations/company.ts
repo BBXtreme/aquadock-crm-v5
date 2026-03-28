@@ -20,18 +20,20 @@ export const companySchema = z.object({
   lat: z.number().optional(),
   lon: z.number().optional(),
   osm: z.string().optional(),
-  status: z.enum([
-    "lead",
-    "interessant",
-    "qualifiziert",
-    "akquise",
-    "angebot",
-    "gewonnen",
-    "verloren",
-    "kunde",
-    "partner",
-    "inaktiv",
-  ]).optional(),
+  status: z
+    .enum([
+      "lead",
+      "interessant",
+      "qualifiziert",
+      "akquise",
+      "angebot",
+      "gewonnen",
+      "verloren",
+      "kunde",
+      "partner",
+      "inaktiv",
+    ])
+    .optional(),
   value: z.number().optional(),
   notes: z.string().optional(),
 });

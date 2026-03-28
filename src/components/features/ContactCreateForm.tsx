@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
-import { contactSchema, type ContactFormValues } from "@/lib/validations/contact";
 import { createContact } from "@/lib/supabase/services/contacts";
+import { type ContactFormValues, contactSchema } from "@/lib/validations/contact";
 
 const anredeOptions = [
   { value: "Herr", label: "Herr" },

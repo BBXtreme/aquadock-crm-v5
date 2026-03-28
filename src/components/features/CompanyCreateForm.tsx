@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
-import { companySchema, type CompanyFormValues } from "@/lib/validations/company";
 import { createCompany } from "@/lib/supabase/services/companies";
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
