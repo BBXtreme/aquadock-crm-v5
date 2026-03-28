@@ -330,3 +330,8 @@ export type KPI = {
   changePercent: number;
   subtitle: string;
 };
+
+export type TimelineEntryWithJoins = TimelineEntry & {
+  companies?: Pick<Company, "firmenname"> | null;
+  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
+};
