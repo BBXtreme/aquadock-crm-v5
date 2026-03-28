@@ -1,4 +1,3 @@
-import type { ParseError, ParseResult } from "papaparse";
 import Papa from "papaparse";
 import type { CompanyInsert } from "@/lib/supabase/database.types";
 
@@ -82,9 +81,9 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header: string) => header.toLowerCase().trim(),
-      complete: (results) => {
+      complete: (results: any) => {
         if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${results.errors.map((e) => e.message).join(", ")}`));
+          reject(new Error(`CSV parsing errors: ${results.errors.map((e: any) => e.message).join(", ")}`));
           return;
         }
 
@@ -161,7 +160,7 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
 
         resolve(parsedRows);
       },
-      error: (error) => {
+      error: (error: any) => {
         reject(new Error(`CSV parsing failed: ${error.message}`));
       },
     });
