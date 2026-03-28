@@ -2,9 +2,11 @@
 "use client";
 
 import { ExternalLink, MapPin, Phone } from "lucide-react";
-
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
+import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
 export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalculateWater }: OsmPoiMarkerPopupProps) {
@@ -24,6 +26,48 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalcul
 
   const osmId = `${poi.type}/${poi.id}`;
   const osmUrl = `https://www.openstreetmap.org/${osmId}`;
+
+  // Local state for water info (shows cached values immediately)
+  const [localWater, setLocalWater] = useState<{
+    distance: number | null;
+    wassertyp: string | null;
+  } | null>(poi.wasserdistanz !== undefined ? { distance: poi.wasserdistanz, wassertyp: poi.wassertyp ?? null } : null);
+
+  const hasWaterInfo = localWater !== null && localWater.distance !== null;
+
+  const handleCalculateWater = async () => {
+    if (hasWaterInfo) return;
+
+    const lat = poi.lat || poi.center?.lat;
+    const lon = poi.lon || poi.center?.lon;
+
+    if (!lat || !lon) {
+      toast.error("Keine Koordinaten für Wasserberechnung verfügbar");
+      return;
+    }
+
+    toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
+
+    try {
+      const result = await calculateWaterDistance(lat, lon);
+
+      // Update both local state and original POI object
+      setLocalWater(result);
+      Object.assign(poi, {
+        wasserdistanz: result.distance,
+        wassertyp: result.wassertyp,
+      });
+
+      if (result.distance !== null) {
+        const msg = result.distance === 0 ? "Direkt am Wasser" : `${result.distance} m zum Wasser`;
+        toast.success(msg, { id: "water-calc" });
+      } else {
+        toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
+      }
+    } catch (_error) {
+      toast.error("Fehler bei der Wasserberechnung. Bitte später erneut versuchen.", { id: "water-calc" });
+    }
+  };
 
   return (
     <div className="min-w-[320px] space-y-4 text-sm p-1">
@@ -66,10 +110,11 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalcul
         </div>
       )}
 
-      {poi.wasserdistanz !== undefined && (
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          💧 {poi.wasserdistanz === 0 ? "–" : `${poi.wasserdistanz} m`} zum Wasser
-          {poi.wassertyp && <span className="font-medium">({poi.wassertyp})</span>}
+      {/* Water Info - shows immediately if cached or previously calculated */}
+      {hasWaterInfo && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1 bg-muted/50 p-2 rounded-md">
+          💧 {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m`} zum Wasser
+          {localWater.wassertyp && <span className="font-medium">({localWater.wassertyp})</span>}
         </div>
       )}
 
@@ -84,8 +129,8 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalcul
           In CRM importieren
         </Button>
 
-        <Button size="sm" variant="outline" onClick={() => onCalculateWater?.(poi)} type="button">
-          💧 Wasser-Info berechnen
+        <Button size="sm" variant="outline" onClick={handleCalculateWater} disabled={hasWaterInfo} type="button">
+          {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
         </Button>
       </div>
     </div>
