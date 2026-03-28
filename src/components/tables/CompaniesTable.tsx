@@ -43,6 +43,7 @@ interface CompaniesTableProps {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   sorting: { id: string; desc: boolean }[];
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
+  onImportCSV?: () => void;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -57,6 +58,7 @@ export default function CompaniesTable({
   onPaginationChange,
   sorting,
   onSortingChange: _onSortingChange,
+  onImportCSV,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -331,12 +333,8 @@ export default function CompaniesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                <Link href="/import/csv">Import CSV</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/import/json">Import JSON</Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onImportCSV}>CSV</DropdownMenuItem>
+              <DropdownMenuItem disabled>JSON (coming soon)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>

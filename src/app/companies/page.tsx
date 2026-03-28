@@ -56,15 +56,7 @@ export default function CompaniesPage() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Companies</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button>Import</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={handleImportCSV}>CSV</DropdownMenuItem>
-            <DropdownMenuItem disabled>JSON (coming soon)</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button>New Company</Button>
       </div>
 
       <CompaniesTable
@@ -75,6 +67,7 @@ export default function CompaniesPage() {
         onPaginationChange={setPagination}
         sorting={sorting}
         onSortingChange={setSorting}
+        onImportCSV={handleImportCSV}
       />
 
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
