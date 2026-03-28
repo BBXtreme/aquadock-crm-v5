@@ -362,16 +362,9 @@ export default function CompaniesPage() {
                 >
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
-                      <Badge
-                        key={`${group}-${v}`}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
+                      <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
                         {v}
-                        <X
-                          className="h-3 w-3 cursor-pointer"
-                          onClick={() => removeFilter(group as FilterGroup, v)}
-                        />
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
                       </Badge>
                     )),
                   )}
