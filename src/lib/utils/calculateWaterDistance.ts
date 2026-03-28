@@ -3,118 +3,205 @@ import L from "leaflet";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 
 /**
- * Calculates the distance to the nearest water feature and determines its type using Overpass API.
+ * Calculates the distance to the nearest water feature using Overpass API.
  *
- * Improved query strategy (March 2026):
- * - Single efficient union with nwr (nodes/ways/relations)
- * - 10km around radius
- * - Better tag coverage including common water=* values
- * - Proper is_in fallback for points inside large water areas
- * - Samples all geometry points + considers first/last node for better coastline coverage
- *
- * Limitations (unchanged):
- * - Approximate distance (node sampling, not true closest-point-on-line)
- * - Depends on OSM tagging quality
- * - Future: Migrate to Supabase PostGIS with ST_Distance + ST_Contains for exact results
+ * Improvements (March 2026):
+ * - Aggressive client-side caching (localStorage, 24h TTL)
+ * - Reduced radius (7km instead of 10km)
+ * - Multiple endpoint rotation with backoff
+ * - Only called on explicit user request from POI popup
  */
+
+const WATER_CACHE_KEY = "aquadock_water_cache_v2";
+const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
+const MAX_CACHE_ENTRIES = 500;
+
+interface WaterCacheEntry {
+  distance: number | null;
+  wassertyp: string | null;
+  timestamp: number;
+}
+
+function getCacheKey(lat: number, lon: number): string {
+  return `${lat.toFixed(5)},${lon.toFixed(5)}`;
+}
+
+function getWaterCache(lat: number, lon: number): WaterCacheEntry | null {
+  try {
+    const cacheStr = localStorage.getItem(WATER_CACHE_KEY);
+    if (!cacheStr) return null;
+
+    const cache = JSON.parse(cacheStr) as Record<string, WaterCacheEntry>;
+    const key = getCacheKey(lat, lon);
+    const entry = cache[key];
+
+    if (entry && Date.now() - entry.timestamp < CACHE_TTL_MS) {
+      return entry;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function setWaterCache(lat: number, lon: number, result: { distance: number | null; wassertyp: string | null }) {
+  try {
+    const cacheStr = localStorage.getItem(WATER_CACHE_KEY) || "{}";
+    const cache = JSON.parse(cacheStr) as Record<string, WaterCacheEntry>;
+    const key = getCacheKey(lat, lon);
+
+    cache[key] = {
+      ...result,
+      timestamp: Date.now(),
+    };
+
+    // Trim cache to prevent unlimited growth
+    const entries = Object.entries(cache).sort((a, b) => b[1].timestamp - a[1].timestamp);
+    const trimmed = Object.fromEntries(entries.slice(0, MAX_CACHE_ENTRIES));
+
+    localStorage.setItem(WATER_CACHE_KEY, JSON.stringify(trimmed));
+  } catch (e) {
+    console.warn("Failed to save water cache", e);
+  }
+}
+
 export async function calculateWaterDistance(
   lat: number,
   lon: number,
 ): Promise<{ distance: number | null; wassertyp: string | null }> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  // 1. Check cache first (fast path)
+  const cached = getWaterCache(lat, lon);
+  if (cached) {
+    console.log(`[Water] Cache hit for ${lat.toFixed(5)},${lon.toFixed(5)} → ${cached.distance}m`);
+    return { distance: cached.distance, wassertyp: cached.wassertyp };
+  }
 
-  // Small jitter to avoid Overpass result caching
-  const jitterLat = lat + (Math.random() - 0.5) * 0.0002;
-  const jitterLon = lon + (Math.random() - 0.5) * 0.0002;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  // Small jitter to avoid Overpass caching
+  const jitterLat = lat + (Math.random() - 0.5) * 0.0003;
+  const jitterLon = lon + (Math.random() - 0.5) * 0.0003;
 
   try {
-    // Optimized primary query
+    // Optimized primary query - smaller radius, cleaner tags
     const primaryQuery = `
-[out:json][timeout:25];
+[out:json][timeout:20];
 (
-  nwr(around:10000,${jitterLat},${jitterLon})[waterway];
-  nwr(around:10000,${jitterLat},${jitterLon})[natural=water];
-  nwr(around:10000,${jitterLat},${jitterLon})[natural=coastline];
-  nwr(around:10000,${jitterLat},${jitterLon})[water~"lake|pond|reservoir|basin"];
+  nwr(around:7000,${jitterLat},${jitterLon})[waterway];
+  nwr(around:7000,${jitterLat},${jitterLon})[natural=water];
+  nwr(around:7000,${jitterLat},${jitterLon})[natural=coastline];
+  nwr(around:7000,${jitterLat},${jitterLon})[water~"^(lake|pond|reservoir|basin|river)$"];
 );
-out geom;
-`;
+out geom;`;
 
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: primaryQuery,
-      signal: controller.signal,
-    });
+    const endpoints = [
+      "https://overpass-api.de/api/interpreter",
+      "https://overpass.private.coffee/api/interpreter",
+      "https://overpass.osm.ch/api/interpreter",
+      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    ];
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
-    }
+    let lastError: any = null;
 
-    const data = await response.json();
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: primaryQuery,
+          signal: controller.signal,
+        });
 
-    if (data.elements && data.elements.length > 0) {
-      let minDistance = Infinity;
-      let bestWassertyp: string | null = null;
+        if (response.status === 429) {
+          console.warn(`[Water] ${endpoint} → 429 rate limit, trying next...`);
+          await new Promise((r) => setTimeout(r, 800));
+          continue;
+        }
 
-      const point = L.latLng(lat, lon);
+        if (!response.ok) {
+          throw new Error(`Overpass API error: ${response.status} ${response.statusText}`);
+        }
 
-      for (const element of data.elements) {
-        const tags = element.tags || {};
-        const candidateType = determineWassertyp(tags);
+        const data = await response.json();
 
-        if (element.geometry && Array.isArray(element.geometry)) {
-          for (const geom of element.geometry) {
-            if (geom.lat && geom.lon) {
-              const geomPoint = L.latLng(geom.lat, geom.lon);
-              const dist = point.distanceTo(geomPoint);
-              if (dist < minDistance) {
-                minDistance = dist;
-                bestWassertyp = candidateType || bestWassertyp;
+        if (data.elements && data.elements.length > 0) {
+          let minDistance = Infinity;
+          let bestWassertyp: string | null = null;
+
+          const point = L.latLng(lat, lon);
+
+          for (const element of data.elements) {
+            const tags = element.tags || {};
+            const candidateType = determineWassertyp(tags);
+
+            if (element.geometry && Array.isArray(element.geometry)) {
+              for (const geom of element.geometry) {
+                if (geom.lat && geom.lon) {
+                  const geomPoint = L.latLng(geom.lat, geom.lon);
+                  const dist = point.distanceTo(geomPoint);
+                  if (dist < minDistance) {
+                    minDistance = dist;
+                    bestWassertyp = candidateType || bestWassertyp;
+                  }
+                }
               }
             }
           }
-        }
-      }
 
-      if (minDistance < Infinity) {
-        return {
-          distance: Math.round(minDistance),
-          wassertyp: bestWassertyp,
-        };
+          const result = {
+            distance: minDistance < Infinity ? Math.round(minDistance) : null,
+            wassertyp: bestWassertyp,
+          };
+
+          setWaterCache(lat, lon, result);
+          return result;
+        }
+      } catch (err: any) {
+        lastError = err;
+        if (err.name === "AbortError") break;
+        console.warn(`[Water] ${endpoint} failed:`, err.message);
+        if (endpoint === endpoints[endpoints.length - 1]) break;
       }
     }
 
-    // Fallback: Check if point is inside a water area (is_in)
-    console.warn(`No nearby water ways found near ${lat},${lon}. Trying containment fallback...`);
+    // Fallback: Check if point is inside a water area
+    console.warn(`No nearby water found near ${lat.toFixed(5)},${lon.toFixed(5)}. Trying containment fallback...`);
 
     const fallbackQuery = `
-[out:json][timeout:20];
+[out:json][timeout:15];
 is_in(${jitterLat},${jitterLon});
 area._[natural=water];
-out tags;
-`;
+out tags;`;
 
-    const fallbackResponse = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: fallbackQuery,
-      signal: controller.signal,
-    });
+    try {
+      const fallbackResponse = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: fallbackQuery,
+        signal: controller.signal,
+      });
 
-    if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json();
-      if (fallbackData.elements && fallbackData.elements.length > 0) {
-        const waterArea = fallbackData.elements[0];
-        const wassertyp = determineWassertyp(waterArea.tags || {}) || "See";
-        console.log(`Point appears inside water area: ${wassertyp}`);
-        return { distance: 0, wassertyp };
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        if (fallbackData.elements && fallbackData.elements.length > 0) {
+          const waterArea = fallbackData.elements[0];
+          const wassertyp = determineWassertyp(waterArea.tags || {}) || "See";
+          const result = { distance: 0, wassertyp };
+          setWaterCache(lat, lon, result);
+          return result;
+        }
       }
+    } catch (fallbackErr) {
+      console.warn("Fallback query also failed", fallbackErr);
     }
 
-    return { distance: null, wassertyp: null };
+    const noResult = { distance: null, wassertyp: null };
+    setWaterCache(lat, lon, noResult);
+    return noResult;
   } catch (error) {
     console.warn(`Water distance calculation failed for ${lat.toFixed(5)},${lon.toFixed(5)}:`, error);
-    return { distance: null, wassertyp: null };
+    const failResult = { distance: null, wassertyp: null };
+    setWaterCache(lat, lon, failResult);
+    return failResult;
   } finally {
     clearTimeout(timeoutId);
   }
