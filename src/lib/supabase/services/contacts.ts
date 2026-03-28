@@ -58,6 +58,9 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
 export async function createContact(contact: ContactInsert, client?: SupabaseClient): Promise<Contact> {
   const supabaseClient = client || createClient();
 
+  // Temporary fallback until auth is implemented
+  (contact as any).user_id = null;
+
   // Log the exact payload for debugging
   if (process.env.NODE_ENV === "development") {
     console.log("[DEBUG] Creating contact with payload:", JSON.stringify(contact, null, 2));
@@ -74,8 +77,9 @@ export async function createContact(contact: ContactInsert, client?: SupabaseCli
 /**
  * Update a contact
  */
-export async function updateContact(id: string, updates: Partial<Contact>, client: SupabaseClient): Promise<Contact> {
-  const { data, error } = await client.from("contacts").update(updates).eq("id", id).select().single();
+export async function updateContact(id: string, updates: Partial<Contact>, client?: SupabaseClient): Promise<Contact> {
+  const supabaseClient = client || createClient();
+  const { data, error } = await supabaseClient.from("contacts").update(updates).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateContact");
   return data as Contact;
 }
@@ -83,7 +87,8 @@ export async function updateContact(id: string, updates: Partial<Contact>, clien
 /**
  * Delete a contact
  */
-export async function deleteContact(id: string, client: SupabaseClient): Promise<void> {
-  const { error } = await client.from("contacts").delete().eq("id", id);
+export async function deleteContact(id: string, client?: SupabaseClient): Promise<void> {
+  const supabaseClient = client || createClient();
+  const { error } = await supabaseClient.from("contacts").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteContact");
 }

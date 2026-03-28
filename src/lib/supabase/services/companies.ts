@@ -80,8 +80,18 @@ export async function getCompanyById(id: string, supabase: SupabaseClient): Prom
   return data;
 }
 
-export async function createCompany(company: CompanyInsert, supabase: SupabaseClient): Promise<Company> {
-  const { data, error } = await supabase.from("companies").insert(company).select().single();
+export async function createCompany(company: CompanyInsert, supabase?: SupabaseClient): Promise<Company> {
+  const supabaseClient = supabase || createClient();
+
+  // Temporary fallback until auth is implemented
+  (company as any).user_id = null;
+
+  // Log the full payload before insert
+  if (process.env.NODE_ENV === "development") {
+    console.log("[DEBUG] Creating company with payload:", JSON.stringify(company, null, 2));
+  }
+
+  const { data, error } = await supabaseClient.from("companies").insert(company).select().single();
 
   if (error) {
     throw handleSupabaseError(error, "createCompany");
@@ -90,8 +100,9 @@ export async function createCompany(company: CompanyInsert, supabase: SupabaseCl
   return data;
 }
 
-export async function updateCompany(id: string, updates: CompanyUpdate, supabase: SupabaseClient): Promise<Company> {
-  const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
+export async function updateCompany(id: string, updates: CompanyUpdate, supabase?: SupabaseClient): Promise<Company> {
+  const supabaseClient = supabase || createClient();
+  const { data, error } = await supabaseClient.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) {
     throw new Error(`Update failed: ${error.message || error.details || "Unknown error"}`);
@@ -100,8 +111,9 @@ export async function updateCompany(id: string, updates: CompanyUpdate, supabase
   return data;
 }
 
-export async function deleteCompany(id: string, supabase: SupabaseClient): Promise<void> {
-  const { error } = await supabase.from("companies").delete().eq("id", id);
+export async function deleteCompany(id: string, supabase?: SupabaseClient): Promise<void> {
+  const supabaseClient = supabase || createClient();
+  const { error } = await supabaseClient.from("companies").delete().eq("id", id);
 
   if (error) {
     throw handleSupabaseError(error, "deleteCompany");

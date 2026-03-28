@@ -2,27 +2,13 @@
 import { toast } from "sonner";
 
 export function handleSupabaseError(error: unknown, context: string): Error {
-  if (process.env.NODE_ENV === "development") {
-    console.group("Supabase Error");
-    console.error(`Supabase error in ${context}:`, {
-      error,
-      message: error instanceof Error ? error.message : String(error),
-      code: (error as any)?.code,
-      details: (error as any)?.details,
-      hint: (error as any)?.hint,
-      status: (error as any)?.status,
-    });
-    console.groupEnd();
-  } else {
-    console.error(`Supabase error in ${context}:`, {
-      error,
-      message: error instanceof Error ? error.message : String(error),
-      code: (error as any)?.code,
-      details: (error as any)?.details,
-      hint: (error as any)?.hint,
-      status: (error as any)?.status,
-    });
-  }
+  console.group(`🚨 Supabase Error in ${context}`);
+  console.error("Full error:", error);
+  console.error("Message:", (error as any)?.message);
+  console.error("Code:", (error as any)?.code);
+  console.error("Details:", (error as any)?.details);
+  console.error("Hint:", (error as any)?.hint);
+  console.groupEnd();
 
   const errorMessage = error instanceof Error ? error.message : "An unknown database error occurred";
 
