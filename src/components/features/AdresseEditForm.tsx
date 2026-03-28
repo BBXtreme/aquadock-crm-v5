@@ -61,7 +61,7 @@ export default function AdresseEditForm({ company, onSuccess }: { company: Compa
   const updateMutation = useMutation({
     mutationFn: (data: AdresseFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      return updateCompany(company.id, data as Partial<Company>, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });

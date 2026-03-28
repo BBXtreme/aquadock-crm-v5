@@ -66,7 +66,7 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
         ...data,
         osm: data.osm?.trim() || null,
       };
-      return updateCompany(company.id, cleanData);
+      return updateCompany(company.id, cleanData, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });

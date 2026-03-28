@@ -73,7 +73,7 @@ export default function FirmendatenEditForm({
   const updateMutation = useMutation({
     mutationFn: (data: FirmendatenFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      return updateCompany(company.id, data as Partial<Company>, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
