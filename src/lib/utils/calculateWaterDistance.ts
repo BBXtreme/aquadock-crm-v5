@@ -7,7 +7,7 @@ import { determineWassertyp } from "@/lib/constants/wassertyp";
  *
  * Improvements (March 2026):
  * - Aggressive client-side caching (localStorage, 24h TTL)
- * - Reduced radius (7km instead of 10km)
+ * - Reduced radius to 1000m (1km) – we only care about close water
  * - Multiple endpoint rotation with backoff
  * - Only called on explicit user request from POI popup
  */
@@ -55,7 +55,7 @@ function setWaterCache(lat: number, lon: number, result: { distance: number | nu
       timestamp: Date.now(),
     };
 
-    // Trim cache to prevent unlimited growth
+    // Trim cache
     const entries = Object.entries(cache).sort((a, b) => b[1].timestamp - a[1].timestamp);
     const trimmed = Object.fromEntries(entries.slice(0, MAX_CACHE_ENTRIES));
 
@@ -77,21 +77,21 @@ export async function calculateWaterDistance(
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // reduced timeout
 
-  // Small jitter to avoid Overpass caching
-  const jitterLat = lat + (Math.random() - 0.5) * 0.0003;
-  const jitterLon = lon + (Math.random() - 0.5) * 0.0003;
+  // Small jitter
+  const jitterLat = lat + (Math.random() - 0.5) * 0.0002;
+  const jitterLon = lon + (Math.random() - 0.5) * 0.0002;
 
   try {
-    // Optimized primary query - smaller radius, cleaner tags
+    // Optimized primary query – now only 1km radius
     const primaryQuery = `
-[out:json][timeout:20];
+[out:json][timeout:15];
 (
-  nwr(around:7000,${jitterLat},${jitterLon})[waterway];
-  nwr(around:7000,${jitterLat},${jitterLon})[natural=water];
-  nwr(around:7000,${jitterLat},${jitterLon})[natural=coastline];
-  nwr(around:7000,${jitterLat},${jitterLon})[water~"^(lake|pond|reservoir|basin|river)$"];
+  nwr(around:1000,${jitterLat},${jitterLon})[waterway];
+  nwr(around:1000,${jitterLat},${jitterLon})[natural=water];
+  nwr(around:1000,${jitterLat},${jitterLon})[natural=coastline];
+  nwr(around:1000,${jitterLat},${jitterLon})[water~"^(lake|pond|reservoir|basin|river)$"];
 );
 out geom;`;
 
@@ -168,7 +168,7 @@ out geom;`;
     console.warn(`No nearby water found near ${lat.toFixed(5)},${lon.toFixed(5)}. Trying containment fallback...`);
 
     const fallbackQuery = `
-[out:json][timeout:15];
+[out:json][timeout:12];
 is_in(${jitterLat},${jitterLon});
 area._[natural=water];
 out tags;`;
