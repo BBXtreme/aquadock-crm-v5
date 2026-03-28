@@ -47,6 +47,7 @@ export default function RemindersCard({ companyId }: Props) {
       }
       return data;
     },
+    staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
