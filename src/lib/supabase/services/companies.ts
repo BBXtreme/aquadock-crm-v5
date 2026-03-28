@@ -1,10 +1,9 @@
 // src/lib/supabase/services/companies.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
-
+import type { ParsedCompanyRow } from "../../utils/csv-import";
 import { createClient } from "../browser";
 import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
 import { handleSupabaseError } from "../utils";
-import type { ParsedCompanyRow } from "../../utils/csv-import";
 
 export type CompanyForOpenMap = Company & { contacts?: Contact[] };
 
