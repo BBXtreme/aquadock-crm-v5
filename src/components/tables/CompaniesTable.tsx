@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/supabase/utils";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
@@ -59,7 +59,7 @@ export default function CompaniesTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns: ColumnDef<CompanyWithContacts>[] = [
+  const columns = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -77,7 +77,7 @@ export default function CompaniesTable({
         />
       ),
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("firmenname", {
       id: "firmenname",
       header: "Firmenname",
@@ -86,11 +86,11 @@ export default function CompaniesTable({
           {safeDisplay(info.getValue())}
         </Link>
       ),
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("kundentyp", {
       header: "Kundentyp",
       cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("status", {
       header: "Status",
       cell: (info) => {
@@ -108,7 +108,7 @@ export default function CompaniesTable({
           </Badge>
         );
       },
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("contacts", {
       id: "hauptkontakt",
       header: "Hauptkontakt",
@@ -124,7 +124,7 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("contacts", {
       id: "kontaktanzahl",
       header: "Kontakte",
@@ -140,11 +140,11 @@ export default function CompaniesTable({
         );
       },
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("value", {
       header: "Value",
       cell: (info) => formatCurrency(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("stadt", {
       id: "ort",
       header: "Ort",
@@ -152,17 +152,17 @@ export default function CompaniesTable({
         const row = info.row.original;
         const plz = row.plz ? `${row.plz} ` : "";
         const stadt = row.stadt || "";
-        return `${plz}${stadt}` || "—";
+        return safeDisplay(`${plz}${stadt}`.trim());
       },
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("land", {
       header: "Land",
       cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.accessor("created_at", {
       header: "Created",
       cell: (info) => formatDateDistance(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
+    }),
     columnHelper.display({
       id: "actions",
       header: "Actions",
@@ -196,8 +196,8 @@ export default function CompaniesTable({
         </div>
       ),
       enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-  ];
+    }),
+  ] satisfies ColumnDef<CompanyWithContacts>[];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
