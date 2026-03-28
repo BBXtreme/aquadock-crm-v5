@@ -1,7 +1,7 @@
 // src/components/features/map/OsmPoiMarkerPopup.tsx
 "use client";
 
-import { ExternalLink, MapPin, Phone } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   };
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-2">
+    <div className="min-w-[320px] space-y-3 text-sm p-3">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{name}</div>
@@ -80,7 +80,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
       {/* Address */}
       {fullAddress && (
         <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <span className="text-muted-foreground mt-0.5">📍</span>
           <span>{fullAddress}</span>
         </div>
       )}
@@ -88,7 +88,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
       {/* Phone */}
       {phone && (
         <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-muted-foreground">📞</span>
           <a href={`tel:${phone}`} className="text-blue-600 dark:text-blue-400 hover:underline">
             {phone}
           </a>
@@ -110,15 +110,15 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         </div>
       )}
 
-      {/* Water Info - Prominent badge when available */}
+      {/* Water Info - Prominent muted box */}
       {hasWaterInfo && (
-        <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm">
-          <div className="flex items-center gap-2 font-medium text-blue-900 dark:text-blue-100">
+        <div className="bg-muted/50 border border-muted rounded-md p-3 text-sm">
+          <div className="flex items-center gap-2 font-medium text-foreground">
             <span className="text-lg">💧</span>
             <span>
               {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
               {localWater.wassertyp && (
-                <span className="text-blue-700 dark:text-blue-300"> ({localWater.wassertyp})</span>
+                <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>
               )}
             </span>
           </div>
@@ -135,12 +135,12 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         <Button
           size="sm"
           variant="outline"
-          className="flex-1"
+          className="px-3"
           onClick={handleCalculateWater}
           disabled={hasWaterInfo}
           type="button"
         >
-          {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
+          {hasWaterInfo ? "✅" : "💧"}
         </Button>
 
         <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
