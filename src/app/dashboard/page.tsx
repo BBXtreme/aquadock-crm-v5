@@ -1,36 +1,48 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building, Users } from "lucide-react";
+import { Building, DollarSign, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 
 import { StatCard } from "@/components/ui/StatCard";
 import { createClient } from "@/lib/supabase/browser";
 
 export default function DashboardPage() {
-  const [selectedPeriod, setSelectedPeriod] = useState("30d");
+  const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats", selectedPeriod],
     queryFn: async () => {
       const supabase = createClient();
 
-      // Get companies stats
       const { data: companies } = await supabase.from("companies").select("status, value, created_at");
 
-      // Get contacts stats
       const { data: contacts } = await supabase.from("contacts").select("created_at");
 
-      // Get timeline stats
       const { data: timeline } = await supabase.from("timeline").select("created_at");
 
       const now = new Date();
       const periodDays = selectedPeriod === "7d" ? 7 : selectedPeriod === "30d" ? 30 : 90;
       const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-      const companiesInPeriod = companies?.filter((c) => new Date(c.created_at!) >= periodStart) || [];
-      const contactsInPeriod = contacts?.filter((c) => new Date(c.created_at!) >= periodStart) || [];
-      const timelineInPeriod = timeline?.filter((t) => new Date(t.created_at!) >= periodStart) || [];
+      // Safe date filtering without non-null assertion
+      const companiesInPeriod =
+        companies?.filter((c) => {
+          if (!c.created_at) return false;
+          return new Date(c.created_at) >= periodStart;
+        }) || [];
+
+      const contactsInPeriod =
+        contacts?.filter((c) => {
+          if (!c.created_at) return false;
+          return new Date(c.created_at) >= periodStart;
+        }) || [];
+
+      const timelineInPeriod =
+        timeline?.filter((t) => {
+          if (!t.created_at) return false;
+          return new Date(t.created_at) >= periodStart;
+        }) || [];
 
       return {
         totalCompanies: companies?.length || 0,
@@ -40,6 +52,8 @@ export default function DashboardPage() {
         contactsInPeriod: contactsInPeriod.length,
         activitiesInPeriod: timelineInPeriod.length,
         totalValue: companies?.reduce((sum, c) => sum + (c.value || 0), 0) || 0,
+        leads: companies?.filter((c) => c.status === "lead").length || 0,
+        won: companies?.filter((c) => c.status === "gewonnen").length || 0,
       };
     },
   });
@@ -55,10 +69,14 @@ export default function DashboardPage() {
             </h1>
           </div>
         </div>
+
+        {/* Skeleton Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={`stat-card-skeleton-${index}`} className="h-32 bg-muted animate-pulse rounded-lg" />
-          ))}
+          {["dashboard-skeleton-1", "dashboard-skeleton-2", "dashboard-skeleton-3", "dashboard-skeleton-4"].map(
+            (key) => (
+              <div key={key} className="h-32 bg-muted animate-pulse rounded-lg" />
+            ),
+          )}
         </div>
       </div>
     );
@@ -75,7 +93,7 @@ export default function DashboardPage() {
         </div>
         <select
           value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
+          onChange={(e) => setSelectedPeriod(e.target.value as "7d" | "30d" | "90d")}
           className="px-3 py-2 border rounded-md"
         >
           <option value="7d">Last 7 days</option>
@@ -93,23 +111,23 @@ export default function DashboardPage() {
           change={`+${stats?.companiesInPeriod || 0} this period`}
         />
         <StatCard
-          title="Total Contacts"
-          value={stats?.totalContacts.toLocaleString("de-DE") || "0"}
+          title="Leads"
+          value={stats?.leads.toLocaleString("de-DE") || "0"}
           icon={<Users className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change={`+${stats?.contactsInPeriod || 0} this period`}
+          change={`+${stats?.companiesInPeriod || 0} this period`}
         />
         <StatCard
-          title="Total Activities"
-          value={stats?.totalActivities.toLocaleString("de-DE") || "0"}
-          icon={<Building className="h-5 w-5 text-muted-foreground" />}
+          title="Gewonnene Deals"
+          value={stats?.won.toLocaleString("de-DE") || "0"}
+          icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change={`+${stats?.activitiesInPeriod || 0} this period`}
+          change={`+${stats?.companiesInPeriod || 0} this period`}
         />
         <StatCard
           title="Total Value"
           value={`€${stats?.totalValue.toLocaleString("de-DE") || "0"}`}
-          icon={<Building className="h-5 w-5 text-muted-foreground" />}
+          icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
           change="—"
         />
