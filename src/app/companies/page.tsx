@@ -133,7 +133,7 @@ export default function CompaniesPage() {
 
   const toggleFilter = (group: FilterGroup, value: string) => {
     setActiveFilters((prev) => ({
-      ...prev",
+      ...prev,
       [group]: prev[group].includes(value) ? prev[group].filter((v) => v !== value) : [...prev[group], value],
     }));
   };
