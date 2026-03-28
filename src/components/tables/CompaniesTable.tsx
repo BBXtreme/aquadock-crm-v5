@@ -162,10 +162,6 @@ export default function CompaniesTable({
         },
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("value", {
-        header: "Value",
-        cell: (info) => formatCurrency(info.getValue()),
-      }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("stadt", {
         id: "adresse",
         header: "Adresse",
