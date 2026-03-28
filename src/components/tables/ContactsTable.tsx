@@ -50,7 +50,7 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const columns = [
+  const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
       id: "select",
       header: ({ table }) => (
@@ -68,12 +68,12 @@ export default function ContactsTable({
         />
       ),
       enableSorting: false,
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("vorname", {
       id: "vorname",
       header: "Vorname",
       cell: (info) => info.getValue(),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("nachname", {
       id: "nachname",
       header: "Nachname",
@@ -82,22 +82,22 @@ export default function ContactsTable({
           {info.getValue()}
         </Link>
       ),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("is_primary", {
       id: "is_primary",
       header: "Primary",
       cell: (info) => (info.getValue() ? <Badge variant="secondary">Primary</Badge> : "—"),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("position", {
       id: "position",
       header: "Position",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "company",
       header: "Firma",
@@ -110,32 +110,32 @@ export default function ContactsTable({
           </Link>
         );
       },
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("email", {
       id: "email",
       header: "Email",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("telefon", {
       id: "telefon",
       header: "Telefon",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("mobil", {
       id: "mobil",
       header: "Mobil",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("durchwahl", {
       id: "durchwahl",
       header: "Durchwahl",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("notes", {
       id: "notes",
       header: "Notes",
       cell: (info) => safeDisplay(info.getValue()),
-    }),
+    }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "actions",
       header: "Actions",
@@ -169,8 +169,8 @@ export default function ContactsTable({
         </div>
       ),
       enableSorting: false,
-    }),
-  ] satisfies ColumnDef<ContactWithCompany>[];
+    }) as ColumnDef<ContactWithCompany>,
+  ];
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
