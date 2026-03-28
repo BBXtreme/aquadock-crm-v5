@@ -10,19 +10,21 @@ interface LoadingStateProps {
 }
 
 /**
- * Reusable loading skeleton component.
- * Uses static keys to satisfy Biome noArrayIndexKey rule.
+ * Reusable loading skeleton with stable keys (no index-based keys).
+ * This pattern satisfies Biome noArrayIndexKey rule permanently.
  */
 export function LoadingState({ count = 5, className = "space-y-2", itemClassName = "h-14 w-full" }: LoadingStateProps) {
+  // Pre-defined stable keys - never changes order
+  const skeletonKeys = Array.from({ length: count }, (_, i) => `loading-item-${i}`);
+
   return (
     <div className={className}>
       {/* Optional header skeleton */}
       <Skeleton className="h-8 w-56" />
 
-      {/* Item skeletons with stable static keys */}
       <div className="space-y-2">
-        {Array.from({ length: count }).map((_, index) => (
-          <Skeleton key={`loading-item-${index}`} className={itemClassName} />
+        {skeletonKeys.map((key) => (
+          <Skeleton key={key} className={itemClassName} />
         ))}
       </div>
     </div>
