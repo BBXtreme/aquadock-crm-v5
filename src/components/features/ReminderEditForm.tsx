@@ -42,9 +42,11 @@ const statusOptions = [
 export default function ReminderEditForm({
   reminder,
   onSuccess,
+  preselectedCompanyId,
 }: {
   reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
+  preselectedCompanyId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -72,7 +74,7 @@ export default function ReminderEditForm({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: reminder?.title || "",
-      company_id: reminder?.company_id || "",
+      company_id: reminder?.company_id || preselectedCompanyId || "",
       due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
       priority: reminder?.priority || "normal",
       status: reminder?.status || "open",
