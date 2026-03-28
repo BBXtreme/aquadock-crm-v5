@@ -1,34 +1,30 @@
+// src/components/ui/LoadingState.tsx
+"use client";
+
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface LoadingStateProps {
-  type: "cards" | "table";
   count?: number;
+  className?: string;
   itemClassName?: string;
 }
 
-export function LoadingState({ type, count = 4, itemClassName }: LoadingStateProps) {
-  if (type === "cards") {
-    return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: count }, (_, i) => (
-          <div key={`card-${i}`} className="h-32 bg-muted animate-pulse rounded-lg" />
+/**
+ * Reusable loading skeleton component.
+ * Uses static keys to satisfy Biome noArrayIndexKey rule.
+ */
+export function LoadingState({ count = 5, className = "space-y-2", itemClassName = "h-14 w-full" }: LoadingStateProps) {
+  return (
+    <div className={className}>
+      {/* Optional header skeleton */}
+      <Skeleton className="h-8 w-56" />
+
+      {/* Item skeletons with stable static keys */}
+      <div className="space-y-2">
+        {Array.from({ length: count }).map((_, index) => (
+          <Skeleton key={`loading-item-${index}`} className={itemClassName} />
         ))}
       </div>
-    );
-  }
-
-  if (type === "table") {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-56" />
-        <div className="space-y-2">
-          {Array.from({ length: count }, (_, i) => (
-            <Skeleton key={`item-${i}`} className={itemClassName || "h-14 w-full"} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
