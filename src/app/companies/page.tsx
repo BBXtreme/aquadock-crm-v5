@@ -22,7 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -47,6 +47,22 @@ type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -62,6 +78,8 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
+
+  const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
   const statusOptions = [
     "lead",
@@ -154,7 +172,7 @@ export default function CompaniesPage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter],
+    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase.from("companies").select(
@@ -172,9 +190,9 @@ export default function CompaniesPage() {
       );
 
       // Apply global filter
-      if (globalFilter) {
+      if (debouncedGlobalFilter) {
         query = query.or(
-          `firmenname.ilike.%${globalFilter}%,strasse.ilike.%${globalFilter}%,stadt.ilike.%${globalFilter}%`,
+          `firmenname.ilike.%${debouncedGlobalFilter}%,strasse.ilike.%${debouncedGlobalFilter}%,stadt.ilike.%${debouncedGlobalFilter}%`,
         );
       }
 
@@ -240,7 +258,7 @@ export default function CompaniesPage() {
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
       updateCompany(id, updates, createClient()),
     onMutate: async ({ id, updates }) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
+      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
         queryKey,
@@ -275,7 +293,7 @@ export default function CompaniesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteCompany(id, createClient()),
     onMutate: async (id) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
+      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
         queryKey,

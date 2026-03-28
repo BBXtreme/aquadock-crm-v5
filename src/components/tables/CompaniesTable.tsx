@@ -301,7 +301,7 @@ export default function CompaniesTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Input
-            key="companies-search-input-stable"
+            key="companies-search-input"
             placeholder="Search companies..."
             value={globalFilter ?? ""}
             onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
