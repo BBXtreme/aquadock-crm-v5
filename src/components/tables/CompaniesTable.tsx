@@ -247,7 +247,6 @@ export default function CompaniesTable({
     },
     onSortingChange: (updater) => {
       const newSorting = typeof updater === "function" ? updater(sorting) : updater;
-      onSortingChange(newSorting);
     },
     enableRowSelection: true,
     globalFilterFn: "includesString",
@@ -299,7 +298,7 @@ export default function CompaniesTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Input
-            key="search-input"
+            key="companies-search-input"
             placeholder="Search companies..."
             value={globalFilter ?? ""}
             onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
