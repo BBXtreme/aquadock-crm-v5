@@ -22,7 +22,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -83,19 +82,20 @@ export default function ContactsTable({
       ),
       enableSorting: false,
     }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("vorname", {
-      id: "vorname",
-      header: "Vorname",
-      cell: (info) => info.getValue(),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("nachname", {
-      id: "nachname",
-      header: "Nachname",
-      cell: (info) => (
-        <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-          {info.getValue()}
-        </Link>
-      ),
+    columnHelper.display({
+      id: "name",
+      header: "Name",
+      cell: (info) => {
+        const vorname = info.row.original.vorname;
+        const nachname = info.row.original.nachname;
+        const position = info.row.original.position;
+        return (
+          <div>
+            <div>{vorname} {nachname}</div>
+            {position && <div className="text-sm text-gray-500">{position}</div>}
+          </div>
+        );
+      },
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("is_primary", {
       id: "is_primary",
@@ -105,11 +105,6 @@ export default function ContactsTable({
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("position", {
-      id: "position",
-      header: "Position",
       cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
