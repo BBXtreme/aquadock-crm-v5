@@ -15,9 +15,10 @@ import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } f
 
 interface Props {
   companyId: string;
+  onEditSuccess?: () => void;
 }
 
-export default function RemindersCard({ companyId }: Props) {
+export default function RemindersCard({ companyId, onEditSuccess }: Props) {
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -208,7 +209,7 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm key={editReminder?.id} reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+          <ReminderEditForm key={editReminder?.id} reminder={editReminder} onSuccess={() => { setEditReminder(null); onEditSuccess?.(); }} />
         </DialogContent>
       </Dialog>
 
@@ -219,7 +220,7 @@ export default function RemindersCard({ companyId }: Props) {
           </DialogHeader>
           <ReminderEditForm
             reminder={null}
-            onSuccess={() => setAddDialogOpen(false)}
+            onSuccess={() => { setAddDialogOpen(false); onEditSuccess?.(); }}
             preselectedCompanyId={companyId}
           />
         </DialogContent>

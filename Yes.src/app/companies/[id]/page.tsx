@@ -30,12 +30,6 @@ export default function CompanyDetailPage() {
     queryFn: async () => getCompanyById(id, createClient()),
   });
 
-  const handleSubQueryInvalidation = () => {
-    // Invalidate sub-queries after edits to prevent stale cache
-    // Note: useQueryClient is not imported here, but this function will be passed to cards
-    // The cards will handle the invalidation using their own queryClient
-  };
-
   if (isLoading) return <div className="container mx-auto p-6">Loading company details...</div>;
   if (error || !company) {
     return (
@@ -53,13 +47,13 @@ export default function CompanyDetailPage() {
       <CompanyHeader company={company} id={id} router={router} />
       <CompanyKpiCards company={company} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FirmendatenCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AdresseCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AquaDockCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <CrmCard company={company} onEditSuccess={handleSubQueryInvalidation} />
+        <FirmendatenCard company={company} />
+        <AdresseCard company={company} />
+        <AquaDockCard company={company} />
+        <CrmCard company={company} />
       </div>
-      <LinkedContactsCard companyId={id} onEditSuccess={handleSubQueryInvalidation} />
-      <RemindersCard companyId={id} onEditSuccess={handleSubQueryInvalidation} />
+      <LinkedContactsCard companyId={id} />
+      <RemindersCard companyId={id} />
       <TimelineCard companyId={id} />
     </div>
   );
