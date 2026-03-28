@@ -358,11 +358,7 @@ export default function CompaniesPage() {
                 >
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
-                      <Badge
-                        key={`${group}-${v}`}
-                        variant="secondary"
-                        onClick={() => toggleFilter(group, v)}
-                      >
+                      <Badge key={`${group}-${v}`} variant="secondary" onClick={() => toggleFilter(group, v)}>
                         {v} ×
                       </Badge>
                     )),
