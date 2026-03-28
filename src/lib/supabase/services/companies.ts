@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "../browser";
 import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
 import { handleSupabaseError } from "../utils";
+import type { ParsedCompanyRow } from "../../utils/csv-import";
 
 export type CompanyForOpenMap = Company & { contacts?: Contact[] };
 
@@ -122,7 +123,7 @@ export async function deleteCompany(id: string, supabase?: SupabaseClient): Prom
   }
 }
 
-export async function importCompaniesFromCSV(rows: any[]): Promise<{
+export async function importCompaniesFromCSV(rows: ParsedCompanyRow[]): Promise<{
   imported: number;
   errors: string[];
   importBatch: string;
@@ -131,12 +132,12 @@ export async function importCompaniesFromCSV(rows: any[]): Promise<{
   const importBatch = new Date().toISOString();
 
   try {
-    const companiesToInsert: CompanyInsert[] = rows.map((row: any) => ({
+    const companiesToInsert: CompanyInsert[] = rows.map((row: ParsedCompanyRow) => ({
       firmenname: row.firmenname,
       kundentyp: row.kundentyp,
       strasse: row.strasse,
       plz: row.plz,
-      stadt: row.stadt,
+      stadt: row.ort, // Map ort to stadt if needed
       bundesland: row.bundesland,
       land: row.land,
       telefon: row.telefon,
@@ -145,7 +146,7 @@ export async function importCompaniesFromCSV(rows: any[]): Promise<{
       lat: row.lat,
       lon: row.lon,
       osm: row.osm,
-      wasserdistanz: row.wasserdistanz,
+      wasserdistanz: row.wasser_distanz,
       wassertyp: row.wassertyp,
       status: "lead",
       user_id: null,
