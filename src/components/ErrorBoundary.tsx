@@ -46,12 +46,17 @@ export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
           </CardHeader>
           <CardContent className="space-y-4 text-center">
             <p className="text-muted-foreground">
-              We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+              We encountered an unexpected error. Please try refreshing the page or contact support if the problem
+              persists.
             </p>
             {process.env.NODE_ENV === "development" && error && (
               <details className="text-left">
-                <summary className="cursor-pointer text-sm font-medium text-muted-foreground">Error Details (Dev Mode)</summary>
-                <pre className="mt-2 text-xs text-muted-foreground break-all whitespace-pre-wrap">{error.stack || error.message}</pre>
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+                  Error Details (Dev Mode)
+                </summary>
+                <pre className="mt-2 text-xs text-muted-foreground break-all whitespace-pre-wrap">
+                  {error.stack || error.message}
+                </pre>
               </details>
             )}
             <div className="flex gap-2">
