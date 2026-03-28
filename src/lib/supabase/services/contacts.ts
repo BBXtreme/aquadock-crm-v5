@@ -56,16 +56,14 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
  * Create a new contact
  */
 export async function createContact(contact: ContactInsert, client?: SupabaseClient): Promise<Contact> {
-  if (!client) {
-    client = createClient();
-  }
+  const supabaseClient = client || createClient();
 
   // Log the exact payload for debugging
   if (process.env.NODE_ENV === "development") {
     console.log("[DEBUG] Creating contact with payload:", JSON.stringify(contact, null, 2));
   }
 
-  const { data, error } = await client.from("contacts").insert(contact).select().single();
+  const { data, error } = await supabaseClient.from("contacts").insert(contact).select().single();
   if (error) throw handleSupabaseError(error, "createContact");
   return data as Contact;
 }
