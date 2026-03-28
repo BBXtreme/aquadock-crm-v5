@@ -145,6 +145,9 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+      if (company) {
+        queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      }
       toast.success("Company updated successfully");
       onSuccess?.();
     },
