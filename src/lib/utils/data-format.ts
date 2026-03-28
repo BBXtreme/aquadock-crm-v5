@@ -1,3 +1,4 @@
+// src/lib/utils/data-format.ts
 /**
  * Utility functions for safe data formatting in AquaDock CRM.
  * All functions handle null/undefined inputs safely.

@@ -1,3 +1,4 @@
+// src/lib/utils/map.ts
 import L from "leaflet";
 
 import { poiCategories } from "@/lib/constants/map-poi-config";

@@ -29,7 +29,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Contact } from "@/lib/supabase/database.types";
-import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };

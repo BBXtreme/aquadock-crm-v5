@@ -1,7 +1,3 @@
----
-
----
-
 # AquaDock CRM v5 – Architecture Overview
 
 **Last updated**: March 2026  
@@ -16,6 +12,7 @@
 - **Error handling** → centralized via `handleSupabaseError`
 - **UI consistency** → shadcn/ui (radix-nova) + Tailwind v4.2.2
 - **Auth** → Supabase Auth + RLS enforced in service layer
+- **State management** → TanStack React Query for mutations, caching and optimistic updates
 
 ## 2. Current Folder Structure (Flat App Router)
 
@@ -41,7 +38,8 @@ src/
 │   │   └── services/companies.ts # Central service layer
 │   └── utils/
 │       ├── map.ts
-│       └── calculateWaterDistance.ts
+│       ├── calculateWaterDistance.ts
+│       └── data-format.ts        # safeDisplay, safeString, format helpers
 ├── lib/constants/
 │   ├── map-poi-config.ts
 │   ├── map-status-colors.ts
@@ -52,13 +50,13 @@ src/
 
 ## 3. Data Flow Patterns
 
-| Scenario                  | Approach                                | Notes                     |
-| ------------------------- | --------------------------------------- | ------------------------- |
-| Page data (companies)     | Server Component + service layer        | RLS-safe                  |
-| OpenMap companies         | getCompaniesForOpenMap() in page.tsx    | Passed as prop            |
-| OSM POIs / water distance | Direct browser fetch to Overpass        | Lightweight, no API route |
-| POI Import                | Browser client + service + custom event | Refreshes map             |
-| Mutations                 | Service layer + React Query (future)    | —                         |
+| Scenario                  | Approach                                | Notes                        |
+| ------------------------- | --------------------------------------- | ---------------------------- |
+| Page data (companies)     | Server Component + service layer        | RLS-safe                     |
+| OpenMap companies         | getCompaniesForOpenMap() in page.tsx    | Passed as prop               |
+| OSM POIs / water distance | Direct browser fetch to Overpass        | Lightweight, no API route    |
+| POI Import                | Browser client + service + custom event | Refreshes map                |
+| Mutations                 | Service layer + React Query             | Optimistic updates supported |
 
 ## 4. Geo & Mapping Layer (OpenMap)
 
@@ -71,7 +69,7 @@ src/
 
 ## 5. Service Layer (Protected)
 
-All database operations must go through src/lib/supabase/services/companies.ts (and similar files). Never put raw Supabase queries in pages or components.
+All database operations **must** go through src/lib/supabase/services/companies.ts (and similar files). Never put raw Supabase queries in pages or components.
 
 **Example**:
 
@@ -91,7 +89,13 @@ export async function getCompaniesForOpenMap() {
 }
 ```
 
-## 6. Styling & Theming
+## 6. Helpers & Debugging
+
+- **Centralized data formatting**: safeDisplay(value) in lib/utils/data-format.ts for consistent "—" fallback on null/undefined/empty values (especially in tables and cards).
+- **React Query Devtools**: Enabled in development only for inspecting queries, cache and mutations.
+- **Error handling**: Always use handleSupabaseError – centralized toasts + logging.
+
+## 7. Styling & Theming
 
 - Tailwind v4.2.2 (config-less)
 - Dark mode via next-themes
