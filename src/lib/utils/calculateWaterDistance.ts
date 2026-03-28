@@ -102,8 +102,6 @@ out geom;`;
       "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     ];
 
-    let lastError: any = null;
-
     for (const endpoint of endpoints) {
       try {
         const response = await fetch(endpoint, {
@@ -156,11 +154,13 @@ out geom;`;
           setWaterCache(lat, lon, result);
           return result;
         }
-      } catch (err: any) {
-        lastError = err;
-        if (err.name === "AbortError") break;
-        console.warn(`[Water] ${endpoint} failed:`, err.message);
-        if (endpoint === endpoints[endpoints.length - 1]) break;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") break;
+        if (err instanceof Error) {
+          console.warn(`[Water] ${endpoint} failed:`, err.message);
+        } else {
+          console.warn(`[Water] ${endpoint} failed:`, err);
+        }
       }
     }
 
