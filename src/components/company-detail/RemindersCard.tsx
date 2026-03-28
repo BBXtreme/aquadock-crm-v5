@@ -52,7 +52,6 @@ export default function RemindersCard({ companyId }: Props) {
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    refetchInterval: 30000,
   });
 
   const deleteMutation = useMutation({
