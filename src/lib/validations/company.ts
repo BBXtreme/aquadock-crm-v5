@@ -1,21 +1,39 @@
 import { z } from "zod";
 
-// Zod schema for Company creation/update based on Database["public"]["Tables"]["companies"]["Insert"]
-// Excludes auto-generated fields: id, created_at, updated_at, user_id
+// Zod schema for Company creation/update based on form requirements
+// Includes all fields used in CompanyCreateForm
 export const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname ist erforderlich"),
   rechtsform: z.string().optional(),
-  kundentyp: z.enum(["restaurant", "hotel", "marina", "camping", "sonstige"], {
-    errorMap: () => ({ message: "Ungültiger Kundentyp" }),
-  }),
-  firmentyp: z.enum(["kette", "einzeln"]).optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren"], {
-    errorMap: () => ({ message: "Ungültiger Status" }),
-  }),
-  value: z.number().int().min(0, "Wert muss eine positive ganze Zahl sein").optional(),
-  lat: z.number().min(-90).max(90).optional(),
-  lon: z.number().min(-180).max(180).optional(),
+  kundentyp: z.string().optional(),
+  firmentyp: z.string().optional(),
+  website: z.string().optional(),
+  telefon: z.string().optional(),
+  email: z.string().optional(),
+  strasse: z.string().optional(),
+  plz: z.string().optional(),
+  stadt: z.string().optional(),
+  bundesland: z.string().optional(),
+  land: z.string().optional(),
+  wasserdistanz: z.number().optional(),
+  wassertyp: z.string().optional(),
+  lat: z.number().optional(),
+  lon: z.number().optional(),
   osm: z.string().optional(),
+  status: z.enum([
+    "lead",
+    "interessant",
+    "qualifiziert",
+    "akquise",
+    "angebot",
+    "gewonnen",
+    "verloren",
+    "kunde",
+    "partner",
+    "inaktiv",
+  ]).optional(),
+  value: z.number().optional(),
+  notes: z.string().optional(),
 });
 
 // Type inference for the schema
