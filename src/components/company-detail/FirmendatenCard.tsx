@@ -69,7 +69,9 @@ export default function FirmendatenCard({ company }: Props) {
             <div>
               <div className="text-sm font-medium text-gray-700">Kundentyp</div>
               <p className="text-sm text-gray-900">
-                {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : safeString(company.kundentyp)}
+                {company.kundentyp
+                  ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1)
+                  : safeString(company.kundentyp)}
               </p>
             </div>
             <div>
