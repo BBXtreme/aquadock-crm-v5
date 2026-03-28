@@ -324,8 +324,9 @@ export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"
 export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
 export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
 
-// Custom joined types
-export type TimelineEntryWithJoins = TimelineEntry & {
-  companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
+export type KPI = {
+  title: string;
+  value: string | number;
+  changePercent: number;
+  subtitle: string;
 };

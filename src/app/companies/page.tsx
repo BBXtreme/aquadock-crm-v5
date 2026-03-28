@@ -1,38 +1,46 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 import CompaniesTable from "@/components/tables/CompaniesTable";
+import { CompanyHeader } from "@/components/company-detail/CompanyHeader";
+import KPICards from "@/components/dashboard/KPICards";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/browser";
-import { getCompanies } from "@/lib/supabase/services/companies";
+import { getCompanies, getKpis } from "@/lib/supabase/services/companies";
 
 export default function CompaniesPage() {
+  const router = useRouter();
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
-  const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [filters, setFilters] = useState({
+    status: "",
+    kundentyp: "",
+    search: "",
+  });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
 
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["companies", pagination, sorting, globalFilter],
-    queryFn: () =>
+  const { data: kpis } = useQuery(["kpis"], () => getKpis(createClient()));
+
+  const { data, isLoading } = useQuery(
+    ["companies", filters, pagination, sorting],
+    () =>
       getCompanies(createClient(), {
         page: pagination.pageIndex,
         pageSize: pagination.pageSize,
+        statusFilters: filters.status ? [filters.status] : [],
+        kundentypFilters: filters.kundentyp ? [filters.kundentyp] : [],
         sortBy: sorting[0]?.id || "firmenname",
         sortDesc: sorting[0]?.desc || false,
       }),
-  });
+  );
 
   const handleImportCSV = () => {
     setCsvDialogOpen(true);
@@ -54,15 +62,60 @@ export default function CompaniesPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Companies</h1>
+      <CompanyHeader
+        company={{
+          firmenname: "Companies",
+          status: "lead",
+          kundentyp: "sonstige",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }}
+        id="companies"
+        router={router}
+      />
+      <KPICards kpis={kpis} />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Select
+          value={filters.status}
+          onValueChange={(value) => setFilters({ ...filters, status: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="lead">Lead</SelectItem>
+            <SelectItem value="qualifiziert">Qualifiziert</SelectItem>
+            <SelectItem value="gewonnen">Gewonnen</SelectItem>
+            <SelectItem value="verloren">Verloren</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.kundentyp}
+          onValueChange={(value) => setFilters({ ...filters, kundentyp: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Kundentyp" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="restaurant">Restaurant</SelectItem>
+            <SelectItem value="hotel">Hotel</SelectItem>
+            <SelectItem value="marina">Marina</SelectItem>
+            <SelectItem value="camping">Camping</SelectItem>
+            <SelectItem value="sonstige">Sonstige</SelectItem>
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Search companies..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        />
         <Button>New Company</Button>
       </div>
 
       <CompaniesTable
         companies={data?.data || []}
-        globalFilter={globalFilter}
-        onGlobalFilterChange={setGlobalFilter}
+        globalFilter={filters.search}
+        onGlobalFilterChange={(value) => setFilters({ ...filters, search: value })}
         pageCount={Math.ceil((data?.total || 0) / pagination.pageSize)}
         onPaginationChange={setPagination}
         sorting={sorting}

@@ -2,7 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ParsedCompanyRow } from "../../utils/csv-import";
 import { createClient } from "../browser";
-import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
+import type { Company, CompanyInsert, CompanyUpdate, Contact, KPI } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
 export type CompanyForOpenMap = Company & { contacts?: Contact[] };
@@ -120,6 +120,23 @@ export async function deleteCompany(id: string, supabase?: SupabaseClient): Prom
   if (error) {
     throw handleSupabaseError(error, "deleteCompany");
   }
+}
+
+export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
+  const { data, error } = await supabase.from("companies").select("status");
+  if (error) throw handleSupabaseError(error, "getKpis");
+
+  const total = data.length;
+  const won = data.filter((c) => c.status === "gewonnen").length;
+  const lost = data.filter((c) => c.status === "verloren").length;
+  const lead = data.filter((c) => c.status === "lead").length;
+
+  return [
+    { title: "Total Companies", value: total, changePercent: 0, subtitle: "Total companies in system" },
+    { title: "Won", value: won, changePercent: 10, subtitle: "Successfully closed deals" },
+    { title: "Lost", value: lost, changePercent: -5, subtitle: "Lost opportunities" },
+    { title: "Leads", value: lead, changePercent: 15, subtitle: "Active leads" },
+  ];
 }
 
 export async function importCompaniesFromCSV(rows: ParsedCompanyRow[]): Promise<{
