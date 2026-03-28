@@ -215,7 +215,11 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm reminder={null} onSuccess={() => setAddDialogOpen(false)} preselectedCompanyId={companyId} />
+          <ReminderEditForm
+            reminder={null}
+            onSuccess={() => setAddDialogOpen(false)}
+            preselectedCompanyId={companyId}
+          />
         </DialogContent>
       </Dialog>
     </>
