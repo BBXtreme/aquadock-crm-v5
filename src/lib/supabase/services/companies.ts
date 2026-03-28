@@ -1,3 +1,4 @@
+// src/lib/supabase/services/companies.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "../browser";
