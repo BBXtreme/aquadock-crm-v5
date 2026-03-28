@@ -60,6 +60,8 @@ export default function CompaniesPage() {
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
 
   const statusOptions = [
     "lead",
@@ -111,13 +113,13 @@ export default function CompaniesPage() {
     "Großbritannien",
   ] as const;
 
-  const statusIcons: Record<string, React.ComponentType<any> | null> = {
+  const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
     lead: Sparkles,
     gewonnen: Trophy,
     verloren: XCircle,
   };
 
-  const kategorieIcons: Record<string, React.ComponentType<any> | null> = {
+  const kategorieIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
     restaurant: Utensils,
     hotel: Building2,
     resort: Palmtree,
