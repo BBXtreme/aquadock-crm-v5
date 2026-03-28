@@ -99,13 +99,10 @@ export default function ContactsPage() {
       await queryClient.cancelQueries({ queryKey });
       const previousContacts = queryClient.getQueryData<{ data: ContactWithCompany[]; total: number }>(queryKey);
       if (previousContacts) {
-        queryClient.setQueryData(
-          queryKey,
-          {
-            data: previousContacts.data.filter((contact) => contact.id !== id),
-            total: previousContacts.total - 1,
-          }
-        );
+        queryClient.setQueryData(queryKey, {
+          data: previousContacts.data.filter((contact) => contact.id !== id),
+          total: previousContacts.total - 1,
+        });
       }
       return { previousContacts, queryKey };
     },

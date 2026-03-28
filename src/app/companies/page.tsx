@@ -193,13 +193,10 @@ export default function CompaniesPage() {
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ data: CompanyWithContacts[]; total: number }>(queryKey);
       if (previousCompanies) {
-        queryClient.setQueryData(
-          queryKey,
-          {
-            ...previousCompanies,
-            data: previousCompanies.data.map((company) => (company.id === id ? { ...company, ...updates } : company)),
-          }
-        );
+        queryClient.setQueryData(queryKey, {
+          ...previousCompanies,
+          data: previousCompanies.data.map((company) => (company.id === id ? { ...company, ...updates } : company)),
+        });
       }
       return { previousCompanies, queryKey };
     },
@@ -223,13 +220,10 @@ export default function CompaniesPage() {
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ data: CompanyWithContacts[]; total: number }>(queryKey);
       if (previousCompanies) {
-        queryClient.setQueryData(
-          queryKey,
-          {
-            data: previousCompanies.data.filter((company) => company.id !== id),
-            total: previousCompanies.total - 1,
-          }
-        );
+        queryClient.setQueryData(queryKey, {
+          data: previousCompanies.data.filter((company) => company.id !== id),
+          total: previousCompanies.total - 1,
+        });
       }
       return { previousCompanies, queryKey };
     },
