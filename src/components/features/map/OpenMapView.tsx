@@ -231,6 +231,43 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     [importOsmPoi],
   );
 
+  const osmMarkers = useMemo(
+    () =>
+      osmPois
+        .filter((poi) => {
+          const lat = poi.lat || poi.center?.lat;
+          const lon = poi.lon || poi.center?.lon;
+          return typeof lat === "number" && typeof lon === "number" && !Number.isNaN(lat) && !Number.isNaN(lon);
+        })
+        .map((poi) => {
+          const lat = poi.lat || poi.center?.lat;
+          const lon = poi.lon || poi.center?.lon;
+          return (
+            <Marker
+              key={`osm-${poi.type}-${poi.id}`}
+              position={[lat as number, lon as number]}
+              icon={getOsmPoiIcon(isDarkMode)}
+            >
+              <Popup>
+                <OsmPoiMarkerPopup
+                  poi={poi}
+                  isDarkMode={isDarkMode}
+                  onImport={handleImportOsmPoi}
+                  onViewInOsm={viewInOsm}
+                  onCalculateWater={async (poi) => {
+                    await calculateWaterForPoi(poi);
+                    setOsmPois((prev) =>
+                      prev.map((p) => (p.id === poi.id && p.type === poi.type ? { ...p, ...poi } : p)),
+                    );
+                  }}
+                />
+              </Popup>
+            </Marker>
+          );
+        }),
+    [osmPois, isDarkMode, handleImportOsmPoi, viewInOsm, calculateWaterForPoi],
+  );
+
   if (!mounted) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -248,6 +285,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         style={{ height: "100%", width: "100%" }}
         className="z-0"
         whenReady={() => setMapReady(true)}
+        preferCanvas={true}
       >
         <TileLayer attribution={attribution} url={tileUrl} />
 
@@ -284,38 +322,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             fillOpacity: 0.1,
           }}
         >
-          {osmPois
-            .filter((poi) => {
-              const lat = poi.lat || poi.center?.lat;
-              const lon = poi.lon || poi.center?.lon;
-              return typeof lat === "number" && typeof lon === "number" && !Number.isNaN(lat) && !Number.isNaN(lon);
-            })
-            .map((poi) => {
-              const lat = poi.lat || poi.center?.lat;
-              const lon = poi.lon || poi.center?.lon;
-              return (
-                <Marker
-                  key={`${poi.type}-${poi.id}`}
-                  position={[lat as number, lon as number]}
-                  icon={getOsmPoiIcon(isDarkMode)}
-                >
-                  <Popup>
-                    <OsmPoiMarkerPopup
-                      poi={poi}
-                      isDarkMode={isDarkMode}
-                      onImport={handleImportOsmPoi}
-                      onViewInOsm={viewInOsm}
-                      onCalculateWater={async (poi) => {
-                        await calculateWaterForPoi(poi);
-                        setOsmPois((prev) =>
-                          prev.map((p) => (p.id === poi.id && p.type === poi.type ? { ...p, ...poi } : p)),
-                        );
-                      }}
-                    />
-                  </Popup>
-                </Marker>
-              );
-            })}
+          {osmMarkers}
         </MarkerClusterGroup>
       </MapContainer>
 
