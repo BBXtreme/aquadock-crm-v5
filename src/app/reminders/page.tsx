@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
@@ -20,11 +21,16 @@ import type { Reminder } from "@/lib/supabase/database.types";
 
 export default function RemindersPage() {
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed">(() => {
+    const status = searchParams.get("status");
+    if (status === "open" || status === "overdue" || status === "closed") return status;
+    return "all";
+  });
 
   const {
     data: reminders = [],
@@ -237,8 +243,7 @@ export default function RemindersPage() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant="ghost" size="sm"
                         onClick={() => {
                           setReminderToDelete(reminder.id);
                           setDeleteDialogOpen(true);
