@@ -7,7 +7,6 @@ import { useDropzone } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -86,7 +85,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <WideDialogContent size="4xl" className="max-h-[90vh] overflow-y-auto">
+      <WideDialogContent size="2xl" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import Companies from CSV</DialogTitle>
           <DialogDescription>
