@@ -99,7 +99,9 @@ export default function ContactsTable({
         return (
           <div>
             <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-              <div>{vorname} {nachname}</div>
+              <div>
+                {vorname} {nachname}
+              </div>
             </Link>
             {position && <div className="text-xs text-gray-500">{position}</div>}
           </div>
