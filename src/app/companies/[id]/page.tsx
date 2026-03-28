@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import AdresseCard from "@/components/company-detail/AdresseCard";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
@@ -18,6 +18,7 @@ export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const queryClient = useQueryClient();
 
   console.log("Company page id:", id);
 
@@ -29,6 +30,13 @@ export default function CompanyDetailPage() {
     queryKey: ["company", id],
     queryFn: async () => getCompanyById(id, createClient()),
   });
+
+  useEffect(() => {
+    if (company) {
+      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+    }
+  }, [company, id, queryClient]);
 
   if (isLoading) return <div className="container mx-auto p-6">Loading company details...</div>;
   if (error || !company) {
