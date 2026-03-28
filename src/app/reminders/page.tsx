@@ -9,7 +9,7 @@ import ReminderEditForm from "@/components/features/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
@@ -19,6 +19,8 @@ export default function RemindersPage() {
   const queryClient = useQueryClient();
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
 
   const {
     data: reminders = [],
@@ -157,9 +159,8 @@ export default function RemindersPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          if (confirm("Delete this reminder?")) {
-                            deleteMutation.mutate(reminder.id);
-                          }
+                          setReminderToDelete(reminder.id);
+                          setDeleteDialogOpen(true);
                         }}
                         disabled={deleteMutation.isPending}
                         type="button"
@@ -191,6 +192,34 @@ export default function RemindersPage() {
             }}
           />
         </WideDialogContent>
+      </Dialog>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Reminder</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this reminder? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (reminderToDelete) {
+                  deleteMutation.mutate(reminderToDelete);
+                  setDeleteDialogOpen(false);
+                  setReminderToDelete(null);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
       </Dialog>
     </div>
   );
