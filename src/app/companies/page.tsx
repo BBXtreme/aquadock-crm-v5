@@ -34,7 +34,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
@@ -139,6 +138,13 @@ export default function CompaniesPage() {
     setActiveFilters((prev) => ({
       ...prev,
       [group]: prev[group].includes(value) ? prev[group].filter((v) => v !== value) : [...prev[group], value],
+    }));
+  };
+
+  const removeFilter = (group: FilterGroup, value: string) => {
+    setActiveFilters((prev) => ({
+      ...prev,
+      [group]: prev[group].filter((v) => v !== value),
     }));
   };
 
@@ -343,10 +349,7 @@ export default function CompaniesPage() {
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-56" />
-                <SkeletonList count={6} className="space-y-2" itemClassName="h-14 w-full" />
-              </div>
+              <LoadingState type="table" count={6} itemClassName="h-14 w-full" />
             ) : (
               <>
                 {/* Active Filters Badges */}
@@ -358,8 +361,16 @@ export default function CompaniesPage() {
                 >
                   {Object.entries(activeFilters).map(([group, values]) =>
                     values.map((v) => (
-                      <Badge key={`${group}-${v}`} variant="secondary" onClick={() => toggleFilter(group, v)}>
-                        {v} ×
+                      <Badge
+                        key={`${group}-${v}`}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        {v}
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => removeFilter(group as FilterGroup, v)}
+                        />
                       </Badge>
                     )),
                   )}

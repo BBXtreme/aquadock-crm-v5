@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
@@ -199,10 +198,7 @@ export default function ContactsPage() {
       <Card>
         <CardContent>
           {loading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-full" />
-              <SkeletonList count={5} className="space-y-2" itemClassName="h-12 w-full" />
-            </div>
+            <LoadingState type="table" count={5} itemClassName="h-12 w-full" />
           ) : (
             <ContactsTable
               contacts={contacts}
