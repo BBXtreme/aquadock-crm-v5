@@ -1,4 +1,4 @@
-import Papa, { ParseResult, ParseError } from "papaparse";
+import Papa, { type ParseError, type ParseResult } from "papaparse";
 import type { CompanyInsert } from "@/lib/supabase/database.types";
 
 // Define the parsed row type from CSV
