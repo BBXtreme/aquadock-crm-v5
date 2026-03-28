@@ -91,7 +91,9 @@ export default function ContactsTable({
         const position = info.row.original.position;
         return (
           <div>
-            <div>{vorname} {nachname}</div>
+            <div>
+              {vorname} {nachname}
+            </div>
             {position && <div className="text-sm text-gray-500">{position}</div>}
           </div>
         );
