@@ -20,7 +20,7 @@ export function safeString(str: string | null | undefined): string {
 }
 
 export function safeDisplay(value: unknown): string {
-  if (value == null || value === '') return '—';
+  if (value == null || value === "") return "—";
   return String(value);
 }
 
