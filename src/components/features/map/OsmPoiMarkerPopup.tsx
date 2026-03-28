@@ -124,26 +124,30 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2 border-t border-border">
-        <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
-          <ExternalLink className="h-4 w-4 mr-2" />
-          In OSM ansehen
-        </Button>
+      <div className="space-y-2 pt-2 border-t border-border">
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            In OSM ansehen
+          </Button>
 
-        <Button
-          size="sm"
-          variant="outline"
-          className="px-3"
-          onClick={handleCalculateWater}
-          disabled={hasWaterInfo}
-          type="button"
-        >
-          {hasWaterInfo ? "✅" : "💧"}
-        </Button>
+          <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
+            In CRM importieren
+          </Button>
+        </div>
 
-        <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
-          In CRM importieren
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1"
+            onClick={handleCalculateWater}
+            disabled={hasWaterInfo}
+            type="button"
+          >
+            {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
+          </Button>
+        </div>
       </div>
     </div>
   );
