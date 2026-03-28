@@ -72,6 +72,7 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       if (company?.id) queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("AquaDock Daten aktualisiert");
       onSuccess?.();
     },

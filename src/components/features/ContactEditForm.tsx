@@ -60,8 +60,9 @@ export default function ContactEditForm({
       const supabase = createClient();
       return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
       toast.success(contact ? "Contact updated" : "Contact created");
       form.reset();
       onSuccess?.();

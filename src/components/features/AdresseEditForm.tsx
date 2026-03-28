@@ -69,6 +69,7 @@ export default function AdresseEditForm({ company, onSuccess }: { company: Compa
       if (company) {
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       }
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Adresse updated successfully");
       onSuccess?.();
     },

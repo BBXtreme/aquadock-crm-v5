@@ -61,8 +61,10 @@ export default function ReminderEditForm({
       if (error) throw error;
       return newData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success(reminder ? "Reminder updated" : "Reminder created");
       form.reset();
       onSuccess?.();
