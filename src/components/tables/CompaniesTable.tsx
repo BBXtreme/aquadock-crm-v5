@@ -214,7 +214,7 @@ export default function CompaniesTable({
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
     ],
-    [],
+    [onEdit, onDelete],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library
