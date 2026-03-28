@@ -91,14 +91,12 @@ export default function ContactsTable({
         const nachname = info.row.original.nachname;
         const position = info.row.original.position;
         return (
-          <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-            <div>
-              <div>
-                {vorname} {nachname}
-              </div>
-              {position && <div className="text-sm text-gray-500">{position}</div>}
-            </div>
-          </Link>
+          <div>
+            <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
+              <div>{vorname} {nachname}</div>
+            </Link>
+            {position && <div className="text-xs text-gray-500">{position}</div>}
+          </div>
         );
       },
     }) as ColumnDef<ContactWithCompany>,
