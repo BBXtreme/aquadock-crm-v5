@@ -56,7 +56,7 @@ export default function CompaniesTable({
   pageCount,
   onPaginationChange,
   sorting,
-  onSortingChange,
+  onSortingChange: _onSortingChange,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -249,7 +249,7 @@ export default function CompaniesTable({
       onPaginationChange(newPagination);
     },
     onSortingChange: (updater) => {
-      const newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      const _newSorting = typeof updater === "function" ? updater(sorting) : updater;
     },
     enableRowSelection: true,
     globalFilterFn: "includesString",
@@ -261,7 +261,7 @@ export default function CompaniesTable({
       const data = table.getFilteredRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a";
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
@@ -282,7 +282,7 @@ export default function CompaniesTable({
       const blob = new Blob([json], {
         type: "application/json;charset=utf-8;",
       });
-      const link = document.createElement("a";
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
       link.setAttribute("href", url);
       link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.json`);
