@@ -1,4 +1,4 @@
-import Papa from "papaparse";
+import Papa, { ParseResult, ParseError } from "papaparse";
 import type { CompanyInsert } from "@/lib/supabase/database.types";
 
 // Define the parsed row type from CSV
@@ -27,7 +27,7 @@ function parseGermanFloat(value: string): number | undefined {
   // Remove thousands separators (dots) and replace comma with dot
   const cleaned = value.replace(/\./g, "").replace(",", ".");
   const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? undefined : parsed;
+  return Number.isNaN(parsed) ? undefined : parsed;
 }
 
 // Helper to strip emojis from a string
@@ -36,7 +36,7 @@ function stripEmojis(text: string): string {
   // Regex to match emojis (basic implementation, covers most cases)
   return text
     .replace(
-      /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
+      /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1E000}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
       "",
     )
     .trim();
@@ -81,9 +81,9 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header: string) => header.toLowerCase().trim(),
-      complete: (results) => {
+      complete: (results: ParseResult<Record<string, string>>) => {
         if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${results.errors.map((e) => e.message).join(", ")}`));
+          reject(new Error(`CSV parsing errors: ${results.errors.map((e: ParseError) => e.message).join(", ")}`));
           return;
         }
 
@@ -160,7 +160,7 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
 
         resolve(parsedRows);
       },
-      error: (error) => {
+      error: (error: ParseError) => {
         reject(new Error(`CSV parsing failed: ${error.message}`));
       },
     });
