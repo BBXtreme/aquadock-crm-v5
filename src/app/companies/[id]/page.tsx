@@ -55,11 +55,11 @@ export default function CompanyDetailPage() {
       // Force fresh data for sub-cards on initial mount / hard reload
       queryClient.refetchQueries({
         queryKey: ["contacts", company.id],
-        type: "all"
+        type: "all",
       });
       queryClient.refetchQueries({
         queryKey: ["reminders", company.id],
-        type: "all"
+        type: "all",
       });
     }
   }, [company?.id, queryClient]);
