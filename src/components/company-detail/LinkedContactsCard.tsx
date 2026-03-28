@@ -135,9 +135,17 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
                         </div>
                       </td>
-                      <td>{safeDisplay(contact.email)}</td>
-                      <td>{safeDisplay(contact.telefon)}</td>
-                      <td>{safeDisplay(contact.mobil)}</td>
+                      <td>
+                        {contact.email ? (
+                          <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                            {contact.email}
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td>{contact.telefon || "—"}</td>
+                      <td>{contact.mobil || "—"}</td>
                       <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
