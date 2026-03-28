@@ -193,7 +193,7 @@ export default function CompaniesPage() {
 
       // Apply sorting
       if (sorting.length > 0) {
-        const sort = sorting[0];
+        const sort = sorting[0]!;
         query = query.order(sort.id, { ascending: !sort.desc });
       }
 
@@ -214,8 +214,8 @@ export default function CompaniesPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const companies = companiesData?.data || [];
-  const total = companiesData?.total || 0;
+  const companies = companiesData?.companies || [];
+  const total = companiesData?.totalCount || 0;
   const pageCount = Math.ceil(total / pagination.pageSize);
 
   const { data: statsData } = useQuery({
