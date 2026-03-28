@@ -14,7 +14,7 @@ import { toast } from "sonner";
  * - Change SHOW_DEVTOOLS to false → Devtools hidden (recommended for production)
  */
 
-const SHOW_DEVTOOLS = true; // ← Change to false before deploying to Vercel
+const SHOW_DEVTOOLS = false; // ← Change to false before deploying to Vercel
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
