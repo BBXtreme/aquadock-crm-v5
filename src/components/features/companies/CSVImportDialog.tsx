@@ -31,8 +31,9 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   const [isImporting, setIsImporting] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      setFile(acceptedFiles[0]);
+    const file = acceptedFiles[0];
+    if (file) {
+      setFile(file);
       setParsedRows([]);
     }
   }, []);
