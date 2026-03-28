@@ -1,6 +1,7 @@
 // src/lib/supabase/services/contacts.ts
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { createClient } from "../browser";
 import type { Contact, ContactInsert } from "../database.types";
 import { handleSupabaseError } from "../utils";
 
@@ -54,7 +55,16 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
 /**
  * Create a new contact
  */
-export async function createContact(contact: ContactInsert, client: SupabaseClient): Promise<Contact> {
+export async function createContact(contact: ContactInsert, client?: SupabaseClient): Promise<Contact> {
+  if (!client) {
+    client = createClient();
+  }
+
+  // Log the exact payload for debugging
+  if (process.env.NODE_ENV === "development") {
+    console.log("[DEBUG] Creating contact with payload:", JSON.stringify(contact, null, 2));
+  }
+
   const { data, error } = await client.from("contacts").insert(contact).select().single();
   if (error) throw handleSupabaseError(error, "createContact");
   return data as Contact;
