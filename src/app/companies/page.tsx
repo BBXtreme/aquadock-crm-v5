@@ -237,13 +237,11 @@ export default function CompaniesPage() {
   const stats = statsData || { total: 0, leads: 0, won: 0, value: 0 };
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates, createClient()),
     onMutate: async ({ id, updates }) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           ...previousCompanies,
@@ -255,8 +253,9 @@ export default function CompaniesPage() {
       return { previousCompanies, queryKey };
     },
     onError: (err, _variables, context) => {
-      if (context?.previousCompanies && context.queryKey) {
-        queryClient.setQueryData(context.queryKey, context.previousCompanies);
+      const ctx = context as { previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number }, queryKey?: string[] };
+      if (ctx?.previousCompanies && ctx.queryKey) {
+        queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
       const message = err instanceof Error ? err.message : "An unknown error occurred";
       toast.error("Update failed", { description: message });
@@ -268,13 +267,11 @@ export default function CompaniesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteCompany,
+    mutationFn: (id: string) => deleteCompany(id, createClient()),
     onMutate: async (id) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           companies: previousCompanies.companies.filter((company) => company.id !== id),
@@ -284,8 +281,9 @@ export default function CompaniesPage() {
       return { previousCompanies, queryKey };
     },
     onError: (err, _id, context) => {
-      if (context?.previousCompanies && context.queryKey) {
-        queryClient.setQueryData(context.queryKey, context.previousCompanies);
+      const ctx = context as { previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number }, queryKey?: string[] };
+      if (ctx?.previousCompanies && ctx.queryKey) {
+        queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
       const message = err instanceof Error ? err.message : "An unknown error occurred";
       toast.error("Deletion failed", { description: message });
