@@ -15,7 +15,6 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
             staleTime: 5 * 60 * 1000,
             gcTime: 10 * 60 * 1000,
             retry: 2,
-            refetchOnWindowFocus: false,
             structuralSharing: true,
           },
         },
