@@ -42,6 +42,8 @@ const _anredeOptions = [
   { value: "Prof.", label: "Prof." },
 ];
 
+type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
+
 export default function ContactsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
