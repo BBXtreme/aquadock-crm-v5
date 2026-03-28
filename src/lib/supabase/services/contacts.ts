@@ -42,7 +42,9 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
   // Optimized for performance - auth filtering will be added later
   const { data, error } = await client
     .from("contacts")
-    .select("id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, companies!company_id(id, firmenname)")
+    .select(
+      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, companies!company_id(id, firmenname)",
+    )
     .eq("id", id)
     .single();
   if (error) throw handleSupabaseError(error, "getContactById");
