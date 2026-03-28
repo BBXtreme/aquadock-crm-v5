@@ -57,7 +57,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={`skeleton-${i}`} className="h-32 bg-muted animate-pulse rounded-lg" />
+            <div key={`stat-skeleton-${i}`} className="h-32 bg-muted animate-pulse rounded-lg" />
           ))}
         </div>
       </div>
