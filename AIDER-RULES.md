@@ -9,6 +9,7 @@
 - Never use `!` non-null assertions.
 - Never call hooks conditionally.
 - All Edit/Create forms must follow the exact hook-first + early-return-after-hooks pattern.
+- For all static skeleton loaders, use pre-defined stable string keys (e.g. loading-item-1). Never use direct array index in key prop.
 
 If you are unsure whether a change will pass typecheck/biome → **do not make the change**. Ask for clarification instead.
 

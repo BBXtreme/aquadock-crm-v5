@@ -13,7 +13,7 @@ export default function ProfilePage() {
     email: "user@example.com",
     user_metadata: {
       display_name: "John Doe",
-      avatar_url: "/placeholder-avatar.jpg",
+      avatar_url: "/placeholder-avatar.png",
     },
   };
   const displayName = user.user_metadata?.display_name || "";
