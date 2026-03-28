@@ -170,7 +170,7 @@ export default function RemindersCard({ companyId }: Props) {
                         {getReminderStatusLabel(reminder.status)}
                       </Badge>
                     </td>
-                    <td>{safeDisplay(reminder.assigned_to)}</td>
+                    <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button
