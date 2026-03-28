@@ -3,22 +3,24 @@ import { toast } from "sonner";
 
 export function handleSupabaseError(error: unknown, context: string): Error {
   if (process.env.NODE_ENV === "development") {
-    console.group(`Supabase error in ${context}`);
-    console.error({
+    console.group("Supabase Error");
+    console.error(`Supabase error in ${context}:`, {
+      error,
       message: error instanceof Error ? error.message : String(error),
-      fullError: error,
       code: (error as any)?.code,
       details: (error as any)?.details,
       hint: (error as any)?.hint,
+      status: (error as any)?.status,
     });
     console.groupEnd();
   } else {
     console.error(`Supabase error in ${context}:`, {
+      error,
       message: error instanceof Error ? error.message : String(error),
-      fullError: error,
       code: (error as any)?.code,
       details: (error as any)?.details,
       hint: (error as any)?.hint,
+      status: (error as any)?.status,
     });
   }
 
