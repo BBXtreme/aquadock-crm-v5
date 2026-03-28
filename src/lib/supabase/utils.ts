@@ -16,7 +16,7 @@ export function formatDateDistance(date: string | null | undefined): string {
 }
 
 export function safeString(str: string | null | undefined): string {
-  return str ?? "—";
+  return str && str.trim() ? str : "—";
 }
 
 export function handleSupabaseError(error: unknown, context: string): Error {

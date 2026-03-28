@@ -108,12 +108,12 @@ export default function ContactsPage() {
           <DialogTrigger asChild>
             <Button>New Contact</Button>
           </DialogTrigger>
-          <DialogContent>
+          <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Create New Contact</DialogTitle>
+              <DialogTitle>Create New Company</DialogTitle>
             </DialogHeader>
             <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
-          </DialogContent>
+          </WideDialogContent>
         </Dialog>
       </div>
 
