@@ -22,7 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -62,6 +62,10 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
+
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+  }, [globalFilter]);
 
   const statusOptions = [
     "lead",
@@ -154,19 +158,57 @@ export default function CompaniesPage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting],
+    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter],
     queryFn: async () => {
       const supabase = createClient();
-      return getCompanies(supabase, {
-        page: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        statusFilters: activeFilters.status.length > 0 ? activeFilters.status : undefined,
-        kundentypFilters: activeFilters.kategorie.length > 0 ? activeFilters.kategorie : undefined,
-        firmentypFilters: activeFilters.betriebstyp.length > 0 ? activeFilters.betriebstyp : undefined,
-        landFilters: activeFilters.land.length > 0 ? activeFilters.land : undefined,
-        sortBy: sorting[0]?.id,
-        sortDesc: sorting[0]?.desc,
-      });
+      let query = supabase
+        .from("companies")
+        .select(
+          `
+          *,
+          contacts (
+            id,
+            vorname,
+            nachname,
+            is_primary
+          )
+        `,
+          { count: "exact" },
+        );
+
+      // Apply global filter
+      if (globalFilter) {
+        query = query.or(`firmenname.ilike.%${globalFilter}%,strasse.ilike.%${globalFilter}%,stadt.ilike.%${globalFilter}%`);
+      }
+
+      // Apply active filters
+      if (activeFilters.status.length > 0) {
+        query = query.in("status", activeFilters.status);
+      }
+      if (activeFilters.kategorie.length > 0) {
+        query = query.in("kundentyp", activeFilters.kategorie);
+      }
+      if (activeFilters.betriebstyp.length > 0) {
+        query = query.in("firmentyp", activeFilters.betriebstyp);
+      }
+      if (activeFilters.land.length > 0) {
+        query = query.in("land", activeFilters.land);
+      }
+
+      // Apply sorting
+      if (sorting.length > 0) {
+        const sort = sorting[0];
+        query = query.order(sort.id, { ascending: !sort.desc });
+      }
+
+      // Apply pagination
+      const from = pagination.pageIndex * pagination.pageSize;
+      const to = from + pagination.pageSize - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+      if (error) throw error;
+      return { companies: data ?? [], totalCount: count ?? 0 };
     },
     // Reliable refresh behavior (exactly like TimelineCard)
     refetchOnWindowFocus: true,
@@ -198,7 +240,7 @@ export default function CompaniesPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
     onMutate: async ({ id, updates }) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting];
+      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ data: CompanyWithContacts[]; total: number }>(queryKey);
       if (previousCompanies) {
@@ -225,7 +267,7 @@ export default function CompaniesPage() {
   const deleteMutation = useMutation({
     mutationFn: deleteCompany,
     onMutate: async (id) => {
-      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting];
+      const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
       const previousCompanies = queryClient.getQueryData<{ data: CompanyWithContacts[]; total: number }>(queryKey);
       if (previousCompanies) {
