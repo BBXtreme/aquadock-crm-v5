@@ -234,7 +234,10 @@ export default function CompaniesTable({
       setPagination(newPagination);
       onPaginationChange(newPagination);
     },
-    onSortingChange,
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      onSortingChange(newSorting);
+    },
     enableRowSelection: true,
     globalFilterFn: "includesString",
     filterFromLeafRows: true,
