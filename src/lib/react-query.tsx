@@ -50,7 +50,7 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* TanStack React Query Devtools */}
-      {SHOW_DEVTOOLS && <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />}
+      {SHOW_DEVTOOLS && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }
