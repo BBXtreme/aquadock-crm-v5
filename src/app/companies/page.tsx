@@ -79,6 +79,7 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
