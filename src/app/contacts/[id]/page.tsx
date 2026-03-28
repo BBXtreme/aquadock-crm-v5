@@ -192,6 +192,12 @@ export default function ContactDetailPage() {
         <div className="flex items-center gap-4">
           {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
           {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+          {contact.created_at && (
+            <span className="text-sm text-gray-500">Created: {new Date(contact.created_at).toLocaleDateString()}</span>
+          )}
+          {contact.updated_at && (
+            <span className="text-sm text-gray-500">Updated: {new Date(contact.updated_at).toLocaleDateString()}</span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
@@ -539,7 +545,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
                 </FormControl>
                 <SelectContent>
                   {anredeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <SelectItem key={option.value} value={option.label}>
                       {option.label}
                     </SelectItem>
                   ))}
