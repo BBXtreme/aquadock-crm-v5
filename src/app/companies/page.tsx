@@ -160,25 +160,47 @@ export default function CompaniesPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ["companies"] });
+      const previousCompanies = queryClient.getQueryData<CompanyWithContacts[]>(["companies"]);
+      queryClient.setQueryData<CompanyWithContacts[]>(["companies"], (old) =>
+        old?.map((company) => (company.id === id ? { ...company, ...updates } : company)) || []
+      );
+      return { previousCompanies };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(["companies"], context.previousCompanies);
+      }
+      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      toast.error("Update failed", { description: message });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company updated");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Update failed", { description: message });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteCompany,
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["companies"] });
+      const previousCompanies = queryClient.getQueryData<CompanyWithContacts[]>(["companies"]);
+      queryClient.setQueryData<CompanyWithContacts[]>(["companies"], (old) =>
+        old?.filter((company) => company.id !== id) || []
+      );
+      return { previousCompanies };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousCompanies) {
+        queryClient.setQueryData(["companies"], context.previousCompanies);
+      }
+      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      toast.error("Deletion failed", { description: message });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Deletion failed", { description: message });
     },
   });
 

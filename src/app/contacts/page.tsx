@@ -65,11 +65,24 @@ export default function ContactsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["contacts"] });
+      const previousContacts = queryClient.getQueryData<ContactWithCompany[]>(["contacts"]);
+      queryClient.setQueryData<ContactWithCompany[]>(["contacts"], (old) =>
+        old?.filter((contact) => contact.id !== id) || []
+      );
+      return { previousContacts };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousContacts) {
+        queryClient.setQueryData(["contacts"], context.previousContacts);
+      }
+      toast.error("Deletion failed", { description: (err as Error).message });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact deleted");
     },
-    onError: (err) => toast.error("Deletion failed", { description: (err as Error).message }),
   });
 
   const _handleBulkDelete = useCallback(async () => {
