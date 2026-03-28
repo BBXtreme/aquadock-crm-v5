@@ -121,3 +121,55 @@ export async function deleteCompany(id: string, supabase?: SupabaseClient): Prom
     throw handleSupabaseError(error, "deleteCompany");
   }
 }
+
+export async function importCompaniesFromCSV(rows: any[]): Promise<{
+  imported: number;
+  errors: string[];
+  importBatch: string;
+}> {
+  const supabase = createClient();
+  const importBatch = new Date().toISOString();
+
+  try {
+    const companiesToInsert: CompanyInsert[] = rows.map((row: any) => ({
+      firmenname: row.firmenname,
+      kundentyp: row.kundentyp,
+      strasse: row.strasse,
+      plz: row.plz,
+      stadt: row.stadt,
+      bundesland: row.bundesland,
+      land: row.land,
+      telefon: row.telefon,
+      website: row.website,
+      email: row.email,
+      lat: row.lat,
+      lon: row.lon,
+      osm: row.osm,
+      wasserdistanz: row.wasserdistanz,
+      wassertyp: row.wassertyp,
+      status: "lead",
+      user_id: null,
+      rechtsform: null,
+      firmentyp: null,
+      value: null,
+    }));
+
+    const { data, error } = await supabase.from("companies").insert(companiesToInsert).select();
+
+    if (error) {
+      throw handleSupabaseError(error, "importCompaniesFromCSV");
+    }
+
+    return {
+      imported: data?.length || 0,
+      errors: [],
+      importBatch,
+    };
+  } catch (error) {
+    return {
+      imported: 0,
+      errors: [error instanceof Error ? error.message : "Unknown error"],
+      importBatch,
+    };
+  }
+}
