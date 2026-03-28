@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { OpenMapClient } from "@/components/features/map/OpenMapClient";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
