@@ -57,7 +57,7 @@ export default function CompaniesPage() {
             <Button>Import</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onClick={handleImportCSV}>CSV</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleImportCSV}>CSV</DropdownMenuItem>
             <DropdownMenuItem disabled>JSON (coming soon)</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
