@@ -95,17 +95,23 @@ export default function ContactsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["contacts"] });
-      const previousContacts = queryClient.getQueryData<ContactWithCompany[]>(["contacts"]);
-      queryClient.setQueryData<ContactWithCompany[]>(
-        ["contacts"],
-        (old) => old?.filter((contact) => contact.id !== id) || [],
-      );
-      return { previousContacts };
+      const queryKey = ["contacts", pagination.pageIndex, pagination.pageSize, sorting];
+      await queryClient.cancelQueries({ queryKey });
+      const previousContacts = queryClient.getQueryData<{ data: ContactWithCompany[]; total: number }>(queryKey);
+      if (previousContacts) {
+        queryClient.setQueryData(
+          queryKey,
+          {
+            data: previousContacts.data.filter((contact) => contact.id !== id),
+            total: previousContacts.total - 1,
+          }
+        );
+      }
+      return { previousContacts, queryKey };
     },
-    onError: (err, _id, context) => {
-      if (context?.previousContacts) {
-        queryClient.setQueryData(["contacts"], context.previousContacts);
+    onError: (err, id, context) => {
+      if (context?.previousContacts && context.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previousContacts);
       }
       toast.error("Deletion failed", { description: (err as Error).message });
     },
