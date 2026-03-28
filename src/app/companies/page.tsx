@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
-import { CompaniesTable } from "@/components/tables/CompaniesTable";
+import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/browser";
 import { getCompanies } from "@/lib/supabase/services/companies";
-
-type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
 export default function CompaniesPage() {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
@@ -31,8 +29,8 @@ export default function CompaniesPage() {
       getCompanies(createClient(), {
         page: pagination.pageIndex,
         pageSize: pagination.pageSize,
-        sortBy: sorting[0].id,
-        sortDesc: sorting[0].desc,
+        sortBy: sorting[0]?.id || "firmenname",
+        sortDesc: sorting[0]?.desc || false,
       }),
   });
 
