@@ -198,7 +198,7 @@ export default function ContactsPage() {
       <Card>
         <CardContent>
           {loading ? (
-            <LoadingState type="table" count={5} itemClassName="h-12 w-full" />
+            <LoadingState count={5} itemClassName="h-12 w-full" />
           ) : (
             <ContactsTable
               contacts={contacts}

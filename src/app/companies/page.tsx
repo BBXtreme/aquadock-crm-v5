@@ -350,7 +350,7 @@ export default function CompaniesPage() {
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {isLoading ? (
-              <LoadingState type="table" count={6} itemClassName="h-14 w-full" />
+              <LoadingState count={6} itemClassName="h-14 w-full" />
             ) : (
               <>
                 {/* Active Filters Badges */}
