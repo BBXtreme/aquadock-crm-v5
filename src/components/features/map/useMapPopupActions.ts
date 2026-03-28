@@ -1,6 +1,7 @@
 // src/components/features/map/useMapPopupActions.ts
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
@@ -72,6 +73,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
 
 export function useMapPopupActions() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const openCompanyDetail = (id: string) => {
     router.push(`/companies/${id}`);
@@ -159,6 +161,9 @@ export function useMapPopupActions() {
 
       // Dispatch event to refresh company markers
       window.dispatchEvent(new CustomEvent("company-imported"));
+
+      // Invalidate React Query cache for companies
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
     } catch (err: unknown) {
       console.error("Import failed:", err);
       toast.error(`Import von "${name}" fehlgeschlagen`, {

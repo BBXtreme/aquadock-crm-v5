@@ -153,7 +153,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const now = Date.now();
     const cacheEntry = poiCache.current.get(key);
 
-    if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000) {
+    if (cacheEntry && now - cacheEntry.timestamp < 5 * 60 * 1000) {
       setOsmPois(cacheEntry.pois);
       return;
     }
@@ -188,7 +188,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     const debounced = () => {
       if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(handleLoad, 500);
+      debounceTimeout.current = setTimeout(handleLoad, 800);
     };
 
     mapRef.current.on("zoomend", debounced);
