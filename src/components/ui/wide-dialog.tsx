@@ -1,3 +1,4 @@
+// src/components/ui/wide-dialog.tsx
 import { DialogContent } from "@/components/ui/dialog";
 
 interface WideDialogContentProps extends React.ComponentProps<typeof DialogContent> {
