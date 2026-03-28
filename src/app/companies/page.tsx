@@ -163,8 +163,9 @@ export default function CompaniesPage() {
     onMutate: async ({ id, updates }) => {
       await queryClient.cancelQueries({ queryKey: ["companies"] });
       const previousCompanies = queryClient.getQueryData<CompanyWithContacts[]>(["companies"]);
-      queryClient.setQueryData<CompanyWithContacts[]>(["companies"], (old) =>
-        old?.map((company) => (company.id === id ? { ...company, ...updates } : company)) || []
+      queryClient.setQueryData<CompanyWithContacts[]>(
+        ["companies"],
+        (old) => old?.map((company) => (company.id === id ? { ...company, ...updates } : company)) || [],
       );
       return { previousCompanies };
     },
@@ -186,8 +187,9 @@ export default function CompaniesPage() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["companies"] });
       const previousCompanies = queryClient.getQueryData<CompanyWithContacts[]>(["companies"]);
-      queryClient.setQueryData<CompanyWithContacts[]>(["companies"], (old) =>
-        old?.filter((company) => company.id !== id) || []
+      queryClient.setQueryData<CompanyWithContacts[]>(
+        ["companies"],
+        (old) => old?.filter((company) => company.id !== id) || [],
       );
       return { previousCompanies };
     },

@@ -68,8 +68,9 @@ export default function ContactsPage() {
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["contacts"] });
       const previousContacts = queryClient.getQueryData<ContactWithCompany[]>(["contacts"]);
-      queryClient.setQueryData<ContactWithCompany[]>(["contacts"], (old) =>
-        old?.filter((contact) => contact.id !== id) || []
+      queryClient.setQueryData<ContactWithCompany[]>(
+        ["contacts"],
+        (old) => old?.filter((contact) => contact.id !== id) || [],
       );
       return { previousContacts };
     },
