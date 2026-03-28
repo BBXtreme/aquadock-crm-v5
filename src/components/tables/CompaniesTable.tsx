@@ -131,8 +131,10 @@ export default function CompaniesTable({
         if (!primary) return "—";
         return (
           <div className="flex flex-col">
-            <span className="font-medium">{`${primary.vorname} ${primary.nachname}`}</span>
-            <span className="text-xs text-muted-foreground">{primary.email || "—"}</span>
+            <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
+              {`${primary.vorname} ${primary.nachname}`}
+            </Link>
+            <span className="text-xs text-muted-foreground">{primary.position || "—"}</span>
           </div>
         );
       },
