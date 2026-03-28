@@ -241,11 +241,15 @@ export default function CompaniesPage() {
     onMutate: async ({ id, updates }) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
+        queryKey,
+      );
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           ...previousCompanies,
-          companies: previousCompanies.companies.map((company) => (company.id === id ? { ...company, ...updates } : company)),
+          companies: previousCompanies.companies.map((company) =>
+            company.id === id ? { ...company, ...updates } : company,
+          ),
         });
       }
       return { previousCompanies, queryKey };
@@ -268,7 +272,9 @@ export default function CompaniesPage() {
     onMutate: async (id) => {
       const queryKey = ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(queryKey);
+      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
+        queryKey,
+      );
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           companies: previousCompanies.companies.filter((company) => company.id !== id),
