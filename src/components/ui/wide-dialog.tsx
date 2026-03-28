@@ -6,7 +6,13 @@ interface WideDialogContentProps extends React.ComponentProps<typeof DialogConte
   description?: string;
 }
 
-export function WideDialogContent({ children, size = "lg", className = "", description, ...props }: WideDialogContentProps) {
+export function WideDialogContent({
+  children,
+  size = "lg",
+  className = "",
+  description,
+  ...props
+}: WideDialogContentProps) {
   const sizeClasses = {
     default: "max-w-md",
     lg: "max-w-2xl",
