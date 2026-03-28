@@ -39,6 +39,13 @@ export default function RemindersPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const stats = useMemo(() => {
+    const total = reminders.length;
+    const open = reminders.filter((r) => r.status === "open").length;
+    const overdue = reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date()).length;
+    return { total, open, overdue };
+  }, [reminders]);
+
   const filteredReminders = useMemo(() => {
     if (statusFilter === "all") return reminders;
     if (statusFilter === "open") return reminders.filter((r) => r.status === "open");
@@ -196,7 +203,9 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
