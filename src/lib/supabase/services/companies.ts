@@ -94,7 +94,7 @@ export async function updateCompany(id: string, updates: CompanyUpdate, supabase
   const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) {
-    throw new Error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
+    throw new Error(`Update failed: ${error.message || error.details || "Unknown error"}`);
   }
 
   return data;
