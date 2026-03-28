@@ -57,7 +57,7 @@ export default function CompaniesTable({
   pageCount,
   onPaginationChange,
   sorting,
-  onSortingChange: _onSortingChange,
+  onSortingChange,
   onImportCSV,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
@@ -250,7 +250,8 @@ export default function CompaniesTable({
       onPaginationChange(newPagination);
     },
     onSortingChange: (updater) => {
-      const _newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      onSortingChange(newSorting);
     },
     enableRowSelection: true,
     globalFilterFn: "includesString",
