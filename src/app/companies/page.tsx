@@ -22,7 +22,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
@@ -62,11 +62,6 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-  }, [globalFilter]);
 
   const statusOptions = [
     "lead",
@@ -273,6 +268,7 @@ export default function CompaniesPage() {
       const previousCompanies = queryClient.getQueryData<{ data: CompanyWithContacts[]; total: number }>(queryKey);
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
+          ...previousCompanies,
           data: previousCompanies.data.filter((company) => company.id !== id),
           total: previousCompanies.total - 1,
         });
