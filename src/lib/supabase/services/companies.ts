@@ -42,7 +42,7 @@ export async function getCompanies(
   if (error) throw handleSupabaseError(error, "getCompanies");
 
   if (process.env.NODE_ENV === "development") {
-    console.log('[DEBUG] Raw companies data sample:', data?.slice(0,2));
+    console.log("[DEBUG] Raw companies data sample:", data?.slice(0, 2));
   }
 
   return (data ?? []) as Company[];
