@@ -132,7 +132,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           ) : (
                             <span>{displayName}</span>
                           )}
-                          {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
+                          {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
                         </div>
                       </td>
                       <td>{safeDisplay(contact.email)}</td>
