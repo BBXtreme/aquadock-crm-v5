@@ -7,20 +7,14 @@ import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 /**
- * React Query Provider for the entire app.
- *
- * How to control Devtools:
- * 1. Normal development: Devtools are automatically shown.
- * 2. Disable completely: Change `SHOW_DEVTOOLS` to false below.
- * 3. Force show in production (for debugging on Vercel): Set env variable NEXT_PUBLIC_SHOW_QUERY_DEVTOOLS=true
- *
- * Recommended: Keep SHOW_DEVTOOLS = true during active development.
- * Set to false before final production deployment.
+ * React Query Provider
+ * 
+ * Devtools Control:
+ * - Change SHOW_DEVTOOLS to true  → Devtools visible (good for development)
+ * - Change SHOW_DEVTOOLS to false → Devtools hidden (recommended for production)
  */
-// Change this line to turn it ON or OFF
-const SHOW_DEVTOOLS = true;     // ← ON (shows the button)
-// or
-const SHOW_DEVTOOLS = false;    // ← OFF (hides the button completely)
+
+const SHOW_DEVTOOLS = true;   // ← Change to false before deploying to Vercel
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -28,8 +22,8 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000, // 30 seconds - good balance for lists and detail pages
-            gcTime: 10 * 60 * 1000, // 10 minutes
+            staleTime: 30 * 1000,     // 30 seconds - good balance
+            gcTime: 10 * 60 * 1000,   // 10 minutes cache
             retry: 2,
             refetchOnWindowFocus: false,
             structuralSharing: true,
@@ -38,7 +32,9 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
         queryCache: new QueryCache({
           onError: (error, query) => {
             const queryKey = query?.meta?.queryKey || query?.queryKey;
-            const context = queryKey ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` : "";
+            const context = queryKey 
+              ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` 
+              : "";
             toast.error("An error occurred", {
               description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
               id: "query-error",
@@ -52,7 +48,7 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {children}
 
-      {/* TanStack React Query Devtools */}
+      {/* TanStack React Query Devtools - only shown when SHOW_DEVTOOLS is true */}
       {SHOW_DEVTOOLS && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
