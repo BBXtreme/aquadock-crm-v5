@@ -17,8 +17,7 @@ import { toast } from "sonner";
  * Recommended: Keep SHOW_DEVTOOLS = true during active development.
  * Set to false before final production deployment.
  */
-const SHOW_DEVTOOLS = process.env.NODE_ENV === "development" || 
-                     process.env.NEXT_PUBLIC_SHOW_QUERY_DEVTOOLS === "true";
+const SHOW_DEVTOOLS = process.env.NODE_ENV === "development" || process.env.NEXT_PUBLIC_SHOW_QUERY_DEVTOOLS === "true";
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -26,8 +25,8 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000,     // 30 seconds - good balance for lists and detail pages
-            gcTime: 10 * 60 * 1000,   // 10 minutes
+            staleTime: 30 * 1000, // 30 seconds - good balance for lists and detail pages
+            gcTime: 10 * 60 * 1000, // 10 minutes
             retry: 2,
             refetchOnWindowFocus: false,
             structuralSharing: true,
@@ -36,9 +35,7 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
         queryCache: new QueryCache({
           onError: (error, query) => {
             const queryKey = query?.meta?.queryKey || query?.queryKey;
-            const context = queryKey 
-              ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` 
-              : "";
+            const context = queryKey ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` : "";
             toast.error("An error occurred", {
               description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
               id: "query-error",
@@ -53,12 +50,7 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* TanStack React Query Devtools */}
-      {SHOW_DEVTOOLS && (
-        <ReactQueryDevtools 
-          initialIsOpen={false} 
-          position="bottom-right"
-        />
-      )}
+      {SHOW_DEVTOOLS && <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />}
     </QueryClientProvider>
   );
 }
