@@ -268,9 +268,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
         <MarkerClusterGroup
           chunkedLoading
-          maxClusterRadius={100}
+          maxClusterRadius={50}
           spiderfyOnMaxZoom={true}
           showCoverageOnHover={false}
+          removeOutsideVisibleBounds={false}
+          animateAddingMarkers={false}
           iconCreateFunction={(cluster: { getChildCount: () => number }) => {
             const count = cluster.getChildCount();
             return L.divIcon({
