@@ -26,6 +26,7 @@ import { toast } from "sonner";
 
 import CompanyCreateForm from "@/components/features/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/CompanyEditForm";
+import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -40,7 +41,6 @@ import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
-import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -480,11 +480,7 @@ export default function CompaniesPage() {
 
         {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
-      <CSVImportDialog 
-        open={csvDialogOpen} 
-        onOpenChange={setCsvDialogOpen} 
-        onSuccess={handleImportSuccess} 
-      />
+      <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </div>
   );
 }
