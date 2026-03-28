@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building, DollarSign, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 
+import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -70,14 +71,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Skeleton Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {["dashboard-skeleton-1", "dashboard-skeleton-2", "dashboard-skeleton-3", "dashboard-skeleton-4"].map(
-            (key) => (
-              <div key={key} className="h-32 bg-muted animate-pulse rounded-lg" />
-            ),
-          )}
-        </div>
+        <LoadingState type="cards" count={4} />
       </div>
     );
   }

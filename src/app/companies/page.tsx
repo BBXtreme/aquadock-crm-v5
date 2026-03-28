@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -360,7 +361,7 @@ export default function CompaniesPage() {
                       <Badge
                         key={`${group}-${v}`}
                         variant="secondary"
-                        onClick={() => toggleFilter(group as FilterGroup, v)}
+                        onClick={() => toggleFilter(group, v)}
                       >
                         {v} ×
                       </Badge>

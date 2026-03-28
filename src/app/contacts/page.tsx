@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -188,7 +189,7 @@ export default function ContactsPage() {
         />
         <StatCard
           title="Companies with Contacts"
-          value={loading ? <Skeleton className="h-5 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
+          value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
           icon={<Building className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
           change="+12% from last month"
