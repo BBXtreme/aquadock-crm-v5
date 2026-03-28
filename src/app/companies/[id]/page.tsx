@@ -35,13 +35,13 @@ export default function CompanyDetailPage() {
   useEffect(() => {
     if (company?.id) {
       // Force immediate refetch with higher priority
-      queryClient.refetchQueries({ 
+      queryClient.refetchQueries({
         queryKey: ["contacts", company.id],
-        type: "active" 
+        type: "active",
       });
-      queryClient.refetchQueries({ 
+      queryClient.refetchQueries({
         queryKey: ["reminders", company.id],
-        type: "active" 
+        type: "active",
       });
 
       // Also invalidate to mark as fresh
