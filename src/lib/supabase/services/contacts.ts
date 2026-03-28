@@ -6,13 +6,32 @@ import { handleSupabaseError } from "../utils";
 /**
  * Get all contacts with joined company data
  */
-export async function getContacts(client: SupabaseClient): Promise<Contact[]> {
-  const { data, error } = await client.from("contacts").select("*, companies!company_id(firmenname)");
+export async function getContacts(
+  client: SupabaseClient,
+  options?: { page?: number; pageSize?: number; sortBy?: string; sortDesc?: boolean },
+): Promise<{ data: Contact[]; total: number }> {
+  let query = client.from("contacts").select("*, companies!company_id(firmenname)", { count: "exact" });
+
+  if (options?.sortBy) {
+    query = query.order(options.sortBy, { ascending: !options.sortDesc });
+  }
+
+  const pageSize = options?.pageSize || 25;
+  const page = options?.page || 0;
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
+
   if (error) throw handleSupabaseError(error, "getContacts");
+
   if (process.env.NODE_ENV === "development") {
     console.log("[DEBUG] Raw contacts data sample:", data?.slice(0, 2));
   }
-  return (data ?? []) as Contact[];
+
+  return { data: (data ?? []) as Contact[], total: count || 0 };
 }
 
 /**

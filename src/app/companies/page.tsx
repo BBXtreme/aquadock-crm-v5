@@ -38,7 +38,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
-import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
+import { deleteCompany, getCompanies, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
@@ -50,6 +50,8 @@ export default function CompaniesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCompany, setEditCompany] = useState<Company | null>(null);
   const [accordionOpen, setAccordionOpen] = useState(false);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
 
   const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>({
     status: [],
@@ -139,16 +141,23 @@ export default function CompaniesPage() {
   };
 
   const {
-    data: companies = [],
+    data: companiesData,
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: ["companies"],
+    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*, contacts!company_id(*)");
-      if (error) throw error;
-      return data as CompanyWithContacts[];
+      return getCompanies(supabase, {
+        page: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        statusFilters: activeFilters.status.length > 0 ? activeFilters.status : undefined,
+        kundentypFilters: activeFilters.kategorie.length > 0 ? activeFilters.kategorie : undefined,
+        firmentypFilters: activeFilters.betriebstyp.length > 0 ? activeFilters.betriebstyp : undefined,
+        landFilters: activeFilters.land.length > 0 ? activeFilters.land : undefined,
+        sortBy: sorting[0]?.id,
+        sortDesc: sorting[0]?.desc,
+      });
     },
     // Reliable refresh behavior (exactly like TimelineCard)
     refetchOnWindowFocus: true,
@@ -157,6 +166,25 @@ export default function CompaniesPage() {
     // Keep cache for fast navigation, but always fetch fresh on hard refresh
     gcTime: 5 * 60 * 1000,
   });
+
+  const companies = companiesData?.data || [];
+  const total = companiesData?.total || 0;
+  const pageCount = Math.ceil(total / pagination.pageSize);
+
+  const { data: statsData } = useQuery({
+    queryKey: ["companies-stats"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("companies").select("status, value");
+      const total = data?.length || 0;
+      const leads = data?.filter((c) => c.status === "lead").length || 0;
+      const won = data?.filter((c) => c.status === "gewonnen").length || 0;
+      const value = data?.reduce((sum, c) => sum + (c.value ?? 0), 0) || 0;
+      return { total, leads, won, value };
+    },
+  });
+
+  const stats = statsData || { total: 0, leads: 0, won: 0, value: 0 };
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) => updateCompany(id, updates),
@@ -205,24 +233,6 @@ export default function CompaniesPage() {
       toast.success("Company deleted");
     },
   });
-
-  const stats = useMemo(() => {
-    const total = companies.length;
-    const leads = companies.filter((c) => c.status === "lead").length;
-    const won = companies.filter((c) => c.status === "gewonnen").length;
-    const value = companies.reduce((sum, c) => sum + (c.value ?? 0), 0);
-    return { total, leads, won, value };
-  }, [companies]);
-
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((c) => {
-      if (activeFilters.status.length > 0 && !activeFilters.status.includes(c.status ?? "")) return false;
-      if (activeFilters.kategorie.length > 0 && !activeFilters.kategorie.includes(c.kundentyp ?? "")) return false;
-      if (activeFilters.betriebstyp.length > 0 && !activeFilters.betriebstyp.includes(c.firmentyp ?? "")) return false;
-      if (activeFilters.land.length > 0 && !activeFilters.land.includes(c.land ?? "")) return false;
-      return true;
-    });
-  }, [companies, activeFilters]);
 
   if (queryError) {
     return (
@@ -475,7 +485,7 @@ export default function CompaniesPage() {
                 </Accordion>
 
                 <CompaniesTable
-                  companies={filteredCompanies}
+                  companies={companies}
                   globalFilter={globalFilter}
                   onGlobalFilterChange={setGlobalFilter}
                   onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
@@ -483,6 +493,10 @@ export default function CompaniesPage() {
                     const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
                     deleteMutation.mutate(id);
                   }}
+                  pageCount={pageCount}
+                  onPaginationChange={setPagination}
+                  sorting={sorting}
+                  onSortingChange={setSorting}
                 />
               </>
             )}

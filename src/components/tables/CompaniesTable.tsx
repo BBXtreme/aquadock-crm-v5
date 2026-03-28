@@ -7,8 +7,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
@@ -41,6 +39,10 @@ interface CompaniesTableProps {
   onDelete?: (company: CompanyWithContacts) => void;
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
+  pageCount: number;
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
+  sorting: { id: string; desc: boolean }[];
+  onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -51,10 +53,15 @@ export default function CompaniesTable({
   onDelete,
   globalFilter: propGlobalFilter,
   onGlobalFilterChange: propOnGlobalFilterChange,
+  pageCount,
+  onPaginationChange,
+  sorting,
+  onSortingChange,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
@@ -205,21 +212,29 @@ export default function CompaniesTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+    manualSorting: true,
+    pageCount,
     getRowId: (row) => row.id,
     initialState: {
-      sorting: [{ id: "firmenname", desc: false }],
       pagination: { pageSize: 20 },
     },
     state: {
       globalFilter,
       columnVisibility,
       rowSelection,
+      pagination,
+      sorting,
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(pagination) : updater;
+      setPagination(newPagination);
+      onPaginationChange(newPagination);
+    },
+    onSortingChange,
     enableRowSelection: true,
     globalFilterFn: "includesString",
     filterFromLeafRows: true,

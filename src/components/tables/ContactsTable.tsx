@@ -6,8 +6,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
@@ -33,6 +31,18 @@ import { safeDisplay } from "@/lib/utils/data-format";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
+interface ContactsTableProps {
+  contacts: ContactWithCompany[];
+  onEdit?: (contact: ContactWithCompany) => void;
+  onDelete?: (id: string) => void;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+  pageCount: number;
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
+  sorting: { id: string; desc: boolean }[];
+  onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
+}
+
 const columnHelper = createColumnHelper<ContactWithCompany>();
 
 export default function ContactsTable({
@@ -41,10 +51,15 @@ export default function ContactsTable({
   onDelete,
   globalFilter: propGlobalFilter,
   onGlobalFilterChange: propOnGlobalFilterChange,
+  pageCount,
+  onPaginationChange,
+  sorting,
+  onSortingChange,
 }: ContactsTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
@@ -177,18 +192,27 @@ export default function ContactsTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+    manualSorting: true,
+    pageCount,
     getRowId: (row) => row.id,
     initialState: { pagination: { pageSize: 20 } },
     state: {
       globalFilter,
       columnVisibility,
       rowSelection,
+      pagination,
+      sorting,
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(pagination) : updater;
+      setPagination(newPagination);
+      onPaginationChange(newPagination);
+    },
+    onSortingChange,
     enableRowSelection: true,
     globalFilterFn: "includesString",
     filterFromLeafRows: true,
@@ -387,12 +411,4 @@ export default function ContactsTable({
       </div>
     </div>
   );
-}
-
-interface ContactsTableProps {
-  contacts: ContactWithCompany[];
-  onEdit?: (contact: ContactWithCompany) => void;
-  onDelete?: (id: string) => void;
-  globalFilter?: string;
-  onGlobalFilterChange?: (value: string) => void;
 }

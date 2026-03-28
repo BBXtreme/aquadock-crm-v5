@@ -12,25 +12,49 @@ import { handleSupabaseError } from "../utils";
 
 export async function getCompanies(
   client?: SupabaseClient,
-  options?: { limit?: number; offset?: number; statusFilter?: string },
-): Promise<Company[]> {
+  options?: {
+    page?: number;
+    pageSize?: number;
+    statusFilters?: string[];
+    kundentypFilters?: string[];
+    firmentypFilters?: string[];
+    landFilters?: string[];
+    sortBy?: string;
+    sortDesc?: boolean;
+  },
+): Promise<{ data: Company[]; total: number }> {
   const supabase = client || createClient();
 
-  let query = supabase.from("companies").select("*");
+  let query = supabase.from("companies").select("*", { count: "exact" });
 
-  if (options?.statusFilter) {
-    query = query.eq("status", options.statusFilter);
+  if (options?.statusFilters?.length) {
+    query = query.in("status", options.statusFilters);
   }
 
-  if (options?.limit) {
-    query = query.limit(options.limit);
+  if (options?.kundentypFilters?.length) {
+    query = query.in("kundentyp", options.kundentypFilters);
   }
 
-  if (options?.offset) {
-    query = query.range(options.offset, options.offset + (options.limit || 1000) - 1);
+  if (options?.firmentypFilters?.length) {
+    query = query.in("firmentyp", options.firmentypFilters);
   }
 
-  const { data, error } = await query;
+  if (options?.landFilters?.length) {
+    query = query.in("land", options.landFilters);
+  }
+
+  if (options?.sortBy) {
+    query = query.order(options.sortBy, { ascending: !options.sortDesc });
+  }
+
+  const pageSize = options?.pageSize || 25;
+  const page = options?.page || 0;
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
 
   if (process.env.NODE_ENV === "development") {
     console.group("getCompanies");
@@ -45,7 +69,7 @@ export async function getCompanies(
     console.log("[DEBUG] Raw companies data sample:", data?.slice(0, 2));
   }
 
-  return (data ?? []) as Company[];
+  return { data: (data ?? []) as Company[], total: count || 0 };
 }
 
 export async function getCompanyById(id: string, client: SupabaseClient): Promise<Company | null> {

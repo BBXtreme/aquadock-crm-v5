@@ -50,20 +50,47 @@ export default function ContactsPage() {
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "nachname", desc: false }]);
 
   const queryClient = useQueryClient();
 
   const {
-    data: contacts = [],
+    data: contactsData,
     isLoading: loading,
     error,
   } = useQuery({
-    queryKey: ["contacts"],
+    queryKey: ["contacts", pagination.pageIndex, pagination.pageSize, sorting],
     queryFn: async () => {
       const supabase = createClient();
-      return getContacts(supabase);
+      return getContacts(supabase, {
+        page: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        sortBy: sorting[0]?.id,
+        sortDesc: sorting[0]?.desc,
+      });
     },
   });
+
+  const contacts = contactsData?.data || [];
+  const total = contactsData?.total || 0;
+  const pageCount = Math.ceil(total / pagination.pageSize);
+
+  const { data: statsData } = useQuery({
+    queryKey: ["contacts-stats"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("contacts").select("is_primary, company_id");
+      const total = data?.length || 0;
+      const primary = data?.filter((c) => c.is_primary).length || 0;
+      const companiesWithContacts = new Set(data?.map((c) => c.company_id)).size;
+      return { total, primary, companiesWithContacts };
+    },
+  });
+
+  const totalContacts = statsData?.total || 0;
+  const primaryContacts = statsData?.primary || 0;
+  const companiesWithContacts = statsData?.companiesWithContacts || 0;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),
@@ -107,10 +134,6 @@ export default function ContactsPage() {
       setEditContact(contact);
     }
   }, []);
-
-  const totalContacts = contacts.length;
-  const primaryContacts = contacts.filter((c) => c.is_primary).length;
-  const companiesWithContacts = new Set(contacts.map((c) => c.company_id)).size;
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
@@ -183,6 +206,10 @@ export default function ContactsPage() {
               onGlobalFilterChange={setGlobalFilter}
               onEdit={handleEdit}
               onDelete={(id) => deleteMutation.mutate(id)}
+              pageCount={pageCount}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              onSortingChange={setSorting}
             />
           )}
         </CardContent>
