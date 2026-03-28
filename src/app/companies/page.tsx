@@ -42,7 +42,7 @@ export default function CompaniesPage() {
 
   const handleImportSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
-    window.dispatchEvent(new CustomEvent('company-imported'));
+    window.dispatchEvent(new CustomEvent("company-imported"));
     toast.success("Companies imported successfully");
   };
 
