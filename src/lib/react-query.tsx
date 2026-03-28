@@ -14,13 +14,15 @@ export function ReactQueryProvider({ children }: { children: ReactNode }) {
           queries: {
             staleTime: 5 * 60 * 1000,
             gcTime: 10 * 60 * 1000,
-            retry: 1,
+            retry: 2,
+            refetchOnWindowFocus: false,
+            structuralSharing: true,
           },
         },
         queryCache: new QueryCache({
           onError: (error) => {
             toast.error("Query failed", {
-              description: error instanceof Error ? error.message : "An unexpected error occurred",
+              description: error instanceof Error ? `${error.name}: ${error.message}` : "An unexpected error occurred",
             });
           },
         }),
