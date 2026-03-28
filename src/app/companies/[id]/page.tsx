@@ -51,17 +51,16 @@ export default function CompanyDetailPage() {
   }, [company?.id, queryClient]);
 
   useEffect(() => {
-    if (company?.id && !window.location.search.includes("refreshed")) {
-      // One-time force refresh after initial render
-      setTimeout(() => {
-        queryClient.refetchQueries({ queryKey: ["contacts", company.id], type: "all" });
-        queryClient.refetchQueries({ queryKey: ["reminders", company.id], type: "all" });
-
-        // Optional: add a query param to prevent infinite loop
-        const url = new URL(window.location.href);
-        url.searchParams.set("refreshed", "true");
-        window.history.replaceState({}, "", url.toString());
-      }, 100); // small delay to let initial render complete
+    if (company?.id) {
+      // Force fresh data for sub-cards on initial mount / hard reload
+      queryClient.refetchQueries({
+        queryKey: ["contacts", company.id],
+        type: "all"
+      });
+      queryClient.refetchQueries({
+        queryKey: ["reminders", company.id],
+        type: "all"
+      });
     }
   }, [company?.id, queryClient]);
 
