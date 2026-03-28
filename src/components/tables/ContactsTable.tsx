@@ -11,7 +11,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -64,11 +64,11 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
+  const handleGlobalFilterChange = (value: string) => {
+    setGlobalFilter(value);
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
-  }, [globalFilter, onPaginationChange, pagination.pageSize]);
+  };
 
   const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
@@ -210,7 +210,7 @@ export default function ContactsTable({
       pagination,
       sorting,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: (updater) => {
@@ -274,7 +274,7 @@ export default function ContactsTable({
           <Input
             placeholder="Search contacts..."
             value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
