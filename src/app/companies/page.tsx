@@ -40,6 +40,7 @@ import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
+import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -58,6 +59,7 @@ export default function CompaniesPage() {
     land: [],
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
 
   const statusOptions = [
     "lead",
@@ -199,6 +201,12 @@ export default function CompaniesPage() {
       return true;
     });
   }, [companies, activeFilters]);
+
+  const handleImportSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["companies"] });
+    window.dispatchEvent(new CustomEvent("company-imported"));
+    toast.success("Companies successfully imported from CSV");
+  };
 
   if (queryError) {
     return (
@@ -459,6 +467,11 @@ export default function CompaniesPage() {
                     const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
                     deleteMutation.mutate(id);
                   }}
+                  pageCount={Math.ceil(filteredCompanies.length / 20)}
+                  onPaginationChange={(pagination) => setPagination(pagination)}
+                  sorting={[{ id: "firmenname", desc: false }]}
+                  onSortingChange={(sorting) => setSorting(sorting)}
+                  onImportCSV={() => setCsvDialogOpen(true)}
                 />
               </>
             )}
@@ -467,6 +480,11 @@ export default function CompaniesPage() {
 
         {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>
+      <CSVImportDialog 
+        open={csvDialogOpen} 
+        onOpenChange={setCsvDialogOpen} 
+        onSuccess={handleImportSuccess} 
+      />
     </div>
   );
 }
