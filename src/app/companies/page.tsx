@@ -31,12 +31,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
+import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { StatCard } from "@/components/ui/StatCard";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, getCompanies, updateCompany } from "@/lib/supabase/services/companies";
