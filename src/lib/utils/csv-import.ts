@@ -34,7 +34,12 @@ function parseGermanFloat(value: string): number | undefined {
 function stripEmojis(text: string): string {
   if (!text) return "";
   // Regex to match emojis (basic implementation, covers most cases)
-  return text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, "").trim();
+  return text
+    .replace(
+      /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu,
+      "",
+    )
+    .trim();
 }
 
 // Map for normalizing land codes to full names
@@ -48,11 +53,11 @@ const LAND_NORMALIZE_MAP: Record<string, string> = {
 // Flexible column name mapping
 const COLUMN_MAPPINGS: Record<string, keyof ParsedCompanyRow> = {
   name: "firmenname",
-  "firmenname": "firmenname",
+  firmenname: "firmenname",
   kategorie: "kundentyp",
-  "kundentyp": "kundentyp",
+  kundentyp: "kundentyp",
   "wasserdistanz (m)": "wasser_distanz",
-  "wasser_distanz": "wasser_distanz",
+  wasser_distanz: "wasser_distanz",
   wassertyp: "wassertyp",
   strasse: "strasse",
   straße: "strasse", // Handle umlaut
@@ -78,7 +83,7 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
       transformHeader: (header: string) => header.toLowerCase().trim(),
       complete: (results) => {
         if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing errors: ${results.errors.map(e => e.message).join(", ")}`));
+          reject(new Error(`CSV parsing errors: ${results.errors.map((e) => e.message).join(", ")}`));
           return;
         }
 
@@ -121,10 +126,11 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
               case "bundesland":
                 parsedRow.bundesland = trimmedValue;
                 break;
-              case "land":
+              case "land": {
                 const normalizedLand = LAND_NORMALIZE_MAP[trimmedValue.toUpperCase()] || trimmedValue;
                 parsedRow.land = normalizedLand;
                 break;
+              }
               case "telefon":
                 parsedRow.telefon = trimmedValue;
                 break;
