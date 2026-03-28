@@ -4,10 +4,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
-import CompaniesTable from "@/components/tables/CompaniesTable";
 import { CompanyHeader } from "@/components/company-detail/CompanyHeader";
 import KPICards from "@/components/dashboard/KPICards";
+import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
+import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,17 +29,15 @@ export default function CompaniesPage() {
 
   const { data: kpis } = useQuery(["kpis"], () => getKpis(createClient()));
 
-  const { data, isLoading } = useQuery(
-    ["companies", filters, pagination, sorting],
-    () =>
-      getCompanies(createClient(), {
-        page: pagination.pageIndex,
-        pageSize: pagination.pageSize,
-        statusFilters: filters.status ? [filters.status] : [],
-        kundentypFilters: filters.kundentyp ? [filters.kundentyp] : [],
-        sortBy: sorting[0]?.id || "firmenname",
-        sortDesc: sorting[0]?.desc || false,
-      }),
+  const { data, isLoading } = useQuery(["companies", filters, pagination, sorting], () =>
+    getCompanies(createClient(), {
+      page: pagination.pageIndex,
+      pageSize: pagination.pageSize,
+      statusFilters: filters.status ? [filters.status] : [],
+      kundentypFilters: filters.kundentyp ? [filters.kundentyp] : [],
+      sortBy: sorting[0]?.id || "firmenname",
+      sortDesc: sorting[0]?.desc || false,
+    }),
   );
 
   const handleImportCSV = () => {
@@ -75,10 +73,7 @@ export default function CompaniesPage() {
       />
       <KPICards kpis={kpis} />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Select
-          value={filters.status}
-          onValueChange={(value) => setFilters({ ...filters, status: value })}
-        >
+        <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -89,10 +84,7 @@ export default function CompaniesPage() {
             <SelectItem value="verloren">Verloren</SelectItem>
           </SelectContent>
         </Select>
-        <Select
-          value={filters.kundentyp}
-          onValueChange={(value) => setFilters({ ...filters, kundentyp: value })}
-        >
+        <Select value={filters.kundentyp} onValueChange={(value) => setFilters({ ...filters, kundentyp: value })}>
           <SelectTrigger>
             <SelectValue placeholder="Kundentyp" />
           </SelectTrigger>
