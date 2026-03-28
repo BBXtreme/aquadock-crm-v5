@@ -63,6 +63,7 @@ export default function RemindersCard({ companyId, onEditSuccess }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
       toast.success("Reminder deleted");
     },
     onError: (err: unknown) => {

@@ -53,10 +53,10 @@ export default function CompanyDetailPage() {
       <CompanyHeader company={company} id={id} router={router} />
       <CompanyKpiCards company={company} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FirmendatenCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AdresseCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AquaDockCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <CrmCard company={company} onEditSuccess={handleSubQueryInvalidation} />
+        <FirmendatenCard company={company} />
+        <AdresseCard company={company} />
+        <AquaDockCard company={company} />
+        <CrmCard company={company} />
       </div>
       <LinkedContactsCard companyId={id} onEditSuccess={handleSubQueryInvalidation} />
       <RemindersCard companyId={id} onEditSuccess={handleSubQueryInvalidation} />

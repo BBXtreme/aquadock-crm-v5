@@ -1,5 +1,5 @@
 "use client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
 import ContactEditForm from "@/components/features/ContactEditForm";
