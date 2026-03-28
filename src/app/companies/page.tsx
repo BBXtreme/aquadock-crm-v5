@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company, Contact } from "@/lib/supabase/database.types";
-import { deleteCompany, getCompanies, updateCompany } from "@/lib/supabase/services/companies";
+import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
@@ -63,6 +63,7 @@ export default function CompaniesPage() {
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [globalFilter]);
