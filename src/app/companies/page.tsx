@@ -193,8 +193,10 @@ export default function CompaniesPage() {
 
       // Apply sorting
       if (sorting.length > 0) {
-        const sort = sorting[0]!;
-        query = query.order(sort.id, { ascending: !sort.desc });
+        const sort = sorting[0];
+        if (sort) {
+          query = query.order(sort.id, { ascending: !sort.desc });
+        }
       }
 
       // Apply pagination
