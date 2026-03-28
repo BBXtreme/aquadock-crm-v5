@@ -63,7 +63,9 @@ export default function ContactEditForm({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
-      queryClient.invalidateQueries({ queryKey: ["contacts", data?.company_id] });
+      if (data?.company_id) {
+        queryClient.invalidateQueries({ queryKey: ["contacts", data.company_id] });
+      }
       toast.success(contact ? "Contact updated" : "Contact created");
       form.reset();
       onSuccess?.();
