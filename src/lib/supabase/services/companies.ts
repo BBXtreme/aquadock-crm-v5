@@ -1,7 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Company, CompanyInsert, CompanyUpdate } from "../database.types";
+import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
 import { handleSupabaseError } from "../utils";
+
+export type CompanyForOpenMap = Company & { contacts?: Contact[] };
+
+export async function getCompaniesForOpenMap(supabase: SupabaseClient): Promise<CompanyForOpenMap[]> {
+  const { data, error } = await supabase.from("companies").select("*");
+  if (error) throw handleSupabaseError(error, "getCompaniesForOpenMap");
+  return data ?? [];
+}
 
 export async function getCompanies(
   supabase: SupabaseClient,
@@ -86,7 +94,7 @@ export async function updateCompany(id: string, updates: CompanyUpdate, supabase
   const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) {
-    throw new Error(`Update failed: ${error.message || error.details || "Unknown error"}`);
+    throw new Error(`Update failed: ${error.message || error.details || 'Unknown error'}`);
   }
 
   return data;
