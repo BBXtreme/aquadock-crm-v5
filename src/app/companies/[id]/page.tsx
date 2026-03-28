@@ -70,7 +70,7 @@ export default function CompanyDetailPage() {
       setTimeout(() => {
         queryClient.refetchQueries({ queryKey: ["contacts", company.id], type: "all" });
         queryClient.refetchQueries({ queryKey: ["reminders", company.id], type: "all" });
-        
+
         // Optional: add a query param to prevent infinite loop
         const url = new URL(window.location.href);
         url.searchParams.set("refreshed", "true");
