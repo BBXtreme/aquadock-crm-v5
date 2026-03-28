@@ -73,11 +73,11 @@ export async function getCompanies(
 }
 
 export async function getCompanyById(id: string, client: SupabaseClient): Promise<Company | null> {
-  // Optimized for performance - auth filtering will be added later
+  // Performance optimization - full auth filtering will be added when login is implemented
   const { data, error } = await client
     .from("companies")
     .select(
-      "id, firmenname, rechtsform, kundentyp, firmentyp, status, value, lat, lon, strasse, stadt, land, plz, osm, telefon, email, website, notes, created_at, updated_at",
+      "id, firmenname, kundentyp, status, value, lat, lon, strasse, plz, stadt, land, website, telefon, email, notes, wassertyp, wasserdistanz, created_at, updated_at, user_id",
     )
     .eq("id", id)
     .single();

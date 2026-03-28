@@ -39,7 +39,7 @@ export async function getContacts(
  * Get contact by ID
  */
 export async function getContactById(id: string, client: SupabaseClient): Promise<Contact | null> {
-  // Optimized for performance - auth filtering will be added later
+  // Performance optimization - full auth filtering will be added when login is implemented
   const { data, error } = await client
     .from("contacts")
     .select(
