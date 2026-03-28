@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import AdresseCard from "@/components/company-detail/AdresseCard";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
@@ -18,7 +18,6 @@ export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const queryClient = useQueryClient();
 
   console.log("Company page id:", id);
 
@@ -30,18 +29,6 @@ export default function CompanyDetailPage() {
     queryKey: ["company", id],
     queryFn: async () => getCompanyById(id, createClient()),
   });
-
-  useEffect(() => {
-    if (company) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-      queryClient.invalidateQueries({ queryKey: ["reminders", id] });
-    }
-  }, [company, id, queryClient]);
-
-  const handleSubQueryInvalidation = () => {
-    queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-    queryClient.invalidateQueries({ queryKey: ["reminders", id] });
-  };
 
   if (isLoading) return <div className="container mx-auto p-6">Loading company details...</div>;
   if (error || !company) {
@@ -60,10 +47,10 @@ export default function CompanyDetailPage() {
       <CompanyHeader company={company} id={id} router={router} />
       <CompanyKpiCards company={company} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <FirmendatenCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AdresseCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <AquaDockCard company={company} onEditSuccess={handleSubQueryInvalidation} />
-        <CrmCard company={company} onEditSuccess={handleSubQueryInvalidation} />
+        <FirmendatenCard company={company} />
+        <AdresseCard company={company} />
+        <AquaDockCard company={company} />
+        <CrmCard company={company} />
       </div>
       <LinkedContactsCard companyId={id} />
       <RemindersCard companyId={id} />
