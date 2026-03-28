@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
+import { endOfWeek, startOfWeek, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
@@ -44,7 +44,13 @@ export default function RemindersPage() {
     const total = reminders.length;
     const open = reminders.filter((r) => r.status === "open").length;
     const overdue = reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date()).length;
-    return { total, open, overdue };
+    const thisWeek = reminders.filter((r) => {
+      const due = new Date(r.due_date);
+      const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const end = endOfWeek(new Date(), { weekStartsOn: 1 });
+      return due >= start && due <= end;
+    }).length;
+    return { total, open, overdue, thisWeek };
   }, [reminders]);
 
   const filteredReminders = useMemo(() => {
@@ -91,7 +97,8 @@ export default function RemindersPage() {
             </h1>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6">
+          <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
@@ -143,14 +150,15 @@ export default function RemindersPage() {
         <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6">
         <StatCard title="Total Reminders" value={stats.total.toString()} icon={<FileText className="h-4 w-4" />} />
         <StatCard title="Open Reminders" value={stats.open.toString()} icon={<CheckCircle className="h-4 w-4" />} />
         <StatCard
           title="Overdue Reminders"
-          value={stats.overdue.toString()}
+          value={<span className={stats.overdue > 0 ? "text-red-600" : ""}>{stats.overdue.toString()}</span>}
           icon={<AlertTriangle className="h-4 w-4" />}
         />
+        <StatCard title="This Week" value={stats.thisWeek.toString()} icon={<Calendar className="h-4 w-4" />} />
       </div>
 
       <div className="flex items-center gap-2 pb-4">
@@ -213,7 +221,9 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
