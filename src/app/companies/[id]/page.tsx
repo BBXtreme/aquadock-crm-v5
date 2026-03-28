@@ -69,11 +69,11 @@ export default function CompanyDetailPage() {
       setTimeout(() => {
         queryClient.refetchQueries({
           queryKey: ["contacts", company.id],
-          type: "all"
+          type: "all",
         });
         queryClient.refetchQueries({
           queryKey: ["reminders", company.id],
-          type: "all"
+          type: "all",
         });
       }, 150); // small delay to ensure mount is complete
     }
