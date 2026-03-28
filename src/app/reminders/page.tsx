@@ -10,9 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
+import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/lib/supabase/database.types";
@@ -146,7 +146,11 @@ export default function RemindersPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
         <StatCard title="Total Reminders" value={stats.total.toString()} icon={<FileText className="h-4 w-4" />} />
         <StatCard title="Open Reminders" value={stats.open.toString()} icon={<CheckCircle className="h-4 w-4" />} />
-        <StatCard title="Overdue Reminders" value={stats.overdue.toString()} icon={<AlertTriangle className="h-4 w-4" />} />
+        <StatCard
+          title="Overdue Reminders"
+          value={stats.overdue.toString()}
+          icon={<AlertTriangle className="h-4 w-4" />}
+        />
       </div>
 
       <div className="flex items-center gap-2 pb-4">
@@ -209,9 +213,7 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                          {reminder.status}
-                        </Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
