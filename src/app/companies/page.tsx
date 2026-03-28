@@ -1,20 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
-
-import { Button } from "@/components/ui/button";
-import { CompaniesTable } from "@/components/tables/CompaniesTable";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
+import { CompaniesTable } from "@/components/tables/CompaniesTable";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getCompanies } from "@/lib/supabase/services/companies";
 import { createClient } from "@/lib/supabase/browser";
+import { getCompanies } from "@/lib/supabase/services/companies";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -27,13 +26,14 @@ export default function CompaniesPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['companies', pagination, sorting, globalFilter],
-    queryFn: () => getCompanies(createClient(), {
-      page: pagination.pageIndex,
-      pageSize: pagination.pageSize,
-      sortBy: sorting[0].id,
-      sortDesc: sorting[0].desc,
-    }),
+    queryKey: ["companies", pagination, sorting, globalFilter],
+    queryFn: () =>
+      getCompanies(createClient(), {
+        page: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+        sortBy: sorting[0].id,
+        sortDesc: sorting[0].desc,
+      }),
   });
 
   const handleImportCSV = () => {
@@ -41,7 +41,7 @@ export default function CompaniesPage() {
   };
 
   const handleImportSuccess = () => {
-    queryClient.invalidateQueries({ queryKey: ['companies'] });
+    queryClient.invalidateQueries({ queryKey: ["companies"] });
     toast.success("Companies imported successfully");
   };
 
@@ -74,11 +74,7 @@ export default function CompaniesPage() {
         onSortingChange={setSorting}
       />
 
-      <CSVImportDialog
-        open={csvImportOpen}
-        onOpenChange={setCsvImportOpen}
-        onSuccess={handleImportSuccess}
-      />
+      <CSVImportDialog open={csvImportOpen} onOpenChange={setCsvImportOpen} onSuccess={handleImportSuccess} />
     </div>
   );
 }
