@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
+import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/lib/supabase/database.types";
@@ -129,6 +130,12 @@ export default function RemindersPage() {
         <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-6">
+        <StatCard title="Total Reminders" value="0" icon={<FileText className="h-4 w-4" />} />
+        <StatCard title="Open Reminders" value="0" icon={<CheckCircle className="h-4 w-4" />} />
+        <StatCard title="Overdue Reminders" value="0" icon={<AlertTriangle className="h-4 w-4" />} />
+      </div>
+
       <div className="flex items-center gap-2 pb-4">
         <Button
           variant={statusFilter === "all" ? "default" : "outline"}
@@ -189,7 +196,9 @@ export default function RemindersPage() {
                         >
                           {reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status}
+                        </Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
