@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/lib/supabase/database.types";
-import { formatDateDE, getPriorityLabel, getReminderStatusLabel } from "@/lib/utils";
+import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
 
 interface Props {
   companyId: string;
@@ -145,7 +145,7 @@ export default function RemindersCard({ companyId }: Props) {
                         className="text-primary hover:underline cursor-pointer"
                         onClick={() => handleEdit(reminder)}
                       >
-                        {reminder.title || "—"}
+                        {safeDisplay(reminder.title)}
                       </button>
                     </td>
                     <td>{formatDateDE(reminder.due_date)}</td>
@@ -167,7 +167,7 @@ export default function RemindersCard({ companyId }: Props) {
                         {getReminderStatusLabel(reminder.status)}
                       </Badge>
                     </td>
-                    <td>{reminder.assigned_to || "—"}</td>
+                    <td>{safeDisplay(reminder.assigned_to)}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button

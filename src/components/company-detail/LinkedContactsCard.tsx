@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/lib/supabase/database.types";
+import { safeDisplay } from "@/lib/utils";
 
 interface Props {
   companyId: string;
@@ -30,7 +31,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contacts")
-        .select("*")
+        .select("*, companies!company_id(firmenname)")
         .eq("company_id", companyId)
         .order("nachname", { ascending: true });
 
@@ -134,9 +135,9 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
                         </div>
                       </td>
-                      <td>{contact.email || "—"}</td>
-                      <td>{contact.telefon || "—"}</td>
-                      <td>{contact.mobil || "—"}</td>
+                      <td>{safeDisplay(contact.email)}</td>
+                      <td>{safeDisplay(contact.telefon)}</td>
+                      <td>{safeDisplay(contact.mobil)}</td>
                       <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
                       <td className="text-right">
                         <div className="flex justify-end gap-1">
