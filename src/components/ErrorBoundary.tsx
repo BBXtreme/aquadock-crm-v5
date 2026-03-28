@@ -2,6 +2,7 @@
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ interface ErrorBoundaryProps {
 export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
   const [hasError, setHasError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -24,10 +26,14 @@ export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
     return () => window.removeEventListener("error", handleError);
   }, []);
 
-  const resetError = () => {
+  const retry = () => {
     setHasError(false);
     setError(null);
-    window.location.reload(); // simple reliable reset for now
+    queryClient.resetQueries();
+  };
+
+  const reload = () => {
+    window.location.reload();
   };
 
   if (hasError) {
@@ -41,10 +47,15 @@ export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
           <CardContent className="space-y-4 text-center">
             <p className="text-muted-foreground">An unexpected error occurred. Please try again.</p>
             {error && <p className="text-xs text-muted-foreground break-all">{error.message}</p>}
-            <Button onClick={resetError} className="w-full">
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={retry} className="flex-1">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+              <Button onClick={reload} variant="outline" className="flex-1">
+                Reload Page
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
