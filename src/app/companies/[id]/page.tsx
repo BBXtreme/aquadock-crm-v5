@@ -33,11 +33,14 @@ export default function CompanyDetailPage() {
   });
 
   useEffect(() => {
-    if (company) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", id] });
-      queryClient.invalidateQueries({ queryKey: ["reminders", id] });
+    if (company?.id) {
+      queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company.id] });
+      // Force immediate refetch
+      queryClient.refetchQueries({ queryKey: ["contacts", company.id] });
+      queryClient.refetchQueries({ queryKey: ["reminders", company.id] });
     }
-  }, [company, id, queryClient]);
+  }, [company?.id, queryClient]);
 
   if (isLoading) return <div className="container mx-auto p-6">Loading company details...</div>;
   if (error || !company) {
