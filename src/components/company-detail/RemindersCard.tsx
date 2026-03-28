@@ -216,10 +216,11 @@ export default function RemindersCard({ companyId }: Props) {
             key={editReminder?.id}
             reminder={editReminder}
             onSuccess={() => {
-              setEditReminder(null);
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              toast.success("Reminder saved");
+              setEditReminder(null);
             }}
           />
         </DialogContent>
@@ -233,10 +234,11 @@ export default function RemindersCard({ companyId }: Props) {
           <ReminderEditForm
             reminder={null}
             onSuccess={() => {
-              setAddDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              toast.success("Reminder saved");
+              setAddDialogOpen(false);
             }}
             preselectedCompanyId={companyId}
           />
