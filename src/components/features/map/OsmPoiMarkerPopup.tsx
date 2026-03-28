@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
-export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm, onCalculateWater }: OsmPoiMarkerPopupProps) {
+export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
