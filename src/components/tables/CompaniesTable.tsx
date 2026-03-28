@@ -36,7 +36,7 @@ type CompanyWithContacts = Company & { contacts?: Contact[] };
 interface CompaniesTableProps {
   companies: CompanyWithContacts[];
   onEdit?: (company: CompanyWithContacts) => void;
-  onDelete?: (company: CompanyWithContacts) => void;
+  onDelete?: (companyOrId: string | CompanyWithContacts) => void;
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
   pageCount: number;
@@ -65,6 +65,12 @@ export default function CompaniesTable({
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
+
+  const handleGlobalFilterChange = (value: string) => {
+    setGlobalFilter(value);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
+  };
 
   const columns: ColumnDef<CompanyWithContacts>[] = [
     columnHelper.display({
@@ -226,7 +232,7 @@ export default function CompaniesTable({
       pagination,
       sorting,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onPaginationChange: (updater) => {
@@ -290,7 +296,7 @@ export default function CompaniesTable({
           <Input
             placeholder="Search companies..."
             value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
