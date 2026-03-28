@@ -64,7 +64,7 @@ export default function CompaniesPage() {
   const [globalFilter, setGlobalFilter] = useState<string>("");
 
   useEffect(() => {
-    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
   }, [globalFilter]);
 
   const statusOptions = [
@@ -161,10 +161,8 @@ export default function CompaniesPage() {
     queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, globalFilter],
     queryFn: async () => {
       const supabase = createClient();
-      let query = supabase
-        .from("companies")
-        .select(
-          `
+      let query = supabase.from("companies").select(
+        `
           *,
           contacts (
             id,
@@ -173,12 +171,14 @@ export default function CompaniesPage() {
             is_primary
           )
         `,
-          { count: "exact" },
-        );
+        { count: "exact" },
+      );
 
       // Apply global filter
       if (globalFilter) {
-        query = query.or(`firmenname.ilike.%${globalFilter}%,strasse.ilike.%${globalFilter}%,stadt.ilike.%${globalFilter}%`);
+        query = query.or(
+          `firmenname.ilike.%${globalFilter}%,strasse.ilike.%${globalFilter}%,stadt.ilike.%${globalFilter}%`,
+        );
       }
 
       // Apply active filters
