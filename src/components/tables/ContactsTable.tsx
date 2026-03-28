@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Contact } from "@/lib/supabase/database.types";
-import { safeDisplay } from "@/lib/supabase/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 import { cn } from "@/lib/utils";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
@@ -324,10 +324,7 @@ export default function ContactsTable({
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
-                        className={cn(
-                          "flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium", // ← justify-start added
-                          "cursor-pointer hover:bg-muted/50",
-                        )}
+                        className="flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium" // ← justify-start added
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}

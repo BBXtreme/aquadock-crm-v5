@@ -30,8 +30,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Company, Contact } from "@/lib/supabase/database.types";
-import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/supabase/utils";
 import { cn } from "@/lib/utils";
+import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
