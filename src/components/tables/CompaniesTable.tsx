@@ -12,7 +12,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -72,147 +72,150 @@ export default function CompaniesTable({
     onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
   };
 
-  const columns: ColumnDef<CompanyWithContacts>[] = [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("firmenname", {
-      id: "firmenname",
-      header: "Firmenname",
-      cell: (info) => (
-        <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
-          {safeDisplay(info.getValue())}
-        </Link>
-      ),
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("kundentyp", {
-      header: "Kundentyp",
-      cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("status", {
-      header: "Status",
-      cell: (info) => {
-        const value = info.getValue();
-        return (
-          <Badge
-            className={cn(
-              value === "won" && "bg-emerald-600 text-white",
-              value === "lost" && "bg-rose-600 text-white",
-              value === "lead" && "bg-amber-600 text-white",
-              !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
-            )}
-          >
-            {value}
-          </Badge>
-        );
-      },
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("contacts", {
-      id: "hauptkontakt",
-      header: "Hauptkontakt",
-      cell: (info) => {
-        const contacts = info.row.original.contacts || [];
-        const primary = contacts.find((c) => c.is_primary);
-        if (!primary) return "—";
-        return (
-          <div className="flex flex-col">
-            <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
-              {`${primary.vorname} ${primary.nachname}`}
-            </Link>
-            <span className="text-xs text-muted-foreground">{primary.position || "—"}</span>
-          </div>
-        );
-      },
-      enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("contacts", {
-      id: "kontaktanzahl",
-      header: "Kontakte",
-      cell: (info) => {
-        const contacts = info.row.original.contacts || [];
-        const count = contacts.length;
-        if (count === 0) return <Badge variant="outline">Keine</Badge>;
-        const hasPrimary = contacts.some((c) => c.is_primary);
-        return (
-          <Badge variant={hasPrimary ? "default" : "secondary"}>
-            {count} {hasPrimary ? "(Primär)" : ""}
-          </Badge>
-        );
-      },
-      enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("value", {
-      header: "Value",
-      cell: (info) => formatCurrency(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("stadt", {
-      id: "ort",
-      header: "Ort",
-      cell: (info) => {
-        const row = info.row.original;
-        const plz = row.plz ? `${row.plz} ` : "";
-        const stadt = row.stadt || "";
-        return safeDisplay(`${plz}${stadt}`.trim());
-      },
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("land", {
-      header: "Land",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.accessor("created_at", {
-      header: "Created",
-      cell: (info) => formatDateDistance(info.getValue()),
-    }) as ColumnDef<CompanyWithContacts>,
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Link href={`/companies/${info.row.original.id}`}>
-            <Button variant="ghost" size="sm" type="button">
-              <Eye className="h-4 w-4" />
-            </Button>
+  const columns = useMemo<ColumnDef<CompanyWithContacts>[]>(
+    () => [
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("firmenname", {
+        id: "firmenname",
+        header: "Firmenname",
+        cell: (info) => (
+          <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
+            {safeDisplay(info.getValue())}
           </Link>
-          <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this company?")) {
-                try {
-                  onDelete?.(info.row.original);
-                } catch (error) {
-                  console.error("Error deleting company:", error);
-                  toast.error("Failed to delete company");
+        ),
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("kundentyp", {
+        header: "Kundentyp",
+        cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("status", {
+        header: "Status",
+        cell: (info) => {
+          const value = info.getValue();
+          return (
+            <Badge
+              className={cn(
+                value === "won" && "bg-emerald-600 text-white",
+                value === "lost" && "bg-rose-600 text-white",
+                value === "lead" && "bg-amber-600 text-white",
+                !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
+              )}
+            >
+              {value}
+            </Badge>
+          );
+        },
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("contacts", {
+        id: "hauptkontakt",
+        header: "Hauptkontakt",
+        cell: (info) => {
+          const contacts = info.row.original.contacts || [];
+          const primary = contacts.find((c) => c.is_primary);
+          if (!primary) return "—";
+          return (
+            <div className="flex flex-col">
+              <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
+                {`${primary.vorname} ${primary.nachname}`}
+              </Link>
+              <span className="text-xs text-muted-foreground">{primary.position || "—"}</span>
+            </div>
+          );
+        },
+        enableSorting: false,
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("contacts", {
+        id: "kontaktanzahl",
+        header: "Kontakte",
+        cell: (info) => {
+          const contacts = info.row.original.contacts || [];
+          const count = contacts.length;
+          if (count === 0) return <Badge variant="outline">Keine</Badge>;
+          const hasPrimary = contacts.some((c) => c.is_primary);
+          return (
+            <Badge variant={hasPrimary ? "default" : "secondary"}>
+              {count} {hasPrimary ? "(Primär)" : ""}
+            </Badge>
+          );
+        },
+        enableSorting: false,
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("value", {
+        header: "Value",
+        cell: (info) => formatCurrency(info.getValue()),
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("stadt", {
+        id: "ort",
+        header: "Ort",
+        cell: (info) => {
+          const row = info.row.original;
+          const plz = row.plz ? `${row.plz} ` : "";
+          const stadt = row.stadt || "";
+          return safeDisplay(`${plz}${stadt}`.trim());
+        },
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("land", {
+        header: "Land",
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.accessor("created_at", {
+        header: "Created",
+        cell: (info) => formatDateDistance(info.getValue()),
+      }) as ColumnDef<CompanyWithContacts>,
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: (info) => (
+          <div className="flex space-x-2">
+            <Link href={`/companies/${info.row.original.id}`}>
+              <Button variant="ghost" size="sm" type="button">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => {
+                if (confirm("Are you sure you want to delete this company?")) {
+                  try {
+                    onDelete?.(info.row.original);
+                  } catch (error) {
+                    console.error("Error deleting company:", error);
+                    toast.error("Failed to delete company");
+                  }
                 }
-              }
-            }}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-      enableSorting: false,
-    }) as ColumnDef<CompanyWithContacts>,
-  ];
+              }}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+        enableSorting: false,
+      }) as ColumnDef<CompanyWithContacts>,
+    ],
+    [],
+  );
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
@@ -296,6 +299,7 @@ export default function CompaniesTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Input
+            key="search-input"
             placeholder="Search companies..."
             value={globalFilter ?? ""}
             onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
