@@ -17,25 +17,26 @@ export function formatCurrency(v: number | null | undefined): string {
 
 /**
  * Formats a date string as a relative distance from now.
- * Handles null/undefined by returning '–'.
+ * Handles null/undefined by returning '—'.
  * @param d - The date string to format
- * @returns Relative time string (e.g., "2 days ago") or '–' if invalid
+ * @returns Relative time string (e.g., "2 days ago") or '—' if invalid
  */
 export function formatDateDistance(d: string | null | undefined): string {
-  if (!d) return "–";
+  if (!d) return "—";
   try {
     return formatDistanceToNow(new Date(d), { addSuffix: true });
   } catch {
-    return "–";
+    return "—";
   }
 }
 
 /**
  * Safely converts a value to string, handling null/undefined by returning fallback.
+ * This is the recommended helper for TanStack Table cells.
  * @param v - The value to convert
  * @param fallback - The fallback string if v is null/undefined
  * @returns The string representation or fallback
  */
-export function safeDisplay<T>(v: T | null | undefined, fallback = "–"): string {
-  return v != null ? v.toString() : fallback;
+export function safeDisplay<T>(v: T | null | undefined, fallback = "—"): string {
+  return v != null ? String(v) : fallback;
 }
