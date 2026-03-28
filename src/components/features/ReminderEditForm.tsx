@@ -107,6 +107,12 @@ export default function ReminderEditForm({
     },
   });
 
+  useEffect(() => {
+    if (preselectedCompanyId && companies.length > 0 && !reminder) {
+      form.setValue("company_id", preselectedCompanyId);
+    }
+  }, [companies, preselectedCompanyId, form, reminder]);
+
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
   return (
