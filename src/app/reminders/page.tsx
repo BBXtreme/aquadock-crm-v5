@@ -3,8 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
@@ -243,7 +243,8 @@ export default function RemindersPage() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost" size="sm"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => {
                           setReminderToDelete(reminder.id);
                           setDeleteDialogOpen(true);
