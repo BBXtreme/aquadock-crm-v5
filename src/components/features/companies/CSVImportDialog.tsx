@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { importCompaniesFromCSV } from "@/lib/supabase/services/companies";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 
@@ -85,7 +86,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-screen h-screen max-w-none max-h-none overflow-y-auto">
+      <WideDialogContent size="4xl" className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Import Companies from CSV</DialogTitle>
           <DialogDescription>
@@ -192,7 +193,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
+      </WideDialogContent>
     </Dialog>
   );
 }
