@@ -61,6 +61,9 @@ export async function createContact(contact: ContactInsert, client?: SupabaseCli
   // Log the exact payload for debugging
   if (process.env.NODE_ENV === "development") {
     console.log("[DEBUG] Creating contact with payload:", JSON.stringify(contact, null, 2));
+    if (contact.user_id) {
+      console.log("[DEBUG] Contact user_id:", contact.user_id);
+    }
   }
 
   const { data, error } = await supabaseClient.from("contacts").insert(contact).select().single();

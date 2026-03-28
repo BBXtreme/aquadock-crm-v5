@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
-import { updateContact } from "@/lib/supabase/services/contacts";
+import { createContact, updateContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -58,9 +58,7 @@ export default function ContactEditForm({
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("contacts").insert(data).select().single();
-      if (error) throw error;
-      return newData;
+      return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
