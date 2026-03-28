@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
-import { updateContact } from "@/lib/supabase/services/contacts";
+import { createContact, updateContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -58,12 +58,16 @@ export default function ContactEditForm({
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("contacts").insert(data).select().single();
-      if (error) throw error;
-      return newData;
+      return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
+      if (data?.company_id) {
+        queryClient.invalidateQueries({ queryKey: ["contacts", data.company_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["contacts", data?.company_id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", data?.company_id] });
       toast.success(contact ? "Contact updated" : "Contact created");
       form.reset();
       onSuccess?.();

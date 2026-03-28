@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import AdresseCard from "@/components/company-detail/AdresseCard";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
@@ -18,6 +19,7 @@ export default function CompanyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const queryClient = useQueryClient();
 
   console.log("Company page id:", id);
 
@@ -29,6 +31,53 @@ export default function CompanyDetailPage() {
     queryKey: ["company", id],
     queryFn: async () => getCompanyById(id, createClient()),
   });
+
+  useEffect(() => {
+    if (company?.id) {
+      // Force immediate refetch with higher priority
+      queryClient.refetchQueries({
+        queryKey: ["contacts", company.id],
+        type: "active",
+      });
+      queryClient.refetchQueries({
+        queryKey: ["reminders", company.id],
+        type: "active",
+      });
+
+      // Also invalidate to mark as fresh
+      queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company.id] });
+    }
+  }, [company?.id, queryClient]);
+
+  useEffect(() => {
+    if (company?.id) {
+      // Force fresh data for sub-cards on initial mount / hard reload
+      queryClient.refetchQueries({
+        queryKey: ["contacts", company.id],
+        type: "all",
+      });
+      queryClient.refetchQueries({
+        queryKey: ["reminders", company.id],
+        type: "all",
+      });
+    }
+  }, [company?.id, queryClient]);
+
+  useEffect(() => {
+    if (company?.id) {
+      setTimeout(() => {
+        queryClient.refetchQueries({
+          queryKey: ["contacts", company.id],
+          type: "all",
+        });
+        queryClient.refetchQueries({
+          queryKey: ["reminders", company.id],
+          type: "all",
+        });
+      }, 150); // small delay to ensure mount is complete
+    }
+  }, [company?.id, queryClient]);
 
   if (isLoading) return <div className="container mx-auto p-6">Loading company details...</div>;
   if (error || !company) {

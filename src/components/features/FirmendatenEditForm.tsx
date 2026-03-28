@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
 
@@ -73,13 +74,16 @@ export default function FirmendatenEditForm({
   const updateMutation = useMutation({
     mutationFn: (data: FirmendatenFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      return updateCompany(company.id, data as Partial<Company>, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       if (company) {
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       }
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       toast.success("Firmendaten updated successfully");
       onSuccess?.();
     },

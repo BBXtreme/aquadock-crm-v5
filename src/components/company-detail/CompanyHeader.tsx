@@ -1,15 +1,18 @@
+// This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
+
 import CompanyEditForm from "@/components/features/CompanyEditForm";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company } from "@/lib/supabase/database.types";
+import type { Company, TimelineEntryInsert } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
 
@@ -46,7 +49,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
   });
 
   const createTimelineMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: TimelineEntryInsert) => {
       const supabase = createClient();
       const { error } = await supabase.from("timeline").insert(data);
       if (error) throw error;
@@ -55,8 +58,10 @@ export default function CompanyHeader({ company, id, router }: Props) {
       queryClient.invalidateQueries({ queryKey: ["timeline", id] });
       setAddTimelineDialogOpen(false);
     },
-    onError: (error) => {
-      console.error("Error creating timeline entry:", error);
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Error creating timeline entry:", err);
+      toast.error("Create failed", { description: message });
     },
   });
 
@@ -64,7 +69,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
     setAddTimelineDialogOpen(true);
   };
 
-  const handleTimelineSubmit = async (values: any) => {
+  const handleTimelineSubmit = async (values: TimelineEntryInsert) => {
     setIsSubmitting(true);
     try {
       await createTimelineMutation.mutateAsync(values);
@@ -90,15 +95,16 @@ export default function CompanyHeader({ company, id, router }: Props) {
           {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={handleAddTimeline}>
+          <Button variant="outline" size="sm" type="button" onClick={handleAddTimeline}>
             <Plus className="h-4 w-4 mr-2" /> Add Timeline
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
+          <Button variant="outline" size="sm" type="button" onClick={() => setEditDialogOpen(true)}>
             <Edit className="w-4 h-4" />
           </Button>
           <Button
             variant="destructive"
             size="sm"
+            type="button"
             onClick={() => {
               if (confirm("Delete this company?")) {
                 /* deleteCompany(id); router.push("/companies"); */
@@ -107,7 +113,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
           >
             <Trash className="w-4 h-4" />
           </Button>
-          <Button onClick={() => router.push("/companies")} size="sm">
+          <Button onClick={() => router.push("/companies")} size="sm" type="button">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
@@ -142,6 +148,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
         )}
       </div>
+
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -150,6 +157,7 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <CompanyEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+
       <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

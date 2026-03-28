@@ -1,3 +1,4 @@
+// This component displays a timeline of events related to a specific company. It allows users to view, add, edit, and delete timeline entries. Each entry can be associated with a company, contact, and user. The component uses React Query for data fetching and mutations, and Supabase as the backend database. It also includes loading states and error handling with toast notifications.  - source:
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
@@ -9,14 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/browser";
-import { formatDateDE, getPriorityLabel, getReminderStatusLabel } from "@/lib/utils";
+import type { Reminder } from "@/lib/supabase/database.types";
+import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
 
 interface Props {
   companyId: string;
 }
 
 export default function RemindersCard({ companyId }: Props) {
-  const [editReminder, setEditReminder] = useState<any>(null);
+  const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -45,8 +47,10 @@ export default function RemindersCard({ companyId }: Props) {
       }
       return data;
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchOnMount: true,
     refetchOnReconnect: true,
   });
 
@@ -58,13 +62,19 @@ export default function RemindersCard({ companyId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
       toast.success("Reminder deleted");
     },
-    onError: (err) => toast.error("Delete failed", { description: err.message }),
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Delete failed", { description: message });
+    },
   });
 
   const handleAdd = () => setAddDialogOpen(true);
-  const handleEdit = (reminder: any) => setEditReminder(reminder);
+  const handleEdit = (reminder: Reminder) => setEditReminder(reminder);
   const handleDelete = (id: string) => {
     if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
   };
@@ -95,7 +105,7 @@ export default function RemindersCard({ companyId }: Props) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-red-500">Error loading reminders: {error.message}</div>
+          <div className="text-red-500">Error loading reminders: {(error as Error).message}</div>
         </CardContent>
       </Card>
     );
@@ -110,7 +120,7 @@ export default function RemindersCard({ companyId }: Props) {
               <Bell className="w-5 h-5" />
               Reminders ({reminders.length})
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAdd}>
+            <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
               Add Reminder
             </Button>
@@ -135,13 +145,16 @@ export default function RemindersCard({ companyId }: Props) {
                 {reminders.map((reminder) => (
                   <tr key={reminder.id}>
                     <td className="font-medium">
-                      <button
-                        type="button"
-                        className="text-primary hover:underline cursor-pointer"
-                        onClick={() => handleEdit(reminder)}
-                      >
-                        {reminder.title || "—"}
-                      </button>
+                      <div>
+                        <button
+                          type="button"
+                          className="text-primary hover:underline cursor-pointer"
+                          onClick={() => handleEdit(reminder)}
+                        >
+                          {safeDisplay(reminder.title)}
+                        </button>
+                        {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
+                      </div>
                     </td>
                     <td>{formatDateDE(reminder.due_date)}</td>
                     <td>
@@ -165,13 +178,20 @@ export default function RemindersCard({ companyId }: Props) {
                     <td>{reminder.assigned_to || "—"}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(reminder)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          type="button"
+                          onClick={() => handleEdit(reminder)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700"
+                          type="button"
                           onClick={() => handleDelete(reminder.id)}
                         >
                           <Trash className="h-4 w-4" />
@@ -191,7 +211,17 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm key={editReminder?.id} reminder={editReminder} onSuccess={() => setEditReminder(null)} />
+          <ReminderEditForm
+            key={editReminder?.id}
+            reminder={editReminder}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              toast.success("Reminder saved");
+              setEditReminder(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -200,7 +230,17 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm reminder={null} onSuccess={() => setAddDialogOpen(false)} />
+          <ReminderEditForm
+            reminder={null}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              toast.success("Reminder saved");
+              setAddDialogOpen(false);
+            }}
+            preselectedCompanyId={companyId}
+          />
         </DialogContent>
       </Dialog>
     </>

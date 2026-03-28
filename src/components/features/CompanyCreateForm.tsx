@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart, Building, MapPin, Waves } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -13,45 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
+import { createClient } from "@/lib/supabase/browser";
 import { createCompany } from "@/lib/supabase/services/companies";
-
-const companySchema = z.object({
-  firmenname: z.string().min(1, "Firmenname is required"),
-  rechtsform: z.string().optional(),
-  kundentyp: z.string().optional(),
-  firmentyp: z.string().optional(),
-  website: z.string().optional(),
-  telefon: z.string().optional(),
-  email: z.string().optional(),
-  strasse: z.string().optional(),
-  plz: z.string().optional(),
-  stadt: z.string().optional(),
-  bundesland: z.string().optional(),
-  land: z.string().optional(),
-  wasserdistanz: z.number().optional(),
-  wassertyp: z.string().optional(),
-  lat: z.number().optional(),
-  lon: z.number().optional(),
-  osm: z.string().optional(),
-  status: z
-    .enum([
-      "lead",
-      "interessant",
-      "qualifiziert",
-      "akquise",
-      "angebot",
-      "gewonnen",
-      "verloren",
-      "kunde",
-      "partner",
-      "inaktiv",
-    ])
-    .optional(),
-  value: z.number().optional(),
-  notes: z.string().optional(),
-});
-
-type CompanyFormValues = z.infer<typeof companySchema>;
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
@@ -136,7 +99,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   });
 
   const mutation = useMutation({
-    mutationFn: createCompany,
+    mutationFn: (company: CompanyFormValues) => createCompany(company, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company created");

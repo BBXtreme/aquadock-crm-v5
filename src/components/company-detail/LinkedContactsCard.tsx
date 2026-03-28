@@ -1,7 +1,8 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import ContactEditForm from "@/components/features/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ interface Props {
 export default function LinkedContactsCard({ companyId }: Props) {
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   console.log("LinkedContactsCard companyId:", companyId);
 
@@ -30,7 +32,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contacts")
-        .select("*")
+        .select("*, companies!company_id(firmenname)")
         .eq("company_id", companyId)
         .order("nachname", { ascending: true });
 
@@ -43,8 +45,10 @@ export default function LinkedContactsCard({ companyId }: Props) {
       }
       return data;
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchOnMount: true,
     refetchOnReconnect: true,
   });
 
@@ -131,10 +135,18 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           ) : (
                             <span>{displayName}</span>
                           )}
-                          {contact.position && <div className="text-sm text-gray-500">{contact.position}</div>}
+                          {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
                         </div>
                       </td>
-                      <td>{contact.email || "—"}</td>
+                      <td>
+                        {contact.email ? (
+                          <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                            {contact.email}
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td>{contact.telefon || "—"}</td>
                       <td>{contact.mobil || "—"}</td>
                       <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
@@ -167,7 +179,15 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm key={editContact?.id} contact={editContact} onSuccess={() => setEditContact(null)} />
+          <ContactEditForm
+            key={editContact?.id}
+            contact={editContact}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              toast.success("Contact saved");
+              setEditContact(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -176,7 +196,15 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Contact</DialogTitle>
           </DialogHeader>
-          <ContactEditForm contact={null} onSuccess={() => setAddDialogOpen(false)} preselectedCompanyId={companyId} />
+          <ContactEditForm
+            contact={null}
+            onSuccess={() => {
+              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              toast.success("Contact saved");
+              setAddDialogOpen(false);
+            }}
+            preselectedCompanyId={companyId}
+          />
         </DialogContent>
       </Dialog>
     </>

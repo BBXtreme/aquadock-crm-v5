@@ -21,6 +21,8 @@ export interface OsmPoi {
   osmUrl?: string;
   phone?: string;
   website?: string;
+  wasserdistanz?: number | null;
+  wassertyp?: string | null;
 }
 
 export interface CompanyMarkerPopupProps {
@@ -33,6 +35,7 @@ export interface OsmPoiMarkerPopupProps {
   isDarkMode?: boolean;
   onImport?: (poi: OsmPoi) => void | Promise<void>;
   onViewInOsm?: (osmUrl: string) => void;
+  onCalculateWater?: (poi: OsmPoi) => void | Promise<void>;
 }
 
 export interface OsmPoiCacheEntry {

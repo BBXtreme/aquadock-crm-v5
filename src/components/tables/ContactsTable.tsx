@@ -6,8 +6,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
@@ -29,9 +27,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Contact } from "@/lib/supabase/database.types";
-import { cn } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
+
+interface ContactsTableProps {
+  contacts: ContactWithCompany[];
+  onEdit?: (contact: ContactWithCompany) => void;
+  onDelete?: (id: string) => void;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+  pageCount: number;
+  onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
+  sorting: { id: string; desc: boolean }[];
+  onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
+}
 
 const columnHelper = createColumnHelper<ContactWithCompany>();
 
@@ -41,13 +51,24 @@ export default function ContactsTable({
   onDelete,
   globalFilter: propGlobalFilter,
   onGlobalFilterChange: propOnGlobalFilterChange,
+  pageCount,
+  onPaginationChange,
+  sorting,
+  onSortingChange,
 }: ContactsTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
+
+  const handleGlobalFilterChange = (value: string) => {
+    setGlobalFilter(value);
+    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
+  };
 
   const columns: ColumnDef<ContactWithCompany>[] = [
     columnHelper.display({
@@ -68,19 +89,24 @@ export default function ContactsTable({
       ),
       enableSorting: false,
     }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("vorname", {
-      id: "vorname",
-      header: "Vorname",
-      cell: (info) => info.getValue(),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("nachname", {
-      id: "nachname",
-      header: "Nachname",
-      cell: (info) => (
-        <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-          {info.getValue()}
-        </Link>
-      ),
+    columnHelper.display({
+      id: "name",
+      header: "Name",
+      cell: (info) => {
+        const vorname = info.row.original.vorname;
+        const nachname = info.row.original.nachname;
+        const position = info.row.original.position;
+        return (
+          <div>
+            <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
+              <div>
+                {vorname} {nachname}
+              </div>
+            </Link>
+            {position && <div className="text-xs text-gray-500">{position}</div>}
+          </div>
+        );
+      },
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("is_primary", {
       id: "is_primary",
@@ -90,12 +116,7 @@ export default function ContactsTable({
     columnHelper.accessor("anrede", {
       id: "anrede",
       header: "Anrede",
-      cell: (info) => info.getValue() || "—",
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("position", {
-      id: "position",
-      header: "Position",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "company",
@@ -113,27 +134,27 @@ export default function ContactsTable({
     columnHelper.accessor("email", {
       id: "email",
       header: "Email",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("telefon", {
       id: "telefon",
       header: "Telefon",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("mobil", {
       id: "mobil",
       header: "Mobil",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("durchwahl", {
       id: "durchwahl",
       header: "Durchwahl",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.accessor("notes", {
       id: "notes",
       header: "Notes",
-      cell: (info) => info.getValue() || "—",
+      cell: (info) => safeDisplay(info.getValue()),
     }) as ColumnDef<ContactWithCompany>,
     columnHelper.display({
       id: "actions",
@@ -177,18 +198,30 @@ export default function ContactsTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
+    manualSorting: true,
+    pageCount,
     getRowId: (row) => row.id,
     initialState: { pagination: { pageSize: 20 } },
     state: {
       globalFilter,
       columnVisibility,
       rowSelection,
+      pagination,
+      sorting,
     },
-    onGlobalFilterChange: setGlobalFilter,
+    onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      const newPagination = typeof updater === "function" ? updater(pagination) : updater;
+      setPagination(newPagination);
+      onPaginationChange(newPagination);
+    },
+    onSortingChange: (updater) => {
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      onSortingChange(newSorting);
+    },
     enableRowSelection: true,
     globalFilterFn: "includesString",
     filterFromLeafRows: true,
@@ -241,7 +274,7 @@ export default function ContactsTable({
           <Input
             placeholder="Search contacts..."
             value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
+            onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -323,10 +356,7 @@ export default function ContactsTable({
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
-                        className={cn(
-                          "flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium", // ← justify-start added
-                          "cursor-pointer hover:bg-muted/50",
-                        )}
+                        className="flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium" // ← justify-start added
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -390,12 +420,4 @@ export default function ContactsTable({
       </div>
     </div>
   );
-}
-
-interface ContactsTableProps {
-  contacts: ContactWithCompany[];
-  onEdit?: (contact: ContactWithCompany) => void;
-  onDelete?: (id: string) => void;
-  globalFilter?: string;
-  onGlobalFilterChange?: (value: string) => void;
 }

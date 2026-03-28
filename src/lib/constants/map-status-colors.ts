@@ -1,3 +1,4 @@
+// src/lib/constants/map-status-colors.ts
 export const statusColors: Record<string, string> = {
   lead: "#f59e0b", // amber
   qualifiziert: "#3b82f6", // blue

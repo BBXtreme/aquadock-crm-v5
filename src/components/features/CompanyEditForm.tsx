@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
 
@@ -140,10 +141,16 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   const updateMutation = useMutation({
     mutationFn: (data: CompanyFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      return updateCompany(company.id, data as Partial<Company>, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+      if (company) {
+        queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       toast.success("Company updated successfully");
       onSuccess?.();
     },

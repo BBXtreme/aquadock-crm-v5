@@ -1,4 +1,7 @@
-import { OpenMapClient } from "@/components/features/OpenMapClient";
+export const dynamic = "force-dynamic";
+
+import { OpenMapClient } from "@/components/features/map/OpenMapClient";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
@@ -7,9 +10,7 @@ export default async function OpenMapPage() {
   let error: string | null = null;
 
   try {
-    companies = await getCompaniesForOpenMap();
-
-    console.log(`[OpenMap Page] Successfully loaded ${companies.length} companies with geo data`);
+    companies = await getCompaniesForOpenMap(await createServerSupabaseClient());
   } catch (err: unknown) {
     console.error("[OpenMap Page] Failed to load companies:", err);
     error = "Fehler beim Laden der Karte. Bitte versuche es erneut.";

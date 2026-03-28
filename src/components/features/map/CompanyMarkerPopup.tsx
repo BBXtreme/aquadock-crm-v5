@@ -9,7 +9,7 @@ import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
-export default function CompanyMarkerPopup({ company, _onOpenDetail }: CompanyMarkerPopupProps) {
+export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps) {
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = statusLabels[statusKey] || "Lead";

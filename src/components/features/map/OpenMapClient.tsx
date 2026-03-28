@@ -1,3 +1,4 @@
+// src/components/features/map/OpenMapClient.tsx
 "use client";
 
 import dynamic from "next/dynamic";

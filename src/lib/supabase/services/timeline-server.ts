@@ -1,3 +1,4 @@
+// src/lib/supabase/services/timeline-server.ts
 import type { TimelineEntry, TimelineEntryInsert } from "../database.types";
 import { createServerSupabaseClient } from "../server";
 import { handleSupabaseError } from "../utils";

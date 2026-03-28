@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Company } from "@/lib/supabase/database.types";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 interface Props {
   company: Company;
@@ -15,7 +16,7 @@ export default function FirmendatenCard({ company }: Props) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const formatWebsite = (website: string | null) => {
-    if (!website) return "—";
+    if (!website) return safeDisplay(website);
     const url = website.startsWith("http") ? website : `https://${website}`;
     return (
       <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
@@ -25,7 +26,7 @@ export default function FirmendatenCard({ company }: Props) {
   };
 
   const formatTelefon = (telefon: string | null) => {
-    if (!telefon) return "—";
+    if (!telefon) return safeDisplay(telefon);
     return (
       <a href={`tel:${telefon}`} className="text-blue-600 hover:underline">
         {telefon}
@@ -34,7 +35,7 @@ export default function FirmendatenCard({ company }: Props) {
   };
 
   const formatEmail = (email: string | null) => {
-    if (!email) return "—";
+    if (!email) return safeDisplay(email);
     return (
       <a href={`mailto:${email}`} className="text-blue-600 hover:underline">
         {email}
@@ -59,21 +60,23 @@ export default function FirmendatenCard({ company }: Props) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-gray-700">Firmenname</div>
-              <p className="text-sm text-gray-900">{company.firmenname || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(company.firmenname)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Rechtsform</div>
-              <p className="text-sm text-gray-900">{company.rechtsform || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(company.rechtsform)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Kundentyp</div>
               <p className="text-sm text-gray-900">
-                {company.kundentyp ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1) : "—"}
+                {company.kundentyp
+                  ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1)
+                  : safeDisplay(company.kundentyp)}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Firmentyp</div>
-              <p className="text-sm text-gray-900">{company.firmentyp || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(company.firmentyp)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Website</div>

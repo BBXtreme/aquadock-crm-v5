@@ -64,7 +64,7 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
         <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
           {!isCollapsed && (
             <>
-              <span>v{APP_VERSION}</span>
+              <span>CRM v{APP_VERSION}</span>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
                 {isCollapsed ? "→" : "←"}
               </Button>

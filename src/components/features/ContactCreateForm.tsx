@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,22 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 import { createContact } from "@/lib/supabase/services/contacts";
-
-const contactSchema = z.object({
-  vorname: z.string().min(1, "Vorname is required"),
-  nachname: z.string().min(1, "Nachname is required"),
-  anrede: z.string().optional(),
-  position: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  telefon: z.string().optional(),
-  mobil: z.string().optional(),
-  durchwahl: z.string().optional(),
-  notes: z.string().optional(),
-  company_id: z.string().optional(),
-  is_primary: z.boolean().optional(),
-});
-
-type ContactFormValues = z.infer<typeof contactSchema>;
+import { type ContactFormValues, contactSchema } from "@/lib/validations/contact";
 
 const anredeOptions = [
   { value: "Herr", label: "Herr" },
@@ -70,8 +54,10 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: ContactFormValues) =>
-      createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], createClient()),
+    mutationFn: async (data: ContactFormValues) => {
+      const supabase = createClient();
+      return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success("Contact created");

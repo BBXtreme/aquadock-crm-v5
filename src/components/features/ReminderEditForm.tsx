@@ -42,9 +42,11 @@ const statusOptions = [
 export default function ReminderEditForm({
   reminder,
   onSuccess,
+  preselectedCompanyId,
 }: {
   reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
+  preselectedCompanyId?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -59,8 +61,15 @@ export default function ReminderEditForm({
       if (error) throw error;
       return newData;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      if (data?.company_id) {
+        queryClient.invalidateQueries({ queryKey: ["reminders", data.company_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["contacts", data?.company_id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", data?.company_id] });
       toast.success(reminder ? "Reminder updated" : "Reminder created");
       form.reset();
       onSuccess?.();
@@ -72,7 +81,7 @@ export default function ReminderEditForm({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: reminder?.title || "",
-      company_id: reminder?.company_id || "",
+      company_id: reminder?.company_id || preselectedCompanyId || "",
       due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
       priority: reminder?.priority || "normal",
       status: reminder?.status || "open",
@@ -104,6 +113,12 @@ export default function ReminderEditForm({
       return data;
     },
   });
+
+  useEffect(() => {
+    if (preselectedCompanyId && companies.length > 0 && !reminder) {
+      form.setValue("company_id", preselectedCompanyId);
+    }
+  }, [companies, preselectedCompanyId, form, reminder]);
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 

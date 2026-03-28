@@ -1,12 +1,15 @@
 // src/components/features/map/useMapPopupActions.ts
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 import { createClient } from "@/lib/supabase/browser";
+import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";
 
@@ -39,7 +42,8 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
     user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
-    wassertyp,
+    wassertyp: poi.wassertyp ?? wassertyp,
+    wasserdistanz: poi.wasserdistanz ?? null,
     notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
   };
 
@@ -69,6 +73,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
 
 export function useMapPopupActions() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const openCompanyDetail = (id: string) => {
     router.push(`/companies/${id}`);
@@ -77,6 +82,29 @@ export function useMapPopupActions() {
   const viewInOsm = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
+
+  const calculateWaterForPoi = useCallback(async (poi: OsmPoi) => {
+    const lat = poi.lat || poi.center?.lat;
+    const lon = poi.lon || poi.center?.lon;
+    if (!lat || !lon) {
+      toast.error("Keine Koordinaten für Wasserberechnung");
+      return;
+    }
+    toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
+    try {
+      const { distance, wassertyp } = await calculateWaterDistance(lat, lon);
+      Object.assign(poi, { wasserdistanz: distance, wassertyp });
+      console.log(`Calculated water distance: ${distance}m, type: ${wassertyp} for POI ${poi.id}`);
+      if (distance !== null) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        toast.success(`Wasser-Info berechnet: ${distance} m`, { id: "water-calc" });
+      } else {
+        toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
+      }
+    } catch (_error) {
+      toast.error("Fehler bei Wasserberechnung", { id: "water-calc" });
+    }
+  }, []);
 
   const importOsmPoi = async (poi: OsmPoi) => {
     const name = poi.tags?.name || "POI";
@@ -133,6 +161,9 @@ export function useMapPopupActions() {
 
       // Dispatch event to refresh company markers
       window.dispatchEvent(new CustomEvent("company-imported"));
+
+      // Invalidate React Query cache for companies
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
     } catch (err: unknown) {
       console.error("Import failed:", err);
       toast.error(`Import von "${name}" fehlgeschlagen`, {
@@ -142,5 +173,5 @@ export function useMapPopupActions() {
     }
   };
 
-  return { openCompanyDetail, importOsmPoi, viewInOsm };
+  return { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi };
 }

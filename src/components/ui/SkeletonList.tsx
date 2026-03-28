@@ -12,8 +12,8 @@ export function SkeletonList({ count, className = "space-y-2", itemClassName = "
   return (
     <div className={className}>
       {Array.from({ length: count }).map((_, _i) => (
-        // biome-ignore lint/correctness/useJsxKeyInIterable: static skeleton – no key per AIDER-RULES.md
-        <Skeleton className={itemClassName} />
+        // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton list per AIDER-RULES.md
+        <Skeleton key={_i} className={itemClassName} />
       ))}
     </div>
   );

@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { wassertypOptions } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
 
@@ -66,16 +67,20 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
         ...data,
         osm: data.osm?.trim() || null,
       };
-      return updateCompany(company.id, cleanData);
+      return updateCompany(company.id, cleanData, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       if (company?.id) queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       toast.success("AquaDock Daten aktualisiert");
       onSuccess?.();
     },
-    onError: (error: any) => {
-      toast.error("Fehler beim Speichern", { description: error.message });
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Fehler beim Speichern", { description: message });
     },
   });
 
@@ -123,8 +128,9 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
       } else {
         setValidationResult({ valid: false, message: "❌ OSM-Element nicht gefunden" });
       }
-    } catch (err: any) {
-      setValidationResult({ valid: false, message: `Fehler: ${err.message}` });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      setValidationResult({ valid: false, message: `Fehler: ${message}` });
     } finally {
       setIsValidating(false);
     }

@@ -1,10 +1,18 @@
-import { DialogContent } from "@/components/ui/dialog";
+// src/components/ui/wide-dialog.tsx
+import { DialogContent, DialogDescription } from "@/components/ui/dialog";
 
 interface WideDialogContentProps extends React.ComponentProps<typeof DialogContent> {
   size?: "default" | "lg" | "xl" | "2xl";
+  description?: string;
 }
 
-export function WideDialogContent({ children, size = "lg", className = "", ...props }: WideDialogContentProps) {
+export function WideDialogContent({
+  children,
+  size = "lg",
+  className = "",
+  description,
+  ...props
+}: WideDialogContentProps) {
   const sizeClasses = {
     default: "max-w-md",
     lg: "max-w-2xl",
@@ -14,6 +22,7 @@ export function WideDialogContent({ children, size = "lg", className = "", ...pr
 
   return (
     <DialogContent className={`max-h-[92vh] overflow-y-auto ${sizeClasses[size]} ${className}`} {...props}>
+      {description && <DialogDescription>{description}</DialogDescription>}
       {children}
     </DialogContent>
   );

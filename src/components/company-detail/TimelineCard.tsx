@@ -1,3 +1,4 @@
+// src/components/company-detail/TimelineCard.tsx
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Edit, Plus, Trash } from "lucide-react";
@@ -63,11 +64,14 @@ export default function TimelineCard({ companyId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
       toast.success("Timeline entry deleted");
     },
-    onError: (err) => toast.error("Delete failed", { description: err.message }),
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Delete failed", { description: message });
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       const supabase = createClient();
       const { error } = await supabase.from("timeline").update(data).eq("id", editEntry?.id);
       if (error) throw error;
@@ -77,11 +81,14 @@ export default function TimelineCard({ companyId }: Props) {
       toast.success("Timeline entry updated");
       setEditEntry(null);
     },
-    onError: (err) => toast.error("Update failed", { description: err.message }),
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Update failed", { description: message });
+    },
   });
 
   const createTimelineMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       const supabase = createClient();
       const { error } = await supabase.from("timeline").insert(data);
       if (error) throw error;
@@ -90,8 +97,10 @@ export default function TimelineCard({ companyId }: Props) {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
       setAddDialogOpen(false);
     },
-    onError: (error) => {
-      console.error("Error creating timeline entry:", error);
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("Error creating timeline entry:", err);
+      toast.error("Create failed", { description: message });
     },
   });
 
@@ -109,11 +118,11 @@ export default function TimelineCard({ companyId }: Props) {
     }
   };
 
-  const handleUpdate = async (values: any) => {
+  const handleUpdate = async (values: Partial<TimelineEntryWithJoins>) => {
     await updateMutation.mutateAsync(values);
   };
 
-  const handleTimelineSubmit = async (values: any) => {
+  const handleTimelineSubmit = async (values: Partial<TimelineEntryWithJoins>) => {
     setIsSubmitting(true);
     try {
       await createTimelineMutation.mutateAsync(values);
@@ -147,7 +156,7 @@ export default function TimelineCard({ companyId }: Props) {
               <Calendar className="w-5 h-5" />
               Timeline ({timeline.length})
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAdd}>
+            <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
               New Timeline
             </Button>
@@ -187,13 +196,20 @@ export default function TimelineCard({ companyId }: Props) {
                     <td>{entry.user_name || "—"}</td>
                     <td className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(entry)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          type="button"
+                          onClick={() => handleEdit(entry)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:text-red-700"
+                          type="button"
                           onClick={() => handleDelete(entry.id)}
                         >
                           <Trash className="h-4 w-4" />
@@ -207,6 +223,7 @@ export default function TimelineCard({ companyId }: Props) {
           )}
         </CardContent>
       </Card>
+
       <Dialog open={!!editEntry} onOpenChange={() => setEditEntry(null)}>
         <DialogContent>
           <DialogHeader>
@@ -223,6 +240,7 @@ export default function TimelineCard({ companyId }: Props) {
           />
         </DialogContent>
       </Dialog>
+
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
