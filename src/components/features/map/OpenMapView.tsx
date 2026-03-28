@@ -3,7 +3,7 @@
 
 import L from "leaflet";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 
 import "leaflet/dist/leaflet.css";
@@ -23,7 +23,16 @@ import { useMapPopupActions } from "./useMapPopupActions";
 interface CacheEntry {
   pois: OsmPoi[];
   timestamp: number;
+  bounds: L.LatLngBounds;
 }
+
+const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => {
+  useMapEvents({
+    moveend: onBoundsChange,
+    zoomend: onBoundsChange,
+  });
+  return null;
+};
 
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const mapRef = useRef<L.Map | null>(null);
@@ -34,7 +43,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
-  const poiCache = useRef(new Map<string, CacheEntry>());
+  const osmCacheRef = useRef(new Map<string, CacheEntry>());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
@@ -48,7 +57,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        poiCache.current = new Map(Object.entries(parsed));
+        osmCacheRef.current = new Map(Object.entries(parsed));
       } catch (e) {
         console.warn("Failed to load POI cache", e);
       }
@@ -106,7 +115,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   useEffect(() => {
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      const cacheObj = Object.fromEntries(poiCache.current);
+      const cacheObj = Object.fromEntries(osmCacheRef.current);
       localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
     };
   }, []);
@@ -151,9 +160,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const key = `${zoom}-${centerLat},${centerLon}`;
 
     const now = Date.now();
-    const cacheEntry = poiCache.current.get(key);
+    const cacheEntry = osmCacheRef.current.get(key);
 
-    if (cacheEntry && now - cacheEntry.timestamp < 5 * 60 * 1000) {
+    if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000 && cacheEntry.bounds.contains(bounds)) {
       setOsmPois(cacheEntry.pois);
       return;
     }
@@ -163,16 +172,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     fetchOsmPois(bounds)
       .then((result) => {
         const pois: OsmPoi[] = (result.pois || []) as OsmPoi[];
-        poiCache.current.set(key, { pois, timestamp: now });
+        osmCacheRef.current.set(key, { pois, timestamp: now, bounds });
 
-        if (poiCache.current.size > 15) {
-          const firstKey = poiCache.current.keys().next().value;
-          if (firstKey) poiCache.current.delete(firstKey);
+        if (osmCacheRef.current.size > 15) {
+          const firstKey = osmCacheRef.current.keys().next().value;
+          if (firstKey) osmCacheRef.current.delete(firstKey);
         }
 
         if (saveTimeout.current) clearTimeout(saveTimeout.current);
         saveTimeout.current = setTimeout(() => {
-          const cacheObj = Object.fromEntries(poiCache.current);
+          const cacheObj = Object.fromEntries(osmCacheRef.current);
           localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
         }, 3000);
 
@@ -183,25 +192,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   }, [autoLoadPois]);
 
   // Debounced map events
-  useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
-
-    const debounced = () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(handleLoad, 800);
-    };
-
-    mapRef.current.on("zoomend", debounced);
-    mapRef.current.on("moveend", debounced);
-
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.off("zoomend", debounced);
-        mapRef.current.off("moveend", debounced);
-      }
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [mapReady, handleLoad]);
+  const debounced = useCallback(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(handleLoad, 800);
+  }, [handleLoad]);
 
   // Initial load
   useEffect(() => {
@@ -265,6 +259,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             </Popup>
           </Marker>
         ))}
+
+        <MapEventHandler onBoundsChange={debounced} />
 
         <MarkerClusterGroup
           chunkedLoading
@@ -358,7 +354,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           disabled={currentZoom < 13}
           onClick={async () => {
-            poiCache.current.clear();
+            osmCacheRef.current.clear();
             localStorage.removeItem("openmap-poi-cache");
             if (mapRef.current && mapRef.current.getZoom() >= 13) {
               setLoadingOsm(true);
