@@ -205,8 +205,14 @@ export default function CompaniesTable({
     getPaginationRowModel: getPaginationRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: onGlobalFilterChange,
-    onPaginationChange: onPaginationChange,
-    onSortingChange: onSortingChange,
+    onPaginationChange: (updaterOrValue) => {
+      const newPagination = typeof updaterOrValue === 'function' ? updaterOrValue(table.getState().pagination) : updaterOrValue;
+      onPaginationChange(newPagination);
+    },
+    onSortingChange: (updaterOrValue) => {
+      const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(table.getState().sorting) : updaterOrValue;
+      onSortingChange(newSorting);
+    },
     state: {
       globalFilter,
       columnVisibility,
