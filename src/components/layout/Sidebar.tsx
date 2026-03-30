@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   isCollapsed: boolean;
-  isMobile: boolean;
   onToggle: () => void;
 }
 
@@ -34,9 +33,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   useEffect(() => {
     const fetchRole = async () => {
       try {
-        // TODO: Replace with actual auth query or context
-        // For now, simulate fetching role
-        const response = await fetch("/api/auth/me"); // Assume an endpoint to get user
+        const response = await fetch("/api/auth/me");
         if (response.ok) {
           const data = await response.json();
           setUserRole(data.role);
@@ -66,25 +63,19 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   return (
     <div
       className={cn(
-        "flex h-full flex-col border-r bg-background transition-all duration-300",
+        "flex h-full flex-col border-r bg-background transition-all duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4">
-        {!isCollapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded bg-primary" />
-            <span className="font-semibold">AquaDock CRM</span>
-          </div>
-        )}
-        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+      <div className="flex h-16 items-center justify-center px-4">
+        <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
           {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
       </div>
 
       <div className="border-b" />
 
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -92,17 +83,19 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               <Button
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
-                  isCollapsed && "px-2",
-                  isActive && "bg-secondary text-secondary-foreground",
+                  "w-full justify-start h-10 px-3 transition-colors",
+                  isCollapsed && "px-2 justify-center",
+                  isActive && "bg-secondary text-secondary-foreground shadow-sm",
                 )}
               >
-                <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
                 {!isCollapsed && (
-                  <>
-                    <span className="flex-1 text-left">{item.name}</span>
-                    {item.adminOnly && <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>}
-                  </>
+                  <span className="flex-1 text-left truncate">{item.name}</span>
+                )}
+                {!isCollapsed && item.adminOnly && (
+                  <Badge variant="outline" className="ml-2 text-xs px-1.5 py-0.5">
+                    Admin
+                  </Badge>
                 )}
               </Button>
             </Link>
@@ -115,23 +108,31 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div className="p-4">
         <Collapsible>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start h-10 px-3">
               <span className="flex-1 text-left">Quick Actions</span>
               <ChevronDown className="h-4 w-4" />
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1 pt-2">
-            <Button variant="ghost" size="sm" className="w-full justify-start">
+            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
               New Company
             </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
+            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
               New Contact
             </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start">
+            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
               New Reminder
             </Button>
           </CollapsibleContent>
         </Collapsible>
+      </div>
+
+      <div className="border-t" />
+
+      <div className="p-4 flex justify-center">
+        <Badge variant="outline" className="text-xs">
+          v1.0.0
+        </Badge>
       </div>
     </div>
   );
