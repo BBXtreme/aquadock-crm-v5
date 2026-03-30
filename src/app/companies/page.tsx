@@ -49,6 +49,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
+import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -88,56 +89,6 @@ export default function CompaniesPage() {
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
-
-  const statusOptions = [
-    "lead",
-    "interessant",
-    "qualifiziert",
-    "akquise",
-    "angebot",
-    "gewonnen",
-    "verloren",
-    "kunde",
-    "partner",
-    "inaktiv",
-  ] as const;
-
-  const kategorieOptions = [
-    "restaurant",
-    "hotel",
-    "resort",
-    "camping",
-    "marina",
-    "segelschule",
-    "segelverein",
-    "bootsverleih",
-    "neukunde",
-    "bestandskunde",
-    "interessent",
-    "partner",
-    "sonstige",
-  ] as const;
-
-  const betriebstypOptions = ["kette", "einzeln"] as const;
-
-  const landOptions = [
-    "Deutschland",
-    "Österreich",
-    "Schweiz",
-    "Frankreich",
-    "Italien",
-    "Spanien",
-    "Niederlande",
-    "Belgien",
-    "Dänemark",
-    "Schweden",
-    "Norwegen",
-    "Polen",
-    "Ungarn",
-    "Griechenland",
-    "Portugal",
-    "Großbritannien",
-  ] as const;
 
   const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
     lead: Sparkles,
@@ -449,12 +400,12 @@ export default function CompaniesPage() {
                     <div className="mb-4">
                       <h4 className="font-normal mb-2">Status</h4>
                       <div className="flex flex-wrap gap-2">
-                        {statusOptions.map((s) => {
-                          const Icon = statusIcons[s];
-                          const isActive = activeFilters.status.includes(s);
+                        {statusOptions.map((option) => {
+                          const Icon = statusIcons[option.value];
+                          const isActive = activeFilters.status.includes(option.value);
                           return (
                             <Button
-                              key={s}
+                              key={option.value}
                               variant={isActive ? "secondary" : "ghost"}
                               size="sm"
                               className={
@@ -462,10 +413,10 @@ export default function CompaniesPage() {
                                   ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                               }
-                              onClick={() => toggleFilter("status", s)}
+                              onClick={() => toggleFilter("status", option.value)}
                             >
                               {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                              {option.label}
                             </Button>
                           );
                         })}
@@ -476,12 +427,12 @@ export default function CompaniesPage() {
                     <div className="mb-4">
                       <h4 className="font-normal mb-2">Kategorie</h4>
                       <div className="flex flex-wrap gap-2">
-                        {kategorieOptions.map((k) => {
-                          const Icon = kategorieIcons[k];
-                          const isActive = activeFilters.kategorie.includes(k);
+                        {kundentypOptions.map((option) => {
+                          const Icon = kategorieIcons[option.value];
+                          const isActive = activeFilters.kategorie.includes(option.value);
                           return (
                             <Button
-                              key={k}
+                              key={option.value}
                               variant={isActive ? "secondary" : "ghost"}
                               size="sm"
                               className={
@@ -489,10 +440,10 @@ export default function CompaniesPage() {
                                   ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                               }
-                              onClick={() => toggleFilter("kategorie", k)}
+                              onClick={() => toggleFilter("kategorie", option.value)}
                             >
                               {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                              {k.charAt(0).toUpperCase() + k.slice(1)}
+                              {option.label}
                             </Button>
                           );
                         })}
@@ -503,11 +454,11 @@ export default function CompaniesPage() {
                     <div className="mb-4">
                       <h4 className="font-normal mb-2">Betriebstyp</h4>
                       <div className="flex flex-wrap gap-2">
-                        {betriebstypOptions.map((b) => {
-                          const isActive = activeFilters.betriebstyp.includes(b);
+                        {firmentypOptions.map((option) => {
+                          const isActive = activeFilters.betriebstyp.includes(option.value);
                           return (
                             <Button
-                              key={b}
+                              key={option.value}
                               variant={isActive ? "secondary" : "ghost"}
                               size="sm"
                               className={
@@ -515,9 +466,9 @@ export default function CompaniesPage() {
                                   ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                               }
-                              onClick={() => toggleFilter("betriebstyp", b)}
+                              onClick={() => toggleFilter("betriebstyp", option.value)}
                             >
-                              {b.charAt(0).toUpperCase() + b.slice(1)}
+                              {option.label}
                             </Button>
                           );
                         })}
@@ -528,11 +479,11 @@ export default function CompaniesPage() {
                     <div>
                       <h4 className="font-normal mb-2">Land</h4>
                       <div className="flex flex-wrap gap-2">
-                        {landOptions.map((l) => {
-                          const isActive = activeFilters.land.includes(l);
+                        {landOptions.map((option) => {
+                          const isActive = activeFilters.land.includes(option.value);
                           return (
                             <Button
-                              key={l}
+                              key={option.value}
                               variant={isActive ? "secondary" : "ghost"}
                               size="sm"
                               className={
@@ -540,9 +491,9 @@ export default function CompaniesPage() {
                                   ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                   : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                               }
-                              onClick={() => toggleFilter("land", l)}
+                              onClick={() => toggleFilter("land", option.value)}
                             >
-                              {l}
+                              {option.label}
                             </Button>
                           );
                         })}

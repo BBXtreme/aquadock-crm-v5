@@ -11,7 +11,6 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Building, Users } from "lucide-react";
 import { Suspense, useCallback, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ContactEditForm from "@/components/features/ContactEditForm";
@@ -25,27 +24,6 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
 import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
-
-const _contactSchema = z.object({
-  vorname: z.string().min(1, "Vorname is required"),
-  nachname: z.string().min(1, "Nachname is required"),
-  anrede: z.string().optional(),
-  position: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  telefon: z.string().optional(),
-  mobil: z.string().optional(),
-  durchwahl: z.string().optional(),
-  notes: z.string().optional(),
-  company_id: z.string().optional(),
-  is_primary: z.boolean().optional(),
-});
-
-const _anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
