@@ -20,7 +20,7 @@ const displayNameSchema = z.object({
 
 type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
-export default function ProfileForm({ profile }: { profile: Profile }) {
+function ProfileForm({ profile }: { profile: Profile }) {
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
     defaultValues: {
@@ -29,12 +29,16 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
   });
 
   const mutation = useMutation({
-    mutationFn: updateDisplayName,
+    mutationFn: async (display_name: string) => {
+      const formData = new FormData();
+      formData.append('display_name', display_name);
+      return updateDisplayName(formData);
+    },
     onSuccess: () => {
       toast.success("Display name updated successfully");
       form.reset({ display_name: form.getValues("display_name") });
     },
-    onError: () => {
+    onError: (_error) => {
       toast.error("Failed to update display name");
     },
   });
@@ -68,14 +72,12 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
           <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
           <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
         </div>
-        <Button 
-          type="submit" 
-          className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" 
-          disabled={mutation.isPending}
-        >
+        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={mutation.isPending}>
           {mutation.isPending ? "Updating..." : "Update Profile"}
         </Button>
       </form>
     </Form>
   );
 }
+
+export default ProfileForm;
