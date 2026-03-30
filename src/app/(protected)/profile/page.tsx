@@ -28,7 +28,7 @@ async function updateProfile(formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase
-    .from("profiles")
+    .from("ofiles")
     .update({ display_name })
     .eq("id", user.id);
   if (error) throw error;
@@ -49,7 +49,7 @@ export default async function ProfilePage() {
 
   const supabase = await createServerSupabaseClient();
   const { data: userProfile } = await supabase
-    .from("profiles")
+    .from("ofiles")
     .select("*")
     .eq("id", user.id)
     .single();
