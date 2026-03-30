@@ -7,13 +7,13 @@
 import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
-import { requireAdmin } from "@/lib/supabase/auth/require-admin";
+import { requireUser } from "@/lib/supabase/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
 import DashboardClient from "./DashboardClient";
 
 export default async function DashboardPage() {
   // Auth before data
-  const user = await requireAdmin();
+  const user = await requireUser();
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
