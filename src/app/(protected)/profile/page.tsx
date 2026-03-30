@@ -1,8 +1,8 @@
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -14,9 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import type { AuthUser } from "@/lib/supabase/auth/types";
 import type { Database } from "@/lib/supabase/database.types";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
