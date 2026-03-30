@@ -20,7 +20,7 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [_isMobile, setIsMobile] = useState(false);
 
   // Do not show sidebar + header on login and unauthorized pages
   const isAuthPage = pathname === "/login" || pathname === "/unauthorized";
