@@ -12,8 +12,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Building, Edit, Trash, User } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,9 +32,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
-import type { Company, Contact } from "@/lib/supabase/database.types";
-import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
-import { cn } from "@/lib/utils";
+import type { Contact } from "@/lib/supabase/database.types";
+import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -89,20 +87,7 @@ export default function ContactDetailPage() {
     error,
   } = useQuery({
     queryKey: ["contact", id],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("contacts")
-        .select(
-          "*, companies!company_id(*)", // ← FULL company row (fixes the type mismatch)
-        )
-        .eq("id", id)
-        .single();
-      if (error) throw error;
-      return data as Contact & {
-        companies?: Company | null;
-      };
-    },
+    queryFn: async () => getContactById(id, createClient()),
     enabled: !!id,
   });
 
@@ -325,8 +310,9 @@ export default function ContactDetailPage() {
           </CardContent>
         </Card>
 
+        {/* Temporarily disabled heavy joins or related data fetching */}
         {/* Linked Company */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building className="w-5 h-5" />
@@ -402,7 +388,7 @@ export default function ContactDetailPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Edit Contact Dialog */}
         <Dialog open={editDialog} onOpenChange={setEditDialog}>
@@ -427,7 +413,7 @@ export default function ContactDetailPage() {
               <DialogTitle>Edit Company</DialogTitle>
             </DialogHeader>
             <CompanyEditForm
-              company={contact.companies || null}
+              company={null}
               onSuccess={() => {
                 setEditCompanyDialog(false);
                 queryClient.invalidateQueries({ queryKey: ["contact", id] });
