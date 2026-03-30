@@ -9,18 +9,18 @@
 // sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
 
 import { Suspense } from "react";
-import { requireAdmin } from "@/lib/supabase/auth/require-admin";
+import { requireUser } from "@/lib/supabase/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
 import ClientCompaniesPage from "./ClientCompaniesPage";
 
 export default async function CompaniesPage() {
-  const user = await requireAdmin();
+  const user = await requireUser();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <div>Welcome, {safeDisplay(user.display_name)}</div>
-        <Suspense fallback={<div>Loading companies...</div>}>
+        <p>Welcome back, {safeDisplay(user.display_name)}</p>
+        <Suspense fallback={<div className="p-8">Loading companies...</div>}>
           <ClientCompaniesPage />
         </Suspense>
       </div>
