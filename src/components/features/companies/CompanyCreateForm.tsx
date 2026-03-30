@@ -1,3 +1,6 @@
+// src/components/features/CompanyCreateForm.tsx
+// This component renders a form for creating company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create company records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,63 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
-import { createClient } from "@/lib/supabase/browser";
+import { wassertypOptions } from "@/lib/constants";
+import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import { createClient } from "@/lib/supabase/browser-client";
 import { createCompany } from "@/lib/supabase/services/companies";
-import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
-
-const kundentypOptions = [
-  { value: "restaurant", label: "Restaurant" },
-  { value: "hotel", label: "Hotel" },
-  { value: "resort", label: "Resort" },
-  { value: "camping", label: "Camping" },
-  { value: "marina", label: "Marina" },
-  { value: "segelschule", label: "Segelschule" },
-  { value: "segelverein", label: "Segelverein" },
-  { value: "bootsverleih", label: "Bootsverleih" },
-  { value: "neukunde", label: "Neukunde" },
-  { value: "bestandskunde", label: "Bestandskunde" },
-  { value: "interessent", label: "Interessent" },
-  { value: "partner", label: "Partner" },
-  { value: "sonstige", label: "Sonstige" },
-];
-
-const firmentypOptions = [
-  { value: "kette", label: "Kette" },
-  { value: "einzeln", label: "Einzelbetrieb" },
-];
-
-const statusOptions = [
-  { value: "lead", label: "Lead" },
-  { value: "interessant", label: "Interessant" },
-  { value: "qualifiziert", label: "Qualifiziert" },
-  { value: "akquise", label: "Akquise" },
-  { value: "angebot", label: "Angebot" },
-  { value: "gewonnen", label: "Gewonnen" },
-  { value: "verloren", label: "Verloren" },
-  { value: "kunde", label: "Kunde" },
-  { value: "partner", label: "Partner" },
-  { value: "inaktiv", label: "Inaktiv" },
-];
-
-const landOptions = [
-  { value: "Deutschland", label: "Deutschland" },
-  { value: "Österreich", label: "Österreich" },
-  { value: "Schweiz", label: "Schweiz" },
-  { value: "Frankreich", label: "Frankreich" },
-  { value: "Italien", label: "Italien" },
-  { value: "Spanien", label: "Spanien" },
-  { value: "Niederlande", label: "Niederlande" },
-  { value: "Belgien", label: "Belgien" },
-  { value: "Dänemark", label: "Dänemark" },
-  { value: "Schweden", label: "Schweden" },
-  { value: "Norwegen", label: "Norwegen" },
-  { value: "Polen", label: "Polen" },
-  { value: "Ungarn", label: "Ungarn" },
-  { value: "Griechenland", label: "Griechenland" },
-  { value: "Portugal", label: "Portugal" },
-  { value: "Großbritannien", label: "Großbritannien" },
-];
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company-val";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -76,30 +27,54 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: "",
-      rechtsform: "",
+      rechtsform: undefined,
       kundentyp: "",
-      firmentyp: "",
-      strasse: "",
-      plz: "",
-      stadt: "",
-      bundesland: "",
+      firmentyp: undefined,
+      strasse: undefined,
+      plz: undefined,
+      stadt: undefined,
+      bundesland: undefined,
       land: "Deutschland",
-      website: "",
-      telefon: "",
-      email: "",
-      wasserdistanz: 0,
-      wassertyp: "",
-      lat: 0,
-      lon: 0,
-      osm: "",
+      website: undefined,
+      telefon: undefined,
+      email: undefined,
+      wasserdistanz: undefined,
+      wassertyp: undefined,
+      lat: undefined,
+      lon: undefined,
+      osm: undefined,
       status: "lead",
-      value: 0,
-      notes: "",
+      value: undefined,
+      notes: undefined,
     },
   });
 
   const mutation = useMutation({
-    mutationFn: (company: CompanyFormValues) => createCompany(company, createClient()),
+    mutationFn: (company: CompanyFormValues) => {
+      const data = {
+        firmenname: company.firmenname,
+        rechtsform: company.rechtsform ?? undefined,
+        kundentyp: company.kundentyp,
+        firmentyp: company.firmentyp ?? undefined,
+        strasse: company.strasse ?? undefined,
+        plz: company.plz ?? undefined,
+        stadt: company.stadt ?? undefined,
+        bundesland: company.bundesland ?? undefined,
+        land: company.land ?? undefined,
+        website: company.website ?? undefined,
+        telefon: company.telefon ?? undefined,
+        email: company.email ?? undefined,
+        wasserdistanz: company.wasserdistanz ?? undefined,
+        wassertyp: company.wassertyp ?? undefined,
+        lat: company.lat ?? undefined,
+        lon: company.lon ?? undefined,
+        osm: company.osm ?? undefined,
+        status: company.status,
+        value: company.value ?? undefined,
+        notes: company.notes ?? undefined,
+      };
+      return createCompany(data, createClient());
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Company created");
@@ -142,7 +117,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Rechtsform</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,7 +129,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Kundentyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select customer type" />
@@ -178,7 +153,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Firmentyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select company type" />
@@ -203,7 +178,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Website</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -216,7 +191,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Telefon</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,7 +204,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Email</FormLabel>
                     <FormControl>
-                      <Input className="w-full" type="email" {...field} />
+                      <Input className="w-full" type="email" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -252,7 +227,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Strasse</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -265,7 +240,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Plz</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -278,7 +253,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Stadt</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -291,7 +266,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Bundesland</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -303,7 +278,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Land</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select country" />
@@ -342,6 +317,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
+                        value={field.value ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -355,7 +331,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Wassertyp</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select water type" />
@@ -385,6 +361,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
+                        value={field.value ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -404,6 +381,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
+                        value={field.value ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -418,7 +396,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Osm</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} />
+                      <Input className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -440,7 +418,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base">Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select status" />
@@ -469,7 +447,8 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -483,7 +462,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem className="md:col-span-2">
                     <FormLabel className="text-base">Notes</FormLabel>
                     <FormControl>
-                      <Textarea className="w-full" {...field} />
+                      <Textarea className="w-full" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

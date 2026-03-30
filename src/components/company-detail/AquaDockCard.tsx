@@ -3,7 +3,7 @@
 import { Edit, MapPin, Waves } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import AquaDockEditForm from "@/components/features/AquaDockEditForm";
+import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

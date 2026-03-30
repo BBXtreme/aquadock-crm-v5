@@ -116,6 +116,11 @@ pnpm check:fix    # lint + auto-fix
 - Input sanitization: All forms use Zod with .trim() and length limits. 
 - Static skeletons use predefined string keys. No ! assertions allowed.
 
+### DTOs and Middleware
+
+- **DTO Pattern**: Introduced in `src/lib/dto/` to define form-specific data transfer objects (e.g., `CompanyFormDTO` and `ContactFormDTO`) for type-safe form handling and API interactions, separating form logic from database schemas.
+- **Middleware**: `src/middleware.ts` added for future authentication and route protection, currently a placeholder for Supabase Auth integration.
+
 ## 7. Folder Structure
 
 text

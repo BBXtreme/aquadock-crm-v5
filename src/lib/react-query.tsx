@@ -1,10 +1,25 @@
 // src/lib/react-query.tsx
+/* React Query Provider component with optional Devtools for development
+Provides a request-scoped QueryClient for proper SSR + hydration
+Usage:
+- Wrap your app with <ReactQueryProvider> in the root layout
+- Set SHOW_DEVTOOLS to true to enable Devtools (good for development)
+- Set SHOW_DEVTOOLS to false to disable Devtools (recommended for production)
+Security: Using a request-scoped QueryClient ensures that data is not shared 
+between users in SSR environments, preventing potential data leaks.
+Note: The QueryClient is created using React.cache to ensure it is scoped 
+to the request and properly hydrated on the client side.
+This file is intentionally simple and focused on providing the React Query 
+context to the app. All query logic should be implemented in separate hooks 
+(e.g., useCompanies, useContacts) that utilize the QueryClient provided here.
+*/
+
 "use client";
 
-import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { type ReactNode, useState } from "react";
-import { toast } from "sonner";
+import type { ReactNode } from "react";
+import { getQueryClient } from "./query-client";
 
 /**
  * React Query Provider
@@ -14,33 +29,11 @@ import { toast } from "sonner";
  * - Change SHOW_DEVTOOLS to false → Devtools hidden (recommended for production)
  */
 
-const SHOW_DEVTOOLS = false; // ← Change to false before deploying to Vercel
+const SHOW_DEVTOOLS = false; // ← Change to true/false before deploying to Vercel
 
 export function ReactQueryProvider({ children }: { children: ReactNode }) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30 * 1000, // 30 seconds - good balance
-            gcTime: 10 * 60 * 1000, // 10 minutes cache
-            retry: 2,
-            refetchOnWindowFocus: false,
-            structuralSharing: true,
-          },
-        },
-        queryCache: new QueryCache({
-          onError: (error, query) => {
-            const queryKey = query?.meta?.queryKey || query?.queryKey;
-            const context = queryKey ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` : "";
-            toast.error("An error occurred", {
-              description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
-              id: "query-error",
-            });
-          },
-        }),
-      }),
-  );
+  // Use request-scoped QueryClient (via React.cache) for proper SSR + hydration
+  const queryClient = getQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>

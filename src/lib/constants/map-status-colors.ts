@@ -1,4 +1,9 @@
 // src/lib/constants/map-status-colors.ts
+// This file defines color constants for different map marker statuses used in the application.
+// The colors are defined in a record where the key is the status (in lowercase) and the value is the corresponding color code.
+// These colors are used to visually differentiate between different statuses of companies or points of interest on the map.
+// The file also includes label mappings for statuses and badge colors for various categories, ensuring a consistent visual language across the app.
+
 export const statusColors: Record<string, string> = {
   lead: "#f59e0b", // amber
   qualifiziert: "#3b82f6", // blue

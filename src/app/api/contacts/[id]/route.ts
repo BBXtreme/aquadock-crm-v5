@@ -1,6 +1,12 @@
+// src/app/api/contacts/[id]/route.ts
+// This file defines the API route handlers for the /api/contacts/[id] endpoint, which allows fetching, updating, and deleting a specific contact by ID.
+// The GET handler retrieves the contact details along with the linked company information from the database using Supabase.
+// The PUT handler updates the contact information based on the request body and returns the updated contact data.
+// The DELETE handler removes the contact from the database. All handlers include error handling to return appropriate responses in case of issues.
+
 import { NextResponse } from "next/server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   // TODO: Add authentication when user login is implemented

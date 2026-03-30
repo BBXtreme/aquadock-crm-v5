@@ -1,4 +1,6 @@
 // src/components/features/map/useMapPopupActions.ts
+// This hook provides action handlers for map popups, such as importing OSM POIs as companies, viewing in OSM, calculating water distance, and opening company details. It integrates with the Supabase backend and uses react-query for cache management.
+
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,7 +10,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";

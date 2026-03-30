@@ -1,4 +1,4 @@
-# Markdown# TanStack React Table v8 – TypeScript Patterns & Gotchas  
+# TanStack React Table v8 – TypeScript Patterns & Gotchas  
 
 **AquaDock CRM** – March 2026
 
@@ -74,6 +74,6 @@ https://github.com/TanStack/table/issues/4302
 https://github.com/TanStack/table/issues/4382
 https://github.com/TanStack/table/discussions/4241
 
-**Last updated: 2026-03-20**
+**Last updated: 2026-03-27**
 Applies to: @tanstack/react-table ^8.10 – ^8.20 (verify in package.json)
 AquaDock CRM rule: see also AIDER-RULES.md section 7

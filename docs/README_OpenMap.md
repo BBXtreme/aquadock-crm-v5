@@ -14,14 +14,15 @@ Users can import POIs directly into the CRM with one click (becomes a company wi
 
 | File                                            | Purpose                                                      |
 | ----------------------------------------------- | ------------------------------------------------------------ |
-| `src/components/features/map/OpenMapClient.tsx` | Thin wrapper + ErrorBoundary + dynamic import (SSR-safe)     |
+| `src/components/features/map/OpenMapClient.tsx` | Thin wrapper + ErrorBoundary + Suspense + dynamic import (SSR-safe)     |
 | `src/components/features/map/OpenMapView.tsx`   | Main Leaflet map UI, state, clustering, dark mode            |
-| `src/lib/utils/map.ts`                          | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
+| `src/lib/utils/map-utils.ts`                    | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
 | `src/lib/constants/map-poi-config.ts`           | POI categories & Overpass tag definitions                    |
 | `src/lib/constants/map-status-colors.ts`        | Status colors + labels                                       |
 | `src/lib/constants/kundentyp.ts`                | OSM tag → `kundentyp` mapping                                |
 | `src/lib/constants/wassertyp.ts`                | Water type detection                                         |
 | `src/lib/utils/calculateWaterDistance.ts`       | Distance + type to nearest water body                        |
+| src/lib/constants/overpass-endpoints.ts         | Overpass API endpoints                                       |
 
 **Key supporting files**: `CompanyMarkerPopup.tsx`, `OsmPoiMarkerPopup.tsx`
 
@@ -58,6 +59,7 @@ Users can import POIs directly into the CRM with one click (becomes a company wi
 - No `!` assertions, full null safety, strict TypeScript
 - Follows AIDER-RULES.md (hooks ordering, Biome compliance)
 - Event-driven refresh via custom `company-imported` event
+- Suspense boundary for loading states
 
 ## Why No `route.ts` API Routes?
 
@@ -80,3 +82,4 @@ An API route would only be added if heavy server-side processing (e.g. bulk Post
 
 **Status**: Production-ready, clean, and fully aligned with v5 architecture.
 
+Built with ❤️ at Waterfront Beach • 2026

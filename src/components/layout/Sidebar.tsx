@@ -61,7 +61,7 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
 
       {/* VERSION BADGE – BOTTOM OF SIDEBAR */}
       <div className="mt-auto border-t p-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+        <div key={APP_VERSION} className="flex items-center justify-between text-xs text-muted-foreground font-mono">
           {!isCollapsed && (
             <>
               <span>CRM v{APP_VERSION}</span>

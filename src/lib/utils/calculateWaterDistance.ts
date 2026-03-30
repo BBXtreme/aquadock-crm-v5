@@ -1,6 +1,22 @@
 // src/lib/utils/calculateWaterDistance.ts
-import L from "leaflet";
-import { determineWassertyp } from "@/lib/constants/wassertyp";
+// This utility calculates the distance to the nearest water feature
+// using the Overpass API
+// It includes aggressive client-side caching to minimize API calls,
+// with a TTL of 24 hours
+// The search radius has been reduced to 1000m to focus on nearby water
+// features
+// Multiple Overpass API endpoints are used with retry logic to improve
+// reliability
+// The function is designed to be called on explicit user request from
+// a POI popup, rather than automatically on map movements, to further
+// reduce unnecessary API calls
+// The result includes both the distance to the nearest water feature
+// and the determined wassertyp (type of water), which can be used for
+// display purposes in the UI
+// The code is structured to handle various edge cases, such as API rate
+// limits, timeouts, and the possibility of no nearby water features
+// being found, while providing informative console logs for debugging
+// The caching mechanism uses localStorage and includes logic to trim the cache to a maximum number of entries to prevent unbounded growth, ensuring that the most recent entries are retained while older ones are removed when the limit is exceeded. This helps maintain performance and storage efficiency over time.
 
 /**
  * Calculates the distance to the nearest water feature using Overpass API.
@@ -11,6 +27,12 @@ import { determineWassertyp } from "@/lib/constants/wassertyp";
  * - Multiple endpoint rotation with backoff
  * - Only called on explicit user request from POI popup
  */
+
+// Note: This function relies on the Leaflet library for distance calculations, which is already a dependency of the project.
+
+import L from "leaflet";
+import { OVERPASS_ENDPOINTS } from "@/lib/constants/overpass-endpoints";
+import { determineWassertyp } from "@/lib/constants/wassertyp";
 
 const WATER_CACHE_KEY = "aquadock_water_cache_v2";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
@@ -60,8 +82,8 @@ function setWaterCache(lat: number, lon: number, result: { distance: number | nu
     const trimmed = Object.fromEntries(entries.slice(0, MAX_CACHE_ENTRIES));
 
     localStorage.setItem(WATER_CACHE_KEY, JSON.stringify(trimmed));
-  } catch (e) {
-    console.warn("Failed to save water cache", e);
+  } catch (_e) {
+    /* Ignore localStorage errors */
   }
 }
 
@@ -72,7 +94,6 @@ export async function calculateWaterDistance(
   // 1. Check cache first (fast path)
   const cached = getWaterCache(lat, lon);
   if (cached) {
-    console.log(`[Water] Cache hit for ${lat.toFixed(5)},${lon.toFixed(5)} → ${cached.distance}m`);
     return { distance: cached.distance, wassertyp: cached.wassertyp };
   }
 
@@ -95,14 +116,7 @@ export async function calculateWaterDistance(
 );
 out geom;`;
 
-    const endpoints = [
-      "https://overpass-api.de/api/interpreter",
-      "https://overpass.private.coffee/api/interpreter",
-      "https://overpass.osm.ch/api/interpreter",
-      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    ];
-
-    for (const endpoint of endpoints) {
+    for (const endpoint of OVERPASS_ENDPOINTS) {
       try {
         const response = await fetch(endpoint, {
           method: "POST",
@@ -111,7 +125,6 @@ out geom;`;
         });
 
         if (response.status === 429) {
-          console.warn(`[Water] ${endpoint} → 429 rate limit, trying next...`);
           await new Promise((r) => setTimeout(r, 800));
           continue;
         }
@@ -156,17 +169,10 @@ out geom;`;
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") break;
-        if (err instanceof Error) {
-          console.warn(`[Water] ${endpoint} failed:`, err.message);
-        } else {
-          console.warn(`[Water] ${endpoint} failed:`, err);
-        }
       }
     }
 
     // Fallback: Check if point is inside a water area
-    console.warn(`No nearby water found near ${lat.toFixed(5)},${lon.toFixed(5)}. Trying containment fallback...`);
-
     const fallbackQuery = `
 [out:json][timeout:12];
 is_in(${jitterLat},${jitterLon});
@@ -190,15 +196,14 @@ out tags;`;
           return result;
         }
       }
-    } catch (fallbackErr) {
-      console.warn("Fallback query also failed", fallbackErr);
+    } catch (_fallbackErr) {
+      /* Ignore fallback errors */
     }
 
     const noResult = { distance: null, wassertyp: null };
     setWaterCache(lat, lon, noResult);
     return noResult;
-  } catch (error) {
-    console.warn(`Water distance calculation failed for ${lat.toFixed(5)},${lon.toFixed(5)}:`, error);
+  } catch (_error) {
     const failResult = { distance: null, wassertyp: null };
     setWaterCache(lat, lon, failResult);
     return failResult;

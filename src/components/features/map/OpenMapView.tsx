@@ -1,4 +1,7 @@
 // src/components/features/map/OpenMapView.tsx
+// This component renders the main map view using Leaflet, showing company markers and OSM POIs.
+// It includes logic for fetching POIs based on map bounds with caching, handling marker popups, and user interactions.
+
 "use client";
 
 import L from "leaflet";
@@ -13,7 +16,7 @@ import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map";
+import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
 import OsmPoiMarkerPopup from "./OsmPoiMarkerPopup";
@@ -82,7 +85,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Company import refresh
   const refreshCompanies = useCallback(async () => {
-    const supabase = (await import("@/lib/supabase/browser")).createClient();
+    const supabase = (await import("@/lib/supabase/browser-client")).createClient();
 
     let query = supabase.from("companies").select("*").not("lat", "is", null).not("lon", "is", null);
 

@@ -3,12 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import ContactEditForm from "@/components/features/ContactEditForm";
+import ContactEditForm from "@/components/features/contacts/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
 
 interface Props {

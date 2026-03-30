@@ -1,4 +1,6 @@
 // src/components/features/map/CompanyMarkerPopup.tsx
+// This component renders a popup for company markers on the map, showing details and actions.
+
 "use client";
 
 import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";

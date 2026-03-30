@@ -1,3 +1,12 @@
+// src/app/login/page.tsx
+// This file defines the Login page of the application, which provides a user interface for signing in
+// and signing up using Supabase's authentication system.
+// It uses the @supabase/auth-ui-react package to render the authentication form, allowing users to
+// switch between sign-in and sign-up views.
+// The page also includes logic to check if a user is already authenticated and redirects them to the dashboard if they are.
+// Additionally, it listens for authentication state changes to handle redirection after successful sign-in or sign-up.
+// The appearance of the authentication form is customized using the ThemeSupa theme with some color overrides.
+
 "use client";
 
 import { Auth } from "@supabase/auth-ui-react";
@@ -7,7 +16,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 
 export default function LoginPage() {
   const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");

@@ -1,7 +1,11 @@
+// src/components/features/ContactEditForm.tsx
+// This component renders a form for editing contact data. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create or update contact records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -11,20 +15,82 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser";
+import { anredeOptions } from "@/lib/constants/company-options";
+import type { ContactFormDTO } from "@/lib/dto/contact.dto";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
-import { createContact } from "@/lib/supabase/services/contacts";
-import { type ContactFormValues, contactSchema } from "@/lib/validations/contact";
+import { createContact, updateContact } from "@/lib/supabase/services/contacts";
+import { contactSchema } from "@/lib/validations/contact-val";
 
-const anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
-
-export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
+export default function ContactEditForm({
+  contact,
+  onSuccess,
+  preselectedCompanyId,
+}: {
+  contact?: Database["public"]["Tables"]["contacts"]["Row"] | null;
+  onSuccess?: () => void;
+  preselectedCompanyId?: string;
+}) {
   const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: async (data: ContactFormDTO) => {
+      if (contact) {
+        return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
+      }
+      // create
+      const supabase = createClient();
+      return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
+      if (data?.company_id) {
+        queryClient.invalidateQueries({ queryKey: ["contacts", data.company_id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ["contacts", data?.company_id] });
+      queryClient.invalidateQueries({ queryKey: ["reminders", data?.company_id] });
+      toast.success(contact ? "Contact updated" : "Contact created");
+      form.reset();
+      onSuccess?.();
+    },
+    onError: (err) => toast.error("Operation failed", { description: err.message }),
+  });
+
+  const form = useForm<ContactFormDTO>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      vorname: contact?.vorname || "",
+      nachname: contact?.nachname || "",
+      anrede: contact?.anrede || "",
+      position: contact?.position || "",
+      email: contact?.email || "",
+      telefon: contact?.telefon || "",
+      mobil: contact?.mobil || "",
+      durchwahl: contact?.durchwahl || "",
+      notes: contact?.notes || "",
+      company_id: contact?.company_id || preselectedCompanyId || "",
+      is_primary: contact?.is_primary || false,
+    },
+  });
+
+  useEffect(() => {
+    if (contact) {
+      form.reset({
+        vorname: contact.vorname || "",
+        nachname: contact.nachname || "",
+        anrede: contact.anrede || "",
+        position: contact.position || "",
+        email: contact.email || "",
+        telefon: contact.telefon || "",
+        mobil: contact.mobil || "",
+        durchwahl: contact.durchwahl || "",
+        notes: contact.notes || "",
+        company_id: contact.company_id || "",
+        is_primary: contact.is_primary || false,
+      });
+    }
+  }, [contact, form]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -34,37 +100,6 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
       if (error) throw error;
       return data;
     },
-  });
-
-  const form = useForm<ContactFormValues>({
-    resolver: zodResolver(contactSchema),
-    defaultValues: {
-      vorname: "",
-      nachname: "",
-      anrede: "",
-      position: "",
-      email: "",
-      telefon: "",
-      mobil: "",
-      durchwahl: "",
-      notes: "",
-      company_id: companyId || "",
-      is_primary: false,
-    },
-  });
-
-  const mutation = useMutation({
-    mutationFn: async (data: ContactFormValues) => {
-      const supabase = createClient();
-      return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success("Contact created");
-      form.reset();
-      onSuccess?.();
-    },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
@@ -206,7 +241,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!!companyId}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company" />
@@ -239,7 +274,13 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating..." : "Create Contact"}
+          {mutation.isPending
+            ? contact
+              ? "Updating..."
+              : "Creating..."
+            : contact
+              ? "Update Contact"
+              : "Create Contact"}
         </Button>
       </form>
     </Form>

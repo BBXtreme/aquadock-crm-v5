@@ -1,3 +1,4 @@
+// src/components/tables/CompaniesTable.tsx
 // Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
 "use client";
 
@@ -7,6 +8,7 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  type Updater,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
@@ -29,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
@@ -43,6 +45,9 @@ interface CompaniesTableProps {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   sorting: { id: string; desc: boolean }[];
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
+  onImportCSV?: () => void;
+  rowSelection: Record<string, boolean>;
+  onRowSelectionChange: (updater: Updater<Record<string, boolean>>) => void;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -56,11 +61,13 @@ export default function CompaniesTable({
   pageCount,
   onPaginationChange,
   sorting,
-  onSortingChange: _onSortingChange,
+  onSortingChange,
+  onImportCSV,
+  rowSelection,
+  onRowSelectionChange,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
@@ -160,23 +167,22 @@ export default function CompaniesTable({
         },
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("value", {
-        header: "Value",
-        cell: (info) => formatCurrency(info.getValue()),
-      }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("stadt", {
-        id: "ort",
-        header: "Ort",
+        id: "adresse",
+        header: "Adresse",
         cell: (info) => {
           const row = info.row.original;
+          const strasse = row.strasse || "";
           const plz = row.plz ? `${row.plz} ` : "";
           const stadt = row.stadt || "";
-          return safeDisplay(`${plz}${stadt}`.trim());
+          const land = row.land || "";
+          return (
+            <div className="flex flex-col">
+              <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
+              {land && <span className="text-xs text-gray-500">{land}</span>}
+            </div>
+          );
         },
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("land", {
-        header: "Land",
-        cell: (info) => safeDisplay(info.getValue()),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("created_at", {
         header: "Created",
@@ -242,14 +248,15 @@ export default function CompaniesTable({
     },
     onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: onRowSelectionChange,
     onPaginationChange: (updater) => {
       const newPagination = typeof updater === "function" ? updater(pagination) : updater;
       setPagination(newPagination);
       onPaginationChange(newPagination);
     },
     onSortingChange: (updater) => {
-      const _newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      const newSorting = typeof updater === "function" ? updater(sorting) : updater;
+      onSortingChange(newSorting);
     },
     enableRowSelection: true,
     globalFilterFn: "includesString",
@@ -315,10 +322,16 @@ export default function CompaniesTable({
         </div>
         <div className="flex space-x-2">
           <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            value={pagination.pageSize}
+            onChange={(e) => {
+              const newSize = Number(e.target.value);
+              const newPagination = { ...pagination, pageIndex: 0, pageSize: newSize };
+              setPagination(newPagination);
+              onPaginationChange(newPagination);
+            }}
             className="px-2 py-1 border rounded"
           >
+            <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={30}>30</option>
             <option value={50}>50</option>
@@ -331,12 +344,8 @@ export default function CompaniesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem asChild>
-                <Link href="/import/csv">Import CSV</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/import/json">Import JSON</Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onImportCSV}>CSV</DropdownMenuItem>
+              <DropdownMenuItem disabled>JSON (coming soon)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>

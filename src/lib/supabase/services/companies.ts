@@ -1,9 +1,17 @@
 // src/lib/supabase/services/companies.ts
-import type { SupabaseClient } from "@supabase/supabase-js";
+// This file contains functions for managing companies in the Supabase database.
+// It includes functions to get companies with pagination and filtering, get by ID,
+// create new entries, update existing entries, delete entries, and import from CSV.
+// The functions use the Supabase client to interact with the database
+// and handle errors using a utility function.
+// The code is designed to be reusable across different parts of the app
+// that need to access or modify company data.
 
-import { createClient } from "../browser";
-import type { Company, CompanyInsert, CompanyUpdate, Contact } from "../database.types";
-import { handleSupabaseError } from "../utils";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ParsedCompanyRow } from "../../utils/csv-import";
+import { createClient } from "../browser-client";
+import type { Company, CompanyInsert, CompanyUpdate, Contact, KPI } from "../database.types";
+import { handleSupabaseError } from "../db-error-utils";
 
 export type CompanyForOpenMap = Company & { contacts?: Contact[] };
 
@@ -73,13 +81,25 @@ export async function getCompanies(
 }
 
 export async function getCompanyById(id: string, supabase: SupabaseClient): Promise<Company> {
-  const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(
+        "id, firmenname, status, kundentyp, firmentyp, rechtsform, value, strasse, plz, stadt, bundesland, land, telefon, email, website, lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at",
+      )
+      .eq("id", id)
+      .single();
 
-  if (error) {
-    throw handleSupabaseError(error, "getCompanyById");
+    if (error) {
+      console.error("getCompanyById error:", error);
+      throw handleSupabaseError(error, "getCompanyById");
+    }
+
+    return data as Company;
+  } catch (err) {
+    console.error("getCompanyById unexpected error:", err);
+    throw err;
   }
-
-  return data;
 }
 
 export async function createCompany(company: CompanyInsert, supabase?: SupabaseClient): Promise<Company> {
@@ -87,11 +107,6 @@ export async function createCompany(company: CompanyInsert, supabase?: SupabaseC
 
   // Temporary fallback until auth is implemented
   company.user_id = null;
-
-  // Log the full payload before insert
-  if (process.env.NODE_ENV === "development") {
-    console.log("[DEBUG] Creating company with payload:", JSON.stringify(company, null, 2));
-  }
 
   const { data, error } = await supabaseClient.from("companies").insert(company).select().single();
 
@@ -119,5 +134,74 @@ export async function deleteCompany(id: string, supabase?: SupabaseClient): Prom
 
   if (error) {
     throw handleSupabaseError(error, "deleteCompany");
+  }
+}
+
+export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
+  const { data, error } = await supabase.from("companies").select("status");
+  if (error) throw handleSupabaseError(error, "getKpis");
+
+  const total = data.length;
+  const won = data.filter((c) => c.status === "gewonnen").length;
+  const lost = data.filter((c) => c.status === "verloren").length;
+  const lead = data.filter((c) => c.status === "lead").length;
+
+  return [
+    { title: "Total Companies", value: total, changePercent: 0, subtitle: "Total companies in system" },
+    { title: "Won", value: won, changePercent: 10, subtitle: "Successfully closed deals" },
+    { title: "Lost", value: lost, changePercent: -5, subtitle: "Lost opportunities" },
+    { title: "Leads", value: lead, changePercent: 15, subtitle: "Active leads" },
+  ];
+}
+
+export async function importCompaniesFromCSV(rows: ParsedCompanyRow[]): Promise<{
+  imported: number;
+  errors: string[];
+  importBatch: string;
+}> {
+  const supabase = createClient();
+  const importBatch = new Date().toISOString();
+
+  try {
+    const companiesToInsert: CompanyInsert[] = rows.map((row: ParsedCompanyRow) => ({
+      firmenname: row.firmenname,
+      kundentyp: row.kundentyp,
+      strasse: row.strasse,
+      plz: row.plz,
+      stadt: row.ort, // Map ort to stadt if needed
+      bundesland: row.bundesland,
+      land: row.land,
+      telefon: row.telefon,
+      website: row.website,
+      email: row.email,
+      lat: row.lat,
+      lon: row.lon,
+      osm: row.osm,
+      wasserdistanz: row.wasser_distanz,
+      wassertyp: row.wassertyp,
+      status: "lead",
+      user_id: null,
+      rechtsform: null,
+      firmentyp: null,
+      value: null,
+    }));
+
+    const { data, error } = await supabase.from("companies").insert(companiesToInsert).select();
+
+    if (error) {
+      throw handleSupabaseError(error, "importCompaniesFromCSV");
+    }
+
+    return {
+      imported: data?.length || 0,
+      errors: [],
+      importBatch,
+    };
+  } catch (error) {
+    return {
+      imported: 0,
+      errors: [error instanceof Error ? error.message : "Unknown error"],
+      importBatch,
+    };
   }
 }

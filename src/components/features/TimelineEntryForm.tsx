@@ -1,3 +1,6 @@
+// src/components/features/TimelineEntryForm.tsx
+// This component renders a form for creating or editing timeline entries (activities) related to companies and contacts. It uses react-hook-form with zod for validation, and supports selecting associated companies and contacts from dropdowns. It also handles form state and submission.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { TimelineEntry } from "@/lib/supabase/database.types";
 
 const formSchema = z.object({

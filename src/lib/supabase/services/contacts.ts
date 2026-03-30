@@ -1,9 +1,17 @@
 // src/lib/supabase/services/contacts.ts
+// This file contains functions for managing contacts in the Supabase database.
+// It includes functions to get all contacts, get by ID, create new entries,
+// update existing entries, and delete entries.
+// The functions use the Supabase client to interact with the database
+// and handle errors using a utility function.
+// The code is designed to be reusable across different parts of the
+// app that need to access or modify contacts.
+
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { createClient } from "../browser";
+import { createClient } from "../browser-client";
 import type { Contact, ContactInsert } from "../database.types";
-import { handleSupabaseError } from "../utils";
+import { handleSupabaseError } from "../db-error-utils";
 
 /**
  * Get all contacts with joined company data
@@ -40,16 +48,25 @@ export async function getContacts(
  * Get contact by ID
  */
 export async function getContactById(id: string, client: SupabaseClient): Promise<Contact | null> {
-  // Optimized for performance - full RLS/auth will be added later
-  const { data, error } = await client
-    .from("contacts")
-    .select(
-      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, companies!company_id(firmenname)",
-    )
-    .eq("id", id)
-    .single();
-  if (error) throw handleSupabaseError(error, "getContactById");
-  return (data as unknown as Contact | null) ?? null;
+  try {
+    const { data, error } = await client
+      .from("contacts")
+      .select(
+        "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at",
+      )
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("getContactById error:", error);
+      throw handleSupabaseError(error, "getContactById");
+    }
+
+    return data as Contact | null;
+  } catch (err) {
+    console.error("getContactById unexpected error:", err);
+    throw err;
+  }
 }
 
 /**

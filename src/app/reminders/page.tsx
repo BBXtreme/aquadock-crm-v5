@@ -1,3 +1,10 @@
+// src/app/reminders/page.tsx
+// This file defines the Reminders page of the application, which displays a list of reminders and allows users to create, edit, and delete reminders.
+// It uses React Query to fetch reminder data from the server and manage state for creating, updating, and deleting reminders.
+// The page includes a dialog for creating and editing reminders, as well as a confirmation dialog for deletions.
+// Each reminder displays relevant information such as title, description, due date, priority, status, and assigned user.
+// The page also handles loading and error states, providing feedback to the user accordingly.
+
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +23,7 @@ import { SkeletonList } from "@/components/ui/SkeletonList";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Reminder } from "@/lib/supabase/database.types";
 
 function RemindersPageContent() {

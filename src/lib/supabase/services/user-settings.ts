@@ -1,6 +1,19 @@
-import { createClient } from "@/lib/supabase/browser";
+// src/lib/supabase/services/user-settings.ts
+// This file contains functions for managing user settings in the
+// Supabase database. It includes functions to get and save user-specific
+// settings such as column order for the companies table, as well as
+// more general functions to get and upsert any user setting based on a key.
+// The settings are stored in a "user_settings" table, which has a
+// structure that includes a user_id, key, and value, allowing for
+// flexible storage of various types of settings for each user.
+// The functions use the Supabase client to interact with the database
+// and handle errors using a utility function.
+// The code is designed to be reusable across different parts of the
+// app that need to access or modify user settings.
+
+import { createClient } from "@/lib/supabase/browser-client";
 import type { UserSetting, UserSettingInsert } from "@/lib/supabase/database.types";
-import { handleSupabaseError } from "@/lib/supabase/utils";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 
 export async function getUserColumnOrder(): Promise<string[] | null> {
   const supabase = createClient();

@@ -1,3 +1,6 @@
+// src/components/features/CompanyEditForm.tsx
+// This component renders a form for editing company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/browser";
+import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import type { CompanyFormDTO } from "@/lib/dto/company.dto";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
 
@@ -20,128 +25,82 @@ type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 const companySchema = z.object({
   firmenname: z.string().min(1, "Firmenname is required"),
-  rechtsform: z.string().optional(),
-  kundentyp: z.string().optional(),
-  firmentyp: z.string().optional(),
-  website: z.string().optional(),
-  telefon: z.string().optional(),
-  email: z.string().optional(),
-  strasse: z.string().optional(),
-  plz: z.string().optional(),
-  stadt: z.string().optional(),
-  bundesland: z.string().optional(),
-  land: z.string().optional(),
-  wasserdistanz: z.number().optional(),
-  wassertyp: z.string().optional(),
-  lat: z.number().optional(),
-  lon: z.number().optional(),
-  osm: z.string().optional(),
-  status: z
-    .enum([
-      "lead",
-      "interessant",
-      "qualifiziert",
-      "akquise",
-      "angebot",
-      "gewonnen",
-      "verloren",
-      "kunde",
-      "partner",
-      "inaktiv",
-    ])
-    .optional(),
-  value: z.number().optional(),
-  notes: z.string().optional(),
+  rechtsform: z.string().nullable().optional(),
+  kundentyp: z.string(),
+  firmentyp: z.string().nullable().optional(),
+  website: z.string().nullable().optional(),
+  telefon: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  strasse: z.string().nullable().optional(),
+  plz: z.string().nullable().optional(),
+  stadt: z.string().nullable().optional(),
+  bundesland: z.string().nullable().optional(),
+  land: z.string().nullable().optional(),
+  wasserdistanz: z.number().nullable().optional(),
+  wassertyp: z.string().nullable().optional(),
+  lat: z.number().nullable().optional(),
+  lon: z.number().nullable().optional(),
+  osm: z.string().nullable().optional(),
+  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren"]),
+  value: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
 });
-
-type CompanyFormValues = z.infer<typeof companySchema>;
-
-const kundentypOptions = [
-  { value: "restaurant", label: "Restaurant" },
-  { value: "hotel", label: "Hotel" },
-  { value: "resort", label: "Resort" },
-  { value: "camping", label: "Camping" },
-  { value: "marina", label: "Marina" },
-  { value: "segelschule", label: "Segelschule" },
-  { value: "segelverein", label: "Segelverein" },
-  { value: "bootsverleih", label: "Bootsverleih" },
-  { value: "neukunde", label: "Neukunde" },
-  { value: "bestandskunde", label: "Bestandskunde" },
-  { value: "interessent", label: "Interessent" },
-  { value: "partner", label: "Partner" },
-  { value: "sonstige", label: "Sonstige" },
-];
-
-const firmentypOptions = [
-  { value: "kette", label: "Kette" },
-  { value: "einzeln", label: "Einzelbetrieb" },
-];
-
-const statusOptions = [
-  { value: "lead", label: "Lead" },
-  { value: "interessant", label: "Interessant" },
-  { value: "qualifiziert", label: "Qualifiziert" },
-  { value: "akquise", label: "Akquise" },
-  { value: "angebot", label: "Angebot" },
-  { value: "gewonnen", label: "Gewonnen" },
-  { value: "verloren", label: "Verloren" },
-  { value: "kunde", label: "Kunde" },
-  { value: "partner", label: "Partner" },
-  { value: "inaktiv", label: "Inaktiv" },
-];
-
-const landOptions = [
-  { value: "Deutschland", label: "Deutschland" },
-  { value: "Österreich", label: "Österreich" },
-  { value: "Schweiz", label: "Schweiz" },
-  { value: "Frankreich", label: "Frankreich" },
-  { value: "Italien", label: "Italien" },
-  { value: "Spanien", label: "Spanien" },
-  { value: "Niederlande", label: "Niederlande" },
-  { value: "Belgien", label: "Belgien" },
-  { value: "Dänemark", label: "Dänemark" },
-  { value: "Schweden", label: "Schweden" },
-  { value: "Norwegen", label: "Norwegen" },
-  { value: "Polen", label: "Polen" },
-  { value: "Ungarn", label: "Ungarn" },
-  { value: "Griechenland", label: "Griechenland" },
-  { value: "Portugal", label: "Portugal" },
-  { value: "Großbritannien", label: "Großbritannien" },
-];
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
-  const form = useForm<CompanyFormValues>({
+  const form = useForm<CompanyFormDTO>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company?.firmenname || "",
-      rechtsform: company?.rechtsform || "",
+      rechtsform: company?.rechtsform ?? undefined,
       kundentyp: company?.kundentyp || "",
-      firmentyp: company?.firmentyp || "",
-      strasse: company?.strasse || "",
-      plz: company?.plz || "",
-      stadt: company?.stadt || "",
-      bundesland: company?.bundesland || "",
-      land: company?.land || "Deutschland",
-      website: company?.website || "",
-      telefon: company?.telefon || "",
-      email: company?.email || "",
+      firmentyp: company?.firmentyp ?? undefined,
+      strasse: company?.strasse ?? undefined,
+      plz: company?.plz ?? undefined,
+      stadt: company?.stadt ?? undefined,
+      bundesland: company?.bundesland ?? undefined,
+      land: company?.land ?? undefined,
+      website: company?.website ?? undefined,
+      telefon: company?.telefon ?? undefined,
+      email: company?.email ?? undefined,
       wasserdistanz: company?.wasserdistanz ?? undefined,
-      wassertyp: company?.wassertyp || "",
+      wassertyp: company?.wassertyp ?? undefined,
       lat: company?.lat ?? undefined,
       lon: company?.lon ?? undefined,
-      osm: company?.osm || "",
-      status: (company?.status as CompanyFormValues["status"]) || "lead",
+      osm: company?.osm ?? undefined,
+      status: (company?.status as CompanyFormDTO["status"]) || "lead",
       value: company?.value ?? undefined,
-      notes: company?.notes || "",
+      notes: company?.notes ?? undefined,
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormValues) => {
+    mutationFn: (data: CompanyFormDTO) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>, createClient());
+      const mappedData = {
+        firmenname: data.firmenname,
+        rechtsform: data.rechtsform ?? undefined,
+        kundentyp: data.kundentyp,
+        firmentyp: data.firmentyp ?? undefined,
+        strasse: data.strasse ?? undefined,
+        plz: data.plz ?? undefined,
+        stadt: data.stadt ?? undefined,
+        bundesland: data.bundesland ?? undefined,
+        land: data.land ?? undefined,
+        website: data.website ?? undefined,
+        telefon: data.telefon ?? undefined,
+        email: data.email ?? undefined,
+        wasserdistanz: data.wasserdistanz ?? undefined,
+        wassertyp: data.wassertyp ?? undefined,
+        lat: data.lat ?? undefined,
+        lon: data.lon ?? undefined,
+        osm: data.osm ?? undefined,
+        status: data.status,
+        value: data.value ?? undefined,
+        notes: data.notes ?? undefined,
+      };
+      return updateCompany(company.id, mappedData, createClient());
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
@@ -191,7 +150,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Rechtsform</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -204,7 +163,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Kundentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select customer type" />
                     </SelectTrigger>
@@ -228,7 +187,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Firmentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select company type" />
                     </SelectTrigger>
@@ -252,7 +211,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Website</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -265,7 +224,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Telefon</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -278,7 +237,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" {...field} />
+                  <Input type="email" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -291,7 +250,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Strasse</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -304,7 +263,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>PLZ</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -317,7 +276,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Stadt</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -330,7 +289,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Bundesland</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -343,7 +302,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Land</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
@@ -385,7 +344,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Wassertyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select water type" />
                     </SelectTrigger>
@@ -451,7 +410,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>OSM ID</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -464,7 +423,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value || "lead"}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>

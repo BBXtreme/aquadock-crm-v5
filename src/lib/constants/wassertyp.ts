@@ -1,5 +1,8 @@
 // src/lib/constants/wassertyp.ts
-// Water type options + OSM mapping for determineWassertyp
+// This file defines constants and utility functions related to the "wassertyp" field used in the application.
+// The `wassertypOptions` array provides predefined options for the wassertyp field, which can be used in dropdowns or forms.
+// The `WASSERTYP_MAP` object maps OpenStreetMap (OSM) tags to the corresponding wassertyp values used in the app.
+// The `determineWassertyp` function takes a set of OSM tags and determines the appropriate wassertyp based on the mapping, returning null if no match is found.
 
 export const wassertypOptions = [
   { value: "Küste / Meer", label: "Küste / Meer" },

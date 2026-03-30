@@ -1,3 +1,23 @@
+// src/lib/supabase/database.types.ts
+// Database type definitions for Supabase
+// This file is generated based on the database schema and includes
+// TypeScript interfaces for the tables, as well as types for inserts
+// and updates. It also includes some additional types for specific
+// use cases in the app, such as KPI and timeline entries with joins.
+// The types are designed to be used throughout the app wherever database
+// interactions occur, ensuring type safety and consistency when working
+// with data from Supabase.
+// The `Database` interface defines the structure of the database,
+// including
+// the tables and their respective row, insert, and update types.
+// The individual table types (e.g., `Company`, `Contact`, etc.) are
+// exported for convenience and can be used directly in the app's logic
+// when working with data from those tables.
+// The additional types like `KPI` and `TimelineEntryWithJoins` are
+// defined to represent specific data structures that are used in the
+// app's UI or business logic, providing a clear contract for what data
+// is expected in those contexts.
+
 // Database type definitions for Supabase
 export interface Database {
   public: {
@@ -324,7 +344,13 @@ export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"
 export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
 export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
 
-// Custom joined types
+export type KPI = {
+  title: string;
+  value: string | number;
+  changePercent: number;
+  subtitle: string;
+};
+
 export type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "firmenname"> | null;
   contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
