@@ -6,7 +6,7 @@
 
 import { usePathname } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -49,10 +49,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
   return (
     <ErrorBoundary>
       <div className="flex h-screen">
-        <Sidebar
-          isCollapsed={isCollapsed}
-          onToggle={() => setIsCollapsed(!isCollapsed)}
-        />
+        <Suspense fallback={<div className="w-16 bg-background border-r" />}>
+          <Sidebar
+            isCollapsed={isCollapsed}
+            onToggle={() => setIsCollapsed(!isCollapsed)}
+          />
+        </Suspense>
         <div
           className="flex-1 flex flex-col"
           style={{ marginLeft: isCollapsed ? "4rem" : "10rem" }}
