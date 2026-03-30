@@ -17,6 +17,7 @@
 | timeline        | Activity log              | 2 800 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
+| user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
 
 ## 2. Core Tables – Column Overview
 
@@ -26,16 +27,104 @@
 | ---------- | ----------- | -------- | ----------------- | ----------------------------------------- | ------------- |
 | id         | uuid        | false    | gen_random_uuid() | Primary key                               | PK            |
 | firmenname | text        | false    | —                 | Legal name                                | —             |
+| rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
+| firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
 | status     | text        | false    | 'lead'            | lead, qualifiziert, gewonnen, verloren, … | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
+| strasse    | text        | true     | —                 | Street address                            | —             |
+| plz        | text        | true     | —                 | Postal code                               | —             |
+| stadt      | text        | true     | —                 | City                                      | —             |
+| bundesland | text        | true     | —                 | State/Province                            | —             |
+| land       | text        | true     | —                 | Country                                   | —             |
 | lat / lon  | real        | true     | —                 | Geographic coordinates                    | —             |
 | osm        | text        | true     | —                 | OSM node/way/relation ID                  | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())                        | Indexed       |
 | created_at | timestamptz | true     | now()             | —                                         | —             |
 | updated_at | timestamptz | true     | now()             | —                                         | —             |
 
-*(contacts, reminders, timeline follow similar pattern – full columns in generated types)*
+### contacts
+
+| Column      | Type        | Nullable | Default           | Business Meaning              | Notes / Index |
+| ----------- | ----------- | -------- | ----------------- | ----------------------------- | ------------- |
+| id          | uuid        | false    | gen_random_uuid() | Primary key                   | PK            |
+| vorname     | text        | false    | —                 | First name                    | —             |
+| nachname    | text        | false    | —                 | Last name                     | —             |
+| anrede      | text        | true     | —                 | Salutation (Herr, Frau, etc.) | —             |
+| position    | text        | true     | —                 | Job title                     | —             |
+| email       | text        | true     | —                 | Email address                 | —             |
+| telefon     | text        | true     | —                 | Phone number                  | —             |
+| mobil       | text        | true     | —                 | Mobile number                 | —             |
+| durchwahl   | text        | true     | —                 | Extension                     | —             |
+| notes       | text        | true     | —                 | Additional notes              | —             |
+| company_id  | uuid        | true     | —                 | Foreign key to companies      | Indexed       |
+| is_primary  | boolean     | false    | false             | Primary contact flag          | —             |
+| user_id     | uuid        | true     | —                 | Owner (auth.uid())            | Indexed       |
+| created_at  | timestamptz | true     | now()             | —                             | —             |
+| updated_at  | timestamptz | true     | now()             | —                             | —             |
+
+### reminders
+
+| Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
+| ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
+| id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| title      | text        | false    | —                 | Reminder title           | —             |
+| company_id | uuid        | false    | —                 | Foreign key to companies | Indexed       |
+| due_date   | timestamptz | false    | —                 | Due date                 | Indexed       |
+| priority   | text        | true     | 'normal'          | hoch, normal, niedrig    | —             |
+| status     | text        | true     | 'open'            | open, closed             | Indexed       |
+| assigned_to| text        | true     | —                 | Assigned person          | —             |
+| description| text        | true     | —                 | Description              | —             |
+| user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
+
+### timeline
+
+| Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
+| ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
+| id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| company_id | uuid        | true     | —                 | Foreign key to companies | Indexed       |
+| contact_id | uuid        | true     | —                 | Foreign key to contacts  | —             |
+| type       | text        | false    | —                 | Event type               | —             |
+| title      | text        | false    | —                 | Event title              | —             |
+| description| text        | true     | —                 | Event description        | —             |
+| user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
+
+### email_log
+
+| Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
+| ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
+| id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| recipient_email| text       | false    | —                 | Email recipient          | —             |
+| subject    | text        | false    | —                 | Email subject            | —             |
+| body       | text        | false    | —                 | Email body               | —             |
+| sent_at    | timestamptz | true     | —                 | Sent timestamp           | —             |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
+
+### email_templates
+
+| Column | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
+| ------ | ----------- | -------- | ----------------- | ------------------------ | ------------- |
+| id     | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| name   | text        | false    | —                 | Template name            | Unique        |
+| subject| text        | false    | —                 | Email subject            | —             |
+| body   | text        | false    | —                 | Email body               | —             |
+| user_id| uuid        | true     | —                 | Owner (auth.uid())       | —             |
+
+### user_settings
+
+| Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
+| ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
+| id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| user_id    | uuid        | false    | —                 | Owner (auth.uid())       | Indexed       |
+| key        | text        | false    | —                 | Setting key              | Indexed       |
+| value      | jsonb       | true     | —                 | Setting value            | —             |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ## 3. Important Enums & Constraints
 
@@ -63,6 +152,7 @@ companies: status, kundentyp, user_id
 contacts: company_id, user_id, (company_id + is_primary)
 reminders: company_id, due_date, status, user_id
 timeline: company_id, user_id
+user_settings: user_id, key
 
 ```
 
@@ -84,7 +174,7 @@ import type { Database } from "@/lib/supabase/database.types";
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 export async function getCompanies(userId: string): Promise<Company[]> {
-  const supabase = createServerClient();
+  const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from("companies")
     .select("*")
@@ -98,3 +188,9 @@ export async function getCompanies(userId: string): Promise<Company[]> {
 
 2026-03-20 Initial v5 snapshot
 2026-03-21 Refined documentation, added index overview
+2026-03-22 Added missing columns to companies table overview
+2026-03-23 Added contacts, reminders, timeline, email_log, email_templates tables
+2026-03-24 Updated enums and constraints section
+2026-03-25 Completed RLS summary and performance indexes
+2026-03-26 Final audit and type safety notes
+2026-03-27 Added user_settings table

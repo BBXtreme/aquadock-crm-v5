@@ -1,6 +1,6 @@
 # AquaDock CRM v5 – Architecture Overview
 
-**Last updated**: October 10, 2023  
+**Last updated**: March 2026  
 **Goal**: Clean separation of concerns, type safety, RLS respect, good DX, maintainable at scale
 
 ## 1. Core Principles
@@ -13,6 +13,7 @@
 - **UI consistency** → shadcn/ui (radix-nova) + Tailwind v4.2.2
 - **Auth** → Supabase Auth + RLS enforced in service layer
 - **State management** → TanStack React Query for mutations, caching and optimistic updates
+- **Suspense for data loading** → useSuspenseQuery for automatic loading states, with Suspense boundaries for fallbacks
 
 ## 2. Current Folder Structure (Flat App Router)
 
@@ -23,28 +24,43 @@ src/
 │   ├── openmap/                  # Server fetch → OpenMapClient
 │   ├── contacts/
 │   ├── reminders/
+│   ├── dashboard/
+│   ├── mass-email/
+│   ├── settings/
+│   ├── timeline/
 │   ├── layout.tsx                # Root layout + auth
 │   └── page.tsx
 ├── components/
 │   ├── ui/
 │   ├── layout/                   # Sidebar + Header
 │   ├── features/
-│   │   └── map/                  # OpenMapClient, OpenMapView, popups
+│   │   ├── map/                  # OpenMapClient, OpenMapView, popups
+│   │   ├── companies/
+│   │   ├── contacts/
+│   │   ├── reminders/
 │   └── ErrorBoundary.tsx
 ├── lib/
 │   ├── supabase/
 │   │   ├── server.ts
 │   │   ├── browser.ts
-│   │   └── services/companies.ts # Central service layer
+│   │   ├── services/             # Central service layer
+│   │   ├── database.types.ts     # Auto-generated types
+│   │   └── query-debug-utils.ts
+│   ├── dto/                      # Form-specific types
+│   ├── validations/              # Zod schemas
+│   ├── constants/
+│   │   ├── company-options.ts    # Form options
+│   │   ├── map-poi-config.ts
+│   │   ├── map-status-colors.ts
+│   │   ├── kundentyp.ts
+│   │   ├── wassertyp.ts
+│   │   └── overpass-endpoints.ts
 │   └── utils/
-│       ├── map.ts
+│       ├── map-utils.ts
 │       ├── calculateWaterDistance.ts
-│       └── data-format.ts        # safeDisplay, safeString, format helpers
-├── lib/constants/
-│   ├── map-poi-config.ts
-│   ├── map-status-colors.ts
-│   ├── kundentyp.ts
-│   └── wassertyp.ts
+│       ├── csv-import.ts
+│       ├── data-format.ts        # safeDisplay, safeString, format helpers
+│       └── query-client.ts
 └── hooks/
 ```
 
@@ -57,6 +73,8 @@ src/
 | OSM POIs / water distance | Direct browser fetch to Overpass        | Lightweight, no API route    |
 | POI Import                | Browser client + service + custom event | Refreshes map                |
 | Mutations                 | Service layer + React Query             | Optimistic updates supported |
+| Dashboard stats           | useSuspenseQuery in client component    | Suspense boundary for loading |
+| Suspense for data loading | useSuspenseQuery + Suspense boundary    | Throws on error, catches in Suspense; automatic loading states |
 
 ## 4. Geo & Mapping Layer (OpenMap)
 
