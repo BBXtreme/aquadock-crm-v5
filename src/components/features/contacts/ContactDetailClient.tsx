@@ -1,8 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Building, Edit, Mail, MapPin, Phone, User } from "lucide-react";
-import type React from "react";
+import { Building, Edit, Mail, Phone, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { LoadingState } from "@/components/ui/LoadingState";
 import {
   Select,
   SelectContent,
@@ -66,7 +64,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
       setChangeCompanyDialogOpen(false);
       // Invalidate to refetch contact data
       contactQuery.refetch();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to change company");
     }
   };
