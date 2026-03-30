@@ -81,13 +81,23 @@ export async function getCompanies(
 }
 
 export async function getCompanyById(id: string, supabase: SupabaseClient): Promise<Company> {
-  const { data, error } = await supabase.from("companies").select("*").eq("id", id).single();
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id, firmenname, status, kundentyp, firmentyp, rechtsform, value, strasse, plz, stadt, bundesland, land, telefon, email, website, lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at")
+      .eq("id", id)
+      .single();
 
-  if (error) {
-    throw handleSupabaseError(error, "getCompanyById");
+    if (error) {
+      console.error("getCompanyById error:", error);
+      throw handleSupabaseError(error, "getCompanyById");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("getCompanyById unexpected error:", err);
+    throw err;
   }
-
-  return data;
 }
 
 export async function createCompany(company: CompanyInsert, supabase?: SupabaseClient): Promise<Company> {

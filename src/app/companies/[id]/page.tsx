@@ -129,9 +129,10 @@ export default function CompanyDetailPage() {
           <AquaDockCard company={company} />
           <CrmCard company={company} />
         </div>
-        <LinkedContactsCard companyId={id} />
-        <RemindersCard companyId={id} />
-        <TimelineCard companyId={id} />
+        {/* Temporarily disabled heavy joins or related data fetching */}
+        {/* <LinkedContactsCard companyId={id} /> */}
+        {/* <RemindersCard companyId={id} /> */}
+        {/* <TimelineCard companyId={id} /> */}
       </div>
     </Suspense>
   );
