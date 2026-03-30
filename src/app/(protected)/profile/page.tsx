@@ -7,11 +7,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import ProfilePageClient from "./ProfilePageClient";
-
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export async function updateDisplayName(display_name: string) {
   'use server';
