@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
 import { createClient } from "@/lib/supabase/browser-client";
 import { createCompany } from "@/lib/supabase/services/companies";
+import type { CompanyFormDTO } from "@/lib/dto/company.dto";
 import { type CompanyFormValues, companySchema } from "@/lib/validations/company-val";
 
 const kundentypOptions = [
@@ -79,25 +80,25 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: "",
-      rechtsform: "",
+      rechtsform: undefined,
       kundentyp: "",
-      firmentyp: "",
-      strasse: "",
-      plz: "",
-      stadt: "",
-      bundesland: "",
+      firmentyp: undefined,
+      strasse: undefined,
+      plz: undefined,
+      stadt: undefined,
+      bundesland: undefined,
       land: "Deutschland",
-      website: "",
-      telefon: "",
-      email: "",
-      wasserdistanz: 0,
-      wassertyp: "",
-      lat: 0,
-      lon: 0,
-      osm: "",
+      website: undefined,
+      telefon: undefined,
+      email: undefined,
+      wasserdistanz: undefined,
+      wassertyp: undefined,
+      lat: undefined,
+      lon: undefined,
+      osm: undefined,
       status: "lead",
-      value: 0,
-      notes: "",
+      value: undefined,
+      notes: undefined,
     },
   });
 
@@ -472,7 +473,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
                     <FormMessage />

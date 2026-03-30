@@ -18,6 +18,7 @@ import { wassertypOptions } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { updateCompany } from "@/lib/supabase/services/companies";
+import type { CompanyFormDTO } from "@/lib/dto/company.dto";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -57,7 +58,7 @@ const companySchema = z.object({
   notes: z.string().optional(),
 });
 
-type CompanyFormValues = z.infer<typeof companySchema>;
+type CompanyFormValues = CompanyFormDTO;
 
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
@@ -119,25 +120,25 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company?.firmenname || "",
-      rechtsform: company?.rechtsform || "",
+      rechtsform: company?.rechtsform || undefined,
       kundentyp: company?.kundentyp || "",
-      firmentyp: company?.firmentyp || "",
-      strasse: company?.strasse || "",
-      plz: company?.plz || "",
-      stadt: company?.stadt || "",
-      bundesland: company?.bundesland || "",
+      firmentyp: company?.firmentyp || undefined,
+      strasse: company?.strasse || undefined,
+      plz: company?.plz || undefined,
+      stadt: company?.stadt || undefined,
+      bundesland: company?.bundesland || undefined,
       land: company?.land || "Deutschland",
-      website: company?.website || "",
-      telefon: company?.telefon || "",
-      email: company?.email || "",
+      website: company?.website || undefined,
+      telefon: company?.telefon || undefined,
+      email: company?.email || undefined,
       wasserdistanz: company?.wasserdistanz ?? undefined,
-      wassertyp: company?.wassertyp || "",
+      wassertyp: company?.wassertyp || undefined,
       lat: company?.lat ?? undefined,
       lon: company?.lon ?? undefined,
-      osm: company?.osm || "",
+      osm: company?.osm || undefined,
       status: (company?.status as CompanyFormValues["status"]) || "lead",
       value: company?.value ?? undefined,
-      notes: company?.notes || "",
+      notes: company?.notes || undefined,
     },
   });
 
