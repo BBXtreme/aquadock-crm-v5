@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
-import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
+import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 const contactSchema = z.object({
@@ -57,7 +57,7 @@ interface ContactDetailClientProps {
   companies: { id: string; firmenname: string }[];
 }
 
-export default function ContactDetailClient({ contact, companies }: ContactDetailClientProps) {
+export default function ContactDetailClient({ contact: initialContact, companies }: ContactDetailClientProps) {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -69,6 +69,12 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
   const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const { data: contact } = useQuery({
+    queryKey: ["contact", id],
+    queryFn: async () => getContactById(id, createClient()),
+    initialData: initialContact,
+  });
 
   const { data: linkedCompany } = useQuery({
     queryKey: ["company", contact.company_id],
@@ -120,6 +126,10 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
       });
     }
   };
+
+  if (!contact) {
+    return <div>Contact not found</div>;
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-8">
