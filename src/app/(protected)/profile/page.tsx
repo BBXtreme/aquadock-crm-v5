@@ -12,8 +12,6 @@ import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-
 // Server Action - Update Display Name
 export async function updateDisplayName(formData: FormData) {
   'use server';
