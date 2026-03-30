@@ -363,7 +363,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 )}
               </div>
 
-              <Button variant="outline" size="sm" onClick={() => setEditCompanyDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
                 Change Company
               </Button>
             </div>
