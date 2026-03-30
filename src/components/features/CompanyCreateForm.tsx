@@ -12,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants"; // ← now imported (no duplication!)
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import { createCompany } from "@/lib/supabase/services/companies";
-import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company-val";
 
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },

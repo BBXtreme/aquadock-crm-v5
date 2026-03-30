@@ -1,7 +1,13 @@
+// src/app/openmap/page.tsx
+// This file defines the OpenMap page of the application, which displays an interactive map with company locations.
+// It uses a client component (OpenMapClient) to render the map and handle interactions, while the server component
+// fetches the necessary company data from Supabase and passes it as props to the client component.
+// The page also handles potential errors during data fetching and displays an appropriate message if the map cannot be loaded.
+
 export const dynamic = "force-dynamic";
 
 import { OpenMapClient } from "@/components/features/map/OpenMapClient";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 

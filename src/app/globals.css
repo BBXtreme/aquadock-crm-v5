@@ -1,3 +1,12 @@
+/* src/app/globals.css
+This file defines global styles for the application, including color variables, typography, and base styles.
+It uses CSS custom properties to define a color palette that can be easily switched between light and dark modes.
+The @theme inline block maps these custom properties to Tailwind CSS theme variables, allowing us to use them 
+throughout our components with Tailwind's utility classes.
+The base layer applies some default styles to all elements, such as border and outline colors, as well as 
+typography settings for the body and headings.
+*/
+
 @import "tailwindcss";
 @import "tw-animate-css";
 

@@ -1,3 +1,13 @@
+// src/app/contacts/[id]/page.tsx
+// This file defines the Contact Detail page of the application, which displays detailed information about a specific contact.
+// It uses React Query to fetch the contact data from the server based on the contact ID from the URL parameters.
+// The page includes sections for contact details, linked company information, and notes, with options to edit the
+// contact and change the linked company.
+// Note: This file is a client component because it uses React state and effects to manage the contact data and interactions.
+// The contact data is fetched from the Supabase backend, and updates to the contact (such as marking as primary or
+// editing notes) are also sent to the backend, with the UI updating accordingly based on the response. The page is
+// designed to be user-friendly and informative, providing all relevant information about the contact in a clear and organized manner.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import { cn } from "@/lib/utils";

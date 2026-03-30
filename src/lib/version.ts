@@ -1,3 +1,11 @@
-// Version Management for the application. The version is read from an environment variable, allowing for easy updates without changing the codebase.
 // src/lib/version.ts
-export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.5.19";
+/* This file defines the application version, which is injected at build 
+time via environment variables.
+The version is used in the app footer and can also be used for debugging 
+or display purposes.
+The version is set in the .env file as NEXT_PUBLIC_APP_VERSION and 
+defaults to "0.5.19" if not provided.
+This allows for easy tracking of the deployed version of the app, 
+especially when deployed to platforms like Vercel.
+*/
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.5.20";

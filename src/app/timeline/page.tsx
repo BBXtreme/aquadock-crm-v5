@@ -1,3 +1,10 @@
+// src/app/timeline/page.tsx
+// This file defines the Timeline page of the application, which displays a list of timeline entries related to companies and contacts.
+// It uses React Query to fetch timeline data from the server and manage state for creating, updating, and deleting entries.
+// The page includes a dialog for creating and editing timeline entries, as well as a confirmation dialog for deletions.
+// Each timeline entry displays relevant information such as title, content, associated company/contact, creation time, and activity type with corresponding icons and colors.
+// The page also handles loading and error states, providing feedback to the user accordingly.
+
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/SkeletonList";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact, TimelineEntry } from "@/lib/supabase/database.types";
 
 type TimelineEntryWithJoins = TimelineEntry & {

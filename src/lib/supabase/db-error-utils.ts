@@ -1,4 +1,10 @@
-// Utility functions for Supabase-related operations - src/lib/supabase/utils.ts
+// src/lib/supabase/db-error-utils.ts
+// This file contains a utility function for handling errors from Supabase operations
+// The `handleSupabaseError` function takes an error object and a context string to provide
+// detailed logging of the error in the console, including message, code, details, and hint if available
+// It also shows a user-friendly toast notification with the error message when running in a browser environment
+// The function returns a new Error object with a standardized message format for consistent error handling across the app
+
 import { toast } from "sonner";
 
 export function handleSupabaseError(error: unknown, context: string): Error {

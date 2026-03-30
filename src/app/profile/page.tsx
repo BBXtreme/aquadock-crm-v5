@@ -1,3 +1,11 @@
+// src/app/profile/page.tsx
+// This file defines the Profile page of the application, where users can view and update their profile information.
+// It displays the user's email, display name, and avatar, and includes a form for updating the display name and profile
+// picture (currently disabled as a placeholder).
+// The page also includes a section for account actions, such as signing out (also currently disabled).
+// The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
+// from the authentication context or Supabase client.
+
 "use client";
 
 import { LogOut, User } from "lucide-react";

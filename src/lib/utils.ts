@@ -1,4 +1,15 @@
-// Utility functions for general use across the app - src/lib/utils.ts
+// src/lib/utils.ts
+// Utility functions for general use across the app
+// This file includes functions for class name merging, label mapping, and formatting
+// The functions in this file are designed to be reusable and help keep
+// the codebase clean and consistent
+// The `cn` function is a utility for merging class names using clsx and tailwind-merge
+// The label mapping functions convert internal values to user-friendly
+// labels with emojis for better UX
+// The `formatDateDE` function formats dates in the German locale
+// The `safeDisplay` function ensures that null or undefined values are displayed as a placeholder
+// instead of causing errors or showing "null"/"undefined" in the UI
+
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 

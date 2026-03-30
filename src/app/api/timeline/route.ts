@@ -1,6 +1,12 @@
+// src/app/api/timeline/route.ts
+// This file defines the API route handlers for the /api/timeline endpoint, which allows fetching and creating timeline entries for users.
+// The GET handler retrieves all timeline entries for a specific user (currently hardcoded for development purposes), while the POST handler creates a new timeline entry based on the request body.
+// The POST handler includes robust error handling and validation to ensure that the incoming data is in the expected format and to provide detailed logging in case of errors.
+// The timeline entries are managed through Supabase services, and the handlers interact with these services to perform database operations.
+
 import { type NextRequest, NextResponse } from "next/server";
 
-import { createTimelineEntry, getAllTimelineForUser } from "@/lib/supabase/services/timeline-server";
+import { createTimelineEntry, getAllTimelineForUser } from "@/lib/supabase/services/timeline";
 
 // GET /api/timeline
 // Returns timeline entries for current authenticated user

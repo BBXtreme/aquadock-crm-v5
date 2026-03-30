@@ -1,3 +1,32 @@
+// src/lib/utils/csv-import.ts
+// Utility functions for importing companies from CSV files
+// This file includes functions to parse CSV files using PapaParse,
+// transform the parsed data into the format expected by the database,
+// and handle various edge cases in the CSV data (e.g., German number
+// formats, emojis in wassertyp)
+// The parsing function is designed to be flexible with column names
+// and to provide informative error messages if parsing fails
+// The transformation function maps the parsed data to the CompanyInsert
+// type, which can then be used to insert data into the database
+// The code includes helper functions for parsing German-style floats
+// and stripping emojis from strings, which are common issues when
+// dealing with user-generated CSV data in this context
+// The parsing function also includes a mapping for normalizing country
+// codes to full names, which can help ensure consistency in the database
+// The column mapping allows for flexibility in the CSV file, so users
+// can have different column headers as long as they match the expected
+// keys (case-insensitive)
+// The code is structured to be easily extendable in the future,
+// allowing for additional fields or more complex transformations as
+// needed
+// The use of TypeScript types helps ensure type safety and clarity
+// when working with the parsed data and the transformation process,
+// making it easier to maintain and debug the code in the future.
+// The functions in this file can be imported and used in various parts
+// of the app where CSV import functionality is needed, such as in an
+// admin interface for bulk uploading companies or in a data migration
+// script.
+
 import Papa from "papaparse";
 import type { CompanyInsert } from "@/lib/supabase/database.types";
 

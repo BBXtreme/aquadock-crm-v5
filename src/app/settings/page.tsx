@@ -1,3 +1,7 @@
+// src/app/settings/page.tsx
+// This file defines the Settings page of the application, where users can configure various settings related
+// to notifications, appearance, OpenMap integration, and SMTP email configuration.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 
 const smtpSchema = z.object({
   host: z.string().min(1, "Host is required"),

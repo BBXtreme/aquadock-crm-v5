@@ -8,7 +8,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";

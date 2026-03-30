@@ -1,3 +1,13 @@
+// src/app/companies/page.tsx
+// This file defines the Companies page of the application, which displays a list of companies and allows users to create,
+// edit, and delete companies.
+// It uses React Query to fetch company data from the server and manage state for creating, updating, and deleting companies.
+// The page includes a dialog for creating new companies and editing existing ones, as well as a confirmation dialog for deletions.
+// Each company entry displays relevant information such as name, address, contact details, status, category, and associated contacts.
+// The page also includes filtering options for status, category, business type, and country, as well as a global search filter.
+// The page handles loading and error states, providing feedback to the user accordingly. The company data is fetched with pagination,
+// sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
+
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,7 +49,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";

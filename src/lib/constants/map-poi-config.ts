@@ -1,4 +1,6 @@
-// This file defines the categories of points of interest (POIs) that are relevant for the application.  src/lib/constants/map-poi-config.ts
+// src/lib/constants/map-poi-config.ts
+// This file defines the categories of points of interest (POIs) that are relevant for the application. Each category includes an icon, a name, and a list of OpenStreetMap (OSM) tags that correspond to that category. This configuration is used when fetching and displaying POIs on the map, allowing the app to identify and categorize different types of locations based on their OSM tags. The categories include restaurants, camping sites, marinas, boat rentals, hotels, resorts, sailing schools, rowing clubs, sports clubs, ferry terminals, and tourist attractions.
+
 export const poiCategories = {
   restaurant: {
     icon: "🍽️",

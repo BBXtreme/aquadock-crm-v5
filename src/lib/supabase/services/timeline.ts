@@ -1,7 +1,19 @@
 // src/lib/supabase/services/timeline-server.ts
+// This file contains server-side functions for managing timeline
+// entries in the Supabase database. It includes functions to get
+// all timeline entries for a user,
+// create a new timeline entry, update an existing entry, and delete
+// an entry.
+// The functions use the createServerSupabaseClient to interact with
+// the database
+// in a server-side context, ensuring proper handling of
+// authentication and
+// session management. Error handling is implemented using a utility
+// function to provide consistent error responses across the app.
+
 import type { TimelineEntry, TimelineEntryInsert } from "../database.types";
-import { createServerSupabaseClient } from "../server";
-import { handleSupabaseError } from "../utils";
+import { handleSupabaseError } from "../db-error-utils";
+import { createServerSupabaseClient } from "../server-client";
 
 /**
  * Get all timeline entries for a specific user

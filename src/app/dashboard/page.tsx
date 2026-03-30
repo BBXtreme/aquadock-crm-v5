@@ -1,4 +1,11 @@
 // src/app/dashboard/page.tsx
+// This file defines the Dashboard page of the application, which displays key metrics and statistics
+// about companies, contacts, and activities.
+// It uses React Query to fetch data from the Supabase backend and manage loading states.
+// The dashboard includes a period selector to filter statistics for the last 7, 30, or 90 days.
+// The statistics are displayed in StatCard components, showing total companies, leads, won deals,
+// and total value, along with changes for the selected period.
+
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +14,7 @@ import { useState } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
-import { createClient } from "@/lib/supabase/browser";
+import { createClient } from "@/lib/supabase/browser-client";
 
 export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");

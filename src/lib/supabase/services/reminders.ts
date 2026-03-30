@@ -1,7 +1,18 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+// src/lib/supabase/services/reminders.ts
+// This file contains functions for managing reminders in the Supabase
+// database. It includes functions to get all reminders, get a reminder
+// by ID, create a new reminder, update an existing reminder, and delete
+// a reminder.
+// The functions use the Supabase client to interact with the database
+// and handle errors using a utility function.
+// The code is designed to be reusable across different parts of the app
+// that need to access or modify reminders, and it includes type definitions
+// for the reminder data structures to ensure type safety when working with
+// reminders in the app.
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Reminder, ReminderInsert, ReminderUpdate } from "../database.types";
-import { handleSupabaseError } from "../utils";
+import { handleSupabaseError } from "../db-error-utils";
 
 type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
 

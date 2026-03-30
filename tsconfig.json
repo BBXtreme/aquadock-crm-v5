@@ -1,4 +1,8 @@
 // tsconfig.json
+// TypeScript configuration for the project
+/* This file is used to specify the root files and the compiler options 
+required to compile the project.
+*/
 {
   "compilerOptions": {
     "target": "ES2017",

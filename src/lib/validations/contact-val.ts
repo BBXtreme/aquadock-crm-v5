@@ -1,3 +1,13 @@
+// src/lib/validations/company-val.ts
+// This file defines the Zod schema for validating contact data
+// It includes all fields that are part of the contact form, with
+// appropriate validation rules for each field
+// The schema ensures that required fields are present and that all
+// string fields are trimmed and have reasonable length limits to
+// prevent issues with excessively long input
+// The inferred TypeScript type `ContactFormValues` can be used in
+// form handling to ensure type safety
+
 import { z } from "zod";
 
 // Zod schema for Contact creation/update based on form requirements

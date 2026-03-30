@@ -1,8 +1,14 @@
+// src/app/api/send-test-email/route.ts
+// This file defines the API route handler for sending a test email using the user's SMTP settings.
+// The POST handler retrieves the authenticated user, validates the recipient email from the request body,
+// fetches the user's SMTP settings from the database, and uses nodemailer to send a test email.
+// It includes error handling for authentication, validation, and email sending issues, returning appropriate responses.
+
 import { type NextRequest, NextResponse } from "next/server";
 
 import nodemailer from "nodemailer";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { getUserSettings } from "@/lib/supabase/services/user-settings";
 
 export async function POST(request: NextRequest) {
