@@ -47,7 +47,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
     initialData: initialContact,
   });
 
-  const contact = contactQuery.data; // useSuspenseQuery ensures data is available
+  const contact = contactQuery.data as Contact; // useSuspenseQuery ensures data is available
 
   const companiesQuery = useSuspenseQuery({
     queryKey: ["companies-light"],
