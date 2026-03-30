@@ -5,8 +5,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Edit, Trash, User } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -69,6 +69,17 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
   const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const { data: linkedCompany } = useQuery({
+    queryKey: ["company", contact.company_id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("companies").select("*").eq("id", contact.company_id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!contact.company_id,
+  });
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -273,6 +284,87 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
         </CardContent>
       </Card>
 
+      {/* Linked Company */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building className="w-5 h-5" />
+            Linked Company
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {linkedCompany ? (
+            <div className="space-y-3">
+              <div>
+                <a
+                  href={`/companies/${linkedCompany.id}`}
+                  className="text-lg font-semibold hover:underline text-primary flex items-center gap-2"
+                >
+                  {linkedCompany.firmenname}
+                  <ArrowLeft className="h-4 w-4 rotate-180" />
+                </a>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {linkedCompany.kundentyp && (
+                  <Badge variant="secondary">
+                    {linkedCompany.kundentyp.charAt(0).toUpperCase() + linkedCompany.kundentyp.slice(1)}
+                  </Badge>
+                )}
+                {linkedCompany.status && (
+                  <Badge
+                    className={
+                      linkedCompany.status === "gewonnen"
+                        ? "bg-emerald-600 text-white"
+                        : linkedCompany.status === "lead"
+                          ? "bg-amber-600 text-white"
+                          : "bg-zinc-500 text-white"
+                    }
+                  >
+                    {linkedCompany.status}
+                  </Badge>
+                )}
+                {linkedCompany.wassertyp && <Badge variant="outline">{linkedCompany.wassertyp}</Badge>}
+                {linkedCompany.wasserdistanz && (
+                  <Badge variant="outline">{linkedCompany.wasserdistanz} m</Badge>
+                )}
+              </div>
+
+              <div className="text-sm text-muted-foreground space-y-1">
+                {(linkedCompany.stadt || linkedCompany.land) && (
+                  <p>
+                    {linkedCompany.stadt}
+                    {linkedCompany.stadt && linkedCompany.land && ", "}
+                    {linkedCompany.land}
+                  </p>
+                )}
+                {linkedCompany.osm && (
+                  <a
+                    href={linkedCompany.osm}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline block"
+                  >
+                    OSM Link →
+                  </a>
+                )}
+              </div>
+
+              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                Change Company
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-muted-foreground">No company linked yet.</p>
+              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                Link Company
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Edit Contact Dialog */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <WideDialogContent size="xl">
@@ -296,10 +388,11 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
             <DialogTitle>Edit Company</DialogTitle>
           </DialogHeader>
           <CompanyEditForm
-            company={null}
+            company={linkedCompany || null}
             onSuccess={() => {
               setEditCompanyDialog(false);
               queryClient.invalidateQueries({ queryKey: ["contact", id] });
+              queryClient.invalidateQueries({ queryKey: ["company", contact.company_id] });
             }}
           />
         </WideDialogContent>
@@ -318,6 +411,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
                 toast.success("Company updated");
                 await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                await queryClient.invalidateQueries({ queryKey: ["company", contact.company_id] });
                 setChangeCompanyDialog(false);
               } catch (err) {
                 toast.error("Update failed", {
