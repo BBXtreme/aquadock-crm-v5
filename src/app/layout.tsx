@@ -14,6 +14,7 @@ import type React from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import ClientLayout from "@/components/layout/ClientLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
@@ -28,9 +29,11 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}>
-        <ClientLayout>
-          <AppLayout>{children}</AppLayout>
-        </ClientLayout>
+        <ErrorBoundary>
+          <ClientLayout>
+            <AppLayout>{children}</AppLayout>
+          </ClientLayout>
+        </ErrorBoundary>
       </body>
     </html>
   );
