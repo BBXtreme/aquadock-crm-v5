@@ -8,6 +8,7 @@ import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { requireUser } from "@/lib/supabase/auth/require-user";
+import { safeDisplay } from "@/lib/utils/data-format";
 import DashboardClient from "./DashboardClient";
 
 export default async function DashboardPage() {
@@ -20,9 +21,7 @@ export default async function DashboardPage() {
         <div>
           <div className="text-sm text-muted-foreground">Home → Dashboard</div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {user.display_name || user.email}
-          </p>
+          <div>Welcome, {safeDisplay(user.display_name)}</div>
         </div>
       </div>
 
