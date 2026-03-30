@@ -1,38 +1,27 @@
-// src/app/(protected)/profile/page.tsx
-"use client";
-
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser-client";
+import { requireUser } from "@/lib/supabase/auth/require-user";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
-const displayNameSchema = z.object({
-  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
-});
-
-type DisplayNameForm = z.infer<typeof displayNameSchema>;
-
 // Server Action - Update Display Name
-export async function updateDisplayName(display_name: string) {
+export async function updateDisplayName(formData: FormData) {
   'use server';
-  const supabase = createClient(); // browser client is allowed in server actions in this context
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
+  const display_name = formData.get('display_name') as string;
 
   const { error } = await supabase
     .from("profiles")
@@ -51,137 +40,48 @@ export async function updateDisplayName(display_name: string) {
 // Server Action - Sign Out
 export async function signOut() {
   'use server';
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
 
-// Client Form Component
-function ProfileForm({ profile }: { profile: Profile }) {
-  const form = useForm<DisplayNameForm>({
-    resolver: zodResolver(displayNameSchema),
-    defaultValues: {
-      display_name: profile?.display_name ?? "",
-    },
-  });
-
-  const mutation = useMutation({
-    mutationFn: updateDisplayName,
-    onSuccess: () => {
-      toast.success("Display name updated successfully");
-      form.reset({ display_name: form.getValues("display_name") });
-    },
-    onError: () => {
-      toast.error("Failed to update display name");
-    },
-  });
-
-  const onSubmit = form.handleSubmit((data) => {
-    mutation.mutate(data.display_name);
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="display_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium">Display Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Enter your display name"
-                  className="h-11"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="space-y-3">
-          <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-          <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-          <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
-        </div>
-        <Button 
-          type="submit" 
-          className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" 
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? "Updating..." : "Update Profile"}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
 // Main Page Component
-export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+export default async function ProfilePage() {
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
 
-  const supabase = createClient();
+  // Try to fetch profile
+  let { data: profileData, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) {
-          redirect('/login');
-          return;
-        }
+  // Create profile if it doesn't exist
+  if (error || !profileData) {
+    console.log("Profile not found, creating new profile for user:", user.id);
+    const { data: newProfile, error: insertError } = await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        role: 'user',
+        display_name: user.display_name || null,
+      })
+      .select()
+      .single();
 
-        setUser(authUser);
+    if (insertError) {
+      console.error("Error creating profile:", insertError);
+      throw new Error("Failed to create profile");
+    }
 
-        // Try to fetch profile
-        let { data: profileData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-
-        // Create profile if it doesn't exist
-        if (!profileData) {
-          const { data: newProfile } = await supabase
-            .from("profiles")
-            .insert({
-              id: authUser.id,
-              role: 'user',
-              display_name: authUser.user_metadata?.display_name || null,
-              avatar_url: authUser.user_metadata?.avatar_url || null,
-            })
-            .select()
-            .single();
-
-          profileData = newProfile;
-        }
-
-        setProfile(profileData);
-      } catch (e) {
-        console.error("Profile loading error:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [supabase]);
-
-  if (loading) {
-    return <div className="p-10 text-center">Loading profile...</div>;
+    profileData = newProfile;
   }
 
-  if (!profile) {
-    return <div className="p-10 text-center text-red-500">Failed to load profile</div>;
-  }
-
-  const displayName = safeDisplay(profile.display_name || user?.user_metadata?.display_name);
-  const role = profile.role || "user";
-  const avatarUrl = profile.avatar_url || "";
-  const email = user?.email || "";
+  const displayName = safeDisplay(profileData.display_name || user.display_name);
+  const role = profileData.role || "user";
+  const avatarUrl = profileData.avatar_url || "";
+  const email = user.email || "";
 
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
@@ -229,7 +129,28 @@ export default function ProfilePage() {
             <CardTitle className="text-xl">Update Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <ProfileForm profile={profile} />
+            <form action={updateDisplayName} className="space-y-6">
+              <div>
+                <Label className="text-sm font-medium">Display Name</Label>
+                <Input
+                  name="display_name"
+                  defaultValue={profileData.display_name || ""}
+                  placeholder="Enter your display name"
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
+                <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
+                <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors"
+              >
+                Update Profile
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
