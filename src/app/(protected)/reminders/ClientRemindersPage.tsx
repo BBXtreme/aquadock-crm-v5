@@ -77,7 +77,7 @@ function ClientRemindersPage() {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder deleted");
     },
-    onError: (error) => {
+    onError: (_error) => {
       const message = err instanceof Error ? err.message : "An unknown error occurred";
       toast.error("Failed to delete reminder", { description: message });
     },

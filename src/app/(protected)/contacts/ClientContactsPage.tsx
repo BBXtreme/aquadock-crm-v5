@@ -22,7 +22,7 @@ import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
 function ClientContactsPage() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
