@@ -9,9 +9,9 @@
 // from the authentication context or Supabase client.
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,6 +26,7 @@ import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createClient } from "@/lib/supabase/browser-client";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { redirect } from "next/navigation";
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
@@ -50,10 +51,24 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  const { data: userProfile } = useQuery({
+    queryKey: ["user-profile", user.id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
     defaultValues: {
-      display_name: user.display_name || "",
+      display_name: userProfile?.display_name || user.display_name || "",
     },
   });
 
@@ -67,7 +82,7 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
       router.refresh();
       toast.success("Display name updated successfully");
     },
@@ -81,13 +96,17 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
     updateMutation.mutate(data);
   });
 
+  const displayName = userProfile?.display_name || user.display_name;
+  const role = userProfile?.role || user.role;
+  const avatarUrl = userProfile?.avatar_url || user.avatar_url;
+
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
       <div className="space-y-2">
         <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
           Profile
         </h1>
-        <p className="text-lg text-muted-foreground">Welcome, {safeDisplay(user.display_name)}</p>
+        <p className="text-lg text-muted-foreground">Welcome, {safeDisplay(displayName)}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -102,7 +121,7 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Avatar className="h-32 w-32 border-4 border-primary/10">
-                  <AvatarImage src={user.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
+                  <AvatarImage src={avatarUrl || "/placeholder-avatar.png"} alt="Profile" />
                   <AvatarFallback className="text-2xl font-semibold">
                     {user.email?.charAt(0).toUpperCase()}
                   </AvatarFallback>
@@ -112,10 +131,10 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
                 </div>
               </div>
               <div className="text-center space-y-1">
-                <p className="text-2xl font-semibold">{user.display_name || "No display name"}</p>
+                <p className="text-2xl font-semibold">{displayName || "No display name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
                 <Badge variant="secondary" className="capitalize">
-                  {user.role}
+                  {role}
                 </Badge>
               </div>
             </div>
