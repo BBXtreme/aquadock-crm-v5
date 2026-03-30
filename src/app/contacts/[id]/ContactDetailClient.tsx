@@ -76,19 +76,16 @@ export default function ContactDetailClient({ contact: initialContact, companies
     initialData: initialContact,
   });
 
-  if (!contact) {
-    return <div>Contact not found</div>;
-  }
-
   const { data: linkedCompany } = useQuery({
-    queryKey: ["company", contact.company_id],
+    queryKey: ["company", contact?.company_id],
     queryFn: async () => {
+      if (!contact?.company_id) return null;
       const supabase = createClient();
       const { data, error } = await supabase.from("companies").select("*").eq("id", contact.company_id).single();
       if (error) throw error;
       return data;
     },
-    enabled: !!contact.company_id,
+    enabled: !!contact?.company_id,
   });
 
   useEffect(() => {
@@ -103,6 +100,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
       setNotesValue(contact.notes || "");
     }
   }, [contact]);
+
+  if (!contact) {
+    return <div>Contact not found</div>;
+  }
 
   const handleDeleteContact = async () => {
     if (confirm("Are you sure you want to delete this contact?")) {
