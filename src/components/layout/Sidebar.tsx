@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -29,6 +29,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const userRole = user.role;
 
@@ -100,14 +101,37 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-2">
-              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start h-8 px-3"
+                onClick={() => router.push("/companies")}
+              >
                 New Company
               </Button>
-              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start h-8 px-3"
+                onClick={() => router.push("/contacts")}
+              >
                 New Contact
               </Button>
-              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start h-8 px-3"
+                onClick={() => router.push("/reminders?create=true")}
+              >
                 New Reminder
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start h-8 px-3"
+                onClick={() => router.push("/timeline?create=true")}
+              >
+                New Timeline
               </Button>
             </CollapsibleContent>
           </Collapsible>
