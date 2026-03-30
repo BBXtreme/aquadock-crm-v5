@@ -118,52 +118,61 @@ function ProfileForm({ profile }: { profile: Profile }) {
 export default function ProfilePage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        redirect('/login');
-      }
-      setUser({
-        id: authUser.id,
-        email: authUser.email ?? null,
-        display_name: authUser.user_metadata?.display_name || null,
-      });
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+          redirect('/login');
+        }
+        setUser({
+          id: authUser.id,
+          email: authUser.email ?? null,
+          display_name: authUser.user_metadata?.display_name || null,
+        });
 
-      let { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (error || !profileData) {
-        // Create profile if not found
-        const { data: newProfile, error: insertError } = await supabase
+        let { data: profileData, error } = await supabase
           .from("profiles")
-          .insert({
-            id: authUser.id,
-            role: 'user',
-            display_name: authUser.user_metadata?.display_name || null,
-            avatar_url: authUser.user_metadata?.avatar_url || null,
-          })
-          .select()
+          .select("*")
+          .eq("id", authUser.id)
           .single();
 
-        if (insertError) {
-          console.error("Error creating profile:", insertError);
-          throw new Error("Failed to create profile");
+        if (error || !profileData) {
+          // Create profile if not found
+          const { data: newProfile, error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: authUser.id,
+              role: 'user',
+              display_name: authUser.user_metadata?.display_name || null,
+              avatar_url: authUser.user_metadata?.avatar_url || null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error("Error creating profile:", insertError);
+            throw new Error("Failed to create profile");
+          }
+
+          profileData = newProfile;
         }
 
-        profileData = newProfile;
+        setProfile(profileData);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'An error occurred');
       }
-
-      setProfile(profileData);
     };
     fetchData();
   }, [supabase]);
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   if (!user || !profile) {
     return <div>Loading...</div>;
