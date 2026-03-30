@@ -26,7 +26,7 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-export default function Sidebar({ isCollapsed, _isMobile, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string | null>(null);
 
