@@ -8,7 +8,7 @@
 
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Building, DollarSign, Trophy, Users } from "lucide-react";
 import { Suspense, useState } from "react";
 
@@ -19,7 +19,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
 
-  const { data: stats, isLoading } = useQuery({
+  const stats = useSuspenseQuery({
     queryKey: ["dashboard-stats", selectedPeriod],
     queryFn: async () => {
       const supabase = createClient();
@@ -67,25 +67,6 @@ export default function DashboardPage() {
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto space-y-8 p-6 lg:p-8">
-        <div className="flex items-center justify-between pb-6 border-b">
-          <div>
-            <div className="text-sm text-muted-foreground">Home → Dashboard</div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <LoadingState count={4} className="" itemClassName="h-32 bg-muted animate-pulse rounded-lg" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
       <div className="flex items-center justify-between pb-6 border-b">
@@ -110,28 +91,28 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Companies"
-            value={stats?.totalCompanies.toLocaleString("de-DE") || "0"}
+            value={stats.totalCompanies.toLocaleString("de-DE")}
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats?.companiesInPeriod || 0} this period`}
+            change={`+${stats.companiesInPeriod} this period`}
           />
           <StatCard
             title="Leads"
-            value={stats?.leads.toLocaleString("de-DE") || "0"}
+            value={stats.leads.toLocaleString("de-DE")}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats?.companiesInPeriod || 0} this period`}
+            change={`+${stats.companiesInPeriod} this period`}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={stats?.won.toLocaleString("de-DE") || "0"}
+            value={stats.won.toLocaleString("de-DE")}
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats?.companiesInPeriod || 0} this period`}
+            change={`+${stats.companiesInPeriod} this period`}
           />
           <StatCard
             title="Total Value"
-            value={`€${stats?.totalValue.toLocaleString("de-DE") || "0"}`}
+            value={`€${stats.totalValue.toLocaleString("de-DE")}`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
             change="—"
