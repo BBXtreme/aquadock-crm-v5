@@ -1,37 +1,40 @@
-"use client";
-
 // src/app/(protected)/profile/page.tsx
 // This file defines the Profile page of the application, where users can view and update their profile information.
 // It displays the user's email, display name, and avatar, and includes a form for updating the display name and profile
 // picture (currently disabled as a placeholder).
 // The page also includes a section for account actions, such as signing out (also currently disabled).
-// The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
-// from the authentication context or Supabase client.
+// The user data is fetched from the authentication context or Supabase client.
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Upload, User } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { createClient } from "@/lib/supabase/browser-client";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
-const displayNameSchema = z.object({
-  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
-});
+async function updateProfile(formData: FormData) {
+  'use server';
+  const user = await requireUser();
+  const display_name = formData.get('display_name') as string;
 
-type DisplayNameForm = z.infer<typeof displayNameSchema>;
+  if (!display_name || display_name.length < 1 || display_name.length > 50) {
+    throw new Error("Invalid display name");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ display_name })
+    .eq("id", user.id);
+  if (error) throw error;
+
+  // Redirect to refresh the page
+  redirect('/profile');
+}
 
 async function signOut() {
   'use server';
@@ -43,57 +46,12 @@ async function signOut() {
 export default async function ProfilePage() {
   const user = await requireUser();
 
-  return <ProfilePageClient user={user} />;
-}
-
-function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUser>> }) {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-
-  const { data: userProfile } = useQuery({
-    queryKey: ["user-profile", user.id],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const form = useForm<DisplayNameForm>({
-    resolver: zodResolver(displayNameSchema),
-    defaultValues: {
-      display_name: userProfile?.display_name || user.display_name || "",
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (values: DisplayNameForm) => {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ display_name: values.display_name })
-        .eq("id", user.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
-      router.refresh();
-      toast.success("Display name updated successfully");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to update display name", { description: message });
-    },
-  });
-
-  const onSubmit = form.handleSubmit((data) => {
-    updateMutation.mutate(data);
-  });
+  const supabase = await createServerSupabaseClient();
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
   const displayName = userProfile?.display_name || user.display_name;
   const role = userProfile?.role || user.role;
@@ -145,35 +103,29 @@ function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUs
             <CardTitle className="text-xl">Update Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={onSubmit} className="space-y-6">
-                <FormField
-                  control={form.control}
+            <form action={updateProfile} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="display_name" className="text-sm font-medium">Display Name</Label>
+                <Input
+                  id="display_name"
                   name="display_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">Display Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Enter your display name"
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  defaultValue={displayName || ""}
+                  placeholder="Enter your display name"
+                  className="h-11"
+                  required
+                  minLength={1}
+                  maxLength={50}
                 />
-                <div className="space-y-3">
-                  <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-                  <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-                  <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
-                </div>
-                <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? "Updating..." : "Update Profile"}
-                </Button>
-              </form>
-            </Form>
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
+                <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
+                <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
+              </div>
+              <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors">
+                Update Profile
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
