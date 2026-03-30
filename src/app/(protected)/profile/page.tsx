@@ -1,12 +1,9 @@
 // src/app/(protected)/profile/page.tsx
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -20,15 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-type AuthUser = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-};
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
@@ -36,29 +27,36 @@ const displayNameSchema = z.object({
 
 type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
+// Server Action - Update Display Name
 export async function updateDisplayName(display_name: string) {
   'use server';
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient(); // browser client is allowed in server actions in this context
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
   const { error } = await supabase
     .from("profiles")
     .update({ display_name })
     .eq("id", user.id);
+
   if (error) {
-    console.error("Update display name error:", error);
-    throw new Error("Failed to update display name. Please try again.");
+    console.error("Update error:", error);
+    throw new Error("Failed to update display name");
   }
+
+  // Revalidate the profile page
   revalidatePath('/profile');
 }
 
+// Server Action - Sign Out
 export async function signOut() {
   'use server';
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
 
+// Client Form Component
 function ProfileForm({ profile }: { profile: Profile }) {
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
@@ -73,7 +71,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
       toast.success("Display name updated successfully");
       form.reset({ display_name: form.getValues("display_name") });
     },
-    onError: (_error) => {
+    onError: () => {
       toast.error("Failed to update display name");
     },
   });
@@ -107,7 +105,11 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
           <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
         </div>
-        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={mutation.isPending}>
+        <Button 
+          type="submit" 
+          className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" 
+          disabled={mutation.isPending}
+        >
           {mutation.isPending ? "Updating..." : "Update Profile"}
         </Button>
       </form>
@@ -115,10 +117,11 @@ function ProfileForm({ profile }: { profile: Profile }) {
   );
 }
 
+// Main Page Component
 export default function ProfilePage() {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
 
@@ -128,22 +131,21 @@ export default function ProfilePage() {
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) {
           redirect('/login');
+          return;
         }
-        setUser({
-          id: authUser.id,
-          email: authUser.email ?? null,
-          display_name: authUser.user_metadata?.display_name || null,
-        });
 
-        let { data: profileData, error } = await supabase
+        setUser(authUser);
+
+        // Try to fetch profile
+        let { data: profileData } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", authUser.id)
           .single();
 
-        if (error || !profileData) {
-          // Create profile if not found
-          const { data: newProfile, error: insertError } = await supabase
+        // Create profile if it doesn't exist
+        if (!profileData) {
+          const { data: newProfile } = await supabase
             .from("profiles")
             .insert({
               id: authUser.id,
@@ -154,34 +156,32 @@ export default function ProfilePage() {
             .select()
             .single();
 
-          if (insertError) {
-            console.error("Error creating profile:", insertError);
-            throw new Error("Failed to create profile");
-          }
-
           profileData = newProfile;
         }
 
         setProfile(profileData);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'An error occurred');
+        console.error("Profile loading error:", e);
+      } finally {
+        setLoading(false);
       }
     };
+
     fetchData();
   }, [supabase]);
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (loading) {
+    return <div className="p-10 text-center">Loading profile...</div>;
   }
 
-  if (!user || !profile) {
-    return <div>Loading...</div>;
+  if (!profile) {
+    return <div className="p-10 text-center text-red-500">Failed to load profile</div>;
   }
 
-  const displayName = safeDisplay(profile.display_name || user.display_name);
+  const displayName = safeDisplay(profile.display_name || user?.user_metadata?.display_name);
   const role = profile.role || "user";
   const avatarUrl = profile.avatar_url || "";
-  const email = user.email || "";
+  const email = user?.email || "";
 
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
@@ -193,7 +193,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {/* Profile Information Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center text-xl">
@@ -225,7 +224,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        {/* Update Profile Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="text-xl">Update Profile</CardTitle>
@@ -236,7 +234,6 @@ export default function ProfilePage() {
         </Card>
       </div>
 
-      {/* Account Actions */}
       <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
         <CardHeader className="pb-6">
           <CardTitle className="text-xl">Account Actions</CardTitle>
