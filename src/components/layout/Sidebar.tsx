@@ -101,38 +101,26 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start h-8 px-3"
-                onClick={() => router.push("/companies")}
-              >
-                New Company
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start h-8 px-3"
-                onClick={() => router.push("/contacts")}
-              >
-                New Contact
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start h-8 px-3"
-                onClick={() => router.push("/reminders?create=true")}
-              >
-                New Reminder
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start h-8 px-3"
-                onClick={() => router.push("/timeline?create=true")}
-              >
-                New Timeline
-              </Button>
+              <Link href="/companies?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Company
+                </Button>
+              </Link>
+              <Link href="/contacts?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Contact
+                </Button>
+              </Link>
+              <Link href="/reminders?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Reminder
+                </Button>
+              </Link>
+              <Link href="/timeline?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Timeline
+                </Button>
+              </Link>
             </CollapsibleContent>
           </Collapsible>
         </div>
