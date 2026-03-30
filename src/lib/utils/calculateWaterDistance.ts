@@ -1,6 +1,22 @@
 // src/lib/utils/calculateWaterDistance.ts
-import L from "leaflet";
-import { determineWassertyp } from "@/lib/constants/wassertyp";
+// This utility calculates the distance to the nearest water feature
+// using the Overpass API
+// It includes aggressive client-side caching to minimize API calls,
+// with a TTL of 24 hours
+// The search radius has been reduced to 1000m to focus on nearby water
+// features
+// Multiple Overpass API endpoints are used with retry logic to improve
+// reliability
+// The function is designed to be called on explicit user request from
+// a POI popup, rather than automatically on map movements, to further
+// reduce unnecessary API calls
+// The result includes both the distance to the nearest water feature
+// and the determined wassertyp (type of water), which can be used for
+// display purposes in the UI
+// The code is structured to handle various edge cases, such as API rate
+// limits, timeouts, and the possibility of no nearby water features
+// being found, while providing informative console logs for debugging
+// The caching mechanism uses localStorage and includes logic to trim the cache to a maximum number of entries to prevent unbounded growth, ensuring that the most recent entries are retained while older ones are removed when the limit is exceeded. This helps maintain performance and storage efficiency over time.
 
 /**
  * Calculates the distance to the nearest water feature using Overpass API.
@@ -11,6 +27,8 @@ import { determineWassertyp } from "@/lib/constants/wassertyp";
  * - Multiple endpoint rotation with backoff
  * - Only called on explicit user request from POI popup
  */
+
+import L from "leaflet";
 
 const WATER_CACHE_KEY = "aquadock_water_cache_v2";
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
