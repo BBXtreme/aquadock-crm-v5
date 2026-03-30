@@ -15,7 +15,6 @@ export default async function ContactsPage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div>Welcome, {safeDisplay(user.display_name)}</div>
       <Suspense fallback={<div>Loading contacts...</div>}>
         <ClientContactsPage />
       </Suspense>

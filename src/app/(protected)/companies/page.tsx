@@ -19,7 +19,6 @@ export default async function CompaniesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <p>Welcome back, {safeDisplay(user.display_name)}</p>
         <Suspense fallback={<div className="p-8">Loading companies...</div>}>
           <ClientCompaniesPage />
         </Suspense>
