@@ -4,11 +4,11 @@
 // The page also includes a section for account actions, such as signing out (also currently disabled).
 // The user data is fetched from the authentication context or Supabase client.
 
-import type { AuthUser } from "@/lib/supabase/auth/types";
-import type { Database } from "@/lib/supabase/database.types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/supabase/auth/require-user";
+import type { AuthUser } from "@/lib/supabase/auth/types";
+import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
