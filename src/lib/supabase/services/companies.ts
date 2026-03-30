@@ -84,9 +84,7 @@ export async function getCompanyById(id: string, supabase: SupabaseClient): Prom
   try {
     const { data, error } = await supabase
       .from("companies")
-      .select(
-        "id, firmenname, status, kundentyp, firmentyp, rechtsform, value, strasse, plz, stadt, bundesland, land, telefon, email, website, lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at",
-      )
+      .select("id, firmenname, status, kundentyp, firmentyp, rechtsform, value, strasse, plz, stadt, bundesland, land, telefon, email, website, lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at")
       .eq("id", id)
       .single();
 
@@ -95,7 +93,7 @@ export async function getCompanyById(id: string, supabase: SupabaseClient): Prom
       throw handleSupabaseError(error, "getCompanyById");
     }
 
-    return data;
+    return data as Company;
   } catch (err) {
     console.error("getCompanyById unexpected error:", err);
     throw err;
