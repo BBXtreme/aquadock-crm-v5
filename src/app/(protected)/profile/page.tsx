@@ -6,8 +6,8 @@
 // The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
 // from the authentication context or Supabase client.
 
-import { revalidatePath } from "next/cache";
 import { LogOut, User } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
