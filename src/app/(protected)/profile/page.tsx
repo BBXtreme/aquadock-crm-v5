@@ -11,7 +11,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,11 +22,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser-client";
 import { requireUser } from "@/lib/supabase/auth/require-user";
+import { createClient } from "@/lib/supabase/browser-client";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { redirect } from "next/navigation";
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
