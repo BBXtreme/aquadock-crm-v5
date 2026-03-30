@@ -47,7 +47,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
     initialData: initialContact,
   });
 
-  const contact = contactQuery.data!; // Safe because useSuspenseQuery ensures data is available
+  const contact = contactQuery.data; // useSuspenseQuery ensures data is available
 
   const companiesQuery = useSuspenseQuery({
     queryKey: ["companies-light"],
@@ -110,25 +110,25 @@ export default function ContactDetailClient({ contact: initialContact, companies
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">First Name</label>
+                  <span className="text-sm font-medium text-muted-foreground">First Name</span>
                   <p className="text-lg">{safeDisplay(contact.vorname)}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Last Name</label>
+                  <span className="text-sm font-medium text-muted-foreground">Last Name</span>
                   <p className="text-lg">{safeDisplay(contact.nachname)}</p>
                 </div>
               </div>
 
               {contact.anrede && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Salutation</label>
+                  <span className="text-sm font-medium text-muted-foreground">Salutation</span>
                   <Badge variant="outline">{contact.anrede}</Badge>
                 </div>
               )}
 
               {contact.position && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Position</label>
+                  <span className="text-sm font-medium text-muted-foreground">Position</span>
                   <p>{contact.position}</p>
                 </div>
               )}
@@ -154,7 +154,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
 
               {contact.notes && (
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Notes</label>
+                  <span className="text-sm font-medium text-muted-foreground">Notes</span>
                   <p className="whitespace-pre-wrap">{contact.notes}</p>
                 </div>
               )}
@@ -190,7 +190,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-muted-foreground">Primary Contact</label>
+                <span className="text-sm font-medium text-muted-foreground">Primary Contact</span>
                 <Badge variant={contact.is_primary ? "default" : "secondary"}>
                   {contact.is_primary ? "Yes" : "No"}
                 </Badge>
