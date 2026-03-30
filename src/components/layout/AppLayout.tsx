@@ -15,7 +15,7 @@ import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  user?: { role: string; display_name?: string };
+  user: { role: string; display_name?: string | null };
 }
 
 export default function AppLayout({ children, user }: AppLayoutProps) {

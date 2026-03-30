@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
-  user: { role: string; display_name?: string };
+  user: { role: string; display_name?: string | null };
 }
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
