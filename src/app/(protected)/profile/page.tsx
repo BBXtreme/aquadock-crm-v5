@@ -1,3 +1,5 @@
+"use client";
+
 // src/app/(protected)/profile/page.tsx
 // This file defines the Profile page of the application, where users can view and update their profile information.
 // It displays the user's email, display name, and avatar, and includes a form for updating the display name and profile
@@ -6,12 +8,10 @@
 // The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
 // from the authentication context or Supabase client.
 
-"use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,6 +26,7 @@ import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createClient } from "@/lib/supabase/browser-client";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { redirect } from "next/navigation";
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
