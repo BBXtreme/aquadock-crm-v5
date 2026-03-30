@@ -22,13 +22,12 @@ import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/wide-dialog";
-import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { Textarea, WideDialogContent } from "@/components/ui/wide-dialog";
+import type { ContactFormDTO } from "@/lib/dto/contact.dto";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
 import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { ContactFormDTO } from "@/lib/dto/contact.dto";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
