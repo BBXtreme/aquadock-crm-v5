@@ -18,7 +18,6 @@ export default async function OpenMapPage() {
   try {
     companies = await getCompaniesForOpenMap(await createServerSupabaseClient());
   } catch (err: unknown) {
-    console.error("[OpenMap Page] Failed to load companies:", err);
     error = "Fehler beim Laden der Karte. Bitte versuche es erneut.";
   }
 
