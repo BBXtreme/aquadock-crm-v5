@@ -5,28 +5,23 @@
 // Note: The main page is a server component for data fetching, while interactive parts are handled by the client component.
 
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { getContactById } from "@/lib/supabase/services/contacts";
+import { safeDisplay } from "@/lib/utils/data-format";
 import ContactDetailClient from "./ContactDetailClient";
 
-export default async function ContactDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   try {
     const supabase = await createServerSupabaseClient();
     const contact = await getContactById(id, supabase);
 
     if (!contact) {
-      return (
-        <div className="container mx-auto p-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-            <p className="text-gray-600">Contact Not Found</p>
-          </div>
-        </div>
-      );
+      notFound();
     }
 
     const { data: companies } = await supabase.from("companies").select("id, firmenname");

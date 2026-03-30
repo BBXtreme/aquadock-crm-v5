@@ -27,6 +27,7 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
@@ -184,19 +185,19 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-gray-700">Vorname</div>
-              <p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(contact.vorname)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Nachname</div>
-              <p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(contact.nachname)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Anrede</div>
-              <p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(contact.anrede)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Position</div>
-              <p className="text-sm text-gray-900">{contact.position || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(contact.position)}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Email</div>
@@ -206,7 +207,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                     {contact.email}
                   </a>
                 ) : (
-                  "—"
+                  safeDisplay(null)
                 )}
               </p>
             </div>
@@ -218,7 +219,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                     {contact.telefon}
                   </a>
                 ) : (
-                  "—"
+                  safeDisplay(null)
                 )}
               </p>
             </div>
@@ -230,13 +231,13 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                     {contact.mobil}
                   </a>
                 ) : (
-                  "—"
+                  safeDisplay(null)
                 )}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-700">Durchwahl</div>
-              <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
+              <p className="text-sm text-gray-900">{safeDisplay(contact.durchwahl)}</p>
             </div>
             <div className="md:col-span-2">
               <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -265,7 +266,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
+                <p className="text-sm text-gray-900">{safeDisplay(contact.notes)}</p>
               )}
             </div>
           </div>
