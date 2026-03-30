@@ -1,4 +1,4 @@
-// src/app/timeline/page.tsx
+// src/app/(protected)/timeline/page.tsx
 // This file defines the Timeline page of the application, which displays a list of timeline entries related to companies and contacts.
 // It uses React Query to fetch timeline data from the server and manage state for creating, updating, and deleting entries.
 // The page includes a dialog for creating and editing timeline entries, as well as a confirmation dialog for deletions.

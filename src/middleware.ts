@@ -1,5 +1,7 @@
 // src/middleware.ts
-// This middleware function checks if the user is authenticated when trying to access protected routes. If the user is not authenticated and tries to access a protected route, they are redirected to the login page. If the user is already authenticated and tries to access the login page, they are redirected to the dashboard. The middleware uses the Supabase client to check for an active session and defines a list of protected paths that require authentication.
+// This middleware handles authentication and route protection for the 
+// application. It checks if a user is authenticated when accessing 
+// protected routes and redirects them to the login page if they are not. It also prevents authenticated users from accessing the login page by redirecting them to the dashboard.
 
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "./lib/supabase/server-client";
@@ -8,6 +10,7 @@ export async function middleware(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
 
+  // Protected paths (URLs remain the same even with route groups)
   const protectedPaths = [
     "/dashboard",
     "/companies",
@@ -31,7 +34,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect to dashboard if already logged in and trying to access login
+  // Redirect authenticated users away from login page
   if (request.nextUrl.pathname === "/login" && session) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -41,6 +44,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|logo-*.png).*)",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, logo-*.png (public assets)
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|logo-.*\\.png).*)",
   ],
 };

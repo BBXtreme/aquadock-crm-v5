@@ -1,4 +1,4 @@
-// src/app/settings/page.tsx
+// src/app/(protected)/settings/page.tsx
 // This file defines the Settings page of the application, where users can configure various settings related
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 

@@ -15,21 +15,29 @@
 - **State management** → TanStack React Query for mutations, caching and optimistic updates
 - **Suspense for data loading** → useSuspenseQuery for automatic loading states, with Suspense boundaries for fallbacks
 
-## 2. Current Folder Structure (Flat App Router)
+## 2. Current Folder Structure (App Router + Route Groups)
 
 ```markdown
-src/
-├── app/                          # Flat routes – no route groups
-│   ├── companies/
-│   ├── openmap/                  # Server fetch → OpenMapClient
-│   ├── contacts/
-│   ├── reminders/
+src/app/
+├── (auth)/
+│   └── login/
+│       └── page.tsx                 # Public login page (no sidebar/header)
+├── (protected)/
+│   ├── layout.tsx                   # Applies AppLayout (Sidebar + Header) to all protected routes
 │   ├── dashboard/
-│   ├── mass-email/
-│   ├── settings/
+│   ├── companies/
+│   ├── contacts/
 │   ├── timeline/
-│   ├── layout.tsx                # Root layout + auth
-│   └── page.tsx
+│   ├── reminders/
+│   ├── mass-email/
+│   ├── openmap/
+│   ├── profile/
+│   └── settings/
+├── api/                             # All API routes (unaffected by route groups)
+├── unauthorized/
+├── layout.tsx              # Root layout (clean - only ClientLayout + ErrorBoundary)
+├── page.tsx                         # Home → redirect to /dashboard
+└── globals.css
 ├── components/
 │   ├── ui/
 │   ├── layout/                   # Sidebar + Header
@@ -63,6 +71,55 @@ src/
 │       └── query-client.ts
 └── hooks/
 ```
+
+### Route Groups (Next.js 16 App Router)
+
+- (protected) – All authenticated pages get AppLayout (Sidebar + Header)
+- (auth) – Login page stays clean (no sidebar)
+- URLs remain unchanged (/dashboard, /companies, etc.)
+- No extra path segments in browser
+
+### Layout Hierarchy
+
+- src/app/layout.tsx → Root (Server) – Fonts, ClientLayout, ErrorBoundary
+- src/app/(protected)/layout.tsx → Protected Layout – Wraps AppLayout
+- AppLayout.tsx → Client Component – Handles collapse, mobile, and hides UI on auth pages
+
+### Authentication Flow
+
+1. Middleware checks session for protected paths
+2. Protected pages call requireUser() (server component)
+3. getCurrentUser() joins profiles table for role + display_name
+4. requireAdmin() for admin-only features
+5. Login page handles redirectTo from middleware
+
+### Guiding Principles Applied
+
+- **Auth before data**: requireUser() is called before any data fetching
+- **Single source of truth**: profiles table + Supabase auth.users
+- **Server-first**: Protection happens in server components and middleware
+
+## Protected Routes (Current)
+
+All routes inside (protected) automatically receive:
+
+- Sidebar navigation
+- Header with user menu, notifications, theme toggle
+- requireUser() protection (implemented per page)
+
+Current protected pages:
+
+- /dashboard
+- /companies
+- /contacts
+- /timeline
+- /reminders
+- /settings
+- /profile
+- /mass-email
+- /openmap
+
+
 
 ## 3. Data Flow Patterns
 

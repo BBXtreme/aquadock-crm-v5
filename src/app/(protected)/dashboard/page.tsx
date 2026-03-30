@@ -1,4 +1,7 @@
-// src/app/dashboard/page.tsx
+// src/app/(protected)/dashboard/page.tsx
+// This file defines the Dashboard page of the application, which displays key performance indicators (KPIs) and visualizations related to companies, contacts, and timeline events.
+// The page is protected and requires user authentication before rendering the dashboard content.
+// It uses a client component (DashboardClient) to fetch and display the actual statistics and charts, while the server component handles authentication and provides a loading state during data fetching.
 // Protected dashboard with real KPI calculations and beautiful visualizations.
 
 import { Suspense } from "react";

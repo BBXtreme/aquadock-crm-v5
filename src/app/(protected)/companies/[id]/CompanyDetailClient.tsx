@@ -1,4 +1,7 @@
-// src/app/companies/[id]/CompanyDetailClient.tsx
+// src/app/(protected)/companies/[id]/CompanyDetailClient.tsx
+// This file defines the CompanyDetailClient component, which is responsible for rendering the detailed view of a single company.
+// It receives the company data as props and renders various cards and sections related to the company's information, linked contacts, reminders, and timeline events.
+// The component also handles any necessary client-side interactions and state management for the company detail view.  
 // Client wrapper for Company Detail page, handling interactive parts and sub-queries.
 
 "use client";

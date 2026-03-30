@@ -7,6 +7,30 @@
 **Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
 **Service layer**: `src/lib/supabase/services/*.ts`
 
+
+
+## Authentication & Authorization
+
+### Route Structure 
+
+- Public routes: `(auth)/login` 
+- Protected routes: `(protected)/...` with dedicated layout 
+- All protected pages must call `await requireUser()` before data access
+
+### Profiles Table (Source of Truth for Roles) 
+
+```sql
+CREATE TABLE public.profiles (
+  id uuid REFERENCES auth.users NOT NULL PRIMARY KEY,
+  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  display_name text,
+  avatar_url text,
+  updated_at timestamp with time zone DEFAULT now()
+);
+```
+
+
+
 ## 1. Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |

@@ -1,4 +1,4 @@
-// src/app/login/page.tsx
+// src/app/(auth)/login/page.tsx
 // This file defines the Login page of the application, which provides a user interface for signing in
 // and signing up using Supabase's authentication system.
 // It respects the redirectTo parameter from middleware and properly handles auth state changes.

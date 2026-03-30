@@ -126,33 +126,59 @@ pnpm check:fix    # lint + auto-fix
 text
 
 ```
-src/
-├── app/                          # Flat routes
+src/app/
+├── (auth)/
+│   └── login/
+│       └── page.tsx                 # Public login page (no sidebar/header)
+├── (protected)/
+│   ├── layout.tsx                   # Applies AppLayout (Sidebar + Header) to all protected routes
+│   ├── dashboard/
 │   ├── companies/
-│   ├── openmap/                  # ← OpenMap page
 │   ├── contacts/
+│   ├── timeline/
 │   ├── reminders/
-│   ├── layout.tsx                # Root layout
-│   └── page.tsx
+│   ├── mass-email/
+│   ├── openmap/
+│   ├── profile/
+│   └── settings/
+├── api/                             # All API routes (unaffected by route groups)
+├── unauthorized/
+├── layout.tsx              # Root layout (clean - only ClientLayout + ErrorBoundary)
+├── page.tsx                         # Home → redirect to /dashboard
+└── globals.css
 ├── components/
 │   ├── ui/
-│   ├── layout/                   # Sidebar, Header
+│   ├── layout/                   # Sidebar + Header
 │   ├── features/
-│   │   └── map/                  # OpenMapClient, OpenMapView, popups
+│   │   ├── map/                  # OpenMapClient, OpenMapView, popups
+│   │   ├── companies/
+│   │   ├── contacts/
+│   │   ├── reminders/
 │   └── ErrorBoundary.tsx
 ├── lib/
 │   ├── supabase/
 │   │   ├── server.ts
 │   │   ├── browser.ts
-│   │   └── services/companies.ts
+│   │   ├── services/             # Central service layer
+│   │   ├── database.types.ts     # Auto-generated types
+│   │   └── query-debug-utils.ts
+│   ├── dto/                      # Form-specific types
+│   ├── validations/              # Zod schemas
+│   ├── constants/
+│   │   ├── company-options.ts    # Form options
+│   │   ├── map-poi-config.ts
+│   │   ├── map-status-colors.ts
+│   │   ├── kundentyp.ts
+│   │   ├── wassertyp.ts
+│   │   └── overpass-endpoints.ts
 │   └── utils/
-│       └── map.ts
-├── lib/constants/
-│   ├── map-poi-config.ts
-│   ├── map-status-colors.ts
-│   ├── kundentyp.ts
-│   └── wassertyp.ts
+│       ├── map-utils.ts
+│       ├── calculateWaterDistance.ts
+│       ├── csv-import.ts
+│       ├── data-format.ts        # safeDisplay, safeString, format helpers
+│       └── query-client.ts
 └── hooks/
+│ middleware.ts
 ```
 
 ## 8. Deployment
@@ -177,7 +203,19 @@ Bash
 npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 ```
 
-## 10. Contributing
+## 10. Routing & Layout
+
+We use Next.js App Router with **route groups** for clean separation:
+
+- `(auth)` → Public pages (login)
+- `(protected)` → All authenticated pages (automatically get Sidebar + Header)
+
+This gives us:
+- Clean URLs
+- Automatic layout wrapping
+- Easy protection with `requireUser()`
+
+## 11. Contributing
 
 - Branch naming: feature/xxx, fix/xxx, chore/xxx
 - Run pnpm check:fix before commit

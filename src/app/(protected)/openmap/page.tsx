@@ -1,4 +1,4 @@
-// src/app/openmap/page.tsx
+// src/app/(protected)/openmap/page.tsx
 // This file defines the OpenMap page of the application, which displays an interactive map with company locations.
 // It uses a client component (OpenMapClient) to render the map and handle interactions, while the server component
 // fetches the necessary company data from Supabase and passes it as props to the client component.

@@ -1,5 +1,8 @@
-// src/app/dashboard/DashboardClient.tsx
-// This component is the client-side part of the dashboard page. It fetches data from Supabase and renders KPIs and charts.
+// src/app/(protected)/dashboard/DashboardClient.tsx
+// This file defines the DashboardClient component, which is responsible for fetching and displaying the dashboard statistics and visualizations.
+// It uses React Query's useSuspenseQuery to fetch data from Supabase, including total companies, contacts, activities, and sales funnel data.
+// The component renders KPI overview cards for total companies, active leads, won deals, and total pipeline value, as well as visualizations for the sales funnel and status distribution.
+// The period for the statistics can be selected from a dropdown, allowing users to view data for the last 7, 30, or 90 days. 
 
 "use client";
 
@@ -56,7 +59,6 @@ export default function DashboardClient() {
       const leads = companies?.filter((c) => c.status === "lead").length || 0;
       const won = companies?.filter((c) => c.status === "gewonnen").length || 0;
 
-      // Sales Funnel Data – realistic conversion flow
       const funnelData = [
         { stage: "Leads", value: leads || 42, fill: BRAND_COLORS[0] },
         { stage: "Qualified", value: Math.round(leads * 0.65) || 27, fill: BRAND_COLORS[1] },
@@ -120,7 +122,7 @@ export default function DashboardClient() {
             </h3>
             <span className="text-xs text-muted-foreground">Conversion Pipeline</span>
           </div>
-          <div className="h-80">
+          <div className="h-[320px]">   {/* Explicit height fix */}
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.funnelData} layout="vertical" barCategoryGap={18}>
                 <XAxis type="number" hide />
@@ -156,7 +158,7 @@ export default function DashboardClient() {
               <Trophy className="h-5 w-5 text-primary" /> Status Overview
             </h3>
           </div>
-          <div className="h-80">
+          <div className="h-[320px]">   {/* Explicit height fix */}
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

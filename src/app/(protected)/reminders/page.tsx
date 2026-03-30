@@ -1,4 +1,4 @@
-// src/app/reminders/page.tsx
+// src/app/(protected)/reminders/page.tsx
 // This file defines the Reminders page of the application, which displays a list of reminders and allows users to create, edit, and delete reminders.
 // It uses React Query to fetch reminder data from the server and manage state for creating, updating, and deleting reminders.
 // The page includes a dialog for creating and editing reminders, as well as a confirmation dialog for deletions.

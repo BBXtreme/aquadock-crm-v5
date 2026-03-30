@@ -1,4 +1,4 @@
-// src/app/companies/page.tsx
+// s
 // This file defines the Companies page of the application, which displays a list of companies and allows users to create,
 // edit, and delete companies.
 // It uses React Query to fetch company data from the server and manage state for creating, updating, and deleting companies.

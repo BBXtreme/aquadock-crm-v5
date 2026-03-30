@@ -1,4 +1,4 @@
-// src/app/mass-email/page.tsx
+// src/app/(protected)/mass-email/page.tsx
 // This file defines the Mass Email page of the application, which allows users to send mass emails to selected contacts.
 // The page includes a form for selecting contacts, choosing an email template, and composing the email subject and body.
 // It uses React state to manage selected contacts, chosen template, email subject, and body content.
