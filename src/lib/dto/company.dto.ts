@@ -43,4 +43,6 @@ export type CompanyFormDTO = {
   wasserdistanz?: number | null | undefined;
   /** Water type (optional) */
   wassertyp?: string | null | undefined;
+  /** Notes (optional) */
+  notes?: string | null | undefined;
 };

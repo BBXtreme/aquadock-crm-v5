@@ -116,34 +116,34 @@ const landOptions = [
 export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
-  const form = useForm<CompanyFormValues>({
+  const form = useForm<CompanyFormDTO>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company?.firmenname || "",
-      rechtsform: company?.rechtsform || undefined,
+      rechtsform: company?.rechtsform ?? undefined,
       kundentyp: company?.kundentyp || "",
-      firmentyp: company?.firmentyp || undefined,
-      strasse: company?.strasse || undefined,
-      plz: company?.plz || undefined,
-      stadt: company?.stadt || undefined,
-      bundesland: company?.bundesland || undefined,
-      land: company?.land || "Deutschland",
-      website: company?.website || undefined,
-      telefon: company?.telefon || undefined,
-      email: company?.email || undefined,
+      firmentyp: company?.firmentyp ?? undefined,
+      strasse: company?.strasse ?? undefined,
+      plz: company?.plz ?? undefined,
+      stadt: company?.stadt ?? undefined,
+      bundesland: company?.bundesland ?? undefined,
+      land: company?.land ?? undefined,
+      website: company?.website ?? undefined,
+      telefon: company?.telefon ?? undefined,
+      email: company?.email ?? undefined,
       wasserdistanz: company?.wasserdistanz ?? undefined,
-      wassertyp: company?.wassertyp || undefined,
+      wassertyp: company?.wassertyp ?? undefined,
       lat: company?.lat ?? undefined,
       lon: company?.lon ?? undefined,
-      osm: company?.osm || undefined,
-      status: (company?.status as CompanyFormValues["status"]) || "lead",
+      osm: company?.osm ?? undefined,
+      status: (company?.status as CompanyFormDTO["status"]) || "lead",
       value: company?.value ?? undefined,
-      notes: company?.notes || undefined,
+      notes: company?.notes ?? undefined,
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormValues) => {
+    mutationFn: (data: CompanyFormDTO) => {
       if (!company) throw new Error("Company is null");
       return updateCompany(company.id, data as Partial<Company>, createClient());
     },
@@ -195,7 +195,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Rechtsform</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +208,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Kundentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select customer type" />
                     </SelectTrigger>
@@ -232,7 +232,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Firmentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select company type" />
                     </SelectTrigger>
@@ -256,7 +256,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Website</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -269,7 +269,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Telefon</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -282,7 +282,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" {...field} />
+                  <Input type="email" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -295,7 +295,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Strasse</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -308,7 +308,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>PLZ</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -321,7 +321,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Stadt</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -334,7 +334,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Bundesland</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -347,7 +347,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Land</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
@@ -389,7 +389,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Wassertyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select water type" />
                     </SelectTrigger>
@@ -455,7 +455,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>OSM ID</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -468,7 +468,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value || "lead"}>
+                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
