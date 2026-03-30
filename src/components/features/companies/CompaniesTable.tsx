@@ -6,11 +6,12 @@
 // The component is designed to be reusable and accepts props for the companies data, filters, and callbacks for actions.
 
 import { type ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { ArrowUpDown, Building, Checkbox, Edit, MoreHorizontal, Trash, Users } from "lucide-react";
+import { ArrowUpDown, Building, Edit, MoreHorizontal, Trash, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -56,14 +57,14 @@ export default function CompaniesTable({
       header: ({ table }) => (
         <Checkbox
           checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          onCheckedChange={(value: boolean) => table.toggleAllRowsSelected(!!value)}
           aria-label="Select all"
         />
       ),
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          onCheckedChange={(value: boolean) => row.toggleSelected(!!value)}
           aria-label="Select row"
         />
       ),
