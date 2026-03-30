@@ -83,6 +83,7 @@ function setWaterCache(lat: number, lon: number, result: { distance: number | nu
 
     localStorage.setItem(WATER_CACHE_KEY, JSON.stringify(trimmed));
   } catch (_e) {
+    /* Ignore localStorage errors */
   }
 }
 
@@ -196,6 +197,7 @@ out tags;`;
         }
       }
     } catch (_fallbackErr) {
+      /* Ignore fallback errors */
     }
 
     const noResult = { distance: null, wassertyp: null };
