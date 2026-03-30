@@ -9,6 +9,8 @@ import {
   FileText,
   Mail,
   MapPin,
+  PanelLeft,
+  PanelRight,
   Settings,
   Users,
 } from "lucide-react";
@@ -53,7 +55,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     >
       <div className="flex h-16 items-center justify-center px-4 flex-shrink-0">
         <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
-          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          {isCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
       </div>
 
