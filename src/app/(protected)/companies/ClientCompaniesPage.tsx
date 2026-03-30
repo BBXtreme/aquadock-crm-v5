@@ -21,9 +21,9 @@ import {
   X,
   XCircle,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type React from "react";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
