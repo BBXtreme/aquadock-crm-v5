@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { anredeOptions } from "@/lib/constants/company-options";
+import type { ContactFormDTO } from "@/lib/dto/contact.dto";
 import { createClient } from "@/lib/supabase/browser-client";
 import { createContact } from "@/lib/supabase/services/contacts";
-import type { ContactFormDTO } from "@/lib/dto/contact.dto";
 import { contactSchema } from "@/lib/validations/contact-val";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
