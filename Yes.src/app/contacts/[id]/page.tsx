@@ -12,8 +12,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,9 +32,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
-import type { Company, Contact } from "@/lib/supabase/database.types";
+import type { Contact } from "@/lib/supabase/database.types";
 import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
-import { cn } from "@/lib/utils";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),
