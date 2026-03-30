@@ -51,7 +51,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="flex h-screen">
         <Sidebar
           isCollapsed={isCollapsed}
-          isMobile={isMobile}
           onToggle={() => setIsCollapsed(!isCollapsed)}
         />
         <div
