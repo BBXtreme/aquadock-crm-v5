@@ -209,7 +209,7 @@ export default function CompaniesPage() {
 
   const stats = statsData.data;
 
-  const updateMutation = useMutation({
+  const _updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
       updateCompany(id, updates, createClient()),
     onMutate: async ({ id, updates }) => {

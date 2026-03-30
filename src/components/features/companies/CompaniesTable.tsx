@@ -5,7 +5,7 @@
 // It also includes a global search filter and pagination controls.
 // The component is designed to be reusable and accepts props for the companies data, filters, and callbacks for actions.
 
-import { useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, getPaginationRowModel, ColumnDef, flexRender } from "@tanstack/react-table";
+import { type ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { ArrowUpDown, Building, Edit, MoreHorizontal, Trash, Users } from "lucide-react";
 import { useState } from "react";
 
