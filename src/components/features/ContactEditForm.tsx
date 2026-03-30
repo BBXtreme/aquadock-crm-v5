@@ -241,7 +241,7 @@ export default function ContactEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select company" />
