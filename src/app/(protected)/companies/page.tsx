@@ -8,9 +8,6 @@
 // The page handles loading and error states, providing feedback to the user accordingly. The company data is fetched with pagination,
 // sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
 
-import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
-import { safeDisplay } from "@/lib/utils/data-format";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
@@ -33,7 +30,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -48,10 +45,12 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
