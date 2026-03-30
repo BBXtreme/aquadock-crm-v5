@@ -27,7 +27,6 @@ export default async function OpenMapPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full relative">
-      <div>Welcome, {safeDisplay(user.display_name)}</div>
       <OpenMapClient initialCompanies={companies} error={error} />
     </div>
   );
