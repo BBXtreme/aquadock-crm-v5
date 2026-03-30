@@ -1,5 +1,3 @@
-// src/lib/dto/contact.dto.ts
-
 /**
  * DTO for contact create/edit forms.
  * Contains the essential fields required for form submission and validation.

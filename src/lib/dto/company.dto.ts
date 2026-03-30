@@ -1,5 +1,5 @@
-// src/lib/dto/contact.dto.ts
 /**
+ * rc/lib/dto/company.dto.ts
  * DTO for company create/edit forms.
  * Contains the essential fields required for form submission and validation.
  * Optional fields are marked as such to allow partial updates.
