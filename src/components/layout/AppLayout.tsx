@@ -15,9 +15,10 @@ import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
+  user?: { role: string; display_name?: string };
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout({ children, user }: AppLayoutProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
@@ -53,6 +54,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Sidebar
             isCollapsed={isCollapsed}
             onToggle={() => setIsCollapsed(!isCollapsed)}
+            user={user}
           />
         </Suspense>
         <div

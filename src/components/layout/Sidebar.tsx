@@ -1,6 +1,5 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
   BarChart3,
@@ -23,19 +22,11 @@ import { cn } from "@/lib/utils";
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
+  user: { role: string; display_name?: string };
 }
 
-export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
-
-  const { data: user } = useSuspenseQuery({
-    queryKey: ["auth", "me"],
-    queryFn: async () => {
-      const response = await fetch("/api/auth/me");
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
-    },
-  });
 
   const userRole = user.role;
 
