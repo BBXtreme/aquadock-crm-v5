@@ -91,11 +91,6 @@ export async function fetchOsmPois(
 
   return new Promise((resolve, reject) => {
     poiFetchTimeout = setTimeout(async () => {
-      console.group("OpenMap OSM Query");
-      console.log("Current bounds:", bounds.toBBoxString());
-      console.log("Active categories:", activeCategories);
-      console.log("Retry count:", retryCount);
-
       const bbox = bounds.toBBoxString(); // "west,south,east,north"
       const [west, south, east, north] = bbox.split(",").map(Number);
       const overpassBbox = `${south},${west},${north},${east}`; // "south,west,north,east"
@@ -146,13 +141,10 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
   out center;
 `;
 
-      console.log("Final query string:", query);
-
       // Basic deduplication by OSM ID
       const seen = new Set<string>();
 
       for (const endpoint of OVERPASS_ENDPOINTS) {
-        console.log(`[OpenMap OSM] Trying ${endpoint}`);
         let retries = retryCount;
         const maxRetries = 3;
 
@@ -174,7 +166,6 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
                 return true;
               });
 
-              console.groupEnd();
               resolve({
                 pois: deduplicated,
                 totalFound: deduplicated.length,
@@ -186,23 +177,15 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
             if (res.status === 429) {
               retries++;
               const delay = 2 ** retries * 800;
-              console.warn(`[OpenMap OSM] ${endpoint} 429 - retrying in ${delay}ms (attempt ${retries}/${maxRetries})`);
               await new Promise((r) => setTimeout(r, delay));
             } else if (res.status === 403 || res.status === 504) {
-              console.warn(`[OpenMap OSM] ${endpoint} ${res.status} - skipping`);
               break;
             } else {
-              console.warn(`[OpenMap OSM] ${endpoint} error ${res.status}`);
               break;
             }
           } catch (err: unknown) {
-            if (err instanceof Error && err.name === "AbortError") {
-              console.warn(`[OpenMap OSM] ${endpoint} timeout`);
-              break;
-            }
+            if (err instanceof Error && err.name === "AbortError") break;
             if (endpoint === OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1] && retries >= maxRetries - 1) {
-              console.groupEnd();
-              console.error("All Overpass endpoints failed after retries");
               reject(new Error("Failed to fetch OSM POIs after all retries"));
               return;
             }
@@ -211,7 +194,6 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
         }
       }
 
-      console.groupEnd();
       reject(new Error("Failed to fetch OSM POIs"));
     }, 300);
   });

@@ -83,7 +83,6 @@ function setWaterCache(lat: number, lon: number, result: { distance: number | nu
 
     localStorage.setItem(WATER_CACHE_KEY, JSON.stringify(trimmed));
   } catch (e) {
-    console.warn("Failed to save water cache", e);
   }
 }
 
@@ -94,7 +93,6 @@ export async function calculateWaterDistance(
   // 1. Check cache first (fast path)
   const cached = getWaterCache(lat, lon);
   if (cached) {
-    console.log(`[Water] Cache hit for ${lat.toFixed(5)},${lon.toFixed(5)} → ${cached.distance}m`);
     return { distance: cached.distance, wassertyp: cached.wassertyp };
   }
 
@@ -126,7 +124,6 @@ out geom;`;
         });
 
         if (response.status === 429) {
-          console.warn(`[Water] ${endpoint} → 429 rate limit, trying next...`);
           await new Promise((r) => setTimeout(r, 800));
           continue;
         }
@@ -171,17 +168,10 @@ out geom;`;
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") break;
-        if (err instanceof Error) {
-          console.warn(`[Water] ${endpoint} failed:`, err.message);
-        } else {
-          console.warn(`[Water] ${endpoint} failed:`, err);
-        }
       }
     }
 
     // Fallback: Check if point is inside a water area
-    console.warn(`No nearby water found near ${lat.toFixed(5)},${lon.toFixed(5)}. Trying containment fallback...`);
-
     const fallbackQuery = `
 [out:json][timeout:12];
 is_in(${jitterLat},${jitterLon});
@@ -206,14 +196,12 @@ out tags;`;
         }
       }
     } catch (fallbackErr) {
-      console.warn("Fallback query also failed", fallbackErr);
     }
 
     const noResult = { distance: null, wassertyp: null };
     setWaterCache(lat, lon, noResult);
     return noResult;
   } catch (error) {
-    console.warn(`Water distance calculation failed for ${lat.toFixed(5)},${lon.toFixed(5)}:`, error);
     const failResult = { distance: null, wassertyp: null };
     setWaterCache(lat, lon, failResult);
     return failResult;

@@ -108,11 +108,6 @@ export async function createCompany(company: CompanyInsert, supabase?: SupabaseC
   // Temporary fallback until auth is implemented
   company.user_id = null;
 
-  // Log the full payload before insert
-  if (process.env.NODE_ENV === "development") {
-    console.log("[DEBUG] Creating company with payload:", JSON.stringify(company, null, 2));
-  }
-
   const { data, error } = await supabaseClient.from("companies").insert(company).select().single();
 
   if (error) {
