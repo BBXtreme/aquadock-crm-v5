@@ -33,12 +33,7 @@ export default function LoginPage() {
   }, []);
 
   // Full redirect URL for Supabase Auth component
-  const redirectTo = (() => {
-    if (typeof window === "undefined") {
-      return `${typeof window !== "undefined" ? window.location.origin : ""}/dashboard`;
-    }
-    return `${window.location.origin}${getRedirectPath()}`;
-  })();
+  const redirectTo = `${window.location.origin}${getRedirectPath()}`;
 
   useEffect(() => {
     const checkUser = async () => {
