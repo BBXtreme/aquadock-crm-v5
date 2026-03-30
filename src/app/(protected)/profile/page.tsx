@@ -1,9 +1,3 @@
-// src/app/(protected)/profile/page.tsx
-// This file defines the Profile page of the application, which allows users to view and update their profile information, including display name and profile picture.
-// It uses React Query's useMutation to handle updating the display name, and provides a form for users to input their new display name.
-// The page also includes a section for account actions, such as signing out. The profile picture upload functionality is currently disabled and marked as coming soon.
-// The user's profile information is fetched from Supabase on component mount, and the page handles loading states accordingly. 
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +17,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/browser-client";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
 
@@ -41,7 +36,7 @@ type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
 export async function updateDisplayName(display_name: string) {
   'use server';
-  const supabase = createClient();
+  const supabase = createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
   const { error } = await supabase
@@ -57,7 +52,7 @@ export async function updateDisplayName(display_name: string) {
 
 export async function signOut() {
   'use server';
-  const supabase = createClient();
+  const supabase = createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
