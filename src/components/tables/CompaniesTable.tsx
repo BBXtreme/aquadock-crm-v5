@@ -8,6 +8,7 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  type Updater,
   useReactTable,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
@@ -46,7 +47,7 @@ interface CompaniesTableProps {
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
   onImportCSV?: () => void;
   rowSelection: Record<string, boolean>;
-  onRowSelectionChange: (updater: any) => void;
+  onRowSelectionChange: (updater: Updater<Record<string, boolean>>) => void;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
