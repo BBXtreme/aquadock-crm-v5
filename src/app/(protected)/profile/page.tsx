@@ -126,7 +126,7 @@ export default function ProfilePage() {
       }
       setUser({
         id: authUser.id,
-        email: authUser.email,
+        email: authUser.email ?? null,
         display_name: authUser.user_metadata?.display_name || null,
       });
 
