@@ -58,8 +58,6 @@ const companySchema = z.object({
   notes: z.string().optional(),
 });
 
-type CompanyFormValues = CompanyFormDTO;
-
 const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
   { value: "hotel", label: "Hotel" },
