@@ -11,10 +11,9 @@ import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
-import { safeDisplay } from "@/lib/utils/data-format";
 
 export default async function OpenMapPage() {
-  const user = await requireUser();
+  const _user = await requireUser();
 
   let companies: CompanyForOpenMap[] = [];
   let error: string | null = null;
