@@ -34,6 +34,7 @@ import L from "leaflet";
 
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { statusColors } from "@/lib/constants/map-status-colors";
+import { OVERPASS_ENDPOINTS } from "@/lib/constants/overpass-endpoints";
 
 // ─────────────────────────────────────────────────────────────
 // Type for POI category config (derived from map-poi-config.ts)
@@ -147,17 +148,10 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 
       console.log("Final query string:", query);
 
-      const endpoints = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.private.coffee/api/interpreter",
-        "https://overpass.osm.ch/api/interpreter",
-        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-      ];
-
       // Basic deduplication by OSM ID
       const seen = new Set<string>();
 
-      for (const endpoint of endpoints) {
+      for (const endpoint of OVERPASS_ENDPOINTS) {
         console.log(`[OpenMap OSM] Trying ${endpoint}`);
         let retries = retryCount;
         const maxRetries = 3;
@@ -206,7 +200,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
               console.warn(`[OpenMap OSM] ${endpoint} timeout`);
               break;
             }
-            if (endpoint === endpoints[endpoints.length - 1] && retries >= maxRetries - 1) {
+            if (endpoint === OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1] && retries >= maxRetries - 1) {
               console.groupEnd();
               console.error("All Overpass endpoints failed after retries");
               reject(new Error("Failed to fetch OSM POIs after all retries"));

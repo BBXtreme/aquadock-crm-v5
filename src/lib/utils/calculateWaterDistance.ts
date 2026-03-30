@@ -31,6 +31,7 @@
 // Note: This function relies on the Leaflet library for distance calculations, which is already a dependency of the project.
 
 import L from "leaflet";
+import { OVERPASS_ENDPOINTS } from "@/lib/constants/overpass-endpoints";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 
 const WATER_CACHE_KEY = "aquadock_water_cache_v2";
@@ -116,14 +117,7 @@ export async function calculateWaterDistance(
 );
 out geom;`;
 
-    const endpoints = [
-      "https://overpass-api.de/api/interpreter",
-      "https://overpass.private.coffee/api/interpreter",
-      "https://overpass.osm.ch/api/interpreter",
-      "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    ];
-
-    for (const endpoint of endpoints) {
+    for (const endpoint of OVERPASS_ENDPOINTS) {
       try {
         const response = await fetch(endpoint, {
           method: "POST",
