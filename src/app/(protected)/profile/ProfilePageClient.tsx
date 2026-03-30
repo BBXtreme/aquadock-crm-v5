@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import type { AuthUser } from "@/lib/supabase/auth/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { updateDisplayName, signOut } from "./page";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
