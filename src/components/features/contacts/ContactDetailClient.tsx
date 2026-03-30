@@ -47,7 +47,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
     initialData: initialContact,
   });
 
-  const contact = contactQuery.data;
+  const contact = contactQuery.data!; // Safe because useSuspenseQuery ensures data is available
 
   const companiesQuery = useSuspenseQuery({
     queryKey: ["companies-light"],
@@ -223,7 +223,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 <SelectValue placeholder="Select a company" />
               </SelectTrigger>
               <SelectContent>
-                {companiesQuery.data?.map((company) => (
+                {companiesQuery.data?.data?.map((company: { id: string; firmenname: string }) => (
                   <SelectItem key={company.id} value={company.id}>
                     {company.firmenname}
                   </SelectItem>
