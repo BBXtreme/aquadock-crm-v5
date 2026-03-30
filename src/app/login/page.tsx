@@ -1,18 +1,14 @@
 // src/app/login/page.tsx
 // This file defines the Login page of the application, which provides a user interface for signing in
 // and signing up using Supabase's authentication system.
-// It uses the @supabase/auth-ui-react package to render the authentication form, allowing users to
-// switch between sign-in and sign-up views.
-// The page also includes logic to check if a user is already authenticated and redirects them to the dashboard if they are.
-// Additionally, it listens for authentication state changes to handle redirection after successful sign-in or sign-up.
-// The appearance of the authentication form is customized using the ThemeSupa theme with some color overrides.
+// It respects the redirectTo parameter from middleware and properly handles auth state changes.
 
 "use client";
 
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,8 +16,29 @@ import { createClient } from "@/lib/supabase/browser-client";
 
 export default function LoginPage() {
   const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
-  const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : "/dashboard";
   const router = useRouter();
+
+  // Stable redirect path – wrapped in useCallback to satisfy exhaustive-deps
+  const getRedirectPath = useCallback((): string => {
+    if (typeof window === "undefined") return "/dashboard";
+
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = params.get("redirectTo");
+
+    // Only allow internal redirects starting with /
+    if (redirectTo?.startsWith("/")) {
+      return redirectTo;
+    }
+    return "/dashboard";
+  }, []);
+
+  // Full redirect URL for Supabase Auth component
+  const redirectTo = (() => {
+    if (typeof window === "undefined") {
+      return `${typeof window !== "undefined" ? window.location.origin : ""}/dashboard`;
+    }
+    return `${window.location.origin}${getRedirectPath()}`;
+  })();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -29,23 +46,26 @@ export default function LoginPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
       if (user) {
-        router.push("/dashboard");
+        router.push(getRedirectPath());
       }
     };
+
     checkUser();
 
+    // Listen for auth state changes
     const supabase = createClient();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        router.push("/dashboard");
+        router.push(getRedirectPath());
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, getRedirectPath]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -70,6 +90,7 @@ export default function LoginPage() {
               Sign Up
             </Button>
           </div>
+
           <Auth
             supabaseClient={createClient()}
             view={view}
