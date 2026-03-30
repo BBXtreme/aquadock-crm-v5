@@ -28,6 +28,8 @@
  * - Only called on explicit user request from POI popup
  */
 
+// Note: This function relies on the Leaflet library for distance calculations, which is already a dependency of the project.
+
 import L from "leaflet";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 
