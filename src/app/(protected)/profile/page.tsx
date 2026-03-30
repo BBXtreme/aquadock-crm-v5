@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
