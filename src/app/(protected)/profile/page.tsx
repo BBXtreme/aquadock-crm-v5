@@ -19,56 +19,61 @@ export default async function ProfilePage() {
   const user = await requireUser();
 
   return (
-    <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div>
-        <h1 className="font-semibold text-3xl tracking-tight">Profile</h1>
-        <div>Welcome, {safeDisplay(user.display_name)}</div>
+    <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          Profile
+        </h1>
+        <p className="text-lg text-muted-foreground">Welcome, {safeDisplay(user.display_name)}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="mr-2 h-5 w-5" />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="pb-6">
+            <CardTitle className="flex items-center text-xl">
+              <User className="mr-3 h-6 w-6 text-primary" />
               Profile Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
+          <CardContent className="space-y-6">
+            <div className="flex flex-col items-center space-y-4">
+              <Avatar className="h-32 w-32 border-4 border-primary/10">
                 <AvatarImage src={user.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
-                <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-2xl font-semibold">
+                  {user.email?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
-              <div>
-                <p className="font-medium text-lg">{user.display_name || "No display name"}</p>
+              <div className="text-center space-y-1">
+                <p className="text-2xl font-semibold">{user.display_name || "No display name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-          <CardHeader>
-            <CardTitle>Update Profile</CardTitle>
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-xl">Update Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="displayName">Display Name</Label>
+            <form className="space-y-6">
+              <div className="space-y-3">
+                <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
                 <Input
                   id="displayName"
                   type="text"
                   placeholder="Enter your display name"
                   value={user.display_name || ""}
                   disabled
+                  className="h-11"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="profilePicture">Profile Picture</Label>
-                <Input id="profilePicture" type="file" accept="image/*" disabled />
+              <div className="space-y-3">
+                <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
+                <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
                 <p className="text-muted-foreground text-sm">Upload functionality placeholder</p>
               </div>
-              <Button type="submit" className="bg-[#24BACC] text-white hover:bg-[#1da0a8]" disabled>
+              <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled>
                 Update Profile
               </Button>
             </form>
@@ -76,13 +81,13 @@ export default async function ProfilePage() {
         </Card>
       </div>
 
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-        <CardHeader>
-          <CardTitle>Account Actions</CardTitle>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+        <CardHeader className="pb-6">
+          <CardTitle className="text-xl">Account Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" className="flex items-center" disabled>
-            <LogOut className="mr-2 h-4 w-4" />
+          <Button variant="destructive" className="flex items-center h-11 px-6" disabled>
+            <LogOut className="mr-2 h-5 w-5" />
             Sign Out
           </Button>
         </CardContent>
