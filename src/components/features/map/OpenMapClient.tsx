@@ -3,8 +3,8 @@
 
 "use client";
 
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { LoadingState } from "@/components/ui/LoadingState";
