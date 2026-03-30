@@ -18,12 +18,12 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
-  // Fetch profile (role + display_name)
+  // Fetch profile (role + display_name) – use maybeSingle to avoid errors if profile doesn't exist
   const { data: profile } = await supabase
     .from("profiles")
     .select("role, display_name, avatar_url")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   return {
     id: user.id,
