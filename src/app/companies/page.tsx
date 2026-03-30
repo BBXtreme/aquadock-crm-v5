@@ -34,9 +34,8 @@ import {
 import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-import CompanyCreateForm from "@/components/features/CompanyCreateForm";
-import CompanyEditForm from "@/components/features/CompanyEditForm";
+import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
+import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";

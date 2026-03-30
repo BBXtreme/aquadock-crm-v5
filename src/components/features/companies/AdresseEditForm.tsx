@@ -1,3 +1,6 @@
+// src/components/features/AdresseEditForm.tsx
+// This component renders a form for editing company address data. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

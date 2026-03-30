@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import CompanyEditForm from "@/components/features/CompanyEditForm";
+import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

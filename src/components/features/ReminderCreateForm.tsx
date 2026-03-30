@@ -1,3 +1,6 @@
+// src/components/features/ReminderCreateForm.tsx
+// This component renders a form for creating reminders. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create reminder records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

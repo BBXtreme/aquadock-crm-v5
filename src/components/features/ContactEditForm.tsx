@@ -1,3 +1,6 @@
+// src/components/features/ContactEditForm.tsx
+// This component renders a form for editing contact data. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create or update contact records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

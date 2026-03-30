@@ -1,3 +1,6 @@
+// src/components/features/ReminderEditForm.tsx
+// This component renders a form for editing company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -1,4 +1,6 @@
 // src/components/features/map/types.ts
+// This file defines shared TypeScript types for the OpenMap feature, including types for map companies, OSM POIs, and popup props. These types are used across multiple components in the map feature to ensure consistency and type safety.
+
 "use client";
 
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";

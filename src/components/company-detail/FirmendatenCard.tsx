@@ -1,7 +1,10 @@
+// src/components/company-detail/FirmendatenCard.tsx
+// This component displays the company data in a card format. It shows fields like company name, legal form, customer type, company type, website, phone, and email. It also includes an edit button that opens a dialog with a form to edit the company data.
+
 "use client";
 import { Building, Edit } from "lucide-react";
 import { useState } from "react";
-import FirmendatenEditForm from "@/components/features/FirmendatenEditForm";
+import FirmendatenEditForm from "@/components/features/companies/FirmendatenEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";

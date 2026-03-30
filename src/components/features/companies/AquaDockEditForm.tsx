@@ -1,3 +1,6 @@
+// src/components/features/AquaDockEditForm.tsx
+// This component renders a form for editing AquaDock-related data for a company. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also includes live validation of OSM IDs using the Overpass API, and displays success/error toasts.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";

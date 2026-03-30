@@ -1,3 +1,6 @@
+// src/components/features/CSVImportDialog.tsx
+// This component provides a dialog for importing company data from a CSV file. It includes a drag-and-drop area, file parsing, preview of parsed data, and an import action that sends the data to the backend.
+
 "use client";
 
 import { FileText, Loader2, Upload } from "lucide-react";

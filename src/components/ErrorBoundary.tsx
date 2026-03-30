@@ -1,3 +1,6 @@
+// src/components/ErrorBoundary.tsx
+// This component is a React error boundary that catches JavaScript errors anywhere in its child component tree, logs those errors, and displays a fallback UI instead of the component tree that crashed. It also provides options to retry the failed operation or reload the page. The error details are shown in development mode for easier debugging.
+
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
