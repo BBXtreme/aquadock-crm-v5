@@ -1,8 +1,5 @@
-import type { Company } from "@/lib/supabase/database.types";
-import type { PoiCategory } from "@/lib/constants/map-poi-config";
-import { mapStatusColors } from "@/lib/constants/map-status-colors";
 import { kundentypMapping } from "@/lib/constants/kundentyp";
-import { wassertypMapping } from "@/lib/constants/wassertyp";
+import type { PoiCategory } from "@/lib/constants/map-poi-config";
 import { calculateWaterDistance } from "./calculateWaterDistance";
 
 // Overpass API endpoints (hardcoded for now - to be refactored into constants)
@@ -68,15 +65,17 @@ export function getOsmPoiIcon(category: PoiCategory): string {
  */
 export async function fetchOsmPois(
   bbox: [number, number, number, number],
-  categories: PoiCategory[]
-): Promise<Array<{
-  id: string;
-  lat: number;
-  lon: number;
-  name?: string;
-  category: PoiCategory;
-  tags: Record<string, string>;
-}>> {
+  categories: PoiCategory[],
+): Promise<
+  Array<{
+    id: string;
+    lat: number;
+    lon: number;
+    name?: string;
+    category: PoiCategory;
+    tags: Record<string, string>;
+  }>
+> {
   const [south, west, north, east] = bbox;
   const categoryQueries = categories
     .map((cat) => `(node["amenity"="${cat}"](${south},${west},${north},${east});)`)
@@ -108,9 +107,7 @@ export async function fetchOsmPois(
         lat: el.lat,
         lon: el.lon,
         name: el.tags?.name,
-        category: categories.find((cat) =>
-          Object.keys(el.tags).some((key) => el.tags[key] === cat)
-        ) || "unknown",
+        category: categories.find((cat) => Object.keys(el.tags).some((key) => el.tags[key] === cat)) || "unknown",
         tags: el.tags || {},
       }));
     } catch (error) {
@@ -142,7 +139,10 @@ export function getKundentypFromTags(tags: Record<string, string>): string {
  * @param lon - Longitude.
  * @returns Promise resolving to water distance and type.
  */
-export async function getWaterInfo(lat: number, lon: number): Promise<{
+export async function getWaterInfo(
+  lat: number,
+  lon: number,
+): Promise<{
   distance: number;
   type: string;
 }> {
