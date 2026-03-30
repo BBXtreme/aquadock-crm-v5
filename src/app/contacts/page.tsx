@@ -16,7 +16,6 @@ import { z } from "zod";
 import ContactCreateForm from "@/components/features/ContactCreateForm";
 import ContactEditForm from "@/components/features/ContactEditForm";
 import ContactsTable from "@/components/tables/ContactsTable";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
