@@ -50,3 +50,10 @@ export const landOptions = [
   { value: "Portugal", label: "Portugal" },
   { value: "Großbritannien", label: "Großbritannien" },
 ];
+
+export const anredeOptions = [
+  { value: "Herr", label: "Herr" },
+  { value: "Frau", label: "Frau" },
+  { value: "Dr.", label: "Dr." },
+  { value: "Prof.", label: "Prof." },
+];

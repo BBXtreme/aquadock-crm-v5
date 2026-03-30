@@ -13,16 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser-client";
 import { createContact } from "@/lib/supabase/services/contacts";
-import { type ContactFormValues, contactSchema } from "@/lib/validations/contact-val";
-
-const anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
+import type { ContactFormDTO } from "@/lib/dto/contact.dto";
+import { contactSchema } from "@/lib/validations/contact-val";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
   const queryClient = useQueryClient();
@@ -37,7 +32,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
     },
   });
 
-  const form = useForm<ContactFormValues>({
+  const form = useForm<ContactFormDTO>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       vorname: "",
@@ -55,7 +50,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: (contact: ContactFormValues) => createContact({
+    mutationFn: (contact: ContactFormDTO) => createContact({
       vorname: contact.vorname,
       nachname: contact.nachname,
       anrede: contact.anrede ?? undefined,

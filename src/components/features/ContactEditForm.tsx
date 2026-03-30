@@ -8,7 +8,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,32 +15,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { createContact, updateContact } from "@/lib/supabase/services/contacts";
-
-const contactSchema = z.object({
-  vorname: z.string().min(1, "Vorname is required"),
-  nachname: z.string().min(1, "Nachname is required"),
-  anrede: z.string().optional(),
-  position: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  telefon: z.string().optional(),
-  mobil: z.string().optional(),
-  durchwahl: z.string().optional(),
-  notes: z.string().optional(),
-  company_id: z.string().optional(),
-  is_primary: z.boolean().optional(),
-});
-
-type ContactFormValues = z.infer<typeof contactSchema>;
-
-const anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
+import type { ContactFormDTO } from "@/lib/dto/contact.dto";
+import { contactSchema } from "@/lib/validations/contact-val";
 
 export default function ContactEditForm({
   contact,
@@ -55,7 +34,7 @@ export default function ContactEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: ContactFormValues) => {
+    mutationFn: async (data: ContactFormDTO) => {
       if (contact) {
         return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
       }
@@ -78,7 +57,7 @@ export default function ContactEditForm({
     onError: (err) => toast.error("Operation failed", { description: err.message }),
   });
 
-  const form = useForm<ContactFormValues>({
+  const form = useForm<ContactFormDTO>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       vorname: contact?.vorname || "",
