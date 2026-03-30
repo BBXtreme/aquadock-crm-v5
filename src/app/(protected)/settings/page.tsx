@@ -3,12 +3,12 @@
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
 import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireAdmin } from "@/lib/supabase/auth/require-admin";
 import { safeDisplay } from "@/lib/utils/data-format";
 import ClientSettingsPage from "./ClientSettingsPage";
 
 export default async function SettingsPage() {
-  const user = await requireUser();
+  const user = await requireAdmin();
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">

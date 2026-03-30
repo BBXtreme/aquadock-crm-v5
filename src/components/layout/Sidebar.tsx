@@ -1,13 +1,25 @@
 "use client";
 
-import { Bell, Building, Clock, Home, Mail, Map as MapIcon, Menu, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
+import {
+  Anchor,
+  BarChart3,
+  Building,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Mail,
+  MapPin,
+  Settings,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { APP_VERSION } from "@/lib/version"; // ← this line was missing
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -15,91 +27,113 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/companies", label: "Companies", icon: Building },
-  { href: "/contacts", label: "Contacts", icon: Users },
-  { href: "/timeline", label: "Timeline", icon: Clock },
-  { href: "/reminders", label: "Reminders", icon: Bell },
-  { href: "/mass-email", label: "Mass Email", icon: Mail },
-  { href: "/openmap", label: "OpenMap", icon: MapIcon },
-];
-
 export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const sidebarContent = (
-    <div className="flex h-full flex-col">
-      {/* Header / Toggle */}
-      <div className="p-4">
-        <Button variant="ghost" onClick={onToggle} className="mb-4">
-          <Menu className="h-4 w-4" />
+  // Fetch user role on mount
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        // TODO: Replace with actual auth query or context
+        // For now, simulate fetching role
+        const response = await fetch("/api/auth/me"); // Assume an endpoint to get user
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          setUserRole("user"); // Default to user
+        }
+      } catch {
+        setUserRole("user"); // Default to user on error
+      }
+    };
+    fetchRole();
+  }, []);
+
+  const navigation = [
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Companies", href: "/companies", icon: Building },
+    { name: "Contacts", href: "/contacts", icon: Users },
+    { name: "Timeline", href: "/timeline", icon: FileText },
+    { name: "Reminders", href: "/reminders", icon: Anchor },
+    { name: "OpenMap", href: "/openmap", icon: MapPin },
+    { name: "Mass Email", href: "/mass-email", icon: Mail, adminOnly: true },
+    { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
+  ];
+
+  const filteredNavigation = navigation.filter((item) => !item.adminOnly || userRole === "admin");
+
+  return (
+    <div
+      className={cn(
+        "flex h-full flex-col border-r bg-background transition-all duration-300",
+        isCollapsed ? "w-16" : "w-64",
+      )}
+    >
+      <div className="flex h-16 items-center justify-between px-4">
+        {!isCollapsed && (
+          <div className="flex items-center space-x-2">
+            <div className="h-8 w-8 rounded bg-primary" />
+            <span className="font-semibold">AquaDock CRM</span>
+          </div>
+        )}
+        <Button variant="ghost" size="sm" onClick={onToggle} className="h-8 w-8 p-0">
+          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4">
-        <ul className="space-y-2">
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href}>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start rounded-md transition-colors hover:bg-muted/50",
-                    pathname === item.href && "bg-accent text-accent-foreground",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {!isCollapsed && <span className="ml-2">{item.label}</span>}
-                </Button>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <Separator />
+
+      <nav className="flex-1 space-y-1 p-4">
+        {filteredNavigation.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  isCollapsed && "px-2",
+                  isActive && "bg-secondary text-secondary-foreground",
+                )}
+              >
+                <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
+                {!isCollapsed && (
+                  <>
+                    <span className="flex-1 text-left">{item.name}</span>
+                    {item.adminOnly && <Badge variant="outline" className="ml-2 text-xs">Admin</Badge>}
+                  </>
+                )}
+              </Button>
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* VERSION BADGE – BOTTOM OF SIDEBAR */}
-      <div className="mt-auto border-t p-4">
-        <div key={APP_VERSION} className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-          {!isCollapsed && (
-            <>
-              <span>CRM v{APP_VERSION}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
-                {isCollapsed ? "→" : "←"}
-              </Button>
-            </>
-          )}
-          {isCollapsed && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
-              →
+      <Separator />
+
+      <div className="p-4">
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start">
+              <span className="flex-1 text-left">Quick Actions</span>
+              <ChevronDown className="h-4 w-4" />
             </Button>
-          )}
-        </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-1 pt-2">
+            <Button variant="ghost" size="sm" className="w-full justify-start">
+              New Company
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full justify-start">
+              New Contact
+            </Button>
+            <Button variant="ghost" size="sm" className="w-full justify-start">
+              New Reminder
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" className="fixed top-4 left-4 z-50">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64">
-          {sidebarContent}
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  return (
-    <aside
-      className={`fixed left-0 top-0 h-screen z-40 bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}
-    >
-      {sidebarContent}
-    </aside>
   );
 }
