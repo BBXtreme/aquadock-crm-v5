@@ -31,7 +31,10 @@ async function updateProfile(formData: FormData) {
     .from("profiles")
     .update({ display_name })
     .eq("id", user.id);
-  if (error) throw error;
+  if (error) {
+    console.error("Update profile error:", error);
+    throw new Error("Failed to update profile. Please try again.");
+  }
 
   // Redirect to refresh the page
   redirect('/profile');
@@ -110,7 +113,7 @@ export default async function ProfilePage() {
                 <Input
                   id="display_name"
                   name="display_name"
-                  defaultValue={displayName || ""}
+                  defaultValue={safeDisplay(displayName) || ""}
                   placeholder="Enter your display name"
                   className="h-11"
                   required
