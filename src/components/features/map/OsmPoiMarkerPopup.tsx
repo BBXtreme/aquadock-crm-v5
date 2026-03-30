@@ -38,7 +38,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
 
   const hasWaterInfo = localWater !== null && localWater.distance !== null;
 
-  const handleCalculateWater = async () => {
+  const _handleCalculateWater = async () => {
     if (hasWaterInfo) return;
 
     const lat = poi.lat || poi.center?.lat;
