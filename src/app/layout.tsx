@@ -11,9 +11,10 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import "./globals.css";
 import type React from "react";
-import ErrorBoundary from "@/components/ErrorBoundary";
+
 import AppLayout from "@/components/layout/AppLayout";
 import ClientLayout from "@/components/layout/ClientLayout";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
