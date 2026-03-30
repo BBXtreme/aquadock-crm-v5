@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
-import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
+import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 const contactSchema = z.object({
@@ -409,7 +409,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
                 toast.success("Company updated");
                 await queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                await queryClient.invalidateQueries({ queryKey: ["company", contact.company_id] });
+                await queryClient.invalidateQueries({ queryKey: ["company", value === "none" ? null : value] });
                 setChangeCompanyDialog(false);
               } catch (err) {
                 toast.error("Update failed", {
