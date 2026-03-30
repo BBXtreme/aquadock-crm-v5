@@ -10,11 +10,10 @@
 
 import { Suspense } from "react";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { safeDisplay } from "@/lib/utils/data-format";
 import ClientCompaniesPage from "./ClientCompaniesPage";
 
 export default async function CompaniesPage() {
-  const user = await requireUser();
+  const _user = await requireUser();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
