@@ -10,6 +10,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
+import { revalidatePath } from "next/cache";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -22,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/browser-client";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { revalidatePath } from "next/cache";
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
@@ -85,7 +85,7 @@ function ProfilePageClient() {
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       toast.success("Display name updated successfully");
     },
-    onError: (error) => {
+    onError: (_error) => {
       toast.error("Failed to update display name");
     },
   });
