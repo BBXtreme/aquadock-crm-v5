@@ -325,9 +325,7 @@ export default function ContactDetailClient({ contact, companies }: ContactDetai
                   </Badge>
                 )}
                 {linkedCompany.wassertyp && <Badge variant="outline">{linkedCompany.wassertyp}</Badge>}
-                {linkedCompany.wasserdistanz && (
-                  <Badge variant="outline">{linkedCompany.wasserdistanz} m</Badge>
-                )}
+                {linkedCompany.wasserdistanz && <Badge variant="outline">{linkedCompany.wasserdistanz} m</Badge>}
               </div>
 
               <div className="text-sm text-muted-foreground space-y-1">
