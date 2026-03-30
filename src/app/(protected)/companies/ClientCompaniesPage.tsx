@@ -41,7 +41,6 @@ import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
-import { safeDisplay } from "@/lib/utils/data-format";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
