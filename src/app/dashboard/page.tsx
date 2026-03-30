@@ -91,28 +91,28 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Companies"
-            value={stats.totalCompanies.toLocaleString("de-DE")}
+            value={stats.data.totalCompanies.toLocaleString("de-DE")}
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats.companiesInPeriod} this period`}
+            change={`+${stats.data.companiesInPeriod} this period`}
           />
           <StatCard
             title="Leads"
-            value={stats.leads.toLocaleString("de-DE")}
+            value={stats.data.leads.toLocaleString("de-DE")}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats.companiesInPeriod} this period`}
+            change={`+${stats.data.companiesInPeriod} this period`}
           />
           <StatCard
             title="Gewonnene Deals"
-            value={stats.won.toLocaleString("de-DE")}
+            value={stats.data.won.toLocaleString("de-DE")}
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change={`+${stats.companiesInPeriod} this period`}
+            change={`+${stats.data.companiesInPeriod} this period`}
           />
           <StatCard
             title="Total Value"
-            value={`€${stats.totalValue.toLocaleString("de-DE")}`}
+            value={`€${stats.data.totalValue.toLocaleString("de-DE")}`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
             change="—"
