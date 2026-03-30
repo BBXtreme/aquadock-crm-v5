@@ -73,88 +73,84 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   };
 
   return (
-    <div className="min-w-[400px] max-w-[450px] bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="border-b border-border pb-3">
-          <h3 className="font-semibold text-lg text-foreground leading-tight">{name}</h3>
-          <p className="text-muted-foreground text-sm mt-1 capitalize">{category}</p>
-        </div>
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
+      {/* Header */}
+      <div>
+        <div className="font-semibold text-base text-foreground">{name}</div>
+        <p className="text-muted-foreground text-sm mt-1 capitalize">{category}</p>
+      </div>
 
-        {/* Details */}
-        <div className="space-y-3">
-          {/* Address */}
-          {fullAddress && (
-            <div className="flex items-start gap-3 text-sm">
-              <span className="text-muted-foreground mt-0.5 flex-shrink-0">📍</span>
-              <span className="text-foreground">{fullAddress}</span>
-            </div>
-          )}
-
-          {/* Phone */}
-          {phone && (
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground flex-shrink-0">📞</span>
-              <a
-                href={`tel:${phone}`}
-                className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
-              >
-                {phone}
-              </a>
-            </div>
-          )}
-
-          {/* Website */}
-          {website && (
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground flex-shrink-0">🌐</span>
-              <a
-                href={website}
-                target="_blank"
-                rel="noopener"
-                className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors truncate"
-              >
-                Website öffnen
-              </a>
-            </div>
-          )}
-
-          {/* Water Info */}
-          {hasWaterInfo && (
-            <div className="bg-muted/50 border border-muted rounded-md p-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <span className="text-lg">💧</span>
-                <span>
-                  {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
-                  {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="pt-3 border-t border-border">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onViewInOsm?.(osmUrl)}
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              In OSM ansehen
-            </Button>
-            <Button
-              size="sm"
-              variant="default"
-              className="flex-1"
-              onClick={() => onImport?.(poi)}
-            >
-              In CRM importieren
-            </Button>
+      {/* Details */}
+      <div className="space-y-3">
+        {/* Address */}
+        {fullAddress && (
+          <div className="flex items-start gap-3 text-sm">
+            <span className="text-muted-foreground mt-0.5 flex-shrink-0">📍</span>
+            <span className="text-foreground">{fullAddress}</span>
           </div>
-        </div>
+        )}
+
+        {/* Phone */}
+        {phone && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground flex-shrink-0">📞</span>
+            <a
+              href={`tel:${phone}`}
+              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+            >
+              {phone}
+            </a>
+          </div>
+        )}
+
+        {/* Website */}
+        {website && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground flex-shrink-0">🌐</span>
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener"
+              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors truncate"
+            >
+              Website öffnen
+            </a>
+          </div>
+        )}
+
+        {/* Water Info */}
+        {hasWaterInfo && (
+          <div className="bg-muted/50 border border-muted rounded-md p-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <span className="text-lg">💧</span>
+              <span>
+                {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
+                {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 pt-3 border-t border-border">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          onClick={() => onViewInOsm?.(osmUrl)}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          In OSM ansehen
+        </Button>
+        <Button
+          size="sm"
+          variant="default"
+          className="flex-1"
+          onClick={() => onImport?.(poi)}
+        >
+          In CRM importieren
+        </Button>
       </div>
     </div>
   );
