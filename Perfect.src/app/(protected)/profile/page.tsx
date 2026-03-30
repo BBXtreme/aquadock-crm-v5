@@ -14,7 +14,7 @@ import ProfilePageClient from "./ProfilePageClient";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
-async function updateDisplayName(display_name: string) {
+export async function updateDisplayName(display_name: string) {
   'use server';
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
@@ -26,7 +26,7 @@ async function updateDisplayName(display_name: string) {
   revalidatePath('/profile');
 }
 
-async function signOut() {
+export async function signOut() {
   'use server';
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
