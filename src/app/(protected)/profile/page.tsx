@@ -6,30 +6,23 @@
 // The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
 // from the authentication context or Supabase client.
 
-"use client";
-
 import { LogOut, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { requireUser } from "@/lib/supabase/auth/require-user";
+import { safeDisplay } from "@/lib/utils/data-format";
 
-export default function ProfilePage() {
-  // Dummy user data for mockup
-  const user = {
-    email: "user@example.com",
-    user_metadata: {
-      display_name: "John Doe",
-      avatar_url: "/placeholder-avatar.png",
-    },
-  };
-  const displayName = user.user_metadata?.display_name || "";
+export default async function ProfilePage() {
+  const user = await requireUser();
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
       <div>
         <h1 className="font-semibold text-3xl tracking-tight">Profile</h1>
+        <div>Welcome, {safeDisplay(user.display_name)}</div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -43,11 +36,11 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
+                <AvatarImage src={user.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
                 <AvatarFallback>{user.email?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium text-lg">{displayName || "No display name"}</p>
+                <p className="font-medium text-lg">{user.display_name || "No display name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
               </div>
             </div>
@@ -66,7 +59,7 @@ export default function ProfilePage() {
                   id="displayName"
                   type="text"
                   placeholder="Enter your display name"
-                  value={displayName}
+                  value={user.display_name || ""}
                   disabled
                 />
               </div>
