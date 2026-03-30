@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -58,7 +59,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
       <div className="border-b flex-shrink-0" />
 
-      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+      <nav className={cn("flex-1 space-y-1 p-4", !isCollapsed && "overflow-y-auto")}>
         {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -116,7 +117,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
       <div className="p-4 flex justify-center flex-shrink-0">
         <Badge variant="outline" className="text-xs">
-          v1.0.0
+          {APP_VERSION}
         </Badge>
       </div>
     </div>
