@@ -4,9 +4,9 @@
 // It fetches the company data server-side and passes it to a client wrapper for rendering.
 
 import { redirect } from "next/navigation";
-import CompanyDetailClient from "./CompanyDetailClient";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { getCompanyById } from "@/lib/supabase/services/companies";
+import CompanyDetailClient from "./CompanyDetailClient";
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

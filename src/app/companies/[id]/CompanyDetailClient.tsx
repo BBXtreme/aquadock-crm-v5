@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import AdresseCard from "@/components/company-detail/AdresseCard";
