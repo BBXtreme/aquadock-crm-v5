@@ -18,7 +18,10 @@ export async function updateDisplayName(display_name: string) {
     .from("profiles")
     .update({ display_name })
     .eq("id", user.id);
-  if (error) throw error;
+  if (error) {
+    console.error("Update display name error:", error);
+    throw new Error("Failed to update display name. Please try again.");
+  }
   revalidatePath('/profile');
 }
 

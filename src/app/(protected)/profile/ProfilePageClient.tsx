@@ -30,7 +30,7 @@ function ProfilePageClient({ user, profile }: { user: AuthUser; profile: Profile
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
     defaultValues: {
-      display_name: safeDisplay(profile.display_name) || "",
+      display_name: profile?.display_name ?? "",
     },
   });
 
