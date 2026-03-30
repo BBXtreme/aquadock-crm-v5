@@ -49,7 +49,7 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen">
+      <div className="flex h-screen overflow-hidden">
         <Suspense fallback={<div className="w-16 bg-background border-r" />}>
           <Sidebar
             isCollapsed={isCollapsed}
@@ -57,10 +57,7 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
             user={user}
           />
         </Suspense>
-        <div
-          className="flex-1 flex flex-col"
-          style={{ marginLeft: isCollapsed ? "4rem" : "10rem" }}
-        >
+        <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
           <main className="flex-1 overflow-auto">{children}</main>
         </div>

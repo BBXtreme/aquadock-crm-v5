@@ -50,13 +50,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         isCollapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex h-16 items-center justify-center px-4">
+      <div className="flex h-16 items-center justify-center px-4 flex-shrink-0">
         <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
           {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
       </div>
 
-      <div className="border-b" />
+      <div className="border-b flex-shrink-0" />
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {filteredNavigation.map((item) => {
@@ -86,33 +86,35 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         })}
       </nav>
 
-      <div className="border-t" />
+      <div className="border-t flex-shrink-0" />
 
-      <div className="p-4">
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start h-10 px-3">
-              <span className="flex-1 text-left">Quick Actions</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-1 pt-2">
-            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-              New Company
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-              New Contact
-            </Button>
-            <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-              New Reminder
-            </Button>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
+      {!isCollapsed && (
+        <div className="p-4 flex-shrink-0">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start h-10 px-3">
+                <span className="flex-1 text-left">Quick Actions</span>
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1 pt-2">
+              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                New Company
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                New Contact
+              </Button>
+              <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                New Reminder
+              </Button>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
+      )}
 
-      <div className="border-t" />
+      <div className="border-t flex-shrink-0" />
 
-      <div className="p-4 flex justify-center">
+      <div className="p-4 flex justify-center flex-shrink-0">
         <Badge variant="outline" className="text-xs">
           v1.0.0
         </Badge>
