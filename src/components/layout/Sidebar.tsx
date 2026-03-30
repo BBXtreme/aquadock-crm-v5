@@ -5,7 +5,6 @@ import {
   BarChart3,
   Building,
   ChevronDown,
-  ChevronUp,
   FileText,
   Mail,
   MapPin,
