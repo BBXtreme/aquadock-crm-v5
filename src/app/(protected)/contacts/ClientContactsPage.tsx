@@ -2,7 +2,8 @@
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Building, Users } from "lucide-react";
-import { Suspense, useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import ContactCreateForm from "@/components/features/contacts/ContactCreateForm";
@@ -21,6 +22,7 @@ import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
 function ClientContactsPage() {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
@@ -82,7 +84,8 @@ function ClientContactsPage() {
       if (context?.previousContacts && context.queryKey) {
         queryClient.setQueryData(context.queryKey, context.previousContacts);
       }
-      toast.error("Deletion failed", { description: (err as Error).message });
+      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      toast.error("Deletion failed", { description: message });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
@@ -109,6 +112,14 @@ function ClientContactsPage() {
       setEditContact(contact);
     }
   }, []);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   return (
     <>

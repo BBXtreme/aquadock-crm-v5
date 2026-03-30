@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Bell, Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -32,6 +33,7 @@ type TimelineEntryWithJoins = TimelineEntry & {
 function ClientTimelinePage() {
   const queryClient = useQueryClient();
   const _router = useRouter();
+  const searchParams = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -222,6 +224,12 @@ function ClientTimelinePage() {
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   if (isLoading) {
     return (

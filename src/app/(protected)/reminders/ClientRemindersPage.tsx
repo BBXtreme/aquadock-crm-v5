@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderEditForm from "@/components/features/ReminderEditForm";
@@ -78,7 +78,8 @@ function ClientRemindersPage() {
       toast.success("Reminder deleted");
     },
     onError: (error) => {
-      toast.error("Failed to delete reminder", { description: error.message });
+      const message = err instanceof Error ? err.message : "An unknown error occurred";
+      toast.error("Failed to delete reminder", { description: message });
     },
   });
 
@@ -90,6 +91,12 @@ function ClientRemindersPage() {
   const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed") => {
     setStatusFilter(filter);
   };
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setReminderDialogOpen(true);
+    }
+  }, [searchParams]);
 
   if (isLoading) {
     return (
