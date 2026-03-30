@@ -35,6 +35,9 @@ import CompanyHeader from "@/components/company-detail/CompanyHeader";
 import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
 import CrmCard from "@/components/company-detail/CrmCard";
 import FirmendatenCard from "@/components/company-detail/FirmendatenCard";
+import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
+import RemindersCard from "@/components/company-detail/RemindersCard";
+import TimelineCard from "@/components/company-detail/TimelineCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { createClient } from "@/lib/supabase/browser-client";
 import { getCompanyById } from "@/lib/supabase/services/companies";
@@ -126,10 +129,9 @@ export default function CompanyDetailPage() {
           <AquaDockCard company={company} />
           <CrmCard company={company} />
         </div>
-        {/* Temporarily disabled heavy joins or related data fetching */}
-        {/* <LinkedContactsCard companyId={id} /> */}
-        {/* <RemindersCard companyId={id} /> */}
-        {/* <TimelineCard companyId={id} /> */}
+        <LinkedContactsCard companyId={id} />
+        <RemindersCard companyId={id} />
+        <TimelineCard companyId={id} />
       </div>
     </Suspense>
   );
