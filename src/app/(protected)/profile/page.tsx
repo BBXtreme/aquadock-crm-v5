@@ -6,9 +6,11 @@
 // The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
 // from the authentication context or Supabase client.
 
-import { LogOut, User } from "lucide-react";
+import { LogOut, Upload, User } from "lucide-react";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +26,13 @@ async function updateDisplayName(formData: FormData) {
   const user = await requireUser();
   await supabase.from('profiles').update({ display_name }).eq('id', user.id);
   revalidatePath('/profile');
+}
+
+async function signOut() {
+  'use server';
+  const supabase = await createServerSupabaseClient();
+  await supabase.auth.signOut();
+  redirect('/login');
 }
 
 export default async function ProfilePage() {
@@ -48,15 +57,23 @@ export default async function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-32 w-32 border-4 border-primary/10">
-                <AvatarImage src={user.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
-                <AvatarFallback className="text-2xl font-semibold">
-                  {user.email?.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-32 w-32 border-4 border-primary/10">
+                  <AvatarImage src={user.avatar_url || "/placeholder-avatar.png"} alt="Profile" />
+                  <AvatarFallback className="text-2xl font-semibold">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
+                  <Upload className="h-4 w-4" />
+                </div>
+              </div>
               <div className="text-center space-y-1">
                 <p className="text-2xl font-semibold">{user.display_name || "No display name"}</p>
                 <p className="text-muted-foreground">{user.email}</p>
+                <Badge variant="secondary" className="capitalize">
+                  {user.role}
+                </Badge>
               </div>
             </div>
           </CardContent>
@@ -82,7 +99,7 @@ export default async function ProfilePage() {
               <div className="space-y-3">
                 <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
                 <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-                <p className="text-muted-foreground text-sm">Upload functionality placeholder</p>
+                <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
               </div>
               <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors">
                 Update Profile
@@ -97,10 +114,12 @@ export default async function ProfilePage() {
           <CardTitle className="text-xl">Account Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" className="flex items-center h-11 px-6" disabled>
-            <LogOut className="mr-2 h-5 w-5" />
-            Sign Out
-          </Button>
+          <form action={signOut}>
+            <Button variant="destructive" className="flex items-center h-11 px-6" type="submit">
+              <LogOut className="mr-2 h-5 w-5" />
+              Sign Out
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
