@@ -7,11 +7,10 @@
 
 import { Suspense } from "react";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { safeDisplay } from "@/lib/utils/data-format";
 import ClientRemindersPage from "./ClientRemindersPage";
 
 export default async function RemindersPage() {
-  const user = await requireUser();
+  const _user = await requireUser();
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
