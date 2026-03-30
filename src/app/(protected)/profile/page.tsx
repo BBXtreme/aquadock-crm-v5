@@ -1,37 +1,16 @@
-"use client";
 // This file defines the Profile page of the application, where users can view and update their profile information.
 // It displays the user's email, display name, and avatar, and includes a form for updating the display name and profile
 // picture (currently disabled as a placeholder).
 // The page also includes a section for account actions, such as signing out (also currently disabled).
 // The user data is fetched from the authentication context or Supabase client.
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Upload, User } from "lucide-react";
 import { revalidatePath } from "next/cache";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser-client";
-import { safeDisplay } from "@/lib/utils/data-format";
-
-const displayNameSchema = z.object({
-  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
-});
-
-type DisplayNameForm = z.infer<typeof displayNameSchema>;
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/supabase/auth/require-user";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
 async function updateDisplayName(display_name: string) {
   'use server';
-  const { requireUser } = await import("@/lib/supabase/auth/require-user");
-  const { createServerSupabaseClient } = await import("@/lib/supabase/server-client");
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
   const { error } = await supabase
@@ -44,43 +23,56 @@ async function updateDisplayName(display_name: string) {
 
 async function signOut() {
   'use server';
-  const { createServerSupabaseClient } = await import("@/lib/supabase/server-client");
-  const { redirect } = await import("next/navigation");
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
 
-function ProfilePageClient() {
-  const queryClient = useQueryClient();
-  const supabase = createClient();
+export default async function ProfilePage() {
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+  return <ProfilePageClient user={user} profile={profile} />;
+}
 
-  const { data: userProfile } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: async () => {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) throw new Error("Not authenticated");
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (error) throw error;
-      return { user, profile: data };
-    },
-  });
+"use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { LogOut, Upload, User } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { safeDisplay } from "@/lib/utils/data-format";
+
+const displayNameSchema = z.object({
+  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
+});
+
+type DisplayNameForm = z.infer<typeof displayNameSchema>;
+
+function ProfilePageClient({ user, profile }: { user: any; profile: any }) {
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
     defaultValues: {
-      display_name: safeDisplay(userProfile?.profile.display_name) || "",
+      display_name: safeDisplay(profile.display_name) || "",
     },
   });
 
   const mutation = useMutation({
     mutationFn: updateDisplayName,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
       toast.success("Display name updated successfully");
     },
     onError: (_error) => {
@@ -92,10 +84,10 @@ function ProfilePageClient() {
     mutation.mutate(data.display_name);
   });
 
-  const displayName = safeDisplay(userProfile?.profile.display_name || userProfile?.user.user_metadata?.display_name);
-  const role = userProfile?.profile.role || "user";
-  const avatarUrl = userProfile?.profile.avatar_url || "";
-  const email = userProfile?.user.email || "";
+  const displayName = safeDisplay(profile.display_name || user.display_name);
+  const role = profile.role || "user";
+  const avatarUrl = profile.avatar_url || "";
+  const email = user.email || "";
 
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
@@ -192,5 +184,3 @@ function ProfilePageClient() {
     </div>
   );
 }
-
-export default ProfilePageClient;
