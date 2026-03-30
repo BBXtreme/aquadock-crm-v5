@@ -10,21 +10,21 @@ export type ContactFormDTO = {
   /** Last name (required) */
   nachname: string;
   /** Salutation (optional) */
-  anrede?: string | null | undefined;
+  anrede?: string;
   /** Position/Title (optional) */
-  position?: string | null | undefined;
+  position?: string;
   /** Email address (optional) */
-  email?: string | null | undefined;
+  email?: string;
   /** Phone number (optional) */
-  telefon?: string | null | undefined;
+  telefon?: string;
   /** Mobile number (optional) */
-  mobil?: string | null | undefined;
+  mobil?: string;
   /** Extension (optional) */
-  durchwahl?: string | null | undefined;
+  durchwahl?: string;
   /** Notes (optional) */
-  notes?: string | null | undefined;
+  notes?: string;
   /** Associated company ID (optional) */
-  company_id?: string | null | undefined;
+  company_id?: string | null;
   /** Whether this is the primary contact (optional) */
-  is_primary?: boolean | null | undefined;
+  is_primary?: boolean;
 };

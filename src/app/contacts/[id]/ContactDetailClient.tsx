@@ -22,7 +22,8 @@ import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea, WideDialogContent } from "@/components/ui/wide-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import type { ContactFormDTO } from "@/lib/dto/contact.dto";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
@@ -270,7 +271,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </div>
               {editingNotes ? (
                 <div>
-                  <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
+                  <Textarea
+                    value={notesValue}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotesValue(e.target.value)}
+                  />
                   <div className="flex gap-2 mt-2">
                     <Button size="sm" onClick={handleSaveNotes}>
                       Save
@@ -359,7 +363,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 )}
               </div>
 
-              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+              <Button variant="outline" size="sm" onClick={() => setEditCompanyDialog(true)}>
                 Change Company
               </Button>
             </div>
@@ -454,15 +458,15 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
     defaultValues: {
       vorname: contact.vorname || "",
       nachname: contact.nachname || "",
-      anrede: contact.anrede || "",
-      position: contact.position || "",
-      email: contact.email || "",
-      telefon: contact.telefon || "",
-      mobil: contact.mobil || "",
-      durchwahl: contact.durchwahl || "",
-      notes: contact.notes || "",
+      anrede: contact.anrede || undefined,
+      position: contact.position || undefined,
+      email: contact.email || undefined,
+      telefon: contact.telefon || undefined,
+      mobil: contact.mobil || undefined,
+      durchwahl: contact.durchwahl || undefined,
+      notes: contact.notes || undefined,
       company_id: contact.company_id || null,
-      is_primary: contact.is_primary || false,
+      is_primary: contact.is_primary || undefined,
     },
   });
 
