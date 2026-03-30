@@ -527,14 +527,8 @@ export default function CompaniesPage() {
               {/* Bulk Delete Button */}
               {Object.keys(rowSelection).length > 0 && (
                 <div className="mb-4">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setBulkDeleteDialogOpen(true)}
-                    className="flex items-center gap-2"
-                  >
+                  <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} title="Delete selected companies">
                     <Trash className="h-4 w-4" />
-                    Delete Selected ({Object.keys(rowSelection).length})
                   </Button>
                 </div>
               )}

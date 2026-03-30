@@ -45,6 +45,8 @@ interface CompaniesTableProps {
   sorting: { id: string; desc: boolean }[];
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
   onImportCSV?: () => void;
+  rowSelection: Record<string, boolean>;
+  onRowSelectionChange: (updater: any) => void;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -60,10 +62,11 @@ export default function CompaniesTable({
   sorting,
   onSortingChange,
   onImportCSV,
+  rowSelection,
+  onRowSelectionChange,
 }: CompaniesTableProps) {
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
@@ -244,7 +247,7 @@ export default function CompaniesTable({
     },
     onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: onRowSelectionChange,
     onPaginationChange: (updater) => {
       const newPagination = typeof updater === "function" ? updater(pagination) : updater;
       setPagination(newPagination);
