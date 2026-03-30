@@ -91,10 +91,10 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null
   }
 
-  // biome-ignore lint/security/noDangerouslySetInnerHtml: Controlled style injection for Recharts theming. No user input.
   return (
     <style
       key={id}
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Controlled style injection for Recharts theming. No user input.
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
