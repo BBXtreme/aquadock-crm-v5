@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
-import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
+import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 const contactSchema = z.object({
