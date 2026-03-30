@@ -18,7 +18,6 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -27,7 +26,7 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, _isMobile, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -83,7 +82,7 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
         </Button>
       </div>
 
-      <Separator />
+      <div className="border-b" />
 
       <nav className="flex-1 space-y-1 p-4">
         {filteredNavigation.map((item) => {
@@ -111,7 +110,7 @@ export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProp
         })}
       </nav>
 
-      <Separator />
+      <div className="border-t" />
 
       <div className="p-4">
         <Collapsible>

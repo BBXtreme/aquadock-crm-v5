@@ -22,7 +22,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   return {
     id: user.id,
-    email: user.email,
+    email: user.email || null,
     user_metadata: user.user_metadata,
     role: profile?.role || "user",
     display_name: profile?.display_name || null,
