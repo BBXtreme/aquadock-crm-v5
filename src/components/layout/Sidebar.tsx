@@ -14,11 +14,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -27,25 +28,17 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Fetch user role on mount
-  useEffect(() => {
-    const fetchRole = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (response.ok) {
-          const data = await response.json();
-          setUserRole(data.role);
-        } else {
-          setUserRole("user"); // Default to user
-        }
-      } catch {
-        setUserRole("user"); // Default to user on error
-      }
-    };
-    fetchRole();
-  }, []);
+  const { data: user } = useSuspenseQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      const response = await fetch("/api/auth/me");
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+  });
+
+  const userRole = user.role;
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
