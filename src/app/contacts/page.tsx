@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Building, Users } from "lucide-react";
 import { Suspense, useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -22,7 +22,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
-import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Contact } from "@/lib/supabase/database.types";
@@ -62,11 +61,7 @@ export default function ContactsPage() {
 
   const queryClient = useQueryClient();
 
-  const {
-    data: contactsData,
-    isLoading: loading,
-    error,
-  } = useQuery({
+  const contactsData = useSuspenseQuery({
     queryKey: ["contacts", pagination.pageIndex, pagination.pageSize, sorting],
     queryFn: async () => {
       const supabase = createClient();
@@ -79,11 +74,11 @@ export default function ContactsPage() {
     },
   });
 
-  const contacts = contactsData?.data || [];
-  const total = contactsData?.total || 0;
+  const contacts = contactsData.data;
+  const total = contactsData.total;
   const pageCount = Math.ceil(total / pagination.pageSize);
 
-  const { data: statsData } = useQuery({
+  const statsData = useSuspenseQuery({
     queryKey: ["contacts-stats"],
     queryFn: async () => {
       const supabase = createClient();
@@ -95,9 +90,9 @@ export default function ContactsPage() {
     },
   });
 
-  const totalContacts = statsData?.total || 0;
-  const primaryContacts = statsData?.primary || 0;
-  const companiesWithContacts = statsData?.companiesWithContacts || 0;
+  const totalContacts = statsData.total;
+  const primaryContacts = statsData.primary;
+  const companiesWithContacts = statsData.companiesWithContacts;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),
@@ -167,36 +162,25 @@ export default function ContactsPage() {
         </Dialog>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription className="flex items-center justify-between gap-4">
-            <span>{(error as Error).message}</span>
-            <Button onClick={() => window.location.reload()} variant="outline" size="sm">
-              Retry
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
       <Suspense fallback={<LoadingState count={8} />}>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard
             title="Total Contacts"
-            value={loading ? <Skeleton className="h-8 w-20" /> : totalContacts.toLocaleString("de-DE")}
+            value={totalContacts.toLocaleString("de-DE")}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
             change="+8% from last month"
           />
           <StatCard
             title="Primary Contacts"
-            value={loading ? <Skeleton className="h-8 w-20" /> : primaryContacts.toLocaleString("de-DE")}
+            value={primaryContacts.toLocaleString("de-DE")}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
             change="+5% from last month"
           />
           <StatCard
             title="Companies with Contacts"
-            value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
+            value={companiesWithContacts.toLocaleString("de-DE")}
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
             change="+12% from last month"
@@ -205,21 +189,17 @@ export default function ContactsPage() {
 
         <Card>
           <CardContent>
-            {loading ? (
-              <LoadingState count={5} itemClassName="h-12 w-full" />
-            ) : (
-              <ContactsTable
-                contacts={contacts}
-                globalFilter={globalFilter}
-                onGlobalFilterChange={setGlobalFilter}
-                onEdit={handleEdit}
-                onDelete={(id) => deleteMutation.mutate(id)}
-                pageCount={pageCount}
-                onPaginationChange={setPagination}
-                sorting={sorting}
-                onSortingChange={setSorting}
-              />
-            )}
+            <ContactsTable
+              contacts={contacts}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              onEdit={handleEdit}
+              onDelete={(id) => deleteMutation.mutate(id)}
+              pageCount={pageCount}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              onSortingChange={setSorting}
+            />
           </CardContent>
         </Card>
       </Suspense>

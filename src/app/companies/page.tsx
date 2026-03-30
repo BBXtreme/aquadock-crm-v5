@@ -10,7 +10,7 @@
 
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
   Building,
@@ -46,7 +46,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
-import { Skeleton } from "@/components/ui/skeleton";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
@@ -178,11 +177,7 @@ export default function CompaniesPage() {
     }));
   };
 
-  const {
-    data: companiesData,
-    isLoading,
-    error: queryError,
-  } = useQuery({
+  const companiesData = useSuspenseQuery({
     queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter],
     queryFn: async () => {
       const supabase = createClient();
@@ -246,11 +241,11 @@ export default function CompaniesPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const companies = companiesData?.companies || [];
-  const total = companiesData?.totalCount || 0;
+  const companies = companiesData.companies;
+  const total = companiesData.totalCount;
   const pageCount = Math.ceil(total / pagination.pageSize);
 
-  const { data: statsData } = useQuery({
+  const statsData = useSuspenseQuery({
     queryKey: ["companies-stats"],
     queryFn: async () => {
       const supabase = createClient();
@@ -263,7 +258,7 @@ export default function CompaniesPage() {
     },
   });
 
-  const stats = statsData || { total: 0, leads: 0, won: 0, value: 0 };
+  const stats = statsData;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
@@ -354,42 +349,6 @@ export default function CompaniesPage() {
     toast.success("Companies successfully imported from CSV");
   };
 
-  if (queryError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-        <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-sm">Home → Companies</p>
-              <h1 className="font-semibold text-3xl tracking-tight">Companies</h1>
-            </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>New Company</Button>
-              </DialogTrigger>
-              <WideDialogContent size="2xl">
-                <DialogHeader>
-                  <DialogTitle>Create New Company</DialogTitle>
-                </DialogHeader>
-                <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-              </WideDialogContent>
-            </Dialog>
-          </div>
-
-          <Alert variant="destructive">
-            <AlertDescription className="flex items-center justify-between gap-4">
-              <span>{queryError.message}</span>
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Erneut versuchen
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
@@ -418,28 +377,28 @@ export default function CompaniesPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Gesamt Firmen"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+              value={stats.total.toLocaleString("de-DE")}
               icon={<Building className="h-5 w-5 text-muted-foreground" />}
               className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+12% from last month"
             />
             <StatCard
               title="Leads"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+              value={stats.leads.toLocaleString("de-DE")}
               icon={<Users className="h-5 w-5 text-muted-foreground" />}
               className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+8% from last month"
             />
             <StatCard
               title="Gewonnene Deals"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+              value={stats.won.toLocaleString("de-DE")}
               icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
               className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+15% from last month"
             />
             <StatCard
               title="Gesamtwert"
-              value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+              value={`€${stats.value.toLocaleString("de-DE")}`}
               icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
               className="border-none shadow-sm bg-card/90 hover:shadow-md"
               change="+22% from last month"
@@ -449,173 +408,167 @@ export default function CompaniesPage() {
           {/* Table Section */}
           <Card className="border-border rounded-xl shadow-sm">
             <CardContent className="p-6">
-              {isLoading ? (
-                <LoadingState count={6} itemClassName="h-14 w-full" />
-              ) : (
-                <>
-                  {/* Active Filters Badges */}
-                  <div
-                    className={cn(
-                      "flex flex-wrap gap-2 items-center",
-                      Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-                    )}
+              {/* Active Filters Badges */}
+              <div
+                className={cn(
+                  "flex flex-wrap gap-2 items-center",
+                  Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
+                )}
+              >
+                {Object.entries(activeFilters).map(([group, values]) =>
+                  values.map((v) => (
+                    <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
+                      {v}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                    </Badge>
+                  )),
+                )}
+                {Object.values(activeFilters).flat().length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setActiveFilters({
+                        status: [],
+                        kategorie: [],
+                        betriebstyp: [],
+                        land: [],
+                      })
+                    }
                   >
-                    {Object.entries(activeFilters).map(([group, values]) =>
-                      values.map((v) => (
-                        <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-                          {v}
-                          <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
-                        </Badge>
-                      )),
-                    )}
-                    {Object.values(activeFilters).flat().length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setActiveFilters({
-                            status: [],
-                            kategorie: [],
-                            betriebstyp: [],
-                            land: [],
-                          })
-                        }
-                      >
-                        Clear all
-                      </Button>
-                    )}
-                  </div>
+                    Clear all
+                  </Button>
+                )}
+              </div>
 
-                  <Accordion type="single" collapsible className="mb-4">
-                    <AccordionItem>
-                      <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
-                        Filters ({Object.values(activeFilters).flat().length})
-                      </AccordionTrigger>
-                      <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
-                        {/* Status */}
-                        <div className="mb-4">
-                          <h4 className="font-normal mb-2">Status</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {statusOptions.map((s) => {
-                              const Icon = statusIcons[s];
-                              const isActive = activeFilters.status.includes(s);
-                              return (
-                                <Button
-                                  key={s}
-                                  variant={isActive ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    isActive
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("status", s)}
-                                >
-                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                  {s.charAt(0).toUpperCase() + s.slice(1)}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
+              <Accordion type="single" collapsible className="mb-4">
+                <AccordionItem>
+                  <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
+                    Filters ({Object.values(activeFilters).flat().length})
+                  </AccordionTrigger>
+                  <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
+                    {/* Status */}
+                    <div className="mb-4">
+                      <h4 className="font-normal mb-2">Status</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {statusOptions.map((s) => {
+                          const Icon = statusIcons[s];
+                          const isActive = activeFilters.status.includes(s);
+                          return (
+                            <Button
+                              key={s}
+                              variant={isActive ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                isActive
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("status", s)}
+                            >
+                              {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                        {/* Kategorie */}
-                        <div className="mb-4">
-                          <h4 className="font-normal mb-2">Kategorie</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {kategorieOptions.map((k) => {
-                              const Icon = kategorieIcons[k];
-                              const isActive = activeFilters.kategorie.includes(k);
-                              return (
-                                <Button
-                                  key={k}
-                                  variant={isActive ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    isActive
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("kategorie", k)}
-                                >
-                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                  {k.charAt(0).toUpperCase() + k.slice(1)}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                    {/* Kategorie */}
+                    <div className="mb-4">
+                      <h4 className="font-normal mb-2">Kategorie</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {kategorieOptions.map((k) => {
+                          const Icon = kategorieIcons[k];
+                          const isActive = activeFilters.kategorie.includes(k);
+                          return (
+                            <Button
+                              key={k}
+                              variant={isActive ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                isActive
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("kategorie", k)}
+                            >
+                              {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                              {k.charAt(0).toUpperCase() + k.slice(1)}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                        {/* Betriebstyp */}
-                        <div className="mb-4">
-                          <h4 className="font-normal mb-2">Betriebstyp</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {betriebstypOptions.map((b) => {
-                              const isActive = activeFilters.betriebstyp.includes(b);
-                              return (
-                                <Button
-                                  key={b}
-                                  variant={isActive ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    isActive
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("betriebstyp", b)}
-                                >
-                                  {b.charAt(0).toUpperCase() + b.slice(1)}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                    {/* Betriebstyp */}
+                    <div className="mb-4">
+                      <h4 className="font-normal mb-2">Betriebstyp</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {betriebstypOptions.map((b) => {
+                          const isActive = activeFilters.betriebstyp.includes(b);
+                          return (
+                            <Button
+                              key={b}
+                              variant={isActive ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                isActive
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("betriebstyp", b)}
+                            >
+                              {b.charAt(0).toUpperCase() + b.slice(1)}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                        {/* Land */}
-                        <div>
-                          <h4 className="font-normal mb-2">Land</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {landOptions.map((l) => {
-                              const isActive = activeFilters.land.includes(l);
-                              return (
-                                <Button
-                                  key={l}
-                                  variant={isActive ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className={
-                                    isActive
-                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                  }
-                                  onClick={() => toggleFilter("land", l)}
-                                >
-                                  {l}
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                    {/* Land */}
+                    <div>
+                      <h4 className="font-normal mb-2">Land</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {landOptions.map((l) => {
+                          const isActive = activeFilters.land.includes(l);
+                          return (
+                            <Button
+                              key={l}
+                              variant={isActive ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                isActive
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("land", l)}
+                            >
+                              {l}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
-                  <CompaniesTable
-                    companies={companies}
-                    globalFilter={globalFilter}
-                    onGlobalFilterChange={setGlobalFilter}
-                    onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
-                    onDelete={(companyOrId) => {
-                      const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
-                      deleteMutation.mutate(id);
-                    }}
-                    pageCount={pageCount}
-                    onPaginationChange={setPagination}
-                    sorting={sorting}
-                    onSortingChange={setSorting}
-                    onImportCSV={() => setCsvDialogOpen(true)}
-                  />
-                </>
-              )}
+              <CompaniesTable
+                companies={companies}
+                globalFilter={globalFilter}
+                onGlobalFilterChange={setGlobalFilter}
+                onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
+                onDelete={(companyOrId) => {
+                  const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                  deleteMutation.mutate(id);
+                }}
+                pageCount={pageCount}
+                onPaginationChange={setPagination}
+                sorting={sorting}
+                onSortingChange={setSorting}
+                onImportCSV={() => setCsvDialogOpen(true)}
+              />
             </CardContent>
           </Card>
         </Suspense>
