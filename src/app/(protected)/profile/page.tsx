@@ -1,3 +1,9 @@
+// src/app/(protected)/profile/page.tsx
+// This file defines the Profile page of the application, which allows users to view and update their profile information, including display name and profile picture.
+// It uses React Query's useMutation to handle updating the display name, and provides a form for users to input their new display name.
+// The page also includes a section for account actions, such as signing out. The profile picture upload functionality is currently disabled and marked as coming soon.
+// The user's profile information is fetched from Supabase on component mount, and the page handles loading states accordingly. 
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
