@@ -8,8 +8,9 @@
 // The page handles loading and error states, providing feedback to the user accordingly. The company data is fetched with pagination,
 // sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
 
-"use client";
-
+import { Suspense } from "react";
+import { requireUser } from "@/lib/supabase/auth/require-user";
+import { safeDisplay } from "@/lib/utils/data-format";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
@@ -32,7 +33,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -72,7 +73,9 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-export default function CompaniesPage() {
+function ClientCompaniesPage() {
+  "use client";
+
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -320,278 +323,291 @@ export default function CompaniesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <div className="flex items-center justify-between pb-6 border-b">
-          <div>
-            <div className="text-sm text-muted-foreground">Home → Companies</div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Companies
-            </h1>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>New Company</Button>
-            </DialogTrigger>
-            <WideDialogContent size="2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Company</DialogTitle>
-              </DialogHeader>
-              <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
-            </WideDialogContent>
-          </Dialog>
+    <>
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Companies</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Companies
+          </h1>
         </div>
-
-        <Suspense fallback={<LoadingState count={8} />}>
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Gesamt Firmen"
-              value={stats.total.toLocaleString("de-DE")}
-              icon={<Building className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+12% from last month"
-            />
-            <StatCard
-              title="Leads"
-              value={stats.leads.toLocaleString("de-DE")}
-              icon={<Users className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+8% from last month"
-            />
-            <StatCard
-              title="Gewonnene Deals"
-              value={stats.won.toLocaleString("de-DE")}
-              icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+15% from last month"
-            />
-            <StatCard
-              title="Gesamtwert"
-              value={`€${stats.value.toLocaleString("de-DE")}`}
-              icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
-              className="border-none shadow-sm bg-card/90 hover:shadow-md"
-              change="+22% from last month"
-            />
-          </div>
-
-          {/* Table Section */}
-          <Card className="border-border rounded-xl shadow-sm">
-            <CardContent className="p-6">
-              {/* Active Filters Badges */}
-              <div
-                className={cn(
-                  "flex flex-wrap gap-2 items-center",
-                  Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-                )}
-              >
-                {Object.entries(activeFilters).map(([group, values]) =>
-                  values.map((v) => (
-                    <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-                      {v}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
-                    </Badge>
-                  )),
-                )}
-                {Object.values(activeFilters).flat().length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setActiveFilters({
-                        status: [],
-                        kategorie: [],
-                        betriebstyp: [],
-                        land: [],
-                      })
-                    }
-                  >
-                    Clear all
-                  </Button>
-                )}
-              </div>
-
-              <Accordion type="single" collapsible className="mb-4">
-                <AccordionItem>
-                  <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
-                    {Object.values(activeFilters).flat().length > 0
-                      ? `Filters (${Object.values(activeFilters).flat().length}) • ${total} companies found`
-                      : "Filters"}
-                  </AccordionTrigger>
-                  <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
-                    {/* Status */}
-                    <div className="mb-4">
-                      <h4 className="font-normal mb-2">Status</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {statusOptions.map((option) => {
-                          const Icon = statusIcons[option.value];
-                          const isActive = activeFilters.status.includes(option.value);
-                          return (
-                            <Button
-                              key={option.value}
-                              variant={isActive ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                isActive
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("status", option.value)}
-                            >
-                              {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                              {option.label}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Kategorie */}
-                    <div className="mb-4">
-                      <h4 className="font-normal mb-2">Kategorie</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {kundentypOptions.map((option) => {
-                          const Icon = kategorieIcons[option.value];
-                          const isActive = activeFilters.kategorie.includes(option.value);
-                          return (
-                            <Button
-                              key={option.value}
-                              variant={isActive ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                isActive
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("kategorie", option.value)}
-                            >
-                              {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                              {option.label}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Betriebstyp */}
-                    <div className="mb-4">
-                      <h4 className="font-normal mb-2">Betriebstyp</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {firmentypOptions.map((option) => {
-                          const isActive = activeFilters.betriebstyp.includes(option.value);
-                          return (
-                            <Button
-                              key={option.value}
-                              variant={isActive ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                isActive
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("betriebstyp", option.value)}
-                            >
-                              {option.label}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Land */}
-                    <div>
-                      <h4 className="font-normal mb-2">Land</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {landOptions.map((option) => {
-                          const isActive = activeFilters.land.includes(option.value);
-                          return (
-                            <Button
-                              key={option.value}
-                              variant={isActive ? "secondary" : "ghost"}
-                              size="sm"
-                              className={
-                                isActive
-                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                              }
-                              onClick={() => toggleFilter("land", option.value)}
-                            >
-                              {option.label}
-                            </Button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              {/* Bulk Delete Button */}
-              {Object.keys(rowSelection).length > 0 && (
-                <div className="mb-4">
-                  <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} title="Delete selected companies">
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              <CompaniesTable
-                companies={companies}
-                globalFilter={globalFilter}
-                onGlobalFilterChange={setGlobalFilter}
-                onEdit={(company) => setEditingCompany(company)}
-                onDelete={(companyOrId) => {
-                  const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
-                  deleteMutation.mutate(id);
-                }}
-                pageCount={pageCount}
-                onPaginationChange={setPagination}
-                sorting={sorting}
-                onSortingChange={setSorting}
-                onImportCSV={() => setCsvDialogOpen(true)}
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-              />
-            </CardContent>
-          </Card>
-        </Suspense>
-
-        {editingCompany && (
-          <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
-            <WideDialogContent size="2xl">
-              <DialogHeader>
-                <DialogTitle>Edit Company</DialogTitle>
-              </DialogHeader>
-              <CompanyEditForm
-                company={editingCompany}
-                onSuccess={() => {
-                  setEditingCompany(null);
-                  queryClient.invalidateQueries({ queryKey: ["companies"] });
-                }}
-              />
-            </WideDialogContent>
-          </Dialog>
-        )}
-
-        {/* Bulk Delete Confirmation Dialog */}
-        <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-          <DialogContent>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>New Company</Button>
+          </DialogTrigger>
+          <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Confirm Bulk Delete</DialogTitle>
+              <DialogTitle>Create New Company</DialogTitle>
             </DialogHeader>
-            <p>Are you sure you want to delete {Object.keys(rowSelection).length} selected companies? This action cannot be undone.</p>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleBulkDelete}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+            <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
+          </WideDialogContent>
         </Dialog>
       </div>
+
+      <Suspense fallback={<LoadingState count={8} />}>
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Gesamt Firmen"
+            value={stats.total.toLocaleString("de-DE")}
+            icon={<Building className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+12% from last month"
+          />
+          <StatCard
+            title="Leads"
+            value={stats.leads.toLocaleString("de-DE")}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+8% from last month"
+          />
+          <StatCard
+            title="Gewonnene Deals"
+            value={stats.won.toLocaleString("de-DE")}
+            icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+15% from last month"
+          />
+          <StatCard
+            title="Gesamtwert"
+            value={`€${stats.value.toLocaleString("de-DE")}`}
+            icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+22% from last month"
+          />
+        </div>
+
+        {/* Table Section */}
+        <Card className="border-border rounded-xl shadow-sm">
+          <CardContent className="p-6">
+            {/* Active Filters Badges */}
+            <div
+              className={cn(
+                "flex flex-wrap gap-2 items-center",
+                Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
+              )}
+            >
+              {Object.entries(activeFilters).map(([group, values]) =>
+                values.map((v) => (
+                  <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
+                    {v}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                  </Badge>
+                )),
+              )}
+              {Object.values(activeFilters).flat().length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setActiveFilters({
+                      status: [],
+                      kategorie: [],
+                      betriebstyp: [],
+                      land: [],
+                    })
+                  }
+                >
+                  Clear all
+                </Button>
+              )}
+            </div>
+
+            <Accordion type="single" collapsible className="mb-4">
+              <AccordionItem>
+                <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
+                  {Object.values(activeFilters).flat().length > 0
+                    ? `Filters (${Object.values(activeFilters).flat().length}) • ${total} companies found`
+                    : "Filters"}
+                </AccordionTrigger>
+                <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
+                  {/* Status */}
+                  <div className="mb-4">
+                    <h4 className="font-normal mb-2">Status</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {statusOptions.map((option) => {
+                        const Icon = statusIcons[option.value];
+                        const isActive = activeFilters.status.includes(option.value);
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => toggleFilter("status", option.value)}
+                          >
+                            {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Kategorie */}
+                  <div className="mb-4">
+                    <h4 className="font-normal mb-2">Kategorie</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {kundentypOptions.map((option) => {
+                        const Icon = kategorieIcons[option.value];
+                        const isActive = activeFilters.kategorie.includes(option.value);
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => toggleFilter("kategorie", option.value)}
+                          >
+                            {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Betriebstyp */}
+                  <div className="mb-4">
+                    <h4 className="font-normal mb-2">Betriebstyp</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {firmentypOptions.map((option) => {
+                        const isActive = activeFilters.betriebstyp.includes(option.value);
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => toggleFilter("betriebstyp", option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Land */}
+                  <div>
+                    <h4 className="font-normal mb-2">Land</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {landOptions.map((option) => {
+                        const isActive = activeFilters.land.includes(option.value);
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => toggleFilter("land", option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Bulk Delete Button */}
+            {Object.keys(rowSelection).length > 0 && (
+              <div className="mb-4">
+                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} title="Delete selected companies">
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            <CompaniesTable
+              companies={companies}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              onEdit={(company) => setEditingCompany(company)}
+              onDelete={(companyOrId) => {
+                const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                deleteMutation.mutate(id);
+              }}
+              pageCount={pageCount}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              onSortingChange={setSorting}
+              onImportCSV={() => setCsvDialogOpen(true)}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+            />
+          </CardContent>
+        </Card>
+      </Suspense>
+
+      {editingCompany && (
+        <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
+          <WideDialogContent size="2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Company</DialogTitle>
+            </DialogHeader>
+            <CompanyEditForm
+              company={editingCompany}
+              onSuccess={() => {
+                setEditingCompany(null);
+                queryClient.invalidateQueries({ queryKey: ["companies"] });
+              }}
+            />
+          </WideDialogContent>
+        </Dialog>
+      )}
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Bulk Delete</DialogTitle>
+          </DialogHeader>
+          <p>Are you sure you want to delete {Object.keys(rowSelection).length} selected companies? This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleBulkDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
+    </>
+  );
+}
+
+export default async function CompaniesPage() {
+  const user = await requireUser();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
+        <div>Welcome, {safeDisplay(user.display_name)}</div>
+        <Suspense fallback={<div>Loading companies...</div>}>
+          <ClientCompaniesPage />
+        </Suspense>
+      </div>
     </div>
   );
 }
