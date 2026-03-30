@@ -25,6 +25,7 @@ import {
   Star,
   Tent,
   Trophy,
+  Trash,
   Users,
   Utensils,
   X,
@@ -41,7 +42,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
@@ -87,6 +88,8 @@ export default function CompaniesPage() {
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState({});
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
@@ -291,6 +294,24 @@ export default function CompaniesPage() {
       toast.success("Company deleted");
     },
   });
+
+  const handleBulkDelete = async () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) return;
+
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("companies").delete().in("id", selectedIds);
+      if (error) throw error;
+
+      toast.success(`Deleted ${selectedIds.length} companies`);
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      setRowSelection({});
+      setBulkDeleteDialogOpen(false);
+    } catch (err) {
+      toast.error("Bulk delete failed", { description: (err as Error).message });
+    }
+  };
 
   const handleImportSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
@@ -503,6 +524,21 @@ export default function CompaniesPage() {
                 </AccordionItem>
               </Accordion>
 
+              {/* Bulk Delete Button */}
+              {Object.keys(rowSelection).length > 0 && (
+                <div className="mb-4">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash className="h-4 w-4" />
+                    Delete Selected ({Object.keys(rowSelection).length})
+                  </Button>
+                </div>
+              )}
+
               <CompaniesTable
                 companies={companies}
                 globalFilter={globalFilter}
@@ -517,6 +553,8 @@ export default function CompaniesPage() {
                 sorting={sorting}
                 onSortingChange={setSorting}
                 onImportCSV={() => setCsvDialogOpen(true)}
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
               />
             </CardContent>
           </Card>
@@ -538,6 +576,24 @@ export default function CompaniesPage() {
             </WideDialogContent>
           </Dialog>
         )}
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Bulk Delete</DialogTitle>
+            </DialogHeader>
+            <p>Are you sure you want to delete {Object.keys(rowSelection).length} selected companies? This action cannot be undone.</p>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </div>

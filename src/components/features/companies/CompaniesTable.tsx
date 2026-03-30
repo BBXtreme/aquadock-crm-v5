@@ -6,7 +6,7 @@
 // The component is designed to be reusable and accepts props for the companies data, filters, and callbacks for actions.
 
 import { type ColumnDef, flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { ArrowUpDown, Building, Edit, MoreHorizontal, Trash, Users } from "lucide-react";
+import { ArrowUpDown, Building, Checkbox, Edit, MoreHorizontal, Trash, Users } from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,8 @@ interface CompaniesTableProps {
   sorting: { id: string; desc: boolean }[];
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
   onImportCSV?: () => void;
+  rowSelection?: Record<string, boolean>;
+  onRowSelectionChange?: (updaterOrValue: Record<string, boolean> | ((old: Record<string, boolean>) => Record<string, boolean>)) => void;
 }
 
 export default function CompaniesTable({
@@ -43,10 +45,31 @@ export default function CompaniesTable({
   sorting,
   onSortingChange,
   onImportCSV,
+  rowSelection = {},
+  onRowSelectionChange,
 }: CompaniesTableProps) {
   const [columnVisibility, setColumnVisibility] = useState({});
 
   const columns: ColumnDef<CompanyWithContacts>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: "firmenname",
       header: ({ column }) => (
@@ -213,11 +236,14 @@ export default function CompaniesTable({
       const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(table.getState().sorting) : updaterOrValue;
       onSortingChange(newSorting);
     },
+    enableRowSelection: true,
+    onRowSelectionChange: onRowSelectionChange,
     state: {
       globalFilter,
       columnVisibility,
       pagination: { pageIndex: 0, pageSize: 20 },
       sorting,
+      rowSelection,
     },
     manualPagination: true,
     pageCount,
