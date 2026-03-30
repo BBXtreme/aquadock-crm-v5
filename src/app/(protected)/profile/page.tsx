@@ -6,17 +6,68 @@
 // The user data is currently hardcoded for demonstration purposes, but in a real application, it would be fetched
 // from the authentication context or Supabase client.
 
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogOut, User } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/browser-client";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
 
+const displayNameSchema = z.object({
+  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
+});
+
+type DisplayNameForm = z.infer<typeof displayNameSchema>;
+
 export default async function ProfilePage() {
   const user = await requireUser();
+
+  return <ProfilePageClient user={user} />;
+}
+
+function ProfilePageClient({ user }: { user: Awaited<ReturnType<typeof requireUser>> }) {
+  const queryClient = useQueryClient();
+
+  const form = useForm<DisplayNameForm>({
+    resolver: zodResolver(displayNameSchema),
+    defaultValues: {
+      display_name: user.display_name || "",
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (values: DisplayNameForm) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: values.display_name })
+        .eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      toast.success("Display name updated successfully");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to update display name", { description: message });
+    },
+  });
+
+  const onSubmit = form.handleSubmit((data) => {
+    updateMutation.mutate(data);
+  });
 
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
@@ -56,27 +107,35 @@ export default async function ProfilePage() {
             <CardTitle className="text-xl">Update Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form className="space-y-6">
-              <div className="space-y-3">
-                <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
-                <Input
-                  id="displayName"
-                  type="text"
-                  placeholder="Enter your display name"
-                  value={user.display_name || ""}
-                  disabled
-                  className="h-11"
+            <Form {...form}>
+              <form onSubmit={onSubmit} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="display_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">Display Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Enter your display name"
+                          className="h-11"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-                <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-                <p className="text-muted-foreground text-sm">Upload functionality placeholder</p>
-              </div>
-              <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled>
-                Update Profile
-              </Button>
-            </form>
+                <div className="space-y-3">
+                  <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
+                  <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
+                  <p className="text-muted-foreground text-sm">Upload functionality placeholder</p>
+                </div>
+                <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? "Updating..." : "Update Profile"}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
