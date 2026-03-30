@@ -74,7 +74,7 @@ const useDebounce = (value: string, delay: number) => {
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editCompany, setEditCompany] = useState<Company | null>(null);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [accordionOpen, setAccordionOpen] = useState(false);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
@@ -507,7 +507,7 @@ export default function CompaniesPage() {
                 companies={companies}
                 globalFilter={globalFilter}
                 onGlobalFilterChange={setGlobalFilter}
-                onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
+                onEdit={(company) => setEditingCompany(company)}
                 onDelete={(companyOrId) => {
                   const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
                   deleteMutation.mutate(id);
@@ -522,7 +522,22 @@ export default function CompaniesPage() {
           </Card>
         </Suspense>
 
-        {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
+        {editingCompany && (
+          <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
+            <WideDialogContent size="2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Company</DialogTitle>
+              </DialogHeader>
+              <CompanyEditForm
+                company={editingCompany}
+                onSuccess={() => {
+                  setEditingCompany(null);
+                  queryClient.invalidateQueries({ queryKey: ["companies"] });
+                }}
+              />
+            </WideDialogContent>
+          </Dialog>
+        )}
       </div>
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </div>
