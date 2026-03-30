@@ -4,13 +4,12 @@
 // The page includes sections for contact details, and options to edit the contact and change the linked company.
 // Note: The main page is a server component for data fetching, while interactive parts are handled by the client component.
 
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { getContactById } from "@/lib/supabase/services/contacts";
-import { safeDisplay } from "@/lib/utils/data-format";
 import ContactDetailClient from "./ContactDetailClient";
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
