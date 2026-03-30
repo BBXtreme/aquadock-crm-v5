@@ -7,11 +7,15 @@
 export const dynamic = "force-dynamic";
 
 import { OpenMapClient } from "@/components/features/map/OpenMapClient";
+import { requireUser } from "@/lib/supabase/auth/require-user";
+import { safeDisplay } from "@/lib/utils/data-format";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
 
 export default async function OpenMapPage() {
+  const user = await requireUser();
+
   let companies: CompanyForOpenMap[] = [];
   let error: string | null = null;
 
@@ -23,6 +27,7 @@ export default async function OpenMapPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full relative">
+      <div>Welcome, {safeDisplay(user.display_name)}</div>
       <OpenMapClient initialCompanies={companies} error={error} />
     </div>
   );
