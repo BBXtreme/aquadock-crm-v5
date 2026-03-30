@@ -1,4 +1,6 @@
 // src/components/features/map/OpenMapClient.tsx
+// This component is the client-side entry point for the OpenMap feature. It dynamically imports the main OpenMapView component and wraps it in an error boundary.
+
 "use client";
 
 import dynamic from "next/dynamic";

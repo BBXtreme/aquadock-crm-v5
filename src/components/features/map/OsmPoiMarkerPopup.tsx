@@ -1,4 +1,7 @@
 // src/components/features/map/OsmPoiMarkerPopup.tsx
+// This component renders a popup for OSM POI markers on the map, showing details and actions.
+// It includes logic to calculate and display water distance info, with caching in the POI object for performance.
+
 "use client";
 
 import { ExternalLink } from "lucide-react";

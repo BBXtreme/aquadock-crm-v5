@@ -1,4 +1,7 @@
 // src/components/features/map/OpenMapView.tsx
+// This component renders the main map view using Leaflet, showing company markers and OSM POIs.
+// It includes logic for fetching POIs based on map bounds with caching, handling marker popups, and user interactions.
+
 "use client";
 
 import L from "leaflet";

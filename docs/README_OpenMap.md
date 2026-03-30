@@ -16,12 +16,13 @@ Users can import POIs directly into the CRM with one click (becomes a company wi
 | ----------------------------------------------- | ------------------------------------------------------------ |
 | `src/components/features/map/OpenMapClient.tsx` | Thin wrapper + ErrorBoundary + dynamic import (SSR-safe)     |
 | `src/components/features/map/OpenMapView.tsx`   | Main Leaflet map UI, state, clustering, dark mode            |
-| `src/lib/utils/map.ts`                          | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
+| `src/lib/utils/map-utils.ts`                    | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
 | `src/lib/constants/map-poi-config.ts`           | POI categories & Overpass tag definitions                    |
 | `src/lib/constants/map-status-colors.ts`        | Status colors + labels                                       |
 | `src/lib/constants/kundentyp.ts`                | OSM tag → `kundentyp` mapping                                |
 | `src/lib/constants/wassertyp.ts`                | Water type detection                                         |
 | `src/lib/utils/calculateWaterDistance.ts`       | Distance + type to nearest water body                        |
+| src/lib/constants/overpass-endpoints.ts         |                                                              |
 
 **Key supporting files**: `CompanyMarkerPopup.tsx`, `OsmPoiMarkerPopup.tsx`
 
