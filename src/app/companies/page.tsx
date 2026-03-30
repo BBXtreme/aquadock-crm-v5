@@ -414,7 +414,9 @@ export default function CompaniesPage() {
               <Accordion type="single" collapsible className="mb-4">
                 <AccordionItem>
                   <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
-                    Filters ({Object.values(activeFilters).flat().length})
+                    {Object.values(activeFilters).flat().length > 0
+                      ? `Filters (${Object.values(activeFilters).flat().length}) • ${total} companies found`
+                      : "Filters"}
                   </AccordionTrigger>
                   <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
                     {/* Status */}
