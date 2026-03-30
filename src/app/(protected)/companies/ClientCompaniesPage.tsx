@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
@@ -39,6 +41,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
@@ -61,8 +64,6 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 function ClientCompaniesPage() {
-  "use client";
-
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
