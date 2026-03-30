@@ -18,22 +18,23 @@ export default function LoginPage() {
   const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
   const router = useRouter();
 
-  // Stable redirect path – wrapped in useCallback to satisfy exhaustive-deps
+  // Stable redirect path – wrapped in useCallback
   const getRedirectPath = useCallback((): string => {
     if (typeof window === "undefined") return "/dashboard";
 
     const params = new URLSearchParams(window.location.search);
     const redirectTo = params.get("redirectTo");
 
-    // Only allow internal redirects starting with /
     if (redirectTo?.startsWith("/")) {
       return redirectTo;
     }
     return "/dashboard";
   }, []);
 
-  // Full redirect URL for Supabase Auth component
-  const redirectTo = `${window.location.origin}${getRedirectPath()}`;
+  // Safe redirectTo for Supabase Auth (computed only on client)
+  const redirectTo = typeof window !== "undefined"
+    ? `${window.location.origin}${getRedirectPath()}`
+    : "/dashboard";
 
   useEffect(() => {
     const checkUser = async () => {
@@ -49,7 +50,6 @@ export default function LoginPage() {
 
     checkUser();
 
-    // Listen for auth state changes
     const supabase = createClient();
     const {
       data: { subscription },

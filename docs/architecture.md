@@ -117,11 +117,19 @@ export async function getCompaniesForOpenMap() {
 - Forms use React Hook Form + Zod schemas from @/lib/validations/ with input sanitization (.trim(), .max(), .enum()). 
 - Detail queries are optimized with selective column selection. Auth and RLS will be added later.
 
-### DTO Layer and Middleware
+### 7. DTO Layer and Middleware
 
 The DTO layer in `src/lib/dto/` provides form-specific types like `CompanyFormDTO` and `ContactFormDTO` to decouple form logic from database schemas, ensuring type safety in API interactions. Middleware in `src/middleware.ts` is set up for future authentication handling and route protection using Supabase Auth.
 
-## 7. Styling & Theming
+## 8. Auth & Authorization
+
+- Supabase Auth for authentication
+- `public.profiles` table as single source of truth for role (`user` | `admin`), display_name, avatar_url
+- Server helpers: `requireUser()`, `requireAdmin()`, `getCurrentUser()`
+- RLS policies enforce "Auth before data"
+- Never use `user_metadata` for authorization (security)
+
+## 9. Styling & Theming
 
 - Tailwind v4.2.2 (config-less)
 - Dark mode via next-themes
