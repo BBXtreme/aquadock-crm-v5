@@ -15,7 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Building, Edit, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteContact, updateContact } from "@/lib/supabase/services/contacts";
@@ -145,18 +146,7 @@ export default function ContactDetailPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-1/3" />
-        </div>
-      </div>
-    );
-  }
-
+  if (isLoading) return <LoadingState count={8} />;
   if (error || !contact) {
     return (
       <div className="container mx-auto p-6">
@@ -172,312 +162,318 @@ export default function ContactDetailPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">
-            Contacts → {contact.vorname} {contact.nachname}
+    <Suspense fallback={<LoadingState count={8} />}>
+      <div className="container mx-auto p-6 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-6 border-b">
+          <div>
+            <div className="text-sm text-muted-foreground">
+              Contacts → {contact.vorname} {contact.nachname}
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {contact.vorname} {contact.nachname}
+            </h1>
+            {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {contact.vorname} {contact.nachname}
-          </h1>
-          {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
+          <div className="flex gap-3">
+            <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button onClick={handleDeleteContact} variant="destructive" size="sm">
+              <Trash className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => router.push("/contacts")} size="sm">
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button onClick={handleDeleteContact} variant="destructive" size="sm">
-            <Trash className="w-4 h-4" />
-          </Button>
-          <Button onClick={() => router.push("/contacts")} size="sm">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
 
-      {/* Badges and Primary Contact Checkbox */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
-          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
-          {contact.created_at && (
-            <span className="text-sm text-gray-500">Created: {new Date(contact.created_at).toLocaleDateString()}</span>
-          )}
-          {contact.updated_at && (
-            <span className="text-sm text-gray-500">Updated: {new Date(contact.updated_at).toLocaleDateString()}</span>
-          )}
+        {/* Badges and Primary Contact Checkbox */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
+            {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+            {contact.created_at && (
+              <span className="text-sm text-gray-500" suppressHydrationWarning={true}>
+                Created: {new Date(contact.created_at).toLocaleDateString()}
+              </span>
+            )}
+            {contact.updated_at && (
+              <span className="text-sm text-gray-500" suppressHydrationWarning={true}>
+                Updated: {new Date(contact.updated_at).toLocaleDateString()}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="primary-contact"
+              checked={contact.is_primary || false}
+              onCheckedChange={async (checked) => {
+                const supabase = createClient();
+                try {
+                  await updateContact(contact.id, { is_primary: !!checked }, supabase);
+                  toast.success("Primary contact updated");
+                  queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                } catch (err) {
+                  toast.error("Update failed", { description: (err as Error).message });
+                }
+              }}
+            />
+            <label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">
+              Primary Contact
+            </label>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="primary-contact"
-            checked={contact.is_primary || false}
-            onCheckedChange={async (checked) => {
-              const supabase = createClient();
-              try {
-                await updateContact(contact.id, { is_primary: !!checked }, supabase);
-                toast.success("Primary contact updated");
-                queryClient.invalidateQueries({ queryKey: ["contact", id] });
-              } catch (err) {
-                toast.error("Update failed", { description: (err as Error).message });
-              }
-            }}
-          />
-          <label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">
-            Primary Contact
-          </label>
-        </div>
-      </div>
 
-      {/* Contact Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            Contact Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm font-medium text-gray-700">Vorname</div>
-              <p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Nachname</div>
-              <p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Anrede</div>
-              <p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Position</div>
-              <p className="text-sm text-gray-900">{contact.position || "—"}</p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Email</div>
-              <p className="text-sm text-gray-900">
-                {contact.email ? (
-                  <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                    {contact.email}
-                  </a>
+        {/* Contact Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Contact Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <div className="text-sm font-medium text-gray-700">Vorname</div>
+                <p className="text-sm text-gray-900">{contact.vorname || "—"}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Nachname</div>
+                <p className="text-sm text-gray-900">{contact.nachname || "—"}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Anrede</div>
+                <p className="text-sm text-gray-900">{contact.anrede || "—"}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Position</div>
+                <p className="text-sm text-gray-900">{contact.position || "—"}</p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Email</div>
+                <p className="text-sm text-gray-900">
+                  {contact.email ? (
+                    <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                      {contact.email}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Telefon</div>
+                <p className="text-sm text-gray-900">
+                  {contact.telefon ? (
+                    <a href={`tel:${contact.telefon}`} className="text-blue-600 hover:underline">
+                      {contact.telefon}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Mobil</div>
+                <p className="text-sm text-gray-900">
+                  {contact.mobil ? (
+                    <a href={`tel:${contact.mobil}`} className="text-blue-600 hover:underline">
+                      {contact.mobil}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-700">Durchwahl</div>
+                <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
+              </div>
+              <div className="md:col-span-2">
+                <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  Notes
+                  <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+                {editingNotes ? (
+                  <div>
+                    <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" onClick={handleSaveNotes}>
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingNotes(false);
+                          setNotesValue(contact.notes || "");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
-                  "—"
+                  <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
                 )}
-              </p>
+              </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Telefon</div>
-              <p className="text-sm text-gray-900">
-                {contact.telefon ? (
-                  <a href={`tel:${contact.telefon}`} className="text-blue-600 hover:underline">
-                    {contact.telefon}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Mobil</div>
-              <p className="text-sm text-gray-900">
-                {contact.mobil ? (
-                  <a href={`tel:${contact.mobil}`} className="text-blue-600 hover:underline">
-                    {contact.mobil}
-                  </a>
-                ) : (
-                  "—"
-                )}
-              </p>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700">Durchwahl</div>
-              <p className="text-sm text-gray-900">{contact.durchwahl || "—"}</p>
-            </div>
-            <div className="md:col-span-2">
-              <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                Notes
-                <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
-                  <Edit className="h-4 w-4" />
+          </CardContent>
+        </Card>
+
+        {/* Linked Company */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" />
+              Linked Company
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {contact.companies ? (
+              <div className="space-y-3">
+                <div>
+                  <Link
+                    href={`/companies/${contact.companies.id}`}
+                    className="text-lg font-semibold hover:underline text-primary flex items-center gap-2"
+                  >
+                    {contact.companies.firmenname}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {contact.companies.kundentyp && (
+                    <Badge variant="secondary">
+                      {contact.companies.kundentyp.charAt(0).toUpperCase() + contact.companies.kundentyp.slice(1)}
+                    </Badge>
+                  )}
+                  {contact.companies.status && (
+                    <Badge
+                      className={cn(
+                        contact.companies.status === "gewonnen" && "bg-emerald-600 text-white",
+                        contact.companies.status === "lead" && "bg-amber-600 text-white",
+                        !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white",
+                      )}
+                    >
+                      {contact.companies.status}
+                    </Badge>
+                  )}
+                  {contact.companies.wassertyp && <Badge variant="outline">{contact.companies.wassertyp}</Badge>}
+                  {contact.companies.wasserdistanz && (
+                    <Badge variant="outline">{contact.companies.wasserdistanz} m</Badge>
+                  )}
+                </div>
+
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {(contact.companies.stadt || contact.companies.land) && (
+                    <p>
+                      {contact.companies.stadt}
+                      {contact.companies.stadt && contact.companies.land && ", "}
+                      {contact.companies.land}
+                    </p>
+                  )}
+                  {contact.companies.osm && (
+                    <a
+                      href={contact.companies.osm}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline block"
+                    >
+                      OSM Link →
+                    </a>
+                  )}
+                </div>
+
+                <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                  Change Company
                 </Button>
               </div>
-              {editingNotes ? (
-                <div>
-                  <Textarea value={notesValue} onChange={(e) => setNotesValue(e.target.value)} />
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" onClick={handleSaveNotes}>
-                      Save
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingNotes(false);
-                        setNotesValue(contact.notes || "");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-900">{contact.notes || "—"}</p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Linked Company */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="w-5 h-5" />
-            Linked Company
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {contact.companies ? (
-            <div className="space-y-3">
-              <div>
-                <Link
-                  href={`/companies/${contact.companies.id}`}
-                  className="text-lg font-semibold hover:underline text-primary flex items-center gap-2"
-                >
-                  {contact.companies.firmenname}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-muted-foreground">No company linked yet.</p>
+                <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                  Link Company
+                </Button>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex flex-wrap gap-2">
-                {contact.companies.kundentyp && (
-                  <Badge variant="secondary">
-                    {contact.companies.kundentyp.charAt(0).toUpperCase() + contact.companies.kundentyp.slice(1)}
-                  </Badge>
-                )}
-                {contact.companies.status && (
-                  <Badge
-                    className={cn(
-                      contact.companies.status === "gewonnen" && "bg-emerald-600 text-white",
-                      contact.companies.status === "lead" && "bg-amber-600 text-white",
-                      !["gewonnen", "lead"].includes(contact.companies.status) && "bg-zinc-500 text-white",
-                    )}
-                  >
-                    {contact.companies.status}
-                  </Badge>
-                )}
-                {contact.companies.wassertyp && <Badge variant="outline">{contact.companies.wassertyp}</Badge>}
-                {contact.companies.wasserdistanz && (
-                  <Badge variant="outline">{contact.companies.wasserdistanz} m</Badge>
-                )}
-              </div>
+        {/* Edit Contact Dialog */}
+        <Dialog open={editDialog} onOpenChange={setEditDialog}>
+          <WideDialogContent size="xl">
+            <DialogHeader>
+              <DialogTitle>Edit Contact</DialogTitle>
+            </DialogHeader>
+            <EditContactForm
+              contact={contact}
+              onSuccess={() => {
+                setEditDialog(false);
+                queryClient.invalidateQueries({ queryKey: ["contact", id] });
+              }}
+            />
+          </WideDialogContent>
+        </Dialog>
 
-              <div className="text-sm text-muted-foreground space-y-1">
-                {(contact.companies.stadt || contact.companies.land) && (
-                  <p>
-                    {contact.companies.stadt}
-                    {contact.companies.stadt && contact.companies.land && ", "}
-                    {contact.companies.land}
-                  </p>
-                )}
-                {contact.companies.osm && (
-                  <a
-                    href={contact.companies.osm}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline block"
-                  >
-                    OSM Link →
-                  </a>
-                )}
-              </div>
+        {/* Edit Company Dialog - now safe (full Company type) */}
+        <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
+          <WideDialogContent size="2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Company</DialogTitle>
+            </DialogHeader>
+            <CompanyEditForm
+              company={contact.companies || null}
+              onSuccess={() => {
+                setEditCompanyDialog(false);
+                queryClient.invalidateQueries({ queryKey: ["contact", id] });
+              }}
+            />
+          </WideDialogContent>
+        </Dialog>
 
-              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
-                Change Company
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-muted-foreground">No company linked yet.</p>
-              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
-                Link Company
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit Contact Dialog */}
-      <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <WideDialogContent size="xl">
-          <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
-          </DialogHeader>
-          <EditContactForm
-            contact={contact}
-            onSuccess={() => {
-              setEditDialog(false);
-              queryClient.invalidateQueries({ queryKey: ["contact", id] });
-            }}
-          />
-        </WideDialogContent>
-      </Dialog>
-
-      {/* Edit Company Dialog - now safe (full Company type) */}
-      <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
-        <WideDialogContent size="2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-          </DialogHeader>
-          <CompanyEditForm
-            company={contact.companies || null}
-            onSuccess={() => {
-              setEditCompanyDialog(false);
-              queryClient.invalidateQueries({ queryKey: ["contact", id] });
-            }}
-          />
-        </WideDialogContent>
-      </Dialog>
-
-      {/* Change Company Dialog */}
-      <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
-        <WideDialogContent size="xl">
-          <DialogHeader>
-            <DialogTitle>Change Linked Company</DialogTitle>
-          </DialogHeader>
-          <Select
-            onValueChange={async (value) => {
-              const supabase = createClient();
-              try {
-                await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
-                toast.success("Company updated");
-                await queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                setChangeCompanyDialog(false);
-              } catch (err) {
-                toast.error("Update failed", {
-                  description: (err as Error).message,
-                });
-              }
-            }}
-            defaultValue={contact.company_id || "none"}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select company" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.firmenname}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </WideDialogContent>
-      </Dialog>
-    </div>
+        {/* Change Company Dialog */}
+        <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
+          <WideDialogContent size="xl">
+            <DialogHeader>
+              <DialogTitle>Change Linked Company</DialogTitle>
+            </DialogHeader>
+            <Select
+              onValueChange={async (value) => {
+                const supabase = createClient();
+                try {
+                  await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
+                  toast.success("Company updated");
+                  await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                  setChangeCompanyDialog(false);
+                } catch (err) {
+                  toast.error("Update failed", {
+                    description: (err as Error).message,
+                  });
+                }
+              }}
+              defaultValue={contact.company_id || "none"}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select company" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.firmenname}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </WideDialogContent>
+        </Dialog>
+      </div>
+    </Suspense>
   );
 }
 
