@@ -29,7 +29,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
+  const _router = useRouter();
 
   const userRole = user.role;
 
