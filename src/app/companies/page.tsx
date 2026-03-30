@@ -32,7 +32,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -413,210 +413,212 @@ export default function CompaniesPage() {
           </Dialog>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Gesamt Firmen"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
-            icon={<Building className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+12% from last month"
-          />
-          <StatCard
-            title="Leads"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
-            icon={<Users className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+8% from last month"
-          />
-          <StatCard
-            title="Gewonnene Deals"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
-            icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+15% from last month"
-          />
-          <StatCard
-            title="Gesamtwert"
-            value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
-            icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+22% from last month"
-          />
-        </div>
+        <Suspense fallback={<LoadingState count={8} />}>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Gesamt Firmen"
+              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.total.toLocaleString("de-DE")}
+              icon={<Building className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+12% from last month"
+            />
+            <StatCard
+              title="Leads"
+              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.leads.toLocaleString("de-DE")}
+              icon={<Users className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+8% from last month"
+            />
+            <StatCard
+              title="Gewonnene Deals"
+              value={isLoading ? <Skeleton className="h-8 w-20" /> : stats.won.toLocaleString("de-DE")}
+              icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+15% from last month"
+            />
+            <StatCard
+              title="Gesamtwert"
+              value={isLoading ? <Skeleton className="h-8 w-20" /> : `€${stats.value.toLocaleString("de-DE")}`}
+              icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+              className="border-none shadow-sm bg-card/90 hover:shadow-md"
+              change="+22% from last month"
+            />
+          </div>
 
-        {/* Table Section */}
-        <Card className="border-border rounded-xl shadow-sm">
-          <CardContent className="p-6">
-            {isLoading ? (
-              <LoadingState count={6} itemClassName="h-14 w-full" />
-            ) : (
-              <>
-                {/* Active Filters Badges */}
-                <div
-                  className={cn(
-                    "flex flex-wrap gap-2 items-center",
-                    Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-                  )}
-                >
-                  {Object.entries(activeFilters).map(([group, values]) =>
-                    values.map((v) => (
-                      <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-                        {v}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
-                      </Badge>
-                    )),
-                  )}
-                  {Object.values(activeFilters).flat().length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setActiveFilters({
-                          status: [],
-                          kategorie: [],
-                          betriebstyp: [],
-                          land: [],
-                        })
-                      }
-                    >
-                      Clear all
-                    </Button>
-                  )}
-                </div>
+          {/* Table Section */}
+          <Card className="border-border rounded-xl shadow-sm">
+            <CardContent className="p-6">
+              {isLoading ? (
+                <LoadingState count={6} itemClassName="h-14 w-full" />
+              ) : (
+                <>
+                  {/* Active Filters Badges */}
+                  <div
+                    className={cn(
+                      "flex flex-wrap gap-2 items-center",
+                      Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
+                    )}
+                  >
+                    {Object.entries(activeFilters).map(([group, values]) =>
+                      values.map((v) => (
+                        <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
+                          {v}
+                          <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                        </Badge>
+                      )),
+                    )}
+                    {Object.values(activeFilters).flat().length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setActiveFilters({
+                            status: [],
+                            kategorie: [],
+                            betriebstyp: [],
+                            land: [],
+                          })
+                        }
+                      >
+                        Clear all
+                      </Button>
+                    )}
+                  </div>
 
-                <Accordion type="single" collapsible className="mb-4">
-                  <AccordionItem>
-                    <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
-                      Filters ({Object.values(activeFilters).flat().length})
-                    </AccordionTrigger>
-                    <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
-                      {/* Status */}
-                      <div className="mb-4">
-                        <h4 className="font-normal mb-2">Status</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {statusOptions.map((s) => {
-                            const Icon = statusIcons[s];
-                            const isActive = activeFilters.status.includes(s);
-                            return (
-                              <Button
-                                key={s}
-                                variant={isActive ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  isActive
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("status", s)}
-                              >
-                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                {s.charAt(0).toUpperCase() + s.slice(1)}
-                              </Button>
-                            );
-                          })}
+                  <Accordion type="single" collapsible className="mb-4">
+                    <AccordionItem>
+                      <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
+                        Filters ({Object.values(activeFilters).flat().length})
+                      </AccordionTrigger>
+                      <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
+                        {/* Status */}
+                        <div className="mb-4">
+                          <h4 className="font-normal mb-2">Status</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {statusOptions.map((s) => {
+                              const Icon = statusIcons[s];
+                              const isActive = activeFilters.status.includes(s);
+                              return (
+                                <Button
+                                  key={s}
+                                  variant={isActive ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className={
+                                    isActive
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("status", s)}
+                                >
+                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Kategorie */}
-                      <div className="mb-4">
-                        <h4 className="font-normal mb-2">Kategorie</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {kategorieOptions.map((k) => {
-                            const Icon = kategorieIcons[k];
-                            const isActive = activeFilters.kategorie.includes(k);
-                            return (
-                              <Button
-                                key={k}
-                                variant={isActive ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  isActive
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("kategorie", k)}
-                              >
-                                {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
-                                {k.charAt(0).toUpperCase() + k.slice(1)}
-                              </Button>
-                            );
-                          })}
+                        {/* Kategorie */}
+                        <div className="mb-4">
+                          <h4 className="font-normal mb-2">Kategorie</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {kategorieOptions.map((k) => {
+                              const Icon = kategorieIcons[k];
+                              const isActive = activeFilters.kategorie.includes(k);
+                              return (
+                                <Button
+                                  key={k}
+                                  variant={isActive ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className={
+                                    isActive
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("kategorie", k)}
+                                >
+                                  {Icon && <Icon className="mr-1.5 h-3.5 w-3.5" />}
+                                  {k.charAt(0).toUpperCase() + k.slice(1)}
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Betriebstyp */}
-                      <div className="mb-4">
-                        <h4 className="font-normal mb-2">Betriebstyp</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {betriebstypOptions.map((b) => {
-                            const isActive = activeFilters.betriebstyp.includes(b);
-                            return (
-                              <Button
-                                key={b}
-                                variant={isActive ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  isActive
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("betriebstyp", b)}
-                              >
-                                {b.charAt(0).toUpperCase() + b.slice(1)}
-                              </Button>
-                            );
-                          })}
+                        {/* Betriebstyp */}
+                        <div className="mb-4">
+                          <h4 className="font-normal mb-2">Betriebstyp</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {betriebstypOptions.map((b) => {
+                              const isActive = activeFilters.betriebstyp.includes(b);
+                              return (
+                                <Button
+                                  key={b}
+                                  variant={isActive ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className={
+                                    isActive
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("betriebstyp", b)}
+                                >
+                                  {b.charAt(0).toUpperCase() + b.slice(1)}
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Land */}
-                      <div>
-                        <h4 className="font-normal mb-2">Land</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {landOptions.map((l) => {
-                            const isActive = activeFilters.land.includes(l);
-                            return (
-                              <Button
-                                key={l}
-                                variant={isActive ? "secondary" : "ghost"}
-                                size="sm"
-                                className={
-                                  isActive
-                                    ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                                }
-                                onClick={() => toggleFilter("land", l)}
-                              >
-                                {l}
-                              </Button>
-                            );
-                          })}
+                        {/* Land */}
+                        <div>
+                          <h4 className="font-normal mb-2">Land</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {landOptions.map((l) => {
+                              const isActive = activeFilters.land.includes(l);
+                              return (
+                                <Button
+                                  key={l}
+                                  variant={isActive ? "secondary" : "ghost"}
+                                  size="sm"
+                                  className={
+                                    isActive
+                                      ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                      : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                                  }
+                                  onClick={() => toggleFilter("land", l)}
+                                >
+                                  {l}
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
 
-                <CompaniesTable
-                  companies={companies}
-                  globalFilter={globalFilter}
-                  onGlobalFilterChange={setGlobalFilter}
-                  onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
-                  onDelete={(companyOrId) => {
-                    const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
-                    deleteMutation.mutate(id);
-                  }}
-                  pageCount={pageCount}
-                  onPaginationChange={setPagination}
-                  sorting={sorting}
-                  onSortingChange={setSorting}
-                  onImportCSV={() => setCsvDialogOpen(true)}
-                />
-              </>
-            )}
-          </CardContent>
-        </Card>
+                  <CompaniesTable
+                    companies={companies}
+                    globalFilter={globalFilter}
+                    onGlobalFilterChange={setGlobalFilter}
+                    onEdit={(company) => updateMutation.mutate({ id: company.id, updates: company })}
+                    onDelete={(companyOrId) => {
+                      const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                      deleteMutation.mutate(id);
+                    }}
+                    pageCount={pageCount}
+                    onPaginationChange={setPagination}
+                    sorting={sorting}
+                    onSortingChange={setSorting}
+                    onImportCSV={() => setCsvDialogOpen(true)}
+                  />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Suspense>
 
         {editCompany && <CompanyEditForm company={editCompany} onSuccess={() => setEditCompany(null)} />}
       </div>

@@ -10,7 +10,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Building, DollarSign, Trophy, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
@@ -106,36 +106,38 @@ export default function DashboardPage() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Companies"
-          value={stats?.totalCompanies.toLocaleString("de-DE") || "0"}
-          icon={<Building className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change={`+${stats?.companiesInPeriod || 0} this period`}
-        />
-        <StatCard
-          title="Leads"
-          value={stats?.leads.toLocaleString("de-DE") || "0"}
-          icon={<Users className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change={`+${stats?.companiesInPeriod || 0} this period`}
-        />
-        <StatCard
-          title="Gewonnene Deals"
-          value={stats?.won.toLocaleString("de-DE") || "0"}
-          icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change={`+${stats?.companiesInPeriod || 0} this period`}
-        />
-        <StatCard
-          title="Total Value"
-          value={`€${stats?.totalValue.toLocaleString("de-DE") || "0"}`}
-          icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="—"
-        />
-      </div>
+      <Suspense fallback={<LoadingState count={8} />}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Companies"
+            value={stats?.totalCompanies.toLocaleString("de-DE") || "0"}
+            icon={<Building className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change={`+${stats?.companiesInPeriod || 0} this period`}
+          />
+          <StatCard
+            title="Leads"
+            value={stats?.leads.toLocaleString("de-DE") || "0"}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change={`+${stats?.companiesInPeriod || 0} this period`}
+          />
+          <StatCard
+            title="Gewonnene Deals"
+            value={stats?.won.toLocaleString("de-DE") || "0"}
+            icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change={`+${stats?.companiesInPeriod || 0} this period`}
+          />
+          <StatCard
+            title="Total Value"
+            value={`€${stats?.totalValue.toLocaleString("de-DE") || "0"}`}
+            icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="—"
+          />
+        </div>
+      </Suspense>
     </div>
   );
 }

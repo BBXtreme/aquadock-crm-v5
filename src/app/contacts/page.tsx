@@ -9,7 +9,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building, Users } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, Suspense } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -178,49 +178,51 @@ export default function ContactsPage() {
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard
-          title="Total Contacts"
-          value={loading ? <Skeleton className="h-8 w-20" /> : totalContacts.toLocaleString("de-DE")}
-          icon={<Users className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+8% from last month"
-        />
-        <StatCard
-          title="Primary Contacts"
-          value={loading ? <Skeleton className="h-8 w-20" /> : primaryContacts.toLocaleString("de-DE")}
-          icon={<Users className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+5% from last month"
-        />
-        <StatCard
-          title="Companies with Contacts"
-          value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
-          icon={<Building className="h-5 w-5 text-muted-foreground" />}
-          className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+12% from last month"
-        />
-      </div>
+      <Suspense fallback={<LoadingState count={8} />}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard
+            title="Total Contacts"
+            value={loading ? <Skeleton className="h-8 w-20" /> : totalContacts.toLocaleString("de-DE")}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+8% from last month"
+          />
+          <StatCard
+            title="Primary Contacts"
+            value={loading ? <Skeleton className="h-8 w-20" /> : primaryContacts.toLocaleString("de-DE")}
+            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+5% from last month"
+          />
+          <StatCard
+            title="Companies with Contacts"
+            value={loading ? <Skeleton className="h-8 w-20" /> : companiesWithContacts.toLocaleString("de-DE")}
+            icon={<Building className="h-5 w-5 text-muted-foreground" />}
+            className="border-none shadow-sm bg-card/90 hover:shadow-md"
+            change="+12% from last month"
+          />
+        </div>
 
-      <Card>
-        <CardContent>
-          {loading ? (
-            <LoadingState count={5} itemClassName="h-12 w-full" />
-          ) : (
-            <ContactsTable
-              contacts={contacts}
-              globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
-              onEdit={handleEdit}
-              onDelete={(id) => deleteMutation.mutate(id)}
-              pageCount={pageCount}
-              onPaginationChange={setPagination}
-              sorting={sorting}
-              onSortingChange={setSorting}
-            />
-          )}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardContent>
+            {loading ? (
+              <LoadingState count={5} itemClassName="h-12 w-full" />
+            ) : (
+              <ContactsTable
+                contacts={contacts}
+                globalFilter={globalFilter}
+                onGlobalFilterChange={setGlobalFilter}
+                onEdit={handleEdit}
+                onDelete={(id) => deleteMutation.mutate(id)}
+                pageCount={pageCount}
+                onPaginationChange={setPagination}
+                sorting={sorting}
+                onSortingChange={setSorting}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </Suspense>
 
       {editContact && (
         <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
