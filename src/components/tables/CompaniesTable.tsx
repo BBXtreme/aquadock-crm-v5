@@ -1,3 +1,4 @@
+// src/components/tables/CompaniesTable.tsx
 // Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
 "use client";
 
