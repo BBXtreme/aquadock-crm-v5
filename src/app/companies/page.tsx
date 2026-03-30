@@ -45,11 +45,11 @@ import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/u
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Company, Contact } from "@/lib/supabase/database.types";
 import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
 import { cn } from "@/lib/utils";
-import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
