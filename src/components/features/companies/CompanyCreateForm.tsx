@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { wassertypOptions } from "@/lib/constants";
-import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser-client";
 import { createCompany } from "@/lib/supabase/services/companies";
 import { type CompanyFormValues, companySchema } from "@/lib/validations/company-val";
