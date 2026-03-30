@@ -1,44 +1,18 @@
-"use client";
+// src/app/(protected)/profile/page.tsx
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
-import { LogOut, Upload, User } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser-client";
+import { requireUser } from "@/lib/supabase/auth/require-user";
 import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-type AuthUser = {
-  id: string;
-  email: string | null;
-  display_name: string | null;
-};
-
-const displayNameSchema = z.object({
-  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
-});
-
-type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
 export async function updateDisplayName(display_name: string) {
   'use server';
+  const user = await requireUser();
   const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
   const { error } = await supabase
     .from("profiles")
     .update({ display_name })
@@ -57,95 +31,18 @@ export async function signOut() {
   redirect('/login');
 }
 
-function ProfileForm({ profile }: { profile: Profile }) {
-  const form = useForm<DisplayNameForm>({
-    resolver: zodResolver(displayNameSchema),
-    defaultValues: {
-      display_name: profile?.display_name ?? "",
-    },
-  });
+export default async function ProfilePage() {
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
 
-  const mutation = useMutation({
-    mutationFn: updateDisplayName,
-    onSuccess: () => {
-      toast.success("Display name updated successfully");
-      form.reset({ display_name: form.getValues("display_name") });
-    },
-    onError: (_error) => {
-      toast.error("Failed to update display name");
-    },
-  });
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
-  const onSubmit = form.handleSubmit((data) => {
-    mutation.mutate(data.display_name);
-  });
-
-  return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="display_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-medium">Display Name</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  placeholder="Enter your display name"
-                  className="h-11"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="space-y-3">
-          <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-          <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-          <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
-        </div>
-        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={mutation.isPending}>
-          {mutation.isPending ? "Updating..." : "Update Profile"}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-export default function ProfilePage() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) {
-        redirect('/login');
-      }
-      setUser({
-        id: authUser.id,
-        email: authUser.email ?? null,
-        display_name: authUser.user_metadata?.display_name || null,
-      });
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
-      }
-    };
-    fetchData();
-  }, [supabase]);
-
-  if (!user || !profile) {
-    return <div>Loading...</div>;
+  if (!profile) {
+    throw new Error("Profile not found");
   }
 
   const displayName = safeDisplay(profile.display_name || user.display_name);
@@ -163,6 +60,7 @@ export default function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        {/* Profile Information Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center text-xl">
@@ -194,6 +92,7 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
+        {/* Update Profile Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="text-xl">Update Profile</CardTitle>
@@ -204,6 +103,7 @@ export default function ProfilePage() {
         </Card>
       </div>
 
+      {/* Account Actions */}
       <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
         <CardHeader className="pb-6">
           <CardTitle className="text-xl">Account Actions</CardTitle>
