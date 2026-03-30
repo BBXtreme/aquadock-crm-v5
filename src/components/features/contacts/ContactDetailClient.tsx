@@ -1,3 +1,8 @@
+// src/components/features/contacts/ContactDetailClient.tsx
+// This component displays detailed information about a contact, including their name, contact details, 
+// linked company, and metadata. It also provides functionality to edit the contact and change the linked company using dialogs. The component uses react-query for data fetching and state management, and integrates with the Supabase backend to fetch and update contact data. 
+
+
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";

@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import ContactEditForm from "@/components/features/ContactEditForm";
+import ContactEditForm from "@/components/features/contacts/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

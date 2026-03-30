@@ -12,8 +12,8 @@ import { Building, Users } from "lucide-react";
 import { Suspense, useCallback, useState } from "react";
 import { toast } from "sonner";
 
-import ContactCreateForm from "@/components/features/ContactCreateForm";
-import ContactEditForm from "@/components/features/ContactEditForm";
+import ContactCreateForm from "@/components/features/contacts/ContactCreateForm";
+import ContactEditForm from "@/components/features/contacts/ContactEditForm";
 import ContactsTable from "@/components/tables/ContactsTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
