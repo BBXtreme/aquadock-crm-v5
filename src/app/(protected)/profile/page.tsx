@@ -1,8 +1,11 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { LogOut, Upload, User } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -13,12 +16,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type AuthUser = {
+  id: string;
+  email: string | null;
+  display_name: string | null;
+};
 
 const displayNameSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
@@ -28,8 +35,9 @@ type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
 export async function updateDisplayName(display_name: string) {
   'use server';
-  const user = await requireUser();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   const { error } = await supabase
     .from("profiles")
     .update({ display_name })
@@ -43,7 +51,7 @@ export async function updateDisplayName(display_name: string) {
 
 export async function signOut() {
   'use server';
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
@@ -60,6 +68,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     mutationFn: updateDisplayName,
     onSuccess: () => {
       toast.success("Display name updated successfully");
+      form.reset({ display_name: form.getValues("display_name") });
     },
     onError: (_error) => {
       toast.error("Failed to update display name");
@@ -103,17 +112,39 @@ function ProfileForm({ profile }: { profile: Profile }) {
   );
 }
 
-export default async function ProfilePage() {
-  const user = await requireUser();
-  const supabase = await createServerSupabaseClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+export default function ProfilePage() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
 
-  if (!profile) {
-    throw new Error("Profile not found");
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) {
+        redirect('/login');
+      }
+      setUser({
+        id: authUser.id,
+        email: authUser.email,
+        display_name: authUser.user_metadata?.display_name || null,
+      });
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
+      }
+    };
+    fetchData();
+  }, [supabase]);
+
+  if (!user || !profile) {
+    return <div>Loading...</div>;
   }
 
   const displayName = safeDisplay(profile.display_name || user.display_name);
