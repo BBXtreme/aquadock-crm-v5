@@ -136,7 +136,7 @@ function ClientContactsPage() {
           </DialogTrigger>
           <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Create New Company</DialogTitle>
+              <DialogTitle>Create New Contact</DialogTitle>
             </DialogHeader>
             <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
           </WideDialogContent>
