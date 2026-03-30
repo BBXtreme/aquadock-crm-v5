@@ -57,3 +57,14 @@ export const anredeOptions = [
   { value: "Dr.", label: "Dr." },
   { value: "Prof.", label: "Prof." },
 ];
+
+export const priorityOptions = [
+  { value: "hoch", label: "Hoch" },
+  { value: "normal", label: "Normal" },
+  { value: "niedrig", label: "Niedrig" },
+];
+
+export const reminderStatusOptions = [
+  { value: "open", label: "Open" },
+  { value: "closed", label: "Closed" },
+];

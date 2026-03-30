@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { Database } from "@/lib/supabase/database.types";
 import { createReminder } from "@/lib/supabase/services/reminders";
@@ -28,17 +29,6 @@ const reminderSchema = z.object({
 });
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
-
-const priorityOptions = [
-  { value: "hoch", label: "Hoch" },
-  { value: "normal", label: "Normal" },
-  { value: "niedrig", label: "Niedrig" },
-];
-
-const statusOptions = [
-  { value: "open", label: "Open" },
-  { value: "closed", label: "Closed" },
-];
 
 export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -169,7 +159,7 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {statusOptions.map((option) => (
+                  {reminderStatusOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
