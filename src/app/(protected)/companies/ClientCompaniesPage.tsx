@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -308,6 +309,14 @@ function ClientCompaniesPage() {
     window.dispatchEvent(new CustomEvent("company-imported"));
     toast.success("Companies successfully imported from CSV");
   };
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setDialogOpen(true);
+    }
+  }, [searchParams]);
 
   return (
     <>
