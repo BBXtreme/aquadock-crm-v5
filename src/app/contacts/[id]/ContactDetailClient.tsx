@@ -76,6 +76,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
     initialData: initialContact,
   });
 
+  if (!contact) {
+    return <div>Contact not found</div>;
+  }
+
   const { data: linkedCompany } = useQuery({
     queryKey: ["company", contact.company_id],
     queryFn: async () => {
@@ -126,10 +130,6 @@ export default function ContactDetailClient({ contact: initialContact, companies
       });
     }
   };
-
-  if (!contact) {
-    return <div>Contact not found</div>;
-  }
 
   return (
     <div className="container mx-auto p-6 space-y-8">
