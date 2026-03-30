@@ -8,7 +8,6 @@ import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import type { Contact } from "@/lib/supabase/database.types";
 import { getContactById } from "@/lib/supabase/services/contacts";
 import ContactDetailClient from "./ContactDetailClient";
 
