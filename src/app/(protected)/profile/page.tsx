@@ -36,7 +36,7 @@ type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
 export async function updateDisplayName(display_name: string) {
   'use server';
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
   const { error } = await supabase
@@ -52,7 +52,7 @@ export async function updateDisplayName(display_name: string) {
 
 export async function signOut() {
   'use server';
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/login');
 }
