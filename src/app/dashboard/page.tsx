@@ -10,7 +10,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Building, DollarSign, Trophy, Users } from "lucide-react";
-import { useState, Suspense } from "react";
+import { Suspense, useState } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";

@@ -32,7 +32,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState, Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
