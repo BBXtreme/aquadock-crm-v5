@@ -73,8 +73,8 @@ export default function ContactsPage() {
     },
   });
 
-  const contacts = contactsData.data;
-  const total = contactsData.total;
+  const contacts = contactsData.data.data;
+  const total = contactsData.data.total;
   const pageCount = Math.ceil(total / pagination.pageSize);
 
   const statsData = useSuspenseQuery({
@@ -89,9 +89,9 @@ export default function ContactsPage() {
     },
   });
 
-  const totalContacts = statsData.total;
-  const primaryContacts = statsData.primary;
-  const companiesWithContacts = statsData.companiesWithContacts;
+  const totalContacts = statsData.data.total;
+  const primaryContacts = statsData.data.primary;
+  const companiesWithContacts = statsData.data.companiesWithContacts;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),

@@ -239,8 +239,8 @@ export default function CompaniesPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const companies = companiesData.companies;
-  const total = companiesData.totalCount;
+  const companies = companiesData.data.companies;
+  const total = companiesData.data.totalCount;
   const pageCount = Math.ceil(total / pagination.pageSize);
 
   const statsData = useSuspenseQuery({
@@ -256,7 +256,7 @@ export default function CompaniesPage() {
     },
   });
 
-  const stats = statsData;
+  const stats = statsData.data;
 
   const updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
