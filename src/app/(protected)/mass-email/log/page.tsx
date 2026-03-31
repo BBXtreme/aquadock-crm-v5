@@ -14,7 +14,8 @@ export default async function EmailLogPage() {
     redirect("/login");
   }
 
-  const { data: logs = [] } = await supabase.from("email_log").select("*").order("created_at", { ascending: false });
+  const { data } = await supabase.from("email_log").select("*").order("created_at", { ascending: false });
+  const logs = data ?? [];
 
   return <ClientEmailLogPage logs={logs as EmailLog[]} />;
 }

@@ -19,10 +19,11 @@ type ClientEmailLogPageProps = {
 
 export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
   const router = useRouter();
+  const safeLogs = logs ?? [];
   const [filter, setFilter] = useState<"all" | "sent" | "error">("all");
   const [search, setSearch] = useState("");
 
-  const filteredLogs = logs.filter((log) => {
+  const filteredLogs = safeLogs.filter((log) => {
     if (filter !== "all" && log.status !== filter) return false;
     if (search && !log.recipient_email.toLowerCase().includes(search.toLowerCase()) && !log.subject.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -74,7 +75,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLogs.length === 0 ? (
+            {safeLogs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-8">
                   <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
