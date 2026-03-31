@@ -195,23 +195,16 @@ export async function createUser(formData: FormData) {
 
   if (error) throw new Error("Failed to create user");
 
-  // Insert profile with fallback default values for all required fields
-  const profileData = {
-    id: data.user.id,
-    role: role || 'user', // Fallback to 'user' if not provided
-    display_name: display_name || null, // Nullable field
-  };
-
-  console.log("Inserting profile:", profileData);
-
+  // Insert profile
   const { error: profileError } = await serviceSupabase
     .from("profiles")
-    .insert(profileData);
+    .insert({
+      id: data.user.id,
+      role,
+      display_name
+    });
 
-  if (profileError) {
-    console.error("Profile insert error:", profileError);
-    throw new Error(`Failed to create profile for user ${email}: ${profileError.message}`);
-  }
+  if (profileError) throw new Error("Failed to create profile");
 
   // Send password reset email
   const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email);
