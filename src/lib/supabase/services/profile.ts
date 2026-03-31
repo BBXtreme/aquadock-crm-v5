@@ -179,7 +179,15 @@ export async function createUser(formData: FormData) {
   const crypto = await import('node:crypto');
   const randomPassword = crypto.randomBytes(16).toString('hex');
 
-  const { data, error } = await supabase.auth.admin.createUser({
+  // Use service role client for all admin operations to ensure consistency and bypass RLS
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing required environment variables");
+  }
+  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+
+  const { data, error } = await serviceSupabase.auth.admin.createUser({
     email,
     password: randomPassword,
     user_metadata: { display_name }
@@ -188,7 +196,7 @@ export async function createUser(formData: FormData) {
   if (error) throw new Error("Failed to create user");
 
   // Insert profile
-  const { error: profileError } = await supabase
+  const { error: profileError } = await serviceSupabase
     .from("profiles")
     .insert({
       id: data.user.id,
@@ -199,7 +207,7 @@ export async function createUser(formData: FormData) {
   if (profileError) throw new Error("Failed to create profile");
 
   // Send password reset email
-  const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email);
   if (resetError) {
     console.error("Failed to send reset email:", resetError);
     // Don't throw, user is created

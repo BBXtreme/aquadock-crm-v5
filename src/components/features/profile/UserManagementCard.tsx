@@ -102,7 +102,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       setCreateRole('user');
       queryClient.invalidateQueries();
       router.refresh();
-    } catch (_error) {
+    } catch (error) {
+      console.error("Create user error:", error);
       toast.error("Failed to create user");
     } finally {
       setLoadingCreate(false);
