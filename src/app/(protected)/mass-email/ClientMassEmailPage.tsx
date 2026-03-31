@@ -6,7 +6,8 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, Send, TestTube, Users } from "lucide-react";
+import { AlertCircle, Plus, Send, TestTube, Users } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
@@ -206,18 +207,26 @@ export default function ClientMassEmailPage() {
             <CardContent className="space-y-6 p-8">
               <div>
                 <Label className="mb-2">Vorlage</Label>
-                <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Vorlage auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((t: EmailTemplate) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={selectedTemplateId} onValueChange={handleTemplateChange} className="flex-1">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Vorlage auswählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((t: EmailTemplate) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Link href="/mass-email/templates">
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Neue Vorlage
+                    </Button>
+                  </Link>
+                </div>
               </div>
 
               <div>
