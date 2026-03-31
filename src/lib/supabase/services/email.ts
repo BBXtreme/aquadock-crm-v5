@@ -287,7 +287,7 @@ export async function sendMassEmail({
 
   let sent = 0;
   let errors = 0;
-  const results: any[] = [];
+  const results: Array<{ email: string; status: 'sent' | 'error'; error?: string }> = [];
 
   for (const rec of selected) {
     try {
@@ -311,7 +311,8 @@ export async function sendMassEmail({
 
       sent++;
       results.push({ email: rec.email, status: 'sent' });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as Error;
       errors++;
       await createEmailLog({
         recipient_email: rec.email,
@@ -319,7 +320,7 @@ export async function sendMassEmail({
         body: bodyOverride || '',
         status: 'error',
       }, client);
-      results.push({ email: rec.email, status: 'error', error: err.message });
+      results.push({ email: rec.email, status: 'error', error: error.message });
     }
 
     if (delayMs > 0) await new Promise((r) => setTimeout(r, delayMs));

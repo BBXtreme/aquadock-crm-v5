@@ -26,6 +26,23 @@ import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients, sendMassEmail } from "@/lib/supabase/services/email";
 
+type SendResults = {
+  sent: number;
+  errors: number;
+  total: number;
+  results: Array<{ email: string; status: 'sent' | 'error'; error?: string }>;
+};
+
+type SendPayload = {
+  userId: string;
+  templateId?: string;
+  recipientIds: string[];
+  mode: 'contacts' | 'companies';
+  subjectOverride?: string;
+  bodyOverride?: string;
+  delayMs?: number;
+};
+
 export default function ClientMassEmailPage() {
   const [mode, setMode] = useState<"contacts" | "companies">("contacts");
   const [search, setSearch] = useState("");
@@ -35,7 +52,7 @@ export default function ClientMassEmailPage() {
   const [body, setBody] = useState("");
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [sendResults, setSendResults] = useState<any>(null);
+  const [sendResults, setSendResults] = useState<SendResults | null>(null);
 
   const userId = "current-user-id"; // TODO: replace with real user from session in next phase
 
@@ -59,7 +76,7 @@ export default function ClientMassEmailPage() {
 
   // Send mutation
   const sendMutation = useMutation({
-    mutationFn: (payload: any) => sendMassEmail(payload),
+    mutationFn: (payload: SendPayload) => sendMassEmail(payload),
     onMutate: () => setShowProgress(true),
     onSuccess: (result) => {
       setSendResults(result);
@@ -68,7 +85,7 @@ export default function ClientMassEmailPage() {
       setProgress(100);
       setTimeout(() => setShowProgress(false), 2000);
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       toast.error("Versand fehlgeschlagen", { description: err.message });
       setShowProgress(false);
     },
@@ -89,7 +106,7 @@ export default function ClientMassEmailPage() {
       return;
     }
 
-    const payload = {
+    const payload: SendPayload = {
       userId,
       templateId: selectedTemplateId || undefined,
       recipientIds: isTest ? [] : selectedRecipientIds, // test uses current user email later
@@ -219,7 +236,7 @@ export default function ClientMassEmailPage() {
                 </TabsList>
                 <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[380px]">
                   <div className="font-semibold mb-3">{previewSubject || "Kein Betreff"}</div>
-                  <div className="prose dark:prose-invert text-sm" dangerouslySetInnerHTML={{ __html: previewBody.replace(/\n/g, "<br>") }} />
+                  <div className="prose dark:prose-invert text-sm whitespace-pre-wrap">{previewBody}</div>
                 </TabsContent>
                 <TabsContent value="raw" className="mt-4">
                   <ScrollArea className="h-96 font-mono text-xs bg-muted p-4 rounded">
