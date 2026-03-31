@@ -249,8 +249,8 @@ export default function ClientMassEmailPage() {
 
       <Tabs defaultValue="campaign" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="campaign">Neue Kampagne</TabsTrigger>
-          <TabsTrigger value="templates">Vorlagen verwalten</TabsTrigger>
+          <TabsTrigger value="campaign">Kampagne erstellen</TabsTrigger>
+          <TabsTrigger value="templates">Vorlagen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="campaign" className="space-y-6">
@@ -400,10 +400,10 @@ export default function ClientMassEmailPage() {
 
         <TabsContent value="templates" className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold">E-Mail Vorlagen</h2>
+            <h2 className="text-2xl font-semibold">Vorlagen</h2>
             <Button onClick={openCreateDialog}>
               <Plus className="mr-2 h-4 w-4" />
-              Neue Vorlage erstellen
+              Neue Vorlage
             </Button>
           </div>
 
