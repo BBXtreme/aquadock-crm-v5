@@ -31,7 +31,7 @@ export default function TemplatesClient() {
   const queryClient = useQueryClient();
 
   // Templates
-  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+  const { data: templates = [], isLoading: templatesLoading, error } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
       const client = createClient();
@@ -140,6 +140,10 @@ export default function TemplatesClient() {
         </Button>
       </div>
 
+      {error && (
+        <div className="text-red-500">Fehler beim Laden der Vorlagen: {error.message}</div>
+      )}
+
       {templatesLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4", "skeleton-5", "skeleton-6"].map((key) => (
@@ -156,6 +160,14 @@ export default function TemplatesClient() {
               </CardFooter>
             </Card>
           ))}
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground mb-4">Noch keine Vorlagen vorhanden.</p>
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Erste Vorlage erstellen
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
