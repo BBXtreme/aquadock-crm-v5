@@ -47,9 +47,20 @@ export default function SmtpSettings() {
         setPassword(config.password || "");
         setFromName(config.fromName || "");
         setSecure(config.secure || false);
+        toast.success("SMTP-Konfiguration geladen", {
+          description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
+        });
+      } else {
+        toast.success("SMTP-Konfiguration geladen", {
+          description: "Keine gespeicherte Konfiguration gefunden. Felder sind leer.",
+        });
       }
     } catch (error) {
       console.error("Failed to load SMTP config:", error);
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler beim Laden der Konfiguration";
+      toast.error("Fehler beim Laden der SMTP-Konfiguration", {
+        description: message,
+      });
     } finally {
       setIsLoadingConfig(false);
     }
