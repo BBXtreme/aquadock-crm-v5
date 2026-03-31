@@ -20,7 +20,7 @@ const displayNameSchema = z.object({
 
 type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
-function ProfileForm({ profile }: { profile: Profile }) {
+export default function ProfileForm({ profile }: { profile: Profile }) {
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<DisplayNameForm>({
@@ -34,7 +34,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     setIsPending(true);
     try {
       const formData = new FormData();
-      formData.append('display_name', data.display_name);
+      formData.append("display_name", data.display_name);
       await updateDisplayName(formData);
       toast.success("Display name updated successfully");
       form.reset({ display_name: data.display_name });
@@ -65,17 +65,27 @@ function ProfileForm({ profile }: { profile: Profile }) {
             </FormItem>
           )}
         />
+
         <div className="space-y-3">
           <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-          <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
+          <Input 
+            id="profilePicture" 
+            type="file" 
+            accept="image/*" 
+            disabled 
+            className="h-11" 
+          />
           <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
         </div>
-        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={isPending}>
+
+        <Button 
+          type="submit" 
+          className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" 
+          disabled={isPending}
+        >
           {isPending ? "Updating..." : "Update Profile"}
         </Button>
       </form>
     </Form>
   );
 }
-
-export default ProfileForm;
