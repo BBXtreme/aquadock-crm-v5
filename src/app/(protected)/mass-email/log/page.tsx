@@ -5,10 +5,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailLog } from "@/lib/supabase/database.types";
 
@@ -33,13 +35,12 @@ export default function EmailLogPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">E-Mail Versandlog</h1>
-          <p className="text-muted-foreground">Übersicht über alle gesendeten E-Mails</p>
-        </div>
-      </div>
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <PageHeader
+        title="E-Mail Versandlog"
+        description="Übersicht über alle gesendeten E-Mails"
+        icon={<Mail className="h-5 w-5" />}
+      />
 
       <div className="flex gap-4">
         <Select value={filter} onValueChange={(value: "all" | "sent" | "error") => setFilter(value)}>
@@ -77,7 +78,9 @@ export default function EmailLogPage() {
               </TableRow>
             ) : filteredLogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">Keine Einträge gefunden</TableCell>
+                <TableCell colSpan={4} className="text-center py-8">
+                  <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
+                </TableCell>
               </TableRow>
             ) : (
               filteredLogs.map((log) => (
