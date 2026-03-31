@@ -20,7 +20,6 @@ export default function EmailLogPage() {
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["email-logs"],
-    queryKey: ["email-logs"],
     queryFn: async () => {
       const client = createClient();
       const { data, error } = await client.from("email_log").select("*").order("created_at", { ascending: false });
