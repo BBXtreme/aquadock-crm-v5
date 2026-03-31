@@ -203,9 +203,9 @@ export default function ClientMassEmailPage() {
             <CardHeader>
               <CardTitle>E-Mail erstellen</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6 p-8">
               <div>
-                <Label>Vorlage</Label>
+                <Label className="mb-2">Vorlage</Label>
                 <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Vorlage auswählen" />
@@ -221,16 +221,16 @@ export default function ClientMassEmailPage() {
               </div>
 
               <div>
-                <Label>Betreff</Label>
+                <Label className="mb-2">Betreff</Label>
                 <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Betreff" />
               </div>
 
               <div>
-                <Label>Inhalt (HTML unterstützt)</Label>
+                <Label className="mb-2">Inhalt (HTML unterstützt)</Label>
                 <Textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  rows={10}
+                  rows={12}
                   placeholder="Verwenden Sie {{vorname}}, {{firmenname}}, {{anrede}} ..."
                 />
               </div>
