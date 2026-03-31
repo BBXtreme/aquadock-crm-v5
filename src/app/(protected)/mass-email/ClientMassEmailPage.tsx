@@ -30,7 +30,7 @@ export default function ClientMassEmailPage() {
   const [isSending, setIsSending] = useState(false);
 
   // Fetch templates
-  const { data: templates = [], isLoading: templatesLoading } = useQuery({
+  const { data: templates = [] } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
       const client = createClient();
@@ -146,7 +146,7 @@ export default function ClientMassEmailPage() {
                 {recipientsLoading ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={i} className="h-10 w-full" />
+                      <Skeleton key={`loading-item-${i}`} className="h-10 w-full" />
                     ))}
                   </div>
                 ) : recipients.length === 0 ? (
@@ -186,6 +186,7 @@ export default function ClientMassEmailPage() {
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{recipients.length} Empfänger geladen</span>
                 <button
+                  type="button"
                   onClick={() => setSelectedRecipientIds(recipients.map((r) => r.id))}
                   className="underline hover:text-foreground"
                 >
@@ -260,11 +261,7 @@ export default function ClientMassEmailPage() {
                 <TabsContent value="preview" className="mt-4">
                   <div className="border rounded-lg p-6 bg-white dark:bg-zinc-950 min-h-[400px] prose dark:prose-invert">
                     <div className="font-semibold text-lg mb-2">{previewSubject || "Kein Betreff"}</div>
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: previewBody.replace(/\n/g, "<br>"),
-                      }}
-                    />
+                    <div className="whitespace-pre-wrap">{previewBody.replace(/<br>/g, '\n')}</div>
                   </div>
                 </TabsContent>
 

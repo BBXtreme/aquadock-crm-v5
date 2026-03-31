@@ -160,7 +160,14 @@ export async function getMassEmailRecipients(
     const { data, error } = await query.limit(limit).order('nachname');
 
     if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:contacts');
-    return (data ?? []).map((c: any) => ({
+    return (data ?? []).map((c: {
+      id: string;
+      vorname: string | null;
+      nachname: string | null;
+      anrede: string | null;
+      email: string;
+      companies: { firmenname: string };
+    }) => ({
       id: c.id,
       name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
       email: c.email,
@@ -183,7 +190,11 @@ export async function getMassEmailRecipients(
     const { data, error } = await query.limit(limit).order('firmenname');
 
     if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:companies');
-    return (data ?? []).map((c: any) => ({
+    return (data ?? []).map((c: {
+      id: string;
+      firmenname: string;
+      email: string;
+    }) => ({
       id: c.id,
       name: c.firmenname,
       email: c.email,
@@ -200,9 +211,9 @@ export function fillPlaceholders(
 ): string {
   return text
     .replace(/{{anrede}}/gi, recipient.anrede || '')
-    .replace(/{{vorname}}/gi, recipient.vorname || recipient.name.split(' ')[0] || '')
+    .replace(/{{vorname}}/gi, recipient.vorname || '')
     .replace(/{{nachname}}/gi, recipient.nachname || '')
-    .replace(/{{firmenname}}/gi, recipient.firmenname || recipient.name)
+    .replace(/{{firmenname}}/gi, recipient.firmenname || '')
     .replace(/{{stadt}}/gi, recipient.stadt || '')
     .replace(/{{name}}/gi, recipient.name);
 }
