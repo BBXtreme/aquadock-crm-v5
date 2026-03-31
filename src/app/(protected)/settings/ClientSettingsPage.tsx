@@ -67,9 +67,6 @@ function ClientSettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
-  const [_userId, _setUserId] = useState<string | null>(null);
-  const [_testRecipient, setTestRecipient] = useState("");
-  const [_showPassword, _setShowPassword] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
