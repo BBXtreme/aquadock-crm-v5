@@ -1,6 +1,7 @@
-import { LogOut, Upload, User, Users, Shield, Mail, Trash2 } from "lucide-react";
+import { LogOut, Mail, Shield, Trash2, Upload, User, Users } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { toast } from "sonner";
 
 // Server Action - Update Display Name
 export async function updateDisplayName(formData: FormData) {
@@ -104,7 +104,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       await changeUserRole(formData);
       toast.success("Role updated successfully");
       window.location.reload();
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to update role");
     }
   };
@@ -115,7 +115,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       formData.append('userId', userId);
       await triggerPasswordReset(formData);
       toast.success("Password reset email sent");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to send reset email");
     }
   };
@@ -128,7 +128,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
         await deleteUser(formData);
         toast.success("User deleted successfully");
         window.location.reload();
-      } catch (error) {
+      } catch (_error) {
         toast.error("Failed to delete user");
       }
     }
