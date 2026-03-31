@@ -1,30 +1,31 @@
+// src/app/(protected)/profile/page.tsx
+// This file defines the Profile page of the application, which displays the user's profile information and allows them to update their display name and manage their account.
+// If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
+
 import { LogOut, Upload, User } from "lucide-react";
+import ProfilForm from "@/components/features/profile/ProfileForm";
+import UserManagementCard from "@/components/features/profile/UserManagementCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+import { signOut } from "@/lib/supabase/services/profile";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { signOut } from "./actions";
-import ProfilForm from "./ProfilForm";
-import UserManagementCard from "./UserManagementCard";
 
-// Main Page Component
 export default async function ProfilePage() {
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
 
-  // Try to fetch profile
+  // Fetch or create profile
   let { data: profileData, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  // Create profile if it doesn't exist
   if (error || !profileData) {
-    console.log("Profile not found, creating new profile for user:", user.id);
     const { data: newProfile, error: insertError } = await supabase
       .from("profiles")
       .insert({
@@ -48,7 +49,7 @@ export default async function ProfilePage() {
   const avatarUrl = profileData.avatar_url || "";
   const email = user.email || "";
 
-  // Fetch all users if admin
+  // Fetch all users for admin only
   let allUsers: { id: string; email: string; display_name: string | null; role: string }[] = [];
   if (role === 'admin') {
     const { data: authUsers } = await supabase.auth.admin.listUsers();
@@ -75,6 +76,7 @@ export default async function ProfilePage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        {/* Profile Information Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center text-xl">
@@ -106,6 +108,7 @@ export default async function ProfilePage() {
           </CardContent>
         </Card>
 
+        {/* Update Profile Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="pb-6">
             <CardTitle className="text-xl">Update Profile</CardTitle>
@@ -116,6 +119,7 @@ export default async function ProfilePage() {
         </Card>
       </div>
 
+      {/* Account Actions */}
       <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
         <CardHeader className="pb-6">
           <CardTitle className="text-xl">Account Actions</CardTitle>
@@ -130,6 +134,7 @@ export default async function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* User Management - ONLY visible to admins */}
       {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
     </div>
   );
