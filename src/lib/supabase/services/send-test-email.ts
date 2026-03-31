@@ -4,6 +4,11 @@
 import nodemailer from "nodemailer";
 import { getSmtpConfig } from "@/lib/supabase/services/smtp";
 
+interface SmtpError extends Error {
+  code?: string;
+  responseCode?: number;
+}
+
 export async function sendTestEmail(toEmail: string) {
   if (!toEmail?.includes("@")) {
     throw new Error("Bitte eine gültige E-Mail-Adresse angeben");
@@ -47,7 +52,7 @@ export async function sendTestEmail(toEmail: string) {
       `,
     });
   } catch (error: unknown) {
-    const err = error as any;
+    const err = error as SmtpError;
     let message = "Unbekannter SMTP-Fehler";
 
     if (err.code === "ECONNREFUSED") {
