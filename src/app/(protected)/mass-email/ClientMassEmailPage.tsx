@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/browser-client";
