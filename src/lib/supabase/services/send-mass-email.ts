@@ -91,8 +91,10 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       );
 
       sent++;
-    } catch (err: any) {
+    } catch (err: unknown) {
       errors++;
+
+      const errorMessage = err instanceof Error ? err.message : String(err);
 
       await createEmailLog(
         {
@@ -101,12 +103,12 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           recipient_name: rec.name,
           subject: input.subject,
           status: "error",
-          error_msg: err.message,
+          error_msg: errorMessage,
         },
         supabase
       );
 
-      console.error(`Failed to send to ${rec.email}:`, err.message);
+      console.error(`Failed to send to ${rec.email}:`, errorMessage);
     }
 
     // Respect delay between emails
