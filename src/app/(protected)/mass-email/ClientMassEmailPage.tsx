@@ -208,18 +208,20 @@ export default function ClientMassEmailPage() {
               <div>
                 <Label className="mb-2">Vorlage</Label>
                 <div className="flex gap-2">
-                  <Select value={selectedTemplateId} onValueChange={handleTemplateChange} className="flex-1">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Vorlage auswählen" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {templates.map((t: EmailTemplate) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex-1">
+                    <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Vorlage auswählen" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((t: EmailTemplate) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Link href="/mass-email/templates">
                     <Button variant="outline" size="sm">
                       <Plus className="h-4 w-4 mr-1" />
