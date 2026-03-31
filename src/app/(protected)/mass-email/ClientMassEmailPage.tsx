@@ -223,7 +223,7 @@ export default function ClientMassEmailPage() {
                     </Select>
                   </div>
                   <Link href="/mass-email/templates">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" className="h-8">
                       <Plus className="h-4 w-4 mr-1" />
                       Neue Vorlage
                     </Button>
