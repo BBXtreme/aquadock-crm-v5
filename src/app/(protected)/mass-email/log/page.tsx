@@ -2,8 +2,8 @@
 // This file defines the EmailLogPage component, which displays a log of all sent emails in the application. It allows users to filter by status (sent or error) and search by recipient email or subject.
 
 import type { EmailLog } from "@/lib/supabase/database.types";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { requireUser } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import ClientEmailLogPage from "./ClientEmailLogPage";
 
 export default async function EmailLogPage() {
