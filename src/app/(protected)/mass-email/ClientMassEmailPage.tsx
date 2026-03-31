@@ -120,7 +120,7 @@ export default function ClientMassEmailPage() {
   };
 
   // Live preview
-  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) || 
+  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) ||
     { name: "Max Mustermann", firmenname: "Beispiel GmbH", email: "max@beispiel.de" };
   const previewSubject = useMemo(() => fillPlaceholders(subject, previewRecipient), [subject, previewRecipient]);
   const previewBody = useMemo(() => fillPlaceholders(body, previewRecipient), [body, previewRecipient]);
@@ -144,7 +144,7 @@ export default function ClientMassEmailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <RecipientSelector
           mode={mode}
           setMode={setMode}

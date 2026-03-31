@@ -34,41 +34,55 @@ export default function EmailComposer({
 }: EmailComposerProps) {
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="pb-6">
         <CardTitle>E-Mail erstellen</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-8">
         <div>
-          <Label className="mb-2">Vorlage</Label>
-          <div className="flex gap-2">
+          <Label className="mb-3">Vorlage</Label>
+          <div className="flex gap-3">
             <div className="flex-1">
-              <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Vorlage auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((t: EmailTemplate) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {templates.length === 0 ? (
+                <div className="text-center py-8 px-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                  <p className="text-muted-foreground mb-4">Noch keine Vorlagen vorhanden</p>
+                  <Link href="/mass-email/templates">
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Vorlage erstellen
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Vorlage auswählen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t: EmailTemplate) => (
+                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
-            <Link href="/mass-email/templates">
-              <Button variant="outline" className="h-10">
-                <Plus className="h-4 w-4 mr-2" />
-                Neue Vorlage
-              </Button>
-            </Link>
+            {templates.length > 0 && (
+              <Link href="/mass-email/templates">
+                <Button variant="outline" className="h-10">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Neue Vorlage
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
         <div>
-          <Label className="mb-2">Betreff</Label>
+          <Label className="mb-3">Betreff</Label>
           <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Betreff der E-Mail" />
         </div>
 
         <div>
-          <Label className="mb-2">Inhalt (HTML unterstützt)</Label>
+          <Label className="mb-3">Inhalt (HTML unterstützt)</Label>
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}

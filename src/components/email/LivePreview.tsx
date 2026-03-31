@@ -29,10 +29,10 @@ export default function LivePreview({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-6">
         <CardTitle>Live-Vorschau</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6 p-8">
         {/* Simple toggle */}
         <div className="flex border-b">
           <button
@@ -55,10 +55,10 @@ export default function LivePreview({
 
         {/* Preview Content */}
         {previewTab === "preview" ? (
-          <div className="border rounded-lg p-6 bg-white dark:bg-gray-900 min-h-[600px] shadow-lg mt-4">
-            <div className="max-w-3xl mx-auto space-y-6">
+          <div className="border rounded-lg p-8 bg-white dark:bg-gray-900 min-h-[600px] shadow-lg mt-6">
+            <div className="max-w-3xl mx-auto space-y-8">
               {/* Email header */}
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 border-b pb-4">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 border-b pb-6">
                 <div>
                   <span className="font-medium">Von:</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
                 </div>
@@ -79,7 +79,7 @@ export default function LivePreview({
             </div>
           </div>
         ) : (
-          <ScrollArea className="min-h-[600px] border rounded-lg p-6 bg-gray-50 dark:bg-gray-800 mt-4">
+          <ScrollArea className="min-h-[600px] border rounded-lg p-8 bg-gray-50 dark:bg-gray-800 mt-6">
             <strong>Betreff:</strong> {previewSubject}
             <br /><br />
             <strong>Inhalt:</strong>

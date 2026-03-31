@@ -43,10 +43,10 @@ export default function RecipientSelector({
 }: RecipientSelectorProps) {
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="pb-6">
         <CardTitle>Empfänger</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 p-8">
         <div className="flex gap-3">
           <Button
             variant={mode === "contacts" ? "default" : "outline"}
@@ -80,6 +80,11 @@ export default function RecipientSelector({
         <ScrollArea className="h-96 border rounded-xl">
           {isLoading ? (
             <div className="p-8 text-center">Lade Empfänger...</div>
+          ) : recipients.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">Keine Empfänger gefunden</p>
+              <p className="text-sm text-muted-foreground">Versuchen Sie eine andere Suche oder wechseln Sie den Modus.</p>
+            </div>
           ) : (
             recipients.map((rec) => (
               <div
