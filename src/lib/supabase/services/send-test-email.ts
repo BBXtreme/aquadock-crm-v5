@@ -4,7 +4,7 @@
 
 import nodemailer from "nodemailer";
 import { toast } from "sonner"; // server actions can still trigger client toasts via revalidate, but we return success/error
-import { createClient } from "@/lib/supabase/server-client";
+import { createServerSupabaseClient as createClient } from "@/lib/supabase/server-client";
 
 export async function sendTestEmail(toEmail: string) {
   if (!toEmail || !toEmail.includes("@")) {
