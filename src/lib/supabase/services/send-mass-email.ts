@@ -75,7 +75,6 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: input.testEmail,
           subject: finalSubject,
-          body: finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
         },
@@ -96,7 +95,6 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: input.testEmail,
           subject: finalSubject,
-          body: finalBody,
           status: "error",
           error_msg: errorMessage,
         },
