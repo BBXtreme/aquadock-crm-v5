@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,7 +21,7 @@ type RecipientSelectorProps = {
   search: string;
   setSearch: (search: string) => void;
   selectedRecipientIds: string[];
-  setSelectedRecipientIds: (ids: string[]) => void;
+  setSelectedRecipientIds: React.Dispatch<React.SetStateAction<string[]>>;
   recipients: Recipient[];
   isLoading: boolean;
   handleSelectAll: () => void;
@@ -85,8 +86,8 @@ export default function RecipientSelector({
                 <Checkbox
                   checked={selectedRecipientIds.includes(rec.id)}
                   onCheckedChange={(checked) => {
-                    if (checked) setSelectedRecipientIds((prev) => [...prev, rec.id]);
-                    else setSelectedRecipientIds((prev) => prev.filter((id) => id !== rec.id));
+                    if (checked) setSelectedRecipientIds((prev: string[]) => [...prev, rec.id]);
+                    else setSelectedRecipientIds((prev: string[]) => prev.filter((id: string) => id !== rec.id));
                   }}
                 />
                 <div className="flex-1 min-w-0">
