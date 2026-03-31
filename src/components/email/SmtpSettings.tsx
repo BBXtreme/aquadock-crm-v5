@@ -41,7 +41,7 @@ export default function SmtpSettings() {
         const config = await getSmtpConfig();
         if (config) {
           setHost(config.host || "");
-          setPort(config.port || "587");
+          setPort(String(config.port) || "587");
           setUser(config.user || "");
           setPassword(config.password || "");
           setFromName(config.fromName || "");
