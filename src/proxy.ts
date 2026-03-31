@@ -1,16 +1,18 @@
-// src/middleware.ts
-// This middleware handles authentication and route protection for the 
-// application. It checks if a user is authenticated when accessing 
-// protected routes and redirects them to the login page if they are not. It also prevents authenticated users from accessing the login page by redirecting them to the dashboard.
+// src/proxy.ts
+// Proxy (formerly middleware) – handles authentication and route protection for AquaDock CRM v5
 
 import { type NextRequest, NextResponse } from "next/server";
+import { updateSession } from "./lib/supabase/proxy";
 import { createServerSupabaseClient } from "./lib/supabase/server-client";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
+  // === STEP 1: Refresh session & cookies (Supabase + Next.js 16 best practice) ===
+  const response = await updateSession(request);
+
   const supabase = await createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Protected paths (URLs remain the same even with route groups)
+  // Protected paths (URLs stay clean thanks to route groups)
   const protectedPaths = [
     "/dashboard",
     "/companies",
@@ -27,7 +29,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(path)
   );
 
-  // Redirect to login if accessing protected route without session
+  // Redirect unauthenticated users from protected routes
   if (isProtectedPath && !session) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
@@ -39,18 +41,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  return response;   // Return the response with updated cookies
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, logo-*.png (public assets)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico|logo-.*\\.png).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|logo-.*\\.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

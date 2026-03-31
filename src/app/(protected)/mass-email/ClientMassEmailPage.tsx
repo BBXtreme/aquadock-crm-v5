@@ -1,169 +1,190 @@
+// src/app/(protected)/mass-email/ClientMassEmailPage.tsx
+// This file defines the ClientMassEmailPage component, which is the main page for sending mass emails in the application. It allows users to select recipients, choose email templates, compose their message, and send it out while showing progress and results.
+
 "use client";
 
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Users } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-
+import EmailComposer from "@/components/email/EmailComposer";
+import LivePreview from "@/components/email/LivePreview";
+import RecipientSelector from "@/components/email/RecipientSelector";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { createClient } from "@/lib/supabase/browser-client";
+import type { EmailTemplate } from "@/lib/supabase/database.types";
+import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
+import { sendMassEmailAction } from "@/lib/supabase/services/send-mass-email";
 
-import type { Database } from "@/lib/supabase/database.types";
+type SendResults = {
+  success: boolean;
+  sent: number;
+  errors: number;
+  total: number;
+  filteredCount?: number;
+};
 
-type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
-
-function ClientMassEmailPage() {
-  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+export default function ClientMassEmailPage() {
+  const [mode, setMode] = useState<"contacts" | "companies">("contacts");
+  const [search, setSearch] = useState("");
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [sendResults, setSendResults] = useState<SendResults | null>(null);
 
-  // TODO: Fetch contacts and templates
-  const contacts: { id: string; name: string; email: string }[] = [];
-  const templates: EmailTemplate[] = [];
+  // Templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ["email-templates"],
+    queryFn: async () => {
+      const client = createClient();
+      return getEmailTemplates(client);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const handleSend = async () => {
-    if (selectedContacts.length === 0) {
-      toast.error("Please select at least one contact");
+  // Recipients
+  const { data: recipients = [], isLoading } = useQuery({
+    queryKey: ["mass-recipients", mode, search],
+    queryFn: async () => {
+      const client = createClient();
+      return getMassEmailRecipients(client, { mode, search: search || undefined });
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const handleTemplateChange = (id: string) => {
+    setSelectedTemplateId(id);
+    const tpl = templates.find((t: EmailTemplate) => t.id === id);
+    if (tpl) {
+      setSubject(tpl.subject);
+      setBody(tpl.body);
+    }
+  };
+
+  const handleSend = async (isTest = false, testEmail?: string) => {
+    if (!isTest && selectedRecipientIds.length === 0) {
+      toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
     }
 
-    if (!subject.trim() || !body.trim()) {
-      toast.error("Please fill in subject and body");
-      return;
-    }
+    setShowProgress(true);
+    setProgress(0);
 
-    setIsSending(true);
     try {
-      // TODO: Implement mass email sending
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
-      toast.success(`Email sent to ${selectedContacts.length} contacts`);
-      setSelectedContacts([]);
-      setSubject("");
-      setBody("");
-    } catch (error) {
-      toast.error("Failed to send emails", { description: String(error) });
+      const result = await sendMassEmailAction({
+        mode,
+        subject,
+        body,
+        delayMs: 800,
+        ...(isTest && testEmail ? { testEmail } : (mode === "contacts" ? { contact_ids: selectedRecipientIds } : { company_ids: selectedRecipientIds })),
+      });
+
+      setSendResults(result);
+      setProgress(100);
+
+      toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
+      if (result.errors > 0) toast.warning(`${result.errors} E-Mails fehlgeschlagen.`);
+      if (result.filteredCount && result.filteredCount > 0) {
+        toast.warning(`${result.filteredCount} ungültige E-Mail-Adressen wurden automatisch entfernt.`);
+      }
+
+      setSelectedRecipientIds([]);
+    } catch (error: unknown) {
+      const err = error as Error;
+      toast.error("Versand fehlgeschlagen", { description: err.message });
     } finally {
-      setIsSending(false);
+      setTimeout(() => setShowProgress(false), 1500);
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedContacts(contacts.map((c) => c.id));
+  const handleSelectAll = () => {
+    if (selectedRecipientIds.length === recipients.length) {
+      setSelectedRecipientIds([]);
     } else {
-      setSelectedContacts([]);
+      setSelectedRecipientIds(recipients.map((r) => r.id));
     }
   };
 
-  const handleSelectContact = (contactId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedContacts((prev) => [...prev, contactId]);
-    } else {
-      setSelectedContacts((prev) => prev.filter((id) => id !== contactId));
-    }
-  };
-
-  const handleTemplateSelect = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (template) {
-      setSelectedTemplate(templateId);
-      setSubject(template.subject || "");
-      setBody(template.body || "");
-    }
-  };
+  // Live preview
+  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) ||
+    { name: "Max Mustermann", firmenname: "Beispiel GmbH", email: "max@beispiel.de" };
+  const previewSubject = useMemo(() => fillPlaceholders(subject, previewRecipient), [subject, previewRecipient]);
+  const previewBody = useMemo(() => fillPlaceholders(body, previewRecipient), [body, previewRecipient]);
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-6">Mass Email</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Recipients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="select-all"
-                  checked={selectedContacts.length === contacts.length && contacts.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-                <Label htmlFor="select-all">Select All</Label>
-              </div>
-              <div className="max-h-64 overflow-y-auto space-y-2">
-                {contacts.map((contact) => (
-                  <div key={contact.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={contact.id}
-                      checked={selectedContacts.includes(contact.id)}
-                      onCheckedChange={(checked) => handleSelectContact(contact.id, !!checked)}
-                    />
-                    <Label htmlFor={contact.id} className="flex-1">
-                      {contact.name} ({contact.email})
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Compose Email</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="template">Email Template (Optional)</Label>
-              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Email subject"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="body">Body</Label>
-              <Textarea
-                id="body"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Email body"
-                rows={10}
-              />
-            </div>
-
-            <Button onClick={handleSend} disabled={isSending} className="w-full" type="button">
-              {isSending ? "Sending..." : `Send to ${selectedContacts.length} contacts`}
+    <div className="space-y-8 p-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Massen-E-Mail</h1>
+          <p className="text-muted-foreground">Professionelle Kampagnen versenden</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="gap-1.5">
+            <Users className="h-4 w-4" /> {selectedRecipientIds.length} ausgewählt
+          </Badge>
+          <Link href="/mass-email/log">
+            <Button variant="outline" size="sm">
+              Versandlog ansehen
             </Button>
-          </CardContent>
-        </Card>
+          </Link>
+        </div>
       </div>
-    </>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <RecipientSelector
+          mode={mode}
+          setMode={setMode}
+          search={search}
+          setSearch={setSearch}
+          selectedRecipientIds={selectedRecipientIds}
+          setSelectedRecipientIds={setSelectedRecipientIds}
+          recipients={recipients}
+          isLoading={isLoading}
+          handleSelectAll={handleSelectAll}
+        />
+        <EmailComposer
+          selectedTemplateId={selectedTemplateId}
+          subject={subject}
+          setSubject={setSubject}
+          body={body}
+          setBody={setBody}
+          templates={templates}
+          handleTemplateChange={handleTemplateChange}
+        />
+      </div>
+
+      <LivePreview
+        previewSubject={previewSubject}
+        previewBody={previewBody}
+        previewRecipient={previewRecipient}
+        selectedRecipientIds={selectedRecipientIds}
+        handleSend={handleSend}
+      />
+
+      {/* Progress Dialog */}
+      <Dialog open={showProgress} onOpenChange={setShowProgress}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mails werden versendet...</DialogTitle>
+            <DialogDescription>
+              Ihre E-Mails werden im Hintergrund versendet. Bitte warten Sie, bis der Vorgang abgeschlossen ist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-6">
+            <Progress value={progress} className="h-2" />
+            <p className="text-center text-sm text-muted-foreground">
+              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.errors} Fehler` : "Bitte warten..."}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
-
-export default ClientMassEmailPage;

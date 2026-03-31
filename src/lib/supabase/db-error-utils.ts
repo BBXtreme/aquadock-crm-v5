@@ -10,6 +10,14 @@ import { toast } from "sonner";
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.group(`🚨 Supabase Error in ${context}`);
   console.error("Full error:", error);
+
+  // Improved logging for empty or malformed errors
+  if (error === null || error === undefined) {
+    console.error("Error is null or undefined");
+  } else if (typeof error === "object" && Object.keys(error).length === 0) {
+    console.error("Error is an empty object {} – this may indicate a malformed query or silent failure");
+  }
+
   if (typeof error === "object" && error !== null) {
     const err = error as Record<string, unknown>;
     if (err.message) console.error("Message:", err.message);

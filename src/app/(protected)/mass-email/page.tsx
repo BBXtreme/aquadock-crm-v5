@@ -7,18 +7,14 @@
 
 import { Suspense } from "react";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { safeDisplay } from "@/lib/utils/data-format";
 import ClientMassEmailPage from "./ClientMassEmailPage";
 
 export default async function MassEmailPage() {
-  const user = await requireUser();
+  await requireUser();
 
   return (
-    <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div>Welcome, {safeDisplay(user.display_name)}</div>
-      <Suspense fallback={<div>Loading mass email...</div>}>
-        <ClientMassEmailPage />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div>Loading mass email...</div>}>
+      <ClientMassEmailPage />
+    </Suspense>
   );
 }

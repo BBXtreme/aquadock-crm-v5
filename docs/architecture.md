@@ -176,7 +176,7 @@ export async function getCompaniesForOpenMap() {
 
 ### 7. DTO Layer and Middleware
 
-The DTO layer in `src/lib/dto/` provides form-specific types like `CompanyFormDTO` and `ContactFormDTO` to decouple form logic from database schemas, ensuring type safety in API interactions. Middleware in `src/middleware.ts` is set up for future authentication handling and route protection using Supabase Auth.
+The DTO layer in `src/lib/dto/` provides form-specific types like `CompanyFormDTO` and `ContactFormDTO` to decouple form logic from database schemas, ensuring type safety in API interactions. Middleware in `src/proxy.ts` is set up for future authentication handling and route protection using Supabase Auth.
 
 ## 8. Auth & Authorization
 

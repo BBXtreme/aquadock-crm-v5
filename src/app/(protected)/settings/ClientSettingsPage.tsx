@@ -1,16 +1,15 @@
+// src/app/(protected)/settings/ClientSettingsPage.tsx
+// This file defines the ClientSettingsPage component, which is the main settings page for the application. It includes sections for notifications, appearance, OpenMap settings, and SMTP email settings. Users can configure their preferences and save them, with changes being persisted to the database and local storage as needed.
+
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Trash2 } from "lucide-react";
+import { Bell, MapPin, Palette, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-
+import SmtpSettings from "@/components/email/SmtpSettings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,17 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser-client";
-
-const smtpSchema = z.object({
-  host: z.string().min(1, "Host is required"),
-  port: z.number().min(1, "Port must be at least 1").max(65535, "Port must be at most 65535"),
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-  from_email: z.string().email("Valid email is required"),
-  from_name: z.string().min(1, "From name is required"),
-});
-
-type SmtpForm = z.infer<typeof smtpSchema>;
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -79,9 +67,6 @@ function ClientSettingsPage() {
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
-  const [_userId, _setUserId] = useState<string | null>(null);
-  const [testRecipient, setTestRecipient] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -102,7 +87,7 @@ function ClientSettingsPage() {
   });
 
   const supabase = createClient();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
@@ -129,29 +114,6 @@ function ClientSettingsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const smtpMutation = useMutation({
-    mutationFn: async (values: SmtpForm) => {
-      const { error } = await supabase.from("user_settings").upsert({
-        id: "default", // Assuming single user settings
-        smtp_host: values.host,
-        smtp_port: values.port,
-        smtp_username: values.username,
-        smtp_password: values.password,
-        smtp_from_email: values.from_email,
-        smtp_from_name: values.from_name,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      toast.success("SMTP settings saved");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to save SMTP settings", { description: message });
-    },
-  });
-
   const openMapMutation = useMutation({
     mutationFn: async () => {
       localStorage.setItem("openmap_maxCacheSize", openMapSettings.maxCacheSize.toString());
@@ -168,28 +130,6 @@ function ClientSettingsPage() {
     onError: (error) => {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
       toast.error("Failed to save OpenMap settings", { description: message });
-    },
-  });
-
-  const testEmailMutation = useMutation({
-    mutationFn: async (recipient: string) => {
-      const response = await fetch("/api/send-test-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send test email");
-      }
-    },
-    onSuccess: () => {
-      toast.success("Test email sent successfully");
-      setTestRecipient("");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to send test email", { description: message });
     },
   });
 
@@ -230,28 +170,12 @@ function ClientSettingsPage() {
     return groups;
   }, [settings]);
 
-  const smtpForm = useForm<SmtpForm>({
-    resolver: zodResolver(smtpSchema),
-    defaultValues: {
-      host: (settings.smtp_host as string) || "",
-      port: (settings.smtp_port as number) || 587,
-      username: (settings.smtp_username as string) || "",
-      password: (settings.smtp_password as string) || "",
-      from_email: (settings.smtp_from_email as string) || "",
-      from_name: (settings.smtp_from_name as string) || "",
-    },
-  });
-
   const clearCache = () => {
     localStorage.removeItem("openmap-poi-cache");
     if (confirm("Clear POI cache and reload the page to apply changes?")) {
       window.location.reload();
     }
   };
-
-  const onSmtpSubmit = smtpForm.handleSubmit((data) => {
-    smtpMutation.mutate(data);
-  });
 
   useEffect(() => {
     loadFromLocalStorage();
@@ -417,137 +341,10 @@ function ClientSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* SMTP Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="mr-2 h-5 w-5" />
-              SMTP-Konfiguration für den E-Mail Versand
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...smtpForm}>
-              <form onSubmit={onSmtpSubmit} className="space-y-4">
-                <FormField
-                  control={smtpForm.control}
-                  name="host"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Host</FormLabel>
-                      <FormControl>
-                        <Input placeholder="smtp.example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="port"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Port</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="587"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 587)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your-username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input type={showPassword ? "text" : "password"} placeholder="your-password" {...field} />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="from_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="noreply@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="from_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your App Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={smtpMutation.isPending}>
-                  {smtpMutation.isPending ? "Saving..." : "Save SMTP Settings"}
-                </Button>
-              </form>
-            </Form>
-
-            <div className="mt-6 space-y-4">
-              <h3 className="text-lg font-medium">Test Email</h3>
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="test@example.com"
-                  value={testRecipient}
-                  onChange={(e) => setTestRecipient(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={() => testEmailMutation.mutate(testRecipient)}
-                  disabled={testEmailMutation.isPending || !testRecipient}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {testEmailMutation.isPending ? "Sending..." : "Send Test Email"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* SMTP Settings */}
+        <div className="md:col-span-2">
+          <SmtpSettings />
+        </div>
       </div>
     </div>
   );

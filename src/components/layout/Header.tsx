@@ -25,7 +25,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -73,9 +73,8 @@ export default function Header() {
   });
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
+    const { signOut } = await import("@/lib/supabase/services/auth");
+    await signOut();
   };
 
   return (

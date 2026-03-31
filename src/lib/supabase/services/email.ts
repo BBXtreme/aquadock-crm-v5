@@ -109,3 +109,135 @@ export async function deleteEmailTemplate(id: string, client: SupabaseClient): P
   const { error } = await client.from("email_templates").delete().eq("id", id);
   if (error) throw handleSupabaseError(error, "deleteEmailTemplate");
 }
+
+// === MASS EMAIL HELPERS (added for v5 Mass Email page) ===
+
+/**
+ * Get recipients for mass email with flexible filtering
+ * Supports companies or contacts mode + basic filters (expandable)
+ */
+export async function getMassEmailRecipients(
+  client: SupabaseClient,
+  options: {
+    mode: 'companies' | 'contacts';
+    status?: string;
+    kundentyp?: string;
+    land?: string;
+    search?: string;
+    limit?: number;
+  } = { mode: 'contacts' }
+): Promise<Array<{
+  id: string;
+  name: string;
+  email: string;
+  firmenname?: string;
+  company_id?: string;
+}>> {
+  const { mode, status, kundentyp, land, search, limit = 500 } = options;
+
+  if (mode === 'contacts') {
+    let query = client
+      .from('contacts')
+      .select(`
+        id,
+        vorname,
+        nachname,
+        anrede,
+        email,
+        companies!inner(id, firmenname)
+      `)
+      .not('email', 'is', null)
+      .neq('email', '');
+
+    if (status) query = query.eq('companies.status', status);
+    if (kundentyp) query = query.eq('companies.kundentyp', kundentyp);
+    if (land) query = query.eq('companies.land', land);
+    if (search) {
+      // Sanitize search term to prevent commas from breaking PostgREST .or() syntax
+      const sanitizedSearch = search.replace(/,/g, ' ');
+      const term = `%${sanitizedSearch}%`;
+      query = query.or(`vorname.ilike.${term},nachname.ilike.${term},email.ilike.${term}`);
+    }
+
+    const { data, error } = await query.limit(limit).order('nachname');
+
+    if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:contacts');
+
+    type RawContact = {
+      id: string;
+      vorname: string | null;
+      nachname: string | null;
+      anrede: string | null;
+      email: string;
+      companies: { id: string; firmenname: string };
+    };
+
+    return (data as unknown as RawContact[]).map((c: RawContact) => ({
+      id: c.id,
+      name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
+      email: c.email,
+      firmenname: c.companies.firmenname,
+      company_id: c.companies.id,
+    }));
+  }
+    // companies mode – use company email or primary contact fallback (simplified for now)
+    let query = client
+      .from('companies')
+      .select('id, firmenname, email')
+      .not('email', 'is', null)
+      .neq('email', '');
+
+    if (status) query = query.eq('status', status);
+    if (kundentyp) query = query.eq('kundentyp', kundentyp);
+    if (land) query = query.eq('land', land);
+    if (search) query = query.ilike('firmenname', `%${search}%`);
+
+    const { data, error } = await query.limit(limit).order('firmenname');
+
+    if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:companies');
+    return (data ?? []).map((c: {
+      id: string;
+      firmenname: string;
+      email: string;
+    }) => ({
+      id: c.id,
+      name: c.firmenname,
+      email: c.email,
+      firmenname: c.firmenname,
+    }));
+}
+
+/**
+ * Fill placeholders in subject/body (ported & improved from v4)
+ */
+export function fillPlaceholders(
+  text: string,
+  recipient: { name: string; firmenname?: string; anrede?: string; vorname?: string; nachname?: string; stadt?: string }
+): string {
+  return text
+    .replace(/{{anrede}}/gi, recipient.anrede || '')
+    .replace(/{{vorname}}/gi, recipient.vorname || '')
+    .replace(/{{nachname}}/gi, recipient.nachname || '')
+    .replace(/{{firmenname}}/gi, recipient.firmenname || '')
+    .replace(/{{stadt}}/gi, recipient.stadt || '')
+    .replace(/{{name}}/gi, recipient.name);
+}
+
+export function isValidEmail(email: string): boolean {
+  if (!email || typeof email !== 'string') return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return false;
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain || domain.includes('..') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  return true;
+}
+
+export async function hasMXRecords(domain: string): Promise<boolean> {
+  try {
+    const { promises: dns } = await import('node:dns');
+    const mx = await dns.resolveMx(domain);
+    return mx && mx.length > 0;
+  } catch {
+    return false;
+  }
+}

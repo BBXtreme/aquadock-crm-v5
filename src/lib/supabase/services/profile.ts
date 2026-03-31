@@ -6,6 +6,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
 // Server Action - Update Display Name (for current user)
@@ -88,12 +89,7 @@ export async function changeUserRole(formData: FormData) {
   const newRole = formData.get('newRole') as 'user' | 'admin';
 
   // Use service role client to bypass RLS for admin actions
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+  const serviceSupabase = createAdminClient();
 
   const { error } = await serviceSupabase
     .from("profiles")
@@ -132,12 +128,7 @@ export async function deleteUser(formData: FormData) {
 
   const userId = formData.get('userId') as string;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+  const serviceSupabase = createAdminClient();
 
   // Delete from profiles table first
   const { error: profileError } = await serviceSupabase
@@ -180,12 +171,7 @@ export async function createUser(formData: FormData) {
   const randomPassword = crypto.randomBytes(16).toString('hex');
 
   // Use service role client for all admin operations to ensure consistency and bypass RLS
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+  const serviceSupabase = createAdminClient();
 
   // Step 1: Create the auth user
   console.log("Creating auth user for:", email);
