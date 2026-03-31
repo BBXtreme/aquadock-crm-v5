@@ -41,7 +41,6 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     { name: "Reminders", href: "/reminders", icon: Anchor },
     { name: "OpenMap", href: "/openmap", icon: MapPin },
     { name: "Mass Email", href: "/mass-email", icon: Mail },
-    { name: "Settings", href: "/settings", icon: Settings, adminOnly: true },
   ];
 
   const filteredNavigation = navigation.filter((item) => !item.adminOnly || userRole === "admin");
