@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Send, TestTube, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,7 @@ export default function ClientMassEmailPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sendResults, setSendResults] = useState<SendResults | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     const client = createClient();
