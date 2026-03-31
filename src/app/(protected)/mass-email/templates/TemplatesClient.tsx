@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -222,6 +222,9 @@ export default function TemplatesClient() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingTemplate ? "Vorlage bearbeiten" : "Neue Vorlage erstellen"}</DialogTitle>
+            <DialogDescription>
+              Erstellen oder bearbeiten Sie eine E-Mail-Vorlage mit Platzhaltern für personalisierte Nachrichten.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -273,6 +276,9 @@ Verfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, 
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Vorlagen-Vorschau</DialogTitle>
+            <DialogDescription>
+              Vorschau der E-Mail-Vorlage mit Platzhaltern.
+            </DialogDescription>
           </DialogHeader>
           {previewTemplate && (
             <div className="space-y-4">

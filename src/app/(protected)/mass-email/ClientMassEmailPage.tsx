@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -306,6 +306,9 @@ export default function ClientMassEmailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>E-Mails werden versendet...</DialogTitle>
+            <DialogDescription>
+              Ihre E-Mails werden im Hintergrund versendet. Bitte warten Sie, bis der Vorgang abgeschlossen ist.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <Progress value={progress} className="h-2" />
