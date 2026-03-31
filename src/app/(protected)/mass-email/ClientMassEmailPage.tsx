@@ -24,7 +24,7 @@ import { sendMassEmailAction } from "@/lib/supabase/services/send-mass-email";
 type SendResults = {
   success: boolean;
   sent: number;
-  failed: number;
+  errors: number;
   total: number;
 };
 
@@ -75,10 +75,6 @@ export default function ClientMassEmailPage() {
   };
 
   const handleSend = async (isTest = false) => {
-    if (!currentUser) {
-      toast.error("Benutzer nicht authentifiziert.");
-      return;
-    }
     if (!isTest && selectedRecipientIds.length === 0) {
       toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
@@ -100,7 +96,7 @@ export default function ClientMassEmailPage() {
       setProgress(100);
 
       toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
-      if (result.failed > 0) toast.warning(`${result.failed} E-Mails fehlgeschlagen.`);
+      if (result.errors > 0) toast.warning(`${result.errors} E-Mails fehlgeschlagen.`);
 
       setSelectedRecipientIds([]);
     } catch (error: unknown) {
@@ -187,7 +183,7 @@ export default function ClientMassEmailPage() {
           <div className="space-y-6 py-6">
             <Progress value={progress} className="h-2" />
             <p className="text-center text-sm text-muted-foreground">
-              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.failed} Fehler` : "Bitte warten..."}
+              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.errors} Fehler` : "Bitte warten..."}
             </p>
           </div>
         </DialogContent>

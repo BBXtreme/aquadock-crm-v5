@@ -64,7 +64,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   const delay = input.delayMs || 1500;
   let sent = 0;
-  let failed = 0;
+  let errors = 0;
 
   for (const rec of selectedRecipients) {
     try {
@@ -91,7 +91,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
       sent++;
     } catch (err: unknown) {
-      failed++;
+      errors++;
 
       const errorMessage = err instanceof Error ? err.message : String(err);
 
@@ -117,7 +117,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   return {
     success: true,
     sent,
-    failed,
+    errors,
     total: selectedRecipients.length,
     message: `${sent} von ${selectedRecipients.length} E-Mails versendet.`,
   };
