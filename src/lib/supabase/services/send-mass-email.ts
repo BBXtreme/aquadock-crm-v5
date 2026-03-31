@@ -78,6 +78,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "sent",
           sent_at: new Date().toISOString(),
           user_id: user.id,
+          mode: "test",
         },
         supabase
       );
@@ -99,6 +100,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "error",
           error_msg: errorMessage,
           user_id: user.id,
+          mode: "test",
         },
         supabase
       );
@@ -155,6 +157,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "sent",
           sent_at: new Date().toISOString(),
           user_id: user.id,
+          mode: "mass",
         },
         supabase
       );
@@ -172,6 +175,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "error",
           error_msg: errorMessage,
           user_id: user.id,
+          mode: "mass",
         },
         supabase
       );
