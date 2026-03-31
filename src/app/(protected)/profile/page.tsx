@@ -50,7 +50,7 @@ export default async function ProfilePage() {
   const email = user.email || "";
 
   // Fetch all users for admin only
-  let allUsers: { id: string; email: string; display_name: string | null; role: string }[] = [];
+  let allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] = [];
   if (role === 'admin') {
     const { data: authUsers } = await supabase.auth.admin.listUsers();
     const { data: profiles } = await supabase.from('profiles').select('*');
@@ -62,6 +62,8 @@ export default async function ProfilePage() {
         email: u.email || '',
         display_name: profile?.display_name || u.user_metadata?.display_name || null,
         role: profile?.role || 'user',
+        created_at: profile?.created_at || null,
+        updated_at: profile?.updated_at || null,
       };
     });
   }
@@ -138,4 +140,6 @@ export default async function ProfilePage() {
       {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
     </div>
   );
-}
+}````
+
+src/components/features/profile/UserManagementCard.tsx
