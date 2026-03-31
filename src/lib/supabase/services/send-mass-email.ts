@@ -36,7 +36,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   }
 
   // Setup transporter
-  const transporter = nodemailer.createTransport({
+  const transporter = nodemailer.createTransporter({
     host: smtp.host,
     port: parseInt(String(smtp.port) || "587", 10),
     secure: smtp.secure === true || parseInt(String(smtp.port) || "587", 10) === 465,
@@ -67,9 +67,12 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   let errors = 0;
 
   for (const rec of selectedRecipients) {
+    let finalSubject: string;
+    let finalBody: string;
+
     try {
-      const finalSubject = fillPlaceholders(input.subject, rec);
-      const finalBody = fillPlaceholders(input.body, rec);
+      finalSubject = fillPlaceholders(input.subject, rec);
+      finalBody = fillPlaceholders(input.body, rec);
 
       await transporter.sendMail({
         from: `"${smtp.fromName || "AquaDock CRM"}" <${smtp.user}>`,
