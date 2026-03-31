@@ -90,7 +90,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Display Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Actions</TableHead>
