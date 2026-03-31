@@ -81,6 +81,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     }
 
     const domain = input.testEmail.split('@')[1];
+    if (!domain) {
+      throw new Error("Ungültige E-Mail-Adresse.");
+    }
     if (!(await hasMXRecords(domain))) {
       throw new Error("Domain hat keine gültigen MX-Records. Die E-Mail-Adresse kann nicht zugestellt werden.");
     }
