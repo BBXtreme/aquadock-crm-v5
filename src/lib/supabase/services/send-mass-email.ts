@@ -4,9 +4,9 @@
 "use server";
 
 import nodemailer from "nodemailer";
+import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
-import type { Database } from "@/lib/supabase/database.types";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
