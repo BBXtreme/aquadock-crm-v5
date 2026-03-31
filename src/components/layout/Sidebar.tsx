@@ -42,7 +42,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     { name: "Mass Email", href: "/mass-email", icon: Mail },
   ];
 
-  const filteredNavigation = navigation.filter((item) => !item.adminOnly || userRole === "admin");
+  const filteredNavigation = navigation;
 
   return (
     <div
@@ -75,11 +75,6 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                 <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
                 {!isCollapsed && (
                   <span className="flex-1 text-left truncate">{item.name}</span>
-                )}
-                {!isCollapsed && item.adminOnly && (
-                  <Badge variant="outline" className="ml-2 text-xs px-1.5 py-0.5">
-                    Admin
-                  </Badge>
                 )}
               </Button>
             </Link>
