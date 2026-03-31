@@ -4,7 +4,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Eye, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -134,10 +135,17 @@ export default function TemplatesClient() {
           <h1 className="text-3xl font-bold">E-Mail Vorlagen</h1>
           <p className="text-muted-foreground">Verwalten Sie Ihre E-Mail-Vorlagen</p>
         </div>
-        <Button onClick={openCreateDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Neue Vorlage
-        </Button>
+        <div className="flex gap-2">
+          <Link href="/mass-email">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Button onClick={openCreateDialog}>
+            <Plus className="mr-2 h-4 w-4" />
+            Neue Vorlage
+          </Button>
+        </div>
       </div>
 
       {error && (
