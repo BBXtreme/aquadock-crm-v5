@@ -22,7 +22,6 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
@@ -263,14 +262,11 @@ export default function ClientMassEmailPage() {
             <CardTitle>Live-Vorschau</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="preview" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="preview">Vorschau</TabsTrigger>
-                <TabsTrigger value="raw">Quelltext</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="preview" className="min-h-[520px]">
-                <div className="border rounded-2xl p-8 bg-card h-full shadow-sm">
+            <div className="space-y-6">
+              {/* Vorschau */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Vorschau</h3>
+                <div className="border rounded-2xl p-8 bg-card min-h-[520px] shadow-sm">
                   <div className="space-y-6">
                     <div className="border-b pb-4">
                       <div className="text-sm text-muted-foreground">Betreff:</div>
@@ -281,17 +277,19 @@ export default function ClientMassEmailPage() {
                     </div>
                   </div>
                 </div>
-              </TabsContent>
+              </div>
 
-              <TabsContent value="raw" className="min-h-[520px]">
-                <ScrollArea className="h-[520px] border rounded-2xl p-6 bg-muted">
+              {/* Quelltext */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Quelltext</h3>
+                <ScrollArea className="min-h-[520px] border rounded-2xl p-6 bg-muted">
                   <strong>Betreff:</strong> {previewSubject}
                   <br /><br />
                   <strong>Inhalt:</strong>
                   <pre className="mt-4 whitespace-pre-wrap text-sm">{previewBody}</pre>
                 </ScrollArea>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
 
             <Separator className="my-8" />
 
