@@ -3,8 +3,9 @@
 
 "use client";
 
-import { Code, Eye, Send, TestTube } from "lucide-react";
+import { Code, Copy, Eye, Send, TestTube } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,16 @@ export default function LivePreview({
   handleSend,
 }: LivePreviewProps) {
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
+
+  const copyToClipboard = async () => {
+    const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("In die Zwischenablage kopiert");
+    } catch (_err) {
+      toast.error("Kopieren fehlgeschlagen");
+    }
+  };
 
   return (
     <Card>
@@ -51,6 +62,10 @@ export default function LivePreview({
             <Code className="inline mr-2 h-4 w-4" />
             Quelltext
           </button>
+          <Button variant="outline" size="sm" onClick={copyToClipboard} className="ml-4">
+            <Copy className="h-4 w-4 mr-2" />
+            In die Zwischenablage kopieren
+          </Button>
         </div>
 
         {/* Preview Content */}
