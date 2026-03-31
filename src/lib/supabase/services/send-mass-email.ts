@@ -97,7 +97,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: finalSubject,
-          body: finalBody.length > 100 ? finalBody.substring(0, 100) + "..." : finalBody,
+          body: finalBody.length > 100 ? `${finalBody.substring(0, 100)}...` : finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
         },
