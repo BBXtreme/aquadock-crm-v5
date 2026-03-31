@@ -8,7 +8,7 @@ import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { PageHeader } from "@/components/ui/PageHeader";
+import PageHeader from "@/components/ui/PageHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser-client";
@@ -19,6 +19,7 @@ export default function EmailLogPage() {
   const [search, setSearch] = useState("");
 
   const { data: logs = [], isLoading } = useQuery({
+    queryKey: ["email-logs"],
     queryKey: ["email-logs"],
     queryFn: async () => {
       const client = createClient();
