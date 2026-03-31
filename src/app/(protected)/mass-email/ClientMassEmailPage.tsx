@@ -101,8 +101,8 @@ export default function ClientMassEmailPage() {
       }
 
       setSelectedRecipientIds([]);
-    } catch (error: any) {
-      toast.error("Versand fehlgeschlagen", { description: error.message });
+    } catch (error: unknown) {
+      toast.error("Versand fehlgeschlagen", { description: (error as Error).message });
     } finally {
       setTimeout(() => setShowProgress(false), 1500);
     }
