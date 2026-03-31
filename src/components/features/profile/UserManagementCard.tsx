@@ -7,6 +7,8 @@
 
 import { Loader2, Mail, Shield, Trash2, Users } from "lucide-react";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const handleChangeRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
@@ -31,7 +35,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       formData.append('newRole', newRole);
       await changeUserRole(formData);
       toast.success("Role updated successfully");
-      window.location.reload();
+      queryClient.invalidateQueries();
+      router.refresh();
     } catch (_error) {
       toast.error("Failed to update role");
     } finally {
@@ -62,7 +67,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       await deleteUser(formData);
       toast.success("User deleted successfully");
       setDeleteUserId(null);
-      window.location.reload();
+      queryClient.invalidateQueries();
+      router.refresh();
     } catch (_error) {
       toast.error("Failed to delete user");
     } finally {
