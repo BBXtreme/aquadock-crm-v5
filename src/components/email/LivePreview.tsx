@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Code, Copy, Eye, Send, TestTube } from "lucide-react";
+import { Code, Copy, Eye, Send, MailCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -115,7 +115,7 @@ export default function LivePreview({
             Senden ({selectedRecipientIds.length})
           </Button>
           <Button variant="outline" onClick={() => setTestDialogOpen(true)} className="flex-1" size="lg">
-            <TestTube className="mr-2 h-5 w-5" />
+            <MailCheck className="mr-2 h-5 w-5" />
             Testsendung
           </Button>
         </div>
