@@ -1,8 +1,6 @@
 // src/lib/supabase/database.types.ts
 // Database type definitions for Supabase
-// This file is generated based on the database schema and includes
-// TypeScript interfaces for the tables, as well as types for inserts
-// and updates. The `profiles` table was added for role management (user/admin).
+// Generated based on the provided schema - March 2026
 
 export interface Database {
   public: {
@@ -127,7 +125,7 @@ export interface Database {
           company_id?: string | null;
           anrede?: string | null;
           vorname?: string;
-          nachname: string;
+          nachname?: string;
           position?: string | null;
           email?: string | null;
           telefon?: string | null;
@@ -140,95 +138,25 @@ export interface Database {
           user_id?: string | null;
         };
       };
-      reminders: {
-        Row: {
-          id: string;
-          company_id: string;
-          title: string;
-          description: string | null;
-          due_date: string;
-          priority: string;
-          status: string;
-          assigned_to: string;
-          created_at: string | null;
-          completed_at: string | null;
-          user_id: string | null;
-        };
-        Insert: {
-          company_id: string;
-          title: string;
-          description?: string | null;
-          due_date: string;
-          priority?: string;
-          status?: string;
-          assigned_to: string;
-          created_at?: string | null;
-          completed_at?: string | null;
-          user_id?: string | null;
-        };
-        Update: {
-          id?: string;
-          company_id?: string;
-          title?: string;
-          description?: string | null;
-          due_date?: string;
-          priority?: string;
-          status?: string;
-          assigned_to?: string;
-          created_at?: string | null;
-          completed_at?: string | null;
-          user_id?: string | null;
-        };
-      };
-      timeline: {
-        Row: {
-          id: string;
-          company_id: string | null;
-          activity_type: string;
-          title: string;
-          content: string | null;
-          user_name: string;
-          created_at: string | null;
-          user_id: string | null;
-          contact_id?: string | null;
-        };
-        Insert: {
-          company_id?: string | null;
-          activity_type: string;
-          title: string;
-          content?: string | null;
-          user_name: string;
-          created_at?: string | null;
-          user_id?: string | null;
-          contact_id?: string | null;
-        };
-        Update: {
-          id?: string;
-          company_id?: string | null;
-          activity_type?: string;
-          title?: string;
-          content?: string | null;
-          user_name?: string;
-          created_at?: string | null;
-          user_id?: string | null;
-          contact_id?: string | null;
-        };
-      };
       email_log: {
         Row: {
           id: string;
+          template_name: string | null;
           recipient_email: string;
+          recipient_name: string | null;
           subject: string;
-          body: string;
+          status: string;
           error_msg: string | null;
           sent_at: string | null;
           created_at: string | null;
           updated_at: string | null;
         };
         Insert: {
+          template_name?: string | null;
           recipient_email: string;
+          recipient_name?: string | null;
           subject: string;
-          body: string;
+          status?: string;
           error_msg?: string | null;
           sent_at?: string | null;
           created_at?: string | null;
@@ -236,9 +164,11 @@ export interface Database {
         };
         Update: {
           id?: string;
+          template_name?: string | null;
           recipient_email?: string;
+          recipient_name?: string | null;
           subject?: string;
-          body?: string;
+          status?: string;
           error_msg?: string | null;
           sent_at?: string | null;
           created_at?: string | null;
@@ -270,32 +200,6 @@ export interface Database {
           updated_at?: string | null;
         };
       };
-      user_settings: {
-        Row: {
-          id: string;
-          user_id: string;
-          key: string;
-          value: string;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          user_id: string;
-          key: string;
-          value: string;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          key?: string;
-          value?: string;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      // NEW: profiles table for role management
       profiles: {
         Row: {
           id: string;
@@ -322,42 +226,131 @@ export interface Database {
           updated_at?: string;
         };
       };
+      reminders: {
+        Row: {
+          id: string;
+          company_id: string;
+          title: string;
+          description: string | null;
+          due_date: string;
+          priority: string;
+          status: string;
+          assigned_to: string;
+          created_at: string | null;
+          completed_at: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          company_id: string;
+          title: string;
+          description?: string | null;
+          due_date: string;
+          priority?: string;
+          status?: string;
+          assigned_to?: string;
+          created_at?: string | null;
+          completed_at?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          title?: string;
+          description?: string | null;
+          due_date?: string;
+          priority?: string;
+          status?: string;
+          assigned_to?: string;
+          created_at?: string | null;
+          completed_at?: string | null;
+          user_id?: string | null;
+        };
+      };
+      timeline: {
+        Row: {
+          id: string;
+          company_id: string | null;
+          activity_type: string;
+          title: string;
+          content: string | null;
+          user_name: string;
+          created_at: string | null;
+          user_id: string | null;
+          contact_id: string | null;
+        };
+        Insert: {
+          company_id?: string | null;
+          activity_type: string;
+          title: string;
+          content?: string | null;
+          user_name?: string;
+          created_at?: string | null;
+          user_id?: string | null;
+          contact_id?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string | null;
+          activity_type?: string;
+          title?: string;
+          content?: string | null;
+          user_name?: string;
+          created_at?: string | null;
+          user_id?: string | null;
+          contact_id?: string | null;
+        };
+      };
+      user_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          key: string;
+          value: any;           // jsonb in DB → any in TS
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          key: string;
+          value: any;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          key?: string;
+          value?: any;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
     };
-    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-    Views: {};
-    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-    Functions: {};
-    // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
-    Enums: {};
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
   };
 }
 
-// Export table types
+// Export common types
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
-export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
-export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
+export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"];   // ← NEW
 
-export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
-export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
-export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
-export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
-export type ReminderInsert = Database["public"]["Tables"]["reminders"]["Insert"];
-export type ReminderUpdate = Database["public"]["Tables"]["reminders"]["Update"];
-export type TimelineEntryInsert = Database["public"]["Tables"]["timeline"]["Insert"];
-export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Update"];
 export type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
 export type EmailLogUpdate = Database["public"]["Tables"]["email_log"]["Update"];
-export type EmailTemplateInsert = Database["public"]["Tables"]["email_templates"]["Insert"];
-export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"]["Update"];
-export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
-export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
-export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
-export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
 // Additional app types
 export type KPI = {
@@ -365,9 +358,4 @@ export type KPI = {
   value: string | number;
   changePercent: number;
   subtitle: string;
-};
-
-export type TimelineEntryWithJoins = TimelineEntry & {
-  companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
 };
