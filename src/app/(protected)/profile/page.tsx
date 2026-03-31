@@ -1,4 +1,4 @@
-import { LogOut, Upload, User } from "lucide-react";
+import { LogOut, Upload, User, Users, Shield, Mail, Trash2 } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { toast } from "sonner";
 
 // Server Action - Update Display Name
 export async function updateDisplayName(formData: FormData) {
@@ -34,12 +35,144 @@ export async function updateDisplayName(formData: FormData) {
   revalidatePath('/profile');
 }
 
+// Server Action - Change User Role
+export async function changeUserRole(formData: FormData) {
+  'use server';
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const userId = formData.get('userId') as string;
+  const newRole = formData.get('newRole') as 'user' | 'admin';
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ role: newRole })
+    .eq("id", userId);
+
+  if (error) throw error;
+
+  revalidatePath('/profile');
+}
+
+// Server Action - Trigger Password Reset
+export async function triggerPasswordReset(formData: FormData) {
+  'use server';
+  const supabase = await createServerSupabaseClient();
+  const userId = formData.get('userId') as string;
+
+  const { data: authUser, error: userError } = await supabase.auth.admin.getUserById(userId);
+  if (userError || !authUser.user?.email) throw new Error("User or email not found");
+
+  const { error } = await supabase.auth.resetPasswordForEmail(authUser.user.email);
+  if (error) throw error;
+
+  revalidatePath('/profile');
+}
+
+// Server Action - Delete User
+export async function deleteUser(formData: FormData) {
+  'use server';
+  const supabase = await createServerSupabaseClient();
+  const userId = formData.get('userId') as string;
+
+  const { error: profileError } = await supabase.from('profiles').delete().eq('id', userId);
+  if (profileError) throw profileError;
+
+  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+  if (authError) throw authError;
+
+  revalidatePath('/profile');
+}
+
 // Server Action - Sign Out
 export async function signOut() {
   'use server';
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
   redirect('/login');
+}
+
+// Client Component for User Management
+function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string }[] }) {
+  const handleChangeRole = async (userId: string, currentRole: string) => {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      formData.append('newRole', newRole);
+      await changeUserRole(formData);
+      toast.success("Role updated successfully");
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to update role");
+    }
+  };
+
+  const handlePasswordReset = async (userId: string) => {
+    try {
+      const formData = new FormData();
+      formData.append('userId', userId);
+      await triggerPasswordReset(formData);
+      toast.success("Password reset email sent");
+    } catch (error) {
+      toast.error("Failed to send reset email");
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      try {
+        const formData = new FormData();
+        formData.append('userId', userId);
+        await deleteUser(formData);
+        toast.success("User deleted successfully");
+        window.location.reload();
+      } catch (error) {
+        toast.error("Failed to delete user");
+      }
+    }
+  };
+
+  return (
+    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+      <CardHeader className="pb-6">
+        <CardTitle className="flex items-center text-xl">
+          <Users className="mr-3 h-6 w-6 text-primary" />
+          User Management
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {allUsers.map((u) => (
+            <div key={u.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div>
+                <p className="font-semibold">{u.display_name || 'No display name'}</p>
+                <p className="text-sm text-muted-foreground">{u.email}</p>
+                <Badge variant="secondary" className="capitalize">
+                  {u.role}
+                </Badge>
+              </div>
+              <div className="flex space-x-2">
+                <Button size="sm" onClick={() => handleChangeRole(u.id, u.role)}>
+                  <Shield className="h-4 w-4 mr-1" />
+                  {u.role === 'admin' ? 'Demote to User' : 'Promote to Admin'}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handlePasswordReset(u.id)}>
+                  <Mail className="h-4 w-4 mr-1" />
+                  Reset Password
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => handleDelete(u.id)}>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // Main Page Component
@@ -79,6 +212,22 @@ export default async function ProfilePage() {
   const role = profileData.role || "user";
   const avatarUrl = profileData.avatar_url || "";
   const email = user.email || "";
+
+  // Fetch all users if admin
+  let allUsers: { id: string; email: string; display_name: string | null; role: string }[] = [];
+  if (role === 'admin') {
+    const { data: authUsers } = await supabase.auth.admin.listUsers();
+    const { data: profiles } = await supabase.from('profiles').select('*');
+    allUsers = authUsers.users.map(u => {
+      const profile = profiles.find(p => p.id === u.id);
+      return {
+        id: u.id,
+        email: u.email || '',
+        display_name: profile?.display_name || u.user_metadata?.display_name || null,
+        role: profile?.role || 'user',
+      };
+    });
+  }
 
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
@@ -165,6 +314,8 @@ export default async function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
     </div>
   );
 }
