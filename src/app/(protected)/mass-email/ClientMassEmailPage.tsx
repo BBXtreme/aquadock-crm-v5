@@ -410,7 +410,7 @@ export default function ClientMassEmailPage() {
           {templatesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
+                <Card key={`loading-item-${i}`} className="animate-pulse">
                   <CardHeader>
                     <div className="h-4 bg-muted rounded" />
                   </CardHeader>
@@ -434,7 +434,7 @@ export default function ClientMassEmailPage() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground truncate">{template.subject}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Aktualisiert: {new Date(template.updated_at || template.created_at).toLocaleDateString()}
+                      Aktualisiert: {new Date(template.updated_at || template.created_at || new Date()).toLocaleDateString()}
                     </p>
                   </CardContent>
                   <CardFooter className="flex gap-2">
