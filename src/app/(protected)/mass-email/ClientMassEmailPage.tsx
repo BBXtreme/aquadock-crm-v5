@@ -27,10 +27,10 @@ import type { EmailTemplate } from "@/lib/supabase/database.types";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
 
 type SendResults = {
+  success: boolean;
   sent: number;
-  errors: number;
+  failed: number;
   total: number;
-  results: Array<{ email: string; status: 'sent' | 'error'; error?: string }>;
 };
 
 export default function ClientMassEmailPage() {
@@ -263,7 +263,7 @@ export default function ClientMassEmailPage() {
           <div className="space-y-4 py-4">
             <Progress value={progress} className="h-2" />
             <p className="text-center text-sm text-muted-foreground">
-              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.errors} Fehler` : "Bitte warten..."}
+              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.failed} Fehler` : "Bitte warten..."}
             </p>
             {sendResults && (
               <Alert>
