@@ -3,13 +3,10 @@
 
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, MapPin, Palette, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,17 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser-client";
-
-const smtpSchema = z.object({
-  host: z.string().min(1, "Host is required"),
-  port: z.number().min(1, "Port must be at least 1").max(65535, "Port must be at most 65535"),
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-  from_email: z.string().email("Valid email is required"),
-  from_name: z.string().min(1, "From name is required"),
-});
-
-type SmtpForm = z.infer<typeof smtpSchema>;
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -131,29 +117,6 @@ function ClientSettingsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const smtpMutation = useMutation({
-    mutationFn: async (values: SmtpForm) => {
-      const { error } = await supabase.from("user_settings").upsert({
-        id: "default", // Assuming single user settings
-        smtp_host: values.host,
-        smtp_port: values.port,
-        smtp_username: values.username,
-        smtp_password: values.password,
-        smtp_from_email: values.from_email,
-        smtp_from_name: values.from_name,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      toast.success("SMTP settings saved");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to save SMTP settings", { description: message });
-    },
-  });
-
   const openMapMutation = useMutation({
     mutationFn: async () => {
       localStorage.setItem("openmap_maxCacheSize", openMapSettings.maxCacheSize.toString());
@@ -170,28 +133,6 @@ function ClientSettingsPage() {
     onError: (error) => {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
       toast.error("Failed to save OpenMap settings", { description: message });
-    },
-  });
-
-  const _testEmailMutation = useMutation({
-    mutationFn: async (recipient: string) => {
-      const response = await fetch("/api/send-test-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send test email");
-      }
-    },
-    onSuccess: () => {
-      toast.success("Test email sent successfully");
-      setTestRecipient("");
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to send test email", { description: message });
     },
   });
 
@@ -232,28 +173,12 @@ function ClientSettingsPage() {
     return groups;
   }, [settings]);
 
-  const smtpForm = useForm<SmtpForm>({
-    resolver: zodResolver(smtpSchema),
-    defaultValues: {
-      host: (settings.smtp_host as string) || "",
-      port: (settings.smtp_port as number) || 587,
-      username: (settings.smtp_username as string) || "",
-      password: (settings.smtp_password as string) || "",
-      from_email: (settings.smtp_from_email as string) || "",
-      from_name: (settings.smtp_from_name as string) || "",
-    },
-  });
-
   const clearCache = () => {
     localStorage.removeItem("openmap-poi-cache");
     if (confirm("Clear POI cache and reload the page to apply changes?")) {
       window.location.reload();
     }
   };
-
-  const _onSmtpSubmit = smtpForm.handleSubmit((data) => {
-    smtpMutation.mutate(data);
-  });
 
   useEffect(() => {
     loadFromLocalStorage();
