@@ -47,7 +47,7 @@ export default function RecipientSelector({
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-6">
+      <CardHeader className="pb-4">
         <CardTitle>Empfänger</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-8">
