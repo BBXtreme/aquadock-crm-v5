@@ -1,22 +1,18 @@
 // src/app/(protected)/mass-email/ClientMassEmailPage.tsx
-// This file defines the ClientMassEmailPage component, which allows users to create and send mass email campaigns to their contacts or companies.
-// It includes recipient selection, email template selection, live preview, and progress tracking for sending emails.
-
 "use client";
 
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, Plus, Send, TestTube, Users } from "lucide-react";
+import { Plus, Send, TestTube, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -50,9 +46,7 @@ export default function ClientMassEmailPage() {
 
   useEffect(() => {
     const client = createClient();
-    client.auth.getUser().then(({ data }) => {
-      setCurrentUser(data.user);
-    });
+    client.auth.getUser().then(({ data }) => setCurrentUser(data.user));
   }, []);
 
   // Templates
@@ -84,10 +78,9 @@ export default function ClientMassEmailPage() {
 
   const handleSend = async (isTest = false) => {
     if (!currentUser) {
-      toast.error("Benutzer nicht authentifiziert. Bitte melden Sie sich an.");
+      toast.error("Benutzer nicht authentifiziert.");
       return;
     }
-
     if (!isTest && selectedRecipientIds.length === 0) {
       toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
@@ -109,14 +102,11 @@ export default function ClientMassEmailPage() {
       setProgress(100);
 
       toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
-
-      if (result.failed > 0) {
-        toast.warning(`${result.failed} E-Mails konnten nicht gesendet werden.`);
-      }
+      if (result.failed > 0) toast.warning(`${result.failed} E-Mails fehlgeschlagen.`);
 
       setSelectedRecipientIds([]);
-    } catch (error: unknown) {
-      toast.error("Versand fehlgeschlagen", { description: (error as Error).message });
+    } catch (error: any) {
+      toast.error("Versand fehlgeschlagen", { description: error.message });
     } finally {
       setTimeout(() => setShowProgress(false), 1500);
     }
@@ -131,7 +121,8 @@ export default function ClientMassEmailPage() {
   };
 
   // Live preview
-  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) || { name: "Max Mustermann", firmenname: "Beispiel GmbH" };
+  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) || 
+    { name: "Max Mustermann", firmenname: "Beispiel GmbH" };
   const previewSubject = fillPlaceholders(subject, previewRecipient);
   const previewBody = fillPlaceholders(body, previewRecipient);
 
@@ -147,182 +138,194 @@ export default function ClientMassEmailPage() {
         </Badge>
       </div>
 
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recipient Selection Card */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Empfänger</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Mode + Search */}
-              <div className="flex gap-3">
-                <Button variant={mode === "contacts" ? "default" : "outline"} onClick={() => setMode("contacts")} className="flex-1">
-                  Kontakte
-                </Button>
-                <Button variant={mode === "companies" ? "default" : "outline"} onClick={() => setMode("companies")} className="flex-1">
-                  Firmen
-                </Button>
-              </div>
-
-              <Input placeholder="Name, E-Mail oder Firma suchen..." value={search} onChange={(e) => setSearch(e.target.value)} />
-
-              <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={handleSelectAll} size="sm">
-                  {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
-                </Button>
-                <span className="text-sm text-muted-foreground">{recipients.length} Empfänger gefunden</span>
-              </div>
-
-              <ScrollArea className="h-80 border rounded-md">
-                {isLoading ? (
-                  <div className="p-4">Lade Empfänger...</div>
-                ) : (
-                  recipients.map((rec) => (
-                    <label htmlFor={rec.id} key={rec.id} className="flex items-center gap-4 px-6 py-4 hover:bg-accent cursor-pointer border-b last:border-0">
-                      <Checkbox
-                        id={rec.id}
-                        checked={selectedRecipientIds.includes(rec.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) setSelectedRecipientIds((prev) => [...prev, rec.id]);
-                          else setSelectedRecipientIds((prev) => prev.filter((id) => id !== rec.id));
-                        }}
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium">{rec.name}</div>
-                        <div className="text-sm text-muted-foreground">{rec.email}</div>
-                      </div>
-                    </label>
-                  ))
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-
-          {/* Compose Card */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>E-Mail erstellen</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 p-8">
-              <div>
-                <Label className="mb-2">Vorlage</Label>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Vorlage auswählen" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {templates.map((t: EmailTemplate) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Link href="/mass-email/templates">
-                    <Button variant="outline" className="h-8">
-                      <Plus className="h-4 w-4 mr-1" />
-                      Neue Vorlage
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              <div>
-                <Label className="mb-2">Betreff</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Betreff" />
-              </div>
-
-              <div>
-                <Label className="mb-2">Inhalt (HTML unterstützt)</Label>
-                <Textarea
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={12}
-                  placeholder="Verwenden Sie {{vorname}}, {{firmenname}}, {{anrede}} ..."
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Preview Column */}
-        <Card className="sticky top-6">
+      {/* First Row: Empfänger + E-Mail erstellen */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Empfänger Card */}
+        <Card className="h-full">
           <CardHeader>
-            <CardTitle>Live-Vorschau</CardTitle>
+            <CardTitle>Empfänger</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="preview" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="preview">Vorschau</TabsTrigger>
-                <TabsTrigger value="raw">Quelltext</TabsTrigger>
-              </TabsList>
-              <TabsContent value="preview" className="min-h-[500px]">
-                <div className="border rounded-lg p-6 bg-card h-full">
-                  <div className="space-y-4">
-                    <div className="border-b pb-3 mb-4">
-                      <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
-                      <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
-                    </div>
-                    <div className="border-b pb-3">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
-                      <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
-                    </div>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
-                      {previewBody || "Kein Inhalt"}
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="raw" className="min-h-[500px]">
-                <ScrollArea className="h-full border rounded p-4 bg-muted">
-                  <strong>Betreff:</strong> {previewSubject}
-                  <br /><br />
-                  <strong>Inhalt:</strong>
-                  <pre>{previewBody}</pre>
-                </ScrollArea>
-              </TabsContent>
-            </Tabs>
-
-            <Separator className="my-6" />
-
+          <CardContent className="space-y-4">
             <div className="flex gap-3">
-              <Button onClick={() => handleSend(false)} disabled={selectedRecipientIds.length === 0} className="flex-1">
-                <Send className="mr-2 h-4 w-4" />
-                Senden ({selectedRecipientIds.length})
+              <Button 
+                variant={mode === "contacts" ? "default" : "outline"} 
+                onClick={() => setMode("contacts")} 
+                className="flex-1"
+              >
+                Kontakte
               </Button>
-              <Button variant="outline" onClick={() => handleSend(true)} className="flex-1">
-                <TestTube className="mr-2 h-4 w-4" />
-                Testsendung
+              <Button 
+                variant={mode === "companies" ? "default" : "outline"} 
+                onClick={() => setMode("companies")} 
+                className="flex-1"
+              >
+                Firmen
               </Button>
+            </div>
+
+            <Input 
+              placeholder="Name, E-Mail oder Firma suchen..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
+
+            <div className="flex justify-between items-center">
+              <Button variant="outline" onClick={handleSelectAll} size="sm">
+                {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
+              </Button>
+              <span className="text-sm text-muted-foreground">{recipients.length} gefunden</span>
+            </div>
+
+            <ScrollArea className="h-96 border rounded-md">
+              {isLoading ? (
+                <div className="p-8 text-center">Lade Empfänger...</div>
+              ) : (
+                recipients.map((rec) => (
+                  <label key={rec.id} className="flex items-center gap-4 px-6 py-4 hover:bg-accent cursor-pointer border-b last:border-0">
+                    <Checkbox
+                      checked={selectedRecipientIds.includes(rec.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) setSelectedRecipientIds(prev => [...prev, rec.id]);
+                        else setSelectedRecipientIds(prev => prev.filter(id => id !== rec.id));
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{rec.name}</div>
+                      <div className="text-sm text-muted-foreground truncate">{rec.email}</div>
+                    </div>
+                  </label>
+                ))
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* E-Mail erstellen Card */}
+        <Card className="h-full">
+          <CardHeader>
+            <CardTitle>E-Mail erstellen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <Label className="mb-2 block">Vorlage</Label>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Vorlage auswählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((t: EmailTemplate) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link href="/mass-email/templates">
+                  <Button variant="outline" className="h-10">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Neue Vorlage
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-2 block">Betreff</Label>
+              <Input 
+                value={subject} 
+                onChange={(e) => setSubject(e.target.value)} 
+                placeholder="Betreff der E-Mail" 
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 block">Inhalt (HTML unterstützt)</Label>
+              <Textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={10}
+                placeholder="Verwenden Sie {{vorname}}, {{firmenname}}, {{anrede}} ..."
+              />
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Second Row: Live-Vorschau (full width, taller) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Live-Vorschau</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="preview" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="preview">Vorschau</TabsTrigger>
+              <TabsTrigger value="raw">Quelltext</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="preview" className="min-h-[420px]">
+              <div className="border rounded-xl p-8 bg-card h-full">
+                <div className="space-y-6">
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Betreff:</div>
+                    <div className="font-bold text-xl leading-tight">
+                      {previewSubject || "Kein Betreff"}
+                    </div>
+                  </div>
+                  <div className="prose dark:prose-invert text-[15px] leading-relaxed whitespace-pre-wrap">
+                    {previewBody || "Kein Inhalt"}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="raw" className="min-h-[420px]">
+              <ScrollArea className="h-[420px] border rounded-xl p-6 bg-muted">
+                <strong>Betreff:</strong> {previewSubject}
+                <br /><br />
+                <strong>Inhalt:</strong>
+                <pre className="mt-4 whitespace-pre-wrap">{previewBody}</pre>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+
+          <Separator className="my-8" />
+
+          <div className="flex gap-4">
+            <Button 
+              onClick={() => handleSend(false)} 
+              disabled={selectedRecipientIds.length === 0} 
+              className="flex-1"
+              size="lg"
+            >
+              <Send className="mr-2 h-5 w-5" />
+              Senden ({selectedRecipientIds.length})
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => handleSend(true)} 
+              className="flex-1"
+              size="lg"
+            >
+              <TestTube className="mr-2 h-5 w-5" />
+              Testsendung
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Progress Dialog */}
       <Dialog open={showProgress} onOpenChange={setShowProgress}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>E-Mails werden versendet...</DialogTitle>
-            <DialogDescription>
-              Ihre E-Mails werden im Hintergrund versendet. Bitte warten Sie, bis der Vorgang abgeschlossen ist.
-            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-6">
             <Progress value={progress} className="h-2" />
             <p className="text-center text-sm text-muted-foreground">
               {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.failed} Fehler` : "Bitte warten..."}
             </p>
-            {sendResults && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>Details im Versandlog verfügbar.</AlertDescription>
-              </Alert>
-            )}
           </div>
         </DialogContent>
       </Dialog>
