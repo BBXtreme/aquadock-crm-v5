@@ -35,7 +35,6 @@ export default function SmtpSettings() {
   }, []);
 
   const loadConfig = useCallback(async () => {
-    if (!currentUser) return;
     setIsLoadingConfig(true);
     try {
       const { getSmtpConfig } = await import("@/lib/supabase/services/smtp");
@@ -64,11 +63,11 @@ export default function SmtpSettings() {
     } finally {
       setIsLoadingConfig(false);
     }
-  }, [currentUser]);
+  }, []);
 
   useEffect(() => {
-    loadConfig();
-  }, [loadConfig]);
+    if (currentUser) loadConfig();
+  }, [currentUser]);
 
   const handleSave = async () => {
     setIsSaving(true);
