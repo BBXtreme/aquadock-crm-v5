@@ -30,7 +30,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
   const _router = useRouter();
 
-  const userRole = user.role;
+  const _userRole = user.role;
 
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
