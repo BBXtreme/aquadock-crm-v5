@@ -548,23 +548,6 @@ function ClientSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Danger Zone */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
-          <CardHeader>
-            <CardTitle>Danger Zone</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Delete Account</Label>
-              <p className="text-muted-foreground text-sm">Permanently delete your account and all data</p>
-              <Button variant="destructive" size="sm">
-                Delete Account
-              </Button>
-            </div>
-            <p className="text-red-600 text-sm">This action cannot be undone</p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
