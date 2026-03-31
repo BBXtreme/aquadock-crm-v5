@@ -1,3 +1,8 @@
+// src/components/features/profile/ProfileForm.tsx
+// Client Component for Profile Form
+// This component renders a form for updating the user's display name and uploading a profile picture (upload functionality is not implemented yet).
+// It uses React Hook Form for form state management and Zod for validation. The form includes loading states and displays success or error toasts based on the outcome of the update operation.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Database } from "@/lib/supabase/database.types";
-import { updateDisplayName } from "./actions";
+import { updateDisplayName } from "@/lib/supabase/services/profile";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -20,7 +25,7 @@ const displayNameSchema = z.object({
 
 type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
-export default function ProfileForm({ profile }: { profile: Profile }) {
+export default function ProfilForm({ profile }: { profile: Profile }) {
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<DisplayNameForm>({
