@@ -1,6 +1,3 @@
-// src/lib/supabase/services/send-mass-email.ts
-// This file contains the server action for sending mass emails using nodemailer and logging the results in the database.
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
