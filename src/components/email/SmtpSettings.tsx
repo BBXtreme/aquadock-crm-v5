@@ -77,7 +77,7 @@ export default function SmtpSettings() {
     setIsTesting(true);
     try {
       const { sendTestEmail } = await import("@/lib/supabase/services/send-test-email");
-      const result = await sendTestEmail(testEmail);
+      const _result = await sendTestEmail(testEmail);
       toast.success("Test-E-Mail erfolgreich gesendet!", { description: `An ${testEmail}` });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Test fehlgeschlagen";
