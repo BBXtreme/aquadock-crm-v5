@@ -157,10 +157,10 @@ export default function SmtpSettings() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={handleTest} disabled={isTesting || !testEmail} className="flex-1">
+            <Button onClick={handleTest} className="flex-1">
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving || !testSuccessful} className="flex-1">
+            <Button onClick={handleSave} className="flex-1">
               {isSaving ? "Speichere..." : "Konfiguration speichern"}
             </Button>
           </div>
