@@ -139,8 +139,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                           onClick={() => setDeleteUserId(u.id)}
                           disabled={loadingDelete === u.id}
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
