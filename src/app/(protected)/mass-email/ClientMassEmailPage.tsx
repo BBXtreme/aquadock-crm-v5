@@ -89,11 +89,11 @@ export default function ClientMassEmailPage() {
 
     try {
       const result = await sendMassEmailAction({
-        recipientIds: isTest ? [] : selectedRecipientIds,
         mode,
         subject,
         body,
         delayMs: 800,
+        ...(mode === "contacts" ? { contact_ids: selectedRecipientIds } : { company_ids: selectedRecipientIds }),
       });
 
       setSendResults(result);

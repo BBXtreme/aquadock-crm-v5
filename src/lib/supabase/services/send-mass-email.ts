@@ -64,7 +64,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   const delay = input.delayMs || 1500;
   let sent = 0;
-  let errors = 0;
+  let failed = 0;
 
   for (const rec of selectedRecipients) {
     try {
@@ -81,10 +81,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       // Log successful send
       await createEmailLog(
         {
-          template_name: input.subject ? "Massenmail" : undefined,
           recipient_email: rec.email,
-          recipient_name: rec.name,
           subject: finalSubject,
+          body: finalBody,
           status: "sent",
         },
         supabase
@@ -92,18 +91,16 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
       sent++;
     } catch (err: unknown) {
-      errors++;
+      failed++;
 
       const errorMessage = err instanceof Error ? err.message : String(err);
 
       await createEmailLog(
         {
-          template_name: "Massenmail",
           recipient_email: rec.email,
-          recipient_name: rec.name,
           subject: input.subject,
+          body: errorMessage,
           status: "error",
-          error_msg: errorMessage,
         },
         supabase
       );
@@ -120,7 +117,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   return {
     success: true,
     sent,
-    errors,
+    failed,
     total: selectedRecipients.length,
     message: `${sent} von ${selectedRecipients.length} E-Mails versendet.`,
   };
