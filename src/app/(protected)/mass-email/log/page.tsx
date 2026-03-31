@@ -1,4 +1,6 @@
 // src/app/(protected)/mass-email/log/page.tsx
+// This file defines the EmailLogPage component, which displays a log of all sent emails in the application. It allows users to filter by status (sent or error) and search by recipient email or subject.
+
 "use client";
 
 import { useQuery } from "@tanstack/react-query";

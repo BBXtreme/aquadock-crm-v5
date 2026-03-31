@@ -47,10 +47,10 @@ export default function RecipientSelector({
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-1">
         <CardTitle>Empfänger</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 p-8">
+      <CardContent className="space-y-6 p-6">
         <div className="flex gap-3">
           <Button
             variant={mode === "contacts" ? "default" : "outline"}

@@ -1,4 +1,4 @@
-// src/app/(protected)/mass-email/templates/TemplatesClient.tsx
+// src/components/tables/TemplatesClient.tsx
 // This file defines the TemplatesClient component, handling the interactive parts of the templates management page.
 
 "use client";

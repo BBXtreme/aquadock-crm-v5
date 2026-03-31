@@ -1,3 +1,6 @@
+// src/app/(protected)/settings/ClientSettingsPage.tsx
+// This file defines the ClientSettingsPage component, which is the main settings page for the application. It includes sections for notifications, appearance, OpenMap settings, and SMTP email settings. Users can configure their preferences and save them, with changes being persisted to the database and local storage as needed.
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
