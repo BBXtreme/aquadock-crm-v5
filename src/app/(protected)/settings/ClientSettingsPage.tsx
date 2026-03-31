@@ -2,15 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Eye, EyeOff, Mail, MapPin, Palette, Send, Trash2 } from "lucide-react";
+import { Bell, MapPin, Palette, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
+import SmtpSettings from "@/components/email/SmtpSettings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,7 +17,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser-client";
-import SmtpSettings from "../mass-email/components/SmtpSettings";
 
 const smtpSchema = z.object({
   host: z.string().min(1, "Host is required"),
@@ -81,8 +79,8 @@ function ClientSettingsPage() {
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
   const [_userId, _setUserId] = useState<string | null>(null);
-  const [testRecipient, setTestRecipient] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [_testRecipient, setTestRecipient] = useState("");
+  const [_showPassword, _setShowPassword] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -172,7 +170,7 @@ function ClientSettingsPage() {
     },
   });
 
-  const testEmailMutation = useMutation({
+  const _testEmailMutation = useMutation({
     mutationFn: async (recipient: string) => {
       const response = await fetch("/api/send-test-email", {
         method: "POST",
@@ -250,7 +248,7 @@ function ClientSettingsPage() {
     }
   };
 
-  const onSmtpSubmit = smtpForm.handleSubmit((data) => {
+  const _onSmtpSubmit = smtpForm.handleSubmit((data) => {
     smtpMutation.mutate(data);
   });
 
