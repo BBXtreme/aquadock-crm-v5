@@ -8,6 +8,16 @@ import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
 import { getSmtpConfig } from "./smtp";
 
+function isValidEmail(email: string): boolean {
+  if (!email || typeof email !== 'string') return false;
+  if (email.includes(' ')) return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return false;
+  const domain = email.split('@')[1];
+  if (!domain || domain.length < 3) return false;
+  return true;
+}
+
 type SendMassEmailInput = {
   subject: string;
   body: string;
@@ -57,6 +67,10 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   });
 
   if (input.testEmail) {
+    if (!isValidEmail(input.testEmail)) {
+      throw new Error("Ungültige E-Mail-Adresse für Testversand.");
+    }
+
     // Send test email
     const rec = { email: input.testEmail, id: 'test', name: 'Test User', firmenname: 'Test', vorname: 'Test' };
     const finalSubject = fillPlaceholders(input.subject, rec);
