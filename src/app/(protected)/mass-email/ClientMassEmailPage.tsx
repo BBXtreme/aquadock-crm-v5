@@ -1,4 +1,6 @@
 // src/app/(protected)/mass-email/ClientMassEmailPage.tsx
+// This file defines the ClientMassEmailPage component, which is the main page for sending mass emails in the application. It allows users to select recipients, choose email templates, compose their message, and send it out while showing progress and results.
+
 "use client";
 
 import type { User } from "@supabase/supabase-js";
