@@ -1,6 +1,4 @@
-// src/lib/supabase/services/profile.ts
-// This file contains server actions related to user profile management, including updating display names, changing user roles (admin only), triggering password resets (admin only), deleting users (admin only), and signing out.
-
+// src/app/(protected)/profile/actions.ts
 'use server';
 
 import { createClient } from "@supabase/supabase-js";
@@ -8,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
-// Server Action - Update Display Name (for current user)
+// Update current user's display name
 export async function updateDisplayName(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -21,59 +19,17 @@ export async function updateDisplayName(formData: FormData) {
     .update({ display_name })
     .eq("id", user.id);
 
-  if (error) {
-    console.error("Update display name error:", error);
-    throw new Error("Failed to update display name. Please try again.");
-  }
-
-  revalidatePath('/profile');
-}
-
-// Server Action - Update User Display Name (Admin only)
-export async function updateUserDisplayName(formData: FormData) {
-  const userSupabase = await createServerSupabaseClient();
-  const { data: { user: currentUser } } = await userSupabase.auth.getUser();
-  if (!currentUser) throw new Error("Not authenticated");
-
-  // Only allow admins
-  const { data: adminProfile } = await userSupabase
-    .from("profiles")
-    .select("role")
-    .eq("id", currentUser.id)
-    .single();
-
-  if (adminProfile?.role !== 'admin') {
-    throw new Error("Only admins can update user display names");
-  }
-
-  const userId = formData.get('userId') as string;
-  const display_name = formData.get('display_name') as string;
-
-  // Use service role
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
-
-  const { error } = await serviceSupabase
-    .from("profiles")
-    .update({ display_name })
-    .eq("id", userId);
-
   if (error) throw new Error("Failed to update display name");
 
   revalidatePath('/profile');
 }
 
-// Server Action - Change User Role (Admin only)
+// Change user role (Admin only)
 export async function changeUserRole(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
 
-  // Only allow admins to change roles
   const { data: adminProfile } = await supabase
     .from("profiles")
     .select("role")
@@ -87,13 +43,10 @@ export async function changeUserRole(formData: FormData) {
   const userId = formData.get('userId') as string;
   const newRole = formData.get('newRole') as 'user' | 'admin';
 
-  // Use service role client to bypass RLS for admin actions
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+  const serviceSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   const { error } = await serviceSupabase
     .from("profiles")
@@ -105,7 +58,7 @@ export async function changeUserRole(formData: FormData) {
   revalidatePath('/profile');
 }
 
-// Server Action - Trigger Password Reset (Admin only)
+// Trigger password reset (Admin only)
 export async function triggerPasswordReset(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -124,7 +77,7 @@ export async function triggerPasswordReset(formData: FormData) {
   revalidatePath('/profile');
 }
 
-// Server Action - Delete User (Admin only)
+// Delete user (Admin only)
 export async function deleteUser(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const { data: { user: currentUser } } = await supabase.auth.getUser();
@@ -132,14 +85,11 @@ export async function deleteUser(formData: FormData) {
 
   const userId = formData.get('userId') as string;
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
+  const serviceSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
-  // Delete from profiles table first
   const { error: profileError } = await serviceSupabase
     .from('profiles')
     .delete()
@@ -147,83 +97,13 @@ export async function deleteUser(formData: FormData) {
 
   if (profileError) throw profileError;
 
-  // Delete from auth.users
   const { error: authError } = await supabase.auth.admin.deleteUser(userId);
   if (authError) throw authError;
 
   revalidatePath('/profile');
 }
 
-// Server Action - Create New User (Admin only)
-export async function createUser(formData: FormData) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
-  if (!currentUser) throw new Error("Not authenticated");
-
-  // Only allow admins
-  const { data: adminProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", currentUser.id)
-    .single();
-
-  if (adminProfile?.role !== 'admin') {
-    throw new Error("Only admins can create users");
-  }
-
-  const email = formData.get('email') as string;
-  const display_name = formData.get('display_name') as string;
-  const role = formData.get('role') as 'user' | 'admin';
-
-  // Generate random password
-  const crypto = await import('node:crypto');
-  const randomPassword = crypto.randomBytes(16).toString('hex');
-
-  // Use service role client for all admin operations to ensure consistency and bypass RLS
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error("Missing required environment variables");
-  }
-  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
-
-  const { data, error } = await serviceSupabase.auth.admin.createUser({
-    email,
-    password: randomPassword,
-    user_metadata: { display_name }
-  });
-
-  if (error) throw new Error("Failed to create user");
-
-  // Insert profile with fallback default values for all required fields
-  const profileData = {
-    id: data.user.id,
-    role: role || 'user', // Fallback to 'user' if not provided
-    display_name: display_name || null, // Nullable field
-  };
-
-  console.log("Inserting profile:", profileData);
-
-  const { error: profileError } = await serviceSupabase
-    .from("profiles")
-    .insert(profileData);
-
-  if (profileError) {
-    console.error("Profile insert error:", profileError);
-    throw new Error(`Failed to create profile for user ${email}: ${profileError.message}`);
-  }
-
-  // Send password reset email
-  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email);
-  if (resetError) {
-    console.error("Failed to send reset email:", resetError);
-    // Don't throw, user is created
-  }
-
-  revalidatePath('/profile');
-}
-
-// Server Action - Sign Out
+// Sign Out
 export async function signOut() {
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut();
