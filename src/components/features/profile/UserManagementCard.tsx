@@ -95,7 +95,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       formData.append('display_name', createDisplayName);
       formData.append('role', createRole);
       await createUser(formData);
-      toast.success("User created successfully. Password reset email sent.");
+      toast.success("User created successfully.");
       setCreateDialogOpen(false);
       setCreateEmail('');
       setCreateDisplayName('');

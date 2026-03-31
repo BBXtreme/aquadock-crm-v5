@@ -200,7 +200,10 @@ export async function createUser(formData: FormData) {
 
   // Send password reset email
   const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
-  if (resetError) throw new Error("Failed to send reset email");
+  if (resetError) {
+    console.error("Failed to send reset email:", resetError);
+    // Don't throw, user is created
+  }
 
   revalidatePath('/profile');
 }
