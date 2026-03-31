@@ -161,7 +161,7 @@ export async function getMassEmailRecipients(
 
     if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:contacts');
 
-    type ContactWithCompany = {
+    type RawContact = {
       id: string;
       vorname: string | null;
       nachname: string | null;
@@ -170,7 +170,7 @@ export async function getMassEmailRecipients(
       companies: { id: string; firmenname: string };
     };
 
-    return (data ?? []).map((c: ContactWithCompany) => ({
+    return (data as RawContact[]).map((c: RawContact) => ({
       id: c.id,
       name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
       email: c.email,

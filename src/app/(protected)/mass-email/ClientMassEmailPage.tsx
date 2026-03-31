@@ -145,8 +145,8 @@ export default function ClientMassEmailPage() {
               <ScrollArea className="h-80 border rounded-md p-2">
                 {recipientsLoading ? (
                   <div className="space-y-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Skeleton key={`skeleton-${i + 1}`} className="h-10 w-full" />
+                    {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4", "skeleton-5"].map((key) => (
+                      <Skeleton key={key} className="h-10 w-full" />
                     ))}
                   </div>
                 ) : recipients.length === 0 ? (
