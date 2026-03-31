@@ -412,14 +412,14 @@ export default function ClientMassEmailPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="animate-pulse">
                   <CardHeader>
-                    <div className="h-4 bg-muted rounded"></div>
+                    <div className="h-4 bg-muted rounded" />
                   </CardHeader>
                   <CardContent>
-                    <div className="h-3 bg-muted rounded mb-2"></div>
-                    <div className="h-3 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded mb-2" />
+                    <div className="h-3 bg-muted rounded w-3/4" />
                   </CardContent>
                   <CardFooter>
-                    <div className="h-8 bg-muted rounded w-full"></div>
+                    <div className="h-8 bg-muted rounded w-full" />
                   </CardFooter>
                 </Card>
               ))}
