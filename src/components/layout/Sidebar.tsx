@@ -1,105 +1,134 @@
 "use client";
 
-import { Bell, Building, Clock, Home, Mail, Map as MapIcon, Menu, Users } from "lucide-react";
+import {
+  Anchor,
+  BarChart3,
+  Building,
+  ChevronDown,
+  FileText,
+  Mail,
+  MapPin,
+  PanelLeft,
+  PanelRight,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-
+import { usePathname, useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { APP_VERSION } from "@/lib/version"; // ← this line was missing
+import { APP_VERSION } from "@/lib/version";
 
 interface SidebarProps {
   isCollapsed: boolean;
-  isMobile: boolean;
   onToggle: () => void;
+  user: { role: string; display_name?: string | null };
 }
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/companies", label: "Companies", icon: Building },
-  { href: "/contacts", label: "Contacts", icon: Users },
-  { href: "/timeline", label: "Timeline", icon: Clock },
-  { href: "/reminders", label: "Reminders", icon: Bell },
-  { href: "/mass-email", label: "Mass Email", icon: Mail },
-  { href: "/openmap", label: "OpenMap", icon: MapIcon },
-];
-
-export default function Sidebar({ isCollapsed, isMobile, onToggle }: SidebarProps) {
+export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
+  const _router = useRouter();
 
-  const sidebarContent = (
-    <div className="flex h-full flex-col">
-      {/* Header / Toggle */}
-      <div className="p-4">
-        <Button variant="ghost" onClick={onToggle} className="mb-4">
-          <Menu className="h-4 w-4" />
+  const _userRole = user.role;
+
+  const navigation = [
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Companies", href: "/companies", icon: Building },
+    { name: "Contacts", href: "/contacts", icon: Users },
+    { name: "Timeline", href: "/timeline", icon: FileText },
+    { name: "Reminders", href: "/reminders", icon: Anchor },
+    { name: "OpenMap", href: "/openmap", icon: MapPin },
+    { name: "Mass Email", href: "/mass-email", icon: Mail },
+  ];
+
+  const filteredNavigation = navigation;
+
+  return (
+    <div
+      className={cn(
+        "flex h-full flex-col border-r bg-background transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-16" : "w-64",
+      )}
+    >
+      <div className="flex h-16 items-center justify-center px-4 flex-shrink-0">
+        <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
+          {isCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4">
-        <ul className="space-y-2">
-          {navItems.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href}>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start rounded-md transition-colors hover:bg-muted/50",
-                    pathname === item.href && "bg-accent text-accent-foreground",
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {!isCollapsed && <span className="ml-2">{item.label}</span>}
-                </Button>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <div className="border-b flex-shrink-0" />
+
+      <nav className={cn("flex-1 space-y-1 p-4", !isCollapsed && "overflow-y-auto")} suppressHydrationWarning={true}>
+        {filteredNavigation.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link key={item.name} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start h-10 px-3 transition-colors",
+                  isCollapsed && "px-2 justify-center",
+                  isActive && "bg-secondary text-secondary-foreground shadow-sm",
+                )}
+              >
+                <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
+                {!isCollapsed && (
+                  <span className="flex-1 text-left truncate">{item.name}</span>
+                )}
+              </Button>
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* VERSION BADGE – BOTTOM OF SIDEBAR */}
-      <div className="mt-auto border-t p-4">
-        <div key={APP_VERSION} className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-          {!isCollapsed && (
-            <>
-              <span>CRM v{APP_VERSION}</span>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
-                {isCollapsed ? "→" : "←"}
+      <div className="border-t flex-shrink-0" />
+
+      {!isCollapsed && (
+        <div className="p-4 flex-shrink-0">
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-start h-10 px-3">
+                <span className="flex-1 text-left">Quick Actions</span>
+                <ChevronDown className="h-4 w-4" />
               </Button>
-            </>
-          )}
-          {isCollapsed && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onToggle}>
-              →
-            </Button>
-          )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1 pt-2">
+              <Link href="/companies?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Company
+                </Button>
+              </Link>
+              <Link href="/contacts?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Contact
+                </Button>
+              </Link>
+              <Link href="/reminders?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Reminder
+                </Button>
+              </Link>
+              <Link href="/timeline?create=true">
+                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                  New Timeline
+                </Button>
+              </Link>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
+      )}
+
+      <div className="border-t flex-shrink-0" />
+
+      <div className={cn("p-4 flex flex-shrink-0", isCollapsed ? "flex-col items-center space-y-2" : "justify-between items-center")}>
+        <Badge variant="outline" className="text-xs capitalize">
+          {user.role}
+        </Badge>
+        <Badge variant="outline" className="text-xs">
+          v{APP_VERSION}
+        </Badge>
       </div>
     </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" className="fixed top-4 left-4 z-50">
-            <Menu className="h-4 w-4" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-64">
-          {sidebarContent}
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  return (
-    <aside
-      className={`fixed left-0 top-0 h-screen z-40 bg-muted transition-all duration-300 ${isCollapsed ? "w-16" : "w-40"}`}
-    >
-      {sidebarContent}
-    </aside>
   );
 }

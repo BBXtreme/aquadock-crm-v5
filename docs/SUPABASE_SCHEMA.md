@@ -7,6 +7,30 @@
 **Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
 **Service layer**: `src/lib/supabase/services/*.ts`
 
+
+
+## Authentication & Authorization
+
+### Route Structure 
+
+- Public routes: `(auth)/login` 
+- Protected routes: `(protected)/...` with dedicated layout 
+- All protected pages must call `await requireUser()` before data access
+
+### Profiles Table (Source of Truth for Roles) 
+
+```sql
+CREATE TABLE public.profiles (
+  id uuid REFERENCES auth.users NOT NULL PRIMARY KEY,
+  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  display_name text,
+  avatar_url text,
+  updated_at timestamp with time zone DEFAULT now()
+);
+```
+
+
+
 ## 1. Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
@@ -18,6 +42,7 @@
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
+| ofiles          | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
 
 ## 2. Core Tables – Column Overview
 
@@ -126,6 +151,20 @@
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
+### profiles
+
+| Column       | Type        | Nullable | Default | Business Meaning         | Notes / Index    |
+| ------------ | ----------- | -------- | ------- | ------------------------ | ---------------- |
+| id           | uuid        | false    | —       | References auth.users.id | PK, FK           |
+| role         | text        | false    | 'user'  | User role (user / admin) | CHECK constraint |
+| display_name | text        | true     | —       | Display name for UI      | —                |
+| avatar_url   | text        | true     | —       | Profile picture URL      | —                |
+| created_at   | timestamptz | false    | now()   | Creation timestamp       | —                |
+| updated_at   | timestamptz | false    | now()   | Last update timestamp    | —                |
+
+**Constraints**: `role` must be 'user' or 'admin'
+**RLS**: Users can view/update own profile. Admins can view all profiles.
+
 ## 3. Important Enums & Constraints
 
 - `companies.status`: `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren'`
@@ -194,3 +233,5 @@ export async function getCompanies(userId: string): Promise<Company[]> {
 2026-03-25 Completed RLS summary and performance indexes
 2026-03-26 Final audit and type safety notes
 2026-03-27 Added user_settings table
+
+2026-03-30 Added `profiles` table for role management (user/admin) – long-term clean auth architecture

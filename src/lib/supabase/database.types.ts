@@ -2,23 +2,8 @@
 // Database type definitions for Supabase
 // This file is generated based on the database schema and includes
 // TypeScript interfaces for the tables, as well as types for inserts
-// and updates. It also includes some additional types for specific
-// use cases in the app, such as KPI and timeline entries with joins.
-// The types are designed to be used throughout the app wherever database
-// interactions occur, ensuring type safety and consistency when working
-// with data from Supabase.
-// The `Database` interface defines the structure of the database,
-// including
-// the tables and their respective row, insert, and update types.
-// The individual table types (e.g., `Company`, `Contact`, etc.) are
-// exported for convenience and can be used directly in the app's logic
-// when working with data from those tables.
-// The additional types like `KPI` and `TimelineEntryWithJoins` are
-// defined to represent specific data structures that are used in the
-// app's UI or business logic, providing a clear contract for what data
-// is expected in those contexts.
+// and updates. The `profiles` table was added for role management (user/admin).
 
-// Database type definitions for Supabase
 export interface Database {
   public: {
     Tables: {
@@ -310,6 +295,33 @@ export interface Database {
           updated_at?: string | null;
         };
       };
+      // NEW: profiles table for role management
+      profiles: {
+        Row: {
+          id: string;
+          role: "user" | "admin";
+          display_name: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          role?: "user" | "admin";
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          role?: "user" | "admin";
+          display_name?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     // biome-ignore lint/complexity/noBannedTypes: Supabase generated type
     Views: {};
@@ -328,6 +340,7 @@ export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];   // ← NEW
 
 export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
 export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
@@ -343,7 +356,10 @@ export type EmailTemplateInsert = Database["public"]["Tables"]["email_templates"
 export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"]["Update"];
 export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
 export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
+// Additional app types
 export type KPI = {
   title: string;
   value: string | number;

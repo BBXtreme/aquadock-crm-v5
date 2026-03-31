@@ -38,7 +38,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
 
   const hasWaterInfo = localWater !== null && localWater.distance !== null;
 
-  const handleCalculateWater = async () => {
+  const _handleCalculateWater = async () => {
     if (hasWaterInfo) return;
 
     const lat = poi.lat || poi.center?.lat;
@@ -73,84 +73,84 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   };
 
   return (
-    <div className="min-w-[380px] space-y-3 text-sm p-3">
+    <div className="min-w-[320px] space-y-4 text-sm p-1">
       {/* Header */}
       <div>
         <div className="font-semibold text-base text-foreground">{name}</div>
-        <div className="text-muted-foreground text-xs mt-1 capitalize">{category}</div>
+        <p className="text-muted-foreground text-sm mt-1 capitalize">{category}</p>
       </div>
 
-      {/* Address */}
-      {fullAddress && (
-        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <span className="text-muted-foreground mt-0.5">📍</span>
-          <span>{fullAddress}</span>
-        </div>
-      )}
-
-      {/* Phone */}
-      {phone && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">📞</span>
-          <a href={`tel:${phone}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-            {phone}
-          </a>
-        </div>
-      )}
-
-      {/* Website */}
-      {website && (
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">🌐</span>
-          <a
-            href={website}
-            target="_blank"
-            rel="noopener"
-            className="text-blue-600 dark:text-blue-400 hover:underline truncate"
-          >
-            Website öffnen
-          </a>
-        </div>
-      )}
-
-      {/* Water Info - Prominent muted box */}
-      {hasWaterInfo && (
-        <div className="bg-muted/50 border border-muted rounded-md p-3 text-sm">
-          <div className="flex items-center gap-2 font-medium text-foreground">
-            <span className="text-lg">💧</span>
-            <span>
-              {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
-              {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
-            </span>
+      {/* Details */}
+      <div className="space-y-3">
+        {/* Address */}
+        {fullAddress && (
+          <div className="flex items-start gap-3 text-sm">
+            <span className="text-muted-foreground mt-0.5 flex-shrink-0">📍</span>
+            <span className="text-foreground">{fullAddress}</span>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Phone */}
+        {phone && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground flex-shrink-0">📞</span>
+            <a
+              href={`tel:${phone}`}
+              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+            >
+              {phone}
+            </a>
+          </div>
+        )}
+
+        {/* Website */}
+        {website && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground flex-shrink-0">🌐</span>
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener"
+              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors truncate"
+            >
+              Website öffnen
+            </a>
+          </div>
+        )}
+
+        {/* Water Info */}
+        {hasWaterInfo && (
+          <div className="bg-muted/50 border border-muted rounded-md p-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <span className="text-lg">💧</span>
+              <span>
+                {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
+                {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Actions */}
-      <div className="space-y-2 pt-2 border-t border-border">
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => onViewInOsm?.(osmUrl)}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            In OSM ansehen
-          </Button>
-
-          <Button size="sm" variant="default" className="flex-1" onClick={() => onImport?.(poi)}>
-            In CRM importieren
-          </Button>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-            onClick={handleCalculateWater}
-            disabled={hasWaterInfo}
-            type="button"
-          >
-            {hasWaterInfo ? "✅ Wasser-Info vorhanden" : "💧 Wasser-Info berechnen"}
-          </Button>
-        </div>
+      <div className="flex gap-2 pt-3 border-t border-border">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          onClick={() => onViewInOsm?.(osmUrl)}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          In OSM ansehen
+        </Button>
+        <Button
+          size="sm"
+          variant="default"
+          className="flex-1"
+          onClick={() => onImport?.(poi)}
+        >
+          In CRM importieren
+        </Button>
       </div>
     </div>
   );

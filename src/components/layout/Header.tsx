@@ -1,12 +1,15 @@
+// src/components/layout/Header.tsx
+// This component implements the header of the application, including the logo, search bar, theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
+
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import { Bell, LogOut, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,21 +25,20 @@ import { createClient } from "@/lib/supabase/browser-client";
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Calculate start and end of current week (Monday to Sunday)
+  // Reminder calculations (Monday–Sunday week)
   const now = new Date();
   const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+  startOfWeek.setDate(now.getDate() - now.getDay() + 1);
   startOfWeek.setHours(0, 0, 0, 0);
+
   const endOfWeek = new Date(startOfWeek);
   endOfWeek.setDate(startOfWeek.getDate() + 6);
   endOfWeek.setHours(23, 59, 59, 999);
@@ -53,7 +55,7 @@ export default function Header() {
         .lte("due_date", endOfWeek.toISOString());
       return count || 0;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: overdueRemindersCount = 0 } = useQuery({
@@ -67,12 +69,20 @@ export default function Header() {
         .lt("due_date", new Date().toISOString());
       return count || 0;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${isScrolled ? "shadow-md" : "shadow-sm"}`}
+      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${
+        isScrolled ? "shadow-md" : "shadow-sm"
+      }`}
     >
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
@@ -89,18 +99,21 @@ export default function Header() {
           </div>
         </Link>
       </div>
+
       <div className="mx-4 max-w-md flex-1">
         <div className="relative">
           <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
           <Input placeholder="Search..." className="pl-8" />
         </div>
       </div>
+
       <div className="flex items-center space-x-4">
         <Link href="/timeline?create=true">
           <Button variant="ghost" size="icon" aria-label="Create new timeline entry">
             <Plus className="h-4 w-4" />
           </Button>
         </Link>
+
         {overdueRemindersCount > 0 && (
           <Link href="/reminders?status=overdue">
             <Button variant="ghost" className="relative">
@@ -111,14 +124,18 @@ export default function Header() {
             </Button>
           </Link>
         )}
+
         {openRemindersCount > 0 && (
           <Link href="/reminders?status=open">
             <Button variant="ghost" className="relative">
               <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">{openRemindersCount}</Badge>
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
+                {openRemindersCount}
+              </Badge>
             </Button>
           </Link>
         )}
+
         <Button
           variant="ghost"
           size="icon"
@@ -126,13 +143,13 @@ export default function Header() {
           aria-label="Toggle theme"
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          <span className="sr-only">Toggle theme</span>
         </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                <AvatarImage src="/placeholder-avatar.png" alt="User" />
                 <AvatarFallback>U</AvatarFallback>
               </Avatar>
             </Button>
@@ -150,7 +167,13 @@ export default function Header() {
                 Settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Sign out</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleSignOut}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
