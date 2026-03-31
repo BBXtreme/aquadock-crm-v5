@@ -83,6 +83,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: finalSubject,
+          body: finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
         },
@@ -98,7 +99,8 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       await createEmailLog(
         {
           recipient_email: rec.email,
-          subject: input.subject,
+          subject: finalSubject,
+          body: finalBody,
           status: "error",
           error_msg: errorMessage,
         },
