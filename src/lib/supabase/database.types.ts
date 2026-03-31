@@ -1,6 +1,6 @@
 // src/lib/supabase/database.types.ts
-// Database type definitions for Supabase
-// Generated based on the provided schema - March 2026
+// Auto-generated database types for Supabase
+// Last generated: March 2026
 
 export interface Database {
   public: {
@@ -125,7 +125,7 @@ export interface Database {
           company_id?: string | null;
           anrede?: string | null;
           vorname?: string;
-          nachname: string;
+          nachname?: string;
           position?: string | null;
           email?: string | null;
           telefon?: string | null;
@@ -150,17 +150,21 @@ export interface Database {
           sent_at: string | null;
           created_at: string | null;
           updated_at: string | null;
+          user_id: string | null;
+          mode: string | null;
         };
         Insert: {
           template_name?: string | null;
           recipient_email: string;
           recipient_name?: string | null;
-          subject: string;
+          subject?: string;
           status?: string;
           error_msg?: string | null;
           sent_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          user_id?: string | null;
+          mode?: string | null;
         };
         Update: {
           id?: string;
@@ -173,6 +177,8 @@ export interface Database {
           sent_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
+          user_id?: string | null;
+          mode?: string | null;
         };
       };
       email_templates: {
@@ -305,7 +311,7 @@ export interface Database {
           id: string;
           user_id: string;
           key: string;
-          value: unknown;           // jsonb in DB → unknown in TS
+          value: unknown;
           created_at: string | null;
           updated_at: string | null;
         };
@@ -339,7 +345,7 @@ export interface Database {
   };
 }
 
-// Export common types
+// Common exported types
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
@@ -349,6 +355,7 @@ export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
 
+// Insert / Update types
 export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
 export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
 export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
@@ -366,7 +373,7 @@ export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Upda
 export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
 export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
 
-// Additional app types
+// Additional app-specific types
 export type KPI = {
   title: string;
   value: string | number;

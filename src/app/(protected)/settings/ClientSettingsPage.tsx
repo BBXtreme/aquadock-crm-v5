@@ -87,7 +87,7 @@ function ClientSettingsPage() {
   });
 
   const supabase = createClient();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");

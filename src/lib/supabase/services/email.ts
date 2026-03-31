@@ -234,7 +234,7 @@ export function isValidEmail(email: string): boolean {
 
 export async function hasMXRecords(domain: string): Promise<boolean> {
   try {
-    const { promises: dns } = await import('dns');
+    const { promises: dns } = await import('node:dns');
     const mx = await dns.resolveMx(domain);
     return mx && mx.length > 0;
   } catch {

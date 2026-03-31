@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Code, Copy, Eye, Send, MailCheck } from "lucide-react";
+import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

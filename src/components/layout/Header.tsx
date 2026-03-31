@@ -25,7 +25,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
