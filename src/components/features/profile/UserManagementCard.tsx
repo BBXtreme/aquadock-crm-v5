@@ -19,7 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { changeUserRole, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/supabase/services/profile";
 
 // Client Component for User Management
-function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string }[] }) {
+function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] }) {
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
@@ -116,6 +116,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                   <TableHead>Display Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Created At</TableHead>
+                  <TableHead>Updated At</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,6 +131,8 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                         {u.role}
                       </Badge>
                     </TableCell>
+                    <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
+                    <TableCell>{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button
