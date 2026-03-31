@@ -218,8 +218,9 @@ export default async function ProfilePage() {
   if (role === 'admin') {
     const { data: authUsers } = await supabase.auth.admin.listUsers();
     const { data: profiles } = await supabase.from('profiles').select('*');
+    const profilesArray = profiles || [];
     allUsers = authUsers.users.map(u => {
-      const profile = profiles.find(p => p.id === u.id);
+      const profile = profilesArray.find(p => p.id === u.id);
       return {
         id: u.id,
         email: u.email || '',
