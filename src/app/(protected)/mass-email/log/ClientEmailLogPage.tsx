@@ -4,6 +4,7 @@
 "use client";
 
 import { ArrowLeft, Mail } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
               <TableHead className="w-20">Modus</TableHead>
               <TableHead className="min-w-48">Empfänger</TableHead>
               <TableHead className="min-w-32">Betreff</TableHead>
+              <TableHead className="w-32">Vorlage</TableHead>
               <TableHead className="w-32">Datum</TableHead>
               <TableHead className="w-24">Status</TableHead>
             </TableRow>
@@ -79,7 +81,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
           <TableBody>
             {safeLogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
                 </TableCell>
               </TableRow>
@@ -94,8 +96,22 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                   <TableCell className="font-medium">
                     {log.recipient_name ? `${log.recipient_name} <${log.recipient_email}>` : log.recipient_email}
                   </TableCell>
-                  <TableCell className="truncate max-w-xs">
-                    {log.subject.length > 50 ? `${log.subject.substring(0, 50)}...` : log.subject}
+                  <TableCell className="max-w-xs">
+                    <div className="truncate">{log.subject.length > 50 ? `${log.subject.substring(0, 50)}...` : log.subject}</div>
+                    {log.status === "error" && log.error_msg && (
+                      <div className="text-xs text-red-500 mt-1 truncate">{log.error_msg}</div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {log.template_name ? (
+                      <Link href="/mass-email/templates">
+                        <Badge variant="secondary" className="cursor-pointer">
+                          {log.template_name}
+                        </Badge>
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     {log.sent_at ? new Date(log.sent_at).toLocaleString('de-DE') : log.created_at ? new Date(log.created_at).toLocaleString('de-DE') : 'Unbekannt'}
