@@ -220,7 +220,7 @@ export interface Database {
           recipient_email: string;
           subject: string;
           body: string;
-          status: string;
+          error_msg: string | null;
           sent_at: string | null;
           created_at: string | null;
           updated_at: string | null;
@@ -229,7 +229,7 @@ export interface Database {
           recipient_email: string;
           subject: string;
           body: string;
-          status?: string;
+          error_msg?: string | null;
           sent_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -239,7 +239,7 @@ export interface Database {
           recipient_email?: string;
           subject?: string;
           body?: string;
-          status?: string;
+          error_msg?: string | null;
           sent_at?: string | null;
           created_at?: string | null;
           updated_at?: string | null;
