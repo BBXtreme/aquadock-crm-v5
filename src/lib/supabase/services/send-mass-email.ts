@@ -6,7 +6,7 @@
 import nodemailer from "nodemailer";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
-import { EmailLogInsert } from "./email-log";
+import type { EmailLogInsert } from "./email-log";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
