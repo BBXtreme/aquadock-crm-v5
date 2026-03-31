@@ -128,7 +128,7 @@ export default function TemplatesClient() {
   };
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">E-Mail Vorlagen</h1>

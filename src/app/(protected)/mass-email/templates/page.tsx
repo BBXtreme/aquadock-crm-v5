@@ -1,12 +1,15 @@
-// src/app/(protected)/mass-email/templates/page.tsx
-// This file defines the TemplatesPage component, a professional page for managing email templates.
-// It uses a server component for authentication and a client component for interactivity.
-
+import { Suspense } from "react";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import TemplatesClient from "./TemplatesClient";
 
 export default async function TemplatesPage() {
   await requireUser();
 
-  return <TemplatesClient />;
+  return (
+    <div className="container mx-auto space-y-8 p-6 lg:p-8">
+      <Suspense fallback={<div>Loading templates...</div>}>
+        <TemplatesClient />
+      </Suspense>
+    </div>
+  );
 }
