@@ -55,10 +55,10 @@ export default function LivePreview({
 
         {/* Preview Content */}
         {previewTab === "preview" ? (
-          <div className="border rounded-3xl p-8 bg-card min-h-[560px] shadow-sm">
-            <div className="max-w-2xl mx-auto space-y-8">
+          <div className="border rounded-lg p-6 bg-white dark:bg-gray-900 min-h-[600px] shadow-lg mt-4">
+            <div className="max-w-3xl mx-auto space-y-6">
               {/* Email header */}
-              <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 border-b pb-4">
                 <div>
                   <span className="font-medium">Von:</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
                 </div>
@@ -68,22 +68,22 @@ export default function LivePreview({
               </div>
 
               {/* Subject */}
-              <div className="font-bold text-2xl leading-tight">
+              <div className="font-bold text-xl leading-tight text-gray-900 dark:text-gray-100">
                 {previewSubject || "Kein Betreff"}
               </div>
 
               {/* Body */}
-              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed whitespace-pre-wrap">
+              <div className="prose dark:prose-invert text-base leading-relaxed whitespace-pre-wrap text-gray-800 dark:text-gray-200">
                 {previewBody || "Kein Inhalt"}
               </div>
             </div>
           </div>
         ) : (
-          <ScrollArea className="min-h-[560px] border rounded-3xl p-8 bg-muted">
+          <ScrollArea className="min-h-[600px] border rounded-lg p-6 bg-gray-50 dark:bg-gray-800 mt-4">
             <strong>Betreff:</strong> {previewSubject}
             <br /><br />
             <strong>Inhalt:</strong>
-            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono">{previewBody}</pre>
+            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono text-gray-700 dark:text-gray-300">{previewBody}</pre>
           </ScrollArea>
         )}
 
