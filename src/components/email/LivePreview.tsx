@@ -3,9 +3,8 @@
 
 "use client";
 
-import { Code, Copy, Eye, Send, TestTube } from "lucide-react";
+import { Code, Eye, Send, TestTube } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,22 +27,12 @@ export default function LivePreview({
 }: LivePreviewProps) {
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
 
-  const copyToClipboard = async () => {
-    const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("In die Zwischenablage kopiert");
-    } catch (_err) {
-      toast.error("Kopieren fehlgeschlagen");
-    }
-  };
-
   return (
     <Card>
-      <CardHeader className="pb-6">
+      <CardHeader>
         <CardTitle>Live-Vorschau</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 p-8">
+      <CardContent>
         {/* Simple toggle */}
         <div className="flex border-b">
           <button
@@ -62,23 +51,14 @@ export default function LivePreview({
             <Code className="inline mr-2 h-4 w-4" />
             Quelltext
           </button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={copyToClipboard}
-            className="ml-4 px-3 py-1 h-auto text-xs"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Kopieren
-          </Button>
         </div>
 
         {/* Preview Content */}
         {previewTab === "preview" ? (
-          <div className="border rounded-lg p-8 bg-white dark:bg-gray-900 min-h-[600px] shadow-lg mt-6">
-            <div className="max-w-3xl mx-auto space-y-8">
+          <div className="border rounded-3xl p-8 bg-card min-h-[560px] shadow-sm">
+            <div className="max-w-2xl mx-auto space-y-8">
               {/* Email header */}
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 border-b pb-6">
+              <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
                 <div>
                   <span className="font-medium">Von:</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
                 </div>
@@ -88,22 +68,22 @@ export default function LivePreview({
               </div>
 
               {/* Subject */}
-              <div className="font-bold text-xl leading-tight text-gray-900 dark:text-gray-100">
+              <div className="font-bold text-2xl leading-tight">
                 {previewSubject || "Kein Betreff"}
               </div>
 
               {/* Body */}
-              <div className="prose dark:prose-invert text-base leading-relaxed whitespace-pre-wrap text-gray-800 dark:text-gray-200">
+              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed whitespace-pre-wrap">
                 {previewBody || "Kein Inhalt"}
               </div>
             </div>
           </div>
         ) : (
-          <ScrollArea className="min-h-[600px] border rounded-lg p-8 bg-white dark:bg-gray-900 mt-6">
+          <ScrollArea className="min-h-[560px] border rounded-3xl p-8 bg-muted">
             <strong>Betreff:</strong> {previewSubject}
             <br /><br />
             <strong>Inhalt:</strong>
-            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono text-gray-800 dark:text-gray-200">{previewBody}</pre>
+            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono">{previewBody}</pre>
           </ScrollArea>
         )}
 
