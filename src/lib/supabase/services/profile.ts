@@ -187,15 +187,23 @@ export async function createUser(formData: FormData) {
   }
   const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
 
+  // Step 1: Create the auth user
+  console.log("Creating auth user for:", email);
   const { data, error } = await serviceSupabase.auth.admin.createUser({
     email,
     password: randomPassword,
-    user_metadata: { display_name }
+    user_metadata: { display_name },
+    email_confirm: true // Automatically confirm email for smoother admin-created users
   });
 
-  if (error) throw new Error("Failed to create user");
+  if (error) {
+    console.error("Auth user creation error:", error);
+    throw new Error(`Failed to create auth user for ${email}: ${error.message}`);
+  }
 
-  // Insert profile with fallback default values for all required fields
+  console.log("Auth user created successfully:", data.user.id);
+
+  // Step 2: Create the profile
   const profileData = {
     id: data.user.id,
     role: role || 'user', // Fallback to 'user' if not provided
@@ -213,11 +221,15 @@ export async function createUser(formData: FormData) {
     throw new Error(`Failed to create profile for user ${email}: ${profileError.message}`);
   }
 
-  // Send password reset email
+  console.log("Profile created successfully");
+
+  // Step 3: Send password reset email
   const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email);
   if (resetError) {
     console.error("Failed to send reset email:", resetError);
     // Don't throw, user is created
+  } else {
+    console.log("Password reset email sent successfully");
   }
 
   revalidatePath('/profile');
