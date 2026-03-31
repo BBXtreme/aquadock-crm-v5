@@ -4,6 +4,7 @@
 "use server";
 
 import nodemailer from "nodemailer";
+import { promises as dns } from 'dns';
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
 import { getSmtpConfig } from "./smtp";
@@ -15,6 +16,15 @@ function isValidEmail(email: string): boolean {
   const domain = email.split('@')[1];
   if (!domain || domain.includes('..') || domain.startsWith('.') || domain.endsWith('.')) return false;
   return true;
+}
+
+async function hasMXRecords(domain: string): Promise<boolean> {
+  try {
+    const mx = await dns.resolveMx(domain);
+    return mx && mx.length > 0;
+  } catch {
+    return false;
+  }
 }
 
 type SendMassEmailInput = {
