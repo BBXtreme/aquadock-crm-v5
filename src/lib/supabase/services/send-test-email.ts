@@ -62,3 +62,24 @@ export async function sendTestEmail(toEmail: string) {
 
   return { success: true, message: `Test-E-Mail erfolgreich an ${toEmail} gesendet` };
 }
+
+export async function saveSmtpConfig(config: {
+  host: string;
+  port: string;
+  user: string;
+  password: string;
+  fromName: string;
+  secure: boolean;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Nicht authentifiziert");
+
+  await supabase.from("user_settings").upsert({
+    user_id: user.id,
+    key: "smtp_config",
+    value: JSON.stringify(config),
+  });
+
+  return { success: true };
+}

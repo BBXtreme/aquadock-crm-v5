@@ -23,14 +23,12 @@ export default function SmtpSettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
   const [testEmail, setTestEmail] = useState("");
 
   useEffect(() => {
     const client = createClient();
     client.auth.getUser().then(({ data }) => {
       setCurrentUser(data.user);
-      setLoadingUser(false);
     });
   }, []);
 
@@ -57,22 +55,15 @@ export default function SmtpSettings() {
   }, [currentUser]);
 
   const handleSave = async () => {
-    if (!currentUser) {
-      toast.error("Benutzer nicht authentifiziert");
-      return;
-    }
     setIsSaving(true);
     try {
-      const client = createClient();
+      const { saveSmtpConfig } = await import("@/lib/supabase/services/send-test-email");
       const config = { host, port, user, password, fromName, secure };
-      await client.from('user_settings').upsert({
-        user_id: currentUser.id,
-        key: 'smtp_config',
-        value: JSON.stringify(config),
-      });
+      await saveSmtpConfig(config);
       toast.success("SMTP-Konfiguration gespeichert");
-    } catch (_error) {
-      toast.error("Fehler beim Speichern");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Fehler beim Speichern";
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -166,7 +157,7 @@ export default function SmtpSettings() {
             <Button onClick={handleTest} disabled={isTesting || !testEmail} className="flex-1">
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving || loadingUser} className="flex-1">
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
               {isSaving ? "Speichere..." : "Konfiguration speichern"}
             </Button>
           </div>
