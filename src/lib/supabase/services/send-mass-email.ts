@@ -58,7 +58,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   if (input.testEmail) {
     // Send test email
-    const rec = { email: input.testEmail, id: 'test', firmenname: 'Test', vorname: 'Test' };
+    const rec = { email: input.testEmail, id: 'test', name: 'Test User', firmenname: 'Test', vorname: 'Test' };
     const finalSubject = fillPlaceholders(input.subject, rec);
     const finalBody = fillPlaceholders(input.body, rec);
 
