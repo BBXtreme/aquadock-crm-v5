@@ -6,7 +6,7 @@
 import nodemailer from "nodemailer";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
-import type { EmailLogInsert } from "./email-log";
+import type { Database } from "@/lib/supabase/database.types";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
@@ -25,6 +25,8 @@ type Recipient = {
   vorname?: string;
   nachname?: string;
 };
+
+type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
 
 export async function sendMassEmailAction(input: SendMassEmailInput) {
   const supabase = await createServerSupabaseClient();
