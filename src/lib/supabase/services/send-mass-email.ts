@@ -5,7 +5,7 @@
 
 import nodemailer from "nodemailer";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
+import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email-log";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
@@ -36,7 +36,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   }
 
   // Setup transporter
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     host: smtp.host,
     port: parseInt(String(smtp.port) || "587", 10),
     secure: smtp.secure === true || parseInt(String(smtp.port) || "587", 10) === 465,
@@ -67,8 +67,8 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   let errors = 0;
 
   for (const rec of selectedRecipients) {
-    let finalSubject: string;
-    let finalBody: string;
+    let finalSubject = "";
+    let finalBody = "";
 
     try {
       finalSubject = fillPlaceholders(input.subject, rec);
