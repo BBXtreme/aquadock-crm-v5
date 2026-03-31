@@ -10,11 +10,10 @@ import { getSmtpConfig } from "./smtp";
 
 function isValidEmail(email: string): boolean {
   if (!email || typeof email !== 'string') return false;
-  if (email.includes(' ')) return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) return false;
   const domain = email.split('@')[1];
-  if (!domain || domain.length < 3) return false;
+  if (!domain || domain.includes('..') || domain.startsWith('.') || domain.endsWith('.')) return false;
   return true;
 }
 
