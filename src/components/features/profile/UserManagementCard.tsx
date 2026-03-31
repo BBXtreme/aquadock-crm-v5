@@ -133,6 +133,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => { setEditUserId(u.id); setEditDisplayName(u.display_name || ''); }}
                           disabled={loadingEdit === u.id}
                         >
@@ -140,6 +141,7 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => handleChangeRole(u.id, u.role)}
                           disabled={loadingRole === u.id}
                         >
