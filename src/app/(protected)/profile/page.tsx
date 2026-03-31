@@ -106,6 +106,14 @@ export default async function ProfilePage() {
                   {role}
                 </Badge>
               </div>
+              <div className="text-center space-y-1 pt-4 border-t border-border/50 w-full">
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Created:</span> {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'N/A'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium">Last Updated:</span> {profileData.updated_at ? new Date(profileData.updated_at).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
