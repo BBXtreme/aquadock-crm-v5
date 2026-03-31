@@ -36,12 +36,16 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   const smtp = JSON.parse(settings.value);
 
+  if (!smtp.host || !smtp.port || !smtp.username || !smtp.password) {
+    throw new Error('SMTP-Konfiguration unvollständig. Bitte alle erforderlichen Felder ausfüllen.');
+  }
+
   const transporter = nodemailer.createTransport({
     host: smtp.host,
     port: smtp.port || 587,
     secure: smtp.secure || false,
     auth: {
-      user: smtp.user,
+      user: smtp.username,
       pass: smtp.password,
     },
   });
@@ -66,7 +70,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       const finalBody = fillPlaceholders(input.body, rec);
 
       await transporter.sendMail({
-        from: `"AquaDock CRM" <${smtp.user}>`,
+        from: `"${smtp.fromName || 'AquaDock CRM'}" <${smtp.username}>`,
         to: rec.email,
         subject: finalSubject,
         html: finalBody,
