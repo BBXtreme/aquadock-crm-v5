@@ -6,13 +6,14 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Send, TestTube, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,8 +44,14 @@ export default function ClientMassEmailPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sendResults, setSendResults] = useState<SendResults | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const _userId = "current-user-id"; // TODO: replace with real user from session in next phase
+  useEffect(() => {
+    const client = createClient();
+    client.auth.getUser().then(({ data }) => {
+      setCurrentUser(data.user);
+    });
+  }, []);
 
   // Templates
   const { data: templates = [] } = useQuery({
@@ -74,6 +81,11 @@ export default function ClientMassEmailPage() {
   };
 
   const handleSend = async (isTest = false) => {
+    if (!currentUser) {
+      toast.error("Benutzer nicht authentifiziert. Bitte melden Sie sich an.");
+      return;
+    }
+
     if (!isTest && selectedRecipientIds.length === 0) {
       toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
@@ -105,6 +117,14 @@ export default function ClientMassEmailPage() {
       toast.error("Versand fehlgeschlagen", { description: (error as Error).message });
     } finally {
       setTimeout(() => setShowProgress(false), 1500);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRecipientIds.length === recipients.length) {
+      setSelectedRecipientIds([]);
+    } else {
+      setSelectedRecipientIds(recipients.map((r) => r.id));
     }
   };
 
@@ -146,17 +166,23 @@ export default function ClientMassEmailPage() {
 
               <Input placeholder="Name, E-Mail oder Firma suchen..." value={search} onChange={(e) => setSearch(e.target.value)} />
 
+              <div className="flex justify-between items-center">
+                <Button variant="outline" onClick={handleSelectAll} size="sm">
+                  {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
+                </Button>
+                <span className="text-sm text-muted-foreground">{recipients.length} Empfänger gefunden</span>
+              </div>
+
               <ScrollArea className="h-80 border rounded-md">
                 {isLoading ? (
                   <div className="p-4">Lade Empfänger...</div>
                 ) : (
                   recipients.map((rec) => (
                     <label key={rec.id} className="flex items-center gap-3 px-4 py-3 hover:bg-accent cursor-pointer border-b last:border-0">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedRecipientIds.includes(rec.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSelectedRecipientIds((prev) => [...prev, rec.id]);
+                        onCheckedChange={(checked) => {
+                          if (checked) setSelectedRecipientIds((prev) => [...prev, rec.id]);
                           else setSelectedRecipientIds((prev) => prev.filter((id) => id !== rec.id));
                         }}
                       />
@@ -224,8 +250,15 @@ export default function ClientMassEmailPage() {
                   <TabsTrigger value="raw">Quelltext</TabsTrigger>
                 </TabsList>
                 <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[380px]">
-                  <div className="font-semibold mb-3">{previewSubject || "Kein Betreff"}</div>
-                  <div className="prose dark:prose-invert text-sm whitespace-pre-wrap">{previewBody}</div>
+                  <div className="space-y-4">
+                    <div className="border-b pb-2">
+                      <div className="text-sm font-medium text-muted-foreground">Betreff:</div>
+                      <div className="font-semibold text-lg">{previewSubject || "Kein Betreff"}</div>
+                    </div>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                      {previewBody || "Kein Inhalt"}
+                    </div>
+                  </div>
                 </TabsContent>
                 <TabsContent value="raw" className="mt-4">
                   <ScrollArea className="h-96 font-mono text-xs bg-muted p-4 rounded">
