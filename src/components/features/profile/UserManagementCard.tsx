@@ -6,7 +6,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Mail, Pencil, Shield, Trash2, Users } from "lucide-react";
+import { Loader2, Mail, Pencil, Plus, Shield, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { changeUserRole, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/supabase/services/profile";
+import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/supabase/services/profile";
 
 // Client Component for User Management
 function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] }) {
@@ -24,9 +25,14 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
   const [loadingEdit, setLoadingEdit] = useState<string | null>(null);
+  const [loadingCreate, setLoadingCreate] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [editDisplayName, setEditDisplayName] = useState('');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createEmail, setCreateEmail] = useState('');
+  const [createDisplayName, setCreateDisplayName] = useState('');
+  const [createRole, setCreateRole] = useState<'user' | 'admin'>('user');
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -81,6 +87,28 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
     }
   };
 
+  const handleCreateUser = async () => {
+    setLoadingCreate(true);
+    try {
+      const formData = new FormData();
+      formData.append('email', createEmail);
+      formData.append('display_name', createDisplayName);
+      formData.append('role', createRole);
+      await createUser(formData);
+      toast.success("User created successfully. Password reset email sent.");
+      setCreateDialogOpen(false);
+      setCreateEmail('');
+      setCreateDisplayName('');
+      setCreateRole('user');
+      queryClient.invalidateQueries();
+      router.refresh();
+    } catch (_error) {
+      toast.error("Failed to create user");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!deleteUserId) return;
     setLoadingDelete(deleteUserId);
@@ -102,11 +130,18 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
   return (
     <>
       <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
-        <CardHeader className="pb-6">
+        <CardHeader className="flex justify-between items-center pb-6">
           <CardTitle className="flex items-center text-xl">
             <Users className="mr-3 h-6 w-6 text-primary" />
             User Management
           </CardTitle>
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New User Account
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -186,6 +221,53 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New User Account</DialogTitle>
+            <DialogDescription>
+              Create a new user account. A password reset email will be sent to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              placeholder="Email"
+              type="email"
+            />
+            <Input
+              value={createDisplayName}
+              onChange={(e) => setCreateDisplayName(e.target.value)}
+              placeholder="Display name"
+            />
+            <Select value={createRole} onValueChange={(value: 'user' | 'admin') => setCreateRole(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={loadingCreate}
+            >
+              {loadingCreate ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Create User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!editUserId} onOpenChange={() => setEditUserId(null)}>
         <DialogContent>

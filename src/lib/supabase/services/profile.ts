@@ -154,6 +154,57 @@ export async function deleteUser(formData: FormData) {
   revalidatePath('/profile');
 }
 
+// Server Action - Create New User (Admin only)
+export async function createUser(formData: FormData) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  if (!currentUser) throw new Error("Not authenticated");
+
+  // Only allow admins
+  const { data: adminProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (adminProfile?.role !== 'admin') {
+    throw new Error("Only admins can create users");
+  }
+
+  const email = formData.get('email') as string;
+  const display_name = formData.get('display_name') as string;
+  const role = formData.get('role') as 'user' | 'admin';
+
+  // Generate random password
+  const crypto = await import('crypto');
+  const randomPassword = crypto.randomBytes(16).toString('hex');
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: randomPassword,
+    user_metadata: { display_name }
+  });
+
+  if (error) throw new Error("Failed to create user");
+
+  // Insert profile
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .insert({
+      id: data.user.id,
+      role,
+      display_name
+    });
+
+  if (profileError) throw new Error("Failed to create profile");
+
+  // Send password reset email
+  const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+  if (resetError) throw new Error("Failed to send reset email");
+
+  revalidatePath('/profile');
+}
+
 // Server Action - Sign Out
 export async function signOut() {
   const supabase = await createServerSupabaseClient();
