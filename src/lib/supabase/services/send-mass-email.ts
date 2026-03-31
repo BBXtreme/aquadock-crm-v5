@@ -17,6 +17,14 @@ type SendMassEmailInput = {
   delayMs?: number;
 };
 
+type Recipient = {
+  id: string;
+  email: string;
+  firmenname?: string;
+  vorname?: string;
+  nachname?: string;
+};
+
 export async function sendMassEmailAction(input: SendMassEmailInput) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -52,7 +60,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     mode: input.mode,
   });
 
-  const selectedRecipients = recipients.filter((r: any) =>
+  const selectedRecipients = recipients.filter((r: Recipient) =>
     input.mode === "contacts"
       ? input.contact_ids?.includes(r.id)
       : input.company_ids?.includes(r.id)
@@ -82,13 +90,16 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       });
 
       // Log successful send
-      await createEmailLog({
-        recipient_email: rec.email,
-        subject: finalSubject,
-        body: finalBody,
-        status: "sent",
-        sent_at: new Date().toISOString(),
-      });
+      await createEmailLog(
+        {
+          recipient_email: rec.email,
+          subject: finalSubject,
+          body: finalBody,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        },
+        supabase
+      );
 
       sent++;
     } catch (err: unknown) {
@@ -96,13 +107,16 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
       const errorMessage = err instanceof Error ? err.message : String(err);
 
-      await createEmailLog({
-        recipient_email: rec.email,
-        subject: finalSubject,
-        body: finalBody,
-        status: "error",
-        error_msg: errorMessage,
-      });
+      await createEmailLog(
+        {
+          recipient_email: rec.email,
+          subject: finalSubject,
+          body: finalBody,
+          status: "error",
+          error_msg: errorMessage,
+        },
+        supabase
+      );
 
       console.error(`Failed to send to ${rec.email}:`, errorMessage);
     }
