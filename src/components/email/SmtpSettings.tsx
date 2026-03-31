@@ -24,7 +24,6 @@ export default function SmtpSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [testEmail, setTestEmail] = useState("");
-  const [_testSuccessful, setTestSuccessful] = useState(false);
 
   useEffect(() => {
     const client = createClient();
@@ -61,7 +60,6 @@ export default function SmtpSettings() {
       const config = { host, port, user, password, fromName, secure };
       await saveSmtpConfig(config);
       toast.success("SMTP-Konfiguration gespeichert");
-      setTestSuccessful(false); // Require re-test for next save
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Fehler beim Speichern";
       toast.error(message);
@@ -80,12 +78,10 @@ export default function SmtpSettings() {
     try {
       const { sendTestEmail } = await import("@/lib/supabase/services/send-test-email");
       const result = await sendTestEmail(testEmail);
-      toast.success(result.message || "Test-E-Mail erfolgreich gesendet!");
-      setTestSuccessful(true);
+      toast.success("Test-E-Mail erfolgreich gesendet!", { description: `An ${testEmail}` });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Test fehlgeschlagen";
       toast.error(message);
-      setTestSuccessful(false);
     } finally {
       setIsTesting(false);
     }
@@ -160,7 +156,7 @@ export default function SmtpSettings() {
             <Button onClick={handleTest} className="flex-1">
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
-            <Button onClick={handleSave} className="flex-1">
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
               {isSaving ? "Speichere..." : "Konfiguration speichern"}
             </Button>
           </div>
