@@ -99,9 +99,8 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: input.subject,
-          body: "Email send failed",
+          body: errorMessage,
           status: "error",
-          error_msg: errorMessage,
         },
         supabase
       );
