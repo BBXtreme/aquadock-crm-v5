@@ -1,3 +1,6 @@
+// src/components/email/RecipientSelector.tsx
+// Client Component for selecting email recipients based on the mode (contacts or companies), with search functionality and select all option.
+
 "use client";
 
 import type React from "react";

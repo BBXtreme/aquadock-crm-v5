@@ -7,15 +7,15 @@ import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
+import EmailComposer from "@/components/email/EmailComposer";
+import LivePreview from "@/components/email/LivePreview";
+import RecipientSelector from "@/components/email/RecipientSelector";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
-import EmailComposer from "./components/EmailComposer";
-import LivePreview from "./components/LivePreview";
-import RecipientSelector from "./components/RecipientSelector";
 
 type SendResults = {
   success: boolean;

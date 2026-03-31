@@ -1,3 +1,6 @@
+// src/components/email/EmailComposer.tsx
+// Client Component for composing email content based on templates and providing a live preview of the email before sending.
+
 "use client";
 
 import { Plus } from "lucide-react";

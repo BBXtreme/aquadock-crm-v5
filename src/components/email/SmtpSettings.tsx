@@ -1,3 +1,6 @@
+// src/components/email/SmtpSettings.tsx
+// Client Component for managing SMTP settings, allowing users to input their SMTP server details and test the connection.
+
 "use client";
 
 import type { User } from "@supabase/supabase-js";

@@ -1,3 +1,6 @@
+// src/components/email/LivePreview.tsx
+// Client Component for displaying a live preview of the email content based on the selected template and recipient.
+
 "use client";
 
 import { Code, Eye, Send, TestTube } from "lucide-react";
