@@ -1,4 +1,6 @@
 // src/lib/supabase/services/smtp.ts
+"use server";
+
 import { handleSupabaseError } from "../db-error-utils";
 import { createServerSupabaseClient } from "../server-client";
 
