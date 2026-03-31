@@ -78,9 +78,9 @@ export default function LoginPage() {
               Sign In
             </Button>
             <Button
-              variant={view === "sign_up" ? "default" : "outline"}
-              onClick={() => setView("sign_up")}
-              className="flex-1"
+              variant="outline"
+              disabled
+              className="flex-1 opacity-50"
             >
               Sign Up
             </Button>
