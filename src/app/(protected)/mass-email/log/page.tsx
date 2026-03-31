@@ -3,7 +3,7 @@
 
 import type { EmailLog } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { requireUser } from "@/lib/supabase/server-helpers";
+import { requireUser } from "@/lib/supabase/server";
 import ClientEmailLogPage from "./ClientEmailLogPage";
 
 export default async function EmailLogPage() {
