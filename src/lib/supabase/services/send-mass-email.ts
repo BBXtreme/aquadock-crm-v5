@@ -3,8 +3,8 @@
 
 "use server";
 
+import { promises as dns } from 'node:dns';
 import nodemailer from "nodemailer";
-import { promises as dns } from 'dns';
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
 import { getSmtpConfig } from "./smtp";
