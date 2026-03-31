@@ -8,9 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Send, TestTube, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +25,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
-import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 
 type SendResults = {
   sent: number;
@@ -45,7 +44,7 @@ export default function ClientMassEmailPage() {
   const [progress, setProgress] = useState(0);
   const [sendResults, setSendResults] = useState<SendResults | null>(null);
 
-  const userId = "current-user-id"; // TODO: replace with real user from session in next phase
+  const _userId = "current-user-id"; // TODO: replace with real user from session in next phase
 
   // Templates
   const { data: templates = [] } = useQuery({
