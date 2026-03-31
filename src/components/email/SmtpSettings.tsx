@@ -23,6 +23,7 @@ export default function SmtpSettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [testEmail, setTestEmail] = useState("");
 
   useEffect(() => {
     const client = createClient();
@@ -73,51 +74,24 @@ export default function SmtpSettings() {
     }
   };
 
-  // Add this state near the other states
-const [testEmail, setTestEmail] = useState("");
+  const handleTest = async () => {
+    if (!testEmail) {
+      toast.error("Bitte eine Test-E-Mail-Adresse eingeben");
+      return;
+    }
 
-// ... inside the component
-
-const handleTest = async () => {
-  if (!testEmail) {
-    toast.error("Bitte eine Test-E-Mail-Adresse eingeben");
-    return;
-  }
-
-  setIsTesting(true);
-  try {
-    const { sendTestEmail } = await import("@/lib/supabase/services/send-test-email");
-    const result = await sendTestEmail(testEmail);
-    toast.success(result.message || "Test-E-Mail erfolgreich gesendet!");
-  } catch (error: any) {
-    toast.error(error.message || "Test fehlgeschlagen");
-  } finally {
-    setIsTesting(false);
-  }
-};
-
-// In the JSX, replace the old test button section with:
-
-<div className="space-y-3">
-  <div>
-    <Label>Test-E-Mail-Adresse</Label>
-    <Input
-      type="email"
-      value={testEmail}
-      onChange={(e) => setTestEmail(e.target.value)}
-      placeholder="deine@email.de"
-    />
-  </div>
-
-  <div className="flex gap-4">
-    <Button onClick={handleTest} disabled={isTesting || !testEmail} className="flex-1">
-      {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
-    </Button>
-    <Button onClick={handleSave} disabled={isSaving} className="flex-1">
-      {isSaving ? "Speichere..." : "Konfiguration speichern"}
-    </Button>
-  </div>
-</div>
+    setIsTesting(true);
+    try {
+      const { sendTestEmail } = await import("@/lib/supabase/services/send-test-email");
+      const result = await sendTestEmail(testEmail);
+      toast.success(result.message || "Test-E-Mail erfolgreich gesendet!");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Test fehlgeschlagen";
+      toast.error(message);
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   return (
     <Card>
@@ -173,13 +147,25 @@ const handleTest = async () => {
           />
           <Label htmlFor="secure">SSL/TLS verwenden</Label>
         </div>
-        <div className="flex gap-4">
-          <Button onClick={handleTest} disabled={isTesting} className="flex-1">
-            {isTesting ? "Teste..." : "Verbindung testen"}
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="flex-1">
-            {isSaving ? "Speichere..." : "Speichern"}
-          </Button>
+        <div className="space-y-3">
+          <div>
+            <Label>Test-E-Mail-Adresse</Label>
+            <Input
+              type="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="deine@email.de"
+            />
+          </div>
+
+          <div className="flex gap-4">
+            <Button onClick={handleTest} disabled={isTesting || !testEmail} className="flex-1">
+              {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
+              {isSaving ? "Speichere..." : "Konfiguration speichern"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
