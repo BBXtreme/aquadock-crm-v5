@@ -41,6 +41,10 @@ export default function RecipientSelector({
   isLoading,
   handleSelectAll,
 }: RecipientSelectorProps) {
+  const handleClearSelection = () => {
+    setSelectedRecipientIds([]);
+  };
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-6">
@@ -71,9 +75,16 @@ export default function RecipientSelector({
         />
 
         <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={handleSelectAll} size="sm">
-            {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleSelectAll} size="sm">
+              {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
+            </Button>
+            {selectedRecipientIds.length > 0 && (
+              <Button variant="outline" onClick={handleClearSelection} size="sm">
+                Auswahl löschen
+              </Button>
+            )}
+          </div>
           <span className="text-sm text-muted-foreground">{recipients.length} gefunden</span>
         </div>
 
