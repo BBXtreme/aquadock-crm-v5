@@ -84,6 +84,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           recipient_email: rec.email,
           subject: finalSubject,
           body: finalBody.length > 100 ? `${finalBody.substring(0, 100)}...` : finalBody,
+          status: "sent",
           sent_at: new Date().toISOString(),
         },
         supabase
@@ -100,6 +101,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           recipient_email: rec.email,
           subject: input.subject,
           body: input.body,
+          status: "error",
           error_msg: errorMessage,
         },
         supabase
