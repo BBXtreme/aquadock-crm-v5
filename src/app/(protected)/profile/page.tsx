@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 import { signOut } from "@/lib/supabase/services/profile";
 import { safeDisplay } from "@/lib/utils/data-format";
 
@@ -52,8 +53,9 @@ export default async function ProfilePage() {
   // Fetch all users for admin only
   let allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] = [];
   if (role === 'admin') {
-    const { data: authUsers } = await supabase.auth.admin.listUsers();
-    const { data: profiles } = await supabase.from('profiles').select('*');
+    const adminSupabase = createAdminClient();
+    const { data: authUsers } = await adminSupabase.auth.admin.listUsers();
+    const { data: profiles } = await adminSupabase.from('profiles').select('*');
     const profilesArray = profiles || [];
     allUsers = authUsers.users.map(u => {
       const profile = profilesArray.find(p => p.id === u.id);
