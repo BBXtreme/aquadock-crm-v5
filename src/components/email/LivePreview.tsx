@@ -33,7 +33,7 @@ export default function LivePreview({
     try {
       await navigator.clipboard.writeText(text);
       toast.success("In die Zwischenablage kopiert");
-    } catch (err) {
+    } catch (_err) {
       toast.error("Kopieren fehlgeschlagen");
     }
   };
