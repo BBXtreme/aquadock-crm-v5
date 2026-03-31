@@ -99,11 +99,11 @@ export default function LivePreview({
             </div>
           </div>
         ) : (
-          <ScrollArea className="min-h-[600px] border rounded-lg p-8 bg-gray-50 dark:bg-gray-800 mt-6">
+          <ScrollArea className="min-h-[600px] border rounded-lg p-8 bg-white dark:bg-gray-800 mt-6">
             <strong>Betreff:</strong> {previewSubject}
             <br /><br />
             <strong>Inhalt:</strong>
-            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono text-gray-700 dark:text-gray-300">{previewBody}</pre>
+            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono text-gray-900 dark:text-gray-300">{previewBody}</pre>
           </ScrollArea>
         )}
 
