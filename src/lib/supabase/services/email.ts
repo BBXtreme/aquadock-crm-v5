@@ -144,7 +144,7 @@ export async function getMassEmailRecipients(
         nachname,
         anrede,
         email,
-        companies!inner(firmenname)
+        companies!inner(id, firmenname)
       `)
       .not('email', 'is', null)
       .neq('email', '');
@@ -166,13 +166,13 @@ export async function getMassEmailRecipients(
       nachname: string | null;
       anrede: string | null;
       email: string;
-      companies: { firmenname: string };
+      companies: { id: string; firmenname: string };
     }) => ({
       id: c.id,
       name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
       email: c.email,
-      firmenname: c.companies?.firmenname,
-      company_id: c.companies?.id,
+      firmenname: c.companies.firmenname,
+      company_id: c.companies.id,
     }));
   }
     // companies mode – use company email or primary contact fallback (simplified for now)
