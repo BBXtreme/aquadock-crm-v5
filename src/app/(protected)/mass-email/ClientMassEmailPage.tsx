@@ -38,12 +38,6 @@ export default function ClientMassEmailPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sendResults, setSendResults] = useState<SendResults | null>(null);
-  const [_currentUser, setCurrentUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const client = createClient();
-    client.auth.getUser().then(({ data }) => setCurrentUser(data.user));
-  }, []);
 
   // Templates
   const { data: templates = [] } = useQuery({

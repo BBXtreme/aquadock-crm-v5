@@ -97,10 +97,10 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: finalSubject,
-          body: finalBody,
+          body: finalBody.length > 100 ? finalBody.substring(0, 100) + "..." : finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
-        } as EmailLogInsert,
+        },
         supabase
       );
 
@@ -117,7 +117,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           body: finalBody,
           status: "error",
           error_msg: errorMessage,
-        } as EmailLogInsert,
+        },
         supabase
       );
 
