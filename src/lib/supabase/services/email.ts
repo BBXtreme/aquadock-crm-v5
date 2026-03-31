@@ -170,7 +170,7 @@ export async function getMassEmailRecipients(
       companies: { id: string; firmenname: string };
     };
 
-    return (data as RawContact[]).map((c: RawContact) => ({
+    return (data as unknown as RawContact[]).map((c: RawContact) => ({
       id: c.id,
       name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
       email: c.email,
