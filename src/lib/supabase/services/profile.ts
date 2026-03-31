@@ -29,6 +29,42 @@ export async function updateDisplayName(formData: FormData) {
   revalidatePath('/profile');
 }
 
+// Server Action - Update User Display Name (Admin only)
+export async function updateUserDisplayName(formData: FormData) {
+  const userSupabase = await createServerSupabaseClient();
+  const { data: { user: currentUser } } = await userSupabase.auth.getUser();
+  if (!currentUser) throw new Error("Not authenticated");
+
+  // Only allow admins
+  const { data: adminProfile } = await userSupabase
+    .from("profiles")
+    .select("role")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (adminProfile?.role !== 'admin') {
+    throw new Error("Only admins can update user display names");
+  }
+
+  const userId = formData.get('userId') as string;
+  const display_name = formData.get('display_name') as string;
+
+  // Use service role
+  const serviceSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await serviceSupabase
+    .from("profiles")
+    .update({ display_name })
+    .eq("id", userId);
+
+  if (error) throw new Error("Failed to update display name");
+
+  revalidatePath('/profile');
+}
+
 // Server Action - Change User Role (Admin only)
 export async function changeUserRole(formData: FormData) {
   const supabase = await createServerSupabaseClient();

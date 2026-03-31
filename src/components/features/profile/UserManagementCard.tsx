@@ -6,7 +6,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Mail, Shield, Trash2, Users } from "lucide-react";
+import { Loader2, Mail, Pencil, Shield, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,15 +14,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { changeUserRole, deleteUser, triggerPasswordReset } from "@/lib/supabase/services/profile";
+import { changeUserRole, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/supabase/services/profile";
 
 // Client Component for User Management
 function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string }[] }) {
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState<string | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState('');
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -55,6 +59,25 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
       toast.error("Failed to send reset email");
     } finally {
       setLoadingReset(null);
+    }
+  };
+
+  const handleEditDisplayName = async () => {
+    if (!editUserId) return;
+    setLoadingEdit(editUserId);
+    try {
+      const formData = new FormData();
+      formData.append('userId', editUserId);
+      formData.append('display_name', editDisplayName);
+      await updateUserDisplayName(formData);
+      toast.success("Display name updated successfully");
+      setEditUserId(null);
+      queryClient.invalidateQueries();
+      router.refresh();
+    } catch (_error) {
+      toast.error("Failed to update display name");
+    } finally {
+      setLoadingEdit(null);
     }
   };
 
@@ -110,6 +133,13 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
+                          onClick={() => { setEditUserId(u.id); setEditDisplayName(u.display_name || ''); }}
+                          disabled={loadingEdit === u.id}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
                           onClick={() => handleChangeRole(u.id, u.role)}
                           disabled={loadingRole === u.id}
                         >
@@ -150,6 +180,38 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editUserId} onOpenChange={() => setEditUserId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Display Name</DialogTitle>
+            <DialogDescription>
+              Update the display name for this user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={editDisplayName}
+              onChange={(e) => setEditDisplayName(e.target.value)}
+              placeholder="Display name"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUserId(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditDisplayName}
+              disabled={loadingEdit === editUserId}
+            >
+              {loadingEdit === editUserId ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
         <DialogContent>
