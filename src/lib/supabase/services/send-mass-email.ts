@@ -194,6 +194,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   // Optional: Check MX records for first 80 addresses
   let finalRecipients = validRecipients;
+  let mxFilteredCount = 0;
   if (validRecipients.length > 0) {
     const mxChecked = [];
     const toCheck = validRecipients.slice(0, 80);
@@ -203,9 +204,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         mxChecked.push(rec);
       } else {
         console.warn(`Domain ${domain} hat keine MX-Records, Adresse ${rec.email} entfernt.`);
+        mxFilteredCount++;
       }
     }
-    const mxFilteredCount = toCheck.length - mxChecked.length;
     if (mxFilteredCount > 0) {
       console.warn(`${mxFilteredCount} Adressen mit ungültigen MX-Records wurden entfernt.`);
     }
@@ -281,6 +282,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     sent,
     errors,
     total: finalRecipients.length,
+    filteredCount: filteredCount + mxFilteredCount,
     message: `${sent} von ${finalRecipients.length} E-Mails versendet.`,
   };
 }

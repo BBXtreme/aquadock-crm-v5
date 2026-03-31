@@ -25,6 +25,7 @@ type SendResults = {
   sent: number;
   errors: number;
   total: number;
+  filteredCount?: number;
 };
 
 export default function ClientMassEmailPage() {
@@ -90,6 +91,9 @@ export default function ClientMassEmailPage() {
 
       toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
       if (result.errors > 0) toast.warning(`${result.errors} E-Mails fehlgeschlagen.`);
+      if (result.filteredCount && result.filteredCount > 0) {
+        toast.warning(`${result.filteredCount} ungültige E-Mail-Adressen wurden automatisch entfernt.`);
+      }
 
       setSelectedRecipientIds([]);
     } catch (error: unknown) {
