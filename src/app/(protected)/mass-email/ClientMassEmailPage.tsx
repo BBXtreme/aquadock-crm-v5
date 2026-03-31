@@ -7,7 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import EmailComposer from "@/components/email/EmailComposer";
@@ -52,6 +52,7 @@ export default function ClientMassEmailPage() {
       const client = createClient();
       return getEmailTemplates(client);
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   // Recipients
@@ -61,6 +62,7 @@ export default function ClientMassEmailPage() {
       const client = createClient();
       return getMassEmailRecipients(client, { mode, search: search || undefined });
     },
+    staleTime: 30 * 1000,
   });
 
   const handleTemplateChange = (id: string) => {
@@ -120,8 +122,8 @@ export default function ClientMassEmailPage() {
   // Live preview
   const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) || 
     { name: "Max Mustermann", firmenname: "Beispiel GmbH", email: "max@beispiel.de" };
-  const previewSubject = fillPlaceholders(subject, previewRecipient);
-  const previewBody = fillPlaceholders(body, previewRecipient);
+  const previewSubject = useMemo(() => fillPlaceholders(subject, previewRecipient), [subject, previewRecipient]);
+  const previewBody = useMemo(() => fillPlaceholders(body, previewRecipient), [body, previewRecipient]);
 
   return (
     <div className="space-y-8 p-6">
