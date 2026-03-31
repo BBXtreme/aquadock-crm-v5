@@ -63,12 +63,38 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     const finalBody = fillPlaceholders(input.body, rec);
 
     try {
-      await transporter.sendMail({
+      const info = await transporter.sendMail({
         from: `"${smtp.fromName || "AquaDock CRM"}" <${smtp.user}>`,
         to: input.testEmail,
         subject: finalSubject,
         html: finalBody,
       });
+
+      console.log("Test email send info:", info);
+
+      // Check for delivery issues
+      if (info.rejected.length > 0 || info.response.includes("5.4.4") || info.response.includes("failed")) {
+        const errorMessage = `Rejected: ${info.rejected.join(', ')} Response: ${info.response}`;
+        await createEmailLog(
+          {
+            recipient_email: input.testEmail,
+            recipient_name: rec.name,
+            subject: finalSubject,
+            status: "error",
+            error_msg: errorMessage,
+            user_id: user.id,
+            mode: "test",
+          },
+          supabase
+        );
+        return {
+          success: false,
+          sent: 0,
+          errors: 1,
+          total: 1,
+          message: "Test-E-Mail fehlgeschlagen.",
+        };
+      }
 
       // Log successful send
       await createEmailLog(
@@ -92,6 +118,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       };
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error("Test email send error:", errorMessage);
 
       await createEmailLog(
         {
