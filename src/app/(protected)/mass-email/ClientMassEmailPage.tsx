@@ -409,8 +409,8 @@ export default function ClientMassEmailPage() {
 
           {templatesLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={`loading-item-${i}`} className="animate-pulse">
+              {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4", "skeleton-5", "skeleton-6"].map((key) => (
+                <Card key={key} className="animate-pulse">
                   <CardHeader>
                     <div className="h-4 bg-muted rounded" />
                   </CardHeader>
