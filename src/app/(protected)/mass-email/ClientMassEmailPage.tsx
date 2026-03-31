@@ -1,6 +1,7 @@
 // src/app/(protected)/mass-email/ClientMassEmailPage.tsx
 "use client";
 
+import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,7 +34,7 @@ export default function ClientMassEmailPage() {
   const [showProgress, setShowProgress] = useState(false);
   const [progress, setProgress] = useState(0);
   const [sendResults, setSendResults] = useState<SendResults | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     const client = createClient();
@@ -144,7 +145,6 @@ export default function ClientMassEmailPage() {
         />
         <EmailComposer
           selectedTemplateId={selectedTemplateId}
-          setSelectedTemplateId={setSelectedTemplateId}
           subject={subject}
           setSubject={setSubject}
           body={body}

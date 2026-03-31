@@ -12,7 +12,6 @@ import type { EmailTemplate } from "@/lib/supabase/database.types";
 
 type EmailComposerProps = {
   selectedTemplateId: string;
-  setSelectedTemplateId: (id: string) => void;
   subject: string;
   setSubject: (subject: string) => void;
   body: string;
@@ -23,7 +22,6 @@ type EmailComposerProps = {
 
 export default function EmailComposer({
   selectedTemplateId,
-  setSelectedTemplateId,
   subject,
   setSubject,
   body,
