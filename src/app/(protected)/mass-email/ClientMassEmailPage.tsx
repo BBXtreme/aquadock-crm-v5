@@ -4,6 +4,7 @@
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
@@ -11,6 +12,7 @@ import EmailComposer from "@/components/email/EmailComposer";
 import LivePreview from "@/components/email/LivePreview";
 import RecipientSelector from "@/components/email/RecipientSelector";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/browser-client";
@@ -126,9 +128,16 @@ export default function ClientMassEmailPage() {
           <h1 className="text-3xl font-bold">Massen-E-Mail</h1>
           <p className="text-muted-foreground">Professionelle Kampagnen versenden</p>
         </div>
-        <Badge variant="outline" className="gap-1.5">
-          <Users className="h-4 w-4" /> {selectedRecipientIds.length} ausgewählt
-        </Badge>
+        <div className="flex items-center gap-4">
+          <Badge variant="outline" className="gap-1.5">
+            <Users className="h-4 w-4" /> {selectedRecipientIds.length} ausgewählt
+          </Badge>
+          <Link href="/mass-email/log">
+            <Button variant="outline" size="sm">
+              Versandlog ansehen
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
