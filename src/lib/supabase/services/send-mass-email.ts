@@ -5,7 +5,7 @@
 
 import nodemailer from "nodemailer";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email-log";
+import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
@@ -52,7 +52,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     mode: input.mode,
   });
 
-  const selectedRecipients = recipients.filter((r) =>
+  const selectedRecipients = recipients.filter((r: any) =>
     input.mode === "contacts"
       ? input.contact_ids?.includes(r.id)
       : input.company_ids?.includes(r.id)
@@ -82,16 +82,13 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       });
 
       // Log successful send
-      await createEmailLog(
-        {
-          recipient_email: rec.email,
-          subject: finalSubject,
-          body: finalBody,
-          status: "sent",
-          sent_at: new Date().toISOString(),
-        },
-        supabase
-      );
+      await createEmailLog({
+        recipient_email: rec.email,
+        subject: finalSubject,
+        body: finalBody,
+        status: "sent",
+        sent_at: new Date().toISOString(),
+      });
 
       sent++;
     } catch (err: unknown) {
@@ -99,16 +96,13 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
       const errorMessage = err instanceof Error ? err.message : String(err);
 
-      await createEmailLog(
-        {
-          recipient_email: rec.email,
-          subject: finalSubject,
-          body: finalBody,
-          status: "error",
-          error_msg: errorMessage,
-        },
-        supabase
-      );
+      await createEmailLog({
+        recipient_email: rec.email,
+        subject: finalSubject,
+        body: finalBody,
+        status: "error",
+        error_msg: errorMessage,
+      });
 
       console.error(`Failed to send to ${rec.email}:`, errorMessage);
     }
