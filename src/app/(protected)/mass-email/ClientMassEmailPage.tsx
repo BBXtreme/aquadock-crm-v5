@@ -6,7 +6,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
-import { Code, Eye, Plus, Send, TestTube, Users } from "lucide-react";
+import { Plus, Send, TestTube, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
