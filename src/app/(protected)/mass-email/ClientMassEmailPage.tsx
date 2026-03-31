@@ -361,11 +361,15 @@ export default function ClientMassEmailPage() {
                     </TabsList>
                     <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[380px]">
                       <div className="space-y-4">
-                        <div className="border-b pb-2">
-                          <div className="text-sm font-medium text-muted-foreground">Betreff:</div>
-                          <div className="font-semibold text-lg">{previewSubject || "Kein Betreff"}</div>
+                        <div className="border-b pb-3 mb-4">
+                          <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
+                          <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
                         </div>
-                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                        <div className="border-b pb-3">
+                          <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
+                          <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
+                        </div>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
                           {previewBody || "Kein Inhalt"}
                         </div>
                       </div>
