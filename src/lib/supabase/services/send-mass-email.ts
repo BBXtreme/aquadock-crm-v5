@@ -177,6 +177,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     }
   }
 
+  // Generate unique batch_id for mass emails
+  const batchId = crypto.randomUUID();
+
   // Get recipients
   const recipients = await getMassEmailRecipients(supabase, {
     mode: input.mode,
@@ -249,6 +252,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           user_id: user.id,
           mode: "mass",
           template_name: "Manueller Versand",
+          batch_id: batchId,
         },
         supabase
       );
@@ -269,6 +273,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           user_id: user.id,
           mode: "mass",
           template_name: "Manueller Versand",
+          batch_id: batchId,
         },
         supabase
       );
