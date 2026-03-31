@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { signOut } from "./actions";
 import ProfilForm from "./ProfilForm";
 import UserManagementCard from "./UserManagementCard";
-import { signOut } from "./actions";
 
 // Main Page Component
 export default async function ProfilePage() {
