@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/browser-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/browser-client";
 
 export default function SmtpSettings() {
   const [host, setHost] = useState("");
@@ -62,7 +62,7 @@ export default function SmtpSettings() {
         value: JSON.stringify(config),
       });
       toast.success("SMTP-Konfiguration gespeichert");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Fehler beim Speichern");
     } finally {
       setIsSaving(false);
@@ -79,7 +79,7 @@ export default function SmtpSettings() {
       // TODO: Implement test SMTP action
       // For now, placeholder - in real implementation, call a server action to send test email
       toast.success("Test-E-Mail würde gesendet werden (noch nicht implementiert)");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Test fehlgeschlagen");
     } finally {
       setIsTesting(false);
