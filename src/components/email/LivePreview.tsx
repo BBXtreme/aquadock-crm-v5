@@ -8,6 +8,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
@@ -16,7 +18,7 @@ type LivePreviewProps = {
   previewBody: string;
   previewRecipient: { name: string; email: string; firmenname?: string };
   selectedRecipientIds: string[];
-  handleSend: (isTest: boolean) => void;
+  handleSend: (isTest: boolean, testEmail?: string) => void;
 };
 
 export default function LivePreview({
@@ -27,6 +29,8 @@ export default function LivePreview({
   handleSend,
 }: LivePreviewProps) {
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
 
   const copyToClipboard = async () => {
     const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
@@ -110,11 +114,45 @@ export default function LivePreview({
             <Send className="mr-2 h-5 w-5" />
             Senden ({selectedRecipientIds.length})
           </Button>
-          <Button variant="outline" onClick={() => handleSend(true)} className="flex-1" size="lg">
+          <Button variant="outline" onClick={() => setTestDialogOpen(true)} className="flex-1" size="lg">
             <TestTube className="mr-2 h-5 w-5" />
             Testsendung
           </Button>
         </div>
+
+        {/* Test Email Dialog */}
+        <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Test-E-Mail senden</DialogTitle>
+              <DialogDescription>
+                Geben Sie eine Test-E-Mail-Adresse ein, um die Nachricht zu testen.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                placeholder="test@example.com"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    handleSend(true, testEmail);
+                    setTestDialogOpen(false);
+                    setTestEmail("");
+                  }}
+                  disabled={!testEmail}
+                >
+                  Senden
+                </Button>
+                <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

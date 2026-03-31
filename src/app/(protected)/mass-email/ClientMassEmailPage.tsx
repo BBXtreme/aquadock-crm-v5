@@ -67,7 +67,7 @@ export default function ClientMassEmailPage() {
     }
   };
 
-  const handleSend = async (isTest = false) => {
+  const handleSend = async (isTest = false, testEmail?: string) => {
     if (!isTest && selectedRecipientIds.length === 0) {
       toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
@@ -82,7 +82,7 @@ export default function ClientMassEmailPage() {
         subject,
         body,
         delayMs: 800,
-        ...(mode === "contacts" ? { contact_ids: selectedRecipientIds } : { company_ids: selectedRecipientIds }),
+        ...(isTest && testEmail ? { testEmail } : (mode === "contacts" ? { contact_ids: selectedRecipientIds } : { company_ids: selectedRecipientIds })),
       });
 
       setSendResults(result);

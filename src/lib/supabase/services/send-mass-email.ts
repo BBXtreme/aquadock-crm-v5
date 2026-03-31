@@ -15,6 +15,7 @@ type SendMassEmailInput = {
   contact_ids?: string[];
   company_ids?: string[];
   delayMs?: number;
+  testEmail?: string;
 };
 
 type Recipient = {
@@ -54,6 +55,61 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     },
     tls: { rejectUnauthorized: false },
   });
+
+  if (input.testEmail) {
+    // Send test email
+    const rec = { email: input.testEmail, id: 'test', firmenname: 'Test', vorname: 'Test' };
+    const finalSubject = fillPlaceholders(input.subject, rec);
+    const finalBody = fillPlaceholders(input.body, rec);
+
+    try {
+      await transporter.sendMail({
+        from: `"${smtp.fromName || "AquaDock CRM"}" <${smtp.user}>`,
+        to: input.testEmail,
+        subject: finalSubject,
+        html: finalBody,
+      });
+
+      // Log successful send
+      await createEmailLog(
+        {
+          recipient_email: input.testEmail,
+          subject: finalSubject,
+          status: "sent",
+          sent_at: new Date().toISOString(),
+        },
+        supabase
+      );
+
+      return {
+        success: true,
+        sent: 1,
+        errors: 0,
+        total: 1,
+        message: "Test-E-Mail erfolgreich gesendet.",
+      };
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      await createEmailLog(
+        {
+          recipient_email: input.testEmail,
+          subject: finalSubject,
+          status: "error",
+          error_msg: errorMessage,
+        },
+        supabase
+      );
+
+      return {
+        success: false,
+        sent: 0,
+        errors: 1,
+        total: 1,
+        message: "Test-E-Mail fehlgeschlagen.",
+      };
+    }
+  }
 
   // Get recipients
   const recipients = await getMassEmailRecipients(supabase, {
