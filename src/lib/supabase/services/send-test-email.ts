@@ -1,32 +1,18 @@
-// src/lib/supabase/services/send-test-email.ts
-// server action to send a test email using the user's configured SMTP settings
+// src/app/actions/send-test-email.ts
 "use server";
 
 import nodemailer from "nodemailer";
-import { createServerSupabaseClient as createClient } from "@/lib/supabase/server-client";
+import { getSmtpConfig } from "@/lib/supabase/services/smtp";
 
 export async function sendTestEmail(toEmail: string) {
-  if (!toEmail || !toEmail.includes("@")) {
+  if (!toEmail?.includes("@")) {
     throw new Error("Bitte eine gültige E-Mail-Adresse angeben");
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Nicht authentifiziert");
-
-  // Load SMTP config
-  const { data: settings } = await supabase
-    .from("user_settings")
-    .select("value")
-    .eq("user_id", user.id)
-    .eq("key", "smtp_config")
-    .maybeSingle();
-
-  if (!settings?.value) {
+  const smtp = await getSmtpConfig();
+  if (!smtp) {
     throw new Error("SMTP-Konfiguration fehlt. Bitte in den Einstellungen konfigurieren.");
   }
-
-  const smtp = JSON.parse(settings.value);
 
   if (!smtp.host || !smtp.user || !smtp.password) {
     throw new Error("SMTP Host, Benutzer oder Passwort fehlt.");
@@ -34,15 +20,13 @@ export async function sendTestEmail(toEmail: string) {
 
   const transporter = nodemailer.createTransport({
     host: smtp.host,
-    port: parseInt(smtp.port || "587", 10),
-    secure: smtp.secure === true || parseInt(smtp.port || "587", 10) === 465, // true for 465, false for other ports
+    port: parseInt(String(smtp.port) || "587", 10),
+    secure: smtp.secure === true || parseInt(String(smtp.port) || "587", 10) === 465,
     auth: {
       user: smtp.user,
       pass: smtp.password,
     },
-    tls: {
-      rejectUnauthorized: false, // often needed for self-signed or corporate SMTP
-    },
+    tls: { rejectUnauthorized: false },
   });
 
   const fromName = smtp.fromName || "AquaDock CRM";
@@ -61,44 +45,4 @@ export async function sendTestEmail(toEmail: string) {
   });
 
   return { success: true, message: `Test-E-Mail erfolgreich an ${toEmail} gesendet` };
-}
-
-export async function saveSmtpConfig(config: {
-  host: string;
-  port: string;
-  user: string;
-  password: string;
-  fromName: string;
-  secure: boolean;
-}) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Nicht authentifiziert");
-
-  await supabase.from("user_settings").upsert({
-    user_id: user.id,
-    key: "smtp_config",
-    value: JSON.stringify(config),
-  });
-
-  return { success: true };
-}
-
-export async function getSmtpConfig() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Nicht authentifiziert");
-
-  const { data } = await supabase
-    .from("user_settings")
-    .select("value")
-    .eq("user_id", user.id)
-    .eq("key", "smtp_config")
-    .maybeSingle();
-
-  if (data?.value) {
-    return JSON.parse(data.value);
-  }
-
-  return null;
 }
