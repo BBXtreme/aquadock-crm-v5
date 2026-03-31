@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unvollständige SMTP-Konfiguration' }, { status: 400 });
     }
 
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host,
       port: parseInt(port, 10),
       secure: secure || false,
