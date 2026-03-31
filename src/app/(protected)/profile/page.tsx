@@ -140,6 +140,4 @@ export default async function ProfilePage() {
       {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
     </div>
   );
-}````
-
-src/components/features/profile/UserManagementCard.tsx
+}
