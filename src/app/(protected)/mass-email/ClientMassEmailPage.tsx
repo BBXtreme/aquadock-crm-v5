@@ -1,13 +1,17 @@
 // src/app/(protected)/mass-email/ClientMassEmailPage.tsx
+// This file defines the ClientMassEmailPage component, which allows users to create and send mass email campaigns to their contacts or companies.
+// It includes recipient selection, email template selection, live preview, and progress tracking for sending emails.
+
 "use client";
 
 import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Send, TestTube, Users } from "lucide-react";
+import { Eye, Plus, Send, TestTube, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { sendMassEmailAction } from '@/app/actions/send-mass-email';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -260,11 +264,11 @@ export default function ClientMassEmailPage() {
         <CardContent>
           <Tabs defaultValue="preview" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="preview">Vorschau</TabsTrigger>
-              <TabsTrigger value="raw">Quelltext</TabsTrigger>
+              <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" />Vorschau</TabsTrigger>
+              <TabsTrigger value="raw"><Code className="mr-2 h-4 w-4" />Quelltext</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="preview" className="min-h-[420px]">
+            <TabsContent value="preview" className="min-h-[600px]">
               <div className="border rounded-xl p-8 bg-card h-full">
                 <div className="space-y-6">
                   <div>
@@ -280,8 +284,8 @@ export default function ClientMassEmailPage() {
               </div>
             </TabsContent>
 
-            <TabsContent value="raw" className="min-h-[420px]">
-              <ScrollArea className="h-[420px] border rounded-xl p-6 bg-muted">
+            <TabsContent value="raw" className="min-h-[600px]">
+              <ScrollArea className="h-[600px] border rounded-xl p-6 bg-muted">
                 <strong>Betreff:</strong> {previewSubject}
                 <br /><br />
                 <strong>Inhalt:</strong>
