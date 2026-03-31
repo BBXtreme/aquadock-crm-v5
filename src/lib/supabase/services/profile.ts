@@ -1,6 +1,5 @@
 // src/lib/supabase/services/profile.ts
-// Server Actions for Profile Page
-// This file contains server actions for updating the user's display name, changing user roles (admin only), triggering password resets (admin only), deleting users (admin only), and signing out.
+// This file contains server actions related to user profile management, including updating display names, changing user roles (admin only), triggering password resets (admin only), deleting users (admin only), and signing out.
 
 'use server';
 
@@ -32,12 +31,12 @@ export async function updateDisplayName(formData: FormData) {
 
 // Server Action - Change User Role (Admin only)
 export async function changeUserRole(formData: FormData) {
-  const userSupabase = await createServerSupabaseClient();
-  const { data: { user: currentUser } } = await userSupabase.auth.getUser();
+  const supabase = await createServerSupabaseClient();
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
 
   // Only allow admins to change roles
-  const { data: adminProfile } = await userSupabase
+  const { data: adminProfile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", currentUser.id)
@@ -50,7 +49,7 @@ export async function changeUserRole(formData: FormData) {
   const userId = formData.get('userId') as string;
   const newRole = formData.get('newRole') as 'user' | 'admin';
 
-  // Use service role client to bypass RLS for admin updates
+  // Use service role client to bypass RLS for admin actions
   const serviceSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -87,13 +86,12 @@ export async function triggerPasswordReset(formData: FormData) {
 
 // Server Action - Delete User (Admin only)
 export async function deleteUser(formData: FormData) {
-  const userSupabase = await createServerSupabaseClient();
-  const { data: { user: currentUser } } = await userSupabase.auth.getUser();
+  const supabase = await createServerSupabaseClient();
+  const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
 
   const userId = formData.get('userId') as string;
 
-  // Use service role client to bypass RLS for admin deletes
   const serviceSupabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -108,7 +106,7 @@ export async function deleteUser(formData: FormData) {
   if (profileError) throw profileError;
 
   // Delete from auth.users
-  const { error: authError } = await userSupabase.auth.admin.deleteUser(userId);
+  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
   if (authError) throw authError;
 
   revalidatePath('/profile');
