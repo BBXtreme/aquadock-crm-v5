@@ -31,6 +31,13 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
     return true;
   });
 
+  const sortedLogs = [...filteredLogs].sort((a, b) => {
+    if (!a.batch_id && !b.batch_id) return 0;
+    if (!a.batch_id) return -1;
+    if (!b.batch_id) return 1;
+    return a.batch_id.localeCompare(b.batch_id);
+  });
+
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
       <div className="flex justify-between items-center">
@@ -76,18 +83,19 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
               <TableHead className="w-32">Vorlage</TableHead>
               <TableHead className="w-32">Datum</TableHead>
               <TableHead className="w-24">Status</TableHead>
+              <TableHead className="w-24">Batch</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {safeLogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredLogs.map((log) => (
-                <TableRow key={log.id}>
+              sortedLogs.map((log, index) => (
+                <TableRow key={log.id} className={index > 0 && sortedLogs[index - 1].batch_id !== log.batch_id ? "border-t-2 border-muted" : ""}>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
                       {log.mode === "test" ? "Test" : "Massenversand"}
@@ -131,6 +139,9 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                         )}
                       </Tooltip>
                     </TooltipProvider>
+                  </TableCell>
+                  <TableCell>
+                    {log.batch_id ? log.batch_id.slice(0, 8) : "-"}
                   </TableCell>
                 </TableRow>
               ))
