@@ -115,6 +115,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
             error_msg: errorMessage,
             user_id: user.id,
             mode: "test",
+            template_name: "Testsendung",
           },
           supabase
         );
@@ -136,6 +137,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "sent",
           user_id: user.id,
           mode: "test",
+          template_name: "Testsendung",
         },
         supabase
       );
@@ -160,6 +162,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           error_msg: errorMessage,
           user_id: user.id,
           mode: "test",
+          template_name: "Testsendung",
         },
         supabase
       );
@@ -245,6 +248,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           status: "sent",
           user_id: user.id,
           mode: "mass",
+          template_name: "Manueller Versand",
         },
         supabase
       );
@@ -264,6 +268,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           error_msg: errorMessage,
           user_id: user.id,
           mode: "mass",
+          template_name: "Manueller Versand",
         },
         supabase
       );
