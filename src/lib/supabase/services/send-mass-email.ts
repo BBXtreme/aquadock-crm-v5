@@ -6,6 +6,7 @@
 import nodemailer from "nodemailer";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
+import { EmailLogInsert } from "./email-log";
 import { getSmtpConfig } from "./smtp";
 
 type SendMassEmailInput = {
@@ -97,7 +98,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           body: finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
-        },
+        } as EmailLogInsert,
         supabase
       );
 
@@ -114,7 +115,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           body: finalBody,
           status: "error",
           error_msg: errorMessage,
-        },
+        } as EmailLogInsert,
         supabase
       );
 
