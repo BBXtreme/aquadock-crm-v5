@@ -154,7 +154,9 @@ export async function getMassEmailRecipients(
     if (land) query = query.eq('companies.land', land);
     if (search) {
       const term = `%${search}%`;
-      query = query.or(`vorname.ilike.${term},nachname.ilike.${term},email.ilike.${term},companies.firmenname.ilike.${term}`);
+      // Fixed: Removed companies.firmenname from .or() as PostgREST does not support .or() across joined tables.
+      // This prevents the empty error object. For cross-table search, consider separate queries or server-side logic.
+      query = query.or(`vorname.ilike.${term},nachname.ilike.${term},email.ilike.${term}`);
     }
 
     const { data, error } = await query.limit(limit).order('nachname');
