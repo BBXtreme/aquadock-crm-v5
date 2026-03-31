@@ -50,10 +50,12 @@ export async function updateUserDisplayName(formData: FormData) {
   const display_name = formData.get('display_name') as string;
 
   // Use service role
-  const serviceSupabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing required environment variables");
+  }
+  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
 
   const { error } = await serviceSupabase
     .from("profiles")
@@ -86,10 +88,12 @@ export async function changeUserRole(formData: FormData) {
   const newRole = formData.get('newRole') as 'user' | 'admin';
 
   // Use service role client to bypass RLS for admin actions
-  const serviceSupabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing required environment variables");
+  }
+  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
 
   const { error } = await serviceSupabase
     .from("profiles")
@@ -128,10 +132,12 @@ export async function deleteUser(formData: FormData) {
 
   const userId = formData.get('userId') as string;
 
-  const serviceSupabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Missing required environment variables");
+  }
+  const serviceSupabase = createClient(supabaseUrl, serviceRoleKey);
 
   // Delete from profiles table first
   const { error: profileError } = await serviceSupabase
