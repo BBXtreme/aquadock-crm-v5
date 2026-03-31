@@ -146,11 +146,10 @@ export default function ClientMassEmailPage() {
         </Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Setup Column */}
-        <div className="lg:col-span-7 space-y-6">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recipient Selection Card */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle>Empfänger</CardTitle>
             </CardHeader>
@@ -200,7 +199,7 @@ export default function ClientMassEmailPage() {
           </Card>
 
           {/* Compose Card */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle>E-Mail erstellen</CardTitle>
             </CardHeader>
@@ -240,57 +239,55 @@ export default function ClientMassEmailPage() {
         </div>
 
         {/* Preview Column */}
-        <div className="lg:col-span-5">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <CardTitle>Live-Vorschau</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="preview">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="preview">Vorschau</TabsTrigger>
-                  <TabsTrigger value="raw">Quelltext</TabsTrigger>
-                </TabsList>
-                <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[380px]">
-                  <div className="space-y-4">
-                    <div className="border-b pb-3 mb-4">
-                      <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
-                      <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
-                    </div>
-                    <div className="border-b pb-3">
-                      <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
-                      <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
-                    </div>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
-                      {previewBody || "Kein Inhalt"}
-                    </div>
+        <Card className="sticky top-6">
+          <CardHeader>
+            <CardTitle>Live-Vorschau</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="preview">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="preview">Vorschau</TabsTrigger>
+                <TabsTrigger value="raw">Quelltext</TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[500px]">
+                <div className="space-y-4">
+                  <div className="border-b pb-3 mb-4">
+                    <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
+                    <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
                   </div>
-                </TabsContent>
-                <TabsContent value="raw" className="mt-4">
-                  <ScrollArea className="h-96 font-mono text-xs bg-muted p-4 rounded">
-                    <strong>Betreff:</strong> {previewSubject}
-                    <br /><br />
-                    <strong>Inhalt:</strong>
-                    <pre>{previewBody}</pre>
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
+                  <div className="border-b pb-3">
+                    <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
+                    <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
+                  </div>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
+                    {previewBody || "Kein Inhalt"}
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="raw" className="mt-4">
+                <ScrollArea className="h-96 font-mono text-xs bg-muted p-4 rounded">
+                  <strong>Betreff:</strong> {previewSubject}
+                  <br /><br />
+                  <strong>Inhalt:</strong>
+                  <pre>{previewBody}</pre>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
 
-              <Separator className="my-6" />
+            <Separator className="my-6" />
 
-              <div className="flex gap-3">
-                <Button onClick={() => handleSend(false)} disabled={selectedRecipientIds.length === 0} className="flex-1">
-                  <Send className="mr-2 h-4 w-4" />
-                  Senden ({selectedRecipientIds.length})
-                </Button>
-                <Button variant="outline" onClick={() => handleSend(true)} className="flex-1">
-                  <TestTube className="mr-2 h-4 w-4" />
-                  Testsendung
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="flex gap-3">
+              <Button onClick={() => handleSend(false)} disabled={selectedRecipientIds.length === 0} className="flex-1">
+                <Send className="mr-2 h-4 w-4" />
+                Senden ({selectedRecipientIds.length})
+              </Button>
+              <Button variant="outline" onClick={() => handleSend(true)} className="flex-1">
+                <TestTube className="mr-2 h-4 w-4" />
+                Testsendung
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Progress Dialog */}
