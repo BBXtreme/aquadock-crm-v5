@@ -5,10 +5,10 @@
 
 "use client";
 
-import { Loader2, Mail, Shield, Trash2, Users } from "lucide-react";
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2, Mail, Shield, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
