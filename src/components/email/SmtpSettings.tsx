@@ -24,7 +24,7 @@ export default function SmtpSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [testEmail, setTestEmail] = useState("");
-  const [testSuccessful, setTestSuccessful] = useState(false);
+  const [_testSuccessful, setTestSuccessful] = useState(false);
 
   useEffect(() => {
     const client = createClient();
