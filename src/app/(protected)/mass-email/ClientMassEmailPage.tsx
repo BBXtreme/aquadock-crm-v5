@@ -94,6 +94,9 @@ export default function ClientMassEmailPage() {
       if (result.filteredCount && result.filteredCount > 0) {
         toast.warning(`${result.filteredCount} ungültige E-Mail-Adressen wurden automatisch entfernt.`);
       }
+      if (!isTest && result.success && result.batch_id) {
+        toast.info(`Campaign logged: ${result.batch_id}`);
+      }
 
       setSelectedRecipientIds([]);
     } catch (error: unknown) {

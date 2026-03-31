@@ -294,5 +294,6 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     total: finalRecipients.length,
     filteredCount: filteredCount + mxFilteredCount,
     message: `${sent} von ${finalRecipients.length} E-Mails versendet.`,
+    batch_id: batchId,
   };
 }
