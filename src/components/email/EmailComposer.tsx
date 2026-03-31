@@ -3,15 +3,19 @@
 
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import Link from "next/link";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
+import { updateEmailTemplate } from "@/lib/supabase/services/email";
 
 type EmailComposerProps = {
   selectedTemplateId: string;
@@ -32,6 +36,27 @@ export default function EmailComposer({
   templates,
   handleTemplateChange,
 }: EmailComposerProps) {
+  const queryClient = useQueryClient();
+
+  const saveToTemplateMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedTemplateId) throw new Error("Keine Vorlage ausgewählt");
+      const client = createClient();
+      return updateEmailTemplate(selectedTemplateId, { subject, body }, client);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-templates"] });
+      toast.success("In Vorlage gespeichert");
+    },
+    onError: (error: Error) => {
+      toast.error("Fehler beim Speichern", { description: error.message });
+    },
+  });
+
+  const handleSaveToTemplate = () => {
+    saveToTemplateMutation.mutate();
+  };
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-1">
@@ -66,12 +91,25 @@ export default function EmailComposer({
               )}
             </div>
             {templates.length > 0 && (
-              <Link href="/mass-email/templates">
-                <Button variant="outline" className="h-10">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Neue Vorlage
-                </Button>
-              </Link>
+              <>
+                {selectedTemplateId && (
+                  <Button
+                    variant="outline"
+                    className="h-10"
+                    onClick={handleSaveToTemplate}
+                    disabled={saveToTemplateMutation.isPending}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    In Vorlage speichern
+                  </Button>
+                )}
+                <Link href="/mass-email/templates">
+                  <Button variant="outline" className="h-10">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Neue Vorlage
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
