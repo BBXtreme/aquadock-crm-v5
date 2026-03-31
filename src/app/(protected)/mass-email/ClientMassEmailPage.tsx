@@ -265,32 +265,30 @@ export default function ClientMassEmailPage() {
           <CardContent>
             <Tabs defaultValue="preview" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" />Vorschau</TabsTrigger>
-                <TabsTrigger value="raw"><Code className="mr-2 h-4 w-4" />Quelltext</TabsTrigger>
+                <TabsTrigger value="preview">Vorschau</TabsTrigger>
+                <TabsTrigger value="raw">Quelltext</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="preview" className="min-h-[600px]">
-                <div className="border rounded-xl p-8 bg-card h-full">
+              <TabsContent value="preview" className="min-h-[520px]">
+                <div className="border rounded-2xl p-8 bg-card h-full shadow-sm">
                   <div className="space-y-6">
-                    <div>
-                      <div className="text-sm text-muted-foreground mb-1">Betreff:</div>
-                      <div className="font-bold text-xl leading-tight">
-                        {previewSubject || "Kein Betreff"}
-                      </div>
+                    <div className="border-b pb-4">
+                      <div className="text-sm text-muted-foreground">Betreff:</div>
+                      <div className="font-bold text-xl">{previewSubject || "Kein Betreff"}</div>
                     </div>
-                    <div className="prose dark:prose-invert text-[15px] leading-relaxed whitespace-pre-wrap">
+                    <div className="prose dark:prose-invert text-[15.5px] leading-relaxed whitespace-pre-wrap">
                       {previewBody || "Kein Inhalt"}
                     </div>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="raw" className="min-h-[600px]">
-                <ScrollArea className="h-[600px] border rounded-xl p-6 bg-muted">
+              <TabsContent value="raw" className="min-h-[520px]">
+                <ScrollArea className="h-[520px] border rounded-2xl p-6 bg-muted">
                   <strong>Betreff:</strong> {previewSubject}
                   <br /><br />
                   <strong>Inhalt:</strong>
-                  <pre className="mt-4 whitespace-pre-wrap">{previewBody}</pre>
+                  <pre className="mt-4 whitespace-pre-wrap text-sm">{previewBody}</pre>
                 </ScrollArea>
               </TabsContent>
             </Tabs>
