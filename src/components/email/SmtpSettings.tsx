@@ -4,6 +4,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
+import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function SmtpSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [testEmail, setTestEmail] = useState("");
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
 
   useEffect(() => {
     const client = createClient();
@@ -32,24 +34,28 @@ export default function SmtpSettings() {
     });
   }, []);
 
-  useEffect(() => {
+  const loadConfig = async () => {
     if (!currentUser) return;
-    const loadConfig = async () => {
-      try {
-        const { getSmtpConfig } = await import("@/lib/supabase/services/smtp");
-        const config = await getSmtpConfig();
-        if (config) {
-          setHost(config.host || "");
-          setPort(String(config.port) || "587");
-          setUser(config.user || "");
-          setPassword(config.password || "");
-          setFromName(config.fromName || "");
-          setSecure(config.secure || false);
-        }
-      } catch (error) {
-        console.error("Failed to load SMTP config:", error);
+    setIsLoadingConfig(true);
+    try {
+      const { getSmtpConfig } = await import("@/lib/supabase/services/smtp");
+      const config = await getSmtpConfig();
+      if (config) {
+        setHost(config.host || "");
+        setPort(String(config.port) || "587");
+        setUser(config.user || "");
+        setPassword(config.password || "");
+        setFromName(config.fromName || "");
+        setSecure(config.secure || false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load SMTP config:", error);
+    } finally {
+      setIsLoadingConfig(false);
+    }
+  };
+
+  useEffect(() => {
     loadConfig();
   }, [currentUser]);
 
@@ -153,6 +159,9 @@ export default function SmtpSettings() {
           </div>
 
           <div className="flex gap-4">
+            <Button onClick={loadConfig} disabled={isLoadingConfig} variant="outline" size="icon">
+              <RefreshCw className={`h-4 w-4 ${isLoadingConfig ? "animate-spin" : ""}`} />
+            </Button>
             <Button onClick={handleTest} className="flex-1">
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
