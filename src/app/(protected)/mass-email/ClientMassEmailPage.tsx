@@ -242,10 +242,11 @@ export default function ClientMassEmailPage() {
         <CardHeader>
           <CardTitle>Live-Vorschau</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
           {/* Simple toggle */}
           <div className="flex border-b">
             <button
+              type="button"
               onClick={() => setPreviewTab("preview")}
               className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${previewTab === "preview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}
             >
@@ -253,6 +254,7 @@ export default function ClientMassEmailPage() {
               Vorschau
             </button>
             <button
+              type="button"
               onClick={() => setPreviewTab("raw")}
               className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${previewTab === "raw" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}
             >
