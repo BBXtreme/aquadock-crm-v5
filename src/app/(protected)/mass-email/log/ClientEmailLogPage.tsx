@@ -95,7 +95,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
               </TableRow>
             ) : (
               sortedLogs.map((log, index) => (
-                <TableRow key={log.id} className={index > 0 && sortedLogs[index - 1].batch_id !== log.batch_id ? "border-t-2 border-muted" : ""}>
+                <TableRow key={log.id} className={index > 0 && sortedLogs[index - 1]?.batch_id !== log.batch_id ? "border-t-2 border-muted" : ""}>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
                       {log.mode === "test" ? "Test" : "Massenversand"}
