@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -21,6 +21,8 @@ const displayNameSchema = z.object({
 type DisplayNameForm = z.infer<typeof displayNameSchema>;
 
 function ProfileForm({ profile }: { profile: Profile }) {
+  const [isPending, setIsPending] = useState(false);
+
   const form = useForm<DisplayNameForm>({
     resolver: zodResolver(displayNameSchema),
     defaultValues: {
@@ -28,28 +30,24 @@ function ProfileForm({ profile }: { profile: Profile }) {
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: async (display_name: string) => {
+  const onSubmit = async (data: DisplayNameForm) => {
+    setIsPending(true);
+    try {
       const formData = new FormData();
-      formData.append('display_name', display_name);
-      return updateDisplayName(formData);
-    },
-    onSuccess: () => {
+      formData.append('display_name', data.display_name);
+      await updateDisplayName(formData);
       toast.success("Display name updated successfully");
-      form.reset({ display_name: form.getValues("display_name") });
-    },
-    onError: (_error) => {
+      form.reset({ display_name: data.display_name });
+    } catch (_error) {
       toast.error("Failed to update display name");
-    },
-  });
-
-  const onSubmit = form.handleSubmit((data) => {
-    mutation.mutate(data.display_name);
-  });
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   return (
     <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="display_name"
@@ -72,8 +70,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
           <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
         </div>
-        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={mutation.isPending}>
-          {mutation.isPending ? "Updating..." : "Update Profile"}
+        <Button type="submit" className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" disabled={isPending}>
+          {isPending ? "Updating..." : "Update Profile"}
         </Button>
       </form>
     </Form>
