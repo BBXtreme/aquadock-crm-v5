@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { EmailLog } from "@/lib/supabase/database.types";
 
 type ClientEmailLogPageProps = {
@@ -68,29 +69,52 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Datum</TableHead>
-              <TableHead>Empfänger</TableHead>
-              <TableHead>Betreff</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="w-20">Modus</TableHead>
+              <TableHead className="min-w-48">Empfänger</TableHead>
+              <TableHead className="min-w-32">Betreff</TableHead>
+              <TableHead className="w-32">Datum</TableHead>
+              <TableHead className="w-24">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {safeLogs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-8">
                   <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
                 </TableCell>
               </TableRow>
             ) : (
               filteredLogs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell>{log.sent_at ? new Date(log.sent_at).toLocaleString('de-DE') : log.created_at ? new Date(log.created_at).toLocaleString('de-DE') : 'Unbekannt'}</TableCell>
-                  <TableCell>{log.recipient_email}</TableCell>
-                  <TableCell>{log.subject}</TableCell>
                   <TableCell>
-                    <Badge variant={log.status === "sent" ? "default" : "destructive"}>
-                      {log.status === "sent" ? "Gesendet" : "Fehler"}
+                    <Badge variant="outline" className="text-xs">
+                      {log.mode === "test" ? "Test" : "Massenversand"}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {log.recipient_name ? `${log.recipient_name} <${log.recipient_email}>` : log.recipient_email}
+                  </TableCell>
+                  <TableCell className="truncate max-w-xs">
+                    {log.subject.length > 50 ? `${log.subject.substring(0, 50)}...` : log.subject}
+                  </TableCell>
+                  <TableCell>
+                    {log.sent_at ? new Date(log.sent_at).toLocaleString('de-DE') : log.created_at ? new Date(log.created_at).toLocaleString('de-DE') : 'Unbekannt'}
+                  </TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant={log.status === "sent" ? "default" : "destructive"}>
+                            {log.status === "sent" ? "Gesendet" : "Fehler"}
+                          </Badge>
+                        </TooltipTrigger>
+                        {log.status === "error" && log.error_msg && (
+                          <TooltipContent>
+                            <p>{log.error_msg}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))
