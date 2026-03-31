@@ -77,10 +77,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           recipient_name: rec.name,
           subject: finalSubject,
           status: "sent",
-          sent_at: new Date().toISOString(),
           user_id: user.id,
           mode: "test",
-        },
+        } satisfies EmailLogInsert,
         supabase
       );
 
@@ -103,7 +102,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           error_msg: errorMessage,
           user_id: user.id,
           mode: "test",
-        },
+        } satisfies EmailLogInsert,
         supabase
       );
 
@@ -158,10 +157,9 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           recipient_name: rec.firmenname,
           subject: finalSubject,
           status: "sent",
-          sent_at: new Date().toISOString(),
           user_id: user.id,
           mode: "mass",
-        },
+        } satisfies EmailLogInsert,
         supabase
       );
 
@@ -180,7 +178,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           error_msg: errorMessage,
           user_id: user.id,
           mode: "mass",
-        },
+        } satisfies EmailLogInsert,
         supabase
       );
 
