@@ -10,7 +10,6 @@ import {
   MapPin,
   PanelLeft,
   PanelRight,
-  Settings,
   Users,
 } from "lucide-react";
 import Link from "next/link";
