@@ -23,11 +23,15 @@ export default function SmtpSettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [testEmail, setTestEmail] = useState("");
 
   useEffect(() => {
     const client = createClient();
-    client.auth.getUser().then(({ data }) => setCurrentUser(data.user));
+    client.auth.getUser().then(({ data }) => {
+      setCurrentUser(data.user);
+      setLoadingUser(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -162,7 +166,7 @@ export default function SmtpSettings() {
             <Button onClick={handleTest} disabled={isTesting || !testEmail} className="flex-1">
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
+            <Button onClick={handleSave} disabled={isSaving || loadingUser} className="flex-1">
               {isSaving ? "Speichere..." : "Konfiguration speichern"}
             </Button>
           </div>
