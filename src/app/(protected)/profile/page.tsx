@@ -1,16 +1,14 @@
-import { LogOut, Mail, Shield, Trash2, Upload, User, Users } from "lucide-react";
+import { LogOut, Upload, User, Users } from "lucide-react";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { requireUser } from "@/lib/supabase/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { safeDisplay } from "@/lib/utils/data-format";
+import ProfilForm from "./ProfilForm";
 
 // Server Action - Update Display Name
 export async function updateDisplayName(formData: FormData) {
@@ -92,6 +90,11 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect('/login');
 }
+
+"use client";
+
+import { Mail, Shield, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 // Client Component for User Management
 function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string }[] }) {
@@ -276,28 +279,7 @@ export default async function ProfilePage() {
             <CardTitle className="text-xl">Update Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={updateDisplayName} className="space-y-6">
-              <div>
-                <Label className="text-sm font-medium">Display Name</Label>
-                <Input
-                  name="display_name"
-                  defaultValue={profileData.display_name || ""}
-                  placeholder="Enter your display name"
-                  className="h-11"
-                />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-                <Input id="profilePicture" type="file" accept="image/*" disabled className="h-11" />
-                <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors"
-              >
-                Update Profile
-              </Button>
-            </form>
+            <ProfilForm profile={profileData} />
           </CardContent>
         </Card>
       </div>
