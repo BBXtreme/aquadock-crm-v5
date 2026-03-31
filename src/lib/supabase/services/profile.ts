@@ -176,7 +176,7 @@ export async function createUser(formData: FormData) {
   const role = formData.get('role') as 'user' | 'admin';
 
   // Generate random password
-  const crypto = await import('crypto');
+  const crypto = await import('node:crypto');
   const randomPassword = crypto.randomBytes(16).toString('hex');
 
   const { data, error } = await supabase.auth.admin.createUser({
