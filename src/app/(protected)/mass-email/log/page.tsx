@@ -8,7 +8,6 @@ import { Mail } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/ui/PageHeader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/browser-client";
@@ -36,10 +35,15 @@ export default function EmailLogPage() {
 
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <PageHeader
-        title="E-Mail Versandlog"
-        icon={<Mail className="h-5 w-5" />}
-      />
+      <div className="flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            <h1 className="text-3xl font-bold">E-Mail Versandlog</h1>
+          </div>
+          <p className="text-muted-foreground">Übersicht über alle gesendeten E-Mails</p>
+        </div>
+      </div>
 
       <div className="flex gap-4">
         <Select value={filter} onValueChange={(value: "all" | "sent" | "error") => setFilter(value)}>
