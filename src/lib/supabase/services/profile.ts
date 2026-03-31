@@ -4,9 +4,9 @@
 
 'use server';
 
+import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 
 // Server Action - Update Display Name (for current user)
