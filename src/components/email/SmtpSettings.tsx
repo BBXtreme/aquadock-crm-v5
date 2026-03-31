@@ -37,7 +37,7 @@ export default function SmtpSettings() {
     if (!currentUser) return;
     const loadConfig = async () => {
       try {
-        const { getSmtpConfig } = await import("@/lib/supabase/services/send-test-email");
+        const { getSmtpConfig } = await import("@/lib/supabase/services/smtp");
         const config = await getSmtpConfig();
         if (config) {
           setHost(config.host || "");
@@ -57,7 +57,7 @@ export default function SmtpSettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { saveSmtpConfig } = await import("@/lib/supabase/services/send-test-email");
+      const { saveSmtpConfig } = await import("@/lib/supabase/services/smtp");
       const config = { host, port, user, password, fromName, secure };
       await saveSmtpConfig(config);
       toast.success("SMTP-Konfiguration gespeichert");
