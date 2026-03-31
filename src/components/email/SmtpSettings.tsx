@@ -64,11 +64,11 @@ export default function SmtpSettings() {
     } finally {
       setIsLoadingConfig(false);
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     loadConfig();
-  }, [currentUser]);
+  }, [loadConfig]);
 
   const handleSave = async () => {
     setIsSaving(true);
