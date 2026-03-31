@@ -5,7 +5,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +34,7 @@ export default function SmtpSettings() {
     });
   }, []);
 
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     if (!currentUser) return;
     setIsLoadingConfig(true);
     try {
@@ -53,7 +53,7 @@ export default function SmtpSettings() {
     } finally {
       setIsLoadingConfig(false);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     loadConfig();
