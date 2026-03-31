@@ -9,7 +9,6 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 import EmailComposer from "@/components/email/EmailComposer";
 import LivePreview from "@/components/email/LivePreview";
 import RecipientSelector from "@/components/email/RecipientSelector";
@@ -20,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
+import { sendMassEmailAction } from "@/lib/supabase/services/send-mass-email";
 
 type SendResults = {
   success: boolean;
