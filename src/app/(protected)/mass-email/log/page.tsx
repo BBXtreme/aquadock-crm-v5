@@ -80,7 +80,7 @@ export default function EmailLogPage() {
             ) : (
               filteredLogs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell>{new Date(log.created_at).toLocaleString('de-DE')}</TableCell>
+                  <TableCell>{log.created_at ? new Date(log.created_at).toLocaleString('de-DE') : 'Unbekannt'}</TableCell>
                   <TableCell>{log.recipient_email}</TableCell>
                   <TableCell>{log.subject}</TableCell>
                   <TableCell>
