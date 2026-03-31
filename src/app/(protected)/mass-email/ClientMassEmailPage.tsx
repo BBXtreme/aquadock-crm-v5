@@ -4,7 +4,7 @@
 
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Send, TestTube, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -24,23 +24,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailTemplate } from "@/lib/supabase/database.types";
-import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients, sendMassEmail } from "@/lib/supabase/services/email";
+import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
+import { sendMassEmailAction } from '@/app/actions/send-mass-email';
 
 type SendResults = {
   sent: number;
   errors: number;
   total: number;
   results: Array<{ email: string; status: 'sent' | 'error'; error?: string }>;
-};
-
-type SendPayload = {
-  userId: string;
-  templateId?: string;
-  recipientIds: string[];
-  mode: 'contacts' | 'companies';
-  subjectOverride?: string;
-  bodyOverride?: string;
-  delayMs?: number;
 };
 
 export default function ClientMassEmailPage() {
@@ -74,23 +65,6 @@ export default function ClientMassEmailPage() {
     },
   });
 
-  // Send mutation
-  const sendMutation = useMutation({
-    mutationFn: (payload: SendPayload) => sendMassEmail(payload),
-    onMutate: () => setShowProgress(true),
-    onSuccess: (result) => {
-      setSendResults(result);
-      toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet`);
-      setSelectedRecipientIds([]);
-      setProgress(100);
-      setTimeout(() => setShowProgress(false), 2000);
-    },
-    onError: (err: Error) => {
-      toast.error("Versand fehlgeschlagen", { description: err.message });
-      setShowProgress(false);
-    },
-  });
-
   const handleTemplateChange = (id: string) => {
     setSelectedTemplateId(id);
     const tpl = templates.find((t: EmailTemplate) => t.id === id);
@@ -101,22 +75,38 @@ export default function ClientMassEmailPage() {
   };
 
   const handleSend = async (isTest = false) => {
-    if (selectedRecipientIds.length === 0 && !isTest) {
-      toast.error("Bitte wählen Sie Empfänger aus");
+    if (!isTest && selectedRecipientIds.length === 0) {
+      toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
       return;
     }
 
-    const payload: SendPayload = {
-      userId,
-      templateId: selectedTemplateId || undefined,
-      recipientIds: isTest ? [] : selectedRecipientIds, // test uses current user email later
-      mode,
-      subjectOverride: subject,
-      bodyOverride: body,
-      delayMs: 800,
-    };
+    setShowProgress(true);
+    setProgress(0);
 
-    sendMutation.mutate(payload);
+    try {
+      const result = await sendMassEmailAction({
+        recipientIds: isTest ? [] : selectedRecipientIds,
+        mode,
+        subject,
+        body,
+        delayMs: 800,
+      });
+
+      setSendResults(result);
+      setProgress(100);
+
+      toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
+
+      if (result.failed > 0) {
+        toast.warning(`${result.failed} E-Mails konnten nicht gesendet werden.`);
+      }
+
+      setSelectedRecipientIds([]);
+    } catch (error: any) {
+      toast.error("Versand fehlgeschlagen", { description: error.message });
+    } finally {
+      setTimeout(() => setShowProgress(false), 1500);
+    }
   };
 
   // Live preview
