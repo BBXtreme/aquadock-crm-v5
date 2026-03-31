@@ -185,7 +185,34 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
       : input.company_ids?.includes(r.id)
   );
 
-  if (selectedRecipients.length === 0) {
+  // Validate email addresses
+  const validRecipients = selectedRecipients.filter(rec => isValidEmail(rec.email));
+  const filteredCount = selectedRecipients.length - validRecipients.length;
+  if (filteredCount > 0) {
+    console.warn(`${filteredCount} ungültige E-Mail-Adressen wurden aus der Empfängerliste entfernt.`);
+  }
+
+  // Optional: Check MX records for first 80 addresses
+  let finalRecipients = validRecipients;
+  if (validRecipients.length > 0) {
+    const mxChecked = [];
+    const toCheck = validRecipients.slice(0, 80);
+    for (const rec of toCheck) {
+      const domain = rec.email.split('@')[1];
+      if (domain && await hasMXRecords(domain)) {
+        mxChecked.push(rec);
+      } else {
+        console.warn(`Domain ${domain} hat keine MX-Records, Adresse ${rec.email} entfernt.`);
+      }
+    }
+    const mxFilteredCount = toCheck.length - mxChecked.length;
+    if (mxFilteredCount > 0) {
+      console.warn(`${mxFilteredCount} Adressen mit ungültigen MX-Records wurden entfernt.`);
+    }
+    finalRecipients = [...mxChecked, ...validRecipients.slice(80)];
+  }
+
+  if (finalRecipients.length === 0) {
     throw new Error("Keine Empfänger ausgewählt oder keine gültigen E-Mail-Adressen gefunden.");
   }
 
@@ -193,7 +220,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
   let sent = 0;
   let errors = 0;
 
-  for (const rec of selectedRecipients) {
+  for (const rec of finalRecipients) {
     let finalSubject = "";
     let finalBody = "";
 
@@ -244,7 +271,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     }
 
     // Respect delay between emails
-    if (delay > 0 && rec !== selectedRecipients[selectedRecipients.length - 1]) {
+    if (delay > 0 && rec !== finalRecipients[finalRecipients.length - 1]) {
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -253,7 +280,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
     success: true,
     sent,
     errors,
-    total: selectedRecipients.length,
-    message: `${sent} von ${selectedRecipients.length} E-Mails versendet.`,
+    total: finalRecipients.length,
+    message: `${sent} von ${finalRecipients.length} E-Mails versendet.`,
   };
 }
