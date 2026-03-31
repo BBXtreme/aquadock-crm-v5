@@ -160,14 +160,7 @@ export async function getMassEmailRecipients(
     const { data, error } = await query.limit(limit).order('nachname');
 
     if (error) throw handleSupabaseError(error, 'getMassEmailRecipients:contacts');
-    return (data ?? []).map((c: {
-      id: string;
-      vorname: string | null;
-      nachname: string | null;
-      anrede: string | null;
-      email: string;
-      companies: { id: string; firmenname: string };
-    }) => ({
+    return (data ?? []).map((c: any) => ({
       id: c.id,
       name: [c.anrede, c.vorname, c.nachname].filter(Boolean).join(' ').trim() || 'Unbekannt',
       email: c.email,
