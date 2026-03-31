@@ -3,7 +3,6 @@
 "use server";
 
 import nodemailer from "nodemailer";
-import { toast } from "sonner"; // server actions can still trigger client toasts via revalidate, but we return success/error
 import { createServerSupabaseClient as createClient } from "@/lib/supabase/server-client";
 
 export async function sendTestEmail(toEmail: string) {
@@ -35,8 +34,8 @@ export async function sendTestEmail(toEmail: string) {
 
   const transporter = nodemailer.createTransport({
     host: smtp.host,
-    port: parseInt(smtp.port || "587"),
-    secure: smtp.secure === true || parseInt(smtp.port || "587") === 465, // true for 465, false for other ports
+    port: parseInt(smtp.port || "587", 10),
+    secure: smtp.secure === true || parseInt(smtp.port || "587", 10) === 465, // true for 465, false for other ports
     auth: {
       user: smtp.user,
       pass: smtp.password,
