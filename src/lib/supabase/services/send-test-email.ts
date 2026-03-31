@@ -83,3 +83,22 @@ export async function saveSmtpConfig(config: {
 
   return { success: true };
 }
+
+export async function getSmtpConfig() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Nicht authentifiziert");
+
+  const { data } = await supabase
+    .from("user_settings")
+    .select("value")
+    .eq("user_id", user.id)
+    .eq("key", "smtp_config")
+    .maybeSingle();
+
+  if (data?.value) {
+    return JSON.parse(data.value);
+  }
+
+  return null;
+}

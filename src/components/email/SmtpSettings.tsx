@@ -34,16 +34,11 @@ export default function SmtpSettings() {
 
   useEffect(() => {
     if (!currentUser) return;
-    const client = createClient();
-    client
-      .from('user_settings')
-      .select('value')
-      .eq('user_id', currentUser.id)
-      .eq('key', 'smtp_config')
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          const config = JSON.parse(data.value);
+    const loadConfig = async () => {
+      try {
+        const { getSmtpConfig } = await import("@/lib/supabase/services/send-test-email");
+        const config = await getSmtpConfig();
+        if (config) {
           setHost(config.host || "");
           setPort(config.port || "587");
           setUser(config.user || "");
@@ -51,7 +46,11 @@ export default function SmtpSettings() {
           setFromName(config.fromName || "");
           setSecure(config.secure || false);
         }
-      });
+      } catch (error) {
+        console.error("Failed to load SMTP config:", error);
+      }
+    };
+    loadConfig();
   }, [currentUser]);
 
   const handleSave = async () => {
