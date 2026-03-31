@@ -287,7 +287,7 @@ export default function ClientMassEmailPage() {
                       <div className="p-4">Lade Empfänger...</div>
                     ) : (
                       recipients.map((rec) => (
-                        <label htmlFor={rec.id} key={rec.id} className="flex items-center gap-3 px-4 py-3 hover:bg-accent cursor-pointer border-b last:border-0">
+                        <label htmlFor={rec.id} key={rec.id} className="flex items-center gap-4 px-6 py-4 hover:bg-accent cursor-pointer border-b last:border-0">
                           <Checkbox
                             id={rec.id}
                             checked={selectedRecipientIds.includes(rec.id)}
