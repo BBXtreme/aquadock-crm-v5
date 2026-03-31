@@ -3,11 +3,10 @@
 
 "use client";
 
-import type { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import EmailComposer from "@/components/email/EmailComposer";
 import LivePreview from "@/components/email/LivePreview";
