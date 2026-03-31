@@ -4,7 +4,6 @@
 "use server";
 
 import nodemailer from "nodemailer";
-import type { Database } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server-client";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
 import { getSmtpConfig } from "./smtp";
@@ -25,8 +24,6 @@ type Recipient = {
   vorname?: string;
   nachname?: string;
 };
-
-type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];
 
 export async function sendMassEmailAction(input: SendMassEmailInput) {
   const supabase = await createServerSupabaseClient();
@@ -97,7 +94,6 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: finalSubject,
-          body: finalBody.length > 100 ? `${finalBody.substring(0, 100)}...` : finalBody,
           status: "sent",
           sent_at: new Date().toISOString(),
         },
@@ -114,7 +110,6 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         {
           recipient_email: rec.email,
           subject: finalSubject,
-          body: finalBody,
           status: "error",
           error_msg: errorMessage,
         },
