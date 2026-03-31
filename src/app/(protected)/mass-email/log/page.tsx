@@ -4,9 +4,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Mail } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +16,7 @@ import { createClient } from "@/lib/supabase/browser-client";
 import type { EmailLog } from "@/lib/supabase/database.types";
 
 export default function EmailLogPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState<"all" | "sent" | "error">("all");
   const [search, setSearch] = useState("");
 
@@ -43,6 +46,10 @@ export default function EmailLogPage() {
           </div>
           <p className="text-muted-foreground">Übersicht über alle gesendeten E-Mails</p>
         </div>
+        <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Zurück
+        </Button>
       </div>
 
       <div className="flex gap-4">
