@@ -57,7 +57,7 @@ export default function SmtpSettings() {
 
   useEffect(() => {
     loadConfig();
-  }, [currentUser]);
+  }, [loadConfig]);
 
   const handleSave = async () => {
     setIsSaving(true);
