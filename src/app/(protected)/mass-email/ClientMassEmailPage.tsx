@@ -255,28 +255,30 @@ export default function ClientMassEmailPage() {
             <CardTitle>Live-Vorschau</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="preview">
-              <TabsList className="grid w-full grid-cols-2">
+            <Tabs defaultValue="preview" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="preview">Vorschau</TabsTrigger>
                 <TabsTrigger value="raw">Quelltext</TabsTrigger>
               </TabsList>
-              <TabsContent value="preview" className="mt-4 border rounded-lg p-6 bg-card min-h-[500px]">
-                <div className="space-y-4">
-                  <div className="border-b pb-3 mb-4">
-                    <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
-                    <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
-                  </div>
-                  <div className="border-b pb-3">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
-                    <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
-                  </div>
-                  <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
-                    {previewBody || "Kein Inhalt"}
+              <TabsContent value="preview" className="min-h-[500px]">
+                <div className="border rounded-lg p-6 bg-card h-full">
+                  <div className="space-y-4">
+                    <div className="border-b pb-3 mb-4">
+                      <div className="text-xs text-muted-foreground">Von: AquaDock CRM</div>
+                      <div className="text-xs text-muted-foreground">An: {previewRecipient.name}</div>
+                    </div>
+                    <div className="border-b pb-3">
+                      <div className="text-sm font-medium text-muted-foreground mb-1">Betreff:</div>
+                      <div className="font-bold text-lg leading-tight">{previewSubject || "Kein Betreff"}</div>
+                    </div>
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans bg-muted/30 p-4 rounded-md">
+                      {previewBody || "Kein Inhalt"}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
-              <TabsContent value="raw" className="mt-4">
-                <ScrollArea className="h-96 font-mono text-xs bg-muted p-4 rounded">
+              <TabsContent value="raw" className="min-h-[500px]">
+                <ScrollArea className="h-full border rounded p-4 bg-muted">
                   <strong>Betreff:</strong> {previewSubject}
                   <br /><br />
                   <strong>Inhalt:</strong>
