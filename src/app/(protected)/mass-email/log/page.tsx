@@ -38,7 +38,6 @@ export default function EmailLogPage() {
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
       <PageHeader
         title="E-Mail Versandlog"
-        description="Übersicht über alle gesendeten E-Mails"
         icon={<Mail className="h-5 w-5" />}
       />
 
