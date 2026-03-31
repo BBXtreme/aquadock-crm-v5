@@ -68,7 +68,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
 
   if (input.testEmail) {
     if (!isValidEmail(input.testEmail)) {
-      throw new Error("Ungültige E-Mail-Adresse für Testversand.");
+      throw new Error("Ungültige E-Mail-Adresse. Bitte prüfen Sie Format und Domain.");
     }
 
     // Send test email
@@ -106,7 +106,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           sent: 0,
           errors: 1,
           total: 1,
-          message: "Test-E-Mail fehlgeschlagen.",
+          message: "Test-E-Mail wurde abgelehnt. Überprüfen Sie die Adresse.",
         };
       }
 
@@ -152,7 +152,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
         sent: 0,
         errors: 1,
         total: 1,
-        message: "Test-E-Mail fehlgeschlagen.",
+        message: "Test-E-Mail fehlgeschlagen aufgrund eines technischen Fehlers.",
       };
     }
   }
