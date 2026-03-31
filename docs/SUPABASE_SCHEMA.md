@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
-**Version**: 5.0 (March 2026)  
-**Last audited**: 2026-03-21  
+**Version**: 0.5.24 (March 2026)  
+**Last audited**: 2026-03-31  
 **Environment**: Supabase PostgreSQL 15+  
 **RLS**: Enabled on all business tables  
 **Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
@@ -122,13 +122,19 @@ CREATE TABLE public.profiles (
 
 | Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
 | ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
-| id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
-| recipient_email| text       | false    | —                 | Email recipient          | —             |
+| id         | uuid PK     | false    | gen_random_uuid() | Primary key              | PK            |
+| recipient_email| text NOT NULL | false    | —                 | Email recipient          | —             |
 | subject    | text        | false    | —                 | Email subject            | —             |
+| status | text (sent / error) |  |  |  |  |
+| error_msg | text |  |  |  |  |
 | body       | text        | false    | —                 | Email body               | —             |
 | sent_at    | timestamptz | true     | —                 | Sent timestamp           | —             |
-| created_at | timestamptz | true     | now()             | —                        | —             |
-| updated_at | timestamptz | true     | now()             | —                        | —             |
+| created_at | timestamptz DEFAULT now() | true     | now()             | —                        | —             |
+| updated_at | timestamptz DEFAULT now() | true     | now()             | —                        | —             |
+| user_id | uuid REFERENCES auth.users |  |  |  |  |
+| mode | text (test / mass) |  |  |  |  |
+| batch_id | uuid |  |  | groups one mass-send campaign |  |
+| spam_score | integer DEFAULT 0 |  |  |  |  |
 
 ### email_templates
 
@@ -197,32 +203,13 @@ user_settings: user_id, key
 
 
 
-## 6. Maintenance & Type Safety
+## 6. Database & Performance 
 
-Regenerate types after schema change
-Bash# Local Supabase
-npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
+- Enhanced `email_log` table with `user_id`, `mode`, `template_name`, `recipient_name`, `batch_id`, `spam_score` 
+- Automatic `updated_at` triggers on major tables 
+- Strategic indexes and GIN full-text search support on companies & contacts
+- Better sorting and filtering performance
 
-# Remote project (recommended for CI)
-npx supabase gen types typescript --project-id <your-project-ref> > src/lib/supabase/database.types.ts
-Service layer pattern (example):
-TypeScript// src/lib/supabase/services/companies.ts
-import { createServerClient } from "@/lib/supabase/server";
-import type { Database } from "@/lib/supabase/database.types";
-
-type Company = Database["public"]["Tables"]["companies"]["Row"];
-
-export async function getCompanies(userId: string): Promise<Company[]> {
-  const supabase = createServerSupabaseClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("user_id", userId)
-    .order("firmenname");
-
-  if (error) throw handleSupabaseError(error);
-  return data ?? [];
-}
 ## 7. Change Log
 
 2026-03-20 Initial v5 snapshot

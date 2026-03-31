@@ -3,17 +3,39 @@
 Modern CRM for marinas, hotels, restaurants & water-sports businesses  
 **Next.js 16 • React 19 • Supabase • Tailwind v4 • shadcn/ui (radix-nova)**
 
-## 1. Recent Refactor (March 2026)
+## 1. Recent Major Improvements (March 2026)
 
-- shadcn/ui updated to latest radix-nova style
-- Biome upgraded & configured (minimal, Tailwind v4 compatible)
-- Static loading skeletons cleaned
-- Type safety improved (no non-null assertions)
-- **OpenMap fully refactored** to clean React + Leaflet with OSM POI import
-- Pre-commit hooks stabilized (Biome + typecheck)
-- React Query patterns standardized
+### Email System
+- Full DNS + syntax validation for test and mass emails
+- MX record check for test emails (prevents sending to invalid domains)
+- Improved spam score heuristics with German business context
+- Rich email logging with `mode` ("test" / "mass"), `template_name`, `recipient_name`, `user_id`, `batch_id`, `spam_score`
+- Better error handling and user feedback for bounces
 
-**Next priorities**: full RHF + zod forms, mass-email sanitization, optimistic updates
+### Database
+- `email_log` table significantly enhanced
+- Automatic `updated_at` triggers on major tables
+- Performance indexes on companies, contacts and email_log
+- Full-text search support prepared (`search_vector`)
+
+### Mass Email
+- Safe recipient filtering (invalid emails removed automatically)
+- Clear feedback when emails are filtered
+- Proper logging of test emails
+
+## Tech Stack
+- Next.js 16 (App Router + Turbopack)
+- Supabase (PostgreSQL + Auth + RLS)
+- Tailwind + shadcn/ui
+- TanStack Query
+- Nodemailer + DNS validation
+
+## Project Structure Highlights
+- `src/lib/supabase/services/` → clean service layer
+- `src/app/(protected)/mass-email/` → mass email feature
+- Rich logging in `email_log` table
+
+See `docs/` folder for detailed architecture and database schema.
 
 ## 2. Tech Stack
 

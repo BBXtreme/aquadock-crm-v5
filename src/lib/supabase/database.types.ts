@@ -1,6 +1,6 @@
 // src/lib/supabase/database.types.ts
 // Auto-generated database types for Supabase
-// Last generated: March 2026
+// Last generated: March 2026 (after email_log + performance improvements)
 
 export interface Database {
   public: {
@@ -152,6 +152,8 @@ export interface Database {
           updated_at: string | null;
           user_id: string | null;
           mode: string | null;
+          batch_id: string | null;
+          spam_score: number | null;
         };
         Insert: {
           template_name?: string | null;
@@ -165,6 +167,8 @@ export interface Database {
           updated_at?: string | null;
           user_id?: string | null;
           mode?: string | null;
+          batch_id?: string | null;
+          spam_score?: number | null;
         };
         Update: {
           id?: string;
@@ -179,6 +183,8 @@ export interface Database {
           updated_at?: string | null;
           user_id?: string | null;
           mode?: string | null;
+          batch_id?: string | null;
+          spam_score?: number | null;
         };
       };
       email_templates: {

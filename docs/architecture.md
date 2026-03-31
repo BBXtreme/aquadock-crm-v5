@@ -14,6 +14,7 @@
 - **Auth** → Supabase Auth + RLS enforced in service layer
 - **State management** → TanStack React Query for mutations, caching and optimistic updates
 - **Suspense for data loading** → useSuspenseQuery for automatic loading states, with Suspense boundaries for fallbacks
+- \- Strong emphasis on `user_id` for multi-user isolation - Automatic `updated_at` triggers on key tables - Performance indexes on search and filter columns - Full-text search support prepared via `search_vector`
 
 ## 2. Current Folder Structure (App Router + Route Groups)
 
@@ -106,20 +107,6 @@ All routes inside (protected) automatically receive:
 - Sidebar navigation
 - Header with user menu, notifications, theme toggle
 - requireUser() protection (implemented per page)
-
-Current protected pages:
-
-- /dashboard
-- /companies
-- /contacts
-- /timeline
-- /reminders
-- /settings
-- /profile
-- /mass-email
-- /openmap
-
-
 
 ## 3. Data Flow Patterns
 
