@@ -1,0 +1,14 @@
+// src/lib/supabase/services/auth.ts
+// Server actions for authentication-related operations
+
+"use server";
+
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+
+export async function signOut() {
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+  redirect("/login");
+}

@@ -73,9 +73,8 @@ export default function Header() {
   });
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
+    const { signOut } = await import("@/lib/supabase/services/auth");
+    await signOut();
   };
 
   return (
