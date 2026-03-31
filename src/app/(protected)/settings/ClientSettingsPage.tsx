@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { createClient } from "@/lib/supabase/browser-client";
+import SmtpSettings from "../mass-email/components/SmtpSettings";
 
 const smtpSchema = z.object({
   host: z.string().min(1, "Host is required"),
@@ -417,137 +418,10 @@ function ClientSettingsPage() {
           </CardContent>
         </Card>
 
-        {/* SMTP Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="mr-2 h-5 w-5" />
-              SMTP-Konfiguration für den E-Mail Versand
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Form {...smtpForm}>
-              <form onSubmit={onSmtpSubmit} className="space-y-4">
-                <FormField
-                  control={smtpForm.control}
-                  name="host"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Host</FormLabel>
-                      <FormControl>
-                        <Input placeholder="smtp.example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="port"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Port</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="587"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 587)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Username</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your-username" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SMTP Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input type={showPassword ? "text" : "password"} placeholder="your-password" {...field} />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="from_email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Email</FormLabel>
-                      <FormControl>
-                        <Input placeholder="noreply@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={smtpForm.control}
-                  name="from_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>From Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your App Name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" disabled={smtpMutation.isPending}>
-                  {smtpMutation.isPending ? "Saving..." : "Save SMTP Settings"}
-                </Button>
-              </form>
-            </Form>
-
-            <div className="mt-6 space-y-4">
-              <h3 className="text-lg font-medium">Test Email</h3>
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="test@example.com"
-                  value={testRecipient}
-                  onChange={(e) => setTestRecipient(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={() => testEmailMutation.mutate(testRecipient)}
-                  disabled={testEmailMutation.isPending || !testRecipient}
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {testEmailMutation.isPending ? "Sending..." : "Send Test Email"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* SMTP Settings */}
+        <div className="md:col-span-2">
+          <SmtpSettings />
+        </div>
       </div>
     </div>
   );
