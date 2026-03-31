@@ -121,7 +121,10 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
       <div className="border-t flex-shrink-0" />
 
-      <div className="p-4 flex justify-center flex-shrink-0">
+      <div className="p-4 flex justify-between items-center flex-shrink-0">
+        <Badge variant="outline" className="text-xs capitalize">
+          {user.role}
+        </Badge>
         <Badge variant="outline" className="text-xs">
           {APP_VERSION}
         </Badge>
