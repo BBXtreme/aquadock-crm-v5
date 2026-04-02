@@ -8,7 +8,7 @@ import { Suspense } from "react";
 
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { LoadingState } from "@/components/ui/LoadingState";
-import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import type { CompanyForOpenMap } from "@/lib/actions/companies";
 
 const OpenMapView = dynamic(() => import("./OpenMapView"), { ssr: false });
 

@@ -2,7 +2,7 @@
 "use server";
 
 import nodemailer from "nodemailer";
-import { getSmtpConfig } from "@/lib/supabase/services/smtp";
+import { getSmtpConfig } from "@/lib/services/smtp";
 
 interface SmtpError extends Error {
   code?: string;

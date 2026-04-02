@@ -8,8 +8,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { getContactById } from "@/lib/supabase/services/contacts";
+import { getContactById } from "@/lib/actions/contacts";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import ContactDetailClient from "./ContactDetailClient";
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {

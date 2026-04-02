@@ -16,9 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { EmailTemplate } from "@/lib/supabase/database.types";
-import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/supabase/services/email";
+import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/services/email";
+import { createClient } from "@/lib/supabase/browser";
+import type { EmailTemplate } from "@/types/database.types";
 
 export default function TemplatesClient() {
   const [dialogOpen, setDialogOpen] = useState(false);

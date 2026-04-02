@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { changeUserRole, deleteUser, triggerPasswordReset } from "@/lib/supabase/services/profile";
+import { changeUserRole, deleteUser, triggerPasswordReset } from "@/lib/services/profile";
 
 
 // Client Component for User Management

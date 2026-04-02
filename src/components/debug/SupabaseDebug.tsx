@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 

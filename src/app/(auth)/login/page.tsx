@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function LoginPage() {
   const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");

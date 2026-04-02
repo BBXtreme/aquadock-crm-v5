@@ -11,9 +11,9 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Company, TimelineEntryInsert } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
+import type { Company, TimelineEntryInsert } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
 
 interface Props {

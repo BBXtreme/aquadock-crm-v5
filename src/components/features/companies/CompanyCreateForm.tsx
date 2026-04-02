@@ -14,11 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import { createClient } from "@/lib/supabase/browser-client";
-import { createCompany } from "@/lib/supabase/services/companies";
-import { type CompanyFormValues, companySchema } from "@/lib/validations/company-val";
+import { createClient } from "@/lib/supabase/browser";
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -77,11 +77,11 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
-      toast.success("Company created");
+      toast.success("Unternehmen erfolgreich angelegt");
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
+    onError: (err) => toast.error("Fehler beim Anlegen des Unternehmens", { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));

@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/supabase/services/profile";
+import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/services/profile";
 
 // Client Component for User Management
 function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] }) {

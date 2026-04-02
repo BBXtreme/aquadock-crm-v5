@@ -9,10 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createAdminClient } from "@/lib/supabase/admin-client";
+import { signOut } from "@/lib/services/profile";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/supabase/auth/require-user";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { signOut } from "@/lib/supabase/services/profile";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 export default async function ProfilePage() {

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function SmtpSettings() {
   const [host, setHost] = useState("");
@@ -37,7 +37,7 @@ export default function SmtpSettings() {
   const loadConfig = useCallback(async () => {
     setIsLoadingConfig(true);
     try {
-      const { getSmtpConfig } = await import("@/lib/supabase/services/smtp");
+      const { getSmtpConfig } = await import("@/lib/services/smtp");
       const config = await getSmtpConfig();
       if (config) {
         setHost(config.host || "");
@@ -72,7 +72,7 @@ export default function SmtpSettings() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { saveSmtpConfig } = await import("@/lib/supabase/services/smtp");
+      const { saveSmtpConfig } = await import("@/lib/services/smtp");
       const config = { host, port, user, password, fromName, secure };
       await saveSmtpConfig(config);
       toast.success("SMTP-Konfiguration gespeichert");
@@ -92,7 +92,7 @@ export default function SmtpSettings() {
 
     setIsTesting(true);
     try {
-      const { sendTestEmail } = await import("@/lib/supabase/services/send-test-email");
+      const { sendTestEmail } = await import("@/lib/services/send-test-email");
       const _result = await sendTestEmail(testEmail);
       toast.success("Test-E-Mail erfolgreich gesendet!", { description: `An ${testEmail}` });
     } catch (error: unknown) {

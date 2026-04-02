@@ -1,8 +1,8 @@
 // src/lib/supabase/services/smtp.ts
 "use server";
 
-import { handleSupabaseError } from "../db-error-utils";
-import { createServerSupabaseClient } from "../server-client";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type SmtpConfig = {
   host: string;

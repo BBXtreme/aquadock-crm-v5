@@ -3,9 +3,10 @@
 // It includes functions to get all email logs, get by ID, create new entries, update existing entries, and delete entries.
 // The functions use the Supabase client to interact with the database and handle errors using a utility function.
 // The code is designed to be reusable across different parts of the app that need to access or modify email logs.
-import { createClient } from "../browser-client";
-import type { Database } from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
+
+import { createClient } from "@/lib/supabase/browser";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { Database } from "@/types/database.types";
 
 type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 type EmailLogInsert = Database["public"]["Tables"]["email_log"]["Insert"];

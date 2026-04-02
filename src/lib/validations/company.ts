@@ -1,20 +1,9 @@
 // src/lib/validations/company-val.ts
-// This file defines the Zod schema for validating company data
-// It includes all fields that are part of the company form, with
-// appropriate validation rules for each field
-// The schema ensures that required fields are present and that all
-// string fields are trimmed and have reasonable length limits to
-// prevent issues with excessively long input
-// The inferred TypeScript type `CompanyFormValues` can be used in
-// form handling to ensure type safety
-// The `CompanyFormValues` type can be used in form handling for
-// company data to ensure type safety and consistency across the app
+// Zod schema for Company forms – synced with Supabase types
 
 import { z } from "zod";
+//  import type { CompanyInsert } from "@/types/database.types";
 
-// Zod schema for Company creation/update based on form requirements
-// Includes all fields used in CompanyCreateForm
-// Security: All string fields are trimmed and have max length limits
 export const companySchema = z.object({
   firmenname: z
     .string()

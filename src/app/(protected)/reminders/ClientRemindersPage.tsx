@@ -14,8 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Reminder } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
+import type { Reminder } from "@/types/database.types";
 
 function ClientRemindersPage() {
   const queryClient = useQueryClient();

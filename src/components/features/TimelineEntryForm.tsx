@@ -13,8 +13,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { TimelineEntry } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
+import type { TimelineEntry } from "@/types/database.types";
 
 const formSchema = z.object({
   title: z.string().min(1, "Titel ist erforderlich"),

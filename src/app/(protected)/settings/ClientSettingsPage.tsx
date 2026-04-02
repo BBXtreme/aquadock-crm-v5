@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox

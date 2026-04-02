@@ -8,10 +8,9 @@
 // app that need to access or modify contacts.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-import { createClient } from "../browser-client";
-import type { Contact, ContactInsert } from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
+import { createClient } from "@/lib/supabase/browser";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { Contact, ContactInsert } from "@/types/database.types";
 
 /**
  * Get all contacts with joined company data

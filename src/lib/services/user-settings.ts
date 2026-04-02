@@ -11,9 +11,9 @@
 // The code is designed to be reusable across different parts of the
 // app that need to access or modify user settings.
 
-import { createClient } from "@/lib/supabase/browser-client";
-import type { UserSetting, UserSettingInsert } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { UserSetting, UserSettingInsert } from "@/types/database.types";
 
 export async function getUserColumnOrder(): Promise<string[] | null> {
   const supabase = createClient();

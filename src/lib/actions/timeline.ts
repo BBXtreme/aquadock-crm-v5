@@ -11,9 +11,9 @@
 // session management. Error handling is implemented using a utility
 // function to provide consistent error responses across the app.
 
-import type { TimelineEntry, TimelineEntryInsert } from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
-import { createServerSupabaseClient } from "../server-client";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { TimelineEntry, TimelineEntryInsert } from "@/types/database.types";
 
 /**
  * Get all timeline entries for a specific user

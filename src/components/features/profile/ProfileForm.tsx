@@ -14,8 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { Database } from "@/lib/supabase/database.types";
-import { updateDisplayName } from "@/lib/supabase/services/profile";
+import { updateDisplayName } from "@/lib/services/profile";
+import type { Database } from "@/types/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 

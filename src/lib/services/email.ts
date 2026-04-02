@@ -12,8 +12,8 @@ import type {
   EmailTemplate,
   EmailTemplateInsert,
   EmailTemplateUpdate,
-} from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
+} from "../../types/database.types";
+import { handleSupabaseError } from "../supabase/db-error-utils";
 
 /**
  * Get all email logs

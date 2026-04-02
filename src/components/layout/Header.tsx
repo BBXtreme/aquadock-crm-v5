@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
@@ -73,7 +73,7 @@ export default function Header() {
   });
 
   const handleSignOut = async () => {
-    const { signOut } = await import("@/lib/supabase/services/auth");
+    const { signOut } = await import("@/lib/actions/auth");
     await signOut();
   };
 

@@ -6,8 +6,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin-client";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 // Server Action - Update Display Name (for current user)
 export async function updateDisplayName(formData: FormData) {

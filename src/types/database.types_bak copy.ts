@@ -1,6 +1,12 @@
-// src/lib/supabase/database.types.ts
+// src/types/database.types.ts
 // Auto-generated database types for Supabase
 // Last generated: March 2026
+
+
+// Re-export the full generated Database (single source of truth)
+//export type Database = SupabaseDatabase;
+
+//log.subject issue??
 
 export interface Database {
   public: {
@@ -381,7 +387,14 @@ export type KPI = {
   subtitle: string;
 };
 
+export type UserRole = "user" | "admin";
+
+// App-specific extended types
 export type TimelineEntryWithJoins = TimelineEntry & {
-  companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
+  companies?: Pick<Company, "firmenname" | "status" | "kundentyp"> | null;
+  contacts?: Pick<Contact, "vorname" | "nachname" | "position" | "email"> | null;
+};
+
+export type CompanyWithPrimaryContact = Company & {
+  primary_contact?: Contact | null;
 };

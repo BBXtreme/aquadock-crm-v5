@@ -21,8 +21,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Company, Contact, TimelineEntry } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
+import type { Company, Contact, TimelineEntry } from "@/types/database.types";
 
 type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "firmenname"> | null;

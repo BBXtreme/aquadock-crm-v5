@@ -24,11 +24,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
 import type { ContactFormDTO } from "@/lib/dto/contact.dto";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Contact } from "@/lib/supabase/database.types";
-import { deleteContact, getContactById, updateContact } from "@/lib/supabase/services/contacts";
+import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
+import type { Contact } from "@/types/database.types";
 
 const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname is required"),

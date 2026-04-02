@@ -14,8 +14,8 @@ import "leaflet/dist/leaflet.css";
 import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import type { CompanyForOpenMap } from "@/lib/actions/companies";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
-import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
@@ -85,7 +85,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Company import refresh
   const refreshCompanies = useCallback(async () => {
-    const supabase = (await import("@/lib/supabase/browser-client")).createClient();
+    const supabase = (await import("@/lib/supabase/browser")).createClient();
 
     let query = supabase.from("companies").select("*").not("lat", "is", null).not("lon", "is", null);
 

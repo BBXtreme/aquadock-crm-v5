@@ -15,10 +15,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Database } from "@/lib/supabase/database.types";
-import { updateReminder } from "@/lib/supabase/services/reminders";
+import { createClient } from "@/lib/supabase/browser";
+import type { Database } from "@/types/database.types";
 
 const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),

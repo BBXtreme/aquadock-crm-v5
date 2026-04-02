@@ -7,7 +7,7 @@ import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 

@@ -3,7 +3,7 @@
   "version": "0.5.23",
   "private": true,
   "scripts": {
-    "supabase:types": "mkdir -p types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr > types/supabase.ts",
+    "supabase:types": "mkdir -p src/types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
     "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev",
     "dev:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next dev",
     "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" next build",

@@ -19,7 +19,7 @@ import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
 import RemindersCard from "@/components/company-detail/RemindersCard";
 import TimelineCard from "@/components/company-detail/TimelineCard";
 import { LoadingState } from "@/components/ui/LoadingState";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 

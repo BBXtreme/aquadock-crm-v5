@@ -1,18 +1,9 @@
 // src/lib/validations/contact-val.ts
 // This file defines the Zod schema for validating contact data
-// It includes all fields that are part of the contact form, with
-// appropriate validation rules for each field
-// The schema ensures that required fields are present and that all
-// string fields are trimmed and have reasonable length limits to
-// prevent issues with excessively long input
-// The inferred TypeScript type `ContactFormValues` can be used in
-// form handling to ensure type safety
 
 import { z } from "zod";
+import type { ContactInsert, ContactUpdate } from "@/types/database.types";
 
-// Zod schema for Contact creation/update based on form requirements
-// Includes all fields used in ContactCreateForm
-// Security: All string fields are trimmed and have max length limits
 export const contactSchema = z.object({
   vorname: z.string().min(1, "Vorname ist erforderlich").trim().max(100, "Vorname darf maximal 100 Zeichen lang sein"),
   nachname: z
@@ -28,8 +19,42 @@ export const contactSchema = z.object({
   durchwahl: z.string().trim().max(10, "Durchwahl darf maximal 10 Zeichen lang sein").nullable().optional(),
   notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional(),
   company_id: z.string().nullable().optional(),
-  is_primary: z.boolean().optional(),
+  is_primary: z.boolean().default(false).optional(),
 });
 
 // Type inference for the schema
 export type ContactFormValues = z.infer<typeof contactSchema>;
+
+/**
+ * Helper to convert form values to Supabase Insert type
+ */
+export const toContactInsert = (values: ContactFormValues): ContactInsert => ({
+  vorname: values.vorname,
+  nachname: values.nachname,
+  anrede: values.anrede || null,
+  position: values.position || null,
+  email: values.email || null,
+  telefon: values.telefon || null,
+  mobil: values.mobil || null,
+  durchwahl: values.durchwahl || null,
+  notes: values.notes || null,
+  company_id: values.company_id || null,
+  is_primary: values.is_primary ?? false,
+});
+
+/**
+ * Helper to convert form values to Supabase Update type
+ */
+export const toContactUpdate = (values: ContactFormValues): ContactUpdate => ({
+  vorname: values.vorname,
+  nachname: values.nachname,
+  anrede: values.anrede || null,
+  position: values.position || null,
+  email: values.email || null,
+  telefon: values.telefon || null,
+  mobil: values.mobil || null,
+  durchwahl: values.durchwahl || null,
+  notes: values.notes || null,
+  company_id: values.company_id || null,
+  is_primary: values.is_primary ?? undefined,
+});

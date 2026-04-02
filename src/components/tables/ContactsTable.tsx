@@ -26,8 +26,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Contact } from "@/lib/supabase/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
+import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 

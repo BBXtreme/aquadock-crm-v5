@@ -6,7 +6,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/supabase/services/timeline";
+import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/actions/timeline";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -15,10 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { EmailTemplate } from "@/lib/supabase/database.types";
-import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/supabase/services/email";
-import { sendMassEmailAction } from "@/lib/supabase/services/send-mass-email";
+import { sendMassEmailAction } from "@/lib/actions/mass-email";
+import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/services/email";
+import { createClient } from "@/lib/supabase/browser";
+import type { EmailTemplate } from "@/types/database.types";
 
 type SendResults = {
   success: boolean;

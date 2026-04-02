@@ -15,9 +15,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Contact } from "@/lib/supabase/database.types";
-import { deleteContact, getContacts } from "@/lib/supabase/services/contacts";
+import { deleteContact, getContacts } from "@/lib/actions/contacts";
+import { createClient } from "@/lib/supabase/browser";
+import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 

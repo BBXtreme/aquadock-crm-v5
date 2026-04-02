@@ -2,21 +2,6 @@
 // This file sets up the Supabase client for use in server components
 // and route handlers
 // It uses the createServerClient function from @supabase/ssr, which
-// is designed to work in both server and client environments
-// The client is configured using environment variables for the URL and
-// anon key, which should be defined in a .env.local file for local
-// development and in the deployment environment for production
-// The createServerSupabaseClient function can be imported and used
-// throughout the app to interact with Supabase in server components
-// and route handlers, ensuring that the client is properly initialized
-// and configured for server use
-// The code includes a check to ensure that the necessary environment
-// variables are defined, throwing an error if they are missing to
-// prevent runtime issues when trying to use the client without proper
-// configuration
-// The function also handles cookies using Next.js's cookies API,
-// allowing for session management and authentication with Supabase
-// in server-side contexts
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";

@@ -11,8 +11,8 @@
 // reminders in the app.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Reminder, ReminderInsert, ReminderUpdate } from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { Reminder, ReminderInsert, ReminderUpdate } from "@/types/database.types";
 
 type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
 

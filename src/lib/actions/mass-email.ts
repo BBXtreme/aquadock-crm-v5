@@ -5,9 +5,9 @@
 
 import { promises as dns } from 'node:dns';
 import nodemailer from "nodemailer";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "./email";
-import { getSmtpConfig } from "./smtp";
+import { getSmtpConfig } from "@/lib/services/smtp";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "../services/email";
 
 function isValidEmail(email: string): boolean {
   if (!email || typeof email !== 'string') return false;

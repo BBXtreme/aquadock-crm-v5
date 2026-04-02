@@ -6,7 +6,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 
-import { createTimelineEntry, getAllTimelineForUser } from "@/lib/supabase/services/timeline";
+import { createTimelineEntry, getAllTimelineForUser } from "@/lib/actions/timeline";
 
 // GET /api/timeline
 // Returns timeline entries for current authenticated user

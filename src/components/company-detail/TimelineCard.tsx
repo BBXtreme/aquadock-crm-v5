@@ -8,8 +8,8 @@ import TimelineEntryForm from "@/components/features/TimelineEntryForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { TimelineEntryWithJoins } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
+import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface Props {
   companyId: string;

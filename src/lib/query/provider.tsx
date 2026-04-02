@@ -19,7 +19,7 @@ context to the app. All query logic should be implemented in separate hooks
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { ReactNode } from "react";
-import { getQueryClient } from "./query-client";
+import { getQueryClient } from "./client";
 
 /**
  * React Query Provider

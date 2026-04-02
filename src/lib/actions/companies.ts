@@ -8,10 +8,10 @@
 // that need to access or modify company data.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ParsedCompanyRow } from "../../utils/csv-import";
-import { createClient } from "../browser-client";
-import type { Company, CompanyInsert, CompanyUpdate, Contact, KPI } from "../database.types";
-import { handleSupabaseError } from "../db-error-utils";
+import { createClient } from "@/lib/supabase/browser";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
+import type { Company, CompanyInsert, CompanyUpdate, Contact, KPI } from "@/types/database.types";
 
 export type CompanyForOpenMap = Company & { contacts?: Contact[] };
 
