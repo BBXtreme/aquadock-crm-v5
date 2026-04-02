@@ -1,8 +1,8 @@
-// src/lib/validations/company-val.ts
+// src/lib/validations/company.ts
 // Zod schema for Company forms – synced with Supabase types
 
 import { z } from "zod";
-//  import type { CompanyInsert } from "@/types/database.types";
+import type { CompanyInsert } from "@/types/database.types";
 
 export const companySchema = z.object({
   firmenname: z
@@ -31,5 +31,27 @@ export const companySchema = z.object({
   notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional(),
 });
 
-// Type inference for the schema
 export type CompanyFormValues = z.infer<typeof companySchema>;
+
+export const toCompanyInsert = (values: CompanyFormValues): CompanyInsert => ({
+  firmenname: values.firmenname,
+  rechtsform: values.rechtsform || null,
+  kundentyp: values.kundentyp,
+  firmentyp: values.firmentyp || null,
+  website: values.website || null,
+  telefon: values.telefon || null,
+  email: values.email || null,
+  strasse: values.strasse || null,
+  plz: values.plz || null,
+  stadt: values.stadt || null,
+  bundesland: values.bundesland || null,
+  land: values.land || null,
+  wasserdistanz: values.wasserdistanz ?? null,
+  wassertyp: values.wassertyp || null,
+  lat: values.lat ?? null,
+  lon: values.lon ?? null,
+  osm: values.osm || null,
+  status: values.status,
+  value: values.value ?? null,
+  notes: values.notes || null,
+});
