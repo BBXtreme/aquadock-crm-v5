@@ -1,0 +1,45 @@
+---
+description: Zod + shadcn/ui form patterns for CRM v5
+globs: ["**/*.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Zod + shadcn/ui Form Rules for CRM v5
+
+## Core Principles
+- Use **React Hook Form** + `zodResolver` for every form.
+- Define one Zod schema per entity/action (e.g. `companyFormSchema`, `contactFormSchema`).
+- Base schemas on Supabase types from `src/types/database.types.ts`.
+- Add business rules with `.min()`, `.email()`, `.regex()`, `.refine()`, or `.superRefine()`.
+- Prefer German error messages for CRM v5.
+- Use shadcn/ui `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage` components.
+- Client-side: real-time validation with `useForm`.
+- Server-side: always validate in Server Actions with `.safeParse()` or `.parse()`.
+
+## Schema Example (companies)
+```ts
+import { z } from "zod";
+import type { CompanyInsert } from "@/types/database.types";
+
+export const companyFormSchema = z.object({
+  firmenname: z.string().min(2, "Firmenname muss mindestens 2 Zeichen lang sein"),
+  kundentyp: z.string().min(1, "Kundentyp ist erforderlich"),
+  email: z.string().email("Ungültige E-Mail-Adresse").optional().or(z.literal("")),
+  telefon: z.string().optional(),
+  plz: z.string().regex(/^\d{5}$/, "PLZ muss genau 5-stellig sein").optional(),
+  status: z.enum(["active", "lead", "inactive"], { message: "Ungültiger Status" }),
+  value: z.number().min(0, "Wert darf nicht negativ sein").optional(),
+  notes: z.string().max(1000).optional(),
+  // Add more fields as needed from CompanyInsert
+}).refine((data) => {
+  // Example cross-field rule
+  if (data.kundentyp === "premium" && !data.value) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Premium-Kunden benötigen einen Wert",
+  path: ["value"],
+});
+
+export type CompanyFormValues = z.infer<typeof companyFormSchema>;

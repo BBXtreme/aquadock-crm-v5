@@ -1,0 +1,13 @@
+---
+description: CRM v5 architecture and coding standards
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: true
+---
+
+# CRM v5 Rules
+
+- Use server components by default for Supabase queries.
+- All forms must use Zod schemas with shadcn/ui Form components.
+- Follow existing entity patterns in /lib/entities or /app/(crm)/...
+- Prefer Biome formatting; never use ESLint/Prettier.
+- Keep components small and composable.
