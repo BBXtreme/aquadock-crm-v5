@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Control } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,9 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createContact, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
-import type { ContactFormDTO } from "@/lib/dto/contact.dto";
 import { createClient } from "@/lib/supabase/browser";
-import { contactSchema } from "@/lib/validations/contact";
+import { contactFormSchema, type ContactForm } from "@/lib/validations/contact";
 import type { Database } from "@/types/database.types";
 
 export default function ContactEditForm({
@@ -34,7 +34,7 @@ export default function ContactEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: ContactFormDTO) => {
+    mutationFn: async (data: ContactForm) => {
       if (contact) {
         return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
       }
@@ -57,8 +57,8 @@ export default function ContactEditForm({
     onError: (err) => toast.error("Operation failed", { description: err.message }),
   });
 
-  const form = useForm<ContactFormDTO>({
-    resolver: zodResolver(contactSchema),
+  const form = useForm<ContactForm>({
+    resolver: zodResolver(contactFormSchema),
     defaultValues: {
       vorname: contact?.vorname || "",
       nachname: contact?.nachname || "",
@@ -108,7 +108,7 @@ export default function ContactEditForm({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="vorname"
           render={({ field }) => (
             <FormItem>
@@ -121,7 +121,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="nachname"
           render={({ field }) => (
             <FormItem>
@@ -134,7 +134,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="anrede"
           render={({ field }) => (
             <FormItem>
@@ -158,7 +158,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="position"
           render={({ field }) => (
             <FormItem>
@@ -171,7 +171,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -184,7 +184,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="telefon"
           render={({ field }) => (
             <FormItem>
@@ -197,7 +197,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="mobil"
           render={({ field }) => (
             <FormItem>
@@ -210,7 +210,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
@@ -223,7 +223,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="notes"
           render={({ field }) => (
             <FormItem>
@@ -236,7 +236,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="company_id"
           render={({ field }) => (
             <FormItem>
@@ -260,7 +260,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="is_primary"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
