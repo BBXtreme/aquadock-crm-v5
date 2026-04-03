@@ -23,6 +23,7 @@ const columns = [
   columnHelper.accessor("created_at", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
@@ -48,6 +49,7 @@ const columns = [
   columnHelper.accessor("activity_type", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
@@ -102,6 +104,7 @@ const columns = [
   columnHelper.accessor("companies", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
@@ -129,6 +132,7 @@ const columns = [
   columnHelper.accessor("contacts", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
@@ -156,6 +160,7 @@ const columns = [
   columnHelper.accessor("title", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
@@ -170,6 +175,7 @@ const columns = [
   columnHelper.accessor("content", {
     header: ({ column }) => (
       <button
+        type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
