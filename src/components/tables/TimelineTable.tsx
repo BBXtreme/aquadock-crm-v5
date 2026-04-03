@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -224,13 +224,13 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   const finalSearch = search !== undefined ? search : internalSearch;
   const finalOnSearchChange = onSearchChange || setInternalSearch;
 
-  const filteredData = finalData.filter((entry) =>
-    entry.title.toLowerCase().includes(finalSearch.toLowerCase()) ||
-    entry.content?.toLowerCase().includes(finalSearch.toLowerCase()) ||
-    entry.companies?.firmenname.toLowerCase().includes(finalSearch.toLowerCase()) ||
-    entry.contacts?.vorname.toLowerCase().includes(finalSearch.toLowerCase()) ||
-    entry.contacts?.nachname.toLowerCase().includes(finalSearch.toLowerCase())
-  );
+  const filteredData = useMemo(() => finalData.filter((entry) =>
+    (entry.title || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
+    (entry.content || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
+    (entry.companies?.firmenname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
+    (entry.contacts?.vorname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
+    (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase())
+  ), [finalData, finalSearch]);
 
   const table = useReactTable({
     data: filteredData,
