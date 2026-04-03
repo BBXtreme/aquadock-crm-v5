@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -9,8 +11,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Bell, FileText, Mail, Phone, Users } from "lucide-react";
-import Link from "next/link";
-import { useMemo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -164,9 +164,19 @@ function ActionButtons({ entry }: { entry: TimelineEntryWithJoins }) {
     },
   });
 
+  type UpdateTimelineData = {
+    id: string;
+    title: string;
+    content?: string;
+    company_id?: string | null;
+    contact_id?: string | null;
+    activity_type?: string;
+    user_name?: string;
+  };
+
   // Assume update function exists or placeholder
   const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: UpdateTimelineData) => {
       // Placeholder for update
       console.log("Update", data);
     },
@@ -191,7 +201,6 @@ function ActionButtons({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogTitle>Edit Timeline Entry</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
-            initialValues={entry}
             onSubmit={async (values) => {
               await updateMutation.mutateAsync({ id: entry.id, ...values });
             }}
