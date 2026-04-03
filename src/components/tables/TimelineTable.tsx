@@ -1,12 +1,12 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { TimelineEntryForm } from "@/components/features/timeline/TimelineEntryForm";
+import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,14 +31,14 @@ const columns = [
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      }).format(new Date(date));
+      }).format(new Date(date as string));
       return <span>{formatted}</span>;
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("type", {
+  columnHelper.accessor("activity_type", {
     header: "Aktivität",
     cell: (info) => {
-      const type = info.getValue();
+      const type = info.getValue() as string;
       const getIcon = (t: string) => {
         switch (t) {
           case "note":
@@ -85,7 +85,7 @@ const columns = [
       const company = info.getValue();
       if (!company) return <span>-</span>;
       return (
-        <Link href={`/companies/${company.id}`} className="text-blue-600 hover:underline">
+        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
           {company.firmenname}
         </Link>
       );
@@ -97,7 +97,7 @@ const columns = [
       const contact = info.getValue();
       if (!contact) return <span>-</span>;
       return (
-        <Link href={`/contacts/${contact.id}`} className="text-blue-600 hover:underline">
+        <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
           {contact.vorname} {contact.nachname}
         </Link>
       );
@@ -107,9 +107,9 @@ const columns = [
     header: "Titel",
     cell: (info) => <span>{info.getValue()}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("description", {
+  columnHelper.accessor("content", {
     header: "Beschreibung",
-    cell: (info) => <span>{info.getValue() || "-"}</span>,
+    cell: (info) => <span>{(info.getValue() as string | null) || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "actions",
@@ -149,12 +149,11 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             initialValues={{
               company_id: entry.company_id || "",
               contact_id: entry.contact_id || "",
-              type: entry.type,
+              type: entry.activity_type,
               title: entry.title,
-              description: entry.description || "",
+              description: entry.content || "",
             }}
-            onSubmit={async (_values) => {
-              // Assuming update logic is handled in the form
+            onSubmit={async (_values: unknown) => {
               setEditDialogOpen(false);
             }}
           />
@@ -193,7 +192,7 @@ interface TimelineTableProps {
 export function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps) {
   const filteredData = data.filter((entry) =>
     entry.title.toLowerCase().includes(search.toLowerCase()) ||
-    entry.description?.toLowerCase().includes(search.toLowerCase()) ||
+    entry.content?.toLowerCase().includes(search.toLowerCase()) ||
     entry.companies?.firmenname.toLowerCase().includes(search.toLowerCase()) ||
     entry.contacts?.vorname.toLowerCase().includes(search.toLowerCase()) ||
     entry.contacts?.nachname.toLowerCase().includes(search.toLowerCase())
@@ -224,8 +223,8 @@ export function TimelineTable({ data, isLoading, search, onSearchChange }: Timel
           <thead>
             <tr className="border-b">
               {columns.map((col) => (
-                <th key={col.id || col.header} className="text-left p-2 font-medium">
-                  {typeof col.header === "string" ? col.header : col.header({} as any)}
+                <th key={col.id || (col.header as string)} className="text-left p-2 font-medium">
+                  {col.header as string}
                 </th>
               ))}
             </tr>
@@ -234,7 +233,7 @@ export function TimelineTable({ data, isLoading, search, onSearchChange }: Timel
             {filteredData.map((entry) => (
               <tr key={entry.id} className="border-b hover:bg-gray-50">
                 {columns.map((col) => (
-                  <td key={col.id || col.header} className="p-2">
+                  <td key={col.id || (col.header as string)} className="p-2">
                     {col.cell ? col.cell({ getValue: () => entry[col.accessorKey as keyof TimelineEntryWithJoins], row: { original: entry } } as any) : null}
                   </td>
                 ))}
