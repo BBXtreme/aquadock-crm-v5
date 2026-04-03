@@ -42,7 +42,7 @@ const htmlToReact = (html: string): React.ReactNode[] => {
     if (node.nodeType === Node.ELEMENT_NODE) {
       const element = node as Element;
       const tagName = element.tagName.toLowerCase();
-      const props: Record<string, any> = {};
+      const props: Record<string, string> = {};
 
       // Only allow safe attributes for links
       if (tagName === 'a') {
