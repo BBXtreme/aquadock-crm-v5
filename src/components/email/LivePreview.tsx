@@ -105,7 +105,7 @@ export default function LivePreview({
               </div>
 
               {/* Body */}
-              {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized server-side for email preview */}
+              // biome-ignore lint/security/noDangerouslySetInnerHtml: Content is sanitized server-side for email preview
               <div
                 className="prose dark:prose-invert text-[15.5px] leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: sanitizedBody || "Kein Inhalt" }}
