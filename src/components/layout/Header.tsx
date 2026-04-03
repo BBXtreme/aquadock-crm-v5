@@ -94,6 +94,7 @@ export default function Header() {
               sizes="(max-width: 768px) 88px, 104px"
               className="h-22 w-auto object-contain md:h-26"
               priority
+              suppressHydrationWarning={true}
             />
           </div>
         </Link>
@@ -140,6 +141,7 @@ export default function Header() {
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label="Toggle theme"
+          suppressHydrationWarning={true}
         >
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
