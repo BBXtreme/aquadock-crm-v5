@@ -122,6 +122,36 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp")
+        .order("firmenname", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as { id: string; firmenname: string; kundentyp?: string }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: contacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, vorname, nachname, email, telefon, position")
+        .order("nachname")
+        .order("vorname")
+        .limit(100);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const handleDelete = async () => {
     try {
       const res = await fetch(`/api/timeline/${entry.id}`, { method: 'DELETE' });
@@ -165,8 +195,8 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
           <TimelineEntryForm
             editEntry={entry}
             isSubmitting={false}
-            companies={[]}
-            contacts={[]}
+            companies={companies}
+            contacts={contacts}
             onSubmit={handleEditSubmit}
           />
         </DialogContent>
