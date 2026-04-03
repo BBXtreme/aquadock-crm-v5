@@ -22,7 +22,7 @@ export const toTimelineInsert = (values: TimelineFormValues): TimelineEntryInser
   contact_id: values.contact_id || null,
 });
 
-function emptyStringToNull(val: unknown) {
+function _emptyStringToNull(val: unknown) {
   return val === "" ? null : val;
 }
 

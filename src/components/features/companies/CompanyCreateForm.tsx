@@ -18,7 +18,7 @@ import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
+import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     defaultValues: {
       firmenname: "",
       rechtsform: undefined,
-      kundentyp: "",
+      kundentyp: "sonstige",
       firmentyp: undefined,
       strasse: undefined,
       plz: undefined,
@@ -51,28 +51,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
 
   const mutation = useMutation({
     mutationFn: (company: CompanyFormValues) => {
-      const data = {
-        firmenname: company.firmenname,
-        rechtsform: company.rechtsform ?? undefined,
-        kundentyp: company.kundentyp,
-        firmentyp: company.firmentyp ?? undefined,
-        strasse: company.strasse ?? undefined,
-        plz: company.plz ?? undefined,
-        stadt: company.stadt ?? undefined,
-        bundesland: company.bundesland ?? undefined,
-        land: company.land ?? undefined,
-        website: company.website ?? undefined,
-        telefon: company.telefon ?? undefined,
-        email: company.email ?? undefined,
-        wasserdistanz: company.wasserdistanz ?? undefined,
-        wassertyp: company.wassertyp ?? undefined,
-        lat: company.lat ?? undefined,
-        lon: company.lon ?? undefined,
-        osm: company.osm ?? undefined,
-        status: company.status,
-        value: company.value ?? undefined,
-        notes: company.notes ?? undefined,
-      };
+      const data = toCompanyInsert(company);
       return createCompany(data, createClient());
     },
     onSuccess: () => {
@@ -317,7 +296,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -361,7 +340,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -381,7 +360,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -447,7 +426,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        value={field.value ?? ""}
+                        value={field.value?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>

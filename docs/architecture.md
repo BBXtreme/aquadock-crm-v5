@@ -95,6 +95,15 @@ export async function getCompaniesForOpenMap() {
 - Forms use React Hook Form + Zod schemas from @/lib/validations/ with input sanitization (.trim(), .max(), .enum()). 
 - Detail queries are optimized with selective column selection. Auth and RLS will be added later.
 
+## 7. Validation Layer (Zod as Single Source of Truth)
+
+- All forms use React Hook Form + Zod schemas from `src/lib/validations/`
+- Schemas are `.strict()`, use `.trim()`, `.email()`, `.uuid()`, and enums pulled from `src/lib/constants/*Options.ts`
+- Empty strings from forms are transformed to `null` for nullable Supabase columns
+- Server Actions / Services always run `schema.safeParse()` before database operations
+- Inferred types (`z.infer<typeof companyFormSchema>`) replace old DTOs
+- `user_id` is **never** accepted from client forms – injected server-side for RLS compliance
+
 ## 8. Auth & Authorization
 
 - Supabase Auth for authentication

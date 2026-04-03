@@ -33,7 +33,7 @@ export const toEmailTemplateUpdate = (values: EmailTemplateFormValues): EmailTem
   ...values,
 });
 
-function emptyStringToNull(val: unknown) {
+function _emptyStringToNull(val: unknown) {
   return val === "" ? null : val;
 }
 
