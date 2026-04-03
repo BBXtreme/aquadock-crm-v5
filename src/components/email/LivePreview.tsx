@@ -2,7 +2,7 @@
 "use client";
 
 import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,69 @@ const sanitizeHtml = (html: string): string => {
     .replace(/javascript:/gi, '');
 };
 
+// Safe HTML to React converter for basic tags
+const htmlToReact = (html: string): React.ReactNode[] => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+  const container = doc.body.firstChild as Element;
+
+  const convertNode = (node: Node, index: number): React.ReactNode => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      const tagName = element.tagName.toLowerCase();
+      const props: Record<string, any> = {};
+
+      // Only allow safe attributes for links
+      if (tagName === 'a') {
+        const href = element.getAttribute('href');
+        if (href && (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:'))) {
+          props.href = href;
+        }
+        props.target = '_blank';
+        props.rel = 'noopener noreferrer';
+      }
+
+      const children = Array.from(element.childNodes).map((child, i) => convertNode(child, i));
+
+      switch (tagName) {
+        case 'p':
+          return <p key={index} className="mb-4">{children}</p>;
+        case 'br':
+          return <br key={index} />;
+        case 'strong':
+        case 'b':
+          return <strong key={index}>{children}</strong>;
+        case 'em':
+        case 'i':
+          return <em key={index}>{children}</em>;
+        case 'ul':
+          return <ul key={index} className="list-disc list-inside mb-4">{children}</ul>;
+        case 'ol':
+          return <ol key={index} className="list-decimal list-inside mb-4">{children}</ol>;
+        case 'li':
+          return <li key={index} className="mb-1">{children}</li>;
+        case 'a':
+          return <a key={index} {...props}>{children}</a>;
+        case 'div':
+          return <div key={index}>{children}</div>;
+        case 'span':
+          return <span key={index}>{children}</span>;
+        default:
+          // For unsupported tags, render as span
+          return <span key={index}>{children}</span>;
+      }
+    }
+
+    return null;
+  };
+
+  return Array.from(container.childNodes).map((node, index) => convertNode(node, index));
+};
+
 export default function LivePreview({
   previewSubject,
   previewBody,
@@ -38,7 +101,6 @@ export default function LivePreview({
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async () => {
     const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
@@ -50,13 +112,8 @@ export default function LivePreview({
     }
   };
 
-  const sanitizedBody = sanitizeHtml(previewBody);
-
-  useEffect(() => {
-    if (bodyRef.current) {
-      bodyRef.current.innerHTML = sanitizedBody || "Kein Inhalt";
-    }
-  }, [sanitizedBody]);
+  const sanitizedBody = useMemo(() => sanitizeHtml(previewBody), [previewBody]);
+  const bodyElements = useMemo(() => htmlToReact(sanitizedBody), [sanitizedBody]);
 
   return (
     <Card>
@@ -108,11 +165,10 @@ export default function LivePreview({
                 {previewSubject || "Kein Betreff"}
               </div>
 
-              {/* Safe HTML rendering using ref and useEffect */}
-              <div
-                ref={bodyRef}
-                className="prose dark:prose-invert text-[15.5px] leading-relaxed"
-              />
+              {/* Safe HTML rendering as React elements */}
+              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
+                {bodyElements.length > 0 ? bodyElements : "Kein Inhalt"}
+              </div>
             </div>
           </div>
         ) : (
