@@ -16,8 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import { companySchema, type CompanyForm } from "@/lib/validations/company";
 import { createClient } from "@/lib/supabase/browser";
+import { type CompanyForm, companySchema } from "@/lib/validations/company";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
