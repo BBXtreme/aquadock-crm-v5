@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -21,7 +21,17 @@ const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 const columns = [
   columnHelper.accessor("created_at", {
-    header: "Datum & Uhrzeit",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Datum & Uhrzeit
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
     cell: (info) => {
       const date = info.getValue();
       if (!date) return <span>-</span>;
@@ -36,7 +46,17 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("activity_type", {
-    header: "Aktivität",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Aktivität
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
     cell: (info) => {
       const type = info.getValue() as string;
       const getIcon = (t: string) => {
@@ -80,7 +100,22 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("companies", {
-    header: "Firma",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Firma
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.companies?.firmenname || "";
+      const b = rowB.original.companies?.firmenname || "";
+      return a.localeCompare(b);
+    },
     cell: (info) => {
       const company = info.getValue();
       if (!company) return <span>-</span>;
@@ -92,7 +127,22 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("contacts", {
-    header: "Kontakt",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Kontakt
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const a = `${rowA.original.contacts?.vorname || ""} ${rowA.original.contacts?.nachname || ""}`.trim();
+      const b = `${rowB.original.contacts?.vorname || ""} ${rowB.original.contacts?.nachname || ""}`.trim();
+      return a.localeCompare(b);
+    },
     cell: (info) => {
       const contact = info.getValue();
       if (!contact) return <span>-</span>;
@@ -104,11 +154,31 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("title", {
-    header: "Titel",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Titel
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
     cell: (info) => <span>{info.getValue()}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("content", {
-    header: "Beschreibung",
+    header: ({ column }) => (
+      <button
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Beschreibung
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
     cell: (info) => <span>{(info.getValue() as string | null) || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
@@ -270,6 +340,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   if (finalIsLoading) {
