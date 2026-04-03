@@ -26,7 +26,7 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { contactSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
 const anredeOptions = [
