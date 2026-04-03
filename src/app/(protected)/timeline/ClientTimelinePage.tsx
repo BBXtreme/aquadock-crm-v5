@@ -1,17 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
-import { Bell, Building, Calendar, Edit, Mail, MessageSquare, MoreHorizontal, Phone, Trash, User } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
-import { Badge } from "@/components/ui/badge";
+import TimelineTable from "@/components/features/timeline/TimelineTable";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -22,38 +18,13 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Contact, TimelineEntry } from "@/types/database.types";
-
-type TimelineEntryWithJoins = TimelineEntry & {
-  companies?: Pick<Company, "firmenname"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname" | "position"> | null;
-};
+import type { Company, Contact } from "@/types/database.types";
 
 function ClientTimelinePage() {
   const queryClient = useQueryClient();
   const _router = useRouter();
   const searchParams = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
-
-  const {
-    data: timeline = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["timeline"],
-    queryFn: async () => {
-      const response = await fetch("/api/timeline");
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-      return response.json() as Promise<TimelineEntryWithJoins[]>;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -127,134 +98,11 @@ function ClientTimelinePage() {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      values,
-    }: {
-      id: string;
-      values: {
-        title: string;
-        content?: string;
-        company_id?: string | null;
-        contact_id?: string | null;
-        activity_type?: string;
-        user_name?: string;
-      };
-    }) => {
-      const res = await fetch(`/api/timeline/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline"] });
-      setDialogOpen(false);
-      setEditEntry(null);
-      toast.success("Entry updated");
-    },
-    onError: (err) => {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("Update failed", { description: message });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/timeline/${id}`, { method: "DELETE" });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-    },
-    onMutate: async (id: string) => {
-      await queryClient.cancelQueries({ queryKey: ["timeline"] });
-      const previous = queryClient.getQueryData<TimelineEntryWithJoins[]>(["timeline"]);
-      queryClient.setQueryData(["timeline"], (old: TimelineEntryWithJoins[] = []) => old.filter((e) => e.id !== id));
-      return { previous };
-    },
-    onError: (_err, _id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["timeline"], context.previous);
-      }
-      toast.error("Delete failed");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline"] });
-    },
-    onSuccess: () => {
-      toast.success("Timeline entry deleted");
-    },
-  });
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "email":
-        return <Mail className="h-3 w-3 mr-1" />;
-      case "call":
-        return <Phone className="h-3 w-3 mr-1" />;
-      case "meeting":
-        return <Calendar className="h-3 w-3 mr-1" />;
-      case "note":
-        return <MessageSquare className="h-3 w-3 mr-1" />;
-      case "reminder":
-        return <Bell className="h-3 w-3 mr-1" />;
-      default:
-        return <MoreHorizontal className="h-3 w-3 mr-1" />;
-    }
-  };
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case "email":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "call":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "meeting":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "note":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "reminder":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   useEffect(() => {
     if (searchParams.get("create") === "true") {
       setDialogOpen(true);
     }
   }, [searchParams]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Timeline</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Timeline
-          </h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Timeline</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Timeline
-          </h1>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -264,143 +112,31 @@ function ClientTimelinePage() {
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Timeline
           </h1>
+          <p className="text-muted-foreground">Aktivitäten & Historie</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditEntry(null)}>New Entry</Button>
+            <Button>Neuer Eintrag</Button>
           </DialogTrigger>
           <WideDialogContent size="xl">
             <DialogHeader>
-              <DialogTitle>{editEntry ? "Edit Timeline Entry" : "Create New Timeline Entry"}</DialogTitle>
-              <DialogDescription>
-                {editEntry ? "Edit the timeline entry." : "Add a new activity to the timeline."}
-              </DialogDescription>
+              <DialogTitle>Create New Timeline Entry</DialogTitle>
+              <DialogDescription>Add a new activity to the timeline.</DialogDescription>
             </DialogHeader>
             <TimelineEntryForm
               onSubmit={async (values) => {
-                if (editEntry?.id) {
-                  await updateMutation.mutateAsync({ id: editEntry.id, values });
-                } else {
-                  await createMutation.mutateAsync(values);
-                }
+                await createMutation.mutateAsync(values);
               }}
-              isSubmitting={createMutation.isPending || updateMutation.isPending}
+              isSubmitting={createMutation.isPending}
               companies={companies}
               contacts={contacts}
-              editEntry={editEntry}
-              onCancel={() => {
-                setDialogOpen(false);
-                setEditEntry(null);
-              }}
+              onCancel={() => setDialogOpen(false)}
             />
           </WideDialogContent>
         </Dialog>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Timeline Entries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {timeline.length === 0 ? (
-            <p className="text-muted-foreground">No timeline entries yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {timeline.map((entry) => (
-                <div key={entry.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        {getActivityIcon(entry.activity_type || "note")}
-                        <h3 className="font-semibold">{entry.title}</h3>
-                        <Badge variant="outline" className={getActivityColor(entry.activity_type || "note")}>
-                          {entry.activity_type || "note"}
-                        </Badge>
-                      </div>
-                      {entry.content && <p className="text-sm text-muted-foreground mb-2">{entry.content}</p>}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        {entry.companies && (
-                          <div className="flex items-center gap-1">
-                            <Building className="h-3 w-3" />
-                            <Link href={`/companies/${entry.company_id}`} className="hover:underline">
-                              {entry.companies.firmenname}
-                            </Link>
-                          </div>
-                        )}
-                        {entry.contacts && (
-                          <div className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            <Link href={`/contacts/${entry.contact_id}`} className="hover:underline">
-                              {entry.contacts.vorname} {entry.contacts.nachname}
-                            </Link>
-                          </div>
-                        )}
-                        <span>
-                          {entry.created_at
-                            ? formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })
-                            : "—"}
-                        </span>
-                        <span>by {entry.user_name || "Unknown"}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditEntry(entry);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEntryToDelete(entry.id);
-                          setDeleteDialogOpen(true);
-                        }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Timeline Entry</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this timeline entry? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (entryToDelete) {
-                  deleteMutation.mutate(entryToDelete);
-                  setDeleteDialogOpen(false);
-                  setEntryToDelete(null);
-                }
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              Delete
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TimelineTable />
     </>
   );
 }
