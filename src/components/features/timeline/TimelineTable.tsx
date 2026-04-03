@@ -200,7 +200,6 @@ function ActionButtons({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogTitle>Edit Timeline Entry</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
-            initialValues={entry}
             onSubmit={async (values) => {
               await updateMutation.mutateAsync({ id: entry.id, ...values });
             }}
