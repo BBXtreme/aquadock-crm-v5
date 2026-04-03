@@ -131,6 +131,21 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
     }
   };
 
+  const handleEditSubmit = async (values: unknown) => {
+    try {
+      const res = await fetch(`/api/timeline/${entry.id}`, {
+        method: 'PUT',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      toast.success("Eintrag aktualisiert");
+      setEditDialogOpen(false);
+    } catch (_error) {
+      toast.error("Fehler beim Aktualisieren");
+    }
+  };
+
   return (
     <div className="flex gap-2">
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -145,12 +160,11 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
+            initialData={entry}
             isSubmitting={false}
             companies={[]}
             contacts={[]}
-            onSubmit={async (_values: unknown) => {
-              setEditDialogOpen(false);
-            }}
+            onSubmit={handleEditSubmit}
           />
         </DialogContent>
       </Dialog>
@@ -184,7 +198,9 @@ interface TimelineTableProps {
   onSearchChange?: (value: string) => void;
 }
 
-export default function TimelineTable({ data, isLoading, search = "", onSearchChange }: TimelineTableProps = {}) {
+export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps = {}) {
+  const [internalSearch, setInternalSearch] = useState("");
+
   const { data: internalData = [], isLoading: internalLoading } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
@@ -205,8 +221,8 @@ export default function TimelineTable({ data, isLoading, search = "", onSearchCh
 
   const finalData = data || internalData;
   const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
-  const finalSearch = search;
-  const finalOnSearchChange = onSearchChange || (() => { /* no-op */ });
+  const finalSearch = search !== undefined ? search : internalSearch;
+  const finalOnSearchChange = onSearchChange || setInternalSearch;
 
   const filteredData = finalData.filter((entry) =>
     entry.title.toLowerCase().includes(finalSearch.toLowerCase()) ||
