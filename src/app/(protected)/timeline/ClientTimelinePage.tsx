@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
-import TimelineTable from "@/components/features/timeline/TimelineTable";
+import TimelineTable from "@/components/tables//TimelineTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -109,7 +109,7 @@ function ClientTimelinePage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Timeline</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Timeline
           </h1>
           <p className="text-muted-foreground">Aktivitäten & Historie</p>
