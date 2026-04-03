@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -8,9 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Bell, FileText, Mail, Phone, Users } from "lucide-react";
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Bell, FileText, Mail, Pencil, Phone, Trash2, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -75,11 +74,11 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       return date
         ? new Date(date).toLocaleString("de-DE", {
             day: "2-digit",
-            month: "short",
+            month: "2-digit",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-          })
+          }).replace(',', '')
         : "";
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
@@ -189,10 +188,10 @@ function ActionButtons({ entry }: { entry: TimelineEntryWithJoins }) {
   return (
     <div className="flex gap-2">
       <Button variant="outline" size="sm" onClick={() => setEditDialogOpen(true)}>
-        Edit
+        <Pencil className="h-4 w-4" />
       </Button>
       <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-        Delete
+        <Trash2 className="h-4 w-4" />
       </Button>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
@@ -201,6 +200,7 @@ function ActionButtons({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogTitle>Edit Timeline Entry</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
+            initialValues={entry}
             onSubmit={async (values) => {
               await updateMutation.mutateAsync({ id: entry.id, ...values });
             }}
@@ -264,151 +264,137 @@ export default function TimelineTable({ companyId }: TimelineTableProps) {
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Timeline Entries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center text-destructive py-8">
-            Error loading timeline entries. Please try again.
-          </div>
-        </CardContent>
-      </Card>
+      <div className="text-center text-destructive py-8">
+        Error loading timeline entries. Please try again.
+      </div>
     );
   }
 
   return (
     <TooltipProvider>
-      <Card>
-        <CardHeader>
-          <CardTitle>Timeline Entries</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <Input
-              placeholder="Search by title or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : header.column.getCanSort()
-                          ? (
-                              <Button
-                                variant="ghost"
-                                onClick={header.column.getToggleSortingHandler()}
-                                className="h-auto p-0 font-medium"
-                              >
-                                {header.column.columnDef.header as string}
-                                {{
-                                  asc: " ↑",
-                                  desc: " ↓",
-                                }[header.column.getIsSorted() as string] ?? null}
-                              </Button>
-                            )
-                          : (header.column.columnDef.header as string)}
-                      </TableHead>
-                    ))}
-                  </TableRow>
+      <div className="mb-4">
+        <Input
+          placeholder="Search by title or description..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : header.column.getCanSort()
+                      ? (
+                          <Button
+                            variant="ghost"
+                            onClick={header.column.getToggleSortingHandler()}
+                            className="h-auto p-0 font-medium"
+                          >
+                            {header.column.columnDef.header as string}
+                            {{
+                              asc: " ↑",
+                              desc: " ↓",
+                            }[header.column.getIsSorted() as string] ?? null}
+                          </Button>
+                        )
+                      : (header.column.columnDef.header as string)}
+                  </TableHead>
                 ))}
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <>
-                    <TableRow key="timeline-skeleton-1">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                    <TableRow key="timeline-skeleton-2">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                    <TableRow key="timeline-skeleton-3">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                    <TableRow key="timeline-skeleton-4">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                    <TableRow key="timeline-skeleton-5">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                    <TableRow key="timeline-skeleton-6">
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    </TableRow>
-                  </>
-                ) : filteredData.length > 0 ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {cell.renderValue() as React.ReactNode}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="text-center py-8">
-                      <div className="flex flex-col items-center gap-4">
-                        <p className="text-muted-foreground">No timeline entries found.</p>
-                        <Button>Neuer Eintrag</Button>
-                      </div>
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <>
+                <TableRow key="timeline-skeleton-1">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+                <TableRow key="timeline-skeleton-2">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+                <TableRow key="timeline-skeleton-3">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+                <TableRow key="timeline-skeleton-4">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+                <TableRow key="timeline-skeleton-5">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+                <TableRow key="timeline-skeleton-6">
+                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                </TableRow>
+              </>
+            ) : filteredData.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {cell.renderValue() as React.ReactNode}
                     </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="text-center py-8">
+                  <div className="flex flex-col items-center gap-4">
+                    <p className="text-muted-foreground">No timeline entries found.</p>
+                    <Button>Neuer Eintrag</Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </TooltipProvider>
   );
 }
