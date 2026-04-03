@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/browser";
 import { deleteTimelineEntry } from "@/lib/actions/timeline";
+import { createClient } from "@/lib/supabase/browser";
 
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
