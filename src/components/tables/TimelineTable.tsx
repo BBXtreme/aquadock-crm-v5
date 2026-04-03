@@ -146,6 +146,9 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
+            isSubmitting={false}
+            companies={[]}
+            contacts={[]}
             onSubmit={async (_values: unknown) => {
               setEditDialogOpen(false);
             }}
