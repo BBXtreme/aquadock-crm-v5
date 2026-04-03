@@ -31,7 +31,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       const date = info.getValue();
       return date ? new Date(date).toLocaleString("de-DE") : "";
     },
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("activity_type", {
     header: "Type",
     cell: (info) => {
@@ -57,22 +57,22 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         </Badge>
       );
     },
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("title", {
     header: "Title",
     cell: (info) => safeDisplay(info.getValue()),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("content", {
     header: "Description",
     cell: (info) => {
       const desc = safeDisplay(info.getValue());
       return desc.length > 50 ? `${desc.slice(0, 50)}...` : desc;
     },
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("user_name", {
     header: "User",
     cell: (info) => safeDisplay(info.getValue()),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "actions",
     header: "Actions",
@@ -102,8 +102,6 @@ function DeleteButton({ timelineId }: { timelineId: string }) {
 }
 
 export default function TimelineTable({ companyId }: TimelineTableProps) {
-  const _queryClient = useQueryClient();
-
   const { data: timelineEntries, isLoading, error } = useQuery({
     queryKey: ["timeline", companyId],
     queryFn: () => getTimelineEntries(companyId),
