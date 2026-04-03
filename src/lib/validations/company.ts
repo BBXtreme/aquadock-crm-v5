@@ -63,9 +63,9 @@ export const toCompanyInsert = (values: CompanyFormValues): CompanyInsert => ({
   rechtsform: values.rechtsform || null,
   kundentyp: values.kundentyp,
   firmentyp: values.firmentyp || null,
-  website: values.website || null,
+  website: (values.website as string | null | undefined) || null,
   telefon: values.telefon || null,
-  email: values.email || null,
+  email: (values.email as string | null | undefined) || null,
   strasse: values.strasse || null,
   plz: values.plz || null,
   stadt: values.stadt || null,
@@ -86,9 +86,9 @@ export const toCompanyUpdate = (values: CompanyFormValues): CompanyUpdate => ({
   rechtsform: values.rechtsform || null,
   kundentyp: values.kundentyp,
   firmentyp: values.firmentyp || null,
-  website: values.website || null,
+  website: (values.website as string | null | undefined) || null,
   telefon: values.telefon || null,
-  email: values.email || null,
+  email: (values.email as string | null | undefined) || null,
   strasse: values.strasse || null,
   plz: values.plz || null,
   stadt: values.stadt || null,
@@ -104,7 +104,7 @@ export const toCompanyUpdate = (values: CompanyFormValues): CompanyUpdate => ({
   notes: values.notes || null,
 });
 
-function emptyStringToNull(val: unknown) {
+function emptyStringToNull(val: string | null | undefined): string | null | undefined {
   return val === "" ? null : val;
 }
 

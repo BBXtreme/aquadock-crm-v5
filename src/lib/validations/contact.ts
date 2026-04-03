@@ -33,12 +33,12 @@ export const toContactInsert = (values: ContactFormValues): ContactInsert => ({
   nachname: values.nachname,
   anrede: values.anrede || null,
   position: values.position || null,
-  email: values.email || null,
+  email: (values.email as string | null | undefined) || null,
   telefon: values.telefon || null,
   mobil: values.mobil || null,
   durchwahl: values.durchwahl || null,
   notes: values.notes || null,
-  company_id: values.company_id || null,
+  company_id: (values.company_id as string | null | undefined) || null,
   is_primary: values.is_primary ?? false,
 });
 
@@ -50,16 +50,16 @@ export const toContactUpdate = (values: ContactFormValues): ContactUpdate => ({
   nachname: values.nachname,
   anrede: values.anrede || null,
   position: values.position || null,
-  email: values.email || null,
+  email: (values.email as string | null | undefined) || null,
   telefon: values.telefon || null,
   mobil: values.mobil || null,
   durchwahl: values.durchwahl || null,
   notes: values.notes || null,
-  company_id: values.company_id || null,
+  company_id: (values.company_id as string | null | undefined) || null,
   is_primary: values.is_primary ?? undefined,
 });
 
-function emptyStringToNull(val: unknown) {
+function emptyStringToNull(val: string | null | undefined): string | null | undefined {
   return val === "" ? null : val;
 }
 

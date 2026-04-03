@@ -18,7 +18,7 @@ import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
+import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
@@ -50,10 +50,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   });
 
   const mutation = useMutation({
-    mutationFn: (company: CompanyFormValues) => {
-      const data = toCompanyInsert(company);
-      return createCompany(data, createClient());
-    },
+    mutationFn: (company: CompanyFormValues) => createCompany(company, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Unternehmen erfolgreich angelegt");
@@ -96,7 +93,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Rechtsform</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -157,7 +154,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Website</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -170,7 +167,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Telefon</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,7 +180,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Email</FormLabel>
                     <FormControl>
-                      <Input className="w-full" type="email" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" type="email" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -206,7 +203,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Strasse</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -219,7 +216,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Plz</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -232,7 +229,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Stadt</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -245,7 +242,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Bundesland</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,7 +293,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        value={field.value?.toString() ?? ""}
+                        value={(field.value as number | undefined)?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -340,7 +337,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
-                        value={field.value?.toString() ?? ""}
+                        value={(field.value as number | undefined)?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -360,7 +357,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         type="number"
                         step="any"
                         {...field}
-                        value={field.value?.toString() ?? ""}
+                        value={(field.value as number | undefined)?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -375,7 +372,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem>
                     <FormLabel className="text-base">Osm</FormLabel>
                     <FormControl>
-                      <Input className="w-full" {...field} value={field.value ?? ""} />
+                      <Input className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -426,7 +423,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                         className="w-full"
                         type="number"
                         {...field}
-                        value={field.value?.toString() ?? ""}
+                        value={(field.value as number | undefined)?.toString() ?? ""}
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
@@ -441,7 +438,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                   <FormItem className="md:col-span-2">
                     <FormLabel className="text-base">Notes</FormLabel>
                     <FormControl>
-                      <Textarea className="w-full" {...field} value={field.value ?? ""} />
+                      <Textarea className="w-full" {...field} value={(field.value as string | undefined) ?? ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
