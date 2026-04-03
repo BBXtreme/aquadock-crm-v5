@@ -163,7 +163,6 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
-            initialValues={entry}
             isSubmitting={false}
             companies={[]}
             contacts={[]}
