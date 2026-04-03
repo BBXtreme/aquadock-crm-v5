@@ -5,7 +5,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -107,7 +107,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="firmenname"
             render={({ field }) => (
               <FormItem>
@@ -120,7 +120,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="rechtsform"
             render={({ field }) => (
               <FormItem>
@@ -133,7 +133,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="kundentyp"
             render={({ field }) => (
               <FormItem>
@@ -157,7 +157,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="firmentyp"
             render={({ field }) => (
               <FormItem>
@@ -181,7 +181,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="website"
             render={({ field }) => (
               <FormItem>
@@ -194,7 +194,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="telefon"
             render={({ field }) => (
               <FormItem>
@@ -207,7 +207,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -220,7 +220,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="strasse"
             render={({ field }) => (
               <FormItem>
@@ -233,7 +233,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="plz"
             render={({ field }) => (
               <FormItem>
@@ -246,7 +246,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="stadt"
             render={({ field }) => (
               <FormItem>
@@ -259,7 +259,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="bundesland"
             render={({ field }) => (
               <FormItem>
@@ -272,7 +272,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="land"
             render={({ field }) => (
               <FormItem>
@@ -296,7 +296,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="wasserdistanz"
             render={({ field }) => (
               <FormItem>
@@ -314,7 +314,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="wassertyp"
             render={({ field }) => (
               <FormItem>
@@ -338,7 +338,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="lat"
             render={({ field }) => (
               <FormItem>
@@ -359,7 +359,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="lon"
             render={({ field }) => (
               <FormItem>
@@ -380,7 +380,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="osm"
             render={({ field }) => (
               <FormItem>
@@ -393,7 +393,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="status"
             render={({ field }) => (
               <FormItem>
@@ -417,7 +417,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="value"
             render={({ field }) => (
               <FormItem>
@@ -435,7 +435,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control as any}
+            control={form.control as Control<CompanyForm>}
             name="notes"
             render={({ field }) => (
               <FormItem className="md:col-span-2">
