@@ -1,3 +1,4 @@
+// src/lib/constants/company-options.ts
 export const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
   { value: "hotel", label: "Hotel" },

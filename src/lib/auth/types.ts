@@ -1,3 +1,4 @@
+// src/lib/supabase/auth/types.ts
 export type UserRole = "user" | "admin";
 
 export interface AuthUser {

@@ -1,4 +1,4 @@
-// src/lib/supabase/services/profile.ts
+// src/lib/services/profile.ts
 // This file contains server actions related to user profile management, including updating display names, changing user roles (admin only), triggering password resets (admin only), deleting users (admin only), and signing out.
 
 'use server';

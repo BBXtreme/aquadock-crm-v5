@@ -1,4 +1,4 @@
-// src/lib/supabase/services/email.ts
+// src/lib/services/email.ts
 // This file contains functions for managing email logs and templates in the Supabase database.
 // It includes functions to get all email logs/templates, get by ID, create new entries, update existing entries, and delete entries.
 // The functions use the Supabase client to interact with the database and handle errors using a utility function.

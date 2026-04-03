@@ -15,63 +15,6 @@
 - **State management** → TanStack React Query for mutations, caching and optimistic updates
 - **Suspense for data loading** → useSuspenseQuery for automatic loading states, with Suspense boundaries for fallbacks
 
-## 2. Current Folder Structure (App Router + Route Groups)
-
-```markdown
-src/app/
-├── (auth)/
-│   └── login/
-│       └── page.tsx                 # Public login page (no sidebar/header)
-├── (protected)/
-│   ├── layout.tsx                   # Applies AppLayout (Sidebar + Header) to all protected routes
-│   ├── dashboard/
-│   ├── companies/
-│   ├── contacts/
-│   ├── timeline/
-│   ├── reminders/
-│   ├── mass-email/
-│   ├── openmap/
-│   ├── profile/
-│   └── settings/
-├── api/                             # All API routes (unaffected by route groups)
-├── unauthorized/
-├── layout.tsx              # Root layout (clean - only ClientLayout + ErrorBoundary)
-├── page.tsx                         # Home → redirect to /dashboard
-└── globals.css
-├── components/
-│   ├── ui/
-│   ├── layout/                   # Sidebar + Header
-│   ├── features/
-│   │   ├── map/                  # OpenMapClient, OpenMapView, popups
-│   │   ├── companies/
-│   │   ├── contacts/
-│   │   ├── reminders/
-│   └── ErrorBoundary.tsx
-├── lib/
-│   ├── supabase/
-│   │   ├── server.ts
-│   │   ├── browser.ts
-│   │   ├── services/             # Central service layer
-│   │   ├── database.types.ts     # Auto-generated types
-│   │   └── query-debug-utils.ts
-│   ├── dto/                      # Form-specific types
-│   ├── validations/              # Zod schemas
-│   ├── constants/
-│   │   ├── company-options.ts    # Form options
-│   │   ├── map-poi-config.ts
-│   │   ├── map-status-colors.ts
-│   │   ├── kundentyp.ts
-│   │   ├── wassertyp.ts
-│   │   └── overpass-endpoints.ts
-│   └── utils/
-│       ├── map-utils.ts
-│       ├── calculateWaterDistance.ts
-│       ├── csv-import.ts
-│       ├── data-format.ts        # safeDisplay, safeString, format helpers
-│       └── query-client.ts
-└── hooks/
-```
-
 ### Route Groups (Next.js 16 App Router)
 
 - (protected) – All authenticated pages get AppLayout (Sidebar + Header)
@@ -87,7 +30,7 @@ src/app/
 
 ### Authentication Flow
 
-1. Middleware checks session for protected paths
+1. Proxy checks session for protected paths
 2. Protected pages call requireUser() (server component)
 3. getCurrentUser() joins profiles table for role + display_name
 4. requireAdmin() for admin-only features
@@ -98,28 +41,6 @@ src/app/
 - **Auth before data**: requireUser() is called before any data fetching
 - **Single source of truth**: profiles table + Supabase auth.users
 - **Server-first**: Protection happens in server components and middleware
-
-## Protected Routes (Current)
-
-All routes inside (protected) automatically receive:
-
-- Sidebar navigation
-- Header with user menu, notifications, theme toggle
-- requireUser() protection (implemented per page)
-
-Current protected pages:
-
-- /dashboard
-- /companies
-- /contacts
-- /timeline
-- /reminders
-- /settings
-- /profile
-- /mass-email
-- /openmap
-
-
 
 ## 3. Data Flow Patterns
 
@@ -174,10 +95,6 @@ export async function getCompaniesForOpenMap() {
 - Forms use React Hook Form + Zod schemas from @/lib/validations/ with input sanitization (.trim(), .max(), .enum()). 
 - Detail queries are optimized with selective column selection. Auth and RLS will be added later.
 
-### 7. DTO Layer and Middleware
-
-The DTO layer in `src/lib/dto/` provides form-specific types like `CompanyFormDTO` and `ContactFormDTO` to decouple form logic from database schemas, ensuring type safety in API interactions. Middleware in `src/proxy.ts` is set up for future authentication handling and route protection using Supabase Auth.
-
 ## 8. Auth & Authorization
 
 - Supabase Auth for authentication
@@ -193,5 +110,3 @@ The DTO layer in `src/lib/dto/` provides form-specific types like `CompanyFormDT
 - Single client wrapper for providers
 
 **Enforcement**: Strictly follow **AIDER-RULES.md** on every change (zero tolerance for type/lint errors).
-
-Built with ❤️ at Waterfront Beach • 2026

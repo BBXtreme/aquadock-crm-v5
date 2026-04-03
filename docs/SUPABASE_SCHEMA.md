@@ -3,35 +3,8 @@
 **Version**: 5.0 (March 2026)  
 **Last audited**: 2026-03-21  
 **Environment**: Supabase PostgreSQL 15+  
-**RLS**: Enabled on all business tables  
-**Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
-**Service layer**: `src/lib/supabase/services/*.ts`
 
-
-
-## Authentication & Authorization
-
-### Route Structure 
-
-- Public routes: `(auth)/login` 
-- Protected routes: `(protected)/...` with dedicated layout 
-- All protected pages must call `await requireUser()` before data access
-
-### Profiles Table (Source of Truth for Roles) 
-
-```sql
-CREATE TABLE public.profiles (
-  id uuid REFERENCES auth.users NOT NULL PRIMARY KEY,
-  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  display_name text,
-  avatar_url text,
-  updated_at timestamp with time zone DEFAULT now()
-);
-```
-
-
-
-## 1. Overview
+## 1. Database Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
 | --------------- | ------------------------- | ----- | ---- | ------------------------- | ---- | ---------------------------- |
@@ -42,7 +15,7 @@ CREATE TABLE public.profiles (
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
-| ofiles          | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
+| profiles        | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
 
 ## 2. Core Tables – Column Overview
 
@@ -200,11 +173,9 @@ user_settings: user_id, key
 ## 6. Maintenance & Type Safety
 
 Regenerate types after schema change
-Bash# Local Supabase
-npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
-# Remote project (recommended for CI)
-npx supabase gen types typescript --project-id <your-project-ref> > src/lib/supabase/database.types.ts
+npx supabase gen types typescript --project-id <your-project-ref> > src/types/database.types.ts
+
 Service layer pattern (example):
 TypeScript// src/lib/supabase/services/companies.ts
 import { createServerClient } from "@/lib/supabase/server";

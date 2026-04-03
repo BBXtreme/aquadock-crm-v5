@@ -1,4 +1,4 @@
-// src/lib/supabase/services/user-settings.ts
+// src/lib/services/user-settings.ts
 // This file contains functions for managing user settings in the
 // Supabase database. It includes functions to get and save user-specific
 // settings such as column order for the companies table, as well as

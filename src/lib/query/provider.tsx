@@ -1,4 +1,4 @@
-// src/lib/react-query.tsx
+// src/lib/query/provider.tsx
 /* React Query Provider component with optional Devtools for development
 Provides a request-scoped QueryClient for proper SSR + hydration
 Usage:

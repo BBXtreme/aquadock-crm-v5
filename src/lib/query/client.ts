@@ -1,14 +1,6 @@
-// src/lib/query-client.ts
+// src/lib/query/client.ts
 // This file sets up a QueryClient for use with TanStack Query
 // (React Query)
-// It configures default options for queries, including stale time,
-// garbage collection time, retry behavior, and error handling
-// The QueryClient is created using a factory function and cached to
-// ensure a singleton instance on the client and a new instance per
-// request on the server
-// The error handling in the QueryCache is designed to provide
-// informative toast notifications when queries fail, including the
-// query key for context
 
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { cache } from "react";

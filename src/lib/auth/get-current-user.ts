@@ -1,3 +1,5 @@
+// src/lib/auth/get-current-user.ts
+
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AuthUser } from "./types";
 

@@ -9,7 +9,7 @@
 // sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
 
 import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 import ClientCompaniesPage from "./ClientCompaniesPage";
 
 export default async function CompaniesPage() {

@@ -1,3 +1,4 @@
+// src/lib/auth/require-user.ts
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "./get-current-user";
 

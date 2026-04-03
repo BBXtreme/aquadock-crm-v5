@@ -6,7 +6,7 @@
 // The contact list and email templates are currently hardcoded as empty arrays, but in a real application, they would be fetched from the server.
 
 import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 import ClientMassEmailPage from "./ClientMassEmailPage";
 
 export default async function MassEmailPage() {
