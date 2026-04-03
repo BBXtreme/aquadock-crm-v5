@@ -157,35 +157,31 @@ const columns = [
       );
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("title", {
+  columnHelper.display({
+    id: "title-description",
     header: ({ column }) => (
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
-        Titel
+        Titel & Beschreibung
         {column.getIsSorted() === "asc" && "↑"}
         {column.getIsSorted() === "desc" && "↓"}
       </button>
     ),
     enableSorting: true,
-    cell: (info) => <span>{info.getValue()}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("content", {
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Beschreibung
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.title || "";
+      const b = rowB.original.title || "";
+      return a.localeCompare(b);
+    },
+    cell: (info) => (
+      <div className="space-y-1">
+        <div className="font-medium">{info.row.original.title}</div>
+        <div className="text-sm text-muted-foreground">{(info.row.original.content as string | null) || "-"}</div>
+      </div>
     ),
-    enableSorting: true,
-    cell: (info) => <span>{(info.getValue() as string | null) || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "actions",
