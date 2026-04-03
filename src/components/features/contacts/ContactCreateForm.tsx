@@ -5,7 +5,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Control, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { type ContactForm, contactFormSchema } from "@/lib/validations/contact";
+import { contactSchema, type ContactForm } from "@/lib/validations/contact";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
   const queryClient = useQueryClient();
@@ -32,7 +32,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const form = useForm<ContactForm>({
-    resolver: zodResolver(contactFormSchema),
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       vorname: "",
       nachname: "",
@@ -80,7 +80,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="vorname"
           render={({ field }) => (
             <FormItem>
@@ -93,7 +93,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="nachname"
           render={({ field }) => (
             <FormItem>
@@ -106,7 +106,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="anrede"
           render={({ field }) => (
             <FormItem>
@@ -130,7 +130,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="position"
           render={({ field }) => (
             <FormItem>
@@ -143,7 +143,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -156,7 +156,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="telefon"
           render={({ field }) => (
             <FormItem>
@@ -169,7 +169,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="mobil"
           render={({ field }) => (
             <FormItem>
@@ -182,7 +182,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
@@ -195,7 +195,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
@@ -208,7 +208,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="company_id"
           render={({ field }) => (
             <FormItem>

@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { type Control, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -26,7 +26,7 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { type ContactForm, contactFormSchema } from "@/lib/validations/contact";
+import { contactSchema, type ContactForm } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
 const anredeOptions = [
@@ -437,11 +437,11 @@ export default function ContactDetailClient({ contact: initialContact, companies
 
 function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: () => void }) {
   const form = useForm<ContactForm>({
-    resolver: zodResolver(contactFormSchema),
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       vorname: contact.vorname || "",
       nachname: contact.nachname || "",
-      anrede: contact.anrede || undefined,
+      anrede: contact.anrede as "Herr" | "Frau" | "Dr." | "Prof." | undefined || undefined,
       position: contact.position || undefined,
       email: contact.email || undefined,
       telefon: contact.telefon || undefined,
@@ -470,7 +470,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="vorname"
           render={({ field }) => (
             <FormItem>
@@ -483,7 +483,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="nachname"
           render={({ field }) => (
             <FormItem>
@@ -496,12 +496,12 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="anrede"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Anrede</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select anrede" />
@@ -509,7 +509,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
                 </FormControl>
                 <SelectContent>
                   {anredeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.label}>
+                    <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}
@@ -520,85 +520,85 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="position"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Position</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input type="email" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="telefon"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Telefon</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="mobil"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Mobil</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Durchwahl</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="notes"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control as Control<ContactForm>}
+          control={form.control}
           name="is_primary"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">

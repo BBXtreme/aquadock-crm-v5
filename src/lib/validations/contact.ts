@@ -11,14 +11,14 @@ export const contactSchema = z.object({
     .min(1, "Nachname ist erforderlich")
     .trim()
     .max(100, "Nachname darf maximal 100 Zeichen lang sein"),
-  anrede: z.enum(["Herr", "Frau", "Dr.", "Prof."], { required_error: "Anrede ist erforderlich" }).nullable().optional(),
-  position: z.string().trim().max(100, "Position darf maximal 100 Zeichen lang sein").nullable().optional(),
-  email: z.string().trim().email("Ungültige E-Mail-Adresse").max(320, "E-Mail darf maximal 320 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
-  telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").nullable().optional(),
-  mobil: z.string().trim().max(50, "Mobil darf maximal 50 Zeichen lang sein").nullable().optional(),
-  durchwahl: z.string().trim().max(10, "Durchwahl darf maximal 10 Zeichen lang sein").nullable().optional(),
-  notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional(),
-  company_id: z.string().uuid("Ungültige Unternehmens-ID").nullable().optional().transform(emptyStringToNull),
+  anrede: z.enum(["Herr", "Frau", "Dr.", "Prof."], { required_error: "Anrede ist erforderlich" }).optional(),
+  position: z.string().trim().max(100, "Position darf maximal 100 Zeichen lang sein").optional(),
+  email: z.string().trim().email("Ungültige E-Mail-Adresse").max(320, "E-Mail darf maximal 320 Zeichen lang sein").optional().transform(emptyStringToNull),
+  telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").optional(),
+  mobil: z.string().trim().max(50, "Mobil darf maximal 50 Zeichen lang sein").optional(),
+  durchwahl: z.string().trim().max(10, "Durchwahl darf maximal 10 Zeichen lang sein").optional(),
+  notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").optional(),
+  company_id: z.string().uuid("Ungültige Unternehmens-ID").optional().transform(emptyStringToNull),
   is_primary: z.boolean().default(false).optional(),
 }).strict();
 
@@ -33,12 +33,12 @@ export const toContactInsert = (values: ContactFormValues): ContactInsert => ({
   nachname: values.nachname,
   anrede: values.anrede || null,
   position: values.position || null,
-  email: (values.email as string | null | undefined) || null,
+  email: values.email || null,
   telefon: values.telefon || null,
   mobil: values.mobil || null,
   durchwahl: values.durchwahl || null,
   notes: values.notes || null,
-  company_id: (values.company_id as string | null | undefined) || null,
+  company_id: values.company_id || null,
   is_primary: values.is_primary ?? false,
 });
 
@@ -50,12 +50,12 @@ export const toContactUpdate = (values: ContactFormValues): ContactUpdate => ({
   nachname: values.nachname,
   anrede: values.anrede || null,
   position: values.position || null,
-  email: (values.email as string | null | undefined) || null,
+  email: values.email || null,
   telefon: values.telefon || null,
   mobil: values.mobil || null,
   durchwahl: values.durchwahl || null,
   notes: values.notes || null,
-  company_id: (values.company_id as string | null | undefined) || null,
+  company_id: values.company_id || null,
   is_primary: values.is_primary ?? undefined,
 });
 
