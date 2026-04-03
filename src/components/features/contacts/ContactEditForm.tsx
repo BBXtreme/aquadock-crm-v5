@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createContact, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { contactSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Database } from "@/types/database.types";
 
 export default function ContactEditForm({
