@@ -1,23 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type ColumnDef,
   createColumnHelper,
-  useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  ColumnDef,
+  useReactTable,
 } from "@tanstack/react-table";
-import { Trash2, FileText, Phone, Mail, Users } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { FileText, Mail, Phone, Trash2, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { deleteTimelineEntry, getTimelineEntries } from "@/lib/services/timeline";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { getTimelineEntries, deleteTimelineEntry } from "@/lib/services/timeline";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface TimelineTableProps {
@@ -101,7 +99,7 @@ function DeleteButton({ timelineId }: { timelineId: string }) {
 }
 
 export default function TimelineTable({ companyId }: TimelineTableProps) {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   const { data: timelineEntries, isLoading, error } = useQuery({
     queryKey: ["timeline", companyId],
