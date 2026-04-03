@@ -27,3 +27,16 @@ const form = useForm<CompanyForm>({ resolver: zodResolver(companyFormSchema) });
   name="..."
   render={({ field }) => <FormControl>...</FormControl>}
 />
+
+##Schema Requirements
+
+- .strict() on every schema
+- Nullable fields: .nullable().optional().transform(emptyStringToNull)
+- IDs: z.string().uuid()
+- Use toCompanyInsert() / toCompanyUpdate() helpers for safe Supabase mapping
+- Server Actions must re-validate with .parse() or .safeParse()
+
+##Recommended Barrel Import
+```ts
+TypeScriptimport { companyFormSchema, type CompanyForm } from "@/lib/validations";
+Follow these patterns in every form for maximum type safety and consistency.
