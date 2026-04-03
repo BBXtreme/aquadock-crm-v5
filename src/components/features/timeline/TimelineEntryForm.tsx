@@ -122,6 +122,19 @@ export default function TimelineEntryForm({
     }
   }, [preselectedCompanyId, form]);
 
+  useEffect(() => {
+    if (editEntry) {
+      form.reset({
+        title: editEntry.title || "",
+        content: editEntry.content || "",
+        activity_type: editEntry.activity_type as FormValues["activity_type"] || "note",
+        company_id: editEntry.company_id || "none",
+        contact_id: editEntry.contact_id || "none",
+        user_name: editEntry.user_name || "",
+      });
+    }
+  }, [editEntry, form]);
+
   // Early return AFTER all hooks
   if (!companies) return null;
 
