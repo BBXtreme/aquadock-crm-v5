@@ -163,7 +163,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Position</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -176,7 +176,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input type="email" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +189,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Telefon</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -202,7 +202,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Mobil</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -215,7 +215,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Durchwahl</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -228,7 +228,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
