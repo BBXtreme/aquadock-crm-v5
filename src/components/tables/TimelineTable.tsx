@@ -206,7 +206,7 @@ export default function TimelineTable({ data, isLoading, search = "", onSearchCh
   const finalData = data || internalData;
   const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
   const finalSearch = search;
-  const finalOnSearchChange = onSearchChange || (() => {});
+  const finalOnSearchChange = onSearchChange || (() => { /* no-op */ });
 
   const filteredData = finalData.filter((entry) =>
     entry.title.toLowerCase().includes(finalSearch.toLowerCase()) ||
