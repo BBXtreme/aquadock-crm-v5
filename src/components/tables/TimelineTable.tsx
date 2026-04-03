@@ -101,6 +101,24 @@ const columns = [
       );
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
+  columnHelper.accessor("user_name", {
+    header: ({ column }) => (
+      <button
+        type="button"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Benutzer
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
+    cell: (info) => {
+      const userName = info.getValue() as string;
+      return <span>{userName || "-"}</span>;
+    },
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "company-contact",
     header: ({ column }) => (
