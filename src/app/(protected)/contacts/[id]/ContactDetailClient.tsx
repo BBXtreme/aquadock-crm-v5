@@ -9,8 +9,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { type Control, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Control } from "react-hook-form";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { Badge } from "@/components/ui/badge";
