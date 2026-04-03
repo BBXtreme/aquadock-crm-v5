@@ -28,7 +28,7 @@
 | rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
 | firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
-| status     | text        | false    | 'lead'            | lead, qualifiziert, gewonnen, verloren, … | Indexed       |
+| status     | text        | false    | 'lead'            | lead, interessannt, qualifiziert, gewonnen, verloren, … | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
 | strasse    | text        | true     | —                 | Street address                            | —             |
 | plz        | text        | true     | —                 | Postal code                               | —             |
@@ -194,7 +194,27 @@ export async function getCompanies(userId: string): Promise<Company[]> {
   if (error) throw handleSupabaseError(error);
   return data ?? [];
 }
-## 7. Change Log
+## 7. Zod Validations
+
+The application uses Zod schemas for client-side form validation, ensuring data integrity before submission. These schemas are defined in `@/lib/validations/` and used with React Hook Form.
+
+Key Zod schemas include:
+
+- `firmendatenSchema`: Validates company legal data (firmenname, rechtsform, kundentyp, etc.)
+- `adresseSchema`: Validates address fields (strasse, plz, stadt, bundesland, land)
+- `aquadockSchema`: Validates AquaDock-specific fields (firmentyp, status, value)
+- `contactSchema`: Validates contact information (vorname, nachname, email, telefon, etc.)
+- `reminderSchema`: Validates reminder fields (title, due_date, priority, status, description)
+- `timelineEntrySchema`: Validates timeline entry fields (type, title, description)
+- `displayNameSchema`: Validates user display name
+
+All schemas include trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
+
+## 8. Auth & Authorization
+
+Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are 'user' or 'admin', enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). No user_metadata is used for authorization.
+
+## 9. Change Log
 
 2026-03-20 Initial v5 snapshot
 2026-03-21 Refined documentation, added index overview
@@ -206,3 +226,5 @@ export async function getCompanies(userId: string): Promise<Company[]> {
 2026-03-27 Added user_settings table
 
 2026-03-30 Added `profiles` table for role management (user/admin) – long-term clean auth architecture
+2026-03-31 Added Zod validations section for form schemas
+2026-03-31 Added Auth & Authorization section summarizing Supabase Auth integration
