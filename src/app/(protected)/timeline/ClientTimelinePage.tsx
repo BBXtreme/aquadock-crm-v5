@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import TimelineTable from "@/components/features/timeline/TimelineTable";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogDescription,
@@ -17,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, } from "@/types/database.types";
+import type { Company, Contact } from "@/types/database.types";
 
 function ClientTimelinePage() {
   const queryClient = useQueryClient();
@@ -135,7 +136,11 @@ function ClientTimelinePage() {
         </Dialog>
       </div>
 
-      <TimelineTable />
+      <Card>
+        <CardContent className="p-6">
+          <TimelineTable />
+        </CardContent>
+      </Card>
     </>
   );
 }
