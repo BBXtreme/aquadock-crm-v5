@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import ReminderEditForm from "@/components/features/ReminderEditForm";
+import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

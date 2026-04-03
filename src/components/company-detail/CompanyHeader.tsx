@@ -7,7 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
-import TimelineEntryForm from "@/components/features/TimelineEntryForm";
+import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
