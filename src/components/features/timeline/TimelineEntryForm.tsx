@@ -22,13 +22,13 @@ const formSchema = z.object({
   activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
 
   company_id: z
-    .union([z.literal("none"), z.string().uuid()])
-    .transform((val) => (val === "none" ? null : val))
+    .union([z.literal("none"), z.string().uuid(), z.null()])
+    .transform((val) => (val === "none" || val === null ? null : val))
     .optional(),
 
   contact_id: z
-    .union([z.literal("none"), z.string().uuid()])
-    .transform((val) => (val === "none" ? null : val))
+    .union([z.literal("none"), z.string().uuid(), z.null()])
+    .transform((val) => (val === "none" || val === null ? null : val))
     .optional(),
 
   user_name: z.string().min(1, "Benutzername ist erforderlich"),
