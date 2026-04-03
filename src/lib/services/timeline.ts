@@ -1,8 +1,8 @@
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 export async function getTimelineEntries(companyId?: string): Promise<TimelineEntryWithJoins[]> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient();
 
   let query = supabase
     .from("timeline")
@@ -34,7 +34,7 @@ export async function getTimelineEntries(companyId?: string): Promise<TimelineEn
 }
 
 export async function deleteTimelineEntry(id: string): Promise<void> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createClient();
 
   const { error } = await supabase.from("timeline").delete().eq("id", id);
 
