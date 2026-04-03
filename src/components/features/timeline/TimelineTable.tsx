@@ -24,15 +24,18 @@ interface TimelineTableProps {
 
 const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
-const columns = [
+const columns: ColumnDef<TimelineEntryWithJoins>[] = [
   columnHelper.accessor("created_at", {
     header: "Date/Time",
-    cell: (info) => new Date(info.getValue()).toLocaleString("de-DE"),
+    cell: (info) => {
+      const date = info.getValue();
+      return date ? new Date(date).toLocaleString("de-DE") : "";
+    },
   }),
-  columnHelper.accessor("type", {
+  columnHelper.accessor("activity_type", {
     header: "Type",
     cell: (info) => {
-      const type = info.getValue();
+      const type = info.getValue() as string;
       const getIcon = () => {
         switch (type) {
           case "note":
@@ -59,14 +62,14 @@ const columns = [
     header: "Title",
     cell: (info) => safeDisplay(info.getValue()),
   }),
-  columnHelper.accessor("description", {
+  columnHelper.accessor("content", {
     header: "Description",
     cell: (info) => {
       const desc = safeDisplay(info.getValue());
       return desc.length > 50 ? `${desc.slice(0, 50)}...` : desc;
     },
   }),
-  columnHelper.accessor("user_id", {
+  columnHelper.accessor("user_name", {
     header: "User",
     cell: (info) => safeDisplay(info.getValue()),
   }),
@@ -75,7 +78,7 @@ const columns = [
     header: "Actions",
     cell: (info) => <DeleteButton timelineId={info.row.original.id} />,
   }),
-] satisfies ColumnDef<TimelineEntryWithJoins>[];
+];
 
 function DeleteButton({ timelineId }: { timelineId: string }) {
   const queryClient = useQueryClient();
@@ -166,7 +169,7 @@ export default function TimelineTable({ companyId }: TimelineTableProps) {
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 6 }, (_, i) => (
-                  <TableRow key={`timeline-skeleton-${i + 1}`}>
+                  <TableRow key={`timeline-loading-${i + 1}`}>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
