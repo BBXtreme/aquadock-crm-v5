@@ -4,18 +4,17 @@ globs: ["**/*.{ts,tsx}"]
 alwaysApply: true
 ---
 
-# Supabase Rules for CRM v5
+# Supabase Rules for AquaDock CRM v5
 
-- Use types from `types/supabase.ts` (generated via `npm run supabase:types`).
-- Prefer the exported aliases from `src/types/database.types.ts` (Company, Contact, etc.) for readability.
-- All database operations **must** use Server Components, Server Actions, or Route Handlers (never direct client-side queries for sensitive data).
-- Use `createServerSupabaseClient()` from `src/lib/supabase/server` for server-side work.
-- Use `createClient()` from `src/lib/supabase/browser` only for public/read-only client components.
-- For admin operations (bypassing RLS): use `createAdminClient()` sparingly and only in protected server routes.
-- Always combine Supabase types with Zod for form validation and runtime safety.
-- Strictly follow RLS policies — never expose service_role key to the client.
-- When Grok suggests schema changes: use MCP tools (`list_tables`, `generate_typescript_types`) first, then review SQL carefully.
-- Apply `supabase-postgres-best-practices` skill for indexing, RLS, performance, and security.
+- Use generated types from `src/types/supabase.ts` (run `pnpm supabase:types` after schema changes).
+- Prefer exported types like `Company`, `Contact`, `Reminder` from the types file.
+- All database operations **must** go through Server Components, Server Actions, or the service layer.
+- Client-side: only use `createClient()` from `src/lib/supabase/browser` for public/read-only operations.
+- Server-side: always use `createServerSupabaseClient()` from `src/lib/supabase/server`.
+- Combine Zod schemas with Supabase types for forms and runtime validation.
+- Strictly respect RLS — never expose service_role key to the client.
+- When making schema changes: validate against live Supabase via MCP first, then regenerate types.
+- After DTO migration: all forms use Zod from `src/lib/validations/` with proper nullable handling.
 
 ## MCP Usage
-Grok has live access to the schema via Supabase MCP. Ask it to "use MCP to list tables" or "show schema for companies table" when needed.
+Grok has live access to the Supabase schema. Use MCP tools (`list_tables`, `describe_table`, `generate_typescript_types`) when reviewing or updating the database.

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Contact } from "@/types/database.types";
+import type { Company, } from "@/types/database.types";
 
 function ClientTimelinePage() {
   const queryClient = useQueryClient();

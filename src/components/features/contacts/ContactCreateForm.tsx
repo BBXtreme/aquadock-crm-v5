@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { contactSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
   const queryClient = useQueryClient();

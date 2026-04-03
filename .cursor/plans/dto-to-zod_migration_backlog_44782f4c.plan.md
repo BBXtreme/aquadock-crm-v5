@@ -4,34 +4,34 @@ overview: Inventory current DTO usage, align all forms and server actions to str
 todos:
   - id: inventory-dto-usage
     content: Lock down DTO inventory + import graph for `src/lib/dto/*` and document all usage sites (already identified; keep in plan as baseline).
-    status: pending
+    status: completed
   - id: zod-company-canonical
     content: Update shared company Zod schema to `.strict()`, enforce `statusOptions/kundentypOptions/wassertypOptions`, normalize empty strings → null, and add `toCompanyUpdate`.
-    status: pending
+    status: completed
   - id: zod-contact-canonical
     content: Update shared contact Zod schema to `.strict()`, add `.email()`, add `.uuid()` for `company_id`, normalize empty strings → null, and refine `anrede` against options.
-    status: pending
+    status: completed
   - id: zod-reminder-canonical
     content: Rewrite reminder schema to match UI values (priority/status), use `z.coerce.date()` + ISO mapper, and enforce `company_id` as UUID.
-    status: pending
+    status: completed
   - id: zod-timeline-canonical
     content: "Tighten timeline schema: strict, activity_type enum, uuid ids with \"none\" normalization, content length limits."
-    status: pending
+    status: completed
   - id: zod-email-template
     content: Add new email template schema + integrate into `EmailTemplatesClient` before create/update operations.
-    status: pending
+    status: completed
   - id: refactor-forms-off-dtos
     content: Refactor CompanyEditForm + contact pages + reminder forms + timeline form to import shared schemas and use `z.infer` types instead of DTO types; remove local duplicate schemas.
-    status: pending
+    status: completed
   - id: rls-alignment-review
     content: Review actions/services that write rows to ensure `user_id` is set server-side or left to DB default; document which client-side paths will break under RLS and queue migration to server-only mutations.
-    status: pending
+    status: completed
   - id: delete-or-deprecate-dto-files
     content: After all imports removed, delete `src/lib/dto/company.dto.ts` and `src/lib/dto/contact.dto.ts` (or keep as deprecated re-exports) to prevent drift.
-    status: pending
+    status: completed
   - id: migration-backlog
     content: Produce numbered migration backlog with exact file paths + effort estimates and order of operations (schemas first, then forms, then services/actions).
-    status: pending
+    status: completed
 isProject: false
 ---
 
