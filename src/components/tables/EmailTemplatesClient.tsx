@@ -3,13 +3,12 @@
 
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Eye, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Control } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
-import { emailTemplateFormSchema, type EmailTemplateForm } from "@/lib/validations/email-template";
+import { type EmailTemplateForm, emailTemplateFormSchema } from "@/lib/validations/email-template";
 import type { EmailTemplate } from "@/types/database.types";
 
 export default function TemplatesClient() {
