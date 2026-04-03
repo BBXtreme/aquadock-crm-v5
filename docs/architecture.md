@@ -20,15 +20,16 @@
 
 - All forms use schemas from `src/lib/validations/`
 - Zod schemas are the **single source of truth** for form shape, validation, and mapping to Supabase
-- DTO files (`src/lib/dto/`) are being removed in this migration
 - Schema rules (enforced):
   - `.strict()` – reject unknown fields
   - `.trim()` on all text inputs
   - `z.enum()` using values from `src/lib/constants/company-options.ts`
-  - `z.string().uuid()` for IDs
+  - `z.string().uuid()` for all ID fields
   - `emptyStringToNull` transform for nullable DB columns
   - Inferred types: `type CompanyForm = z.infer<typeof companyFormSchema>`
 - Schemas stay in sync with `supabase.ts` (Row / Insert / Update)
+
+All former DTO files have been removed. Zod schemas in src/lib/validations/ are now the single source of truth for all forms, with full alignment to supabase.ts types and proper nullable handling.
 
 ## 3. Data Flow & Service Layer
 

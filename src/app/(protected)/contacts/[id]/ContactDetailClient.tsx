@@ -11,6 +11,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { Control } from "react-hook-form";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { Badge } from "@/components/ui/badge";
@@ -470,7 +471,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="vorname"
           render={({ field }) => (
             <FormItem>
@@ -483,7 +484,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="nachname"
           render={({ field }) => (
             <FormItem>
@@ -496,7 +497,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="anrede"
           render={({ field }) => (
             <FormItem>
@@ -520,7 +521,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="position"
           render={({ field }) => (
             <FormItem>
@@ -533,7 +534,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -546,7 +547,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="telefon"
           render={({ field }) => (
             <FormItem>
@@ -559,7 +560,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="mobil"
           render={({ field }) => (
             <FormItem>
@@ -572,7 +573,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
@@ -585,7 +586,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="notes"
           render={({ field }) => (
             <FormItem>
@@ -598,7 +599,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="is_primary"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
