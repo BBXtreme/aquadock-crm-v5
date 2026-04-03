@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -120,12 +120,14 @@ const columns = [
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       const res = await fetch(`/api/timeline/${entry.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
       toast.success("Eintrag gelöscht");
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
     } catch (_error) {
       toast.error("Fehler beim Löschen");
     }
@@ -141,6 +143,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       if (!res.ok) throw new Error('Failed to update');
       toast.success("Eintrag aktualisiert");
       setEditDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
     } catch (_error) {
       toast.error("Fehler beim Aktualisieren");
     }
@@ -160,6 +163,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
+            initialValues={entry}
             isSubmitting={false}
             companies={[]}
             contacts={[]}
