@@ -7,29 +7,40 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Eye, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Control } from "react-hook-form";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
+import { emailTemplateFormSchema, type EmailTemplateForm } from "@/lib/validations/email-template";
 import type { EmailTemplate } from "@/types/database.types";
 
 export default function TemplatesClient() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
-  const [formName, setFormName] = useState("");
-  const [formSubject, setFormSubject] = useState("");
-  const [formBody, setFormBody] = useState("");
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
 
   const queryClient = useQueryClient();
+
+  const form = useForm<EmailTemplateForm>({
+    resolver: zodResolver(emailTemplateFormSchema),
+    defaultValues: {
+      name: "",
+      subject: "",
+      body: "",
+    },
+  });
 
   // Templates
   const { data: templates = [], isLoading: templatesLoading, error } = useQuery({
@@ -42,15 +53,15 @@ export default function TemplatesClient() {
 
   // Mutations for templates
   const createMutation = useMutation({
-    mutationFn: async (data: { name: string; subject: string; body: string }) => {
+    mutationFn: async (data: EmailTemplateForm) => {
       const client = createClient();
-      return createEmailTemplate({ name: data.name, subject: data.subject, body: data.body }, client);
+      return createEmailTemplate(data, client);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
       toast.success("Vorlage erstellt");
       setDialogOpen(false);
-      resetForm();
+      form.reset();
     },
     onError: (error: Error) => {
       toast.error("Fehler beim Erstellen", { description: error.message });
@@ -58,15 +69,15 @@ export default function TemplatesClient() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: { id: string; name: string; subject: string; body: string }) => {
+    mutationFn: async (data: EmailTemplateForm & { id: string }) => {
       const client = createClient();
-      return updateEmailTemplate(data.id, { name: data.name, subject: data.subject, body: data.body }, client);
+      return updateEmailTemplate(data.id, data, client);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
       toast.success("Vorlage aktualisiert");
       setDialogOpen(false);
-      resetForm();
+      form.reset();
     },
     onError: (error: Error) => {
       toast.error("Fehler beim Aktualisieren", { description: error.message });
@@ -87,23 +98,19 @@ export default function TemplatesClient() {
     },
   });
 
-  const resetForm = () => {
-    setFormName("");
-    setFormSubject("");
-    setFormBody("");
-    setEditingTemplate(null);
-  };
-
   const openCreateDialog = () => {
-    resetForm();
+    setEditingTemplate(null);
+    form.reset();
     setDialogOpen(true);
   };
 
   const openEditDialog = (template: EmailTemplate) => {
     setEditingTemplate(template);
-    setFormName(template.name);
-    setFormSubject(template.subject);
-    setFormBody(template.body);
+    form.reset({
+      name: template.name,
+      subject: template.subject,
+      body: template.body,
+    });
     setDialogOpen(true);
   };
 
@@ -112,17 +119,13 @@ export default function TemplatesClient() {
     setPreviewDialogOpen(true);
   };
 
-  const handleSaveTemplate = () => {
-    if (!formName.trim() || !formSubject.trim()) {
-      toast.error("Name und Betreff sind erforderlich");
-      return;
-    }
+  const handleSaveTemplate = form.handleSubmit((data) => {
     if (editingTemplate) {
-      updateMutation.mutate({ id: editingTemplate.id, name: formName, subject: formSubject, body: formBody });
+      updateMutation.mutate({ ...data, id: editingTemplate.id });
     } else {
-      createMutation.mutate({ name: formName, subject: formSubject, body: formBody });
+      createMutation.mutate(data);
     }
-  };
+  });
 
   const handleDeleteTemplate = (id: string) => {
     deleteMutation.mutate(id);
@@ -234,48 +237,65 @@ export default function TemplatesClient() {
               Erstellen oder bearbeiten Sie eine E-Mail-Vorlage mit Platzhaltern für personalisierte Nachrichten.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="template-name">Name *</Label>
-              <Input
-                id="template-name"
-                value={formName}
-                onChange={(e) => setFormName(e.target.value)}
-                placeholder="z.B. Einführung E-Mail"
+          <Form {...form}>
+            <form onSubmit={handleSaveTemplate} className="space-y-4">
+              <FormField
+                control={form.control as Control<EmailTemplateForm>}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="z.B. Einführung E-Mail" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="template-subject">Betreff *</Label>
-              <Input
-                id="template-subject"
-                value={formSubject}
-                onChange={(e) => setFormSubject(e.target.value)}
-                placeholder="z.B. Willkommen bei AquaDock"
+              <FormField
+                control={form.control as Control<EmailTemplateForm>}
+                name="subject"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Betreff *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="z.B. Willkommen bei AquaDock" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="template-body">Inhalt</Label>
-              <Textarea
-                id="template-body"
-                value={formBody}
-                onChange={(e) => setFormBody(e.target.value)}
-                rows={8}
-                placeholder={`Hallo {{vorname}},
+              <FormField
+                control={form.control as Control<EmailTemplateForm>}
+                name="body"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Inhalt</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        rows={8}
+                        placeholder={`Hallo {{vorname}},
 
 wir freuen uns, Sie als {{firmenname}} begrüßen zu dürfen.
 
 Verfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}`}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button onClick={handleSaveTemplate} disabled={createMutation.isPending || updateMutation.isPending}>
-              Speichern
-            </Button>
-          </div>
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                  Abbrechen
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  Speichern
+                </Button>
+              </div>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
