@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { createClient } from "@/lib/supabase/browser";
 import { deleteTimelineEntry } from "@/lib/actions/timeline";
 
 import type { TimelineEntryWithJoins } from "@/types/database.types";
@@ -120,12 +121,10 @@ const columns = [
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       await deleteTimelineEntry(entry.id);
-      queryClient.invalidateQueries({ queryKey: ["timeline"] });
       toast.success("Eintrag gelöscht");
     } catch (_error) {
       toast.error("Fehler beim Löschen");
@@ -179,19 +178,42 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
 }
 
 interface TimelineTableProps {
-  data: TimelineEntryWithJoins[];
-  isLoading: boolean;
-  search: string;
-  onSearchChange: (value: string) => void;
+  data?: TimelineEntryWithJoins[];
+  isLoading?: boolean;
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
-export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps) {
-  const filteredData = data.filter((entry) =>
-    entry.title.toLowerCase().includes(search.toLowerCase()) ||
-    entry.content?.toLowerCase().includes(search.toLowerCase()) ||
-    entry.companies?.firmenname.toLowerCase().includes(search.toLowerCase()) ||
-    entry.contacts?.vorname.toLowerCase().includes(search.toLowerCase()) ||
-    entry.contacts?.nachname.toLowerCase().includes(search.toLowerCase())
+export default function TimelineTable({ data, isLoading, search = "", onSearchChange }: TimelineTableProps = {}) {
+  const { data: internalData = [], isLoading: internalLoading } = useQuery({
+    queryKey: ["timeline"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("timeline")
+        .select(`
+          *,
+          companies:company_id (firmenname, status, kundentyp),
+          contacts:contact_id (vorname, nachname, position, email)
+        `)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as TimelineEntryWithJoins[];
+    },
+    enabled: !data,
+  });
+
+  const finalData = data || internalData;
+  const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
+  const finalSearch = search;
+  const finalOnSearchChange = onSearchChange || (() => {});
+
+  const filteredData = finalData.filter((entry) =>
+    entry.title.toLowerCase().includes(finalSearch.toLowerCase()) ||
+    entry.content?.toLowerCase().includes(finalSearch.toLowerCase()) ||
+    entry.companies?.firmenname.toLowerCase().includes(finalSearch.toLowerCase()) ||
+    entry.contacts?.vorname.toLowerCase().includes(finalSearch.toLowerCase()) ||
+    entry.contacts?.nachname.toLowerCase().includes(finalSearch.toLowerCase())
   );
 
   const table = useReactTable({
@@ -200,10 +222,10 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     getCoreRowModel: getCoreRowModel(),
   });
 
-  if (isLoading) {
+  if (finalIsLoading) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Suche..." value={search} onChange={(e) => onSearchChange(e.target.value)} />
+        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />
         <div className="space-y-2">
           {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
             <Skeleton key={key} className="h-12 w-full" />
@@ -217,8 +239,8 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     <div className="space-y-4">
       <Input
         placeholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
-        value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
+        value={finalSearch}
+        onChange={(e) => finalOnSearchChange(e.target.value)}
       />
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
