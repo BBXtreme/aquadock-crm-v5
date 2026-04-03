@@ -6,9 +6,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Control } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createContact, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { contactFormSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactFormSchema } from "@/lib/validations/contact";
 import type { Database } from "@/types/database.types";
 
 export default function ContactEditForm({

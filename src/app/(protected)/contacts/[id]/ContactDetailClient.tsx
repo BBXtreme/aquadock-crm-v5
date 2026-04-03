@@ -9,10 +9,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-import { Control } from "react-hook-form";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +26,7 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { contactFormSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactFormSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
 const anredeOptions = [

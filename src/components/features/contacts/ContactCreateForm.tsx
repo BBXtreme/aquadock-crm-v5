@@ -5,9 +5,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Control } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { contactFormSchema, type ContactForm } from "@/lib/validations/contact";
+import { type ContactForm, contactFormSchema } from "@/lib/validations/contact";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
   const queryClient = useQueryClient();
