@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -146,13 +146,6 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
-            initialValues={{
-              company_id: entry.company_id || "",
-              contact_id: entry.contact_id || "",
-              type: entry.activity_type,
-              title: entry.title,
-              description: entry.content || "",
-            }}
             onSubmit={async (_values: unknown) => {
               setEditDialogOpen(false);
             }}
@@ -189,7 +182,7 @@ interface TimelineTableProps {
   onSearchChange: (value: string) => void;
 }
 
-export function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps) {
+export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps) {
   const filteredData = data.filter((entry) =>
     entry.title.toLowerCase().includes(search.toLowerCase()) ||
     entry.content?.toLowerCase().includes(search.toLowerCase()) ||
@@ -198,13 +191,19 @@ export function TimelineTable({ data, isLoading, search, onSearchChange }: Timel
     entry.contacts?.nachname.toLowerCase().includes(search.toLowerCase())
   );
 
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
         <Input placeholder="Suche..." value={search} onChange={(e) => onSearchChange(e.target.value)} />
         <div className="space-y-2">
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={`timeline-skeleton-${i + 1}`} className="h-12 w-full" />
+          {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
+            <Skeleton key={key} className="h-12 w-full" />
           ))}
         </div>
       </div>
@@ -221,20 +220,22 @@ export function TimelineTable({ data, isLoading, search, onSearchChange }: Timel
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b">
-              {columns.map((col) => (
-                <th key={col.id || (col.header as string)} className="text-left p-2 font-medium">
-                  {col.header as string}
-                </th>
-              ))}
-            </tr>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b">
+                {headerGroup.headers.map((header) => (
+                  <th key={header.id} className="text-left p-2 font-medium">
+                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                ))}
+              </tr>
+            ))}
           </thead>
           <tbody>
-            {filteredData.map((entry) => (
-              <tr key={entry.id} className="border-b hover:bg-gray-50">
-                {columns.map((col) => (
-                  <td key={col.id || (col.header as string)} className="p-2">
-                    {col.cell ? col.cell({ getValue: () => entry[col.accessorKey as keyof TimelineEntryWithJoins], row: { original: entry } } as any) : null}
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="border-b hover:bg-gray-50">
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="p-2">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
