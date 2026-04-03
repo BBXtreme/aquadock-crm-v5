@@ -1,20 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper } from "@tanstack/react-table";
-import { Pencil, Trash2, FileText, Phone, Mail, Calendar, Bell, MoreHorizontal } from "lucide-react";
-
+import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import { TimelineEntryForm } from "@/components/features/timeline/TimelineEntryForm";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { TimelineEntryForm } from "@/components/features/timeline/TimelineEntryForm";
 import { deleteTimelineEntry } from "@/lib/actions/timeline";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
@@ -128,7 +127,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       await deleteTimelineEntry(entry.id);
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
       toast.success("Eintrag gelöscht");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Fehler beim Löschen");
     }
   };
@@ -154,7 +153,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
               title: entry.title,
               description: entry.description || "",
             }}
-            onSubmit={async (values) => {
+            onSubmit={async (_values) => {
               // Assuming update logic is handled in the form
               setEditDialogOpen(false);
             }}
