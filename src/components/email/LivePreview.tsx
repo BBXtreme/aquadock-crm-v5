@@ -2,7 +2,7 @@
 "use client";
 
 import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +38,7 @@ export default function LivePreview({
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const copyToClipboard = async () => {
     const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
@@ -50,6 +51,12 @@ export default function LivePreview({
   };
 
   const sanitizedBody = sanitizeHtml(previewBody);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.innerHTML = sanitizedBody || "Kein Inhalt";
+    }
+  }, [sanitizedBody]);
 
   return (
     <Card>
@@ -101,10 +108,10 @@ export default function LivePreview({
                 {previewSubject || "Kein Betreff"}
               </div>
 
-              {/* Safe HTML rendering without dangerouslySetInnerHTML */}
+              {/* Safe HTML rendering using ref and useEffect */}
               <div
+                ref={bodyRef}
                 className="prose dark:prose-invert text-[15.5px] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: sanitizedBody || "Kein Inhalt" }}
               />
             </div>
           </div>
