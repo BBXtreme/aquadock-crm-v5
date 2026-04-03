@@ -101,14 +101,15 @@ const columns = [
       );
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("companies", {
+  columnHelper.display({
+    id: "company-contact",
     header: ({ column }) => (
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
-        Firma
+        Firma & Kontakt
         {column.getIsSorted() === "asc" && "↑"}
         {column.getIsSorted() === "desc" && "↓"}
       </button>
@@ -119,43 +120,28 @@ const columns = [
       const b = rowB.original.companies?.firmenname || "";
       return a.localeCompare(b);
     },
-    cell: (info) => {
-      const company = info.getValue();
-      if (!company) return <span>-</span>;
-      return (
-        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-          {company.firmenname}
-        </Link>
-      );
-    },
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("contacts", {
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Kontakt
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
+    cell: (info) => (
+      <div className="space-y-1">
+        <div>
+          {info.row.original.companies ? (
+            <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+              {info.row.original.companies.firmenname}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </div>
+        <div>
+          {info.row.original.contacts ? (
+            <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
+              {info.row.original.contacts.vorname} {info.row.original.contacts.nachname}
+            </Link>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </div>
+      </div>
     ),
-    enableSorting: true,
-    sortingFn: (rowA, rowB) => {
-      const a = `${rowA.original.contacts?.vorname || ""} ${rowA.original.contacts?.nachname || ""}`.trim();
-      const b = `${rowB.original.contacts?.vorname || ""} ${rowB.original.contacts?.nachname || ""}`.trim();
-      return a.localeCompare(b);
-    },
-    cell: (info) => {
-      const contact = info.getValue();
-      if (!contact) return <span>-</span>;
-      return (
-        <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
-          {contact.vorname} {contact.nachname}
-        </Link>
-      );
-    },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "title-description",
