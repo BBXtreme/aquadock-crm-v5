@@ -166,6 +166,7 @@ export default function TimelineTable({ companyId }: TimelineTableProps) {
             </TableHeader>
             <TableBody>
               {isLoading ? (
+                // biome-ignore lint/suspicious/noArrayIndexKey: Stable keys for skeleton loaders
                 Array.from({ length: 6 }, (_, i) => (
                   <TableRow key={`timeline-loading-${i + 1}`}>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
