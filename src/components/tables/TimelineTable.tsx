@@ -211,7 +211,8 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
           companies:company_id (firmenname, status, kundentyp),
           contacts:contact_id (vorname, nachname, position, email)
         `)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
     },
