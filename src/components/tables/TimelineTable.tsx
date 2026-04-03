@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { deleteTimelineEntry } from "@/lib/actions/timeline";
 import { createClient } from "@/lib/supabase/browser";
 
 import type { TimelineEntryWithJoins } from "@/types/database.types";
@@ -124,7 +123,8 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
 
   const handleDelete = async () => {
     try {
-      await deleteTimelineEntry(entry.id);
+      const res = await fetch(`/api/timeline/${entry.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
       toast.success("Eintrag gelöscht");
     } catch (_error) {
       toast.error("Fehler beim Löschen");
