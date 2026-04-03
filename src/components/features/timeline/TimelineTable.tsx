@@ -70,16 +70,19 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
   columnHelper.accessor("created_at", {
     header: "Datum & Uhrzeit",
     cell: (info) => {
-      const date = info.getValue();
-      if (!date) return "";
-      const formatter = new Intl.DateTimeFormat("de-DE", {
+      const dateStr = info.getValue();
+      if (!dateStr) return "—";
+
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return "—";
+
+      return new Intl.DateTimeFormat("de-DE", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      });
-      return formatter.format(new Date(date)).replace(',', '');
+      }).format(date).replace(',', '');
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("activity_type", {
