@@ -21,6 +21,17 @@ type LivePreviewProps = {
   handleSend: (isTest: boolean, testEmail?: string) => void;
 };
 
+// Simple HTML sanitizer to remove script tags and other potentially dangerous elements
+const sanitizeHtml = (html: string): string => {
+  // Remove script tags and their content
+  let sanitized = html.replace(/<script[^>]*>.*?<\/script>/gi, '');
+  // Remove other potentially dangerous tags (e.g., iframe, object, embed)
+  sanitized = sanitized.replace(/<(iframe|object|embed|form|input|button)[^>]*>.*?<\/\1>/gi, '');
+  // Remove event handlers (e.g., onclick, onload)
+  sanitized = sanitized.replace(/\s+(on\w+)="[^"]*"/gi, '');
+  return sanitized;
+};
+
 export default function LivePreview({
   previewSubject,
   previewBody,
@@ -41,6 +52,8 @@ export default function LivePreview({
       toast.error("Kopieren fehlgeschlagen");
     }
   };
+
+  const sanitizedBody = sanitizeHtml(previewBody);
 
   return (
     <Card>
@@ -92,9 +105,10 @@ export default function LivePreview({
               </div>
 
               {/* Body */}
-              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed whitespace-pre-wrap">
-                {previewBody || "Kein Inhalt"}
-              </div>
+              <div
+                className="prose dark:prose-invert text-[15.5px] leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: sanitizedBody || "Kein Inhalt" }}
+              />
             </div>
           </div>
         ) : (
