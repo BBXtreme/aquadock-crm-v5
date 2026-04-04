@@ -258,7 +258,7 @@ interface TimelineTableProps {
 }
 
 export default function TimelineTable({ data, isLoading }: TimelineTableProps = {}) {
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
+  const [_pagination, _setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
 
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
