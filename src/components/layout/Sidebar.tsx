@@ -10,6 +10,7 @@ import {
   MapPin,
   PanelLeft,
   PanelRight,
+  Target,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -35,7 +36,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Reminders", href: "/reminders", icon: Bell },
-    { name: "Companies", href: "/companies", icon: Building },
+    { name: "Companies", href: "/companies", icon: Target },
     { name: "Contacts", href: "/contacts", icon: Users },
     { name: "Timeline", href: "/timeline", icon: History },
     { name: "OpenMap", href: "/openmap", icon: MapPin },
