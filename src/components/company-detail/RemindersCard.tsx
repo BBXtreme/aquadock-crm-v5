@@ -31,7 +31,10 @@ export default function RemindersCard({ companyId }: Props) {
     queryFn: async () => {
       const supabase = createClient();
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) throw new Error("User not found");
+      if (error || !user) {
+        console.warn("User not authenticated; reminder actions may be limited.");
+        return null;  // <-- Change: Return null instead of throwing
+      }
       return user;
     },
   });
@@ -50,13 +53,15 @@ export default function RemindersCard({ companyId }: Props) {
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const userId = user?.id;  // <-- Add: Safe extraction of user.id
+      let query = supabase
         .from("reminders")
         .select("*")
-        .eq("company_id", companyId)
-        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
-        .order("due_date", { ascending: true });
-
+        .eq("company_id", companyId);
+      if (userId) {  // <-- Add: Only add .or if userId exists
+        query = query.or(`user_id.eq.${userId},assigned_to.eq.${userId}`);
+      }
+      const { data, error } = await query.order("due_date", { ascending: true });
       if (error) throw error;
 
       console.log("🔍 RemindersCard - RAW data from Supabase for company", companyId);
