@@ -22,17 +22,7 @@ const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 const columns = [
   columnHelper.accessor("created_at", {
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Datum & Uhrzeit
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Datum & Uhrzeit",
     enableSorting: true,
     cell: (info) => {
       const date = info.getValue();
@@ -48,17 +38,7 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("activity_type", {
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Aktivität
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Aktivität",
     enableSorting: true,
     cell: (info) => {
       const type = info.row.original.activity_type;
@@ -104,17 +84,7 @@ const columns = [
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "user",
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Benutzer
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Benutzer",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.profiles?.display_name || "";
@@ -125,17 +95,7 @@ const columns = [
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "company",
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Firma
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Firma",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.companies?.firmenname || "";
@@ -154,17 +114,7 @@ const columns = [
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "contact",
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Kontakt
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Kontakt",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const a = `${rowA.original.contacts?.vorname || ""} ${rowA.original.contacts?.nachname || ""}`.trim();
@@ -183,17 +133,7 @@ const columns = [
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "title-description",
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="flex items-center gap-1"
-      >
-        Titel & Beschreibung
-        {column.getIsSorted() === "asc" && "↑"}
-        {column.getIsSorted() === "desc" && "↓"}
-      </button>
-    ),
+    header: "Titel & Beschreibung",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const a = rowA.original.title || "";
@@ -283,7 +223,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <Pencil className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Eintrag bearbeiten</DialogTitle>
           <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
