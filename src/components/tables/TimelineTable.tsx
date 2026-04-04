@@ -18,7 +18,41 @@ import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
-const columns = [
+const getIcon = (t: string) => {
+  switch (t) {
+    case "note":
+      return <FileText className="h-4 w-4" />;
+    case "call":
+      return <Phone className="h-4 w-4" />;
+    case "email":
+      return <Mail className="h-4 w-4" />;
+    case "meeting":
+      return <Calendar className="h-4 w-4" />;
+    case "reminder":
+      return <Bell className="h-4 w-4" />;
+    default:
+      return <MoreHorizontal className="h-4 w-4" />;
+  }
+};
+
+const getVariant = (t: string) => {
+  switch (t) {
+    case "note":
+      return "default";
+    case "call":
+      return "secondary";
+    case "email":
+      return "outline";
+    case "meeting":
+      return "destructive";
+    case "reminder":
+      return "secondary";
+    default:
+      return "outline";
+  }
+};
+
+const columns: ColumnDef<TimelineEntryWithJoins>[] = [
   columnHelper.accessor("created_at", {
     id: "Datum & Uhrzeit",
     header: "Datum & Uhrzeit",
@@ -35,45 +69,13 @@ const columns = [
       }).format(new Date(date as string)).replace(',', '');
       return <span>{formatted}</span>;
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.accessor("activity_type", {
     id: "Aktivität",
     header: "Aktivität",
     enableSorting: true,
     cell: (info) => {
       const type = info.row.original.activity_type;
-      const getIcon = (t: string) => {
-        switch (t) {
-          case "note":
-            return <FileText className="h-4 w-4" />;
-          case "call":
-            return <Phone className="h-4 w-4" />;
-          case "email":
-            return <Mail className="h-4 w-4" />;
-          case "meeting":
-            return <Calendar className="h-4 w-4" />;
-          case "reminder":
-            return <Bell className="h-4 w-4" />;
-          default:
-            return <MoreHorizontal className="h-4 w-4" />;
-        }
-      };
-      const getVariant = (t: string) => {
-        switch (t) {
-          case "note":
-            return "default";
-          case "call":
-            return "secondary";
-          case "email":
-            return "outline";
-          case "meeting":
-            return "destructive";
-          case "reminder":
-            return "secondary";
-          default:
-            return "outline";
-        }
-      };
       return (
         <Badge variant={getVariant(type)} className="flex items-center gap-1">
           {getIcon(type)}
@@ -81,7 +83,7 @@ const columns = [
         </Badge>
       );
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Benutzer",
     header: "Benutzer",
@@ -92,7 +94,7 @@ const columns = [
       return a.localeCompare(b);
     },
     cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Firma",
     header: "Firma",
@@ -111,7 +113,7 @@ const columns = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Kontakt",
     header: "Kontakt",
@@ -130,7 +132,7 @@ const columns = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Titel & Beschreibung",
     header: "Titel & Beschreibung",
@@ -146,13 +148,13 @@ const columns = [
         <div className="text-sm text-muted-foreground">{info.row.original.content || "-"}</div>
       </div>
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Aktionen",
     header: "Aktionen",
     cell: (info) => <ActionCell entry={info.row.original} />,
-  }) as ColumnDef<TimelineEntryWithJoins>,
-] satisfies ColumnDef<TimelineEntryWithJoins>[];
+  }),
+];
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
