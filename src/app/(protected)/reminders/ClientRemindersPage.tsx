@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,10 @@ import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
+
+type ReminderWithCompany = Reminder & {
+  companies: { firmenname: string } | null;
+};
 
 function ClientRemindersPage() {
   const queryClient = useQueryClient();
@@ -31,16 +36,19 @@ function ClientRemindersPage() {
   });
 
   const {
-    data: reminders = [],
+    data: reminders = [] as ReminderWithCompany[],
     isLoading,
     error,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("reminders").select("*").order("due_date", { ascending: true });
+      const { data, error } = await supabase
+        .from("reminders")
+        .select("*, companies(firmenname)")
+        .order("due_date", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as ReminderWithCompany[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -215,6 +223,10 @@ function ClientRemindersPage() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
                         <span>Assigned to: {reminder.assigned_to || "Unassigned"}</span>
+                        <span>
+                          Company:{" "}
+                          <Link href={`/companies/${reminder.company_id}`}>{reminder.companies?.firmenname}</Link>
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
