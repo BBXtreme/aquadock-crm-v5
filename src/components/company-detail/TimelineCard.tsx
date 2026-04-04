@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { createClient } from "@/lib/supabase/browser";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user";
+import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface Props {
