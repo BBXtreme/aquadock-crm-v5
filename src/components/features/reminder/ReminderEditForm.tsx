@@ -8,7 +8,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,8 +17,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
+import { type ReminderFormValues, reminderFormSchema } from "@/lib/validations/reminder";
 import type { Database } from "@/types/database.types";
-import { reminderFormSchema, ReminderFormValues } from "@/lib/validations/reminder";
 
 export default function ReminderEditForm({
   reminder,
