@@ -1,7 +1,7 @@
 // src/lib/auth/get-current-user.ts
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createClient } from "@/lib/supabase/browser";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AuthUser, UserRole } from "./types";
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
