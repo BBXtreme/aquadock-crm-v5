@@ -42,7 +42,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   return (
     <Suspense fallback={<LoadingState count={8} />}>
       <div className="container mx-auto p-6 space-y-8">
-        <CompanyHeader company={company} id={id} router={router} />
+        <CompanyHeader company={company} id={id} router={router} onAddTimeline={() => {}} onEdit={() => {}} />
         <CompanyKpiCards company={company} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <CompanyDetailsCard company={company} />
