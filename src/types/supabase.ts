@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           bundesland: string | null
           created_at: string | null
+          created_by: string | null
           deleted_at: string | null
           email: string | null
           firmenname: string
@@ -38,6 +39,7 @@ export type Database = {
           strasse: string | null
           telefon: string | null
           updated_at: string | null
+          updated_by: string | null
           user_id: string | null
           value: number | null
           wasserdistanz: number | null
@@ -47,6 +49,7 @@ export type Database = {
         Insert: {
           bundesland?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           email?: string | null
           firmenname: string
@@ -67,6 +70,7 @@ export type Database = {
           strasse?: string | null
           telefon?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           user_id?: string | null
           value?: number | null
           wasserdistanz?: number | null
@@ -76,6 +80,7 @@ export type Database = {
         Update: {
           bundesland?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           email?: string | null
           firmenname?: string
@@ -96,19 +101,36 @@ export type Database = {
           strasse?: string | null
           telefon?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           user_id?: string | null
           value?: number | null
           wasserdistanz?: number | null
           wassertyp?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "companies_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
           anrede: string | null
           company_id: string | null
           created_at: string | null
+          created_by: string | null
           deleted_at: string | null
           durchwahl: string | null
           email: string | null
@@ -121,6 +143,7 @@ export type Database = {
           search_vector: unknown
           telefon: string | null
           updated_at: string | null
+          updated_by: string | null
           user_id: string | null
           vorname: string
         }
@@ -128,6 +151,7 @@ export type Database = {
           anrede?: string | null
           company_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           durchwahl?: string | null
           email?: string | null
@@ -140,6 +164,7 @@ export type Database = {
           search_vector?: unknown
           telefon?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           user_id?: string | null
           vorname: string
         }
@@ -147,6 +172,7 @@ export type Database = {
           anrede?: string | null
           company_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           deleted_at?: string | null
           durchwahl?: string | null
           email?: string | null
@@ -159,6 +185,7 @@ export type Database = {
           search_vector?: unknown
           telefon?: string | null
           updated_at?: string | null
+          updated_by?: string | null
           user_id?: string | null
           vorname?: string
         }
@@ -283,12 +310,14 @@ export type Database = {
           company_id: string
           completed_at: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           due_date: string
           id: string
           priority: string | null
           status: string | null
           title: string
+          updated_by: string | null
           user_id: string | null
         }
         Insert: {
@@ -296,12 +325,14 @@ export type Database = {
           company_id: string
           completed_at?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           due_date: string
           id?: string
           priority?: string | null
           status?: string | null
           title: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Update: {
@@ -309,12 +340,14 @@ export type Database = {
           company_id?: string
           completed_at?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           due_date?: string
           id?: string
           priority?: string | null
           status?: string | null
           title?: string
+          updated_by?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -334,8 +367,10 @@ export type Database = {
           contact_id: string | null
           content: string | null
           created_at: string | null
+          created_by: string | null
           id: string
           title: string
+          updated_by: string | null
           user_id: string | null
           user_name: string | null
         }
@@ -345,8 +380,10 @@ export type Database = {
           contact_id?: string | null
           content?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           title: string
+          updated_by?: string | null
           user_id?: string | null
           user_name?: string | null
         }
@@ -356,8 +393,10 @@ export type Database = {
           contact_id?: string | null
           content?: string | null
           created_at?: string | null
+          created_by?: string | null
           id?: string
           title?: string
+          updated_by?: string | null
           user_id?: string | null
           user_name?: string | null
         }
@@ -374,6 +413,20 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timeline_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
