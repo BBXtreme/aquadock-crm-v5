@@ -1,6 +1,6 @@
 // src/components/company-detail/TimelineCard.tsx
 "use client";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, Edit, Plus, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
