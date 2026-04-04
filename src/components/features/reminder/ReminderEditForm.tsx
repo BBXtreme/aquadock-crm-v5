@@ -1,4 +1,4 @@
-// src/components/features/ReminderEditForm.tsx
+// src/components/features/reminder/ReminderEditForm.tsx
 // This component renders a form for editing company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
 
 "use client";
@@ -66,7 +66,7 @@ export default function ReminderEditForm({
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+      due_date: reminder?.due_date ? new Date(reminder.due_date) : undefined,
       priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
       status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
@@ -79,7 +79,7 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
+        due_date: reminder.due_date ? new Date(reminder.due_date) : undefined,
         priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
         status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
@@ -120,7 +120,7 @@ export default function ReminderEditForm({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -133,7 +133,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="company_id"
           render={({ field }) => (
             <FormItem>
@@ -157,25 +157,29 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="due_date"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input type="datetime-local" {...field} />
+                <Input
+                  type="datetime-local"
+                  value={field.value ? field.value.toISOString().slice(0, 16) : ""}
+                  onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="priority"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -194,12 +198,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="status"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -246,7 +250,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="description"
           render={({ field }) => (
             <FormItem>
