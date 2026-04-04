@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-03-21  
+**Last audited**: 2026-04-01  
 **Environment**: Supabase PostgreSQL 15+  
 
 ## 1. Database Overview
@@ -37,9 +37,20 @@
 | land       | text        | true     | —                 | Country                                   | —             |
 | lat / lon  | real        | true     | —                 | Geographic coordinates                    | —             |
 | osm        | text        | true     | —                 | OSM node/way/relation ID                  | —             |
+| email      | text        | true     | —                 | Email address                             | —             |
+| telefon    | text        | true     | —                 | Phone number                              | —             |
+| website    | text        | true     | —                 | Website URL                               | —             |
+| notes      | text        | true     | —                 | Additional notes                          | —             |
+| wasserdistanz | real       | true     | —                 | Water distance                            | —             |
+| wassertyp  | text        | true     | —                 | Water type                                | —             |
+| import_batch | text       | true     | —                 | Import batch identifier                   | —             |
+| search_vector | tsvector   | true     | —                 | Full-text search vector                   | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())                        | Indexed       |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id)             | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id)             | —             |
 | created_at | timestamptz | true     | now()             | —                                         | —             |
 | updated_at | timestamptz | true     | now()             | —                                         | —             |
+| deleted_at | timestamptz | true     | —                 | Soft delete timestamp                     | —             |
 
 ### contacts
 
@@ -55,11 +66,15 @@
 | mobil       | text        | true     | —                 | Mobile number                 | —             |
 | durchwahl   | text        | true     | —                 | Extension                     | —             |
 | notes       | text        | true     | —                 | Additional notes              | —             |
+| search_vector | tsvector   | true     | —                 | Full-text search vector       | —             |
 | company_id  | uuid        | true     | —                 | Foreign key to companies      | Indexed       |
 | is_primary  | boolean     | false    | false             | Primary contact flag          | —             |
 | user_id     | uuid        | true     | —                 | Owner (auth.uid())            | Indexed       |
+| created_by  | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by  | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
 | created_at  | timestamptz | true     | now()             | —                             | —             |
 | updated_at  | timestamptz | true     | now()             | —                             | —             |
+| deleted_at  | timestamptz | true     | —                 | Soft delete timestamp         | —             |
 
 ### reminders
 
@@ -74,22 +89,26 @@
 | assigned_to| text        | true     | —                 | Assigned person          | —             |
 | description| text        | true     | —                 | Description              | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
+| completed_at | timestamptz | true     | —                 | Completion timestamp     | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
-| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### timeline
 
 | Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
 | ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
 | id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| title      | text        | false    | —                 | Event title              | —             |
+| activity_type | text       | false    | —                 | Activity type            | —             |
+| content    | text        | true     | —                 | Event description        | —             |
 | company_id | uuid        | true     | —                 | Foreign key to companies | Indexed       |
 | contact_id | uuid        | true     | —                 | Foreign key to contacts  | —             |
-| type       | text        | false    | —                 | Event type               | —             |
-| title      | text        | false    | —                 | Event title              | —             |
-| description| text        | true     | —                 | Event description        | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| user_name  | text        | true     | —                 | User name                | —             |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
-| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### email_log
 
@@ -97,9 +116,16 @@
 | ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
 | id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
 | recipient_email| text       | false    | —                 | Email recipient          | —             |
-| subject    | text        | false    | —                 | Email subject            | —             |
-| body       | text        | false    | —                 | Email body               | —             |
+| recipient_name| text       | true     | —                 | Recipient name           | —             |
+| subject    | text        | true     | —                 | Email subject            | —             |
+| template_name| text       | true     | —                 | Template name            | —             |
+| mode       | text        | true     | —                 | Email mode               | —             |
+| batch_id   | text        | true     | —                 | Batch identifier         | —             |
+| status     | text        | true     | —                 | Email status             | —             |
 | sent_at    | timestamptz | true     | —                 | Sent timestamp           | —             |
+| spam_score | real        | true     | —                 | Spam score               | —             |
+| error_msg  | text        | true     | —                 | Error message            | —             |
+| user_id    | uuid        | true     | —                 | Owner (auth.uid())       | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
@@ -111,7 +137,8 @@
 | name   | text        | false    | —                 | Template name            | Unique        |
 | subject| text        | false    | —                 | Email subject            | —             |
 | body   | text        | false    | —                 | Email body               | —             |
-| user_id| uuid        | true     | —                 | Owner (auth.uid())       | —             |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### user_settings
 
@@ -228,3 +255,4 @@ Supabase Auth provides authentication with the `profiles` table as the single so
 2026-03-30 Added `profiles` table for role management (user/admin) – long-term clean auth architecture
 2026-03-31 Added Zod validations section for form schemas
 2026-03-31 Added Auth & Authorization section summarizing Supabase Auth integration
+2026-04-01 Updated schema to reflect new columns: added created_by, updated_by, deleted_at, search_vector, and additional fields in companies, contacts, reminders, timeline, email_log. Updated timeline to use activity_type and content instead of type and description. Added relationships to profiles via created_by and updated_by.
