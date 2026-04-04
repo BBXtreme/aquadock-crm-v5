@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { createTimelineEntry } from "@/lib/services/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { createTimelineEntry } from "@/lib/supabase/services/timeline";
 
 function isValidTimelineEntry(body: unknown): body is {
   title: string;

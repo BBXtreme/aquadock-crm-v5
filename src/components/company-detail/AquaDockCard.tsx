@@ -84,7 +84,7 @@ export default function AquaDockCard({ company }: Props) {
                   size="sm"
                   onClick={() => {
                     if (company.lat && company.lon) {
-                      router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=15`);
+                      router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);
                     } else {
                       router.push("/openmap");
                     }

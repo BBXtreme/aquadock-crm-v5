@@ -13,10 +13,12 @@ export default async function RemindersPage() {
   const _user = await requireUser();
 
   return (
-    <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <Suspense fallback={<div>Loading reminders...</div>}>
-        <ClientRemindersPage />
-      </Suspense>
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">  
+      <div className="container mx-auto space-y-8 p-6 sm:p-6 lg:p-8">
+        <Suspense fallback={<div>Loading reminders...</div>}>
+          <ClientRemindersPage />
+        </Suspense>
+      </div>
     </div>
   );
 }

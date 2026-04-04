@@ -16,7 +16,7 @@ import ContactDetailClient from "./ContactDetailClient";
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const user = await requireUser();
+  const _user = await requireUser();
 
   try {
     const supabase = await createServerSupabaseClient();

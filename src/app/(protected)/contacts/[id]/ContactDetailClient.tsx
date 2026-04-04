@@ -124,7 +124,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
           <div className="text-sm text-muted-foreground">
             Contacts → {contact.vorname} {contact.nachname}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
           </h1>
           {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}

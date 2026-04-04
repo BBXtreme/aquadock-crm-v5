@@ -78,8 +78,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           onAddTimeline={() => setAddTimelineDialogOpen(true)}
           onEdit={() => setEditCompanyDialogOpen(true)}
         />
-        <CompanyKpiCards company={company} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <CompanyKpiCards company={company} />    
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           <CompanyDetailsCard company={company} />
           <AquaDockCard company={company} />
           <CrmCard company={company} />

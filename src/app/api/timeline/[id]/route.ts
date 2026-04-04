@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/services/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/supabase/services/timeline";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

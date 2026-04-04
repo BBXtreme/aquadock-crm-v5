@@ -90,7 +90,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
         {/* Address */}
         {fullAddress && (
           <div className="flex items-start gap-3 text-sm">
-            <span className="text-muted-foreground mt-0.5 flex-shrink-0">📍</span>
+            <span className="text-muted-foreground mt-0.5 shrink-0">📍</span>
             <span className="text-foreground">{fullAddress}</span>
           </div>
         )}
@@ -98,7 +98,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
         {/* Phone */}
         {phone && (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground flex-shrink-0">📞</span>
+            <span className="text-muted-foreground shrink-0">📞</span>
             <a
               href={`tel:${phone}`}
               className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
@@ -111,7 +111,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
         {/* Website */}
         {website && (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground flex-shrink-0">🌐</span>
+            <span className="text-muted-foreground shrink-0">🌐</span>
             <a
               href={website}
               target="_blank"

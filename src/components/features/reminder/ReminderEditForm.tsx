@@ -19,7 +19,7 @@ import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import { reminderSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
-import type { Database, ReminderInsert, ReminderUpdate } from "@/types/database.types";
+import type { Database, } from "@/types/database.types";
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
