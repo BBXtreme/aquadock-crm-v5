@@ -60,7 +60,7 @@ const columns = [
     ),
     enableSorting: true,
     cell: (info) => {
-      const type = info.getValue() as string;
+      const type = info.row.original.activity_type;
       const getIcon = (t: string) => {
         switch (t) {
           case "note":
@@ -101,7 +101,8 @@ const columns = [
       );
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("user_name", {
+  columnHelper.display({
+    id: "user",
     header: ({ column }) => (
       <button
         type="button"
@@ -114,20 +115,22 @@ const columns = [
       </button>
     ),
     enableSorting: true,
-    cell: (info) => {
-      const userName = info.getValue() as string;
-      return <span>{userName || "-"}</span>;
+    sortingFn: (rowA, rowB) => {
+      const a = rowA.original.profiles?.display_name || "";
+      const b = rowB.original.profiles?.display_name || "";
+      return a.localeCompare(b);
     },
+    cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "company-contact",
+    id: "company",
     header: ({ column }) => (
       <button
         type="button"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="flex items-center gap-1"
       >
-        Firma & Kontakt
+        Firma
         {column.getIsSorted() === "asc" && "↑"}
         {column.getIsSorted() === "desc" && "↓"}
       </button>
@@ -139,26 +142,42 @@ const columns = [
       return a.localeCompare(b);
     },
     cell: (info) => (
-      <div className="space-y-1">
-        <div>
-          {info.row.original.companies ? (
-            <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
-              {info.row.original.companies.firmenname}
-            </Link>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )}
-        </div>
-        <div>
-          {info.row.original.contacts ? (
-            <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
-              {info.row.original.contacts.vorname} {info.row.original.contacts.nachname}
-            </Link>
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )}
-        </div>
-      </div>
+      info.row.original.companies ? (
+        <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+          {info.row.original.companies.firmenname}
+        </Link>
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      )
+    ),
+  }) as ColumnDef<TimelineEntryWithJoins>,
+  columnHelper.display({
+    id: "contact",
+    header: ({ column }) => (
+      <button
+        type="button"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="flex items-center gap-1"
+      >
+        Kontakt
+        {column.getIsSorted() === "asc" && "↑"}
+        {column.getIsSorted() === "desc" && "↓"}
+      </button>
+    ),
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      const a = `${rowA.original.contacts?.vorname || ""} ${rowA.original.contacts?.nachname || ""}`.trim();
+      const b = `${rowB.original.contacts?.vorname || ""} ${rowB.original.contacts?.nachname || ""}`.trim();
+      return a.localeCompare(b);
+    },
+    cell: (info) => (
+      info.row.original.contacts ? (
+        <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
+          {info.row.original.contacts.vorname} {info.row.original.contacts.nachname}
+        </Link>
+      ) : (
+        <span className="text-muted-foreground">-</span>
+      )
     ),
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
@@ -183,7 +202,7 @@ const columns = [
     cell: (info) => (
       <div className="space-y-1">
         <div className="font-medium">{info.row.original.title}</div>
-        <div className="text-sm text-muted-foreground">{(info.row.original.content as string | null) || "-"}</div>
+        <div className="text-sm text-muted-foreground">{info.row.original.content || "-"}</div>
       </div>
     ),
   }) as ColumnDef<TimelineEntryWithJoins>,
@@ -319,7 +338,8 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
         .select(`
           *,
           companies:company_id (firmenname, status, kundentyp),
-          contacts:contact_id (vorname, nachname, position, email)
+          contacts:contact_id (vorname, nachname, position, email),
+          profiles:user_id (display_name)
         `)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -339,7 +359,8 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     (entry.content || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.companies?.firmenname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.contacts?.vorname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
-    (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase())
+    (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
+    (entry.profiles?.display_name || "").toLowerCase().includes(finalSearch.toLowerCase())
   ), [finalData, finalSearch]);
 
   const table = useReactTable({
