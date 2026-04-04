@@ -333,8 +333,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     queryKey: ["user"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) throw error;
+      const { data: { user } } = await supabase.auth.getUser();
       return user;
     },
   });
