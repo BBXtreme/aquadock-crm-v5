@@ -160,7 +160,7 @@ export default function TimelineCard({ companyId }: Props) {
                       <th className="text-left">Event</th>
                       <th className="text-left">Company</th>
                       <th className="text-left">Contact</th>
-                      <th className="text-left">User</th>
+                      <th className="text-left">User (Benutzer)</th>
                       <th className="text-right">Actions</th>
                     </tr>
                   </thead>
