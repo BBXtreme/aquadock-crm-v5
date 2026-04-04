@@ -37,6 +37,23 @@ function ClientRemindersPage() {
     return "all";
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return null;
+      return {
+        id: user.id,
+        email: user.email || null,
+        user_metadata: user.user_metadata,
+        role: (user.user_metadata?.role as UserRole) || "user",
+        display_name: user.user_metadata?.display_name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      };
+    },
+  });
+
   const {
     data: reminders = [] as ReminderWithCompany[],
     isLoading,
@@ -69,23 +86,6 @@ function ClientRemindersPage() {
       const { data, error } = await supabase.from("profiles").select("id, display_name");
       if (error) throw error;
       return data;
-    },
-  });
-
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return null;
-      return {
-        id: user.id,
-        email: user.email || null,
-        user_metadata: user.user_metadata,
-        role: (user.user_metadata?.role as UserRole) || "user",
-        display_name: user.user_metadata?.display_name || null,
-        avatar_url: user.user_metadata?.avatar_url || null,
-      };
     },
   });
 
