@@ -3,7 +3,6 @@
 import {
   BarChart3,
   Bell,
-  Building,
   ChevronDown,
   History,
   Mail,
