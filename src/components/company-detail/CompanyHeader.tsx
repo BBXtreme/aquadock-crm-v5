@@ -1,83 +1,22 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { toast } from "sonner";
-
-import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
-import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
-import type { Company, TimelineEntryInsert } from "@/types/database.types";
+import type { Company } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
 
 interface Props {
   company: Company;
   id: string;
   router: { push: (href: string) => void };
+  onAddTimeline: () => void;
+  onEdit: () => void;
 }
 
-export default function CompanyHeader({ company, id, router }: Props) {
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: contacts = [] } = useQuery({
-    queryKey: ["contacts"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("contacts").select("id, vorname, nachname, position, email, telefon");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const createTimelineMutation = useMutation({
-    mutationFn: async (data: TimelineEntryInsert) => {
-      const supabase = createClient();
-      const { error } = await supabase.from("timeline").insert(data);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline", id] });
-      setAddTimelineDialogOpen(false);
-    },
-    onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      console.error("Error creating timeline entry:", err);
-      toast.error("Create failed", { description: message });
-    },
-  });
-
-  const handleAddTimeline = () => {
-    setAddTimelineDialogOpen(true);
-  };
-
-  const handleTimelineSubmit = async (values: TimelineEntryInsert) => {
-    setIsSubmitting(true);
-    try {
-      await createTimelineMutation.mutateAsync(values);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
   const countryFlag = getCountryFlag(company.land);
 
   return (
@@ -95,10 +34,10 @@ export default function CompanyHeader({ company, id, router }: Props) {
           {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" type="button" onClick={handleAddTimeline}>
+          <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
             <Plus className="h-4 w-4 mr-2" /> Add Timeline
           </Button>
-          <Button variant="outline" size="sm" type="button" onClick={() => setEditDialogOpen(true)}>
+          <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
           </Button>
           <Button
@@ -148,30 +87,6 @@ export default function CompanyHeader({ company, id, router }: Props) {
           <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
         )}
       </div>
-
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
-          </DialogHeader>
-          <CompanyEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Timeline Entry</DialogTitle>
-          </DialogHeader>
-          <TimelineEntryForm
-            onSubmit={handleTimelineSubmit}
-            isSubmitting={isSubmitting}
-            companies={companies}
-            contacts={contacts}
-            preselectedCompanyId={id}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
