@@ -31,7 +31,7 @@ export default function RemindersCard({ companyId }: Props) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("reminders")
-        .select("*")
+        .select("*, profiles(display_name)")
         .eq("company_id", companyId)
         .order("due_date", { ascending: true });
 
@@ -142,7 +142,7 @@ export default function RemindersCard({ companyId }: Props) {
                             {getReminderStatusLabel(reminder.status)}
                           </Badge>
                         </td>
-                        <td>{reminder.assigned_to || "—"}</td>
+                        <td>{reminder.profiles?.display_name || "Unassigned"}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

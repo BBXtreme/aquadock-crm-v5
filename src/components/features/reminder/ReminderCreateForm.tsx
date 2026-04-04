@@ -1,4 +1,4 @@
-// src/components/features/ReminderCreateForm.tsx
+// src/components/features/reminder/ReminderCreateForm.tsx
 // This component renders a form for creating reminders. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create reminder records. It also handles form state and displays success/error toasts.
 
 "use client";
@@ -38,6 +38,16 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
       if (error) throw error;
       return data;
     },
@@ -176,9 +186,21 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Unassigned</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.display_name || "Unnamed User"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
