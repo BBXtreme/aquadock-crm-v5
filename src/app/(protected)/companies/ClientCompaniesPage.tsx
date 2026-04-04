@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
   Building,
@@ -105,6 +105,20 @@ function ClientCompaniesPage() {
     partner: Handshake,
     sonstige: null,
   };
+
+  const { data: lands = [] } = useQuery({
+    queryKey: ["distinct-lands"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("companies")
+        .select("land")
+        .not("land", "is", null);
+      if (error) throw error;
+      const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
+      return distinctLands;
+    },
+  });
 
   const toggleFilter = (group: FilterGroup, value: string) => {
     setActiveFilters((prev) => ({
@@ -501,24 +515,27 @@ function ClientCompaniesPage() {
                   <div>
                     <h4 className="font-normal mb-2">Land</h4>
                     <div className="flex flex-wrap gap-2">
-                      {landOptions.map((option) => {
-                        const isActive = activeFilters.land.includes(option.value);
-                        return (
-                          <Button
-                            key={option.value}
-                            variant={isActive ? "secondary" : "ghost"}
-                            size="sm"
-                            className={
-                              isActive
-                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
-                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
-                            }
-                            onClick={() => toggleFilter("land", option.value)}
-                          >
-                            {option.label}
-                          </Button>
-                        );
-                      })}
+                      {(() => {
+                        const dynamicLandOptions = lands.map((land) => ({ value: land, label: land }));
+                        return dynamicLandOptions.map((option) => {
+                          const isActive = activeFilters.land.includes(option.value);
+                          return (
+                            <Button
+                              key={option.value}
+                              variant={isActive ? "secondary" : "ghost"}
+                              size="sm"
+                              className={
+                                isActive
+                                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                              }
+                              onClick={() => toggleFilter("land", option.value)}
+                            >
+                              {option.label}
+                            </Button>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </AccordionContent>
