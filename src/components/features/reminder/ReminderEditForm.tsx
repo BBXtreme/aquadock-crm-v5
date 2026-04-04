@@ -19,18 +19,7 @@ import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/types/database.types";
-
-const reminderSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  company_id: z.string().min(1, "Company is required"),
-  due_date: z.string().min(1, "Due date is required"),
-  priority: z.string().optional(),
-  status: z.string().optional(),
-  assigned_to: z.string().optional(),
-  description: z.string().optional(),
-});
-
-type ReminderFormValues = z.infer<typeof reminderSchema>;
+import { reminderFormSchema, ReminderFormValues } from "@/lib/validations/reminder";
 
 export default function ReminderEditForm({
   reminder,
@@ -71,14 +60,14 @@ export default function ReminderEditForm({
   });
 
   const form = useForm<ReminderFormValues>({
-    resolver: zodResolver(reminderSchema),
+    resolver: zodResolver(reminderFormSchema),
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
       due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
       priority: reminder?.priority || "normal",
       status: reminder?.status || "open",
-      assigned_to: reminder?.assigned_to || "",
+      assigned_to: reminder?.assigned_to || null,
       description: reminder?.description || "",
     },
   });
@@ -91,7 +80,7 @@ export default function ReminderEditForm({
         due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
         priority: reminder.priority || "normal",
         status: reminder.status || "open",
-        assigned_to: reminder.assigned_to || "",
+        assigned_to: reminder.assigned_to || null,
         description: reminder.description || "",
       });
     }
@@ -184,7 +173,7 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -208,7 +197,7 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -232,7 +221,10 @@ export default function ReminderEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select
+                onValueChange={(value) => field.onChange(value === "" ? null : value)}
+                value={field.value || ""}
+              >
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select user" />
