@@ -59,7 +59,7 @@ export function DataTable<TData>({
   columnVisibility = {},
   onColumnVisibilityChange,
   loading = false,
-  pageSize = 20,
+  pageSize = 10,
   searchPlaceholder,
 }: DataTableProps<TData>) {
   const [internalGlobalFilter, setInternalGlobalFilter] = useState(globalFilter);
