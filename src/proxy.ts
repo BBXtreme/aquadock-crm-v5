@@ -3,7 +3,7 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./lib/supabase/proxy";
-import { createServerSupabaseClient } from "./lib/supabase/server-client";
+import { createServerSupabaseClient } from "./lib/supabase/server";
 
 export async function proxy(request: NextRequest) {
   // === STEP 1: Refresh session & cookies (Supabase + Next.js 16 best practice) ===

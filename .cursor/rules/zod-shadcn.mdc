@@ -1,0 +1,42 @@
+---
+description: Zod + shadcn/ui form patterns for CRM v5 (post-DTO migration)
+globs: ["**/*.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Zod + shadcn/ui Form Rules for AquaDock CRM v5
+
+## Core Principles (Post-DTO Migration)
+- Zod schemas in `src/lib/validations/` are the **single source of truth** — no more DTO files.
+- Every form uses `useForm<T>` where `T = z.infer<typeof schema>`.
+- Use `zodResolver(schema)` with the shared schema.
+- Base every schema on types from `src/types/supabase.ts` (Row / Insert / Update).
+- Always apply `.strict()`, `.trim()` on strings, and `emptyStringToNull` transform for nullable columns.
+- Use German error messages where appropriate for the CRM audience.
+- Prefer enums from `src/lib/constants/company-options.ts`.
+
+## Correct FormField Pattern (No as any)
+```ts
+import { Control } from "react-hook-form";
+import type { CompanyForm } from "@/lib/validations/company";
+
+const form = useForm<CompanyForm>({ resolver: zodResolver(companyFormSchema) });
+
+<FormField
+  control={form.control as Control<CompanyForm>}
+  name="..."
+  render={({ field }) => <FormControl>...</FormControl>}
+/>
+
+##Schema Requirements
+
+- .strict() on every schema
+- Nullable fields: .nullable().optional().transform(emptyStringToNull)
+- IDs: z.string().uuid()
+- Use toCompanyInsert() / toCompanyUpdate() helpers for safe Supabase mapping
+- Server Actions must re-validate with .parse() or .safeParse()
+
+##Recommended Barrel Import
+```ts
+TypeScriptimport { companyFormSchema, type CompanyForm } from "@/lib/validations";
+Follow these patterns in every form for maximum type safety and consistency.

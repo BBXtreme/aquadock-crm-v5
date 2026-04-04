@@ -7,10 +7,10 @@
 export const dynamic = "force-dynamic";
 
 import { OpenMapClient } from "@/components/features/map/OpenMapClient";
-import { requireUser } from "@/lib/supabase/auth/require-user";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
-import { getCompaniesForOpenMap } from "@/lib/supabase/services/companies";
+import type { CompanyForOpenMap } from "@/lib/actions/companies";
+import { getCompaniesForOpenMap } from "@/lib/actions/companies";
+import { requireUser } from "@/lib/auth/require-user";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function OpenMapPage() {
   const _user = await requireUser();

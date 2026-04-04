@@ -7,15 +7,15 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import ReminderEditForm from "@/components/features/ReminderEditForm";
+import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Reminder } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
+import type { Reminder } from "@/types/database.types";
 
 function ClientRemindersPage() {
   const queryClient = useQueryClient();
@@ -103,7 +103,7 @@ function ClientRemindersPage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Reminders
           </h1>
         </div>
@@ -116,7 +116,7 @@ function ClientRemindersPage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Reminders
           </h1>
         </div>
@@ -129,7 +129,7 @@ function ClientRemindersPage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight">
             Reminders
           </h1>
         </div>

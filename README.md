@@ -3,17 +3,25 @@
 Modern CRM for marinas, hotels, restaurants & water-sports businesses  
 **Next.js 16 • React 19 • Supabase • Tailwind v4 • shadcn/ui (radix-nova)**
 
-## 1. Recent Refactor (March 2026)
+## Features
 
-- shadcn/ui updated to latest radix-nova style
-- Biome upgraded & configured (minimal, Tailwind v4 compatible)
-- Static loading skeletons cleaned
-- Type safety improved (no non-null assertions)
-- **OpenMap fully refactored** to clean React + Leaflet with OSM POI import
-- Pre-commit hooks stabilized (Biome + typecheck)
-- React Query patterns standardized
-
-**Next priorities**: full RHF + zod forms, mass-email sanitization, optimistic updates
+- **Company Management**: Create, edit, and track companies with detailed information
+- **Contact Management**: Manage contacts associated with companies
+- **Interactive Map (OpenMap)**: Visualize companies and import OSM POIs
+- **Reminders & Tasks**: Schedule and track follow-ups
+- **Email Integration**: Send emails with templates
+- **Timeline**: Activity logging and history
+- **Dashboard**: KPIs and statistics with period filtering
+- **Mass Email**: Bulk email sending with templates
+- **Settings**: User preferences and SMTP configuration
+- Multi-user CRM with Row Level Security (RLS)
+- Companies + Contacts separation
+- Timeline & reminders per company
+- **Interactive OpenMap** with colored company markers + OSM POI import (zoom ≥ 13)
+- Geo data (lat/lon, water distance calculation)
+- CSV import & OpenStreetMap POI import
+- Responsive dashboard & TanStack Tables
+- Dark mode & theme persistence
 
 ## 2. Tech Stack
 
@@ -35,18 +43,7 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 > [!IMPORTANT]
 > Protected routes are handled via root `app/layout.tsx` + Supabase Auth + sidebar wrapper. Flat app structure (no route groups).
 
-## 3. Features
-
-- Multi-user CRM with Row Level Security (RLS)
-- Companies + Contacts separation
-- Timeline & reminders per company
-- **Interactive OpenMap** with colored company markers + OSM POI import (zoom ≥ 13)
-- Geo data (lat/lon, water distance calculation)
-- CSV import & OpenStreetMap POI import
-- Responsive dashboard & TanStack Tables
-- Dark mode & theme persistence
-
-## 4. Getting Started
+## 3. Getting Started
 
 1. Clone & enter directory
    ```bash
@@ -85,21 +82,47 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 
    Open
 
-    
-
    http://localhost:3000
+
+## 4. Documentation
+
+- [Architecture Overview](docs/architecture.md)
+- [Supabase Schema](docs/SUPABASE_SCHEMA.md)
+- [OpenMap Documentation](docs/README_OpenMap.md)
+- [React Table Patterns](docs/react-table-v8-ts-tricks.md)
+- [Aider Rules](docs/AIDER-RULES.md)
+- [Aider Conventions](docs/aider.conventions.md)
 
 ## 5. Core Commands
 
 Bash
 
 ```
-pnpm dev          # development server
+pnpm dev          # development server "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev"
 pnpm build        # production build
 pnpm start        # run production build
 pnpm check        # biome lint + type check
 pnpm format       # format all files
 pnpm check:fix    # lint + auto-fix
+supabase:types:   # "mkdir -p src/types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts"
+
+    "dev:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next dev",
+    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" next build",
+    "build:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next build",
+    "start": "next start",
+    "lint": "biome lint",
+    "pre-commit": "lint-staged",
+    "format": "biome format --write",
+    "check": "biome check",
+    "check:fix": "biome check --write --unsafe",
+    "check:quick": "biome check --write --max-diagnostics=50",
+    "typecheck": "tsc --noEmit --pretty",
+    "prepare": "husky",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui",
+    "version": "changeset version",
+    "release": "changeset publish"
 ```
 
 ## 6. Development Guidelines
@@ -115,11 +138,6 @@ pnpm check:fix    # lint + auto-fix
 - Strictly follow AIDER-RULES.md on every change
 - Input sanitization: All forms use Zod with .trim() and length limits. 
 - Static skeletons use predefined string keys. No ! assertions allowed.
-
-### DTOs and Middleware
-
-- **DTO Pattern**: Introduced in `src/lib/dto/` to define form-specific data transfer objects (e.g., `CompanyFormDTO` and `ContactFormDTO`) for type-safe form handling and API interactions, separating form logic from database schemas.
-- **Middleware**: `src/middleware.ts` added for future authentication and route protection, currently a placeholder for Supabase Auth integration.
 
 ## 7. Folder Structure
 
@@ -155,30 +173,60 @@ src/app/
 │   │   ├── contacts/
 │   │   ├── reminders/
 │   └── ErrorBoundary.tsx
-├── lib/
-│   ├── supabase/
-│   │   ├── server.ts
-│   │   ├── browser.ts
-│   │   ├── services/             # Central service layer
-│   │   ├── database.types.ts     # Auto-generated types
-│   │   └── query-debug-utils.ts
-│   ├── dto/                      # Form-specific types
-│   ├── validations/              # Zod schemas
-│   ├── constants/
-│   │   ├── company-options.ts    # Form options
-│   │   ├── map-poi-config.ts
-│   │   ├── map-status-colors.ts
-│   │   ├── kundentyp.ts
-│   │   ├── wassertyp.ts
-│   │   └── overpass-endpoints.ts
-│   └── utils/
-│       ├── map-utils.ts
-│       ├── calculateWaterDistance.ts
-│       ├── csv-import.ts
-│       ├── data-format.ts        # safeDisplay, safeString, format helpers
-│       └── query-client.ts
 └── hooks/
-│ middleware.ts
+│ proxy.ts
+
+
+src/lib/
+├── actions/                    # ← All Server Actions (thin layer)
+│   ├── companies.ts
+│   ├── contacts.ts
+│   ├── reminders.ts
+│   ├── timeline.ts
+│   ├── email-log.ts
+│   ├── mass-email.ts
+│   ├── auth.ts                 # signOut, etc.
+│   └── index.ts                # optional barrel
+│
+├── validations/                # ← Zod schemas (single source of truth)
+│   ├── company.ts
+│   ├── contact.ts
+│   ├── reminder.ts
+│   ├── email.ts
+│   └── index.ts
+│
+├── supabase/                   # ← Pure Supabase clients & low-level utils
+│   ├── browser.ts              # createClient() for client components
+│   ├── server.ts               # createServerSupabaseClient()
+│   ├── admin.ts                # createAdminClient() (service role)
+│   ├── types.ts                # CookieOptions, custom Supabase types
+│   ├── utils.ts                # handleSupabaseError, safeDisplay, formatDateDE, etc.
+│   └── proxy.ts                # session/cookie proxy (if needed)
+│
+├── services/                   # ← Complex business logic & reusable operations
+│   ├── email.ts                # mass email logic, placeholder filling, recipient queries
+│   ├── smtp.ts                 # SMTP config handling
+│   └── ...                     # only heavy, reusable, non-action logic
+│
+├── query/                      # ← TanStack Query setup (if used heavily)
+│   ├── provider.tsx
+│   └── keys.ts                 # query key constants
+│
+├── utils/                      # ← Pure utilities (no DB, no side effects)
+│   ├── cn.ts
+│   ├── csv-import.ts
+│   ├── data-format.ts
+│   └── constants/              # company-options.ts, etc.
+│
+├── auth/                       # ← Auth-specific helpers (optional, but clean)
+│   ├── get-current-user.ts
+│   ├── require-user.ts
+│   ├── require-admin.ts
+│   └── types.ts
+│
+└── types/                      # ← Global TypeScript types (outside lib if preferred)
+    ├── database.types.ts
+    └── index.ts
 ```
 
 ## 8. Deployment
@@ -200,7 +248,7 @@ After schema changes:
 Bash
 
 ```
-npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
+mkdir -p src/types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts
 ```
 
 ## 10. Routing & Layout

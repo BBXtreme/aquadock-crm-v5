@@ -5,100 +5,76 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { updateCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import type { CompanyFormDTO } from "@/lib/dto/company.dto";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Database } from "@/lib/supabase/database.types";
-import { updateCompany } from "@/lib/supabase/services/companies";
+import { createClient } from "@/lib/supabase/browser";
+import { type CompanyForm, companySchema } from "@/lib/validations/company";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
-
-const companySchema = z.object({
-  firmenname: z.string().min(1, "Firmenname is required"),
-  rechtsform: z.string().nullable().optional(),
-  kundentyp: z.string(),
-  firmentyp: z.string().nullable().optional(),
-  website: z.string().nullable().optional(),
-  telefon: z.string().nullable().optional(),
-  email: z.string().nullable().optional(),
-  strasse: z.string().nullable().optional(),
-  plz: z.string().nullable().optional(),
-  stadt: z.string().nullable().optional(),
-  bundesland: z.string().nullable().optional(),
-  land: z.string().nullable().optional(),
-  wasserdistanz: z.number().nullable().optional(),
-  wassertyp: z.string().nullable().optional(),
-  lat: z.number().nullable().optional(),
-  lon: z.number().nullable().optional(),
-  osm: z.string().nullable().optional(),
-  status: z.enum(["lead", "interessant", "qualifiziert", "akquise", "angebot", "gewonnen", "verloren"]),
-  value: z.number().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
 
 export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
-  const form = useForm<CompanyFormDTO>({
+  const form = useForm<CompanyForm>({
     resolver: zodResolver(companySchema),
     defaultValues: {
       firmenname: company?.firmenname || "",
-      rechtsform: company?.rechtsform ?? undefined,
-      kundentyp: company?.kundentyp || "",
-      firmentyp: company?.firmentyp ?? undefined,
-      strasse: company?.strasse ?? undefined,
-      plz: company?.plz ?? undefined,
-      stadt: company?.stadt ?? undefined,
-      bundesland: company?.bundesland ?? undefined,
-      land: company?.land ?? undefined,
-      website: company?.website ?? undefined,
-      telefon: company?.telefon ?? undefined,
-      email: company?.email ?? undefined,
-      wasserdistanz: company?.wasserdistanz ?? undefined,
-      wassertyp: company?.wassertyp ?? undefined,
-      lat: company?.lat ?? undefined,
-      lon: company?.lon ?? undefined,
-      osm: company?.osm ?? undefined,
-      status: (company?.status as CompanyFormDTO["status"]) || "lead",
-      value: company?.value ?? undefined,
-      notes: company?.notes ?? undefined,
+      rechtsform: company?.rechtsform ?? null,
+      kundentyp: (company?.kundentyp as CompanyForm["kundentyp"]) || "sonstige",
+      firmentyp: company?.firmentyp ?? null,
+      strasse: company?.strasse ?? null,
+      plz: company?.plz ?? null,
+      stadt: company?.stadt ?? null,
+      bundesland: company?.bundesland ?? null,
+      land: company?.land ?? null,
+      website: company?.website ?? null,
+      telefon: company?.telefon ?? null,
+      email: company?.email ?? null,
+      wasserdistanz: company?.wasserdistanz ?? null,
+      wassertyp: company?.wassertyp ?? null,
+      lat: company?.lat ?? null,
+      lon: company?.lon ?? null,
+      osm: company?.osm ?? null,
+      status: (company?.status as CompanyForm["status"]) || "lead",
+      value: company?.value ?? null,
+      notes: company?.notes ?? null,
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyFormDTO) => {
+    mutationFn: (data: CompanyForm) => {
       if (!company) throw new Error("Company is null");
       const mappedData = {
         firmenname: data.firmenname,
-        rechtsform: data.rechtsform ?? undefined,
+        rechtsform: data.rechtsform ?? null,
         kundentyp: data.kundentyp,
-        firmentyp: data.firmentyp ?? undefined,
-        strasse: data.strasse ?? undefined,
-        plz: data.plz ?? undefined,
-        stadt: data.stadt ?? undefined,
-        bundesland: data.bundesland ?? undefined,
-        land: data.land ?? undefined,
-        website: data.website ?? undefined,
-        telefon: data.telefon ?? undefined,
-        email: data.email ?? undefined,
-        wasserdistanz: data.wasserdistanz ?? undefined,
-        wassertyp: data.wassertyp ?? undefined,
-        lat: data.lat ?? undefined,
-        lon: data.lon ?? undefined,
-        osm: data.osm ?? undefined,
+        firmentyp: data.firmentyp ?? null,
+        strasse: data.strasse ?? null,
+        plz: data.plz ?? null,
+        stadt: data.stadt ?? null,
+        bundesland: data.bundesland ?? null,
+        land: data.land ?? null,
+        website: data.website ?? null,
+        telefon: data.telefon ?? null,
+        email: data.email ?? null,
+        wasserdistanz: data.wasserdistanz ?? null,
+        wassertyp: data.wassertyp ?? null,
+        lat: data.lat ?? null,
+        lon: data.lon ?? null,
+        osm: data.osm ?? null,
         status: data.status,
-        value: data.value ?? undefined,
-        notes: data.notes ?? undefined,
+        value: data.value ?? null,
+        notes: data.notes ?? null,
       };
       return updateCompany(company.id, mappedData, createClient());
     },
@@ -123,7 +99,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
   if (!company) return null;
 
   const onSubmit = form.handleSubmit((data) => {
-    updateMutation.mutate(data);
+    updateMutation.mutate(data as CompanyForm);
   });
 
   return (
@@ -131,7 +107,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="firmenname"
             render={({ field }) => (
               <FormItem>
@@ -144,7 +120,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="rechtsform"
             render={({ field }) => (
               <FormItem>
@@ -157,7 +133,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="kundentyp"
             render={({ field }) => (
               <FormItem>
@@ -181,7 +157,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="firmentyp"
             render={({ field }) => (
               <FormItem>
@@ -205,7 +181,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="website"
             render={({ field }) => (
               <FormItem>
@@ -218,7 +194,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="telefon"
             render={({ field }) => (
               <FormItem>
@@ -231,7 +207,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="email"
             render={({ field }) => (
               <FormItem>
@@ -244,7 +220,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="strasse"
             render={({ field }) => (
               <FormItem>
@@ -257,7 +233,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="plz"
             render={({ field }) => (
               <FormItem>
@@ -270,7 +246,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="stadt"
             render={({ field }) => (
               <FormItem>
@@ -283,7 +259,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="bundesland"
             render={({ field }) => (
               <FormItem>
@@ -296,7 +272,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="land"
             render={({ field }) => (
               <FormItem>
@@ -320,7 +296,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="wasserdistanz"
             render={({ field }) => (
               <FormItem>
@@ -330,7 +306,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     type="number"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -338,7 +314,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="wassertyp"
             render={({ field }) => (
               <FormItem>
@@ -362,7 +338,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="lat"
             render={({ field }) => (
               <FormItem>
@@ -375,7 +351,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     max="90"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -383,7 +359,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="lon"
             render={({ field }) => (
               <FormItem>
@@ -396,7 +372,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     max="180"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -404,7 +380,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="osm"
             render={({ field }) => (
               <FormItem>
@@ -417,7 +393,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="status"
             render={({ field }) => (
               <FormItem>
@@ -441,7 +417,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="value"
             render={({ field }) => (
               <FormItem>
@@ -451,7 +427,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
                     type="number"
                     {...field}
                     value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -459,7 +435,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
             )}
           />
           <FormField
-            control={form.control}
+            control={form.control as Control<CompanyForm>}
             name="notes"
             render={({ field }) => (
               <FormItem className="md:col-span-2">

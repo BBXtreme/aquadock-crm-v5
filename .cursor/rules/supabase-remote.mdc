@@ -1,0 +1,20 @@
+---
+description: Supabase usage rules for CRM v5 (hosted on Vercel)
+globs: ["**/*.{ts,tsx}"]
+alwaysApply: true
+---
+
+# Supabase Rules for AquaDock CRM v5
+
+- Use generated types from `src/types/supabase.ts` (run `pnpm supabase:types` after schema changes).
+- Prefer exported types like `Company`, `Contact`, `Reminder` from the types file.
+- All database operations **must** go through Server Components, Server Actions, or the service layer.
+- Client-side: only use `createClient()` from `src/lib/supabase/browser` for public/read-only operations.
+- Server-side: always use `createServerSupabaseClient()` from `src/lib/supabase/server`.
+- Combine Zod schemas with Supabase types for forms and runtime validation.
+- Strictly respect RLS — never expose service_role key to the client.
+- When making schema changes: validate against live Supabase via MCP first, then regenerate types.
+- After DTO migration: all forms use Zod from `src/lib/validations/` with proper nullable handling.
+
+## MCP Usage
+Grok has live access to the Supabase schema. Use MCP tools (`list_tables`, `describe_table`, `generate_typescript_types`) when reviewing or updating the database.

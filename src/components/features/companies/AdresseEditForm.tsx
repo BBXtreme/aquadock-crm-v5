@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Database } from "@/lib/supabase/database.types";
-import { updateCompany } from "@/lib/supabase/services/companies";
+import { updateCompany } from "@/lib/actions/companies";
+import { createClient } from "@/lib/supabase/browser";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 

@@ -28,7 +28,7 @@
 // script.
 
 import Papa from "papaparse";
-import type { CompanyInsert } from "@/lib/supabase/database.types";
+import type { CompanyInsert } from "@/types/database.types";
 
 // Define the parsed row type from CSV
 export type ParsedCompanyRow = {

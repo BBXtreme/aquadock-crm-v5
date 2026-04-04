@@ -4,14 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import ReminderEditForm from "@/components/features/ReminderEditForm";
+import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Reminder } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/browser";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
+import type { Reminder } from "@/types/database.types";
 
 interface Props {
   companyId: string;

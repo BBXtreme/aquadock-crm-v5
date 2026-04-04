@@ -8,8 +8,8 @@ import FirmendatenEditForm from "@/components/features/companies/FirmendatenEdit
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { Company } from "@/lib/supabase/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
+import type { Company } from "@/types/database.types";
 
 interface Props {
   company: Company;

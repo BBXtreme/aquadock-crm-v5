@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { EmailLog } from "@/lib/supabase/database.types";
+import type { EmailLog } from "@/types/database.types";
 
 type ClientEmailLogPageProps = {
   logs: EmailLog[];
@@ -27,7 +27,12 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
 
   const filteredLogs = safeLogs.filter((log) => {
     if (filter !== "all" && log.status !== filter) return false;
-    if (search && !log.recipient_email.toLowerCase().includes(search.toLowerCase()) && !log.subject.toLowerCase().includes(search.toLowerCase())) return false;
+    if (
+      search &&
+      !log.recipient_email.toLowerCase().includes(search.toLowerCase()) &&
+      !(log.subject ?? "").toLowerCase().includes(search.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -97,7 +102,13 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                     {log.recipient_name ? `${log.recipient_name} <${log.recipient_email}>` : log.recipient_email}
                   </TableCell>
                   <TableCell className="max-w-xs">
-                    <div className="truncate">{log.subject.length > 50 ? `${log.subject.substring(0, 50)}...` : log.subject}</div>
+                    <div className="truncate">
+                      {log.subject == null
+                        ? "—"
+                        : log.subject.length > 50
+                          ? `${log.subject.slice(0, 50)}...`
+                          : log.subject}
+                    </div>
                     {log.status === "error" && log.error_msg && (
                       <div className="text-xs text-red-500 mt-1 truncate">{log.error_msg}</div>
                     )}

@@ -2,7 +2,7 @@
 import type React from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 
 export default async function ProtectedLayout({
   children,

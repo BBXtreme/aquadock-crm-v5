@@ -1,0 +1,17 @@
+---
+description: AquaDock CRM v5 architecture and coding standards
+globs: ["**/*.{ts,tsx,js,jsx}"]
+alwaysApply: true
+---
+
+# AquaDock CRM v5 – Core Architecture Rules
+
+- Use Server Components by default for data fetching and Supabase queries.
+- All forms must use Zod schemas from `src/lib/validations/` as the single source of truth (DTOs have been removed).
+- Every form uses React Hook Form + `zodResolver` + shadcn/ui Form components.
+- Use `Control<T>` (e.g. `Control<CompanyForm>`) for FormField — never `as any`.
+- Follow AIDER-RULES.md strictly: no `!`, no `as any`, hook-first pattern, quality gate on every change.
+- Prefer Biome formatting; never use ESLint or Prettier.
+- Keep components small, composable, and focused.
+- All database operations go through the service layer or Server Actions.
+- Zod schemas must be `.strict()`, use `emptyStringToNull` for nullable fields, and align with `supabase.ts` types.

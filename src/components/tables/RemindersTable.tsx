@@ -26,7 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Reminder } from "@/lib/supabase/database.types";
+import type { Reminder } from "@/types/database.types";
 
 type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
 

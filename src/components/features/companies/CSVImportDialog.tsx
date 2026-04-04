@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { importCompaniesFromCSV } from "@/lib/supabase/services/companies";
+import { importCompaniesFromCSV } from "@/lib/actions/companies";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 
 interface CSVImportDialogProps {

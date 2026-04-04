@@ -7,7 +7,7 @@
 import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
 import DashboardClient from "./DashboardClient";
 

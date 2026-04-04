@@ -3,7 +3,7 @@
 
 "use client";
 
-import type { CompanyForOpenMap } from "@/lib/supabase/services/companies";
+import type { CompanyForOpenMap } from "@/lib/actions/companies";
 
 /**
  * Shared TypeScript definitions for the OpenMap feature

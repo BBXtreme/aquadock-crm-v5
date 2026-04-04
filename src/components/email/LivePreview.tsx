@@ -1,10 +1,8 @@
 // src/components/email/LivePreview.tsx
-// Client Component for displaying a live preview of the email content based on the selected template and recipient.
-
 "use client";
 
 import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +17,78 @@ type LivePreviewProps = {
   previewRecipient: { name: string; email: string; firmenname?: string };
   selectedRecipientIds: string[];
   handleSend: (isTest: boolean, testEmail?: string) => void;
+};
+
+// Enhanced sanitizer
+const sanitizeHtml = (html: string): string => {
+  return html
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/<(iframe|object|embed|form|input|button|style)[^>]*>.*?<\/\1>/gi, '')
+    .replace(/\s+(on\w+)="[^"]*"/gi, '')
+    .replace(/javascript:/gi, '');
+};
+
+// Safe HTML to React converter for basic tags
+const htmlToReact = (html: string): React.ReactNode[] => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
+  const container = doc.body.firstChild as Element;
+
+  const convertNode = (node: Node, index: number): React.ReactNode => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return node.textContent || '';
+    }
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      const tagName = element.tagName.toLowerCase();
+      const props: Record<string, string> = {};
+
+      // Only allow safe attributes for links
+      if (tagName === 'a') {
+        const href = element.getAttribute('href');
+        if (href && (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:'))) {
+          props.href = href;
+        }
+        props.target = '_blank';
+        props.rel = 'noopener noreferrer';
+      }
+
+      const children = Array.from(element.childNodes).map((child, i) => convertNode(child, i));
+
+      switch (tagName) {
+        case 'p':
+          return <p key={index} className="mb-4">{children}</p>;
+        case 'br':
+          return <br key={index} />;
+        case 'strong':
+        case 'b':
+          return <strong key={index}>{children}</strong>;
+        case 'em':
+        case 'i':
+          return <em key={index}>{children}</em>;
+        case 'ul':
+          return <ul key={index} className="list-disc list-inside mb-4">{children}</ul>;
+        case 'ol':
+          return <ol key={index} className="list-decimal list-inside mb-4">{children}</ol>;
+        case 'li':
+          return <li key={index} className="mb-1">{children}</li>;
+        case 'a':
+          return <a key={index} {...props}>{children}</a>;
+        case 'div':
+          return <div key={index}>{children}</div>;
+        case 'span':
+          return <span key={index}>{children}</span>;
+        default:
+          // For unsupported tags, render as span
+          return <span key={index}>{children}</span>;
+      }
+    }
+
+    return null;
+  };
+
+  return Array.from(container.childNodes).map((node, index) => convertNode(node, index));
 };
 
 export default function LivePreview({
@@ -37,10 +107,13 @@ export default function LivePreview({
     try {
       await navigator.clipboard.writeText(text);
       toast.success("In die Zwischenablage kopiert");
-    } catch (_err) {
+    } catch {
       toast.error("Kopieren fehlgeschlagen");
     }
   };
+
+  const sanitizedBody = useMemo(() => sanitizeHtml(previewBody), [previewBody]);
+  const bodyElements = useMemo(() => htmlToReact(sanitizedBody), [sanitizedBody]);
 
   return (
     <Card>
@@ -48,12 +121,13 @@ export default function LivePreview({
         <CardTitle>Live-Vorschau</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Simple toggle */}
-        <div className="flex border-b">
+        <div className="flex border-b mb-6">
           <button
             type="button"
             onClick={() => setPreviewTab("preview")}
-            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${previewTab === "preview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}
+            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              previewTab === "preview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
+            }`}
           >
             <Eye className="inline mr-2 h-4 w-4" />
             Vorschau
@@ -61,22 +135,23 @@ export default function LivePreview({
           <button
             type="button"
             onClick={() => setPreviewTab("raw")}
-            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${previewTab === "raw" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"}`}
+            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
+              previewTab === "raw" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
+            }`}
           >
             <Code className="inline mr-2 h-4 w-4" />
             Quelltext
           </button>
+
           <Button variant="outline" size="sm" onClick={copyToClipboard} className="ml-4">
             <Copy className="h-4 w-4 mr-2" />
-            In die Zwischenablage kopieren
+            Kopieren
           </Button>
         </div>
 
-        {/* Preview Content */}
         {previewTab === "preview" ? (
           <div className="border rounded-3xl p-8 bg-card min-h-[560px] shadow-sm">
             <div className="max-w-2xl mx-auto space-y-8">
-              {/* Email header */}
               <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
                 <div>
                   <span className="font-medium">Von:</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
@@ -86,14 +161,13 @@ export default function LivePreview({
                 </div>
               </div>
 
-              {/* Subject */}
               <div className="font-bold text-2xl leading-tight">
                 {previewSubject || "Kein Betreff"}
               </div>
 
-              {/* Body */}
-              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed whitespace-pre-wrap">
-                {previewBody || "Kein Inhalt"}
+              {/* Safe HTML rendering as React elements */}
+              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
+                {bodyElements.length > 0 ? bodyElements : "Kein Inhalt"}
               </div>
             </div>
           </div>
@@ -108,25 +182,33 @@ export default function LivePreview({
 
         <Separator className="my-8" />
 
-        {/* Send buttons */}
         <div className="flex gap-4">
-          <Button onClick={() => handleSend(false)} disabled={selectedRecipientIds.length === 0} className="flex-1" size="lg">
+          <Button 
+            onClick={() => handleSend(false)} 
+            disabled={selectedRecipientIds.length === 0} 
+            className="flex-1" 
+            size="lg"
+          >
             <Send className="mr-2 h-5 w-5" />
             Senden ({selectedRecipientIds.length})
           </Button>
-          <Button variant="outline" onClick={() => setTestDialogOpen(true)} className="flex-1" size="lg">
+          <Button 
+            variant="outline" 
+            onClick={() => setTestDialogOpen(true)} 
+            className="flex-1" 
+            size="lg"
+          >
             <MailCheck className="mr-2 h-5 w-5" />
             Testsendung
           </Button>
         </div>
 
-        {/* Test Email Dialog */}
         <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Test-E-Mail senden</DialogTitle>
               <DialogDescription>
-                Geben Sie eine Test-E-Mail-Adresse ein, um die Nachricht zu testen.
+                Geben Sie eine Test-E-Mail-Adresse ein.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">

@@ -3,7 +3,7 @@
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
 import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
 import ClientSettingsPage from "./ClientSettingsPage";
 

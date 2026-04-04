@@ -5,8 +5,8 @@
 // Server component for Company Detail page, fetching company data and handling redirection if not found.
 
 import { redirect } from "next/navigation";
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
-import { getCompanyById } from "@/lib/supabase/services/companies";
+import { getCompanyById } from "@/lib/actions/companies";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import CompanyDetailClient from "./CompanyDetailClient";
 
 export default async function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {

@@ -22,7 +22,7 @@ import {
 } from "recharts";
 
 import { StatCard } from "@/components/ui/StatCard";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 const BRAND_COLORS = ["#24BACC", "#1da0a8", "#0f7f85", "#065f63", "#10b981"];
 

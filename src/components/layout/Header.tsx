@@ -20,17 +20,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { createClient } from "@/lib/supabase/browser-client";
+import { createClient } from "@/lib/supabase/browser";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const _router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Reminder calculations (Monday–Sunday week)
@@ -73,7 +78,7 @@ export default function Header() {
   });
 
   const handleSignOut = async () => {
-    const { signOut } = await import("@/lib/supabase/services/auth");
+    const { signOut } = await import("@/lib/actions/auth");
     await signOut();
   };
 
@@ -91,9 +96,10 @@ export default function Header() {
               alt="AquaDock CRM"
               width={0}
               height={0}
-              sizes="(max-width: 768px) 88px, 104px"
+              sizes="(max-width: 768px) 88px, (max-width: 1024px) 104px"
               className="h-22 w-auto object-contain md:h-26"
               priority
+              suppressHydrationWarning={true}
             />
           </div>
         </Link>
@@ -140,8 +146,9 @@ export default function Header() {
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           aria-label="Toggle theme"
+          suppressHydrationWarning={true}
         >
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {mounted && (theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />)}
         </Button>
 
         <DropdownMenu>

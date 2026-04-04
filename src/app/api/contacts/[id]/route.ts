@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server-client";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   // TODO: Add authentication when user login is implemented

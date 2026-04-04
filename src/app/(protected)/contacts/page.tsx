@@ -6,7 +6,7 @@
 // The page also handles loading and error states, providing feedback to the user accordingly.
 
 import { Suspense } from "react";
-import { requireUser } from "@/lib/supabase/auth/require-user";
+import { requireUser } from "@/lib/auth/require-user";
 import ClientContactsPage from "./ClientContactsPage";
 
 export default async function ContactsPage() {

@@ -37,11 +37,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { deleteCompany, updateCompany } from "@/lib/actions/companies";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Company, Contact } from "@/lib/supabase/database.types";
-import { deleteCompany, updateCompany } from "@/lib/supabase/services/companies";
+import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
+import type { Company, Contact } from "@/types/database.types";
 
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 

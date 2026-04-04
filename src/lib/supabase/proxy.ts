@@ -3,7 +3,7 @@
 // Refreshes Supabase session and properly sets/updates cookies on every request
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "./server-client";
+import { createServerSupabaseClient } from "./server";
 
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   const response = NextResponse.next({

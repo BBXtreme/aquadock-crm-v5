@@ -1,37 +1,10 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-03-21  
+**Last audited**: 2026-04-01  
 **Environment**: Supabase PostgreSQL 15+  
-**RLS**: Enabled on all business tables  
-**Types**: `src/lib/supabase/database.types.ts` (auto-generated)  
-**Service layer**: `src/lib/supabase/services/*.ts`
 
-
-
-## Authentication & Authorization
-
-### Route Structure 
-
-- Public routes: `(auth)/login` 
-- Protected routes: `(protected)/...` with dedicated layout 
-- All protected pages must call `await requireUser()` before data access
-
-### Profiles Table (Source of Truth for Roles) 
-
-```sql
-CREATE TABLE public.profiles (
-  id uuid REFERENCES auth.users NOT NULL PRIMARY KEY,
-  role text NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  display_name text,
-  avatar_url text,
-  updated_at timestamp with time zone DEFAULT now()
-);
-```
-
-
-
-## 1. Overview
+## 1. Database Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
 | --------------- | ------------------------- | ----- | ---- | ------------------------- | ---- | ---------------------------- |
@@ -42,7 +15,7 @@ CREATE TABLE public.profiles (
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
-| ofiles          | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
+| profiles        | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
 
 ## 2. Core Tables – Column Overview
 
@@ -55,7 +28,7 @@ CREATE TABLE public.profiles (
 | rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
 | firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
-| status     | text        | false    | 'lead'            | lead, qualifiziert, gewonnen, verloren, … | Indexed       |
+| status     | text        | false    | 'lead'            | lead, interessannt, qualifiziert, gewonnen, verloren, … | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
 | strasse    | text        | true     | —                 | Street address                            | —             |
 | plz        | text        | true     | —                 | Postal code                               | —             |
@@ -64,9 +37,20 @@ CREATE TABLE public.profiles (
 | land       | text        | true     | —                 | Country                                   | —             |
 | lat / lon  | real        | true     | —                 | Geographic coordinates                    | —             |
 | osm        | text        | true     | —                 | OSM node/way/relation ID                  | —             |
+| email      | text        | true     | —                 | Email address                             | —             |
+| telefon    | text        | true     | —                 | Phone number                              | —             |
+| website    | text        | true     | —                 | Website URL                               | —             |
+| notes      | text        | true     | —                 | Additional notes                          | —             |
+| wasserdistanz | real       | true     | —                 | Water distance                            | —             |
+| wassertyp  | text        | true     | —                 | Water type                                | —             |
+| import_batch | text       | true     | —                 | Import batch identifier                   | —             |
+| search_vector | tsvector   | true     | —                 | Full-text search vector                   | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())                        | Indexed       |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id)             | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id)             | —             |
 | created_at | timestamptz | true     | now()             | —                                         | —             |
 | updated_at | timestamptz | true     | now()             | —                                         | —             |
+| deleted_at | timestamptz | true     | —                 | Soft delete timestamp                     | —             |
 
 ### contacts
 
@@ -82,11 +66,15 @@ CREATE TABLE public.profiles (
 | mobil       | text        | true     | —                 | Mobile number                 | —             |
 | durchwahl   | text        | true     | —                 | Extension                     | —             |
 | notes       | text        | true     | —                 | Additional notes              | —             |
+| search_vector | tsvector   | true     | —                 | Full-text search vector       | —             |
 | company_id  | uuid        | true     | —                 | Foreign key to companies      | Indexed       |
 | is_primary  | boolean     | false    | false             | Primary contact flag          | —             |
 | user_id     | uuid        | true     | —                 | Owner (auth.uid())            | Indexed       |
+| created_by  | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by  | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
 | created_at  | timestamptz | true     | now()             | —                             | —             |
 | updated_at  | timestamptz | true     | now()             | —                             | —             |
+| deleted_at  | timestamptz | true     | —                 | Soft delete timestamp         | —             |
 
 ### reminders
 
@@ -101,22 +89,26 @@ CREATE TABLE public.profiles (
 | assigned_to| text        | true     | —                 | Assigned person          | —             |
 | description| text        | true     | —                 | Description              | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
+| completed_at | timestamptz | true     | —                 | Completion timestamp     | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
-| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### timeline
 
 | Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
 | ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
 | id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
+| title      | text        | false    | —                 | Event title              | —             |
+| activity_type | text       | false    | —                 | Activity type            | —             |
+| content    | text        | true     | —                 | Event description        | —             |
 | company_id | uuid        | true     | —                 | Foreign key to companies | Indexed       |
 | contact_id | uuid        | true     | —                 | Foreign key to contacts  | —             |
-| type       | text        | false    | —                 | Event type               | —             |
-| title      | text        | false    | —                 | Event title              | —             |
-| description| text        | true     | —                 | Event description        | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
+| user_name  | text        | true     | —                 | User name                | —             |
+| created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
+| updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
-| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### email_log
 
@@ -124,9 +116,16 @@ CREATE TABLE public.profiles (
 | ---------- | ----------- | -------- | ----------------- | ------------------------ | ------------- |
 | id         | uuid        | false    | gen_random_uuid() | Primary key              | PK            |
 | recipient_email| text       | false    | —                 | Email recipient          | —             |
-| subject    | text        | false    | —                 | Email subject            | —             |
-| body       | text        | false    | —                 | Email body               | —             |
+| recipient_name| text       | true     | —                 | Recipient name           | —             |
+| subject    | text        | true     | —                 | Email subject            | —             |
+| template_name| text       | true     | —                 | Template name            | —             |
+| mode       | text        | true     | —                 | Email mode               | —             |
+| batch_id   | text        | true     | —                 | Batch identifier         | —             |
+| status     | text        | true     | —                 | Email status             | —             |
 | sent_at    | timestamptz | true     | —                 | Sent timestamp           | —             |
+| spam_score | real        | true     | —                 | Spam score               | —             |
+| error_msg  | text        | true     | —                 | Error message            | —             |
+| user_id    | uuid        | true     | —                 | Owner (auth.uid())       | —             |
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
@@ -138,7 +137,8 @@ CREATE TABLE public.profiles (
 | name   | text        | false    | —                 | Template name            | Unique        |
 | subject| text        | false    | —                 | Email subject            | —             |
 | body   | text        | false    | —                 | Email body               | —             |
-| user_id| uuid        | true     | —                 | Owner (auth.uid())       | —             |
+| created_at | timestamptz | true     | now()             | —                        | —             |
+| updated_at | timestamptz | true     | now()             | —                        | —             |
 
 ### user_settings
 
@@ -200,11 +200,9 @@ user_settings: user_id, key
 ## 6. Maintenance & Type Safety
 
 Regenerate types after schema change
-Bash# Local Supabase
-npx supabase gen types typescript --local > src/lib/supabase/database.types.ts
 
-# Remote project (recommended for CI)
-npx supabase gen types typescript --project-id <your-project-ref> > src/lib/supabase/database.types.ts
+npx supabase gen types typescript --project-id <your-project-ref> > src/types/database.types.ts
+
 Service layer pattern (example):
 TypeScript// src/lib/supabase/services/companies.ts
 import { createServerClient } from "@/lib/supabase/server";
@@ -223,7 +221,27 @@ export async function getCompanies(userId: string): Promise<Company[]> {
   if (error) throw handleSupabaseError(error);
   return data ?? [];
 }
-## 7. Change Log
+## 7. Zod Validations
+
+The application uses Zod schemas for client-side form validation, ensuring data integrity before submission. These schemas are defined in `@/lib/validations/` and used with React Hook Form.
+
+Key Zod schemas include:
+
+- `firmendatenSchema`: Validates company legal data (firmenname, rechtsform, kundentyp, etc.)
+- `adresseSchema`: Validates address fields (strasse, plz, stadt, bundesland, land)
+- `aquadockSchema`: Validates AquaDock-specific fields (firmentyp, status, value)
+- `contactSchema`: Validates contact information (vorname, nachname, email, telefon, etc.)
+- `reminderSchema`: Validates reminder fields (title, due_date, priority, status, description)
+- `timelineEntrySchema`: Validates timeline entry fields (type, title, description)
+- `displayNameSchema`: Validates user display name
+
+All schemas include trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
+
+## 8. Auth & Authorization
+
+Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are 'user' or 'admin', enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). No user_metadata is used for authorization.
+
+## 9. Change Log
 
 2026-03-20 Initial v5 snapshot
 2026-03-21 Refined documentation, added index overview
@@ -235,3 +253,6 @@ export async function getCompanies(userId: string): Promise<Company[]> {
 2026-03-27 Added user_settings table
 
 2026-03-30 Added `profiles` table for role management (user/admin) – long-term clean auth architecture
+2026-03-31 Added Zod validations section for form schemas
+2026-03-31 Added Auth & Authorization section summarizing Supabase Auth integration
+2026-04-01 Updated schema to reflect new columns: added created_by, updated_by, deleted_at, search_vector, and additional fields in companies, contacts, reminders, timeline, email_log. Updated timeline to use activity_type and content instead of type and description. Added relationships to profiles via created_by and updated_by.

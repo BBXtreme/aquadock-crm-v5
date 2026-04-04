@@ -1,7 +1,7 @@
 "use client";
 import { BarChart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Company } from "@/lib/supabase/database.types";
+import type { Company } from "@/types/database.types";
 import CRMForm from "./CRMForm";
 
 interface Props {

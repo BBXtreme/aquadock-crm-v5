@@ -15,12 +15,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createContact, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/company-options";
-import type { ContactFormDTO } from "@/lib/dto/contact.dto";
-import { createClient } from "@/lib/supabase/browser-client";
-import type { Database } from "@/lib/supabase/database.types";
-import { createContact, updateContact } from "@/lib/supabase/services/contacts";
-import { contactSchema } from "@/lib/validations/contact-val";
+import { createClient } from "@/lib/supabase/browser";
+import { type ContactForm, contactSchema } from "@/lib/validations/contact";
+import type { Database } from "@/types/database.types";
 
 export default function ContactEditForm({
   contact,
@@ -34,7 +33,7 @@ export default function ContactEditForm({
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: ContactFormDTO) => {
+    mutationFn: async (data: ContactForm) => {
       if (contact) {
         return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
       }
@@ -57,18 +56,18 @@ export default function ContactEditForm({
     onError: (err) => toast.error("Operation failed", { description: err.message }),
   });
 
-  const form = useForm<ContactFormDTO>({
+  const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
       vorname: contact?.vorname || "",
       nachname: contact?.nachname || "",
-      anrede: contact?.anrede || "",
-      position: contact?.position || "",
-      email: contact?.email || "",
-      telefon: contact?.telefon || "",
-      mobil: contact?.mobil || "",
-      durchwahl: contact?.durchwahl || "",
-      notes: contact?.notes || "",
+      anrede: contact?.anrede as "Herr" | "Frau" | "Dr." | "Prof." | undefined || undefined,
+      position: contact?.position || undefined,
+      email: contact?.email || undefined,
+      telefon: contact?.telefon || undefined,
+      mobil: contact?.mobil || undefined,
+      durchwahl: contact?.durchwahl || undefined,
+      notes: contact?.notes || undefined,
       company_id: contact?.company_id || preselectedCompanyId || "",
       is_primary: contact?.is_primary || false,
     },
@@ -79,13 +78,13 @@ export default function ContactEditForm({
       form.reset({
         vorname: contact.vorname || "",
         nachname: contact.nachname || "",
-        anrede: contact.anrede || "",
-        position: contact.position || "",
-        email: contact.email || "",
-        telefon: contact.telefon || "",
-        mobil: contact.mobil || "",
-        durchwahl: contact.durchwahl || "",
-        notes: contact.notes || "",
+        anrede: contact.anrede as "Herr" | "Frau" | "Dr." | "Prof." | undefined || undefined,
+        position: contact.position || undefined,
+        email: contact.email || undefined,
+        telefon: contact.telefon || undefined,
+        mobil: contact.mobil || undefined,
+        durchwahl: contact.durchwahl || undefined,
+        notes: contact.notes || undefined,
         company_id: contact.company_id || "",
         is_primary: contact.is_primary || false,
       });
@@ -139,7 +138,7 @@ export default function ContactEditForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Anrede</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select anrede" />
@@ -164,7 +163,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Position</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -177,7 +176,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" {...field} />
+                <Input type="email" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -190,7 +189,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Telefon</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -203,7 +202,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Mobil</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -216,7 +215,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Durchwahl</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -229,7 +228,7 @@ export default function ContactEditForm({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
