@@ -6,6 +6,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type OnChangeFn,
   type PaginationState,
   type RowSelectionState,
   type SortingState,
@@ -36,7 +37,7 @@ interface DataTableProps<TData> {
   pageSize?: number;
   searchPlaceholder?: string;
   pagination?: PaginationState;
-  onPaginationChange?: (pagination: PaginationState) => void;
+  onPaginationChange?: OnChangeFn<PaginationState>;
   totalCount?: number;
   skeletonRows?: number;
 }
