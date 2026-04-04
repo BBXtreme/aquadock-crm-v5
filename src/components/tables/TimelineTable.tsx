@@ -373,7 +373,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   if (finalIsLoading) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />}
+        <Input placeholder="Suche..." value={finalSearch} />
         <div className="space-y-2">
           {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
             <Skeleton key={key} className="h-12 w-full" />
@@ -386,7 +386,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   if (internalError && !data) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />}
+        <Input placeholder="Suche..." value={finalSearch} />
         <div className="text-red-500">Error loading timeline: {internalError.message}</div>
       </div>
     );
@@ -394,10 +394,10 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
-        value={finalSearch}
-        onChange={(e) => finalOnSearchChange(e.target.value)}
+      <Input 
+        placeholder="Suche..." 
+        value={finalSearch} 
+        onChange={(e) => finalOnSearchChange(e.target.value)} 
       />
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
