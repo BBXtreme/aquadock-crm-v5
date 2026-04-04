@@ -2,17 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDateDistance } from "@/lib/utils/data-format";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
@@ -72,41 +64,14 @@ const columns = [
     header: "Erstellt am",
     cell: (info) => formatDateDistance(info.getValue()),
   }),
-  columnHelper.display({
-    id: "actions",
-    header: "Aktionen",
-    cell: (info) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit?.(info.row.original)}>
-            Bearbeiten
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => onDelete?.(info.row.original.id)}
-            className="text-destructive"
-          >
-            Löschen
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-  }),
 ] satisfies ColumnDef<TimelineEntryWithJoins>[];
 
 interface TimelineTableProps {
   companyId?: string;
   contactId?: string;
-  onEdit?: (entry: TimelineEntryWithJoins) => void;
-  onDelete?: (id: string) => void;
 }
 
-export function TimelineTable({ companyId, contactId, onEdit, onDelete }: TimelineTableProps) {
+export function TimelineTable({ companyId, contactId }: TimelineTableProps) {
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
