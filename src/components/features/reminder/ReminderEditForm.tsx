@@ -21,7 +21,7 @@ import { createClient } from "@/lib/supabase/browser";
 import { reminderFormSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
 import type { Database } from "@/types/database.types";
 
-type ReminderFormValues = z.input<typeof reminderFormSchema>;
+type ReminderFormValues = z.infer<typeof reminderFormSchema>;
 
 export default function ReminderEditForm({
   reminder,
@@ -67,8 +67,8 @@ export default function ReminderEditForm({
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
       due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder?.priority || "normal",
-      status: reminder?.status || "open",
+      priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
+      status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
       description: reminder?.description || "",
     },
@@ -80,8 +80,8 @@ export default function ReminderEditForm({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
         due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-        priority: reminder.priority || "normal",
-        status: reminder.status || "open",
+        priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
+        status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
         description: reminder.description || "",
       });
