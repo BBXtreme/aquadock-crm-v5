@@ -18,10 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { reminderFormSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
+import { reminderSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
 import type { Database } from "@/types/database.types";
 
-type ReminderFormValues = z.infer<typeof reminderFormSchema>;
+type ReminderFormValues = z.infer<typeof reminderSchema>;
 
 export default function ReminderEditForm({
   reminder,
@@ -62,11 +62,11 @@ export default function ReminderEditForm({
   });
 
   const form = useForm<ReminderFormValues>({
-    resolver: zodResolver(reminderFormSchema),
+    resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000),
+      due_date: reminder?.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
       priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
       status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
@@ -79,7 +79,7 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000),
+        due_date: reminder.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
         priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
         status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
@@ -163,11 +163,7 @@ export default function ReminderEditForm({
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input
-                  type="datetime-local"
-                  value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                  onChange={(e) => field.onChange(new Date(e.target.value))}
-                />
+                <Input type="datetime-local" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

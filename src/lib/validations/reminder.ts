@@ -4,6 +4,16 @@
 import { z } from "zod";
 import type { ReminderInsert, ReminderUpdate } from "@/types/database.types";
 
+export const reminderSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  company_id: z.string().min(1, "Company is required"),
+  due_date: z.string().min(1, "Due date is required"),
+  priority: z.string().optional(),
+  status: z.string().optional(),
+  assigned_to: z.string().nullable().optional(),
+  description: z.string().optional(),
+});
+
 export const reminderFormSchema = z.object({
   title: z
     .string({ required_error: "Titel ist erforderlich" })
@@ -31,19 +41,19 @@ export const reminderFormSchema = z.object({
   assigned_to: z.string().uuid("Ungültige Benutzer-ID").nullable().optional(),
 }).strict();
 
-export type ReminderFormValues = z.infer<typeof reminderFormSchema>;
+export type ReminderFormValues = z.infer<typeof reminderSchema>;
 
 // Conversion helpers
 export const toReminderInsert = (values: ReminderFormValues): ReminderInsert => ({
   ...values,
-  due_date: values.due_date.toISOString(),
+  due_date: new Date(values.due_date).toISOString(),
   description: values.description || null,
   assigned_to: values.assigned_to || null,
 });
 
 export const toReminderUpdate = (values: ReminderFormValues): ReminderUpdate => ({
   ...values,
-  due_date: values.due_date.toISOString(),
+  due_date: new Date(values.due_date).toISOString(),
   description: values.description || null,
   assigned_to: values.assigned_to || null,
 });
