@@ -5,6 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/browser";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
 import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
@@ -134,10 +135,9 @@ export async function createCompany(values: CompanyFormValues, supabase?: Supaba
 export async function updateCompany(
   id: string,
   updates: CompanyUpdate,
-  supabase?: SupabaseClient,
 ): Promise<Company> {
-  const client = supabase ?? createClient();
-  const { data, error } = await client.from("companies").update(updates).eq("id", id).select().single();
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) throw handleSupabaseError(error, "updateCompany");
   return data as Company;
