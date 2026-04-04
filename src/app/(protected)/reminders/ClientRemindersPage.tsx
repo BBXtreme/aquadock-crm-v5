@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
@@ -30,9 +31,9 @@ function ClientRemindersPage() {
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed">(() => {
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed" | "my">(() => {
     const status = searchParams.get("status");
-    if (status === "open" || status === "overdue" || status === "closed") return status;
+    if (status === "open" || status === "overdue" || status === "closed" || status === "my") return status;
     return "all";
   });
 
@@ -68,6 +69,14 @@ function ClientRemindersPage() {
     },
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const user = await getCurrentUser();
+      return user;
+    },
+  });
+
   const stats = useMemo(() => {
     const total = reminders.length;
     const open = reminders.filter((r) => r.status === "open").length;
@@ -87,8 +96,9 @@ function ClientRemindersPage() {
     if (statusFilter === "closed") return reminders.filter((r) => r.status === "closed");
     if (statusFilter === "overdue")
       return reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date());
+    if (statusFilter === "my") return reminders.filter((r) => r.assigned_to === user?.id);
     return reminders;
-  }, [reminders, statusFilter]);
+  }, [reminders, statusFilter, user?.id]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -110,7 +120,7 @@ function ClientRemindersPage() {
     setEditReminder(reminder);
   }, []);
 
-  const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed") => {
+  const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed" | "my") => {
     setStatusFilter(filter);
   };
 
@@ -198,7 +208,11 @@ function ClientRemindersPage() {
         >
           Closed
         </Button>
-        <Button variant="outline" size="sm" disabled>
+        <Button
+          variant={statusFilter === "my" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("my")}
+        >
           My Tasks
         </Button>
       </div>
