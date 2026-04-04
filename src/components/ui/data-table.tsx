@@ -1,24 +1,24 @@
-import React, { useState, useEffect } from 'react';
 import {
-  useReactTable,
+  type ColumnDef,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
-  ColumnDef,
-  SortingState,
-  VisibilityState,
-  RowSelectionState,
-  PaginationState,
+  type PaginationState,
+  type RowSelectionState,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
 } from '@tanstack/react-table';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Download, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface DataTableProps<TData> {
   data: TData[];
@@ -90,7 +90,7 @@ export function DataTable<TData>({
   const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>(columnVisibility);
 
   useEffect(() => setInternalGlobalFilter(globalFilter), [globalFilter]);
-  useEffect(() => setInternalPagination(pagination || { pageIndex: 0, pageSize }), [pagination]);
+  useEffect(() => setInternalPagination(pagination || { pageIndex: 0, pageSize }), [pagination, pageSize]);
   useEffect(() => setInternalSorting(sorting), [sorting]);
   useEffect(() => setInternalRowSelection(rowSelection), [rowSelection]);
   useEffect(() => setInternalColumnVisibility(columnVisibility), [columnVisibility]);
