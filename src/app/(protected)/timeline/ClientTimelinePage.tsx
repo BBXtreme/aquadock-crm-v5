@@ -65,7 +65,6 @@ function ClientTimelinePage() {
       company_id?: string | null;
       contact_id?: string | null;
       activity_type?: string;
-      user_name?: string;
     }) => {
       const payload = {
         title: values.title.trim() || "Untitled entry",
@@ -73,8 +72,6 @@ function ClientTimelinePage() {
         activity_type: values.activity_type || "note",
         company_id: values.company_id || null,
         contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
-        user_name: values.user_name?.trim() || "BangLee",
-        user_id: "fbd4cb43-1ff7-447b-bb56-d083bdc22bf7",
       };
 
       const res = await fetch("/api/timeline", {
