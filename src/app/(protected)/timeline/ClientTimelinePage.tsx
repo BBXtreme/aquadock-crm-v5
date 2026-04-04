@@ -4,7 +4,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
@@ -27,6 +27,7 @@ function ClientTimelinePage() {
   const _router = useRouter();
   const searchParams = useSearchParams();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const hasOpenedDialogRef = useRef(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -98,8 +99,9 @@ function ClientTimelinePage() {
   });
 
   useEffect(() => {
-    if (searchParams.get("create") === "true") {
+    if (!hasOpenedDialogRef.current && searchParams.get("create") === "true") {
       setDialogOpen(true);
+      hasOpenedDialogRef.current = true;
     }
   }, [searchParams]);
 
