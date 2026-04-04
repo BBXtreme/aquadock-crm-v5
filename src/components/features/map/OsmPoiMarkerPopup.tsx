@@ -138,10 +138,16 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
           size="sm"
           variant="outline"
           className="flex-1"
-          onClick={() => onViewInOsm?.(osmUrl)}
+          asChild
         >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          In OSM ansehen
+          <a
+            href={osmUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            In OSM ansehen
+          </a>
         </Button>
         <Button
           size="sm"
