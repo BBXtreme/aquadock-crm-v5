@@ -6,9 +6,8 @@
 
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import AdresseCard from "@/components/company-detail/AdresseCard";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
@@ -29,16 +28,7 @@ interface CompanyDetailClientProps {
 
 export default function CompanyDetailClient({ company }: CompanyDetailClientProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const id = company.id;
-
-  // Optional: Keep sub-queries if needed, but remove refetch hacks
-  useEffect(() => {
-    if (company?.id) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
-      queryClient.invalidateQueries({ queryKey: ["reminders", company.id] });
-    }
-  }, [company?.id, queryClient]);
 
   return (
     <Suspense fallback={<LoadingState count={8} />}>
