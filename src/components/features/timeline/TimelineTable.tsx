@@ -21,19 +21,19 @@ const columns = [
         {safeDisplay(info.getValue())}
       </Badge>
     ),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("title", {
     header: "Titel",
     cell: (info) => <span className="font-medium">{safeDisplay(info.getValue())}</span>,
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("content", {
     header: "Beschreibung",
     cell: (info) => <span className="text-muted-foreground">{safeDisplay(info.getValue())}</span>,
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("created_at", {
     header: "Datum",
     cell: (info) => formatDateDistance(info.getValue()),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("companies", {
     header: "Firma",
     cell: (info) => {
@@ -46,7 +46,7 @@ const columns = [
         </Link>
       );
     },
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("contacts", {
     header: "Kontakt",
     cell: (info) => {
@@ -59,7 +59,7 @@ const columns = [
         </Link>
       );
     },
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("profiles", {
     header: "User",
     cell: (info) => {
@@ -67,8 +67,8 @@ const columns = [
       if (!profile) return <span className="text-muted-foreground">-</span>;
       return <span>{safeDisplay(profile.display_name)}</span>;
     },
-  }),
-] satisfies ColumnDef<TimelineEntryWithJoins>[];
+  }) as ColumnDef<TimelineEntryWithJoins>,
+];
 
 interface TimelineTableProps {
   companyId?: string;

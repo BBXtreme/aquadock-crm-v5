@@ -47,8 +47,8 @@ export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["U
 // App-specific Extended / Joined Types
 // =============================================================================
 export type TimelineEntryWithJoins = TimelineEntry & {
-  companies?: Pick<Company, "firmenname" | "status" | "kundentyp"> | null;
-  contacts?: Pick<Contact, "vorname" | "nachname" | "position" | "email"> | null;
+  companies?: Pick<Company, "id" | "firmenname" | "status" | "kundentyp"> | null;
+  contacts?: Pick<Contact, "id" | "vorname" | "nachname" | "position" | "email"> | null;
   profiles?: Pick<Profile, "display_name"> | null;
 };
 
