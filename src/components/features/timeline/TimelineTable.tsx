@@ -29,7 +29,7 @@ const columns = [
   columnHelper.accessor("activity_type", {
     header: "Aktivität",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "company",
     header: "Firma",
@@ -59,11 +59,11 @@ const columns = [
   columnHelper.accessor("user_name", {
     header: "Benutzer",
     cell: (info) => info.getValue() || <span className="text-muted-foreground">-</span>,
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("created_at", {
     header: "Erstellt am",
     cell: (info) => formatDateDistance(info.getValue()),
-  }),
+  }) as ColumnDef<TimelineEntryWithJoins>,
 ] satisfies ColumnDef<TimelineEntryWithJoins>[];
 
 interface TimelineTableProps {
