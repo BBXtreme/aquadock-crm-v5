@@ -31,8 +31,9 @@ const aquadockSchema = z.object({
   lon: z.number().optional(),
   osm: z
     .string()
+    .trim()
     .optional()
-    .refine((val) => !val || OSM_REGEX.test(val.trim()), {
+    .refine((val) => !val || OSM_REGEX.test(val), {
       message: "OSM-ID muss im Format node/12345, way/12345 oder relation/12345 sein",
     }),
 });
