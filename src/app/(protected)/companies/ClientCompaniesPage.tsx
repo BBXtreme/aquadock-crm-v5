@@ -205,7 +205,7 @@ function ClientCompaniesPage() {
 
   const _updateMutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: Partial<Company> }) =>
-      updateCompany(id, updates, createClient()),
+      updateCompany(id, updates),
     onMutate: async ({ id, updates }) => {
       const queryKey = [
         "companies",

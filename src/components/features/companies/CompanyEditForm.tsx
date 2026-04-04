@@ -76,7 +76,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
         value: data.value ?? null,
         notes: data.notes ?? null,
       };
-      return updateCompany(company.id, mappedData, createClient());
+      return updateCompany(company.id, mappedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
