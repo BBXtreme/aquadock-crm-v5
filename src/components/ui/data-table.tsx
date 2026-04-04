@@ -224,7 +224,7 @@ export function DataTable<TData>({
               // Stable string keys only - no array index
               Array.from({ length: pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
                 <TableRow key={key}>
-                  {columns.map((col, colIndex) => (
+                  {columns.map((_col, colIndex) => (
                     <TableCell key={`loading-cell-${key}-${colIndex}`}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
