@@ -9,8 +9,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import AdresseCard from "@/components/company-detail/AdresseCard";
+import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
 import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
 import CrmCard from "@/components/company-detail/CrmCard";
