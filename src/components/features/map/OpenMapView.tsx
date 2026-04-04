@@ -5,10 +5,10 @@
 "use client";
 
 import L from "leaflet";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
-import { useSearchParams } from "next/navigation";
 
 import "leaflet/dist/leaflet.css";
 
@@ -158,7 +158,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       const lonNum = parseFloat(lon);
       const zoomNum = zoom ? parseInt(zoom, 10) : 15;
 
-      if (!isNaN(latNum) && !isNaN(lonNum)) {
+      if (!Number.isNaN(latNum) && !Number.isNaN(lonNum)) {
         mapRef.current.setView([latNum, lonNum], zoomNum);
       }
     }
