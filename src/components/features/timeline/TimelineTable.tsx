@@ -2,80 +2,111 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { ExternalLink } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/browser";
-import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import { formatDateDistance } from "@/lib/utils/data-format";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 const columns = [
+  columnHelper.display({
+    id: "title-description",
+    header: "Titel & Beschreibung",
+    cell: (info) => {
+      const title = info.row.original.title;
+      const content = info.row.original.content;
+      return (
+        <div>
+          <div className="font-medium">{title}</div>
+          {content && <div className="text-sm text-muted-foreground">{content}</div>}
+        </div>
+      );
+    },
+  }),
   columnHelper.accessor("activity_type", {
     header: "Aktivität",
-    cell: (info) => (
-      <Badge variant="outline" className="capitalize">
-        {safeDisplay(info.getValue())}
-      </Badge>
-    ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("title", {
-    header: "Titel",
-    cell: (info) => <span className="font-medium">{safeDisplay(info.getValue())}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("content", {
-    header: "Beschreibung",
-    cell: (info) => <span className="text-muted-foreground">{safeDisplay(info.getValue())}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("created_at", {
-    header: "Datum",
-    cell: (info) => formatDateDistance(info.getValue()),
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("companies", {
+    cell: (info) => info.getValue(),
+  }),
+  columnHelper.display({
+    id: "company",
     header: "Firma",
     cell: (info) => {
-      const company = info.getValue();
+      const company = info.row.original.companies;
       if (!company) return <span className="text-muted-foreground">-</span>;
       return (
-        <Link href={`/companies/${company.id}`} className="flex items-center gap-1 hover:underline">
-          {safeDisplay(company.firmenname)}
-          <ExternalLink className="h-3 w-3" />
+        <Link href={`/companies/${company.id}`} className="text-blue-600 hover:underline">
+          {company.firmenname}
         </Link>
       );
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("contacts", {
+  }),
+  columnHelper.display({
+    id: "contact",
     header: "Kontakt",
     cell: (info) => {
-      const contact = info.getValue();
+      const contact = info.row.original.contacts;
       if (!contact) return <span className="text-muted-foreground">-</span>;
       return (
-        <Link href={`/contacts/${contact.id}`} className="flex items-center gap-1 hover:underline">
-          {safeDisplay(contact.vorname)} {safeDisplay(contact.nachname)}
-          <ExternalLink className="h-3 w-3" />
+        <Link href={`/contacts/${contact.id}`} className="text-blue-600 hover:underline">
+          {contact.vorname} {contact.nachname}
         </Link>
       );
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("profiles", {
-    header: "User",
-    cell: (info) => {
-      const profile = info.getValue();
-      if (!profile) return <span className="text-muted-foreground">-</span>;
-      return <span>{safeDisplay(profile.display_name)}</span>;
-    },
-  }) as ColumnDef<TimelineEntryWithJoins>,
-];
+  }),
+  columnHelper.accessor("user_name", {
+    header: "Benutzer",
+    cell: (info) => info.getValue() || <span className="text-muted-foreground">-</span>,
+  }),
+  columnHelper.accessor("created_at", {
+    header: "Erstellt am",
+    cell: (info) => formatDateDistance(info.getValue()),
+  }),
+  columnHelper.display({
+    id: "actions",
+    header: "Aktionen",
+    cell: (info) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit?.(info.row.original)}>
+            Bearbeiten
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => onDelete?.(info.row.original.id)}
+            className="text-destructive"
+          >
+            Löschen
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  }),
+] satisfies ColumnDef<TimelineEntryWithJoins>[];
 
 interface TimelineTableProps {
   companyId?: string;
   contactId?: string;
+  onEdit?: (entry: TimelineEntryWithJoins) => void;
+  onDelete?: (id: string) => void;
 }
 
-export function TimelineTable({ companyId, contactId }: TimelineTableProps) {
+export function TimelineTable({ companyId, contactId, onEdit, onDelete }: TimelineTableProps) {
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
