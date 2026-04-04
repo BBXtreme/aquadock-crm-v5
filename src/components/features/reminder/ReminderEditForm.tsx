@@ -38,15 +38,13 @@ export default function ReminderEditForm({
 
   const mutation = useMutation({
     mutationFn: async (data: ReminderFormValues) => {
-      const transformedData = { ...data, due_date: new Date(data.due_date) };
+      const transformedData = { ...data, user_id: user?.id ?? null };
       if (reminder) {
-        const updatePayload = { ...transformedData, user_id: user?.id ?? null };
-        return updateReminder(reminder.id, toReminderUpdate(updatePayload), createClient());
+        return updateReminder(reminder.id, toReminderUpdate(transformedData), createClient());
       }
       // create
       const supabase = createClient();
-      const insertPayload = { ...transformedData, user_id: user?.id ?? null };
-      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert(insertPayload)).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert(transformedData)).select().single();
       if (error) throw error;
       return newData;
     },
