@@ -24,7 +24,7 @@ const reminderSchema = z.object({
   due_date: z.string().min(1, "Due date is required"),
   priority: z.string().optional(),
   status: z.string().optional(),
-  assigned_to: z.string(),
+  assigned_to: z.string().nullable().optional(),
   description: z.string().optional(),
 });
 
@@ -61,7 +61,7 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
       due_date: "",
       priority: "normal",
       status: "open",
-      assigned_to: "",
+      assigned_to: null,
       description: "",
     },
   });
@@ -186,14 +186,14 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)} value={field.value ?? "unassigned"}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select user" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.display_name || "Unnamed User"}

@@ -228,8 +228,8 @@ export default function ReminderEditForm({
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
               <Select
-                onValueChange={(value) => field.onChange(value === "" ? null : value)}
-                value={field.value ?? ""}
+                onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)}
+                value={field.value ?? "unassigned"}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -237,7 +237,7 @@ export default function ReminderEditForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
                       {profile.display_name || "Unnamed User"}
