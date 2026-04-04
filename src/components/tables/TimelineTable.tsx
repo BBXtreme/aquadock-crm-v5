@@ -338,7 +338,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     },
   });
 
-  const { data: internalData = [], isLoading: internalLoading } = useQuery({
+  const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
       const supabase = createClient();
@@ -350,13 +350,12 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
           contacts:contact_id (vorname, nachname, position, email),
           profiles:user_id (display_name)
         `)
-        .eq("user_id", user?.id || "")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
     },
-    enabled: !data && !!user,
+    enabled: !data,
   });
 
   const finalData = data || internalData;
@@ -389,6 +388,15 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
             <Skeleton key={key} className="h-12 w-full" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (internalError && !data) {
+    return (
+      <div className="space-y-4">
+        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />
+        <div className="text-red-500">Error loading timeline: {internalError.message}</div>
       </div>
     );
   }
