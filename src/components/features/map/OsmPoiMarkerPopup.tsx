@@ -28,7 +28,11 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
   const address = [street, housenumber].filter(Boolean).join(" ") || "";
   const fullAddress = [address, postcode, city].filter(Boolean).join(", ");
 
-  const osmId = `${poi.type}/${poi.id}`;
+  let osmId = `${poi.type}/${poi.id}`;
+  if (osmId.includes('https://www.openstreetmap.org/')) {
+    const parts = osmId.split('/');
+    osmId = `${parts[parts.length-2]}/${parts[parts.length-1]}`;
+  }
   const osmUrl = getOpenStreetMapUrl(osmId);
 
   // Local state for water info (shows cached values immediately)
@@ -154,7 +158,13 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
           size="sm"
           variant="default"
           className="flex-1"
-          onClick={() => onImport?.(poi)}
+          onClick={() => {
+            if (typeof poi.id === 'string' && poi.id.startsWith('https://www.openstreetmap.org/')) {
+              const parts = poi.id.split('/');
+              poi.id = parts[parts.length-1];
+            }
+            onImport?.(poi);
+          }}
         >
           In CRM importieren
         </Button>
