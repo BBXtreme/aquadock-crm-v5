@@ -7,7 +7,10 @@ import type { ReminderInsert, ReminderUpdate } from "@/types/database.types";
 export const reminderSchema = z.object({
   title: z.string().min(1, "Title is required"),
   company_id: z.string().min(1, "Company is required"),
-  due_date: z.string().min(1, "Due date is required"),
+  due_date: z.string().min(1, "Due date is required").refine((val) => {
+    const date = new Date(val);
+    return date > new Date();
+  }, "Due date must be in the future"),
   priority: z.string().optional(),
   status: z.string().optional(),
   assigned_to: z.string().nullable().optional(),
