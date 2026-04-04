@@ -28,7 +28,7 @@ export default function TimelineCard({ companyId }: Props) {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("timeline")
-        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname,nachname,position)")
+        .select("*, companies!company_id(firmenname), contacts!contact_id(vorname,nachname,position), profiles!created_by(display_name)")
         .eq("company_id", companyId);
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
@@ -180,7 +180,7 @@ export default function TimelineCard({ companyId }: Props) {
                         </td>
                         <td>{entry.companies?.firmenname || "—"}</td>
                         <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
-                        <td>{entry.user_name || "—"}</td>
+                        <td>{entry.profiles?.display_name || entry.user_name || "—"}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button
