@@ -60,7 +60,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
 
       <div className="border-b flex-shrink-0" />
 
-      <nav className={cn("flex-1 space-y-1 p-4", !isCollapsed && "overflow-y-auto")} suppressHydrationWarning={true}>
+      <nav className={cn("flex-1 space-y-1 p-4 overflow-y-auto")} suppressHydrationWarning={true}>
         {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
