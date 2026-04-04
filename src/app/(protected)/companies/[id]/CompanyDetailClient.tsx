@@ -41,7 +41,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
   return (
     <Suspense fallback={<LoadingState count={8} />}>
-      <div className="container mx-auto p-6 lg:p-8 space-y-8">
+      <div className="container mx-auto p-6 lg:p-8 space-y-8 min-h-[calc(100vh-140px)]">
         <CompanyHeader
           company={company}
           router={router}
