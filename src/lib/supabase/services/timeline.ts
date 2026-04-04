@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from "@/types/database.types";
 import { handleSupabaseError } from "@/lib/supabase/error-handling";
+import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from "@/types/database.types";
 
 export async function createTimelineEntry(
   data: Omit<TimelineEntryInsert, 'user_id' | 'id' | 'created_at' | 'updated_at'>,
