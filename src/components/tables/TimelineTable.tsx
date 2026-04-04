@@ -339,7 +339,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
           *,
           companies:company_id (firmenname, status, kundentyp),
           contacts:contact_id (vorname, nachname, position, email),
-          profiles:user_id (display_name)
+          profiles:updated_by (display_name)
         `)
         .order("created_at", { ascending: false })
         .limit(100);
