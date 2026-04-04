@@ -37,7 +37,7 @@ function ClientRemindersPage() {
     return "all";
   });
 
-  const { data: user } = useQuery({
+  const { data: user, error: userError } = useQuery({
     queryKey: ["user"],
     queryFn: getCurrentUserClient,
   });
