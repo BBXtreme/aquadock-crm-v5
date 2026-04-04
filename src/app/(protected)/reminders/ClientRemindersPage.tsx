@@ -37,7 +37,7 @@ function ClientRemindersPage() {
     return "all";
   });
 
-  const { data: user } = useQuery({
+  const { data: user, error: userError } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
       const supabase = createClient();
@@ -66,7 +66,7 @@ function ClientRemindersPage() {
       const { data, error } = await supabase
         .from("reminders")
         .select("*, companies(firmenname)")
-        .eq("user_id", user.id)
+        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
         .order("due_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReminderWithCompany[];
@@ -141,6 +141,20 @@ function ClientRemindersPage() {
       setReminderDialogOpen(true);
     }
   }, [searchParams]);
+
+  if (userError) {
+    return (
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Reminders</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Reminders
+          </h1>
+          <p className="text-red-600">Error loading user data. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

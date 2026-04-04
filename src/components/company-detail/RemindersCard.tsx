@@ -26,6 +26,16 @@ export default function RemindersCard({ companyId }: Props) {
 
   console.log("RemindersCard companyId:", companyId);
 
+  const { data: user } = useSuspenseQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error("User not found");
+      return user;
+    },
+  });
+
   const { data: profiles = [] } = useSuspenseQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
@@ -44,6 +54,7 @@ export default function RemindersCard({ companyId }: Props) {
         .from("reminders")
         .select("*")
         .eq("company_id", companyId)
+        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
