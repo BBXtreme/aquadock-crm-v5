@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { getCurrentUserClient } from "@/lib/auth/get-current-user";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
@@ -72,7 +72,7 @@ function ClientRemindersPage() {
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
-      const user = await getCurrentUser();
+      const user = await getCurrentUserClient();
       return user;
     },
   });
