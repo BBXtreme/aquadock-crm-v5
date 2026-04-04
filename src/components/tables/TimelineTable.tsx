@@ -1,3 +1,4 @@
+// src/components/tables/TimelineTable.tsx
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,35 +21,23 @@ const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 const getIcon = (t: string) => {
   switch (t) {
-    case "note":
-      return <FileText className="h-4 w-4" />;
-    case "call":
-      return <Phone className="h-4 w-4" />;
-    case "email":
-      return <Mail className="h-4 w-4" />;
-    case "meeting":
-      return <Calendar className="h-4 w-4" />;
-    case "reminder":
-      return <Bell className="h-4 w-4" />;
-    default:
-      return <MoreHorizontal className="h-4 w-4" />;
+    case "note": return <FileText className="h-4 w-4" />;
+    case "call": return <Phone className="h-4 w-4" />;
+    case "email": return <Mail className="h-4 w-4" />;
+    case "meeting": return <Calendar className="h-4 w-4" />;
+    case "reminder": return <Bell className="h-4 w-4" />;
+    default: return <MoreHorizontal className="h-4 w-4" />;
   }
 };
 
 const getVariant = (t: string) => {
   switch (t) {
-    case "note":
-      return "default";
-    case "call":
-      return "secondary";
-    case "email":
-      return "outline";
-    case "meeting":
-      return "destructive";
-    case "reminder":
-      return "secondary";
-    default:
-      return "outline";
+    case "note": return "default";
+    case "call": return "secondary";
+    case "email": return "outline";
+    case "meeting": return "destructive";
+    case "reminder": return "secondary";
+    default: return "outline";
   }
 };
 
@@ -69,7 +58,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       }).format(new Date(date as string)).replace(',', '');
       return <span>{formatted}</span>;
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.accessor("activity_type", {
     id: "Aktivität",
     header: "Aktivität",
@@ -83,7 +72,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         </Badge>
       );
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.display({
     id: "Benutzer",
     header: "Benutzer",
@@ -94,7 +83,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       return a.localeCompare(b);
     },
     cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.display({
     id: "Firma",
     header: "Firma",
@@ -113,7 +102,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.display({
     id: "Kontakt",
     header: "Kontakt",
@@ -132,7 +121,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.display({
     id: "Titel & Beschreibung",
     header: "Titel & Beschreibung",
@@ -148,12 +137,12 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <div className="text-sm text-muted-foreground">{info.row.original.content || "-"}</div>
       </div>
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
   columnHelper.display({
     id: "Aktionen",
     header: "Aktionen",
     cell: (info) => <ActionCell entry={info.row.original} />,
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  } as ColumnDef<TimelineEntryWithJoins>),
 ];
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
@@ -196,7 +185,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       if (!res.ok) throw new Error('Failed to delete');
       toast.success("Eintrag gelöscht");
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
-    } catch (_error) {
+    } catch {
       toast.error("Fehler beim Löschen");
     }
   };
@@ -212,7 +201,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       toast.success("Eintrag aktualisiert");
       setEditDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
-    } catch (_error) {
+    } catch {
       toast.error("Fehler beim Aktualisieren");
     }
   };
@@ -225,20 +214,21 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <Pencil className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Eintrag bearbeiten</DialogTitle>
-          <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
-        </DialogHeader>
-        <TimelineEntryForm
-          editEntry={entry}
-          isSubmitting={false}
-          companies={companies}
-          contacts={contacts}
-          onSubmit={handleEditSubmit}
-        />
-      </DialogContent>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eintrag bearbeiten</DialogTitle>
+            <DialogDescription>Bearbeiten Sie den Timeline-Eintrag.</DialogDescription>
+          </DialogHeader>
+          <TimelineEntryForm
+            editEntry={entry}
+            isSubmitting={false}
+            companies={companies}
+            contacts={contacts}
+            onSubmit={handleEditSubmit}
+          />
+        </DialogContent>
       </Dialog>
+
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button variant="outline" size="sm">
@@ -292,11 +282,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
   const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
 
   if (internalError && !data) {
-    return (
-      <div className="space-y-4">
-        <div className="text-red-500">Error loading timeline: {internalError.message}</div>
-      </div>
-    );
+    return <div className="text-red-500 p-4">Error loading timeline: {internalError.message}</div>;
   }
 
   return (
@@ -304,6 +290,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
       columns={columns}
       data={finalData}
       loading={finalIsLoading}
+      searchPlaceholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
     />
   );
 }
