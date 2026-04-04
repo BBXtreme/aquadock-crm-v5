@@ -38,11 +38,11 @@ interface DataTableProps<TData> {
 }
 
 const exportToCSV = <TData,>(data: TData[], columns: ColumnDef<TData>[]) => {
-  const headers = columns.map(col => (col.header as string) || col.id).join(',');
+  const headers = columns.map(col => (col.header as string) || (col as any).accessorKey || col.id).join(',');
   const rows = data.map(row =>
     columns.map(col => {
-      const accessorKey = col.accessorKey as keyof TData;
-      const value = row[accessorKey];
+      const accessorKey = (col as any).accessorKey;
+      const value = accessorKey ? row[accessorKey as keyof TData] : '';
       return typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : String(value || '');
     }).join(',')
   );
@@ -227,9 +227,9 @@ export function DataTable<TData>({
           <TableBody>
             {loading ? (
               Array.from({ length: pageSize }, (_, i) => (
-                <TableRow key={`loading-row-${i}`}>
+                <TableRow key={`loading-row-${i}`}> {/* biome-ignore lint/suspicious/noArrayIndexKey */}
                   {allColumns.map((_, j) => (
-                    <TableCell key={`loading-cell-${i}-${j}`}>
+                    <TableCell key={`loading-cell-${i}-${j}`}> {/* biome-ignore lint/suspicious/noArrayIndexKey */}
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
