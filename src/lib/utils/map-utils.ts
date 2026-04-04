@@ -173,3 +173,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
     }, 300);
   });
 }
+
+export function getOpenStreetMapUrl(osm: string | null | undefined): string {
+  return osm ? `https://www.openstreetmap.org/${osm}` : "";
+}
