@@ -110,7 +110,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
       {company.osm && (
         <div className="text-xs">
           <a
-            href={company.osm}
+            href={`https://www.openstreetmap.org/${company.osm}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
