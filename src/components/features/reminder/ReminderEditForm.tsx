@@ -40,11 +40,11 @@ export default function ReminderEditForm({
     mutationFn: async (data: ReminderFormValues) => {
       const transformedData = { ...data, due_date: new Date(data.due_date) };
       if (reminder) {
-        return updateReminder(reminder.id, toReminderUpdate({ ...transformedData, user_id: user?.id ?? null } as Database["public"]["Tables"]["reminders"]["Update"]), createClient());
+        return updateReminder(reminder.id, toReminderUpdate({ ...transformedData, user_id: user?.id ?? null } as unknown as Database["public"]["Tables"]["reminders"]["Update"]), createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...transformedData, user_id: user?.id ?? null } as Database["public"]["Tables"]["reminders"]["Insert"])).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...transformedData, user_id: user?.id ?? null } as unknown as Database["public"]["Tables"]["reminders"]["Insert"])).select().single();
       if (error) throw error;
       return newData;
     },
