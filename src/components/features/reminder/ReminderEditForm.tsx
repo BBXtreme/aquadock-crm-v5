@@ -19,7 +19,7 @@ import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import { reminderSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
-import type { Database } from "@/types/database.types";
+import type { Database, ReminderInsert, ReminderUpdate } from "@/types/database.types";
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
@@ -39,11 +39,11 @@ export default function ReminderEditForm({
   const mutation = useMutation({
     mutationFn: async (data: ReminderFormValues) => {
       if (reminder) {
-        return updateReminder(reminder.id, toReminderUpdate({ ...data, user_id: user?.id ?? null }), createClient());
+        return updateReminder(reminder.id, toReminderUpdate({ ...data, user_id: user?.id ?? null } as ReminderUpdate), createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...data, user_id: user?.id ?? null })).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...data, user_id: user?.id ?? null } as ReminderInsert)).select().single();
       if (error) throw error;
       return newData;
     },
