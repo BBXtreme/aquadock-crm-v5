@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.tsx
 "use client";
 
 import {
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import packageJson from "../../../package.json";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -124,7 +126,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         <Badge variant="outline" className="text-xs capitalize">
           {user.role}
         </Badge>
-        <span className="text-xs text-muted-foreground">5.0.0</span>
+        <span className="text-xs text-muted-foreground">{packageJson.version}</span>
       </div>
     </div>
   );
