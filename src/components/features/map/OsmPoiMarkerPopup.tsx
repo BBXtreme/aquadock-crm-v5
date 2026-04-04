@@ -13,7 +13,7 @@ import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
-export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
+export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupProps) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
