@@ -131,8 +131,7 @@ export function DataTable<TData>({
     const headers = visibleColumns.map((col) => col.id).join(",");
     const rows = table.getFilteredRowModel().rows.map((row) =>
       visibleColumns.map((col) => {
-        const cell = row.getCell(col.id);
-        const value = cell.getValue();
+        const value = row.getValue(col.id);
         return typeof value === "string" ? `"${value.replace(/"/g, '""')}"` : String(value || "");
       }).join(",")
     );
@@ -225,8 +224,8 @@ export function DataTable<TData>({
               // Stable string keys only - no array index
               Array.from({ length: pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
                 <TableRow key={key}>
-                  {columns.map((_, colIndex) => (
-                    <TableCell key={`loading-cell-${key}-${colIndex + 1}`}>
+                  {columns.map((col) => (
+                    <TableCell key={`loading-cell-${key}-${col.id}`}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
