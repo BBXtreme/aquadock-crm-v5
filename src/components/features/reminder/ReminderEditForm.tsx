@@ -40,11 +40,13 @@ export default function ReminderEditForm({
     mutationFn: async (data: ReminderFormValues) => {
       const transformedData = { ...data, due_date: new Date(data.due_date) };
       if (reminder) {
-        return updateReminder(reminder.id, toReminderUpdate({ ...transformedData, user_id: user?.id ?? null } as unknown as Database["public"]["Tables"]["reminders"]["Update"]), createClient());
+        const updatePayload = { ...transformedData, user_id: user?.id ?? null };
+        return updateReminder(reminder.id, toReminderUpdate(updatePayload), createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...transformedData, user_id: user?.id ?? null } as unknown as Database["public"]["Tables"]["reminders"]["Insert"])).select().single();
+      const insertPayload = { ...transformedData, user_id: user?.id ?? null };
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert(insertPayload)).select().single();
       if (error) throw error;
       return newData;
     },
@@ -69,7 +71,7 @@ export default function ReminderEditForm({
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
       priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
       status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
@@ -82,7 +84,7 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
         priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
         status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
