@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
+import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
 export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
@@ -28,7 +29,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   const fullAddress = [address, postcode, city].filter(Boolean).join(", ");
 
   const osmId = `${poi.type}/${poi.id}`;
-  const osmUrl = `https://www.openstreetmap.org/${osmId}`;
+  const osmUrl = getOpenStreetMapUrl(osmId);
 
   // Local state for water info (shows cached values immediately)
   const [localWater, setLocalWater] = useState<{
