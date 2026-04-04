@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
-import TimelineTable from "@/components/tables//TimelineTable";
+import TimelineTable from "@/components/tables/TimelineTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {

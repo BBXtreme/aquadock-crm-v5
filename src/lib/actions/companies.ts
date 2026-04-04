@@ -5,8 +5,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/browser";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
 import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
 import type {

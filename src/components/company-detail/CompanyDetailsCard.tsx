@@ -1,13 +1,14 @@
+// src/components/company-detail/CompanyDetailsCard.tsx
 "use client";
-import { Building, Edit, MapPin } from "lucide-react";
+import { Building, Edit, } from "lucide-react";
 import { useState } from "react";
-import FirmendatenEditForm from "@/components/features/companies/FirmendatenEditForm";
 import AdresseEditForm from "@/components/features/companies/AdresseEditForm";
+import FirmendatenEditForm from "@/components/features/companies/FirmendatenEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { safeDisplay } from "@/lib/utils/data-format";
 import { getCountryFlag } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 import type { Company } from "@/types/database.types";
 
 interface Props {

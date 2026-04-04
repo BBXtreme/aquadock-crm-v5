@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
-import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
