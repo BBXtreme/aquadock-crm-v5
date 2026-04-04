@@ -16,9 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { getCurrentUserClient } from "@/lib/auth/get-current-user";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
+import type { UserRole } from "@/lib/auth/types";
 
 type ReminderWithCompany = Reminder & {
   companies: { firmenname: string } | null;
@@ -72,8 +72,17 @@ function ClientRemindersPage() {
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
-      const user = await getCurrentUserClient();
-      return user;
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) return null;
+      return {
+        id: user.id,
+        email: user.email || null,
+        user_metadata: user.user_metadata,
+        role: (user.user_metadata?.role as UserRole) || "user",
+        display_name: user.user_metadata?.display_name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      };
     },
   });
 
