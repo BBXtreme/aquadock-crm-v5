@@ -42,9 +42,9 @@ export default async function TemplatesPage() {
 
                 {/* Table Rows */}
                 <div className="divide-y divide-border">
-                  {Array.from({ length: 6 }).map((_, i) => (
+                  {['row1', 'row2', 'row3', 'row4', 'row5', 'row6'].map((key) => (
                     <div
-                      key={`templates-skeleton-row-${i}`}
+                      key={`templates-skeleton-${key}`}
                       className="px-8 py-6 grid grid-cols-12 gap-4 items-center"
                     >
                       <div className="col-span-5">
@@ -72,4 +72,3 @@ export default async function TemplatesPage() {
     </div>
   );
 }
-
