@@ -10,10 +10,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
-import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
+import AdresseCard from "@/components/company-detail/AdresseCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
 import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
 import CrmCard from "@/components/company-detail/CrmCard";
+import FirmendatenCard from "@/components/company-detail/FirmendatenCard";
 import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
 import RemindersCard from "@/components/company-detail/RemindersCard";
 import TimelineCard from "@/components/company-detail/TimelineCard";
@@ -45,7 +46,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         <CompanyHeader company={company} id={id} router={router} />
         <CompanyKpiCards company={company} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <CompanyDetailsCard company={company} />
+          <FirmendatenCard company={company} />
+          <AdresseCard company={company} />
           <AquaDockCard company={company} />
           <CrmCard company={company} />
         </div>
