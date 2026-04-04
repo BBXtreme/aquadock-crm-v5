@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -263,13 +262,9 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
 interface TimelineTableProps {
   data?: TimelineEntryWithJoins[];
   isLoading?: boolean;
-  search?: string;
-  onSearchChange?: (value: string) => void;
 }
 
-export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps = {}) {
-  const [internalSearch, setInternalSearch] = useState("");
-
+export default function TimelineTable({ data, isLoading }: TimelineTableProps = {}) {
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
@@ -292,8 +287,6 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
 
   const finalData = data || internalData;
   const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
-  const finalSearch = search !== undefined ? search : internalSearch;
-  const finalOnSearchChange = onSearchChange || setInternalSearch;
 
   if (finalIsLoading) {
     return (
@@ -314,19 +307,10 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   }
 
   return (
-    <div className="space-y-4">
-      <Input
-        placeholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
-        value={finalSearch}
-        onChange={(e) => finalOnSearchChange(e.target.value)}
-      />
-      <DataTable
-        columns={columns}
-        data={finalData}
-        loading={false}
-        globalFilter={finalSearch}
-        onGlobalFilterChange={finalOnSearchChange}
-      />
-    </div>
+    <DataTable
+      columns={columns}
+      data={finalData}
+      loading={false}
+    />
   );
 }
