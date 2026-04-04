@@ -52,8 +52,8 @@ export default async function SettingsPage() {
                 <div className="rounded-2xl border border-border bg-card p-8">
                   <Skeleton key="settings-section-2" className="h-7 w-64 mb-6" />
                   <div className="space-y-6">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={`settings-smtp-row-${i}`} className="flex gap-4">
+                    {['smtp-1', 'smtp-2', 'smtp-3', 'smtp-4', 'smtp-5'].map((key) => (
+                      <div key={`settings-${key}`} className="flex gap-4">
                         <Skeleton className="h-10 w-40 flex-shrink-0" />
                         <Skeleton className="h-10 flex-1 rounded-lg" />
                       </div>
