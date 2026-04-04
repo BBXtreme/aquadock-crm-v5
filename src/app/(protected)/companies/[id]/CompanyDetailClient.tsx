@@ -70,7 +70,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
 
   return (
     <Suspense fallback={<LoadingState count={8} />}>
-      <div className="p-8 space-y-6">
+      <div className="p-4 md:p-6 lg:p-8 space-y-6">
         <CompanyHeader
           company={company}
           id={id}
