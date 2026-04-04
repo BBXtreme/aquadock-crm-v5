@@ -30,8 +30,6 @@ const formSchema = z.object({
     .union([z.literal("none"), z.string().uuid(), z.null()])
     .transform((val) => (val === "none" || val === null ? null : val))
     .optional(),
-
-  user_name: z.string().min(1, "Benutzername ist erforderlich"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -76,7 +74,6 @@ export default function TimelineEntryForm({
         (editEntry?.activity_type as FormValues["activity_type"]) || defaultValues?.activity_type || "note",
       company_id: editEntry?.company_id || preselectedCompanyId || "none",
       contact_id: editEntry?.contact_id || defaultValues?.contact_id || "none",
-      user_name: editEntry?.user_name || defaultValues?.user_name || "",
     },
   });
 
@@ -130,7 +127,6 @@ export default function TimelineEntryForm({
         activity_type: editEntry.activity_type as FormValues["activity_type"] || "note",
         company_id: editEntry.company_id || "none",
         contact_id: editEntry.contact_id || "none",
-        user_name: editEntry.user_name || "",
       });
     }
   }, [editEntry, form]);
@@ -190,20 +186,6 @@ export default function TimelineEntryForm({
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="user_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>User Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter user name" {...field} />
-              </FormControl>
               <FormMessage />
             </FormItem>
           )}
