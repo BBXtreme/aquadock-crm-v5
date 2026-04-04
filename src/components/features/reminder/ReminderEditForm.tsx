@@ -66,7 +66,7 @@ export default function ReminderEditForm({
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow for create
+      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // String for tomorrow
       priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
       status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
@@ -79,7 +79,7 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow if invalid
+        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // String if invalid
         priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
         status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
@@ -165,8 +165,7 @@ export default function ReminderEditForm({
               <FormControl>
                 <Input
                   type="datetime-local"
-                  value={field.value instanceof Date ? field.value.toISOString().slice(0, 16) : ""}
-                  onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
