@@ -51,7 +51,11 @@ function ClientRemindersPage() {
       if (error) throw error;
       return (data ?? []) as ReminderWithCompany[];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const { data: profiles = [] } = useQuery({
