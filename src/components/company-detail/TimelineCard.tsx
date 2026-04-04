@@ -93,6 +93,7 @@ export default function TimelineCard({ companyId }: Props) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
+      if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
       const { error } = await supabase.from("timeline").update({ ...data, updated_by: user.id }).eq("id", editEntry?.id);
       if (error) throw error;
@@ -110,6 +111,7 @@ export default function TimelineCard({ companyId }: Props) {
 
   const createTimelineMutation = useMutation({
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
+      if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
       const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id });
       if (error) throw error;
