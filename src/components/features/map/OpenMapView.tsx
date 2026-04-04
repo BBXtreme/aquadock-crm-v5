@@ -52,6 +52,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
+  const [hasCentered, setHasCentered] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -162,6 +163,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         mapRef.current.setView([latNum, lonNum], zoomNum);
       }
     }
+    setHasCentered(true);
   }, [mapReady, searchParams]);
 
   // Main POI load handler with debounce
@@ -218,10 +220,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Initial load
   useEffect(() => {
-    if (!mapReady) return;
+    if (!mapReady || !hasCentered) return;
     const timer = setTimeout(handleLoad, 800);
     return () => clearTimeout(timer);
-  }, [mapReady, handleLoad]);
+  }, [mapReady, hasCentered, handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
