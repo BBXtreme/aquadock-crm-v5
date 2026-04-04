@@ -73,70 +73,72 @@ export default function LinkedContactsCard({ companyId }: Props) {
             {contacts.length === 0 ? (
               <p className="text-gray-500">No contacts linked to this company.</p>
             ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Name</th>
-                    <th className="text-left">Email</th>
-                    <th className="text-left">Phone</th>
-                    <th className="text-left">Mobil</th>
-                    <th className="text-left">Primary</th>
-                    <th className="text-right w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {contacts.map((contact) => {
-                    const displayName =
-                      [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
-                        .filter(Boolean)
-                        .join(" ") || "—";
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Name</th>
+                      <th className="text-left">Email</th>
+                      <th className="text-left">Phone</th>
+                      <th className="text-left">Mobil</th>
+                      <th className="text-left">Primary</th>
+                      <th className="text-right w-24">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contacts.map((contact) => {
+                      const displayName =
+                        [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
+                          .filter(Boolean)
+                          .join(" ") || "—";
 
-                    return (
-                      <tr key={contact.id}>
-                        <td>
-                          <div>
-                            {contact.id ? (
-                              <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                                {displayName}
+                      return (
+                        <tr key={contact.id}>
+                          <td>
+                            <div>
+                              {contact.id ? (
+                                <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                                  {displayName}
+                                </a>
+                              ) : (
+                                <span>{displayName}</span>
+                              )}
+                              {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
+                            </div>
+                          </td>
+                          <td>
+                            {contact.email ? (
+                              <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                                {contact.email}
                               </a>
                             ) : (
-                              <span>{displayName}</span>
+                              "—"
                             )}
-                            {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
-                          </div>
-                        </td>
-                        <td>
-                          {contact.email ? (
-                            <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
-                              {contact.email}
-                            </a>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td>{contact.telefon || "—"}</td>
-                        <td>{contact.mobil || "—"}</td>
-                        <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
-                        <td className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
-                              onClick={() => handleDelete(contact.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                          </td>
+                          <td>{contact.telefon || "—"}</td>
+                          <td>{contact.mobil || "—"}</td>
+                          <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
+                          <td className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                onClick={() => handleDelete(contact.id)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Suspense>
         </CardContent>

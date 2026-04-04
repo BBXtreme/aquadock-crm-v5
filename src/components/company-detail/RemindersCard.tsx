@@ -96,78 +96,80 @@ export default function RemindersCard({ companyId }: Props) {
             {reminders.length === 0 ? (
               <p className="text-gray-500">No reminders for this company.</p>
             ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Title</th>
-                    <th className="text-left">Due Date</th>
-                    <th className="text-left">Priority</th>
-                    <th className="text-left">Status</th>
-                    <th className="text-left">Assigned To</th>
-                    <th className="text-right w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reminders.map((reminder) => (
-                    <tr key={reminder.id}>
-                      <td className="font-medium">
-                        <div>
-                          <button
-                            type="button"
-                            className="text-primary hover:underline cursor-pointer"
-                            onClick={() => handleEdit(reminder)}
-                          >
-                            {safeDisplay(reminder.title)}
-                          </button>
-                          {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
-                        </div>
-                      </td>
-                      <td>{formatDateDE(reminder.due_date)}</td>
-                      <td>
-                        <Badge
-                          className={
-                            reminder.priority === "hoch"
-                              ? "bg-orange-500 text-white"
-                              : reminder.priority === "normal"
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-500 text-white"
-                          }
-                        >
-                          {getPriorityLabel(reminder.priority)}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                          {getReminderStatusLabel(reminder.status)}
-                        </Badge>
-                      </td>
-                      <td>{reminder.assigned_to || "—"}</td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            type="button"
-                            onClick={() => handleEdit(reminder)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            type="button"
-                            onClick={() => handleDelete(reminder.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Title</th>
+                      <th className="text-left">Due Date</th>
+                      <th className="text-left">Priority</th>
+                      <th className="text-left">Status</th>
+                      <th className="text-left">Assigned To</th>
+                      <th className="text-right w-24">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {reminders.map((reminder) => (
+                      <tr key={reminder.id}>
+                        <td className="font-medium">
+                          <div>
+                            <button
+                              type="button"
+                              className="text-primary hover:underline cursor-pointer"
+                              onClick={() => handleEdit(reminder)}
+                            >
+                              {safeDisplay(reminder.title)}
+                            </button>
+                            {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
+                          </div>
+                        </td>
+                        <td>{formatDateDE(reminder.due_date)}</td>
+                        <td>
+                          <Badge
+                            className={
+                              reminder.priority === "hoch"
+                                ? "bg-orange-500 text-white"
+                                : reminder.priority === "normal"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-500 text-white"
+                            }
+                          >
+                            {getPriorityLabel(reminder.priority)}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                            {getReminderStatusLabel(reminder.status)}
+                          </Badge>
+                        </td>
+                        <td>{reminder.assigned_to || "—"}</td>
+                        <td className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              type="button"
+                              onClick={() => handleEdit(reminder)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              type="button"
+                              onClick={() => handleDelete(reminder.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Suspense>
         </CardContent>

@@ -152,60 +152,62 @@ export default function TimelineCard({ companyId }: Props) {
             {timeline.length === 0 ? (
               <p className="text-gray-500">No timeline entries for this company.</p>
             ) : (
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th className="text-left">Date</th>
-                    <th className="text-left">Event</th>
-                    <th className="text-left">Company</th>
-                    <th className="text-left">Contact</th>
-                    <th className="text-left">User</th>
-                    <th className="text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {timeline.map((entry) => (
-                    <tr key={entry.id}>
-                      <td>
-                        {entry.created_at
-                          ? new Date(entry.created_at).toLocaleString("de-DE", {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })
-                          : "—"}
-                      </td>
-                      <td>
-                        {entry.title} ({entry.activity_type})
-                      </td>
-                      <td>{entry.companies?.firmenname || "—"}</td>
-                      <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
-                      <td>{entry.user_name || "—"}</td>
-                      <td className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            type="button"
-                            onClick={() => handleEdit(entry)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-red-600 hover:text-red-700"
-                            type="button"
-                            onClick={() => handleDelete(entry.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Date</th>
+                      <th className="text-left">Event</th>
+                      <th className="text-left">Company</th>
+                      <th className="text-left">Contact</th>
+                      <th className="text-left">User</th>
+                      <th className="text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {timeline.map((entry) => (
+                      <tr key={entry.id}>
+                        <td>
+                          {entry.created_at
+                            ? new Date(entry.created_at).toLocaleString("de-DE", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })
+                            : "—"}
+                        </td>
+                        <td>
+                          {entry.title} ({entry.activity_type})
+                        </td>
+                        <td>{entry.companies?.firmenname || "—"}</td>
+                        <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
+                        <td>{entry.user_name || "—"}</td>
+                        <td className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              type="button"
+                              onClick={() => handleEdit(entry)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              type="button"
+                              onClick={() => handleDelete(entry.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Suspense>
         </CardContent>
