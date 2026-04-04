@@ -1,6 +1,6 @@
 // This component renders a list of contacts linked to a specific company. It allows users to view, add, edit, and delete contacts. Each contact can be associated with a company and includes details like name, email, phone, and position. The component uses React Query for data fetching and mutations, and Supabase as the backend database. It also includes loading states and error handling with toast notifications.  - source:
 "use client";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Edit, Plus, Trash, User } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
