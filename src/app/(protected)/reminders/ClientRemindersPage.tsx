@@ -44,14 +44,17 @@ function ClientRemindersPage() {
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
+      if (!user) return [];
       const supabase = createClient();
       const { data, error } = await supabase
         .from("reminders")
         .select("*, companies(firmenname)")
+        .eq("user_id", user.id)
         .order("due_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReminderWithCompany[];
     },
+    enabled: !!user,
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
