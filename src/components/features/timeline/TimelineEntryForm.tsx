@@ -50,6 +50,7 @@ interface Props {
   onCancel?: () => void;
   preselectedCompanyId?: string | null;
   defaultValues?: Partial<FormValues>;
+  user?: { id: string } | null;
 }
 
 export default function TimelineEntryForm({
@@ -61,6 +62,7 @@ export default function TimelineEntryForm({
   onCancel,
   preselectedCompanyId,
   defaultValues,
+  user,
 }: Props) {
   const [localCompanies, setLocalCompanies] = useState<{ id: string; firmenname: string; kundentyp?: string }[]>([]);
 

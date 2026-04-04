@@ -31,7 +31,11 @@ const reminderSchema = z.object({
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
-export default function ReminderCreateForm({ onSuccess, preselectedCompanyId }: { onSuccess?: () => void; preselectedCompanyId?: string }) {
+export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, user }: { 
+  onSuccess?: () => void; 
+  preselectedCompanyId?: string;
+  user?: { id: string } | null;
+}) {
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
@@ -74,7 +78,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId }: 
   }, [preselectedCompanyId, form]);
 
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
-    mutationFn: (data: ReminderFormValues) => createReminder(data, createClient()),
+    mutationFn: (data: ReminderFormValues) => createReminder({ ...data, user_id: user?.id }, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder created");

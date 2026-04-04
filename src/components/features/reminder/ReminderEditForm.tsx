@@ -27,21 +27,23 @@ export default function ReminderEditForm({
   reminder,
   onSuccess,
   preselectedCompanyId,
+  user,
 }: {
   reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
   preselectedCompanyId?: string;
+  user?: { id: string } | null;
 }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (data: ReminderFormValues) => {
       if (reminder) {
-        return updateReminder(reminder.id, toReminderUpdate(data), createClient());
+        return updateReminder(reminder.id, toReminderUpdate({ ...data, user_id: user?.id }), createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert(data)).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert({ ...data, user_id: user?.id })).select().single();
       if (error) throw error;
       return newData;
     },
