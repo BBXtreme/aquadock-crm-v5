@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createTimelineEntry } from "@/lib/supabase/services/timeline";
 
@@ -9,7 +9,7 @@ function isValidTimelineEntry(body: unknown): body is {
   company_id?: string | null;
   contact_id?: string | null;
 } {
-  return typeof body === "object" && body !== null && "title" in body && typeof (body as any).title === "string";
+  return typeof body === "object" && body !== null && "title" in body && typeof (body as Record<string, unknown>).title === "string";
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const payload = {
       title: body.title,
       content: typeof body.content === "string" ? body.content : null,
-      activity_type: body.activity_type,
+      activity_type: body.activity_type || "note",
       company_id: typeof body.company_id === "string" ? body.company_id : null,
       contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
     };
