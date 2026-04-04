@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper, type PaginationState, type SortingState, type VisibilityState } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -20,6 +20,7 @@ const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 const columns = [
   columnHelper.accessor("created_at", {
+    id: "Datum & Uhrzeit",
     header: "Datum & Uhrzeit",
     enableSorting: true,
     cell: (info) => {
@@ -36,6 +37,7 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.accessor("activity_type", {
+    id: "Aktivität",
     header: "Aktivität",
     enableSorting: true,
     cell: (info) => {
@@ -81,7 +83,7 @@ const columns = [
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "user",
+    id: "Benutzer",
     header: "Benutzer",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
@@ -92,7 +94,7 @@ const columns = [
     cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "company",
+    id: "Firma",
     header: "Firma",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
@@ -111,7 +113,7 @@ const columns = [
     ),
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "contact",
+    id: "Kontakt",
     header: "Kontakt",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
@@ -130,7 +132,7 @@ const columns = [
     ),
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "title-description",
+    id: "Titel & Beschreibung",
     header: "Titel & Beschreibung",
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
@@ -146,7 +148,7 @@ const columns = [
     ),
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
-    id: "actions",
+    id: "Aktionen",
     header: "Aktionen",
     cell: (info) => <ActionCell entry={info.row.original} />,
   }) as ColumnDef<TimelineEntryWithJoins>,
@@ -265,6 +267,9 @@ interface TimelineTableProps {
 
 export default function TimelineTable({ data, isLoading }: TimelineTableProps = {}) {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
@@ -304,6 +309,13 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
       loading={finalIsLoading}
       pagination={pagination}
       onPaginationChange={setPagination}
+      globalFilter={globalFilter}
+      onGlobalFilterChange={setGlobalFilter}
+      sorting={sorting}
+      onSortingChange={setSorting}
+      columnVisibility={columnVisibility}
+      onColumnVisibilityChange={setColumnVisibility}
+      searchPlaceholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
     />
   );
 }

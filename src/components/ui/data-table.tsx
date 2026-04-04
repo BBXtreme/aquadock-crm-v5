@@ -42,6 +42,7 @@ interface DataTableProps<TData> {
   onColumnVisibilityChange?: (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => void;
   loading?: boolean;
   pageSize?: number;
+  searchPlaceholder?: string;
 }
 
 export function DataTable<TData>({
@@ -59,6 +60,7 @@ export function DataTable<TData>({
   onColumnVisibilityChange,
   loading = false,
   pageSize = 20,
+  searchPlaceholder,
 }: DataTableProps<TData>) {
   const [internalGlobalFilter, setInternalGlobalFilter] = useState(globalFilter);
   const [internalPagination, setInternalPagination] = useState<PaginationState>(
@@ -160,7 +162,7 @@ export function DataTable<TData>({
     <div>
       <div className="flex items-center justify-between py-4">
         <Input
-          placeholder="Search..."
+          placeholder={searchPlaceholder || "Search..."}
           value={internalGlobalFilter}
           onChange={(e) => handleGlobalFilterChange(e.target.value)}
           className="max-w-sm"
@@ -265,7 +267,7 @@ export function DataTable<TData>({
               onChange={(e) => table.setPageSize(Number(e.target.value))}
               className="h-8 w-[70px] rounded border border-input bg-transparent px-3 py-1 text-sm"
             >
-              {[10, 20, 30, 40, 50].map((size) => (
+              {[10, 20, 30, 50].map((size) => (
                 <option key={size} value={size}>
                   {size}
                 </option>
