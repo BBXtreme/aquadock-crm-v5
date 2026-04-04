@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { handleSupabaseError } from "@/lib/supabase/error-handling";
 import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from "@/types/database.types";
 
 export async function createTimelineEntry(
@@ -16,7 +15,7 @@ export async function createTimelineEntry(
     .select()
     .single();
 
-  if (error) throw handleSupabaseError(error);
+  if (error) throw error;
   return result;
 }
 
@@ -32,13 +31,13 @@ export async function updateTimelineEntry(
     .select()
     .single();
 
-  if (error) throw handleSupabaseError(error);
+  if (error) throw error;
   return result;
 }
 
 export async function deleteTimelineEntry(id: string, supabase: SupabaseClient): Promise<void> {
   const { error } = await supabase.from("timeline").delete().eq("id", id);
-  if (error) throw handleSupabaseError(error);
+  if (error) throw error;
 }
 
 export async function getTimelineEntries(userId: string, supabase: SupabaseClient): Promise<TimelineEntry[]> {
@@ -48,6 +47,6 @@ export async function getTimelineEntries(userId: string, supabase: SupabaseClien
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (error) throw handleSupabaseError(error);
+  if (error) throw error;
   return data ?? [];
 }
