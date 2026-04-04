@@ -13,7 +13,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { Download, Settings } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -32,14 +32,6 @@ interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
-  pagination?: PaginationState;
-  onPaginationChange?: (updater: PaginationState | ((old: PaginationState) => PaginationState)) => void;
-  sorting?: SortingState;
-  onSortingChange?: (updater: SortingState | ((old: SortingState) => SortingState)) => void;
-  rowSelection?: RowSelectionState;
-  onRowSelectionChange?: (updater: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)) => void;
-  columnVisibility?: VisibilityState;
-  onColumnVisibilityChange?: (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => void;
   loading?: boolean;
   pageSize?: number;
   searchPlaceholder?: string;
@@ -50,62 +42,33 @@ export function DataTable<TData>({
   columns,
   globalFilter = "",
   onGlobalFilterChange,
-  pagination,
-  onPaginationChange,
-  sorting = [],
-  onSortingChange,
-  rowSelection = {},
-  onRowSelectionChange,
-  columnVisibility = {},
-  onColumnVisibilityChange,
   loading = false,
-  pageSize = 10,
-  searchPlaceholder,
+  pageSize = 20,
+  searchPlaceholder = "Search...",
 }: DataTableProps<TData>) {
   const [internalGlobalFilter, setInternalGlobalFilter] = useState(globalFilter);
-  const [internalPagination, setInternalPagination] = useState<PaginationState>(
-    pagination || { pageIndex: 0, pageSize }
-  );
-  const [internalSorting, setInternalSorting] = useState<SortingState>(sorting);
-  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>(rowSelection);
-  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>(columnVisibility);
 
-  useEffect(() => setInternalGlobalFilter(globalFilter), [globalFilter]);
+  // Stable internal state
+  const [internalPagination, setInternalPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize,
+  });
+  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
+  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({});
+
+  // Sync external globalFilter
   useEffect(() => {
-    if (pagination) setInternalPagination(pagination);
-  }, [pagination]);
-  useEffect(() => setInternalSorting(sorting), [sorting]);
-  useEffect(() => setInternalRowSelection(rowSelection), [rowSelection]);
-  useEffect(() => setInternalColumnVisibility(columnVisibility), [columnVisibility]);
+    setInternalGlobalFilter(globalFilter);
+  }, [globalFilter]);
 
-  const handleGlobalFilterChange = (value: string) => {
-    setInternalGlobalFilter(value);
-    onGlobalFilterChange?.(value);
-  };
-
-  const handlePaginationChange = (updater: PaginationState | ((old: PaginationState) => PaginationState)) => {
-    const newPagination = typeof updater === "function" ? updater(internalPagination) : updater;
-    setInternalPagination(newPagination);
-    onPaginationChange?.(newPagination);
-  };
-
-  const handleSortingChange = (updater: SortingState | ((old: SortingState) => SortingState)) => {
-    const newSorting = typeof updater === "function" ? updater(internalSorting) : updater;
-    setInternalSorting(newSorting);
-    onSortingChange?.(newSorting);
-  };
-
-  const handleRowSelectionChange = (updater: RowSelectionState | ((old: RowSelectionState) => RowSelectionState)) => {
-    const newRowSelection = typeof updater === "function" ? updater(internalRowSelection) : updater;
-    setInternalRowSelection(newRowSelection);
-    onRowSelectionChange?.(newRowSelection);
-  };
-
-  const handleColumnVisibilityChange = (updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
-    const newColumnVisibility = typeof updater === "function" ? updater(internalColumnVisibility) : updater;
-    setInternalColumnVisibility(newColumnVisibility);
-    onColumnVisibilityChange?.(newColumnVisibility);
-  };
+  const handleGlobalFilterChange = useCallback(
+    (value: string) => {
+      setInternalGlobalFilter(value);
+      onGlobalFilterChange?.(value);
+    },
+    [onGlobalFilterChange]
+  );
 
   const table = useReactTable({
     data,
@@ -115,10 +78,10 @@ export function DataTable<TData>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onGlobalFilterChange: handleGlobalFilterChange,
-    onPaginationChange: handlePaginationChange,
-    onSortingChange: handleSortingChange,
-    onRowSelectionChange: handleRowSelectionChange,
-    onColumnVisibilityChange: handleColumnVisibilityChange,
+    onPaginationChange: setInternalPagination,
+    onSortingChange: setInternalSorting,
+    onRowSelectionChange: setInternalRowSelection,
+    onColumnVisibilityChange: setInternalColumnVisibility,
     state: {
       globalFilter: internalGlobalFilter,
       pagination: internalPagination,
@@ -128,7 +91,7 @@ export function DataTable<TData>({
     },
   });
 
-  const exportToCSV = () => {
+  const exportToCSV = useCallback(() => {
     const visibleColumns = table.getVisibleFlatColumns();
     const headers = visibleColumns.map((col) => col.id).join(",");
     const rows = table.getFilteredRowModel().rows.map((row) =>
@@ -145,9 +108,9 @@ export function DataTable<TData>({
     a.download = "data.csv";
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }, [table]);
 
-  const exportToJSON = () => {
+  const exportToJSON = useCallback(() => {
     const json = JSON.stringify(table.getFilteredRowModel().rows.map((row) => row.original), null, 2);
     const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -156,13 +119,13 @@ export function DataTable<TData>({
     a.download = "data.json";
     a.click();
     URL.revokeObjectURL(url);
-  };
+  }, [table]);
 
   return (
     <div>
       <div className="flex items-center justify-between py-4">
         <Input
-          placeholder={searchPlaceholder || "Search..."}
+          placeholder={searchPlaceholder}
           value={internalGlobalFilter}
           onChange={(e) => handleGlobalFilterChange(e.target.value)}
           className="max-w-sm"
@@ -201,21 +164,19 @@ export function DataTable<TData>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : header.column.getCanSort() ? (
-                          <button
-                            type="button"
-                            className="flex items-center gap-2 w-full h-full p-4 text-left font-medium cursor-pointer hover:bg-muted/50"
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {header.column.getIsSorted() === "asc" && " ↑"}
-                            {header.column.getIsSorted() === "desc" && " ↓"}
-                          </button>
-                        ) : (
-                          flexRender(header.column.columnDef.header, header.getContext())
-                        )}
+                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 w-full h-full p-4 text-left font-medium cursor-pointer hover:bg-muted/50"
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === "asc" && " ↑"}
+                        {header.column.getIsSorted() === "desc" && " ↓"}
+                      </button>
+                    ) : (
+                      flexRender(header.column.columnDef.header, header.getContext())
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -223,11 +184,10 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              // Stable string keys only - no array index
               Array.from({ length: pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
                 <TableRow key={key}>
-                  {columns.map((_col) => (
-                    <TableCell key={`loading-cell-${key}-${_col.id}`}>
+                  {columns.map((_, colIndex) => (
+                    <TableCell key={`loading-cell-${key}-${colIndex + 1}`}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}

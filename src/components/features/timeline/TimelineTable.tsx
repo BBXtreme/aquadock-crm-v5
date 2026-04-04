@@ -1,18 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/browser";
-import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { formatDateDistance } from "@/lib/utils/data-format";
-import { safeDisplay } from "@/lib/utils/data-format";
-import { TimelineEntryWithJoins } from "@/types/database.types";
-import { Skeleton } from "@/components/ui/skeleton";
+import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import { createClient } from "@/lib/supabase/browser";
+import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
