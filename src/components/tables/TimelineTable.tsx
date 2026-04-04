@@ -355,13 +355,15 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   const finalSearch = search !== undefined ? search : internalSearch;
   const finalOnSearchChange = onSearchChange || setInternalSearch;
 
-  const loadingComponent = finalIsLoading ? (
-    <div className="space-y-2">
-      {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
-        <Skeleton key={key} className="h-12 w-full" />
-      ))}
-    </div>
-  ) : null;
+  if (finalIsLoading) {
+    return (
+      <div className="space-y-2">
+        {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
+          <Skeleton key={key} className="h-12 w-full" />
+        ))}
+      </div>
+    );
+  }
 
   if (internalError && !data) {
     return (
@@ -381,10 +383,9 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
       <DataTable
         columns={columns}
         data={finalData}
-        loading={finalIsLoading}
+        loading={false}
         globalFilter={finalSearch}
         onGlobalFilterChange={finalOnSearchChange}
-        loadingComponent={loadingComponent}
       />
     </div>
   );
