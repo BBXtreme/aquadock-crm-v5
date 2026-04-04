@@ -66,7 +66,7 @@ export default function ReminderEditForm({
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date) : undefined,
+      due_date: reminder?.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow for create
       priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
       status: (reminder?.status as "open" | "closed" | null) || "open",
       assigned_to: reminder?.assigned_to || null,
@@ -79,7 +79,7 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date) : undefined,
+        due_date: reminder.due_date ? new Date(reminder.due_date) : new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow if invalid
         priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
         status: (reminder.status as "open" | "closed" | null) || "open",
         assigned_to: reminder.assigned_to || null,
@@ -165,7 +165,7 @@ export default function ReminderEditForm({
               <FormControl>
                 <Input
                   type="datetime-local"
-                  value={field.value ? field.value.toISOString().slice(0, 16) : ""}
+                  value={field.value instanceof Date ? field.value.toISOString().slice(0, 16) : ""}
                   onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
                 />
               </FormControl>
@@ -222,14 +222,14 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
               <Select
                 onValueChange={(value) => field.onChange(value === "" ? null : value)}
-                value={field.value || ""}
+                value={field.value ?? ""}
               >
                 <FormControl>
                   <SelectTrigger>
