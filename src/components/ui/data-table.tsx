@@ -35,6 +35,10 @@ interface DataTableProps<TData> {
   loading?: boolean;
   pageSize?: number;
   searchPlaceholder?: string;
+  pagination?: PaginationState;
+  onPaginationChange?: (pagination: PaginationState) => void;
+  totalCount?: number;
+  skeletonRows?: number;
 }
 
 export function DataTable<TData>({
@@ -45,6 +49,10 @@ export function DataTable<TData>({
   loading = false,
   pageSize = 20,
   searchPlaceholder = "Search...",
+  pagination,
+  onPaginationChange,
+  totalCount,
+  skeletonRows,
 }: DataTableProps<TData>) {
   const [internalGlobalFilter, setInternalGlobalFilter] = useState(globalFilter);
 
@@ -70,6 +78,9 @@ export function DataTable<TData>({
     [onGlobalFilterChange]
   );
 
+  const currentPagination = pagination || internalPagination;
+  const currentOnPaginationChange = onPaginationChange || setInternalPagination;
+
   const table = useReactTable({
     data,
     columns,
@@ -78,13 +89,15 @@ export function DataTable<TData>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onGlobalFilterChange: handleGlobalFilterChange,
-    onPaginationChange: setInternalPagination,
+    onPaginationChange: currentOnPaginationChange,
     onSortingChange: setInternalSorting,
     onRowSelectionChange: setInternalRowSelection,
     onColumnVisibilityChange: setInternalColumnVisibility,
+    manualPagination: !!pagination,
+    pageCount: totalCount ? Math.ceil(totalCount / (currentPagination.pageSize || 10)) : undefined,
     state: {
       globalFilter: internalGlobalFilter,
-      pagination: internalPagination,
+      pagination: currentPagination,
       sorting: internalSorting,
       rowSelection: internalRowSelection,
       columnVisibility: internalColumnVisibility,
@@ -184,7 +197,7 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {loading ? (
-              Array.from({ length: pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
+              Array.from({ length: skeletonRows || pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
                 <TableRow key={key}>
                   {columns.map((column, colIndex) => (
                     <TableCell key={`loading-cell-${column.id || colIndex}`}>
