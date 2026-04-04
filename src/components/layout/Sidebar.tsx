@@ -125,9 +125,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         <Badge variant="outline" className="text-xs capitalize">
           {user.role}
         </Badge>
-        <Badge variant="outline" className="text-xs">
-          v{APP_VERSION}
-        </Badge>
+        <span className="text-xs text-muted-foreground">5.0.0</span>
       </div>
     </div>
   );
