@@ -22,6 +22,16 @@ export default function TimelineCard({ companyId }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error("User not found");
+      return user;
+    },
+  });
+
   const { data: timeline = [] } = useSuspenseQuery({
     queryKey: ["timeline", companyId],
     queryFn: async () => {
@@ -84,7 +94,7 @@ export default function TimelineCard({ companyId }: Props) {
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").update(data).eq("id", editEntry?.id);
+      const { error } = await supabase.from("timeline").update({ ...data, updated_by: user.id }).eq("id", editEntry?.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +111,7 @@ export default function TimelineCard({ companyId }: Props) {
   const createTimelineMutation = useMutation({
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").insert(data);
+      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id });
       if (error) throw error;
     },
     onSuccess: () => {
