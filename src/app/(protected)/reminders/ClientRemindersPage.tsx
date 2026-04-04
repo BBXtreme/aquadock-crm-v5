@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import type { UserRole } from "@/lib/auth/types";
+import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
@@ -37,21 +38,9 @@ function ClientRemindersPage() {
     return "all";
   });
 
-  const { data: user, error: userError } = useQuery({
+  const { data: user } = useQuery({
     queryKey: ["user"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) return null;
-      return {
-        id: user.id,
-        email: user.email || null,
-        user_metadata: user.user_metadata,
-        role: (user.user_metadata?.role as UserRole) || "user",
-        display_name: user.user_metadata?.display_name || null,
-        avatar_url: user.user_metadata?.avatar_url || null,
-      };
-    },
+    queryFn: getCurrentUserClient,
   });
 
   const {
