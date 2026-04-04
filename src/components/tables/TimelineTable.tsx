@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
 import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -265,6 +265,8 @@ interface TimelineTableProps {
 }
 
 export default function TimelineTable({ data, isLoading }: TimelineTableProps = {}) {
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
+
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
@@ -311,6 +313,8 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
       columns={columns}
       data={finalData}
       loading={false}
+      pagination={pagination}
+      onPaginationChange={setPagination}
     />
   );
 }
