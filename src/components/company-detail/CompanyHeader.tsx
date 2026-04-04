@@ -10,6 +10,7 @@ import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } 
 
 interface Props {
   company: Company;
+  id: string;
   router: { push: (href: string) => void };
   onAddTimeline: () => void;
   onEdit: () => void;
