@@ -33,3 +33,6 @@ function makeQueryClient() {
 
 // Request-scoped QueryClient on server, singleton on client
 export const getQueryClient = cache(makeQueryClient);
+
+// Export the queryClient instance for use in class components or non-hook contexts
+export const queryClient = getQueryClient();
