@@ -28,6 +28,13 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const firmentyp = determineFirmentyp(tags);
   const wassertyp = determineWassertyp(tags) || "";
 
+  // Extract short ID from poi.id (handle full URL if present)
+  let osmId = poi.id;
+  if (typeof osmId === 'string' && osmId.startsWith('https://www.openstreetmap.org/')) {
+    const parts = osmId.split('/');
+    osmId = parts[parts.length - 1] as string;
+  }
+
   const formData = {
     firmenname: name,
     kundentyp,
@@ -41,7 +48,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     website: poi.tags?.website || poi.tags?.["contact:website"] || "",
     lat: (poi.lat || poi.center?.lat) as number,
     lon: (poi.lon || poi.center?.lon) as number,
-    osm: `https://www.openstreetmap.org/${poi.type}/${poi.id}`,
+    osm: `${poi.type}/${osmId}`,  // Updated to short format: e.g., "node/123456"
     user_id: userId || null, // Explicitly set to null if no userId
     value: 0,
     wassertyp: poi.wassertyp ?? wassertyp,
@@ -94,9 +101,9 @@ export function useMapPopupActions() {
     }
     toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
     try {
-      const { distance, wassertyp } = await calculateWaterDistance(lat, lon);
-      Object.assign(poi, { wasserdistanz: distance, wassertyp });
-      console.log(`Calculated water distance: ${distance}m, type: ${wassertyp} for POI ${poi.id}`);
+      const distance = await calculateWaterDistance(lat, lon);
+      Object.assign(poi, { wasserdistanz: distance });
+      console.log(`Calculated water distance: ${distance}m for POI ${poi.id}`);
       if (distance !== null) {
         await new Promise((resolve) => setTimeout(resolve, 100));
         toast.success(`Wasser-Info berechnet: ${distance} m`, { id: "water-calc" });

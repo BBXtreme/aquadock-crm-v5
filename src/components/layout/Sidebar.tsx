@@ -1,3 +1,4 @@
+// src/components/layout/Sidebar.tsx
 "use client";
 
 import {
@@ -18,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { APP_VERSION } from "@/lib/version";
+import packageJson from "../../../package.json";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -51,15 +52,15 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         isCollapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex h-16 items-center justify-center px-4 flex-shrink-0">
+      <div className="flex h-16 items-center justify-center px-4 shrink-0">
         <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
           {isCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
       </div>
 
-      <div className="border-b flex-shrink-0" />
+      <div className="border-b shrink-0" />
 
-      <nav className={cn("flex-1 space-y-1 p-4", !isCollapsed && "overflow-y-auto")} suppressHydrationWarning={true}>
+      <nav className={cn("flex-1 space-y-1 p-4 overflow-y-auto")} suppressHydrationWarning={true}>
         {filteredNavigation.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -82,10 +83,10 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         })}
       </nav>
 
-      <div className="border-t flex-shrink-0" />
+      <div className="border-t shrink-0" />
 
       {!isCollapsed && (
-        <div className="p-4 flex-shrink-0">
+        <div className="p-4 shrink-0">
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-start h-10 px-3">
@@ -119,15 +120,13 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         </div>
       )}
 
-      <div className="border-t flex-shrink-0" />
+      <div className="border-t shrink-0" />
 
-      <div className={cn("p-4 flex flex-shrink-0", isCollapsed ? "flex-col items-center space-y-2" : "justify-between items-center")}>
+      <div className={cn("p-4 flex shrink-0", isCollapsed ? "flex-col items-center space-y-2" : "justify-between")}>
         <Badge variant="outline" className="text-xs capitalize">
           {user.role}
         </Badge>
-        <Badge variant="outline" className="text-xs">
-          v{APP_VERSION}
-        </Badge>
+        <span className="text-xs text-muted-foreground">{packageJson.version}</span>
       </div>
     </div>
   );

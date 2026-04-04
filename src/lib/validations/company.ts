@@ -37,9 +37,9 @@ export const companySchema = z.object({
   land: z.string().trim().max(50, "Land darf maximal 50 Zeichen lang sein").nullable().optional(),
   wasserdistanz: z.number().nullable().optional(),
   wassertyp: z.string().trim().max(50, "Wassertyp darf maximal 50 Zeichen lang sein").nullable().optional(),
-  lat: z.number().min(-90, "Latitude muss zwischen -90 und 90 liegen").max(90, "Latitude muss zwischen -90 und 90 liegen").nullable().optional(),
-  lon: z.number().min(-180, "Longitude muss zwischen -180 und 180 liegen").max(180, "Longitude muss zwischen -180 und 180 liegen").nullable().optional(),
-  osm: z.string().trim().max(100, "OSM darf maximal 100 Zeichen lang sein").nullable().optional(),
+  lat: z.preprocess((val) => val === "" ? null : val, z.union([z.number().min(-90, "Latitude muss zwischen -90 und 90 liegen").max(90, "Latitude muss zwischen -90 und 90 liegen"), z.null()]).optional()),
+  lon: z.preprocess((val) => val === "" ? null : val, z.union([z.number().min(-180, "Longitude muss zwischen -180 und 180 liegen").max(180, "Longitude muss zwischen -180 und 180 liegen"), z.null()]).optional()),
+  osm: z.string().trim().regex(/^(node|way|relation)\/\d+$/, "Ungültiges OSM Format").max(100, "OSM darf maximal 100 Zeichen lang sein").nullable().optional(),
   status: z.enum([
     "lead",
     "interessant",

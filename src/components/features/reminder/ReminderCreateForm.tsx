@@ -1,10 +1,11 @@
-// src/components/features/ReminderCreateForm.tsx
+// src/components/features/reminder/ReminderCreateForm.tsx
 // This component renders a form for creating reminders. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create reminder records. It also handles form state and displays success/error toasts.
 
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -24,13 +25,17 @@ const reminderSchema = z.object({
   due_date: z.string().min(1, "Due date is required"),
   priority: z.string().optional(),
   status: z.string().optional(),
-  assigned_to: z.string(),
+  assigned_to: z.string().nullable().optional(),
   description: z.string().optional(),
 });
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
-export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, user }: { 
+  onSuccess?: () => void; 
+  preselectedCompanyId?: string;
+  user?: { id: string } | null;
+}) {
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
@@ -43,21 +48,37 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
     },
   });
 
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<ReminderFormValues>({
     resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: "",
-      company_id: "",
+      company_id: preselectedCompanyId || "",
       due_date: "",
       priority: "normal",
       status: "open",
-      assigned_to: "",
+      assigned_to: null,
       description: "",
     },
   });
 
+  useEffect(() => {
+    if (preselectedCompanyId) {
+      form.setValue("company_id", preselectedCompanyId);
+    }
+  }, [preselectedCompanyId, form]);
+
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
-    mutationFn: (data: ReminderFormValues) => createReminder(data, createClient()),
+    mutationFn: (data: ReminderFormValues) => createReminder({ ...data, user_id: user?.id }, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success("Reminder created");
@@ -176,9 +197,21 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
+              <Select onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)} value={field.value ?? "unassigned"}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.display_name || "Unnamed User"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

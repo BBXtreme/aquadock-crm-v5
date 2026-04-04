@@ -73,7 +73,7 @@ export default async function ProfilePage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
       <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
           Profile
         </h1>
         <p className="text-lg text-muted-foreground">Welcome, {displayName}</p>

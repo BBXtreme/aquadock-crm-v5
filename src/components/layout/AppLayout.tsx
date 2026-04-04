@@ -23,7 +23,6 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [_isMobile, setIsMobile] = useState(false);
 
-  // Do not show sidebar + header on login and unauthorized pages
   const isAuthPage = pathname === "/login" || pathname === "/unauthorized";
 
   useEffect(() => {
@@ -49,7 +48,7 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen overflow-hidden bg-background"> {/* ← added bg-background for safety */}
         <Suspense fallback={<div className="w-16 bg-background border-r" />}>
           <Sidebar
             isCollapsed={isCollapsed}
@@ -57,9 +56,14 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
             user={user}
           />
         </Suspense>
+
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-auto">{children}</main>
+
+          {/* Improved main: better overflow handling + padding control */}
+          <main className="flex-1 overflow-auto p-0 relative">
+            {children}
+          </main>
         </div>
       </div>
     </ErrorBoundary>

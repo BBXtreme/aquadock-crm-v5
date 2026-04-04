@@ -161,7 +161,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
           } catch (err: unknown) {
             if (err instanceof Error && err.name === "AbortError") break;
             if (endpoint === OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1] && retries >= maxRetries - 1) {
-              reject(new Error("Failed to fetch OSM POIs after all retries"));
+              console.error("Failed to fetch OSM POIs after all retries", { bounds: bounds.toBBoxString(), activeCategories, retryCount, endpoint, error: err });
+              reject(new Error("Failed to fetch OSM POIs"));
               return;
             }
             break;
@@ -169,7 +170,20 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
         }
       }
 
+      console.error("Failed to fetch OSM POIs", { bounds: bounds.toBBoxString(), activeCategories, retryCount });
       reject(new Error("Failed to fetch OSM POIs"));
     }, 300);
   });
+}
+
+export function getOpenStreetMapUrl(osm: string | null | undefined): string {
+  return osm ? `https://www.openstreetmap.org/${osm}` : "";
+}
+
+export function normalizeOsmId(osm: string): string {
+  if (osm.startsWith('https://www.openstreetmap.org/')) {
+    const parts = osm.split('/');
+    return `${parts[3]}/${parts[4]}`;
+  }
+  return osm;
 }

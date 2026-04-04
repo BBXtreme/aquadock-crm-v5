@@ -1,14 +1,16 @@
 // This component displays a timeline of events related to a specific company. It allows users to view, add, edit, and delete timeline entries. Each entry can be associated with a company, contact, and user. The component uses React Query for data fetching and mutations, and Supabase as the backend database. It also includes loading states and error handling with toast notifications.  - source:
 "use client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Bell, Edit, Plus, Trash } from "lucide-react";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { toast } from "sonner";
+import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
 import type { Reminder } from "@/types/database.types";
@@ -24,20 +26,42 @@ export default function RemindersCard({ companyId }: Props) {
 
   console.log("RemindersCard companyId:", companyId);
 
-  const {
-    data: reminders = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: user } = useSuspenseQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        console.warn("User not authenticated; reminder actions may be limited.");
+        return null;  // <-- Change: Return null instead of throwing
+      }
+      return user;
+    },
+  });
+
+  const { data: profiles = [] } = useSuspenseQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: reminders = [] } = useSuspenseQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const userId = user?.id;  // <-- Add: Safe extraction of user.id
+      let query = supabase
         .from("reminders")
         .select("*")
-        .eq("company_id", companyId)
-        .order("due_date", { ascending: true });
-
+        .eq("company_id", companyId);
+      if (userId) {  // <-- Add: Only add .or if userId exists
+        query = query.or(`user_id.eq.${userId},assigned_to.eq.${userId}`);
+      }
+      const { data, error } = await query.order("due_date", { ascending: true });
       if (error) throw error;
 
       console.log("🔍 RemindersCard - RAW data from Supabase for company", companyId);
@@ -79,38 +103,6 @@ export default function RemindersCard({ companyId }: Props) {
     if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Reminders
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-gray-500">Loading reminders...</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Reminders
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-red-500">Error loading reminders: {(error as Error).message}</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <>
       <Card>
@@ -127,82 +119,89 @@ export default function RemindersCard({ companyId }: Props) {
           </div>
         </CardHeader>
         <CardContent>
-          {reminders.length === 0 ? (
-            <p className="text-gray-500">No reminders for this company.</p>
-          ) : (
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-left">Title</th>
-                  <th className="text-left">Due Date</th>
-                  <th className="text-left">Priority</th>
-                  <th className="text-left">Status</th>
-                  <th className="text-left">Assigned To</th>
-                  <th className="text-right w-24">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reminders.map((reminder) => (
-                  <tr key={reminder.id}>
-                    <td className="font-medium">
-                      <div>
-                        <button
-                          type="button"
-                          className="text-primary hover:underline cursor-pointer"
-                          onClick={() => handleEdit(reminder)}
-                        >
-                          {safeDisplay(reminder.title)}
-                        </button>
-                        {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
-                      </div>
-                    </td>
-                    <td>{formatDateDE(reminder.due_date)}</td>
-                    <td>
-                      <Badge
-                        className={
-                          reminder.priority === "hoch"
-                            ? "bg-orange-500 text-white"
-                            : reminder.priority === "normal"
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-500 text-white"
-                        }
-                      >
-                        {getPriorityLabel(reminder.priority)}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                        {getReminderStatusLabel(reminder.status)}
-                      </Badge>
-                    </td>
-                    <td>{reminder.assigned_to || "—"}</td>
-                    <td className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          type="button"
-                          onClick={() => handleEdit(reminder)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700"
-                          type="button"
-                          onClick={() => handleDelete(reminder.id)}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <Suspense fallback={<LoadingState count={5} />}>
+            {reminders.length === 0 ? (
+              <p className="text-gray-500">No reminders for this company.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Title</th>
+                      <th className="text-left">Due Date</th>
+                      <th className="text-left">Priority</th>
+                      <th className="text-left">Status</th>
+                      <th className="text-left">Assigned To</th>
+                      <th className="text-right w-24">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reminders.map((reminder) => (
+                      <tr key={reminder.id}>
+                        <td className="font-medium">
+                          <div>
+                            <button
+                              type="button"
+                              className="text-primary hover:underline cursor-pointer"
+                              onClick={() => handleEdit(reminder)}
+                            >
+                              {safeDisplay(reminder.title)}
+                            </button>
+                            {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
+                            <div className="text-xs text-gray-500">
+                              Created on: {formatDateDE(reminder.created_at)} | Updated on: {formatDateDE(reminder.updated_at)}
+                            </div>
+                          </div>
+                        </td>
+                        <td>{formatDateDE(reminder.due_date)}</td>
+                        <td>
+                          <Badge
+                            className={
+                              reminder.priority === "hoch"
+                                ? "bg-orange-500 text-white"
+                                : reminder.priority === "normal"
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-500 text-white"
+                            }
+                          >
+                            {getPriorityLabel(reminder.priority)}
+                          </Badge>
+                        </td>
+                        <td>
+                          <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                            {getReminderStatusLabel(reminder.status)}
+                          </Badge>
+                        </td>
+                        <td>{profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</td>
+                        <td className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              type="button"
+                              onClick={() => handleEdit(reminder)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              type="button"
+                              onClick={() => handleDelete(reminder.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Suspense>
         </CardContent>
       </Card>
 
@@ -230,8 +229,8 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm
-            reminder={null}
+          <ReminderCreateForm
+            preselectedCompanyId={companyId}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
@@ -239,7 +238,6 @@ export default function RemindersCard({ companyId }: Props) {
               toast.success("Reminder saved");
               setAddDialogOpen(false);
             }}
-            preselectedCompanyId={companyId}
           />
         </DialogContent>
       </Dialog>

@@ -3,10 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +16,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
+
+type ReminderWithCompany = Reminder & {
+  companies: { firmenname: string } | null;
+};
 
 function ClientRemindersPage() {
   const queryClient = useQueryClient();
@@ -24,25 +31,47 @@ function ClientRemindersPage() {
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed">(() => {
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "overdue" | "closed" | "my">(() => {
     const status = searchParams.get("status");
-    if (status === "open" || status === "overdue" || status === "closed") return status;
+    if (status === "open" || status === "overdue" || status === "closed" || status === "my") return status;
     return "all";
   });
 
+  const { data: user, error: userError } = useQuery({
+    queryKey: ["user"],
+    queryFn: getCurrentUserClient,
+  });
+
   const {
-    data: reminders = [],
+    data: reminders = [] as ReminderWithCompany[],
     isLoading,
     error,
   } = useQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("reminders").select("*").order("due_date", { ascending: true });
+      const { data, error } = await supabase
+        .from("reminders")
+        .select("*, companies(firmenname)")
+        .order("due_date", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as ReminderWithCompany[];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const stats = useMemo(() => {
@@ -64,8 +93,9 @@ function ClientRemindersPage() {
     if (statusFilter === "closed") return reminders.filter((r) => r.status === "closed");
     if (statusFilter === "overdue")
       return reminders.filter((r) => r.status === "open" && new Date(r.due_date) < new Date());
+    if (statusFilter === "my") return reminders.filter((r) => r.assigned_to === user?.id);
     return reminders;
-  }, [reminders, statusFilter]);
+  }, [reminders, statusFilter, user?.id]);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -85,10 +115,9 @@ function ClientRemindersPage() {
 
   const handleEdit = useCallback((reminder: Reminder) => {
     setEditReminder(reminder);
-    setReminderDialogOpen(true);
   }, []);
 
-  const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed") => {
+  const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed" | "my") => {
     setStatusFilter(filter);
   };
 
@@ -98,12 +127,26 @@ function ClientRemindersPage() {
     }
   }, [searchParams]);
 
+  if (userError) {
+    return (
+      <div className="flex items-center justify-between pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Reminders</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Reminders
+          </h1>
+          <p className="text-red-600">Error loading user data. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Reminders
           </h1>
         </div>
@@ -116,7 +159,7 @@ function ClientRemindersPage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Reminders
           </h1>
         </div>
@@ -129,9 +172,10 @@ function ClientRemindersPage() {
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             Reminders
           </h1>
+          <p className="text-muted-foreground">Carpe Diem</p>
         </div>
         <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
       </div>
@@ -176,7 +220,11 @@ function ClientRemindersPage() {
         >
           Closed
         </Button>
-        <Button variant="outline" size="sm" disabled>
+        <Button
+          variant={statusFilter === "my" ? "default" : "outline"}
+          size="sm"
+          onClick={() => handleFilterChange("my")}
+        >
           My Tasks
         </Button>
       </div>
@@ -214,7 +262,11 @@ function ClientRemindersPage() {
                       )}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
-                        <span>Assigned to: {reminder.assigned_to || "Unassigned"}</span>
+                        <span>Assigned to: {profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</span>
+                        <span>
+                          Company:{" "}
+                          <Link href={`/companies/${reminder.company_id}`}>{reminder.companies?.firmenname}</Link>
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -243,20 +295,27 @@ function ClientRemindersPage() {
       </Card>
 
       {/* Reminder Dialog */}
-      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+      <Dialog open={reminderDialogOpen || !!editReminder} onOpenChange={() => {
+        setReminderDialogOpen(false);
+        setEditReminder(null);
+      }}>
         <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
             <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
           </DialogHeader>
-          <ReminderEditForm
-            reminder={editReminder}
-            onSuccess={() => {
-              setReminderDialogOpen(false);
-              setEditReminder(null);
-              queryClient.invalidateQueries({ queryKey: ["reminders"] });
-            }}
-          />
+          {editReminder ? (
+            <ReminderEditForm
+              reminder={editReminder}
+              onSuccess={() => {
+                setReminderDialogOpen(false);
+                setEditReminder(null);
+                queryClient.invalidateQueries({ queryKey: ["reminders"] });
+              }}
+            />
+          ) : (
+            <ReminderCreateForm onSuccess={() => setReminderDialogOpen(false)} />
+          )}
         </WideDialogContent>
       </Dialog>
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

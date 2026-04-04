@@ -16,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import { createClient } from "@/lib/supabase/browser";
 import { type CompanyForm, companySchema } from "@/lib/validations/company";
 import type { Database } from "@/types/database.types";
 
@@ -76,7 +75,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
         value: data.value ?? null,
         notes: data.notes ?? null,
       };
-      return updateCompany(company.id, mappedData, createClient());
+      return updateCompany(company.id, mappedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
@@ -86,7 +85,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
-      toast.success("Company updated successfully");
+      toast.success("Company updated, awesome!");
       onSuccess?.();
     },
     onError: (error) => {

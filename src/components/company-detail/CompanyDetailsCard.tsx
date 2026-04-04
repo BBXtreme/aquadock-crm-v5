@@ -1,13 +1,13 @@
-// src/components/company-detail/FirmendatenCard.tsx
-// This component displays the company data in a card format. It shows fields like company name, legal form, customer type, company type, website, phone, and email. It also includes an edit button that opens a dialog with a form to edit the company data.
-
+// src/components/company-detail/CompanyDetailsCard.tsx
 "use client";
-import { Building, Edit } from "lucide-react";
+import { Building, Edit, } from "lucide-react";
 import { useState } from "react";
+import AdresseEditForm from "@/components/features/companies/AdresseEditForm";
 import FirmendatenEditForm from "@/components/features/companies/FirmendatenEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getCountryFlag } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 import type { Company } from "@/types/database.types";
 
@@ -15,8 +15,9 @@ interface Props {
   company: Company;
 }
 
-export default function FirmendatenCard({ company }: Props) {
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+export default function CompanyDetailsCard({ company }: Props) {
+  const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
+  const [adresseEditOpen, setAdresseEditOpen] = useState(false);
 
   const formatWebsite = (website: string | null) => {
     if (!website) return safeDisplay(website);
@@ -46,17 +47,24 @@ export default function FirmendatenCard({ company }: Props) {
     );
   };
 
+  const countryFlag = getCountryFlag(company.land);
+
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" /> Firmendaten
+              <Building className="w-5 h-5" /> Company Details
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
-              <Edit className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setFirmendatenEditOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" /> Firmendaten
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" /> Adresse
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -94,14 +102,47 @@ export default function FirmendatenCard({ company }: Props) {
               <p className="text-sm text-gray-900">{formatEmail(company.email)}</p>
             </div>
           </div>
+          <hr className="my-4" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Straße</div>
+              <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">PLZ / Stadt</div>
+              <p className="text-sm text-gray-900">
+                {company.plz ? `${company.plz} ` : ""}
+                {company.stadt || "—"}
+              </p>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">Bundesland</div>
+              <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-gray-700">Land</div>
+              <p className="text-sm text-gray-900 flex items-center gap-2">
+                {countryFlag && <span className="text-xl">{countryFlag}</span>}
+                {company.land || "—"}
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+      <Dialog open={firmendatenEditOpen} onOpenChange={setFirmendatenEditOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Firmendaten</DialogTitle>
           </DialogHeader>
-          <FirmendatenEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
+          <FirmendatenEditForm company={company} onSuccess={() => setFirmendatenEditOpen(false)} />
+        </DialogContent>
+      </Dialog>
+      <Dialog open={adresseEditOpen} onOpenChange={setAdresseEditOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Adresse bearbeiten</DialogTitle>
+          </DialogHeader>
+          <AdresseEditForm company={company} onSuccess={() => setAdresseEditOpen(false)} />
         </DialogContent>
       </Dialog>
     </>

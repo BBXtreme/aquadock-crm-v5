@@ -10,9 +10,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
+import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
-export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoiMarkerPopupProps) {
+export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupProps) {
   const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
@@ -27,8 +28,12 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
   const address = [street, housenumber].filter(Boolean).join(" ") || "";
   const fullAddress = [address, postcode, city].filter(Boolean).join(", ");
 
-  const osmId = `${poi.type}/${poi.id}`;
-  const osmUrl = `https://www.openstreetmap.org/${osmId}`;
+  let osmId = `${poi.type}/${poi.id}`;
+  if (osmId.includes('https://www.openstreetmap.org/')) {
+    const parts = osmId.split('/');
+    osmId = `${parts[parts.length-2]}/${parts[parts.length-1]}`;
+  }
+  const osmUrl = getOpenStreetMapUrl(osmId);
 
   // Local state for water info (shows cached values immediately)
   const [localWater, setLocalWater] = useState<{
@@ -85,7 +90,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         {/* Address */}
         {fullAddress && (
           <div className="flex items-start gap-3 text-sm">
-            <span className="text-muted-foreground mt-0.5 flex-shrink-0">📍</span>
+            <span className="text-muted-foreground mt-0.5 shrink-0">📍</span>
             <span className="text-foreground">{fullAddress}</span>
           </div>
         )}
@@ -93,7 +98,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         {/* Phone */}
         {phone && (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground flex-shrink-0">📞</span>
+            <span className="text-muted-foreground shrink-0">📞</span>
             <a
               href={`tel:${phone}`}
               className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
@@ -106,7 +111,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
         {/* Website */}
         {website && (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground flex-shrink-0">🌐</span>
+            <span className="text-muted-foreground shrink-0">🌐</span>
             <a
               href={website}
               target="_blank"
@@ -138,16 +143,31 @@ export default function OsmPoiMarkerPopup({ poi, onImport, onViewInOsm }: OsmPoi
           size="sm"
           variant="outline"
           className="flex-1"
-          onClick={() => onViewInOsm?.(osmUrl)}
+          asChild
         >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          In OSM ansehen
+          <a
+            href={osmUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            In OSM ansehen
+          </a>
         </Button>
         <Button
           size="sm"
           variant="default"
           className="flex-1"
-          onClick={() => onImport?.(poi)}
+          onClick={() => {
+            if (typeof poi.id === 'string' && poi.id.startsWith('https://www.openstreetmap.org/')) {
+              const parts = poi.id.split('/');
+              const lastPart = parts[parts.length - 1];
+              if (lastPart) {
+                poi.id = lastPart;
+              }
+            }
+            onImport?.(poi);
+          }}
         >
           In CRM importieren
         </Button>

@@ -8,6 +8,7 @@ import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
 import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
+import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
@@ -110,7 +111,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
       {company.osm && (
         <div className="text-xs">
           <a
-            href={company.osm}
+            href={getOpenStreetMapUrl(company.osm)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"

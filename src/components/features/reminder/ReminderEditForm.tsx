@@ -1,4 +1,4 @@
-// src/components/features/ReminderEditForm.tsx
+// src/components/features/reminder/ReminderEditForm.tsx
 // This component renders a form for editing company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
 
 "use client";
@@ -6,9 +6,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import type { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -18,17 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import type { Database } from "@/types/database.types";
-
-const reminderSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  company_id: z.string().min(1, "Company is required"),
-  due_date: z.string().min(1, "Due date is required"),
-  priority: z.string().optional(),
-  status: z.string().optional(),
-  assigned_to: z.string().optional(),
-  description: z.string().optional(),
-});
+import { reminderSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
+import type { Database, } from "@/types/database.types";
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
@@ -36,21 +27,23 @@ export default function ReminderEditForm({
   reminder,
   onSuccess,
   preselectedCompanyId,
+  user,
 }: {
   reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
   preselectedCompanyId?: string;
+  user?: { id: string } | null;
 }) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (data: ReminderFormValues) => {
       if (reminder) {
-        return updateReminder(reminder.id, data, createClient());
+        return updateReminder(reminder.id, { ...toReminderUpdate(data), user_id: user?.id ?? null }, createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(data).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert({ ...toReminderInsert(data), user_id: user?.id ?? null }).select().single();
       if (error) throw error;
       return newData;
     },
@@ -75,10 +68,10 @@ export default function ReminderEditForm({
     defaultValues: {
       title: reminder?.title || "",
       company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-      priority: reminder?.priority || "normal",
-      status: reminder?.status || "open",
-      assigned_to: reminder?.assigned_to || "",
+      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+      priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
+      status: (reminder?.status as "open" | "closed" | null) || "open",
+      assigned_to: reminder?.assigned_to || null,
       description: reminder?.description || "",
     },
   });
@@ -88,10 +81,10 @@ export default function ReminderEditForm({
       form.reset({
         title: reminder.title || "",
         company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : "",
-        priority: reminder.priority || "normal",
-        status: reminder.status || "open",
-        assigned_to: reminder.assigned_to || "",
+        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
+        status: (reminder.status as "open" | "closed" | null) || "open",
+        assigned_to: reminder.assigned_to || null,
         description: reminder.description || "",
       });
     }
@@ -102,6 +95,16 @@ export default function ReminderEditForm({
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("companies").select("id, firmenname");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
       if (error) throw error;
       return data;
     },
@@ -119,7 +122,7 @@ export default function ReminderEditForm({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -132,7 +135,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="company_id"
           render={({ field }) => (
             <FormItem>
@@ -156,7 +159,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="due_date"
           render={({ field }) => (
             <FormItem>
@@ -169,12 +172,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="priority"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Priority</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -193,12 +196,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="status"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -217,26 +220,41 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
+              <Select
+                onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)}
+                value={field.value ?? "unassigned"}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select user" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.display_name || "Unnamed User"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ReminderFormValues>}
           name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>

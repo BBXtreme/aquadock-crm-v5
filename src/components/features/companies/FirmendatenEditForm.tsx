@@ -14,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
-import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -77,7 +76,7 @@ export default function FirmendatenEditForm({
   const updateMutation = useMutation({
     mutationFn: (data: FirmendatenFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>, createClient());
+      return updateCompany(company.id, data as Partial<Company>);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });

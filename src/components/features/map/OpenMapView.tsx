@@ -5,6 +5,7 @@
 "use client";
 
 import L from "leaflet";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
@@ -51,6 +52,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
+  const [hasCentered, setHasCentered] = useState(false);
+
+  const searchParams = useSearchParams();
 
   const { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi } = useMapPopupActions();
 
@@ -142,6 +146,26 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
+  // New effect to handle initial map view from URL params
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+
+    const lat = searchParams.get("lat");
+    const lon = searchParams.get("lon");
+    const zoom = searchParams.get("zoom");
+
+    if (lat && lon) {
+      const latNum = parseFloat(lat);
+      const lonNum = parseFloat(lon);
+      const zoomNum = zoom ? parseInt(zoom, 10) : 15;
+
+      if (!Number.isNaN(latNum) && !Number.isNaN(lonNum)) {
+        mapRef.current.setView([latNum, lonNum], zoomNum);
+      }
+    }
+    setHasCentered(true);
+  }, [mapReady, searchParams]);
+
   // Main POI load handler with debounce
   const handleLoad = useCallback(() => {
     if (!mapRef.current) return;
@@ -196,10 +220,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Initial load
   useEffect(() => {
-    if (!mapReady) return;
+    if (!mapReady || !hasCentered) return;
     const timer = setTimeout(handleLoad, 800);
     return () => clearTimeout(timer);
-  }, [mapReady, handleLoad]);
+  }, [mapReady, hasCentered, handleLoad]);
 
   const tileUrl = isDarkMode
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"

@@ -1,42 +1,49 @@
-import { createClient } from "@/lib/supabase/browser";
-import type { TimelineEntryWithJoins } from "@/types/database.types";
+// src/lib/supabase/services/timeline.ts
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TimelineEntry, TimelineEntryInsert, TimelineEntryUpdate } from "@/types/database.types";
 
-export async function getTimelineEntries(companyId?: string): Promise<TimelineEntryWithJoins[]> {
-  const supabase = createClient();
-
-  let query = supabase
+export async function createTimelineEntry(
+  data: Omit<TimelineEntryInsert, 'id' | 'created_at' | 'updated_at'>,
+  supabase: SupabaseClient
+): Promise<TimelineEntry> {
+  const { data: result, error } = await supabase
     .from("timeline")
-    .select(`
-      *,
-      companies (
-        firmenname,
-        status,
-        kundentyp
-      ),
-      contacts (
-        vorname,
-        nachname,
-        position,
-        email
-      )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (companyId) {
-    query = query.eq("company_id", companyId);
-  }
-
-  const { data, error } = await query;
+    .insert(data)
+    .select()
+    .single();
 
   if (error) throw error;
-
-  return data ?? [];
+  return result;
 }
 
-export async function deleteTimelineEntry(id: string): Promise<void> {
-  const supabase = createClient();
-
-  const { error } = await supabase.from("timeline").delete().eq("id", id);
+export async function updateTimelineEntry(
+  id: string,
+  data: TimelineEntryUpdate,
+  supabase: SupabaseClient
+): Promise<TimelineEntry> {
+  const { data: result, error } = await supabase
+    .from("timeline")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) throw error;
+  return result;
+}
+
+export async function deleteTimelineEntry(id: string, supabase: SupabaseClient): Promise<void> {
+  const { error } = await supabase.from("timeline").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function getTimelineEntries(userId: string, supabase: SupabaseClient): Promise<TimelineEntry[]> {
+  const { data, error } = await supabase
+    .from("timeline")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
 }
