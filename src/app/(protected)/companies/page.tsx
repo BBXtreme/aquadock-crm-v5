@@ -33,9 +33,9 @@ export default async function CompaniesPage() {
 
               {/* Companies Table / Card Skeleton */}
               <div className="space-y-4">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {['row1', 'row2', 'row3', 'row4', 'row5', 'row6', 'row7', 'row8'].map((key) => (
                   <div
-                    key={`companies-skeleton-row-${i}`}
+                    key={`companies-skeleton-${key}`}
                     className="flex items-center gap-6 p-6 border border-border bg-card rounded-2xl"
                   >
                     <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
