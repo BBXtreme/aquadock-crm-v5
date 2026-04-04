@@ -116,11 +116,11 @@ const columns = [
     ),
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.profiles?.display_name || rowA.original.created_by_name || "";
-      const b = rowB.original.profiles?.display_name || rowB.original.created_by_name || "";
+      const a = rowA.original.profiles?.display_name || "";
+      const b = rowB.original.profiles?.display_name || "";
       return a.localeCompare(b);
     },
-    cell: (info) => <span>{info.row.original.profiles?.display_name || info.row.original.created_by_name || "-"}</span>,
+    cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "company",
@@ -339,8 +339,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
           *,
           companies:company_id (firmenname, status, kundentyp),
           contacts:contact_id (vorname, nachname, position, email),
-          profiles!updated_by (display_name),
-          profiles!user_id (display_name as created_by_name)
+          profiles:user_id (display_name)
         `)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -361,7 +360,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     (entry.companies?.firmenname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.contacts?.vorname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
-    (entry.profiles?.display_name || entry.created_by_name || "").toLowerCase().includes(finalSearch.toLowerCase())
+    (entry.profiles?.display_name || "").toLowerCase().includes(finalSearch.toLowerCase())
   ), [finalData, finalSearch]);
 
   const table = useReactTable({
@@ -374,7 +373,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   if (finalIsLoading) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />
+        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />}
         <div className="space-y-2">
           {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
             <Skeleton key={key} className="h-12 w-full" />
@@ -387,7 +386,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   if (internalError && !data) {
     return (
       <div className="space-y-4">
-        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />
+        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />}
         <div className="text-red-500">Error loading timeline: {internalError.message}</div>
       </div>
     );
