@@ -116,11 +116,11 @@ const columns = [
     ),
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
-      const a = rowA.original.profiles?.display_name || "";
-      const b = rowB.original.profiles?.display_name || "";
+      const a = rowA.original.user_id || "";
+      const b = rowB.original.user_id || "";
       return a.localeCompare(b);
     },
-    cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
+    cell: (info) => <span>{info.row.original.user_id || "-"}</span>,
   }) as ColumnDef<TimelineEntryWithJoins>,
   columnHelper.display({
     id: "company",
@@ -338,8 +338,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
         .select(`
           *,
           companies:company_id (firmenname, status, kundentyp),
-          contacts:contact_id (vorname, nachname, position, email),
-          profiles:user_id (display_name)
+          contacts:contact_id (vorname, nachname, position, email)
         `)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -359,8 +358,7 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     (entry.content || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.companies?.firmenname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
     (entry.contacts?.vorname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
-    (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase()) ||
-    (entry.profiles?.display_name || "").toLowerCase().includes(finalSearch.toLowerCase())
+    (entry.contacts?.nachname || "").toLowerCase().includes(finalSearch.toLowerCase())
   ), [finalData, finalSearch]);
 
   const table = useReactTable({
