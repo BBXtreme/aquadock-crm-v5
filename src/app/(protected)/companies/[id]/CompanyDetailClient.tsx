@@ -6,16 +6,21 @@
 
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
+import { toast } from "sonner";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
+import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
 import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
 import CrmCard from "@/components/company-detail/CrmCard";
 import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
 import RemindersCard from "@/components/company-detail/RemindersCard";
 import TimelineCard from "@/components/company-detail/TimelineCard";
+import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import type { Database } from "@/types/database.types";
 
@@ -27,22 +32,70 @@ interface CompanyDetailClientProps {
 
 export default function CompanyDetailClient({ company }: CompanyDetailClientProps) {
   const router = useRouter();
-  const id = company.id;
+  const queryClient = useQueryClient();
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
+
+  const handleAddTimeline = () => setAddTimelineDialogOpen(true);
+  const handleEdit = () => setEditDialogOpen(true);
 
   return (
     <Suspense fallback={<LoadingState count={8} />}>
       <div className="container mx-auto p-6 space-y-8">
-        <CompanyHeader company={company} id={id} router={router} />
+        <CompanyHeader
+          company={company}
+          router={router}
+          onAddTimeline={handleAddTimeline}
+          onEdit={handleEdit}
+        />
         <CompanyKpiCards company={company} />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <CompanyDetailsCard company={company} />
           <AquaDockCard company={company} />
           <CrmCard company={company} />
         </div>
-        <LinkedContactsCard companyId={id} />
-        <RemindersCard companyId={id} />
-        <TimelineCard companyId={id} />
+        <LinkedContactsCard companyId={company.id} />
+        <RemindersCard companyId={company.id} />
+        <TimelineCard companyId={company.id} />
       </div>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Company</DialogTitle>
+          </DialogHeader>
+          <CompanyEditForm
+            company={company}
+            onSuccess={() => {
+              setEditDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["companies"] });
+              queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+              toast.success("Company updated");
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Timeline Entry</DialogTitle>
+          </DialogHeader>
+          <TimelineEntryForm
+            onSubmit={async (values) => {
+              // Handle timeline creation
+              console.log("Timeline values:", values);
+              setAddTimelineDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["timeline", company.id] });
+              toast.success("Timeline entry added");
+            }}
+            isSubmitting={false}
+            companies={[]}
+            contacts={[]}
+            preselectedCompanyId={company.id}
+          />
+        </DialogContent>
+      </Dialog>
     </Suspense>
   );
 }

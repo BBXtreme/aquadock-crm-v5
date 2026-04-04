@@ -10,13 +10,12 @@ import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } 
 
 interface Props {
   company: Company;
-  id: string;
   router: { push: (href: string) => void };
   onAddTimeline: () => void;
   onEdit: () => void;
 }
 
-export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
+export default function CompanyHeader({ company, router, onAddTimeline, onEdit }: Props) {
   const countryFlag = getCountryFlag(company.land);
 
   return (
