@@ -25,13 +25,23 @@ export default function RemindersCard({ companyId }: Props) {
 
   console.log("RemindersCard companyId:", companyId);
 
+  const { data: profiles = [] } = useSuspenseQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: reminders = [] } = useSuspenseQuery({
     queryKey: ["reminders", companyId],
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("reminders")
-        .select("*, profiles(display_name)")
+        .select("*")
         .eq("company_id", companyId)
         .order("due_date", { ascending: true });
 
@@ -142,7 +152,7 @@ export default function RemindersCard({ companyId }: Props) {
                             {getReminderStatusLabel(reminder.status)}
                           </Badge>
                         </td>
-                        <td>{reminder.profiles?.display_name || "Unassigned"}</td>
+                        <td>{profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

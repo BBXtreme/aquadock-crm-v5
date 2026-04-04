@@ -20,7 +20,6 @@ import type { Reminder } from "@/types/database.types";
 
 type ReminderWithCompany = Reminder & {
   companies: { firmenname: string } | null;
-  profiles: { display_name: string | null } | null;
 };
 
 function ClientRemindersPage() {
@@ -46,12 +45,22 @@ function ClientRemindersPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("reminders")
-        .select("*, companies(firmenname), profiles(display_name)")
+        .select("*, companies(firmenname)")
         .order("due_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReminderWithCompany[];
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const stats = useMemo(() => {
@@ -94,7 +103,6 @@ function ClientRemindersPage() {
 
   const handleEdit = useCallback((reminder: Reminder) => {
     setEditReminder(reminder);
-    setReminderDialogOpen(true);
   }, []);
 
   const handleFilterChange = (filter: "all" | "open" | "overdue" | "closed") => {
@@ -223,7 +231,7 @@ function ClientRemindersPage() {
                       )}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
-                        <span>Assigned to: {reminder.profiles?.display_name || "Unassigned"}</span>
+                        <span>Assigned to: {profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</span>
                         <span>
                           Company:{" "}
                           <Link href={`/companies/${reminder.company_id}`}>{reminder.companies?.firmenname}</Link>
