@@ -86,7 +86,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
-      toast.success("Company updated successfully");
+      toast.success("Company updated, awesome!");
       onSuccess?.();
     },
     onError: (error) => {
