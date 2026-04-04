@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -371,14 +372,20 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={finalData}
-      loading={finalIsLoading}
-      globalFilter={finalSearch}
-      onGlobalFilterChange={finalOnSearchChange}
-      searchPlaceholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
-      loadingComponent={loadingComponent}
-    />
+    <div className="space-y-4">
+      <Input
+        placeholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
+        value={finalSearch}
+        onChange={(e) => finalOnSearchChange(e.target.value)}
+      />
+      <DataTable
+        columns={columns}
+        data={finalData}
+        loading={finalIsLoading}
+        globalFilter={finalSearch}
+        onGlobalFilterChange={finalOnSearchChange}
+        loadingComponent={loadingComponent}
+      />
+    </div>
   );
 }
