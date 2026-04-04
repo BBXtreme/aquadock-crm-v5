@@ -46,7 +46,7 @@ const columns = [
       return <span>{formatted}</span>;
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("type", {
+  columnHelper.accessor("activity_type", {
     header: ({ column }) => (
       <button
         type="button"
@@ -60,7 +60,7 @@ const columns = [
     ),
     enableSorting: true,
     cell: (info) => {
-      const type = info.row.original.type;
+      const type = info.row.original.activity_type;
       const getIcon = (t: string) => {
         switch (t) {
           case "note":
@@ -328,15 +328,6 @@ interface TimelineTableProps {
 
 export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps = {}) {
   const [internalSearch, setInternalSearch] = useState("");
-
-  const { data: user } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
-    },
-  });
 
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({
     queryKey: ["timeline"],
