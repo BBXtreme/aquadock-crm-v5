@@ -5,7 +5,7 @@ import {
   Bell,
   Building,
   ChevronDown,
-  FileText,
+  History,
   Mail,
   MapPin,
   PanelLeft,
@@ -37,7 +37,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     { name: "Reminders", href: "/reminders", icon: Bell },
     { name: "Companies", href: "/companies", icon: Building },
     { name: "Contacts", href: "/contacts", icon: Users },
-    { name: "Timeline", href: "/timeline", icon: FileText },
+    { name: "Timeline", href: "/timeline", icon: History },
     { name: "OpenMap", href: "/openmap", icon: MapPin },
     { name: "Mass Email", href: "/mass-email", icon: Mail },
   ];
