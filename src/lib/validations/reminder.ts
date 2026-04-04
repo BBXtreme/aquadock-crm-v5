@@ -28,7 +28,7 @@ export const reminderFormSchema = z.object({
 
   company_id: z.string({ required_error: "Zugehöriges Unternehmen ist erforderlich" }).uuid("Ungültige Unternehmens-ID"),
 
-  assigned_to: z.string().trim().max(100, "Zugewiesen an darf maximal 100 Zeichen lang sein").nullable().optional(),
+  assigned_to: z.string().uuid("Ungültige Benutzer-ID").nullable().optional(),
 }).strict();
 
 export type ReminderFormValues = z.infer<typeof reminderFormSchema>;
