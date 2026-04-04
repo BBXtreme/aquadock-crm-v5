@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { createClient } from "@/lib/supabase/browser";
+import { getCurrentUserClient } from "@/lib/auth/get-current-user";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface Props {
@@ -25,9 +26,11 @@ export default function TimelineCard({ companyId }: Props) {
   const { data: user } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
-      const supabase = createClient();
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) throw new Error("User not found");
+      const user = await getCurrentUserClient();
+      if (!user) {
+        console.warn("User not authenticated; timeline actions may be limited.");
+        return null; // Return null instead of throwing
+      }
       return user;
     },
   });
