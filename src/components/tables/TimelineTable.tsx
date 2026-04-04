@@ -69,7 +69,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       }).format(new Date(date as string)).replace(',', '');
       return <span>{formatted}</span>;
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.accessor("activity_type", {
     id: "Aktivität",
     header: "Aktivität",
@@ -83,7 +83,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         </Badge>
       );
     },
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Benutzer",
     header: "Benutzer",
@@ -94,7 +94,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
       return a.localeCompare(b);
     },
     cell: (info) => <span>{info.row.original.profiles?.display_name || "-"}</span>,
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Firma",
     header: "Firma",
@@ -113,7 +113,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Kontakt",
     header: "Kontakt",
@@ -132,7 +132,7 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <span className="text-muted-foreground">-</span>
       )
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Titel & Beschreibung",
     header: "Titel & Beschreibung",
@@ -148,12 +148,12 @@ const columns: ColumnDef<TimelineEntryWithJoins>[] = [
         <div className="text-sm text-muted-foreground">{info.row.original.content || "-"}</div>
       </div>
     ),
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
   columnHelper.display({
     id: "Aktionen",
     header: "Aktionen",
     cell: (info) => <ActionCell entry={info.row.original} />,
-  }) as ColumnDef<TimelineEntryWithJoins>,
+  }),
 ];
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
