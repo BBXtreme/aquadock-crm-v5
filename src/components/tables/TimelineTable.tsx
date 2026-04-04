@@ -42,11 +42,11 @@ const columns = [
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      }).format(new Date(date as string));
+      }).format(new Date(date as string)).replace(',', '');
       return <span>{formatted}</span>;
     },
   }) as ColumnDef<TimelineEntryWithJoins>,
-  columnHelper.accessor("activity_type", {
+  columnHelper.accessor("type", {
     header: ({ column }) => (
       <button
         type="button"
@@ -60,7 +60,7 @@ const columns = [
     ),
     enableSorting: true,
     cell: (info) => {
-      const type = info.row.original.activity_type;
+      const type = info.row.original.type;
       const getIcon = (t: string) => {
         switch (t) {
           case "note":
