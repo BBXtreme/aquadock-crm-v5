@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,8 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
-import { type ReminderFormValues, reminderFormSchema } from "@/lib/validations/reminder";
+import { reminderFormSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
 import type { Database } from "@/types/database.types";
+
+type ReminderFormValues = z.input<typeof reminderFormSchema>;
 
 export default function ReminderEditForm({
   reminder,
@@ -34,11 +37,11 @@ export default function ReminderEditForm({
   const mutation = useMutation({
     mutationFn: async (data: ReminderFormValues) => {
       if (reminder) {
-        return updateReminder(reminder.id, data, createClient());
+        return updateReminder(reminder.id, toReminderUpdate(data), createClient());
       }
       // create
       const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert(data).select().single();
+      const { data: newData, error } = await supabase.from("reminders").insert(toReminderInsert(data)).select().single();
       if (error) throw error;
       return newData;
     },
@@ -249,7 +252,7 @@ export default function ReminderEditForm({
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
