@@ -127,18 +127,14 @@ export function DataTable<TData>({
   });
 
   const exportToCSV = () => {
-    const headers = columns
-      .map((col) => String(col.header || col.id || ""))
-      .join(",");
-    const rows = data.map((row) =>
-      columns
-        .map((col) => {
-          // Safe accessor access without 'any'
-          const accessorKey = (col as any).accessorKey as keyof TData | undefined;
-          const value = accessorKey ? row[accessorKey] : "";
-          return typeof value === "string" ? `"${value.replace(/"/g, '""')}"` : String(value || "");
-        })
-        .join(",")
+    const visibleColumns = table.getVisibleFlatColumns();
+    const headers = visibleColumns.map((col) => col.id).join(",");
+    const rows = table.getFilteredRowModel().rows.map((row) =>
+      visibleColumns.map((col) => {
+        const cell = row.getCell(col.id);
+        const value = cell.getValue();
+        return typeof value === "string" ? `"${value.replace(/"/g, '""')}"` : String(value || "");
+      }).join(",")
     );
     const csv = [headers, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
