@@ -161,7 +161,10 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
           onClick={() => {
             if (typeof poi.id === 'string' && poi.id.startsWith('https://www.openstreetmap.org/')) {
               const parts = poi.id.split('/');
-              poi.id = parts[parts.length-1];
+              const lastPart = parts[parts.length - 1];
+              if (lastPart) {
+                poi.id = lastPart;
+              }
             }
             onImport?.(poi);
           }}
