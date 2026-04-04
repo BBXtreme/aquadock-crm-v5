@@ -143,6 +143,9 @@ export default function RemindersCard({ companyId }: Props) {
                               {safeDisplay(reminder.title)}
                             </button>
                             {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
+                            <div className="text-xs text-gray-500">
+                              Created on: {formatDateDE(reminder.created_at)} | Updated on: {formatDateDE(reminder.updated_at)}
+                            </div>
                           </div>
                         </td>
                         <td>{formatDateDE(reminder.due_date)}</td>
