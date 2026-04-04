@@ -290,16 +290,6 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
   const finalData = data || internalData;
   const finalIsLoading = isLoading !== undefined ? isLoading : internalLoading;
 
-  if (finalIsLoading) {
-    return (
-      <div className="space-y-2">
-        {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
-          <Skeleton key={key} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
-
   if (internalError && !data) {
     return (
       <div className="space-y-4">
@@ -312,7 +302,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
     <DataTable
       columns={columns}
       data={finalData}
-      loading={false}
+      loading={finalIsLoading}
       pagination={pagination}
       onPaginationChange={setPagination}
     />
