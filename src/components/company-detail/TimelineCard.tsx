@@ -55,6 +55,16 @@ export default function TimelineCard({ companyId }: Props) {
     },
   });
 
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("id, display_name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const supabase = createClient();
@@ -180,7 +190,7 @@ export default function TimelineCard({ companyId }: Props) {
                         </td>
                         <td>{entry.companies?.firmenname || "—"}</td>
                         <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
-                        <td>{entry.profiles?.display_name || entry.user_name || "—"}</td>
+                        <td>{profiles.find(p => p.id === entry.created_by)?.display_name || "Unassigned"}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button
