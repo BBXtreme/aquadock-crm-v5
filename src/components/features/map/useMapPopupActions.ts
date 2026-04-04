@@ -32,7 +32,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   let osmId = poi.id;
   if (typeof osmId === 'string' && osmId.startsWith('https://www.openstreetmap.org/')) {
     const parts = osmId.split('/');
-    osmId = parts[parts.length - 1];
+    osmId = parts[parts.length - 1] as string;
   }
 
   const formData = {
