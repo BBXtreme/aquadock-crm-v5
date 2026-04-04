@@ -46,7 +46,7 @@ export async function getCurrentUserClient(): Promise<AuthUser | null> {
 
   return {
     id: user.id,
-    email: user.email,
+    email: user.email || null,
     user_metadata: user.user_metadata,
     role: (user.user_metadata?.role as UserRole) || "user",
     display_name: user.user_metadata?.display_name || null,
