@@ -5,6 +5,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -30,7 +31,7 @@ const reminderSchema = z.object({
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
-export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => void }) {
+export default function ReminderCreateForm({ onSuccess, preselectedCompanyId }: { onSuccess?: () => void; preselectedCompanyId?: string }) {
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
@@ -57,7 +58,7 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
     resolver: zodResolver(reminderSchema),
     defaultValues: {
       title: "",
-      company_id: "",
+      company_id: preselectedCompanyId || "",
       due_date: "",
       priority: "normal",
       status: "open",
@@ -65,6 +66,12 @@ export default function ReminderCreateForm({ onSuccess }: { onSuccess?: () => vo
       description: "",
     },
   });
+
+  useEffect(() => {
+    if (preselectedCompanyId) {
+      form.setValue("company_id", preselectedCompanyId);
+    }
+  }, [preselectedCompanyId, form]);
 
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
     mutationFn: (data: ReminderFormValues) => createReminder(data, createClient()),

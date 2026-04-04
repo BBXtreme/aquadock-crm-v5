@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -264,20 +265,27 @@ function ClientRemindersPage() {
       </Card>
 
       {/* Reminder Dialog */}
-      <Dialog open={reminderDialogOpen} onOpenChange={setReminderDialogOpen}>
+      <Dialog open={reminderDialogOpen || !!editReminder} onOpenChange={() => {
+        setReminderDialogOpen(false);
+        setEditReminder(null);
+      }}>
         <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
             <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
           </DialogHeader>
-          <ReminderEditForm
-            reminder={editReminder}
-            onSuccess={() => {
-              setReminderDialogOpen(false);
-              setEditReminder(null);
-              queryClient.invalidateQueries({ queryKey: ["reminders"] });
-            }}
-          />
+          {editReminder ? (
+            <ReminderEditForm
+              reminder={editReminder}
+              onSuccess={() => {
+                setReminderDialogOpen(false);
+                setEditReminder(null);
+                queryClient.invalidateQueries({ queryKey: ["reminders"] });
+              }}
+            />
+          ) : (
+            <ReminderCreateForm onSuccess={() => setReminderDialogOpen(false)} />
+          )}
         </WideDialogContent>
       </Dialog>
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

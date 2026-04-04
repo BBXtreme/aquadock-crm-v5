@@ -4,6 +4,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
+import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -209,8 +210,8 @@ export default function RemindersCard({ companyId }: Props) {
           <DialogHeader>
             <DialogTitle>Add Reminder</DialogTitle>
           </DialogHeader>
-          <ReminderEditForm
-            reminder={null}
+          <ReminderCreateForm
+            preselectedCompanyId={companyId}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
@@ -218,7 +219,6 @@ export default function RemindersCard({ companyId }: Props) {
               toast.success("Reminder saved");
               setAddDialogOpen(false);
             }}
-            preselectedCompanyId={companyId}
           />
         </DialogContent>
       </Dialog>
