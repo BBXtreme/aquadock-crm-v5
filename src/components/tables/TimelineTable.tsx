@@ -10,6 +10,7 @@ import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -329,6 +330,16 @@ interface TimelineTableProps {
 export default function TimelineTable({ data, isLoading, search, onSearchChange }: TimelineTableProps = {}) {
   const [internalSearch, setInternalSearch] = useState("");
 
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+  });
+
   const { data: internalData = [], isLoading: internalLoading } = useQuery({
     queryKey: ["timeline"],
     queryFn: async () => {
@@ -341,12 +352,13 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
           contacts:contact_id (vorname, nachname, position, email),
           profiles:user_id (display_name)
         `)
+        .eq("user_id", user?.id || "")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
     },
-    enabled: !data,
+    enabled: !data && !!user,
   });
 
   const finalData = data || internalData;
@@ -363,59 +375,14 @@ export default function TimelineTable({ data, isLoading, search, onSearchChange 
     (entry.profiles?.display_name || "").toLowerCase().includes(finalSearch.toLowerCase())
   ), [finalData, finalSearch]);
 
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
-
-  if (finalIsLoading) {
-    return (
-      <div className="space-y-4">
-        <Input placeholder="Suche..." value={finalSearch} onChange={(e) => finalOnSearchChange(e.target.value)} />
-        <div className="space-y-2">
-          {["timeline-skeleton-1", "timeline-skeleton-2", "timeline-skeleton-3", "timeline-skeleton-4", "timeline-skeleton-5", "timeline-skeleton-6"].map((key) => (
-            <Skeleton key={key} className="h-12 w-full" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <Input
-        placeholder="Suche nach Titel, Beschreibung, Firma oder Kontakt..."
-        value={finalSearch}
-        onChange={(e) => finalOnSearchChange(e.target.value)}
-      />
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b">
-                {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="text-left p-2 font-medium">
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b hover:bg-gray-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="p-2">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      data={filteredData}
+      columns={columns}
+      globalFilter={finalSearch}
+      onGlobalFilterChange={finalOnSearchChange}
+      loading={finalIsLoading}
+      pageSize={100}
+    />
   );
 }
