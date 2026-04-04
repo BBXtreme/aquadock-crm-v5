@@ -177,3 +177,11 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
 export function getOpenStreetMapUrl(osm: string | null | undefined): string {
   return osm ? `https://www.openstreetmap.org/${osm}` : "";
 }
+
+export function normalizeOsmId(osm: string): string {
+  if (osm.startsWith('https://www.openstreetmap.org/')) {
+    const parts = osm.split('/');
+    return `${parts[3]}/${parts[4]}`;
+  }
+  return osm;
+}
