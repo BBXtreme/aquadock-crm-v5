@@ -15,7 +15,7 @@ export async function getBrevoApiKey(userId: string): Promise<string | null> {
     throw new Error(`Failed to fetch Brevo API key: ${error.message}`);
   }
 
-  return data?.value as string | null;
+  return ((data?.value as Json) as any)?.apiKey || (data?.value as string) || null;
 }
 
 export async function createBrevoContact(apiKey: string, contactData: { email: string; attributes?: Record<string, any> }) {
