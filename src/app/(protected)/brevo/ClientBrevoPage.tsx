@@ -18,7 +18,10 @@ export default function ClientBrevoPage({ templates }: ClientBrevoPageProps) {
   return (
     <div className="space-y-8">
       <BrevoCampaignForm />
-      <BrevoRecipientSelector selectedRecipients={selectedRecipients} setSelectedRecipients={setSelectedRecipients} />
+      <BrevoRecipientSelector
+        selectedRecipients={selectedRecipients}
+        setSelectedRecipients={setSelectedRecipients}
+      />
       <BrevoTemplateSelector templates={templates} />
       <BrevoCampaignList />
     </div>
