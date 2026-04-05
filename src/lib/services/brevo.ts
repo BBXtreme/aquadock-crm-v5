@@ -1,45 +1,54 @@
 // src/lib/services/brevo.ts
+import { BrevoClient } from "@getbrevo/brevo";
 import { createClient } from "@/lib/supabase/browser";
-
-const BREVO_API_URL = "https://api.brevo.com/v3";
 
 export async function getBrevoApiKey(userId: string): Promise<string | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("user_settings")
     .select("value")
     .eq("user_id", userId)
     .eq("key", "brevo_api_key")
     .single();
+
+  if (error) {
+    throw new Error(`Failed to fetch Brevo API key: ${error.message}`);
+  }
+
   return data?.value as string | null;
 }
 
-export async function createBrevoContact(apiKey: string, contact: { email: string; attributes: Record<string, unknown> }) {
-  const response = await fetch(`${BREVO_API_URL}/contacts`, {
-    method: "POST",
-    headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify(contact),
-  });
-  if (!response.ok) throw new Error("Failed to create Brevo contact");
-  return response.json();
+export async function createBrevoContact(apiKey: string, contactData: { email: string; attributes?: Record<string, any> }) {
+  const brevo = new BrevoClient({ apiKey });
+  const contactsApi = brevo.contacts;
+
+  try {
+    const response = await contactsApi.createContact({
+      email: contactData.email,
+      attributes: contactData.attributes || {},
+    });
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to create Brevo contact: ${error.message}`);
+  }
 }
 
-export async function createBrevoList(apiKey: string, name: string) {
-  const response = await fetch(`${BREVO_API_URL}/contacts/lists`, {
-    method: "POST",
-    headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
-  });
-  if (!response.ok) throw new Error("Failed to create Brevo list");
-  return response.json();
-}
+export async function sendBrevoCampaign(apiKey: string, campaignData: { name: string; subject: string; htmlContent: string; listIds: number[]; scheduledAt?: string }) {
+  const brevo = new BrevoClient({ apiKey });
+  const emailCampaignsApi = brevo.emailCampaigns;
 
-export async function sendBrevoCampaign(apiKey: string, campaign: { name: string; subject: string; htmlContent: string; listIds: number[] }) {
-  const response = await fetch(`${BREVO_API_URL}/emailCampaigns`, {
-    method: "POST",
-    headers: { "api-key": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify(campaign),
-  });
-  if (!response.ok) throw new Error("Failed to send Brevo campaign");
-  return response.json();
+  try {
+    const response = await emailCampaignsApi.createEmailCampaign({
+      name: campaignData.name,
+      subject: campaignData.subject,
+      htmlContent: campaignData.htmlContent,
+      recipients: {
+        listIds: campaignData.listIds,
+      },
+      scheduledAt: campaignData.scheduledAt,
+    });
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to send Brevo campaign: ${error.message}`);
+  }
 }
