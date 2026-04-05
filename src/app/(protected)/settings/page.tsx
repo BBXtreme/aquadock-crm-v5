@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
+import BrevoSettingsForm from "@/components/features/settings/BrevoSettingsForm";
 import ClientSettingsPage from "./ClientSettingsPage";
 
 export default async function SettingsPage() {
@@ -81,6 +82,12 @@ export default async function SettingsPage() {
         >
           <ClientSettingsPage />
         </Suspense>
+
+        {/* Brevo Settings Section */}
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <h2 className="text-xl font-semibold mb-6">Brevo Settings</h2>
+          <BrevoSettingsForm />
+        </div>
       </div>
     </div>
   );
