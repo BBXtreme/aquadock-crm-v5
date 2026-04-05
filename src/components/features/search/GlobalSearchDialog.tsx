@@ -6,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Bell, Building, Clock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { performGlobalSearch } from "@/lib/actions/search";
 import { searchKeys } from "@/lib/query/keys";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -57,6 +57,7 @@ export function GlobalSearchDialog({ open, setOpen }: GlobalSearchDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="p-0">
+        <DialogTitle className="sr-only">Global Search</DialogTitle>
         <Command className="rounded-lg border shadow-md">
           <CommandInput
             placeholder="Search companies, contacts, reminders..."

@@ -11,7 +11,7 @@ interface SelectedCompany {
   stadt: string | null;
   kundentyp: string;
   status: string;
-  search_vector: unknown;
+  rank: number;
 }
 
 interface SelectedContact {
@@ -20,7 +20,7 @@ interface SelectedContact {
   nachname: string;
   email: string | null;
   position: string | null;
-  search_vector: unknown;
+  rank: number;
 }
 
 interface SelectedReminder {
@@ -54,14 +54,17 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
   });
   const query = validated.query;
 
+  const { data: tsQuery, error: tsQueryError } = await supabase.rpc('websearch_to_tsquery', { config: 'german', query });
+  if (tsQueryError) throw handleSupabaseError(tsQueryError);
+
   const results: SearchResult[] = [];
 
-  // Companies: full-text on search_vector, fallback ilike on firmenname, stadt, kundentyp, status
+  // Companies: full-text with rank
   const { data: companies, error: companiesError } = await supabase
     .from("companies")
-    .select("id, firmenname, stadt, kundentyp, status, search_vector")
+    .select(`id, firmenname, stadt, kundentyp, status, ts_rank(search_vector, '${tsQuery}') as rank`)
     .eq("user_id", user.id)
-    .order("ts_rank(search_vector, websearch_to_tsquery('german', query))", { ascending: false })
+    .order("rank", { ascending: false })
     .limit(20);
 
   if (companiesError) throw handleSupabaseError(companiesError);
@@ -75,12 +78,12 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     });
   });
 
-  // Contacts: similar pattern
+  // Contacts: full-text with rank
   const { data: contacts, error: contactsError } = await supabase
     .from("contacts")
-    .select("id, vorname, nachname, email, position, search_vector")
+    .select(`id, vorname, nachname, email, position, ts_rank(search_vector, '${tsQuery}') as rank`)
     .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
-    .order("ts_rank(search_vector, websearch_to_tsquery('german', query))", { ascending: false })
+    .order("rank", { ascending: false })
     .limit(20);
 
   if (contactsError) throw handleSupabaseError(contactsError);
@@ -94,7 +97,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     });
   });
 
-  // Reminders: ilike on title/description
+  // Reminders: ilike
   const { data: reminders, error: remindersError } = await supabase
     .from("reminders")
     .select("id, title, description")
@@ -114,7 +117,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     });
   });
 
-  // Timeline: ilike on title/content
+  // Timeline: ilike
   const { data: timeline, error: timelineError } = await supabase
     .from("timeline")
     .select("id, title, content, activity_type")
@@ -134,5 +137,5 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     });
   });
 
-  return results.slice(0, 20); // Total limit 20
+  return results.slice(0, 20);
 }
