@@ -9,8 +9,7 @@ export default async function BrevoPage() {
   const supabase = await createServerSupabaseClient();
   const { data: templates } = await supabase
     .from("email_templates")
-    .select("*")
-    .eq("user_id", user.id);
+    .select("*");
 
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
