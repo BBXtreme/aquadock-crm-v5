@@ -11,7 +11,7 @@ interface SelectedCompany {
   stadt: string | null;
   kundentyp: string;
   status: string;
-  search_vector: any;
+  search_vector: unknown;
 }
 
 interface SelectedContact {
@@ -20,7 +20,7 @@ interface SelectedContact {
   nachname: string;
   email: string | null;
   position: string | null;
-  search_vector: any;
+  search_vector: unknown;
 }
 
 interface SelectedReminder {

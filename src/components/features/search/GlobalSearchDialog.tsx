@@ -39,8 +39,9 @@ export function GlobalSearchDialog({ open, setOpen }: GlobalSearchDialogProps) {
   });
 
   const groupedResults = results.reduce((acc, result) => {
-    if (!acc[result.type]) acc[result.type] = [];
-    acc[result.type].push(result);
+    const type = result.type;
+    if (!acc[type]) acc[type] = [];
+    acc[type]!.push(result);
     return acc;
   }, {} as Record<string, typeof results>);
 

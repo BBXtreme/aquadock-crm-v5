@@ -4,7 +4,7 @@
  * Throws a standardized error for client consumption.
  */
 
-export function handleSupabaseError(error: any): never {
+export function handleSupabaseError(error: unknown): never {
   console.error("Supabase error:", error);
-  throw new Error(error.message || "An unexpected error occurred");
+  throw new Error(error instanceof Error ? error.message : "An unexpected error occurred");
 }
