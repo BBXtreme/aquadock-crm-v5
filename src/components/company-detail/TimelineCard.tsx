@@ -126,6 +126,7 @@ export default function TimelineCard({ companyId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      queryClient.refetchQueries({ queryKey: ["timeline", companyId] });
       toast.success("Timeline entry updated");
       setEditEntry(null);
     },
@@ -139,7 +140,7 @@ export default function TimelineCard({ companyId }: Props) {
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id });
+      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id, user_id: user.id });
       if (error) throw error;
     },
     onSuccess: () => {
