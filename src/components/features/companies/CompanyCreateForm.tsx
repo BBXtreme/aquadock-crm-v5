@@ -16,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
-import { createClient } from "@/lib/supabase/browser";
 import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
@@ -49,7 +48,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   });
 
   const mutation = useMutation({
-    mutationFn: (company: CompanyFormValues) => createCompany(company, createClient()),
+    mutationFn: (company: CompanyFormValues) => createCompany(company),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Unternehmen erfolgreich angelegt");
