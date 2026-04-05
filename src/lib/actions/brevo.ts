@@ -15,12 +15,17 @@ export async function syncContactsToBrevo(formData: FormData) {
   const validated = brevoSyncSchema.parse(data);
 
   const supabase = await createServerSupabaseClient();
-  const { data: contacts } = await supabase
-    .from("contacts")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq(validated.filterKundentyp ? "kundentyp" : "", validated.filterKundentyp || "")
-    .eq(validated.filterStatus ? "status" : "", validated.filterStatus || "");
+  let query = supabase.from("contacts").select("*").eq("user_id", user.id);
+
+  if (validated.filterKundentyp) {
+    query = query.eq("kundentyp", validated.filterKundentyp);
+  }
+
+  if (validated.filterStatus) {
+    query = query.eq("status", validated.filterStatus);
+  }
+
+  const { data: contacts } = await query;
 
   for (const contact of contacts || []) {
     await createBrevoContact(apiKey, {
