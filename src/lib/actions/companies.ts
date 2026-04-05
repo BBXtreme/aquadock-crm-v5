@@ -4,7 +4,6 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
@@ -117,7 +116,7 @@ export async function createCompany(values: CompanyFormValues, supabase?: Supaba
     throw new Error("Validierungsfehler beim Erstellen des Unternehmens");
   }
 
-  const client = supabase ?? createClient();
+  const client = supabase ?? await createServerSupabaseClient();
   const insertData = toCompanyInsert(validated.data);
 
   // Temporary fallback until full auth is implemented
@@ -147,7 +146,7 @@ export async function updateCompany(
    DELETE COMPANY
    ────────────────────────────────────────────────────────────── */
 export async function deleteCompany(id: string, supabase?: SupabaseClient): Promise<void> {
-  const client = supabase ?? createClient();
+  const client = supabase ?? await createServerSupabaseClient();
   const { error } = await client.from("companies").delete().eq("id", id);
 
   if (error) throw handleSupabaseError(error, "deleteCompany");
@@ -180,7 +179,7 @@ export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
 export async function importCompaniesFromCSV(
   rows: ParsedCompanyRow[]
 ): Promise<{ imported: number; errors: string[]; importBatch: string }> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
   const importBatch = new Date().toISOString();
 
   try {
