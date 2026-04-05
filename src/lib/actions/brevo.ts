@@ -40,22 +40,32 @@ export async function createBrevoCampaign(formData: FormData) {
   if (!apiKey) throw new Error("Brevo API key not configured");
 
   const data = Object.fromEntries(formData);
-  const listIds = (data.listIds as string).split(',').map(Number).filter(n => !Number.isNaN(n));
   const selectedRecipients = data.selectedRecipients ? JSON.parse(data.selectedRecipients as string) : null;
   const selectedTemplate = data.selectedTemplate as string;
 
-  let validated = brevoCampaignSchema.parse({ ...data, listIds });
+  const validated = brevoCampaignSchema.parse({
+    name: data.name as string,
+    subject: data.subject as string,
+    htmlContent: data.htmlContent as string,
+    listIds: data.listIds as string,
+    selectedTemplate: data.selectedTemplate as string,
+    scheduledAt: data.scheduledAt as string,
+  });
+
+  const listIdsArray = validated.listIds.split(',').map(Number).filter(n => !Number.isNaN(n));
 
   const supabase = await createServerSupabaseClient();
 
   if (selectedTemplate) {
     const { data: template } = await supabase.from("email_templates").select("*").eq("id", selectedTemplate).single();
     if (template) {
-      validated = { ...validated, name: template.name, subject: template.subject, htmlContent: template.body };
+      validated.name = template.name;
+      validated.subject = template.subject;
+      validated.htmlContent = template.body;
     }
   }
 
-  let finalListIds = validated.listIds;
+  let finalListIds = listIdsArray;
   if (selectedRecipients && selectedRecipients.length > 0) {
     const listName = `${validated.name} Recipients`;
     const list = await createBrevoList(apiKey, listName);
@@ -69,7 +79,13 @@ export async function createBrevoCampaign(formData: FormData) {
     finalListIds = [listId];
   }
 
-  const campaign = await sendBrevoCampaign(apiKey, { ...validated, listIds: finalListIds });
+  const campaign = await sendBrevoCampaign(apiKey, {
+    name: validated.name,
+    subject: validated.subject,
+    htmlContent: validated.htmlContent,
+    listIds: finalListIds,
+    scheduledAt: validated.scheduledAt,
+  });
 
   await supabase.from("email_log").insert({
     recipient_email: "campaign@brevo.com",
