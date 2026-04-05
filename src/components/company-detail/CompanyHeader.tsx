@@ -62,7 +62,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={async () => {
-                    await deleteCompany(id, createClient());
+                    await deleteCompany(id);
                     router.push("/companies");
                   }}
                 >

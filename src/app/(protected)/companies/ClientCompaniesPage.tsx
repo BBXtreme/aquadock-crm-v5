@@ -272,7 +272,7 @@ function ClientCompaniesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCompany(id, createClient()),
+    mutationFn: (id: string) => deleteCompany(id),
     onMutate: async (id) => {
       const queryKey = [
         "companies",

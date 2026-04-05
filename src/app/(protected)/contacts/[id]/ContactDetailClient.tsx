@@ -103,8 +103,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
 
   const handleDeleteContact = async () => {
     try {
-      const supabase = createClient();
-      await deleteContact(id, supabase);
+      await deleteContact(id);
       router.push("/contacts");
     } catch (_error) {
       toast.error("Failed to delete contact");
