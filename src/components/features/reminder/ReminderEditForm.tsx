@@ -50,7 +50,6 @@ export default function ReminderEditForm({
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       queryClient.invalidateQueries({ queryKey: ["company", data.company_id] });
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
       if (data?.company_id) {
         queryClient.invalidateQueries({ queryKey: ["reminders", data.company_id] });
       }
