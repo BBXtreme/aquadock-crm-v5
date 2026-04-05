@@ -266,7 +266,7 @@ function ClientCompaniesPage() {
       toast.error("Update failed", { description: message });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       toast.success("Company updated");
     },
   });
@@ -306,7 +306,7 @@ function ClientCompaniesPage() {
       toast.error("Deletion failed", { description: message });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
     },
   });
@@ -321,7 +321,7 @@ function ClientCompaniesPage() {
       if (error) throw error;
 
       toast.success(`Deleted ${selectedIds.length} companies`);
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       setRowSelection({});
       setBulkDeleteDialogOpen(false);
     } catch (err) {
