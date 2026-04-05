@@ -21,11 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/browser";
+import { GlobalSearchDialog } from "@/components/features/search/GlobalSearchDialog";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const _router = useRouter();
 
   useEffect(() => {
@@ -36,6 +38,17 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Reminder calculations (Monday–Sunday week)
@@ -106,10 +119,14 @@ export default function Header() {
       </div>
 
       <div className="mx-4 max-w-md flex-1">
-        <div className="relative">
-          <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-8" />
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setSearchOpen(true)}
+          aria-label="Open global search"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -183,6 +200,7 @@ export default function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <GlobalSearchDialog open={searchOpen} setOpen={setSearchOpen} />
     </header>
   );
 }

@@ -1,0 +1,108 @@
+// src/lib/actions/search.ts
+"use server";
+
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { handleSupabaseError } from "@/lib/supabase/error-handling";
+import { searchQuerySchema } from "@/lib/validations/search";
+import type { Company, Contact, Reminder, TimelineEntry } from "@/types/database.types";
+
+export interface SearchResult {
+  type: "company" | "contact" | "reminder" | "timeline";
+  id: string;
+  title: string;
+  subtitle: string;
+  url: string;
+}
+
+export async function performGlobalSearch(formData: FormData): Promise<SearchResult[]> {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const validated = searchQuerySchema.parse({
+    query: formData.get("query"),
+  });
+  const query = validated.query;
+
+  const results: SearchResult[] = [];
+
+  // Companies: full-text on search_vector, fallback ilike on firmenname, stadt, kundentyp, status
+  const { data: companies, error: companiesError } = await supabase
+    .from("companies")
+    .select("id, firmenname, stadt, kundentyp, status, search_vector")
+    .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
+    .order("ts_rank(search_vector, websearch_to_tsquery('german', query))", { ascending: false })
+    .limit(20);
+
+  if (companiesError) throw handleSupabaseError(companiesError);
+  companies?.forEach((c: Company) => {
+    results.push({
+      type: "company",
+      id: c.id,
+      title: c.firmenname,
+      subtitle: `${c.stadt || "—"}, ${c.kundentyp}, ${c.status}`,
+      url: `/companies/${c.id}`,
+    });
+  });
+
+  // Contacts: similar pattern
+  const { data: contacts, error: contactsError } = await supabase
+    .from("contacts")
+    .select("id, vorname, nachname, email, position, search_vector")
+    .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
+    .order("ts_rank(search_vector, websearch_to_tsquery('german', query))", { ascending: false })
+    .limit(20);
+
+  if (contactsError) throw handleSupabaseError(contactsError);
+  contacts?.forEach((c: Contact) => {
+    results.push({
+      type: "contact",
+      id: c.id,
+      title: `${c.vorname} ${c.nachname}`,
+      subtitle: `${c.position || "—"}, ${c.email || "—"}`,
+      url: `/contacts/${c.id}`,
+    });
+  });
+
+  // Reminders: ilike on title/description
+  const { data: reminders, error: remindersError } = await supabase
+    .from("reminders")
+    .select("id, title, description")
+    .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
+    .ilike("title", `%${query}%`)
+    .or(`ilike("description", "%${query}%")`)
+    .limit(20);
+
+  if (remindersError) throw handleSupabaseError(remindersError);
+  reminders?.forEach((r: Reminder) => {
+    results.push({
+      type: "reminder",
+      id: r.id,
+      title: r.title,
+      subtitle: r.description || "—",
+      url: `/reminders?id=${r.id}`,
+    });
+  });
+
+  // Timeline: ilike on title/content
+  const { data: timeline, error: timelineError } = await supabase
+    .from("timeline")
+    .select("id, title, content, activity_type")
+    .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
+    .ilike("title", `%${query}%`)
+    .or(`ilike("content", "%${query}%")`)
+    .limit(20);
+
+  if (timelineError) throw handleSupabaseError(timelineError);
+  timeline?.forEach((t: TimelineEntry) => {
+    results.push({
+      type: "timeline",
+      id: t.id,
+      title: t.title,
+      subtitle: `${t.activity_type}, ${t.content || "—"}`,
+      url: `/timeline?id=${t.id}`,
+    });
+  });
+
+  return results.slice(0, 20); // Total limit 20
+}
