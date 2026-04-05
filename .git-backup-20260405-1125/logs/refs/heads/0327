@@ -1,0 +1,12 @@
+0000000000000000000000000000000000000000 c60e3711eb3704565e30c216aedcd90097ccb475 BBXtreme <marco.a.graf@icloud.com> 1774625163 +0100	branch: Created from main
+c60e3711eb3704565e30c216aedcd90097ccb475 2e0e75471a89307ee66b654bd149aabfafce312d BBXtreme <marco.a.graf@icloud.com> 1774625244 +0100	commit: refactor: remove auth functionality from profile and settings pages
+2e0e75471a89307ee66b654bd149aabfafce312d c60e3711eb3704565e30c216aedcd90097ccb475 BBXtreme <marco.a.graf@icloud.com> 1774625312 +0100	reset: moving to HEAD~1
+c60e3711eb3704565e30c216aedcd90097ccb475 55a3d412cd934b899c3ad33582c2ce7b14b6e136 BBXtreme <marco.a.graf@icloud.com> 1774625381 +0100	commit: fix: remove auth requirements from profile and settings pages
+55a3d412cd934b899c3ad33582c2ce7b14b6e136 6f52c5eadeb3bac8407074cf6da9a2937364a876 BBXtreme <marco.a.graf@icloud.com> 1774625429 +0100	commit: fix: restore deleted cards in settings page
+6f52c5eadeb3bac8407074cf6da9a2937364a876 a1a0fefe4a61cd639f2aa9264e1094da50f677a9 BBXtreme <marco.a.graf@icloud.com> 1774625474 +0100	commit: fix: bring back OpenMap settings card
+a1a0fefe4a61cd639f2aa9264e1094da50f677a9 9da27fffbc6ca6ca191922b0f14fb973eb1aaf29 BBXtreme <marco.a.graf@icloud.com> 1774625596 +0100	commit: fix: restore email and map settings cards and fix map icon import
+9da27fffbc6ca6ca191922b0f14fb973eb1aaf29 1e637b52b62283f9c916497944913129b136b647 BBXtreme <marco.a.graf@icloud.com> 1774625894 +0100	commit: feat: add Overpass API query display to OpenMap settings card
+1e637b52b62283f9c916497944913129b136b647 3cfee0c5c59e9ce439010db2843a96273bf58dc4 BBXtreme (aider) <marco.a.graf@icloud.com> 1774625932 +0100	commit: style: format Overpass API query and description in settings page
+3cfee0c5c59e9ce439010db2843a96273bf58dc4 6724c994e131844f53627fd0945cf86bd03cff55 BBXtreme <marco.a.graf@icloud.com> 1774625965 +0100	commit: fix: resolve JSX parsing error in settings page
+6724c994e131844f53627fd0945cf86bd03cff55 ec3f7f04bebf1305ad289b09f2abe6e4b7f8cb07 BBXtreme (aider) <marco.a.graf@icloud.com> 1774626063 +0100	commit: style: format Overpass API query in settings page
+ec3f7f04bebf1305ad289b09f2abe6e4b7f8cb07 6380a0c92c5fa949305d4395d64e301ccfd19343 BBXtreme <marco.a.graf@icloud.com> 1774626076 +0100	commit: fix: limit settings page cards to max 2 columns on large screens

@@ -1,0 +1,25 @@
+0000000000000000000000000000000000000000 05693d908371fbc9e5d9d42cc35a124efa16a9cb BBXtreme <marco.a.graf@icloud.com> 1774942341 +0200	reset: moving to origin/AUTH
+05693d908371fbc9e5d9d42cc35a124efa16a9cb 30f299a0ea3b0152b4d1231dba53d143ea1c55bf BBXtreme <marco.a.graf@icloud.com> 1774943975 +0200	commit: fix: make edit and promote buttons match reset button style in UserManagementCard
+30f299a0ea3b0152b4d1231dba53d143ea1c55bf 876384be94de47f7789938d70f8f31b373c37c15 BBXtreme <marco.a.graf@icloud.com> 1774944324 +0200	commit: feat: add created_at and updated_at columns to user management table
+876384be94de47f7789938d70f8f31b373c37c15 294ee23259f3a6b5bd2c103c975f119ffa88bc0f BBXtreme <marco.a.graf@icloud.com> 1774944474 +0200	commit: feat: add created and updated timestamps to profile information card
+294ee23259f3a6b5bd2c103c975f119ffa88bc0f 49331be6729fc4e59a885f0b366d83775180cb3d BBXtreme <marco.a.graf@icloud.com> 1774944554 +0200	commit: style: reduce font size and display time for created/updated timestamps
+49331be6729fc4e59a885f0b366d83775180cb3d 7cdad7bb4a5a5eb9e709ca7c4eda079c25a367e7 BBXtreme <marco.a.graf@icloud.com> 1774944691 +0200	commit: feat: add new user creation button to user management card
+7cdad7bb4a5a5eb9e709ca7c4eda079c25a367e7 ce2f2fcaba9fe5d6a25579cb812002efae7e3887 BBXtreme (aider) <marco.a.graf@icloud.com> 1774944885 +0200	commit: fix: update crypto import to node:crypto
+ce2f2fcaba9fe5d6a25579cb812002efae7e3887 c12d960236c7707f996c6c75097dd660a159a904 BBXtreme <marco.a.graf@icloud.com> 1774944898 +0200	commit: fix: prevent failed toast when user creation succeeds but email fails
+c12d960236c7707f996c6c75097dd660a159a904 150615562b01337516681004d8a25b8732517436 BBXtreme <marco.a.graf@icloud.com> 1774945129 +0200	commit: fix: use service role client in createUser for proper admin permissions
+150615562b01337516681004d8a25b8732517436 f10185c0cdf2ef14111ee7382fccdab8e9aa02b4 BBXtreme <marco.a.graf@icloud.com> 1774945436 +0200	commit: fix: enhance profile creation error handling in createUser action
+f10185c0cdf2ef14111ee7382fccdab8e9aa02b4 f13e71581f72eb455dda1360e497eacd7e515fcf BBXtreme (aider) <marco.a.graf@icloud.com> 1774946399 +0200	commit: refactor: move profile actions to app directory and simplify
+f13e71581f72eb455dda1360e497eacd7e515fcf 85704fde7cdd7b8d8e131a9cd0f96556ace50215 BBXtreme <marco.a.graf@icloud.com> 1774946417 +0200	commit: fix: add createUser export and enhance profile management services
+85704fde7cdd7b8d8e131a9cd0f96556ace50215 bf0ddbf8042fd66a8ad1cfd2019d1542186babf9 BBXtreme (aider) <marco.a.graf@icloud.com> 1774946526 +0200	commit: refactor: simplify profile creation in createUser
+bf0ddbf8042fd66a8ad1cfd2019d1542186babf9 acbb82f7dd7291660ec74e30af1c51108ea781df BBXtreme <marco.a.graf@icloud.com> 1774946532 +0200	commit: fix: improve error handling and defaults in createUser profile creation
+acbb82f7dd7291660ec74e30af1c51108ea781df 6b9a924a252398407fbaab96b1b054de5c21a2c0 BBXtreme <marco.a.graf@icloud.com> 1774946662 +0200	commit: feat: add email confirmation for smoother admin-created users
+6b9a924a252398407fbaab96b1b054de5c21a2c0 f0d9c1c80421aa4c15855852768bb9cfc8c7667e BBXtreme <marco.a.graf@icloud.com> 1774946904 +0200	commit: fix: use upsert for profile creation to avoid duplicate key errors
+f0d9c1c80421aa4c15855852768bb9cfc8c7667e 6c9803087d23235da49ddba0bd054683f01cddcb BBXtreme <marco.a.graf@icloud.com> 1774947304 +0200	commit: fix: disable sign up button on login page with opacity and disabled state
+6c9803087d23235da49ddba0bd054683f01cddcb 97244cb8ceb6259c3312438541173d0221effee5 BBXtreme <marco.a.graf@icloud.com> 1774947372 +0200	commit: fix: remove settings link from sidebar
+97244cb8ceb6259c3312438541173d0221effee5 15621d7645ce76b4abdacb67ff30e38a54bfbc5d BBXtreme (aider) <marco.a.graf@icloud.com> 1774947415 +0200	commit: chore: remove unused Settings import from Sidebar
+15621d7645ce76b4abdacb67ff30e38a54bfbc5d b971350ae5f4e2cd2d0c31e7c6878d6f8853d975 BBXtreme <marco.a.graf@icloud.com> 1774947427 +0200	commit: fix: remove adminOnly filtering and badges in Sidebar
+b971350ae5f4e2cd2d0c31e7c6878d6f8853d975 e2525c53709d3859352c82ea03c62beb547db96a BBXtreme (aider) <marco.a.graf@icloud.com> 1774947512 +0200	commit: refactor: prefix userRole variable with underscore
+e2525c53709d3859352c82ea03c62beb547db96a aae95ef5f582ff656cce65bdea0def678cda138e BBXtreme <marco.a.graf@icloud.com> 1774947519 +0200	commit: feat: add user role badge to sidebar next to version badge
+aae95ef5f582ff656cce65bdea0def678cda138e dfe497b28be587d311a6e874b45fdbf975a512de BBXtreme <marco.a.graf@icloud.com> 1774947612 +0200	commit: fix: stack badges vertically in collapsed sidebar and add 'v' prefix to version
+dfe497b28be587d311a6e874b45fdbf975a512de ef768114fa8367a527658a5abf4ee3a570bd11d6 BBXtreme <marco.a.graf@icloud.com> 1774947705 +0200	commit: fix: remove danger zone card from settings page
+ef768114fa8367a527658a5abf4ee3a570bd11d6 c334c527c1e24243e665fbafcca9f82ae61b4aee BBXtreme <marco.a.graf@icloud.com> 1774947937 +0200	commit: Update package.json

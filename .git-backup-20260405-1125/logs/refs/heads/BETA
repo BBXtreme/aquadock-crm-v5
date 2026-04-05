@@ -1,0 +1,9 @@
+0000000000000000000000000000000000000000 606ff08138803f5dbd7c7ee54977526e8726e42d BBXtreme <marco.a.graf@icloud.com> 1775378414 +0200	branch: Created from main
+606ff08138803f5dbd7c7ee54977526e8726e42d 3cdfb75d9f38a17ef41de04d1cb7a2fb0f60ff8c BBXtreme <marco.a.graf@icloud.com> 1775380773 +0200	commit: feat: add global search dialog with cmdk integration
+3cdfb75d9f38a17ef41de04d1cb7a2fb0f60ff8c 735fc2328f86af358300b8336458b0bd377cdbf8 BBXtreme (aider) <marco.a.graf@icloud.com> 1775380802 +0200	commit: refactor: reorder import statements for better organization
+735fc2328f86af358300b8336458b0bd377cdbf8 18aeec7bfaf36e95bf69ee090c14c917478aa571 BBXtreme <marco.a.graf@icloud.com> 1775380811 +0200	commit: fix: resolve TypeScript type mismatches and add Supabase error handling in search
+18aeec7bfaf36e95bf69ee090c14c917478aa571 5116928e4c1265625704a30299ae15e9d4111b36 BBXtreme <marco.a.graf@icloud.com> 1775380853 +0200	commit: fix: resolve TypeScript errors and lint warnings
+5116928e4c1265625704a30299ae15e9d4111b36 2e64baf3a4e7d15064e003d31a6644208e4b4485 BBXtreme (aider) <marco.a.graf@icloud.com> 1775381026 +0200	commit: fix: use optional chaining in search results grouping to prevent null errors
+2e64baf3a4e7d15064e003d31a6644208e4b4485 f050406fdcb9496161c2e05215db05ebf5bf2bf1 BBXtreme <marco.a.graf@icloud.com> 1775381033 +0200	commit: fix: resolve search query error and add dialog accessibility title
+f050406fdcb9496161c2e05215db05ebf5bf2bf1 87f7ddfe234ad53d44b48dfb5f05f1da38a5b24f BBXtreme <marco.a.graf@icloud.com> 1775381074 +0200	commit: fix: add type assertions to resolve forEach type errors in search action
+87f7ddfe234ad53d44b48dfb5f05f1da38a5b24f 43145de51302ca9022dd161a5434eaaa8dce9b95 BBXtreme <marco.a.graf@icloud.com> 1775381142 +0200	commit: fix: add unknown to type assertions in search action

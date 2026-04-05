@@ -1,0 +1,73 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+	hooksPath = .husky/_
+[remote "origin"]
+	url = https://github.com/BBXtreme/aquadock-crm-v5.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
+[branch "comnpanies02"]
+	remote = origin
+	merge = refs/heads/comnpanies02
+	vscode-merge-base = origin/comnpanies02
+[branch "companies02"]
+	remote = origin
+	merge = refs/heads/companies02
+	vscode-merge-base = origin/companies02
+[branch "main"]
+	remote = origin
+	merge = refs/heads/main
+	vscode-merge-base = origin/main
+[branch "0327"]
+	remote = origin
+	merge = refs/heads/0327
+	vscode-merge-base = origin/main
+[branch "email"]
+	remote = origin
+	merge = refs/heads/email
+	vscode-merge-base = origin/main
+[branch "CHORES"]
+	vscode-merge-base = origin/main
+	remote = origin
+	merge = refs/heads/CHORES
+[branch "IMPORT"]
+	remote = origin
+	merge = refs/heads/IMPORT
+[branch "IMPORT---main"]
+	remote = origin
+	merge = refs/heads/IMPORT---main
+	vscode-merge-base = origin/main
+[branch "AUTH"]
+	remote = origin
+	merge = refs/heads/AUTH
+	vscode-merge-base = origin/main
+[branch "EMAIL"]
+	remote = origin
+	merge = refs/heads/EMAIL
+	vscode-merge-base = origin/main
+[branch "EMAIL2"]
+	remote = origin
+	merge = refs/heads/EMAIL2
+	vscode-merge-base = origin/main
+[branch "DB"]
+	remote = origin
+	merge = refs/heads/DB
+	vscode-merge-base = origin/main
+[branch "DB2"]
+	vscode-merge-base = origin/main
+	remote = origin
+	merge = refs/heads/DB2
+[branch "ALPHA"]
+	remote = origin
+	merge = refs/heads/ALPHA
+	vscode-merge-base = origin/main
+[branch "BETA"]
+	remote = origin
+	merge = refs/heads/BETA
+	vscode-merge-base = origin/main

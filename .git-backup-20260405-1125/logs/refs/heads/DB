@@ -1,0 +1,16 @@
+0000000000000000000000000000000000000000 8efc91d58e0cf9a3de78f7f5ce02e0807b6f7c4f BBXtreme <marco.a.graf@icloud.com> 1774984728 +0200	branch: Created from main
+8efc91d58e0cf9a3de78f7f5ce02e0807b6f7c4f 14247457471c01129f1d824db5d9d8460f359bea BBXtreme <marco.a.graf@icloud.com> 1774986428 +0200	commit: feat: add batch_id for mass email logging
+14247457471c01129f1d824db5d9d8460f359bea 4f0cfb297d29c15c1c1209747365176e164fc080 BBXtreme <marco.a.graf@icloud.com> 1774986471 +0200	commit: feat: add batch_id to mass email response and display in toast
+4f0cfb297d29c15c1c1209747365176e164fc080 2c19305155f08befade752a4686e4fd381617f34 BBXtreme <marco.a.graf@icloud.com> 1774986508 +0200	commit: feat: add Batch column to email log table with visual grouping
+2c19305155f08befade752a4686e4fd381617f34 753095b086ac833b145ae79d4bcb93cbb08be41a BBXtreme <marco.a.graf@icloud.com> 1774986551 +0200	commit: fix: add optional chaining to prevent undefined access in table row class
+753095b086ac833b145ae79d4bcb93cbb08be41a 05c00a50589a7f450a43b88c02a954f47681f322 BBXtreme <marco.a.graf@icloud.com> 1774986684 +0200	commit: chores
+05c00a50589a7f450a43b88c02a954f47681f322 ee5e91d3b4dc878979c3a9f7e9c2e667323e3baf BBXtreme (aider) <marco.a.graf@icloud.com> 1775150031 +0200	commit: refactor: simplify contact detail client component
+ee5e91d3b4dc878979c3a9f7e9c2e667323e3baf d18108c5701a40fc387274cc6acfb5793b9b4b96 BBXtreme <marco.a.graf@icloud.com> 1775150044 +0200	commit: fix: replace undeclared createClient with createBrowserSupabaseClient in ContactDetailClient
+d18108c5701a40fc387274cc6acfb5793b9b4b96 0f4a44e4dac3aa321489d1032cf278b6e35ea743 BBXtreme (aider) <marco.a.graf@icloud.com> 1775150092 +0200	commit: refactor: simplify ClientCompaniesPage UI and remove unused code
+0f4a44e4dac3aa321489d1032cf278b6e35ea743 be764e57035dae9538c5a6f7a6543313e00b1cb7 BBXtreme <marco.a.graf@icloud.com> 1775150114 +0200	commit: fix: import and use createBrowserSupabaseClient instead of createClient
+be764e57035dae9538c5a6f7a6543313e00b1cb7 0eeea5745cee85c03f358f36067c19a9dc96b13d BBXtreme (aider) <marco.a.graf@icloud.com> 1775151028 +0200	commit: feat: add timeline actions
+0eeea5745cee85c03f358f36067c19a9dc96b13d 6ba58e1dc080391c57a1305a099d4bb867837308 BBXtreme <marco.a.graf@icloud.com> 1775151037 +0200	commit: fix: replace non-null assertions with proper env checks in timeline actions
+6ba58e1dc080391c57a1305a099d4bb867837308 1abb0df6fcac13d33ea457638957b782d6599883 BBXtreme (aider) <marco.a.graf@icloud.com> 1775151248 +0200	commit: refactor: simplify CompanyCreateForm by removing fields and localizing text
+1abb0df6fcac13d33ea457638957b782d6599883 f5710fcfee7104e54c2d3ec33533f6264b3d9f62 BBXtreme <marco.a.graf@icloud.com> 1775151269 +0200	commit: fix: replace any with unknown in CompanyCreateForm error handler
+f5710fcfee7104e54c2d3ec33533f6264b3d9f62 144414d117d139a107ef986432b4c2b84fe6c9f7 BBXtreme <marco.a.graf@icloud.com> 1775151442 +0200	commit: fix: prefix unused parameter with underscore in ContactDetailClient
+144414d117d139a107ef986432b4c2b84fe6c9f7 05c00a50589a7f450a43b88c02a954f47681f322 BBXtreme <marco.a.graf@icloud.com> 1775152034 +0200	reset: moving to 05c00a50589a7f450a43b88c02a954f47681f322

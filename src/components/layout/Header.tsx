@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { GlobalSearchDialog } from "@/components/features/search/GlobalSearchDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,9 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/browser";
-import { GlobalSearchDialog } from "@/components/features/search/GlobalSearchDialog";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();

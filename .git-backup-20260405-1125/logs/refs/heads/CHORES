@@ -1,0 +1,261 @@
+0000000000000000000000000000000000000000 6ba781f7887faf7bb9d94d4715932b8d70b20842 BBXtreme <marco.a.graf@icloud.com> 1774645024 +0100	branch: Created from HEAD
+6ba781f7887faf7bb9d94d4715932b8d70b20842 1b7be72159a2c0084c111970e5827a545763f84d BBXtreme <marco.a.graf@icloud.com> 1774645555 +0100	commit: fix: add missing key prop to Skeleton components in SkeletonList
+1b7be72159a2c0084c111970e5827a545763f84d 1c1915d22e87533f8f91d2383a2598716a0a3f01 BBXtreme <marco.a.graf@icloud.com> 1774645684 +0100	commit: fix: ignore lint warning for array index key in SkeletonList
+1c1915d22e87533f8f91d2383a2598716a0a3f01 5b42e3cc503d86a32c8ba760b04b3314dedf115b BBXtreme <marco.a.graf@icloud.com> 1774645711 +0100	commit: SKELETON FIX
+5b42e3cc503d86a32c8ba760b04b3314dedf115b e4fa73f29c537fc013c56018f74e6f7c35e3b7e3 BBXtreme <marco.a.graf@icloud.com> 1774646770 +0100	commit: fix: replace reminder action buttons with icons and remove view link
+e4fa73f29c537fc013c56018f74e6f7c35e3b7e3 fa17e6cd084ff9eb95f7f3bccd5bd2e0331ebecc BBXtreme <marco.a.graf@icloud.com> 1774648554 +0100	commit: feat: add wasserdistanz and wassertyp fields to OsmPoi interface
+fa17e6cd084ff9eb95f7f3bccd5bd2e0331ebecc 279f3d6db494667c74274f4df1ab57fa23e2f1f4 BBXtreme <marco.a.graf@icloud.com> 1774648708 +0100	commit: feat: add calculateWaterDistance utility function
+279f3d6db494667c74274f4df1ab57fa23e2f1f4 73ec2eed3c2bc48e590ed6e2b7157e10b03024d8 BBXtreme <marco.a.graf@icloud.com> 1774648746 +0100	commit: feat: add water distance display and calculate button to POI popup
+73ec2eed3c2bc48e590ed6e2b7157e10b03024d8 d5b693695540a0f2fcf7bc32ca8aa23404b1c1c7 BBXtreme <marco.a.graf@icloud.com> 1774648782 +0100	commit: feat: add water distance calculation for POI
+d5b693695540a0f2fcf7bc32ca8aa23404b1c1c7 902ae9114dce904771431ff0fca18ae9dcb3b09d BBXtreme <marco.a.graf@icloud.com> 1774648866 +0100	commit: feat: add water calculation to OSM POI popup
+902ae9114dce904771431ff0fca18ae9dcb3b09d a46017ae0f8ca28ca9d8800cce2d45c2dc1c7c8a BBXtreme (aider) <marco.a.graf@icloud.com> 1774649364 +0100	commit: style: replace single quotes with double quotes
+a46017ae0f8ca28ca9d8800cce2d45c2dc1c7c8a c8667f186ab0b6827e5a4e81c2a5c5ec5a851ede BBXtreme <marco.a.graf@icloud.com> 1774649376 +0100	commit: feat: enhance water distance calculation with improved query, jitter, and fallback
+c8667f186ab0b6827e5a4e81c2a5c5ec5a851ede b79883e4ab5b03f5f9338e763079e5028e0f2cb0 BBXtreme (aider) <marco.a.graf@icloud.com> 1774649413 +0100	commit: refactor: reorder imports and rename unused error variable in catch block
+b79883e4ab5b03f5f9338e763079e5028e0f2cb0 4848de86344a53d180339b70af8289846eafc396 BBXtreme <marco.a.graf@icloud.com> 1774649427 +0100	commit: feat: enhance water calculation with immutability, logging, and UX delay
+4848de86344a53d180339b70af8289846eafc396 18da12c6bb69fe670af1d6cd8c1650d6015806bc BBXtreme <marco.a.graf@icloud.com> 1774649546 +0100	commit: Wasserdistanz osmpoi
+18da12c6bb69fe670af1d6cd8c1650d6015806bc 2edb55b3d2bb0a11aeac73d8853916f64d9bdbba BBXtreme <marco.a.graf@icloud.com> 1774690378 +0100	commit: refactor: standardize null fallbacks with central safeString helper
+2edb55b3d2bb0a11aeac73d8853916f64d9bdbba 2e62e1790dba7a02adb136d25237e5c3af2d5636 BBXtreme <marco.a.graf@icloud.com> 1774690386 +0100	commit: style: format ternary operator in FirmendatenCard
+2e62e1790dba7a02adb136d25237e5c3af2d5636 ba3339280134dfca02aeea5f44f0c892d225b929 BBXtreme <marco.a.graf@icloud.com> 1774690405 +0100	commit: fix: add missing import for WideDialogContent
+ba3339280134dfca02aeea5f44f0c892d225b929 1166982368aade93024adf6161b8c4f5b1d9154e BBXtreme <marco.a.graf@icloud.com> 1774690545 +0100	commit: docu UPDATE
+1166982368aade93024adf6161b8c4f5b1d9154e 5bd49216dcc864b4f8dfa225e9052f2bb5837c13 BBXtreme <marco.a.graf@icloud.com> 1774690576 +0100	commit: chore: add debug logging to companies and contacts services
+5bd49216dcc864b4f8dfa225e9052f2bb5837c13 17c5cabecf4641bbadd3735d5da3aa0a7b409afa BBXtreme <marco.a.graf@icloud.com> 1774690592 +0100	commit: style: fix linting issues in debug console logs
+17c5cabecf4641bbadd3735d5da3aa0a7b409afa e70b2e9857387ac2801d9b29b4ba39f599f44acc BBXtreme <marco.a.graf@icloud.com> 1774690651 +0100	commit: refactor: migrate table columns to satisfies ColumnDef pattern
+e70b2e9857387ac2801d9b29b4ba39f599f44acc c7b449b0761067be17cfd9d4c719d844f9080ff4 BBXtreme <marco.a.graf@icloud.com> 1774690690 +0100	commit: fix: resolve TypeScript errors in table column definitions
+c7b449b0761067be17cfd9d4c719d844f9080ff4 b73df9c182c8c08690fad6c0468f083c58d644d9 BBXtreme <marco.a.graf@icloud.com> 1774690862 +0100	commit: feat: add safeDisplay helper to supabase utils
+b73df9c182c8c08690fad6c0468f083c58d644d9 12610bc60c3d8d7b73f9fe1b4967d99624ec1d83 BBXtreme <marco.a.graf@icloud.com> 1774690869 +0100	commit: style: use double quotes for empty string in safeDisplay
+12610bc60c3d8d7b73f9fe1b4967d99624ec1d83 581a88748dba804c7f9277116147ed3c61fca55c BBXtreme <marco.a.graf@icloud.com> 1774690929 +0100	commit: refactor: improve error handling and add conditional debug logging in services
+581a88748dba804c7f9277116147ed3c61fca55c 37f2eeb0bd02402f559f7197b317b202aca39f58 BBXtreme <marco.a.graf@icloud.com> 1774690936 +0100	commit: style: fix linting issues in companies service
+37f2eeb0bd02402f559f7197b317b202aca39f58 d122ecb941a9e87f3c58c3cd4eb54f7a0cf04ad3 BBXtreme <marco.a.graf@icloud.com> 1774691009 +0100	commit: feat: add React Query devtools for development
+d122ecb941a9e87f3c58c3cd4eb54f7a0cf04ad3 fd1417cb6287335a48047c4dc63456c09dbf9a8f BBXtreme <marco.a.graf@icloud.com> 1774691167 +0100	commit: refactor: use safeDisplay helper for null fallbacks in tables and cards
+fd1417cb6287335a48047c4dc63456c09dbf9a8f 11624e3968f81ef6691988dec5e074cac6802075 BBXtreme <marco.a.graf@icloud.com> 1774691180 +0100	commit: style: reorder imports in table components
+11624e3968f81ef6691988dec5e074cac6802075 80045ffa43831907eda5bf3d57d366d883d4f5d7 BBXtreme <marco.a.graf@icloud.com> 1774691241 +0100	commit: fix: resolve TypeScript errors in table column definitions
+80045ffa43831907eda5bf3d57d366d883d4f5d7 0f4f5681943701cda55a85822c4919a3149edbf2 BBXtreme <marco.a.graf@icloud.com> 1774691348 +0100	commit: refactor: update data-format utilities with em-dash fallbacks and safeDisplay improvements
+0f4f5681943701cda55a85822c4919a3149edbf2 d4a640d91262d6ec677560bec7006bad29b2ae04 BBXtreme <marco.a.graf@icloud.com> 1774691483 +0100	commit: refactor: standardize safeDisplay import to centralized location
+d4a640d91262d6ec677560bec7006bad29b2ae04 8cb74913012c7b0e94b6db3f95fb276fe7847814 BBXtreme <marco.a.graf@icloud.com> 1774691497 +0100	commit: style: reorder imports in ContactsTable
+8cb74913012c7b0e94b6db3f95fb276fe7847814 3423a54ce1a0841fca90a7142a925c19e06753d3 BBXtreme <marco.a.graf@icloud.com> 1774691667 +0100	commit: feat: implement optimistic updates for company and contact mutations
+3423a54ce1a0841fca90a7142a925c19e06753d3 2fd52d6f474077f4820dd5e4338a3591754b0d08 BBXtreme <marco.a.graf@icloud.com> 1774691672 +0100	commit: style: format queryClient.setQueryData calls in page components
+2fd52d6f474077f4820dd5e4338a3591754b0d08 81dea2611959b7564e3e053c7e34683194f41f48 BBXtreme (aider) <marco.a.graf@icloud.com> 1774691758 +0100	commit: style: prefix unused parameters with underscore in onError callbacks
+81dea2611959b7564e3e053c7e34683194f41f48 2dd2ad5a0f5e4d7270bdaff38d6eae0abc28b59b BBXtreme <marco.a.graf@icloud.com> 1774691787 +0100	commit: fix: resolve type errors and syntax error in companies and contacts pages
+2dd2ad5a0f5e4d7270bdaff38d6eae0abc28b59b 1ba00e4ca621f555dd69abd1baed0b31fd39f57e BBXtreme <marco.a.graf@icloud.com> 1774691802 +0100	commit: docs
+1ba00e4ca621f555dd69abd1baed0b31fd39f57e b7da37f4165f06310ccb7d1a531bc43bf03c16a2 BBXtreme <marco.a.graf@icloud.com> 1774691888 +0100	commit: fix: remove erroneous quote in toggleFilter spread operator
+b7da37f4165f06310ccb7d1a531bc43bf03c16a2 953870e26fe260d78a7e903a4512725f298205dc BBXtreme <marco.a.graf@icloud.com> 1774692424 +0100	commit: feat: add server-side pagination to companies and contacts tables
+953870e26fe260d78a7e903a4512725f298205dc 59025edfcac294f0a61f95a9a01b9997850ab63d BBXtreme (aider) <marco.a.graf@icloud.com> 1774692500 +0100	commit: style: remove unused useMemo import
+59025edfcac294f0a61f95a9a01b9997850ab63d eb8f755de00c79634381c71567bda3cb5cc7b2d3 BBXtreme <marco.a.graf@icloud.com> 1774692520 +0100	commit: fix: resolve sorting type mismatches in table components
+eb8f755de00c79634381c71567bda3cb5cc7b2d3 d8e46518bb4ed45ed39d2ca0450a4ad733e66093 BBXtreme (aider) <marco.a.graf@icloud.com> 1774692680 +0100	commit: chore: remove unused useMemo import from companies page
+d8e46518bb4ed45ed39d2ca0450a4ad733e66093 9164486aa318a632b5efe52894ec1af79444be43 BBXtreme <marco.a.graf@icloud.com> 1774692699 +0100	commit: feat: add optimistic updates for company and contact mutations
+9164486aa318a632b5efe52894ec1af79444be43 7b6aa185afd40c4eb2fc00e3491cd2348c830337 BBXtreme <marco.a.graf@icloud.com> 1774692707 +0100	commit: style: format queryClient.setQueryData calls in companies and contacts pages
+7b6aa185afd40c4eb2fc00e3491cd2348c830337 a6643590e63cd35f64f6e45e9d14143d6b5f294a BBXtreme <marco.a.graf@icloud.com> 1774692756 +0100	commit: chores
+a6643590e63cd35f64f6e45e9d14143d6b5f294a 9893263a24d69dd74e0cc2ad8f89883bb4d7f60e BBXtreme <marco.a.graf@icloud.com> 1774692964 +0100	commit: feat: improve create mutation handling and centralize refresh logic
+9893263a24d69dd74e0cc2ad8f89883bb4d7f60e 107fb8af5eeb978c823da2731fe49e4dd14fd493 BBXtreme <marco.a.graf@icloud.com> 1774692982 +0100	commit: style: format CompanyCreateForm component in companies page
+107fb8af5eeb978c823da2731fe49e4dd14fd493 708f3b9f043930b11107f6b7d3a1f3a1ba934493 BBXtreme <marco.a.graf@icloud.com> 1774693045 +0100	commit: refactor: remove duplicate StatCard component and move to shared location
+708f3b9f043930b11107f6b7d3a1f3a1ba934493 79c80f05d3d4e8596cc2f5d45adaebd1af374995 BBXtreme <marco.a.graf@icloud.com> 1774693058 +0100	commit: style: fix import ordering and type imports
+79c80f05d3d4e8596cc2f5d45adaebd1af374995 49337db8fd6f1c303ff5c7dd71ff874e3d35d6fd BBXtreme <marco.a.graf@icloud.com> 1774693221 +0100	commit: fix: correct StatCard import to named export in dashboard page
+49337db8fd6f1c303ff5c7dd71ff874e3d35d6fd 967d28f9cc1c33486830e4956fb97b456afadfcc BBXtreme <marco.a.graf@icloud.com> 1774693280 +0100	commit: fix: use descriptive key for skeleton divs instead of array index
+967d28f9cc1c33486830e4956fb97b456afadfcc 361884e4311bcf3f2c5b7f7deaf350a766d4fff9 BBXtreme <marco.a.graf@icloud.com> 1774693337 +0100	commit: fix: update skeleton key to avoid array index lint warning
+361884e4311bcf3f2c5b7f7deaf350a766d4fff9 41e0cfa5ec128185a10e07989e824dcad5108d52 BBXtreme <marco.a.graf@icloud.com> 1774693423 +0100	commit: fix: fix Biome lint warning for noArrayIndexKey in dashboard skeleton
+41e0cfa5ec128185a10e07989e824dcad5108d52 5fc1516cab57968a4a9e77838556695e7c950ef0 BBXtreme <marco.a.graf@icloud.com> 1774693498 +0100	commit: fix: resolve Biome noArrayIndexKey lint warning in dashboard skeleton
+5fc1516cab57968a4a9e77838556695e7c950ef0 e91b23f6bc6e6f82dffe4b9b4f193b2f2bebaf79 BBXtreme <marco.a.graf@icloud.com> 1774693510 +0100	commit: style: format stat card skeleton div
+e91b23f6bc6e6f82dffe4b9b4f193b2f2bebaf79 75587543566b312bed4660a7f12acc79888a1605 BBXtreme (aider) <marco.a.graf@icloud.com> 1774694845 +0100	commit: docs: add safeDisplay guidelines and remove unused imports
+75587543566b312bed4660a7f12acc79888a1605 786e0d4ad11fc3f18e518fe848025bf7c42e628a BBXtreme <marco.a.graf@icloud.com> 1774694866 +0100	commit: docs: update architecture and README for safeDisplay guidelines and helpers cleanup
+786e0d4ad11fc3f18e518fe848025bf7c42e628a 716b0fb9ac434c166b6f1b258349443d12f13f11 BBXtreme <marco.a.graf@icloud.com> 1774694953 +0100	commit: feat: add Zod validation schemas for company and contact forms
+716b0fb9ac434c166b6f1b258349443d12f13f11 f5b7f37cac3848f25a0d961e8b351db26b8ea88e BBXtreme <marco.a.graf@icloud.com> 1774694959 +0100	commit: style: format z.enum calls in company validation schema
+f5b7f37cac3848f25a0d961e8b351db26b8ea88e d53b29b4382bbff62bff4cb471505ecd6fb84827 BBXtreme <marco.a.graf@icloud.com> 1774695175 +0100	commit: feat: integrate Zod schemas with React Hook Form in create forms
+d53b29b4382bbff62bff4cb471505ecd6fb84827 01177184e5bc0359bcbbd7ddbde181e983049336 BBXtreme <marco.a.graf@icloud.com> 1774695187 +0100	commit: style: fix import order and schema formatting after linting
+01177184e5bc0359bcbbd7ddbde181e983049336 ef187e12b1b9b43a12e15acb951cc842e96ad2a4 BBXtreme <marco.a.graf@icloud.com> 1774695584 +0100	commit: feat: add retry functionality and improve UX in ErrorBoundary
+ef187e12b1b9b43a12e15acb951cc842e96ad2a4 1997118289118835e858b24a47a791bd973f3d74 BBXtreme <marco.a.graf@icloud.com> 1774695610 +0100	commit: style: reorder imports in ErrorBoundary
+1997118289118835e858b24a47a791bd973f3d74 e6646eb32db8ccc54fdbacf574ed45f93b7e3793 BBXtreme (aider) <marco.a.graf@icloud.com> 1774695687 +0100	commit: feat: add leads and won deals stats to dashboard
+e6646eb32db8ccc54fdbacf574ed45f93b7e3793 947a25a69424e684389e332dfc65cbb54b579fab BBXtreme <marco.a.graf@icloud.com> 1774695710 +0100	commit: feat: add LoadingState component and update dashboard to use it
+947a25a69424e684389e332dfc65cbb54b579fab a32d6404eb84629427cf4978d87987b55ba59cd3 BBXtreme <marco.a.graf@icloud.com> 1774695727 +0100	commit: style: format Badge component in companies page
+a32d6404eb84629427cf4978d87987b55ba59cd3 792c0622f1c53f3d7f8cd8033a25ff7543e5de66 BBXtreme <marco.a.graf@icloud.com> 1774695816 +0100	commit: fix: remove unused imports, fix array index keys, add filter removal
+792c0622f1c53f3d7f8cd8033a25ff7543e5de66 743360755b5bff200e4d26ae90580dc02d5b03b7 BBXtreme <marco.a.graf@icloud.com> 1774695834 +0100	commit: style: format Badge component in companies page
+743360755b5bff200e4d26ae90580dc02d5b03b7 f1c9b9a2277062abffe8cf02b7decaa38753ac92 BBXtreme <marco.a.graf@icloud.com> 1774695908 +0100	commit: fix: import missing X icon and format filter badges
+f1c9b9a2277062abffe8cf02b7decaa38753ac92 b96286b8eac91eb8ea323a29ff6b7b56861ceba1 BBXtreme <marco.a.graf@icloud.com> 1774695927 +0100	commit: style: condense JSX in companies page
+b96286b8eac91eb8ea323a29ff6b7b56861ceba1 9a78dc761662ff3f5a0020ae6835a46fbde3fa69 BBXtreme (aider) <marco.a.graf@icloud.com> 1774699349 +0100	commit: refactor: simplify LoadingState component and add file comments
+9a78dc761662ff3f5a0020ae6835a46fbde3fa69 70345d9e75d53021f25095c6915056ac55554d44 BBXtreme <marco.a.graf@icloud.com> 1774699364 +0100	commit: fix: remove type prop from LoadingState and update usages
+70345d9e75d53021f25095c6915056ac55554d44 bc9e463ff05e0d04432dfac4fb0815ace1808ed1 BBXtreme (aider) <marco.a.graf@icloud.com> 1774699940 +0100	commit: refactor: use pre-defined stable keys for loading skeletons
+bc9e463ff05e0d04432dfac4fb0815ace1808ed1 50247b563480ef5a08d37a6a49b1f0ec01459e61 BBXtreme <marco.a.graf@icloud.com> 1774699949 +0100	commit: fix: resolve noArrayIndexKey issue in LoadingState and dashboard
+50247b563480ef5a08d37a6a49b1f0ec01459e61 e125e25f9106bff088c59db96f144a886129c4d0 BBXtreme <marco.a.graf@icloud.com> 1774699976 +0100	commit: fix: add missing LoadingState import
+e125e25f9106bff088c59db96f144a886129c4d0 97562e09d65a4f8cfb4047922a7bce1af50a6361 BBXtreme (aider) <marco.a.graf@icloud.com> 1774700240 +0100	commit: chore: add file path comment to wide-dialog.tsx
+97562e09d65a4f8cfb4047922a7bce1af50a6361 96c8c7020391bbc7dcb2392e5dc4ce99620a38c0 BBXtreme <marco.a.graf@icloud.com> 1774700257 +0100	commit: fix: add optional description prop to dialog components to resolve Radix warnings
+96c8c7020391bbc7dcb2392e5dc4ce99620a38c0 b69cc3841cec52cbf6a1a98a593026396e75be93 BBXtreme <marco.a.graf@icloud.com> 1774700279 +0100	commit: style: format WideDialogContent parameters
+b69cc3841cec52cbf6a1a98a593026396e75be93 2c5ed64ca624ca2894aefe3dc6c37a747506eab4 BBXtreme (aider) <marco.a.graf@icloud.com> 1774700449 +0100	commit: chore: add file path comment to react-query.tsx
+2c5ed64ca624ca2894aefe3dc6c37a747506eab4 9280f2ce532c723559c49b1ad36be61dd48955d6 BBXtreme <marco.a.graf@icloud.com> 1774700455 +0100	commit: feat: improve React Query configuration for better reliability and DX
+9280f2ce532c723559c49b1ad36be61dd48955d6 29c2ea9d6c4a53a8c88425e994686f3ad0c7443a BBXtreme (aider) <marco.a.graf@icloud.com> 1774700951 +0100	commit: style: add file path comment to contacts service
+29c2ea9d6c4a53a8c88425e994686f3ad0c7443a 55f3891f8100c84fbab761eb99de421603df0d42 BBXtreme <marco.a.graf@icloud.com> 1774700963 +0100	commit: perf: optimize detail page queries in companies and contacts services
+55f3891f8100c84fbab761eb99de421603df0d42 284ecb4cc02565692d68ddb4f9c9904f5a2926ed BBXtreme <marco.a.graf@icloud.com> 1774700984 +0100	commit: style: format select statements in companies and contacts services
+284ecb4cc02565692d68ddb4f9c9904f5a2926ed 9e96ebc4ecf1ba2d72d4522a21697b7564279ec8 BBXtreme <marco.a.graf@icloud.com> 1774701041 +0100	commit: fix: resolve type conversion error in getContactById
+9e96ebc4ecf1ba2d72d4522a21697b7564279ec8 99a765babdb7ba6bc360b74ead87d0c3ff02f2a5 BBXtreme <marco.a.graf@icloud.com> 1774701307 +0100	commit: perf: optimize detail page queries by selecting minimal columns
+99a765babdb7ba6bc360b74ead87d0c3ff02f2a5 f373a83ec2878b59595bdaa4087022170d944128 BBXtreme <marco.a.graf@icloud.com> 1774701962 +0100	commit: feat: add input sanitization and security improvements to Zod schemas
+f373a83ec2878b59595bdaa4087022170d944128 39c8d5c04fed4e048d71f19d7609a955230f4060 BBXtreme <marco.a.graf@icloud.com> 1774701973 +0100	commit: style: format validation schemas with linter
+39c8d5c04fed4e048d71f19d7609a955230f4060 27f804c177e16bda5e5982bb7bafa235c2fb9a5d BBXtreme <marco.a.graf@icloud.com> 1774702021 +0100	commit: fix: correct Zod schema chaining for optional string fields
+27f804c177e16bda5e5982bb7bafa235c2fb9a5d 5a2bc051e933aff4965c11532550cdce425a5907 BBXtreme <marco.a.graf@icloud.com> 1774702253 +0100	commit: docs: update documentation with form sanitization and query optimization details
+5a2bc051e933aff4965c11532550cdce425a5907 9d07bbe005a755f837352aa154da79f992dc6b83 BBXtreme <marco.a.graf@icloud.com> 1774702284 +0100	commit: fix: include Markdown files in Biome configuration
+9d07bbe005a755f837352aa154da79f992dc6b83 f660ac0679906190d854de9cb4c477d3d61b76b3 BBXtreme <marco.a.graf@icloud.com> 1774702317 +0100	commit: chores
+f660ac0679906190d854de9cb4c477d3d61b76b3 8e584c4e40703847723e372d2425bcde656b6362 BBXtreme <marco.a.graf@icloud.com> 1774703277 +0100	commit: feat: improve OpenMap refresh and caching
+8e584c4e40703847723e372d2425bcde656b6362 bc38075c74a2f07504776f0c7c6ae90012b40cc7 BBXtreme <marco.a.graf@icloud.com> 1774703326 +0100	commit: feat: improve global error handling and toast consistency
+bc38075c74a2f07504776f0c7c6ae90012b40cc7 08c44c5570c494c6124a70f33c9900a08a6a7120 BBXtreme <marco.a.graf@icloud.com> 1774703334 +0100	commit: style: format ErrorBoundary component
+08c44c5570c494c6124a70f33c9900a08a6a7120 03e1913ae50ee96c93a2f6d64c1cd3f578670f5a BBXtreme <marco.a.graf@icloud.com> 1774703434 +0100	commit: perf: optimize detail page queries for companies and contacts
+03e1913ae50ee96c93a2f6d64c1cd3f578670f5a 2b16d3b637e2b59f01a94fe911764d985ac179e4 BBXtreme <marco.a.graf@icloud.com> 1774705318 +0100	commit: perf: improve React Query memory settings and update architecture docs
+2b16d3b637e2b59f01a94fe911764d985ac179e4 57493931586fc4e3ad6933212210fc3096f18795 BBXtreme <marco.a.graf@icloud.com> 1774705400 +0100	commit: feat: implement smart OSM POI loading with caching and event handling
+57493931586fc4e3ad6933212210fc3096f18795 f35d4d2066d5995040c7a353ce74a4e56154c9f0 BBXtreme (aider) <marco.a.graf@icloud.com> 1774705512 +0100	commit: feat: add water distance calculation to POI marker popup
+f35d4d2066d5995040c7a353ce74a4e56154c9f0 e3e2d68eaf0db73b71262074d380f1eaec29f892 BBXtreme <marco.a.graf@icloud.com> 1774705526 +0100	commit: fix: remove unused onCalculateWater parameter
+e3e2d68eaf0db73b71262074d380f1eaec29f892 3c85a30617610e30716855b11b09bc86066801ef BBXtreme (aider) <marco.a.graf@icloud.com> 1774705657 +0100	commit: perf: optimize water distance calculation with caching and reduced radius
+3c85a30617610e30716855b11b09bc86066801ef 1b4215dc678ed48abd47d644d16f4f525418526c BBXtreme <marco.a.graf@icloud.com> 1774705671 +0100	commit: fix: resolve lint errors in calculateWaterDistance.ts
+1b4215dc678ed48abd47d644d16f4f525418526c 5589ea630439a35d0c2096459c10c9b6c1f4c8e4 BBXtreme <marco.a.graf@icloud.com> 1774706015 +0100	commit: feat: add clustering and memoization to OSM markers
+5589ea630439a35d0c2096459c10c9b6c1f4c8e4 4ed3e187b8ad00f00a5dbab2bddc20adb058bb90 BBXtreme <marco.a.graf@icloud.com> 1774706362 +0100	commit: style: polish OsmPoiMarkerPopup UI/UX with improved layout and water info badge
+4ed3e187b8ad00f00a5dbab2bddc20adb058bb90 94c13a1446d32c3faa838f202e74db5470f2f50c BBXtreme <marco.a.graf@icloud.com> 1774706377 +0100	commit: style: format conditional rendering in OsmPoiMarkerPopup
+94c13a1446d32c3faa838f202e74db5470f2f50c c9367093a2f7ee06be39dff0b38dbf7645495015 BBXtreme <marco.a.graf@icloud.com> 1774706514 +0100	commit: feat: polish OsmPoiMarkerPopup UI layout with water info and actions
+c9367093a2f7ee06be39dff0b38dbf7645495015 34cec62b77f6a31fed0cf1c8c9ea735d45ea5f4b BBXtreme <marco.a.graf@icloud.com> 1774706528 +0100	commit: style: format conditional rendering in OsmPoiMarkerPopup
+34cec62b77f6a31fed0cf1c8c9ea735d45ea5f4b 532cec38489dc53a22a4ea26b022cd2dede3d754 BBXtreme <marco.a.graf@icloud.com> 1774706598 +0100	commit: fix: increase min-width of OsmPoiMarkerPopup to fit three buttons
+532cec38489dc53a22a4ea26b022cd2dede3d754 22e99a9c1ec6a6312a8c2590fd07f100833a8a35 BBXtreme <marco.a.graf@icloud.com> 1774706682 +0100	commit: fix: move water distance button to second row below OSM view button
+22e99a9c1ec6a6312a8c2590fd07f100833a8a35 ffcfc4794ec1681dccc6bf4497d31380c7325b0b BBXtreme <marco.a.graf@icloud.com> 1774707597 +0100	commit: Update calculateWaterDistance.ts
+ffcfc4794ec1681dccc6bf4497d31380c7325b0b cdb616cf0e25dd7a8ef6c0e63510c409416ea9ce BBXtreme <marco.a.graf@icloud.com> 1774708253 +0100	commit: feat: add confirmation dialog for timeline entry deletion
+cdb616cf0e25dd7a8ef6c0e63510c409416ea9ce ea726ed6a23ed1d948e17814018fc4155c18368a BBXtreme <marco.a.graf@icloud.com> 1774708260 +0100	commit: style: format dialog import in timeline page
+ea726ed6a23ed1d948e17814018fc4155c18368a 45d53579ac85febe96a5f9ba65c71df4f3f8f426 BBXtreme <marco.a.graf@icloud.com> 1774708377 +0100	commit: feat: add confirmation dialog for reminder deletion
+45d53579ac85febe96a5f9ba65c71df4f3f8f426 c48cae0885372afc2790a4cdf6c40f71a0ba6a2a BBXtreme <marco.a.graf@icloud.com> 1774708609 +0100	commit: feat: combine name and position columns in contacts table
+c48cae0885372afc2790a4cdf6c40f71a0ba6a2a 5c9afa9f84e52152339812e4415d5afa76ae189b BBXtreme <marco.a.graf@icloud.com> 1774708622 +0100	commit: style: format JSX in ContactsTable component
+5c9afa9f84e52152339812e4415d5afa76ae189b 0d011783e62b72d654e9e476d329c7b65564feed BBXtreme <marco.a.graf@icloud.com> 1774708645 +0100	commit: fix: add missing DropdownMenuTrigger import in ContactsTable
+0d011783e62b72d654e9e476d329c7b65564feed 2e3e8bfb1eb04b08fd9683c151f733c5170774a5 BBXtreme <marco.a.graf@icloud.com> 1774708718 +0100	commit: feat: make Name column a link to contact detail page
+2e3e8bfb1eb04b08fd9683c151f733c5170774a5 d157996feb6558adadacf657808d78ce2251a233 BBXtreme <marco.a.graf@icloud.com> 1774708737 +0100	commit: style: format ContactsTable component
+d157996feb6558adadacf657808d78ce2251a233 ad9b333c8c9f2f18d70fa07b50680ce2e45921be BBXtreme <marco.a.graf@icloud.com> 1774708816 +0100	commit: fix: make only name clickable and reduce position font size in contacts table
+ad9b333c8c9f2f18d70fa07b50680ce2e45921be 5cd281bfe9e83e15c051e0c3217fef7fe102a9d1 BBXtreme <marco.a.graf@icloud.com> 1774708833 +0100	commit: style: format ContactsTable component for linting compliance
+5cd281bfe9e83e15c051e0c3217fef7fe102a9d1 359765c57d65067e84aecb503b23300f965f99d0 BBXtreme <marco.a.graf@icloud.com> 1774709207 +0100	commit: fix: reset pagination to first page when search filter changes
+359765c57d65067e84aecb503b23300f965f99d0 e9a72540e4fceb7b6bfd497403e44efe72d2b4a2 BBXtreme <marco.a.graf@icloud.com> 1774709212 +0100	commit: style: apply linter fixes to ContactsTable
+e9a72540e4fceb7b6bfd497403e44efe72d2b4a2 7b51428d249e2e3834ca3f0cdeb452d25881fcf0 BBXtreme <marco.a.graf@icloud.com> 1774709245 +0100	commit: fix: suppress exhaustive deps warning and clean formatting in ContactsTable
+7b51428d249e2e3834ca3f0cdeb452d25881fcf0 bc0bc08e35583143f50d17c317f085f6acdaf5cd BBXtreme <marco.a.graf@icloud.com> 1774709256 +0100	commit: style: format ContactsTable component for linting compliance
+bc0bc08e35583143f50d17c317f085f6acdaf5cd 1d486e2bbb80599d8a4d7e592ae29d6bd8e808fa BBXtreme <marco.a.graf@icloud.com> 1774709309 +0100	commit: refactor: replace useEffect with function for global filter handling in ContactsTable
+1d486e2bbb80599d8a4d7e592ae29d6bd8e808fa 8cf089f8b805913d71e4d286b5d7f454c587d0a5 BBXtreme <marco.a.graf@icloud.com> 1774709506 +0100	commit: fix: reset pagination on global filter change
+8cf089f8b805913d71e4d286b5d7f454c587d0a5 1858f88f7e3df0da25c8a5af4d0a7dd85bc808a8 BBXtreme <marco.a.graf@icloud.com> 1774709696 +0100	commit: fix: reset pagination on global filter change
+1858f88f7e3df0da25c8a5af4d0a7dd85bc808a8 41b53122c5ef20515873c4073ae81432b18e6075 BBXtreme <marco.a.graf@icloud.com> 1774709711 +0100	commit: style: fix linting issues in companies page
+41b53122c5ef20515873c4073ae81432b18e6075 30152c1db35ce9d4e1d8a27a0cc2ef378bc161be BBXtreme <marco.a.graf@icloud.com> 1774709745 +0100	commit: fix: remove unused import and suppress exhaustive-deps warning in companies page
+30152c1db35ce9d4e1d8a27a0cc2ef378bc161be b1de3eec46dfdfc843a45fe18062c774664cfafa BBXtreme <marco.a.graf@icloud.com> 1774709822 +0100	commit: fix: remove unnecessary useEffect dependency in CompaniesPage
+b1de3eec46dfdfc843a45fe18062c774664cfafa 756e111b7fa9b436d1e8111de9d844e30277171a BBXtreme <marco.a.graf@icloud.com> 1774709900 +0100	commit: fix: resolve TypeScript errors in companies page query handling
+756e111b7fa9b436d1e8111de9d844e30277171a bebd18784d3ad7dfc61aa7371e82873cb0e650cf BBXtreme <marco.a.graf@icloud.com> 1774710017 +0100	commit: fix: remove non-null assertion in sorting logic
+bebd18784d3ad7dfc61aa7371e82873cb0e650cf b4d96ead767c30aeba21c0327733aed809668451 BBXtreme <marco.a.graf@icloud.com> 1774710112 +0100	commit: fix: add non-null assertion for sorting in companies page
+b4d96ead767c30aeba21c0327733aed809668451 5b7c2a51407ab0e018bfb2e5d88d3ea2602782a4 BBXtreme <marco.a.graf@icloud.com> 1774710303 +0100	commit: feat: add created and updated dates to contact detail header
+5b7c2a51407ab0e018bfb2e5d88d3ea2602782a4 ae8dd8db5bd9c60295f2d73755e585da9c079833 BBXtreme <marco.a.graf@icloud.com> 1774710582 +0100	commit: fix: remove non-null assertion in sorting access
+ae8dd8db5bd9c60295f2d73755e585da9c079833 10de3ac416d2f9aaeddf839c00f6a7bb00d095a4 BBXtreme <marco.a.graf@icloud.com> 1774710654 +0100	commit: fix: add non-null assertion for sorting array access to resolve TypeScript error
+10de3ac416d2f9aaeddf839c00f6a7bb00d095a4 f666c98bd792115d2d43050134afd7c7b967fb80 BBXtreme <marco.a.graf@icloud.com> 1774710893 +0100	commit: fix: remove non-null assertion in sorting block to resolve TypeScript errors
+f666c98bd792115d2d43050134afd7c7b967fb80 9a6e9028ca99e16bc64df3b8e5a946eed0f919c1 BBXtreme <marco.a.graf@icloud.com> 1774711074 +0100	commit: feat: link primary contact name and show position in Hauptkontakt column
+9a6e9028ca99e16bc64df3b8e5a946eed0f919c1 ec295eb01fe5a95f1ea603a3823cebcfe1a19f4e BBXtreme <marco.a.graf@icloud.com> 1774711189 +0100	commit: fix: display actual position in Hauptkontakt column instead of dash
+ec295eb01fe5a95f1ea603a3823cebcfe1a19f4e 1910fe0809086a5bcce4242d63c4af17858bc696 BBXtreme <marco.a.graf@icloud.com> 1774711454 +0100	commit: fix: correct property access in company update and delete mutations
+1910fe0809086a5bcce4242d63c4af17858bc696 342890f331f5bc7592e7879c7ad2f1a64bf05253 BBXtreme <marco.a.graf@icloud.com> 1774711466 +0100	commit: style: format code in companies page
+342890f331f5bc7592e7879c7ad2f1a64bf05253 b817d74fbeb823cdc4d7787656cd1ca2a64e160e BBXtreme <marco.a.graf@icloud.com> 1774711552 +0100	commit: fix: improve error handling in updateCompany and refactor companies service
+b817d74fbeb823cdc4d7787656cd1ca2a64e160e d2dd655909e7b08f159e97cf4e860af6a3276787 BBXtreme <marco.a.graf@icloud.com> 1774711566 +0100	commit: style: replace single quotes with double quotes in error message
+d2dd655909e7b08f159e97cf4e860af6a3276787 ba6c8385cd2cf83bc087d8aeeb8dc612198f6b97 BBXtreme <marco.a.graf@icloud.com> 1774711626 +0100	commit: fix: fix TypeScript errors in companies page mutations
+ba6c8385cd2cf83bc087d8aeeb8dc612198f6b97 94a78e51529fa5469541cfbae77aec6b53372441 BBXtreme <marco.a.graf@icloud.com> 1774711636 +0100	commit: style: format long lines in companies page
+94a78e51529fa5469541cfbae77aec6b53372441 b846d4ac6f4c06cccd5ba7066b452a89bba6c466 BBXtreme <marco.a.graf@icloud.com> 1774711683 +0100	commit: feat: add CompanyForOpenMap type and getCompaniesForOpenMap function
+b846d4ac6f4c06cccd5ba7066b452a89bba6c466 f2b84f8dce291dfa0ccceb61e00fc9f305c209cf BBXtreme <marco.a.graf@icloud.com> 1774711698 +0100	commit: style: standardize quotes in error message
+f2b84f8dce291dfa0ccceb61e00fc9f305c209cf 75bc8ebaae0f3f752cb2eaaf852e93c16718901c BBXtreme <marco.a.graf@icloud.com> 1774712333 +0100	commit: fix: add missing createClient calls to updateCompany and createCompany functions in components
+75bc8ebaae0f3f752cb2eaaf852e93c16718901c 193b14fde73837e3453ab1da0db46878a62bf52e BBXtreme <marco.a.graf@icloud.com> 1774712356 +0100	commit: style: standardize quotes in companies service error message
+193b14fde73837e3453ab1da0db46878a62bf52e 28375bf04239a491f80ec37356673efdcea42c12 BBXtreme <marco.a.graf@icloud.com> 1774712877 +0100	commit: fix: fix type and runtime errors in companies service layer
+28375bf04239a491f80ec37356673efdcea42c12 f783bb8b108abafa0f2378f1156c2f95c5e38910 BBXtreme <marco.a.graf@icloud.com> 1774712949 +0100	commit: fix: add missing Supabase client imports
+f783bb8b108abafa0f2378f1156c2f95c5e38910 5cf82e12fc361164bbb345b3df62932524e0d036 BBXtreme <marco.a.graf@icloud.com> 1774712964 +0100	commit: style: reorder imports
+5cf82e12fc361164bbb345b3df62932524e0d036 a1756c2b274458a0969545b8f27bc637676fe2ce BBXtreme <marco.a.graf@icloud.com> 1774713039 +0100	commit: fix: resolve TypeScript errors in openmap page and view
+a1756c2b274458a0969545b8f27bc637676fe2ce 9fa18d59a55b3f1483fdf8e14d9bc9cec69c9075 BBXtreme <marco.a.graf@icloud.com> 1774713053 +0100	commit: style: fix linting issues in openmap components
+9fa18d59a55b3f1483fdf8e14d9bc9cec69c9075 8df92cfea680040cb4f248a9c79b68e77ac9f6df BBXtreme <marco.a.graf@icloud.com> 1774714089 +0100	commit: refactor: update createContact call to pass browser client explicitly
+8df92cfea680040cb4f248a9c79b68e77ac9f6df 2b0a06f1dbc14cc2b1ecb44f3c6714f79ab2f942 BBXtreme <marco.a.graf@icloud.com> 1774714266 +0100	commit: fix: make createContact client optional and enhance error logging
+2b0a06f1dbc14cc2b1ecb44f3c6714f79ab2f942 6eb4fcd1a645ab4a2e33ee0bf01a89ba0c4d6921 BBXtreme <marco.a.graf@icloud.com> 1774714277 +0100	commit: fix: avoid parameter reassignment in createContact function
+6eb4fcd1a645ab4a2e33ee0bf01a89ba0c4d6921 540fd7bae1306973a49344056ba66b0fb25db06e BBXtreme <marco.a.graf@icloud.com> 1774714474 +0100	commit: feat: improve error logging in handleSupabaseError
+540fd7bae1306973a49344056ba66b0fb25db06e ee49b91cf9160776c8df865178f6623302817973 BBXtreme <marco.a.graf@icloud.com> 1774714534 +0100	commit: feat: improve error logging in handleSupabaseError for better debugging
+ee49b91cf9160776c8df865178f6623302817973 0c17e14eb507d9bd921eb54b49ff1f341b18b9ec BBXtreme <marco.a.graf@icloud.com> 1774714586 +0100	commit: fix: invalidate company detail query after editing via header dialog
+0c17e14eb507d9bd921eb54b49ff1f341b18b9ec 8c482400773944d166967783d49405e7c9380f4b BBXtreme <marco.a.graf@icloud.com> 1774714644 +0100	commit: refactor: use createContact service and enhance payload logging
+8c482400773944d166967783d49405e7c9380f4b aef253b9c6ef3ff49cc4a91bec0d7d51036f3aa2 BBXtreme <marco.a.graf@icloud.com> 1774714724 +0100	commit: fix: make supabase client optional in CRUD functions and enhance error logging
+aef253b9c6ef3ff49cc4a91bec0d7d51036f3aa2 ade8fbd2278859fb10283dd5045e65eacd24e237 BBXtreme <marco.a.graf@icloud.com> 1774714748 +0100	commit: fix: resolve lint errors in companies service by adding createClient import and replacing any type
+ade8fbd2278859fb10283dd5045e65eacd24e237 c86ae0c1de38f657047c98961773533daa68feaa BBXtreme <marco.a.graf@icloud.com> 1774714914 +0100	commit: fix: remove any types and improve error logging in Supabase services
+c86ae0c1de38f657047c98961773533daa68feaa 131bd1ab08366070271fb38e433d00ae348c3ee1 BBXtreme <marco.a.graf@icloud.com> 1774715301 +0100	commit: fix: update LinkedContactsCard and RemindersCard to display real data instead of placeholders
+131bd1ab08366070271fb38e433d00ae348c3ee1 15314bf43b78b0b68bfcccde91f4381a60930179 BBXtreme <marco.a.graf@icloud.com> 1774715322 +0100	commit: feat: add safeDisplay utility function
+15314bf43b78b0b68bfcccde91f4381a60930179 b2162e5c4648bd2159de2391a9de1c2cc07fe2f5 BBXtreme <marco.a.graf@icloud.com> 1774715738 +0100	commit: DOCS to docs
+b2162e5c4648bd2159de2391a9de1c2cc07fe2f5 0e51b9e562adc8043cd4a42d1182747412e5fd2b BBXtreme <marco.a.graf@icloud.com> 1774715835 +0100	commit: Update tsconfig.json
+0e51b9e562adc8043cd4a42d1182747412e5fd2b 7cad3ba044cee5a46740d7601791a7edd119dae9 BBXtreme <marco.a.graf@icloud.com> 1774715938 +0100	commit: style: make position font smaller in linked contacts card
+7cad3ba044cee5a46740d7601791a7edd119dae9 b66e80fb04c71360f1730ed3cb25563617a6014f BBXtreme <marco.a.graf@icloud.com> 1774716024 +0100	commit: feat: add description display in reminders title column
+b66e80fb04c71360f1730ed3cb25563617a6014f d4628f6829d0e3b1ee6a1752649765bb6b34c596 BBXtreme <marco.a.graf@icloud.com> 1774716141 +0100	commit: fix: preselect company in Add Reminder dialog
+d4628f6829d0e3b1ee6a1752649765bb6b34c596 3bd2617e27ddb51eb43f33fafe93f30f0b5f15cf BBXtreme <marco.a.graf@icloud.com> 1774716154 +0100	commit: style: format ReminderEditForm props in RemindersCard
+3bd2617e27ddb51eb43f33fafe93f30f0b5f15cf 8ae68864a684b53771c697efccf232561c1bf8ce BBXtreme <marco.a.graf@icloud.com> 1774716180 +0100	commit: feat: add preselectedCompanyId prop to ReminderEditForm
+8ae68864a684b53771c697efccf232561c1bf8ce ba8434dbeedb2bb1d604e4293ee68f6ca094dad3 BBXtreme <marco.a.graf@icloud.com> 1774716764 +0100	commit: fix: preselect company in Add Reminder dialog
+ba8434dbeedb2bb1d604e4293ee68f6ca094dad3 a9489e027dcf91b3f0f70967924a388446493ea4 BBXtreme <marco.a.graf@icloud.com> 1774717107 +0100	commit: fix: add query invalidation for contacts and company after edits
+a9489e027dcf91b3f0f70967924a388446493ea4 ba8434dbeedb2bb1d604e4293ee68f6ca094dad3 BBXtreme <marco.a.graf@icloud.com> 1774717143 +0100	reset: moving to HEAD~1
+ba8434dbeedb2bb1d604e4293ee68f6ca094dad3 68f7dabfb50c671dad4da14f2509469ddef4daa4 BBXtreme <marco.a.graf@icloud.com> 1774717267 +0100	commit: fix: add query invalidations for company and contacts after edits
+68f7dabfb50c671dad4da14f2509469ddef4daa4 77321282568ed2f56e3a9f7ee76e9a86ad4b8575 BBXtreme <marco.a.graf@icloud.com> 1774717430 +0100	commit: fix: invalidate company query after CRM status update to refresh header badge
+77321282568ed2f56e3a9f7ee76e9a86ad4b8575 598917ae83634167c9675ac0823325b983da5ab5 BBXtreme <marco.a.graf@icloud.com> 1774717663 +0100	commit: fix: display real email, phone, and mobile data in LinkedContactsCard instead of dashes
+598917ae83634167c9675ac0823325b983da5ab5 173d07f5214e0ef3a4f71cf1ecb403810af43d0d BBXtreme <marco.a.graf@icloud.com> 1774717716 +0100	commit: refactor: simplify assigned_to display in RemindersCard
+173d07f5214e0ef3a4f71cf1ecb403810af43d0d 0597ddb473f06b6ab36876c4902ca4be50f1e4dc BBXtreme <marco.a.graf@icloud.com> 1774718295 +0100	commit: fix: invalidate contacts and reminders sub-queries after edits to prevent stale cache on reload
+0597ddb473f06b6ab36876c4902ca4be50f1e4dc 92c2811c6c07fbcaa264ff13e0c0e207440f23b0 BBXtreme <marco.a.graf@icloud.com> 1774718388 +0100	commit: perf: add staleTime: 0 to useQuery in LinkedContactsCard and RemindersCard
+92c2811c6c07fbcaa264ff13e0c0e207440f23b0 dd8be7e3d22cbadecec15c34ce19b8a0a25b454c BBXtreme <marco.a.graf@icloud.com> 1774718482 +0100	commit: fix: fix stale data in LinkedContactsCard and RemindersCard
+dd8be7e3d22cbadecec15c34ce19b8a0a25b454c a687e5c0c6cda1de19458f015119e226e64a3d19 BBXtreme <marco.a.graf@icloud.com> 1774718584 +0100	commit: fix: remove unused safeDisplay import in LinkedContactsCard
+a687e5c0c6cda1de19458f015119e226e64a3d19 56b9a4b8a6a0a5bf5680d11d499533c1e10d5364 BBXtreme <marco.a.graf@icloud.com> 1774719405 +0100	commit: fix: add staleTime and gcTime to force fresh data in contacts and reminders queries
+56b9a4b8a6a0a5bf5680d11d499533c1e10d5364 f2cc614e5c8e73fe5d845d84ce093a01d7497270 BBXtreme <marco.a.graf@icloud.com> 1774719773 +0100	commit: fix: resolve stale cache issue in RemindersCard and LinkedContactsCard
+f2cc614e5c8e73fe5d845d84ce093a01d7497270 f06c740c2f4213d63827ced307b293fd430f32b5 BBXtreme <marco.a.graf@icloud.com> 1774720218 +0100	commit: fix: stabilize CompaniesTable columns and search input to prevent focus loss
+f06c740c2f4213d63827ced307b293fd430f32b5 057d89818c299981433509b7bd10a8786869d8c6 BBXtreme <marco.a.graf@icloud.com> 1774720246 +0100	commit: fix: add onEdit and onDelete to columns useMemo dependencies
+057d89818c299981433509b7bd10a8786869d8c6 82a9f0304e547a3043f9e4ea3aa4c198c6e16e2c BBXtreme <marco.a.graf@icloud.com> 1774721015 +0100	commit: feat: add filter buttons to reminders page
+82a9f0304e547a3043f9e4ea3aa4c198c6e16e2c 6c06598b2267beddae72de2720a8d2686f2916a1 BBXtreme <marco.a.graf@icloud.com> 1774721024 +0100	commit: style: fix linting issues in reminders page
+6c06598b2267beddae72de2720a8d2686f2916a1 e5129d71a7239e72e51c2924f3ab2013a1b33925 BBXtreme <marco.a.graf@icloud.com> 1774721117 +0100	commit: feat: add KPI cards section to Reminders page
+e5129d71a7239e72e51c2924f3ab2013a1b33925 94b6d8f99e4e18ebb746716d4c4184e017eaf581 BBXtreme <marco.a.graf@icloud.com> 1774721132 +0100	commit: style: format Badge component in reminders page
+94b6d8f99e4e18ebb746716d4c4184e017eaf581 51c1ea1d541f506af9ed4845df641b4283cdae56 BBXtreme <marco.a.graf@icloud.com> 1774721178 +0100	commit: feat: add reminder statistics calculation
+51c1ea1d541f506af9ed4845df641b4283cdae56 1d39f58de08ab4903959c7939a2740bef7ef9fda BBXtreme <marco.a.graf@icloud.com> 1774721191 +0100	commit: style: format Badge component in reminders page
+1d39f58de08ab4903959c7939a2740bef7ef9fda 86fea10d0722e428360a147607ec4788702ebfac BBXtreme <marco.a.graf@icloud.com> 1774721258 +0100	commit: feat: connect stats to KPI cards and add loading skeletons
+86fea10d0722e428360a147607ec4788702ebfac 1605afae91eab0bdafa3b8607c50335478223e70 BBXtreme <marco.a.graf@icloud.com> 1774721278 +0100	commit: style: fix linting issues in reminders page
+1605afae91eab0bdafa3b8607c50335478223e70 014d49f939cd0ecc95e3834ccb21ed73bb4ca632 BBXtreme <marco.a.graf@icloud.com> 1774721320 +0100	commit: feat: add This Week stat card to Reminders page
+014d49f939cd0ecc95e3834ccb21ed73bb4ca632 2702b973bb6d506d4ba88d8ae0522391713e6420 BBXtreme <marco.a.graf@icloud.com> 1774721338 +0100	commit: style: format Badge component in reminders page
+2702b973bb6d506d4ba88d8ae0522391713e6420 7b12c53b675418193b903d79215163803c39a7b2 BBXtreme <marco.a.graf@icloud.com> 1774721404 +0100	commit: fix: add date utility imports to reminders page
+7b12c53b675418193b903d79215163803c39a7b2 bfd278e22130d41c0d28189773cb343ef5ae70da BBXtreme <marco.a.graf@icloud.com> 1774721419 +0100	commit: style: format badge and button components in reminders page
+bfd278e22130d41c0d28189773cb343ef5ae70da 8484636865fdf2f8abfc7e20dd9a47c9bcc6b496 BBXtreme <marco.a.graf@icloud.com> 1774721442 +0100	commit: fix: correct imports of date-fns functions from react to date-fns
+8484636865fdf2f8abfc7e20dd9a47c9bcc6b496 7f1e176efac0cc2949e7eca8684a2424073b7c10 BBXtreme <marco.a.graf@icloud.com> 1774721461 +0100	commit: style: apply linter fixes to code formatting and imports
+7f1e176efac0cc2949e7eca8684a2424073b7c10 b949fd64c25452489c640ab92f29017c960e0d45 BBXtreme <marco.a.graf@icloud.com> 1774721589 +0100	commit: fix: remove unused date-fns imports in reminders page
+b949fd64c25452489c640ab92f29017c960e0d45 791f4e5664915d1f821c4c1c02c06bc5c5411867 BBXtreme <marco.a.graf@icloud.com> 1774721604 +0100	commit: style: format Badge and Button components in reminders page
+791f4e5664915d1f821c4c1c02c06bc5c5411867 b67dbfd9312eaec41e9e9d562cf48d86d6a47ffe BBXtreme <marco.a.graf@icloud.com> 1774721919 +0100	commit: fix: enable filtering reminders by status URL param
+b67dbfd9312eaec41e9e9d562cf48d86d6a47ffe 135e611cbbdeaa5f867b7dc430e03e61fccc57d5 BBXtreme <marco.a.graf@icloud.com> 1774721938 +0100	commit: style: fix linting issues in reminders page
+135e611cbbdeaa5f867b7dc430e03e61fccc57d5 d2fce523d18cc0b469a7c44603f85a610d8fb0e4 BBXtreme <marco.a.graf@icloud.com> 1774722232 +0100	commit: fix: resolve stale data issue in LinkedContactsCard and RemindersCard
+d2fce523d18cc0b469a7c44603f85a610d8fb0e4 26e6b781cb5b9f8174ccbc356c27eb110447a6bf BBXtreme <marco.a.graf@icloud.com> 1774722246 +0100	commit: style: format JSX components in LinkedContactsCard and RemindersCard
+26e6b781cb5b9f8174ccbc356c27eb110447a6bf 964ae6025994760049aabd2faab019eae4292ce9 BBXtreme <marco.a.graf@icloud.com> 1774722283 +0100	commit: fix: resolve TypeScript errors and remove unused imports
+964ae6025994760049aabd2faab019eae4292ce9 858fc0629869b779aa7130feaafcccc58963799e BBXtreme <marco.a.graf@icloud.com> 1774722374 +0100	commit: feat: add query invalidation for contacts and reminders on company page
+858fc0629869b779aa7130feaafcccc58963799e 4c9056b36a1d52f687451ebc1343e40c3dbd1455 BBXtreme <marco.a.graf@icloud.com> 1774722390 +0100	commit: fix: resolve TypeScript errors in company detail page
+4c9056b36a1d52f687451ebc1343e40c3dbd1455 55fc1d0298c0042484bed55c06140d891ea1869f BBXtreme <marco.a.graf@icloud.com> 1774722493 +0100	commit: fix: fix stale data on company detail page
+55fc1d0298c0042484bed55c06140d891ea1869f a584cf5c6f74ff891bc1161823b7b9641255257c BBXtreme <marco.a.graf@icloud.com> 1774722590 +0100	commit: fix: correct useEffect import in company detail page
+a584cf5c6f74ff891bc1161823b7b9641255257c 7bccfacee233fce8861066e91d80aa4b1c968a8e BBXtreme <marco.a.graf@icloud.com> 1774722606 +0100	commit: style: reorder imports
+7bccfacee233fce8861066e91d80aa4b1c968a8e fab58e22cee6757a432abc6569b37b9dac5643ee BBXtreme <marco.a.graf@icloud.com> 1774722765 +0100	commit: fix: correct useEffect import and add query invalidation
+fab58e22cee6757a432abc6569b37b9dac5643ee d8556c361c760a1556200dd393a7df96cd31f40b BBXtreme <marco.a.graf@icloud.com> 1774722784 +0100	commit: style: reorder imports in company page
+d8556c361c760a1556200dd393a7df96cd31f40b 6d4aa57f4498301ef988a7c13a685b466d86b04d BBXtreme <marco.a.graf@icloud.com> 1774723118 +0100	commit: refactor: make RemindersCard handle its own invalidation
+6d4aa57f4498301ef988a7c13a685b466d86b04d d993ae389aae9a526d4b639c4de42af330f57a51 BBXtreme <marco.a.graf@icloud.com> 1774723165 +0100	commit: refactor: make LinkedContactsCard self-contained by invalidating queries internally
+d993ae389aae9a526d4b639c4de42af330f57a51 2cb18df5b5870484bebc6e9b57916f436b1e3a3f BBXtreme <marco.a.graf@icloud.com> 1774723578 +0100	commit: fix: make queryClient respect card-level options for fresh data
+2cb18df5b5870484bebc6e9b57916f436b1e3a3f a8a443e385b6a477999734a4e43885e9ee39d9fe BBXtreme <marco.a.graf@icloud.com> 1774723722 +0100	commit: feat: force RemindersCard to always fetch fresh data
+a8a443e385b6a477999734a4e43885e9ee39d9fe 687823703a012bbbac22bb1565311c4fa965f644 BBXtreme <marco.a.graf@icloud.com> 1774723771 +0100	commit: refactor: make RemindersCard mutations reliable like TimelineCard
+687823703a012bbbac22bb1565311c4fa965f644 a0171d417472a9937883fce8793e867a88740204 BBXtreme <marco.a.graf@icloud.com> 1774724118 +0100	commit: fix: lower global staleTime to fix stale data on company detail page
+a0171d417472a9937883fce8793e867a88740204 2deae9897352fc15f1e7e875ea0cd4b53cd7f766 BBXtreme <marco.a.graf@icloud.com> 1774724279 +0100	commit: fix: restore balanced staleTime default to 30 seconds
+2deae9897352fc15f1e7e875ea0cd4b53cd7f766 279ac38c552a47829474b3d2df2e7f842b01914c BBXtreme <marco.a.graf@icloud.com> 1774724966 +0100	commit: refactor: make RemindersCard mutations self-contained
+279ac38c552a47829474b3d2df2e7f842b01914c 561ddd9c3c9f75566a785a87dcc48757bb3c82b6 BBXtreme <marco.a.graf@icloud.com> 1774725016 +0100	commit: refactor: make LinkedContactsCard mutations self-contained
+561ddd9c3c9f75566a785a87dcc48757bb3c82b6 c54509bd740be880bc6c07593e3cc85790e80858 BBXtreme <marco.a.graf@icloud.com> 1774725363 +0100	commit: fix: force RemindersCard to always fetch fresh data on mount
+c54509bd740be880bc6c07593e3cc85790e80858 3feb821665734fc7406acaa89ab2401a8aa02614 BBXtreme <marco.a.graf@icloud.com> 1774725669 +0100	commit: fix: add safety net refetch to fix stale data on hard reload in company detail page
+3feb821665734fc7406acaa89ab2401a8aa02614 22e942ad7f17bdd5d476809d3789ab71d2dc7afa BBXtreme <marco.a.graf@icloud.com> 1774725756 +0100	commit: fix: strengthen data refetch on hard reload in company detail page
+22e942ad7f17bdd5d476809d3789ab71d2dc7afa ce3453991ebe51d8caa370de5e58146e142f0e86 BBXtreme <marco.a.graf@icloud.com> 1774725769 +0100	commit: style: fix linting issues in company detail page
+ce3453991ebe51d8caa370de5e58146e142f0e86 acd2b6934232d4274a10dd425e938e2175463211 BBXtreme <marco.a.graf@icloud.com> 1774725951 +0100	commit: fix: force refresh contacts and reminders on initial render
+acd2b6934232d4274a10dd425e938e2175463211 690a78c63b85c4d33bc91475e270c7dd9ab65489 BBXtreme <marco.a.graf@icloud.com> 1774726005 +0100	commit: refactor: clean up forced refresh logic in company detail page
+690a78c63b85c4d33bc91475e270c7dd9ab65489 e1835bafde15a4bc179e0661fe263905960eb784 BBXtreme <marco.a.graf@icloud.com> 1774726022 +0100	commit: style: add trailing commas to refetchQueries calls
+e1835bafde15a4bc179e0661fe263905960eb784 e22209ac48ac4268dec4b68bc4f52997849abd24 BBXtreme <marco.a.graf@icloud.com> 1774726052 +0100	commit: fix: add one-time refresh for contacts and reminders on company page
+e22209ac48ac4268dec4b68bc4f52997849abd24 6482c844579d2e928c78d4ce62307aa715d033c0 BBXtreme <marco.a.graf@icloud.com> 1774726061 +0100	commit: style: remove trailing whitespace
+6482c844579d2e928c78d4ce62307aa715d033c0 2263aaba69a5d7a309f09827402fae8b63ed115e BBXtreme <marco.a.graf@icloud.com> 1774726190 +0100	commit: fix: restore forced refresh for company detail page cards
+2263aaba69a5d7a309f09827402fae8b63ed115e 2dded3a5083fb89ed5921d11ecad556681674590 BBXtreme <marco.a.graf@icloud.com> 1774726208 +0100	commit: style: add trailing commas to refetchQueries calls
+2dded3a5083fb89ed5921d11ecad556681674590 34174f34659a41d560362f89b0b6def70d69e3bd BBXtreme <marco.a.graf@icloud.com> 1774726354 +0100	commit: fix: add stable key to search input to prevent focus loss
+34174f34659a41d560362f89b0b6def70d69e3bd ff1e2a7e06661cef93858a06398239a91f3270cb BBXtreme <marco.a.graf@icloud.com> 1774726382 +0100	commit: refactor: stabilize global filter handling in CompaniesTable
+ff1e2a7e06661cef93858a06398239a91f3270cb 998e62a8c285b56918323ac3159c6d2b8606fbdf BBXtreme <marco.a.graf@icloud.com> 1774726397 +0100	commit: style: format handleGlobalFilterChange callback
+998e62a8c285b56918323ac3159c6d2b8606fbdf d38aa27fa1d84ae56e5257aa707b365048d42e6e BBXtreme <marco.a.graf@icloud.com> 1774726477 +0100	commit: fix: prevent search input focus loss on pagination reset
+d38aa27fa1d84ae56e5257aa707b365048d42e6e 6e2dda9aa007e38f80f4447817eb56ab1400f3e5 BBXtreme <marco.a.graf@icloud.com> 1774726498 +0100	commit: fix: resolve linting and parsing errors in CompaniesTable
+6e2dda9aa007e38f80f4447817eb56ab1400f3e5 dcf9bf68330dc9a188a0301acbfb46529fec7111 BBXtreme <marco.a.graf@icloud.com> 1774726839 +0100	commit: fix: prevent search input focus loss on Companies page by debouncing global filter
+dcf9bf68330dc9a188a0301acbfb46529fec7111 5372de692cf019659265bd203aef36590077e6e9 BBXtreme <marco.a.graf@icloud.com> 1774726851 +0100	commit: style: format queryKey arrays in CompaniesPage
+5372de692cf019659265bd203aef36590077e6e9 d28cb5e60567807e3b08974bbb530e3531711a73 BBXtreme <marco.a.graf@icloud.com> 1774726988 +0100	commit: style: format ReactQueryDevtools conditional rendering
+d28cb5e60567807e3b08974bbb530e3531711a73 7f7e81dce53fa8ac7aa8d3ca8d15168e1350d23c BBXtreme <marco.a.graf@icloud.com> 1774726997 +0100	commit: style: format JSX in ReactQueryProvider
+7f7e81dce53fa8ac7aa8d3ca8d15168e1350d23c 7b29b53ae6fbd8c3e0bcafa91725754afc953e46 BBXtreme <marco.a.graf@icloud.com> 1774727180 +0100	commit: feat: add controllable React Query Devtools with production toggle and comments
+7b29b53ae6fbd8c3e0bcafa91725754afc953e46 c98677bbc0bf48dad0d005e2dfa60c960b8a789f BBXtreme <marco.a.graf@icloud.com> 1774727195 +0100	commit: style: run linter on react-query.tsx
+c98677bbc0bf48dad0d005e2dfa60c960b8a789f 0d93d76167028d40e111e5cee4df0fbe59b4ab6f BBXtreme <marco.a.graf@icloud.com> 1774727207 +0100	commit: fix: remove invalid position prop from ReactQueryDevtools
+0d93d76167028d40e111e5cee4df0fbe59b4ab6f afbf10e8221508b8331378ac5d4228ed92e20d06 BBXtreme (aider) <marco.a.graf@icloud.com> 1774727444 +0100	commit: chore: hardcode React Query devtools to enabled with toggle comments
+afbf10e8221508b8331378ac5d4228ed92e20d06 ab668468b7881bd644834d41567d0ee9c624af43 BBXtreme <marco.a.graf@icloud.com> 1774727457 +0100	commit: refactor: simplify React Query provider without env vars
+ab668468b7881bd644834d41567d0ee9c624af43 794a264f166acf5256bd664e0f6117aec8aacc8f BBXtreme <marco.a.graf@icloud.com> 1774727467 +0100	commit: style: fix linting issues in react-query.tsx
+794a264f166acf5256bd664e0f6117aec8aacc8f bec5c7b3aabcb89dbae4b2033ec6d8ca1a0e2565 BBXtreme <marco.a.graf@icloud.com> 1774727505 +0100	commit: chores
+bec5c7b3aabcb89dbae4b2033ec6d8ca1a0e2565 556e62de01876d839f7bc64fad4e394d93fcff5f BBXtreme <marco.a.graf@icloud.com> 1774727596 +0100	commit: STABLE 0.5.20
+556e62de01876d839f7bc64fad4e394d93fcff5f 532ac28dd7051c9a15bdf81a0976dc71ca1c6b4d BBXtreme <marco.a.graf@icloud.com> 1774727817 +0100	commit: fix: wrap useSearchParams in Suspense boundary on reminders page
+532ac28dd7051c9a15bdf81a0976dc71ca1c6b4d 4bf68c1087d4248bd21e1c47908accb4330a4fa9 BBXtreme <marco.a.graf@icloud.com> 1774727829 +0100	commit: style: format Badge component in reminders page
+4bf68c1087d4248bd21e1c47908accb4330a4fa9 63d4b9cda6d0d7acc0dcaa59f5d5ebf1d254c424 BBXtreme <marco.a.graf@icloud.com> 1774727882 +0100	commit: fix: add dynamic export to OpenMap page to fix build warning
+63d4b9cda6d0d7acc0dcaa59f5d5ebf1d254c424 2173a203ffe175173814ba15ef87f0f3120d583b BBXtreme <marco.a.graf@icloud.com> 1774727887 +0100	commit: style: standardize quotes in openmap page
+2173a203ffe175173814ba15ef87f0f3120d583b 36240b06e121ecc9825703ab6c1115df46cdb1d0 BBXtreme <marco.a.graf@icloud.com> 1774727985 +0100	commit: fix: wrap useSearchParams in Suspense boundary on reminders page
+36240b06e121ecc9825703ab6c1115df46cdb1d0 0ff4d933a3b3388156d1d35e002c2d0743dea8cc BBXtreme <marco.a.graf@icloud.com> 1774727996 +0100	commit: style: format Badge component in reminders page
+0ff4d933a3b3388156d1d35e002c2d0743dea8cc dac11cb7c77ba73441fa450e8fe5e77f87546ca7 BBXtreme <marco.a.graf@icloud.com> 1774728482 +0100	pull --ff --recurse-submodules --progress origin: Fast-forward

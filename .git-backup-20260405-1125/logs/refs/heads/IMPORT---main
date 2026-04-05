@@ -1,0 +1,155 @@
+0000000000000000000000000000000000000000 14c5ca2def03bd474405cfaa2a05c97d4bbf748b BBXtreme <marco.a.graf@icloud.com> 1774728958 +0100	branch: Created from main
+14c5ca2def03bd474405cfaa2a05c97d4bbf748b c7b5886be7181816b4bf8b85e7067c26de29cc7c BBXtreme <marco.a.graf@icloud.com> 1774729672 +0100	commit: feat: add CSV import utilities for company data
+c7b5886be7181816b4bf8b85e7067c26de29cc7c 99a414026f0adec9a470ecb1e7259a7b30258a62 BBXtreme <marco.a.graf@icloud.com> 1774729685 +0100	commit: style: fix linting issues in csv-import.ts
+99a414026f0adec9a470ecb1e7259a7b30258a62 aee103fa2eeb2a72757b594808555cb3e741562c BBXtreme <marco.a.graf@icloud.com> 1774729707 +0100	commit: fix: address linting warnings and TypeScript errors in csv-import.ts
+aee103fa2eeb2a72757b594808555cb3e741562c 91370ae20cc790c0ac1a08bc8df953b3b5476b49 BBXtreme <marco.a.graf@icloud.com> 1774729727 +0100	commit: style: add type keyword to ParseError and ParseResult imports
+91370ae20cc790c0ac1a08bc8df953b3b5476b49 15723cbe5cc4fc29fb65e881c7f6e2f2a8083cce BBXtreme <marco.a.graf@icloud.com> 1774729751 +0100	commit: fix: import ParseResult and ParseError as types
+15723cbe5cc4fc29fb65e881c7f6e2f2a8083cce 0d50703cf741e4471dc1c25d7fa20f24f1312eb7 BBXtreme <marco.a.graf@icloud.com> 1774729763 +0100	commit: style: reorder imports in csv-import.ts
+0d50703cf741e4471dc1c25d7fa20f24f1312eb7 4f1a26f11e48c7a016eb2c4cd55d6977e3706c2e BBXtreme <marco.a.graf@icloud.com> 1774729785 +0100	commit: fix: remove incorrect type annotations in csv-import.ts
+4f1a26f11e48c7a016eb2c4cd55d6977e3706c2e cb4737c16d6769adfc4df0981957eec5b4c96272 BBXtreme <marco.a.graf@icloud.com> 1774729853 +0100	commit: fix: add type annotations and remove unused imports in csv-import.ts
+cb4737c16d6769adfc4df0981957eec5b4c96272 22f0c5fd6fffb11ed1a5b5cc70c3f9b2acaf005b BBXtreme <marco.a.graf@icloud.com> 1774729918 +0100	commit: fix: replace any types with unknown and proper assertions in csv-import.ts
+22f0c5fd6fffb11ed1a5b5cc70c3f9b2acaf005b 256563646d70297f2eead77a91fd8a5fb9ad1187 BBXtreme <marco.a.graf@icloud.com> 1774729934 +0100	commit: style: format error rejection in CSV parser
+256563646d70297f2eead77a91fd8a5fb9ad1187 20c02914924360ca2e0cc36fa8a763da6ec4670a BBXtreme <marco.a.graf@icloud.com> 1774729956 +0100	commit: feat: add importCompaniesFromCSV function
+20c02914924360ca2e0cc36fa8a763da6ec4670a 5c2f0f1b928c0623bfb0959fdce8a7711dcdd8f7 BBXtreme <marco.a.graf@icloud.com> 1774730027 +0100	commit: fix: replace any types with ParsedCompanyRow in importCompaniesFromCSV
+5c2f0f1b928c0623bfb0959fdce8a7711dcdd8f7 acdcede07bf570f86b2008b71c0b7c5fc203bbc2 BBXtreme <marco.a.graf@icloud.com> 1774730039 +0100	commit: style: reorder import and remove blank line in companies.ts
+acdcede07bf570f86b2008b71c0b7c5fc203bbc2 deca560ecf6b4b8bdf54a6fdc360c29bcd5422e6 BBXtreme <marco.a.graf@icloud.com> 1774730078 +0100	commit: feat: add CSV import dialog for companies
+deca560ecf6b4b8bdf54a6fdc360c29bcd5422e6 705b1d8cf249c41385075f35b0e832f499cc489a BBXtreme <marco.a.graf@icloud.com> 1774730093 +0100	commit: style: fix linting issues in CSVImportDialog
+705b1d8cf249c41385075f35b0e832f499cc489a 34efb00dba535814082757178a9e4c04a98025e3 BBXtreme <marco.a.graf@icloud.com> 1774730178 +0100	commit: fix: resolve lint and type issues in CSVImportDialog
+34efb00dba535814082757178a9e4c04a98025e3 8a2d6c428481cb77f066dcde9488113548aa9f54 BBXtreme <marco.a.graf@icloud.com> 1774734308 +0100	commit: feat: add CSV import to companies page
+8a2d6c428481cb77f066dcde9488113548aa9f54 3561a1e297ed2948247dd667d774e3d014b54d4d BBXtreme <marco.a.graf@icloud.com> 1774734321 +0100	commit: style: fix linting issues in companies page
+3561a1e297ed2948247dd667d774e3d014b54d4d f55519514f13d04a26ed7eb6a34798602ef79c4d BBXtreme <marco.a.graf@icloud.com> 1774734416 +0100	commit: refactor: centralize CSV import success handling in companies page
+f55519514f13d04a26ed7eb6a34798602ef79c4d 9a8d191ababbbce3a89dd10af2007903c6f3b666 BBXtreme <marco.a.graf@icloud.com> 1774734421 +0100	commit: style: fix quote style in companies page
+9a8d191ababbbce3a89dd10af2007903c6f3b666 4060364ea1a934078ab37d5a0b830cc4707fc7f1 BBXtreme <marco.a.graf@icloud.com> 1774734442 +0100	commit: fix: resolve linting warnings and TypeScript errors in companies components
+4060364ea1a934078ab37d5a0b830cc4707fc7f1 1970f63eeab8923838ba7e5e3a1335ea514c1928 BBXtreme <marco.a.graf@icloud.com> 1774734615 +0100	commit: fix: resolve linting issues in CSV import dialog and page
+1970f63eeab8923838ba7e5e3a1335ea514c1928 852224488ea5630deb52c8ef5db1da930ebfc274 BBXtreme <marco.a.graf@icloud.com> 1774734646 +0100	commit: fix: resolve type error in CSVImportDialog onDrop callback
+852224488ea5630deb52c8ef5db1da930ebfc274 a5661e3c7287cfacd9b654d36146758a63c2c5a1 BBXtreme <marco.a.graf@icloud.com> 1774734735 +0100	commit: fix: use onSelect instead of onClick for CSV import dropdown item to open dialog
+a5661e3c7287cfacd9b654d36146758a63c2c5a1 b00d1dcfe57919cc60884111f3e425a5710ab883 BBXtreme <marco.a.graf@icloud.com> 1774734870 +0100	commit: fix: improve CSV import error handling and feedback
+b00d1dcfe57919cc60884111f3e425a5710ab883 d53d7d5a2982b5f9830411e5e64556190a6da6d4 BBXtreme <marco.a.graf@icloud.com> 1774735047 +0100	commit: refactor: move import dropdown to table icon and rename main button to New Company
+d53d7d5a2982b5f9830411e5e64556190a6da6d4 c8b0139cdb4b5e76e28063658bb62d577c36b4cd BBXtreme <marco.a.graf@icloud.com> 1774735370 +0100	commit: fix: restore CompanyHeader, KPICards, and filters to companies page
+c8b0139cdb4b5e76e28063658bb62d577c36b4cd a920ce3191b5bb4aa33fe31329b80d570726e05a BBXtreme <marco.a.graf@icloud.com> 1774735387 +0100	commit: style: format companies page
+a920ce3191b5bb4aa33fe31329b80d570726e05a aa1a4f01ba29874101d6d77548a6cc57760d5196 BBXtreme <marco.a.graf@icloud.com> 1774735433 +0100	commit: fix: fix TypeScript errors in companies page and add missing type export
+aa1a4f01ba29874101d6d77548a6cc57760d5196 f998563be0dc99cd218cf056ae27687995906f18 BBXtreme <marco.a.graf@icloud.com> 1774735444 +0100	commit: style: format Select components and reorder imports in companies page
+f998563be0dc99cd218cf056ae27687995906f18 9f16abfe0c8a709e743266d816d3b8872228b8be BBXtreme (aider) <marco.a.graf@icloud.com> 1774735696 +0100	commit: feat: enhance companies page with advanced filters, stats, and CRUD operations
+9f16abfe0c8a709e743266d816d3b8872228b8be 7bbc1c1020a8ce0f914528fcb8daf3a84ef30836 BBXtreme <marco.a.graf@icloud.com> 1774735895 +0100	commit: chores
+7bbc1c1020a8ce0f914528fcb8daf3a84ef30836 83a81e561b673b7ec18c4a44ac45b51c3f5229e3 BBXtreme <marco.a.graf@icloud.com> 1774736029 +0100	commit: feat: connect CSV import button to dialog in companies page
+83a81e561b673b7ec18c4a44ac45b51c3f5229e3 10b15ed5b35b45e553eed60c815b75fe39be8df9 BBXtreme <marco.a.graf@icloud.com> 1774736035 +0100	commit: style: format JSX and remove duplicate import
+10b15ed5b35b45e553eed60c815b75fe39be8df9 bd149c3a5d15176bbbc188304bada5f1945fcc09 BBXtreme <marco.a.graf@icloud.com> 1774736067 +0100	commit: fix: resolve linting errors in companies page
+bd149c3a5d15176bbbc188304bada5f1945fcc09 beb5ce33c54f574afc99bd278eb79bdbac61adf2 BBXtreme (aider) <marco.a.graf@icloud.com> 1774736324 +0100	commit: feat: add server-side filtering, pagination, and debounced search to companies page
+beb5ce33c54f574afc99bd278eb79bdbac61adf2 4c3f31f86c49c3002bf660f4e541d2dc9b1695b2 BBXtreme <marco.a.graf@icloud.com> 1774736341 +0100	commit: feat: add CSV import dialog to companies page
+4c3f31f86c49c3002bf660f4e541d2dc9b1695b2 fdebb433bd44212f095fb1394d56719718cb38d7 BBXtreme <marco.a.graf@icloud.com> 1774736355 +0100	commit: style: format imports and JSX in companies page
+fdebb433bd44212f095fb1394d56719718cb38d7 31a77959055b33608df5524a573dad450e9e9a55 BBXtreme <marco.a.graf@icloud.com> 1774736412 +0100	commit: fix: add missing state for CSV import dialog
+31a77959055b33608df5524a573dad450e9e9a55 fa682d125f6a5e9ce9d26c64125c40b518634f8a BBXtreme <marco.a.graf@icloud.com> 1774736639 +0100	commit: refactor: combine address and country into single column with country as subtext
+fa682d125f6a5e9ce9d26c64125c40b518634f8a b818f79da637fb82b31e54d6583466827261f39c BBXtreme <marco.a.graf@icloud.com> 1774736736 +0100	commit: feat: include street in company address display
+b818f79da637fb82b31e54d6583466827261f39c 2789b94e2fac12eeeb676c622bb8a94139b2bb1f BBXtreme <marco.a.graf@icloud.com> 1774736781 +0100	commit: refactor: remove value column from companies table
+2789b94e2fac12eeeb676c622bb8a94139b2bb1f edd2f159ad1ff8afe9e42840db25f39982eb1504 BBXtreme <marco.a.graf@icloud.com> 1774736852 +0100	commit: fix: add 10 to page size options and fix pagination selection handling
+edd2f159ad1ff8afe9e42840db25f39982eb1504 c77d4cc629e5f7bef3bd764175b1f4580f1a6758 BBXtreme <marco.a.graf@icloud.com> 1774736918 +0100	commit: fix: remove unused formatCurrency import from CompaniesTable
+c77d4cc629e5f7bef3bd764175b1f4580f1a6758 8bb4384d57c3dcf91ea7a9be297e36799f146ce1 BBXtreme <marco.a.graf@icloud.com> 1774737000 +0100	commit: fix: enable sorting functionality on column header clicks
+8bb4384d57c3dcf91ea7a9be297e36799f146ce1 48eef2faee1070612b2a66d90641ad4b77370388 BBXtreme <marco.a.graf@icloud.com> 1774737085 +0100	commit: fix: maximize CSV import dialog to full screen size
+48eef2faee1070612b2a66d90641ad4b77370388 5d7f86573625383fdad1ac028fdf2a501909b00e BBXtreme <marco.a.graf@icloud.com> 1774737166 +0100	commit: fix: make CSV import dialog full screen width and height
+5d7f86573625383fdad1ac028fdf2a501909b00e 48eef2faee1070612b2a66d90641ad4b77370388 BBXtreme <marco.a.graf@icloud.com> 1774737183 +0100	reset: moving to HEAD~1
+48eef2faee1070612b2a66d90641ad4b77370388 450d65ff819802a9184641940b98951a95af5cb0 BBXtreme <marco.a.graf@icloud.com> 1774737237 +0100	commit: feat: use WideDialogContent for CSV import dialog
+450d65ff819802a9184641940b98951a95af5cb0 58a9eee4522959d809fe888cc6c28977e9e642c8 BBXtreme <marco.a.graf@icloud.com> 1774737448 +0100	commit: fix: resolve linting and type errors in CSVImportDialog
+58a9eee4522959d809fe888cc6c28977e9e642c8 95a091ccfacc90224e9011499b358386eab9d343 BBXtreme <marco.a.graf@icloud.com> 1774737459 +0100	commit: style: format import statement in CSVImportDialog
+95a091ccfacc90224e9011499b358386eab9d343 01bf943e758c5ef1fdf3cb9dff513921037e7d65 BBXtreme (aider) <marco.a.graf@icloud.com> 1774859772 +0200	commit: feat: add caching setup and documentation to calculateWaterDistance
+01bf943e758c5ef1fdf3cb9dff513921037e7d65 9446aceeb9cf8a352aa0ad471f25e462afc159eb BBXtreme <marco.a.graf@icloud.com> 1774859796 +0200	commit: fix: add missing import for determineWassertyp
+9446aceeb9cf8a352aa0ad471f25e462afc159eb b8115afef4d505eeea92939dc4fb1784d013187b BBXtreme <marco.a.graf@icloud.com> 1774859930 +0200	commit: COMMENTARY
+b8115afef4d505eeea92939dc4fb1784d013187b 3397b33e3fa4a1b298e13f52b61e7c5f14b8012a BBXtreme <marco.a.graf@icloud.com> 1774860179 +0200	commit: feat: add map utility functions for OSM POI fetching and icons
+3397b33e3fa4a1b298e13f52b61e7c5f14b8012a 47c2455c650d95ac82e2023c35020546bea37ceb BBXtreme <marco.a.graf@icloud.com> 1774860197 +0200	commit: style: format map.ts with linter
+47c2455c650d95ac82e2023c35020546bea37ceb 5deae2b42dcfc7a7279a5fd041e926140a3c160e BBXtreme <marco.a.graf@icloud.com> 1774860229 +0200	commit: fix: resolve TypeScript errors and improve typing in map utilities
+5deae2b42dcfc7a7279a5fd041e926140a3c160e ef4697cb199bd21ce59a2194a1d332faa351b902 BBXtreme (aider) <marco.a.graf@icloud.com> 1774860671 +0200	commit: docs: add file path comment and Leaflet dependency note to utils and constants
+ef4697cb199bd21ce59a2194a1d332faa351b902 0aae85b5e78bfba4c91e958f49c0d61713637380 BBXtreme <marco.a.graf@icloud.com> 1774860687 +0200	commit: refactor: Consolidate Overpass API endpoints into single source of truth
+0aae85b5e78bfba4c91e958f49c0d61713637380 3b79bd9c778cd1c1225a64dcc72f8890dae31f01 BBXtreme <marco.a.graf@icloud.com> 1774860740 +0200	commit: overpass refactor
+3b79bd9c778cd1c1225a64dcc72f8890dae31f01 2b28e30ae89d0d7bde500d20d06f698dad14c54a BBXtreme (aider) <marco.a.graf@icloud.com> 1774862624 +0200	commit: refactor: move CompanyEditForm to companies subdirectory
+2b28e30ae89d0d7bde500d20d06f698dad14c54a 94ea8ce169a3a523d12a0c1cb291ad9b2444a696 BBXtreme <marco.a.graf@icloud.com> 1774862644 +0200	commit: fix: resolve hydration mismatches on company and contact detail pages
+94ea8ce169a3a523d12a0c1cb291ad9b2444a696 e9ede4b170aaa4dadc698522b57d5cd03847f4b4 BBXtreme <marco.a.graf@icloud.com> 1774862660 +0200	commit: style: reorder imports
+e9ede4b170aaa4dadc698522b57d5cd03847f4b4 61d6acdf051a14091d905aebba38e1729d9373cd BBXtreme <marco.a.graf@icloud.com> 1774864126 +0200	commit: fix: simplify detail page queries to fix RSC payload errors
+61d6acdf051a14091d905aebba38e1729d9373cd 97ec557e2d688d61e610a00eed78b8ba8b9e2eea BBXtreme <marco.a.graf@icloud.com> 1774864135 +0200	commit: style: remove unused imports and format select queries
+97ec557e2d688d61e610a00eed78b8ba8b9e2eea 42b9904c74ba30e1889ed1fb8175cb7f6bfdfddf BBXtreme <marco.a.graf@icloud.com> 1774864162 +0200	commit: fix: cast return value in getCompanyById to resolve TypeScript error
+42b9904c74ba30e1889ed1fb8175cb7f6bfdfddf 6999c3da109dcb0c55a2374ec9aed149f34d27d4 BBXtreme <marco.a.graf@icloud.com> 1774864178 +0200	commit: style: format select statement in getCompanyById
+6999c3da109dcb0c55a2374ec9aed149f34d27d4 dcbb1eabcb92a1269eb4472974b99457c322e511 BBXtreme <marco.a.graf@icloud.com> 1774864596 +0200	commit: fix: resolve hydration mismatches in contacts detail page
+dcbb1eabcb92a1269eb4472974b99457c322e511 777798e18b3ba0831bc597508c0b63f624f5c554 BBXtreme <marco.a.graf@icloud.com> 1774864772 +0200	commit: fix: remove commented-out Linked Company Card block to resolve RSC payload error
+777798e18b3ba0831bc597508c0b63f624f5c554 91235417239ac4b4bf13c57abf3f22b4aab48cec BBXtreme <marco.a.graf@icloud.com> 1774864941 +0200	commit: fix: make linked contacts, reminders, and timeline cards visible in company detail page
+91235417239ac4b4bf13c57abf3f22b4aab48cec c0b256e671a4b26d6b0bc5f9dc9f5d67e655e1f9 BBXtreme <marco.a.graf@icloud.com> 1774865104 +0200	commit: fix: resolve Load failed RSC payload error in contact detail page
+c0b256e671a4b26d6b0bc5f9dc9f5d67e655e1f9 d6dc05abb63fa1bd518dc63aa7e7e5337025ed45 BBXtreme <marco.a.graf@icloud.com> 1774865111 +0200	commit: chore: remove unused imports after linting
+d6dc05abb63fa1bd518dc63aa7e7e5337025ed45 31b2e5010d68f9a0d6a7540a3379b09016e95c28 BBXtreme <marco.a.graf@icloud.com> 1774865271 +0200	commit: fix: await params promise and handle UUID errors in contact detail page
+31b2e5010d68f9a0d6a7540a3379b09016e95c28 87618f4e46a44d278fc4529aa54b917862895e83 BBXtreme <marco.a.graf@icloud.com> 1774865290 +0200	commit: style: fix import order and remove unused import
+87618f4e46a44d278fc4529aa54b917862895e83 d8780ba72e26a07ebe256e731781e17c122fb455 BBXtreme <marco.a.graf@icloud.com> 1774865407 +0200	commit: fix: restore linked company card in contact detail page
+d8780ba72e26a07ebe256e731781e17c122fb455 e789e754de64b90f578615922b42e3a97b4551cb BBXtreme <marco.a.graf@icloud.com> 1774865428 +0200	commit: style: fix linting issues in ContactDetailClient
+e789e754de64b90f578615922b42e3a97b4551cb 9addbe2e94f01ceb92e1da75917bd63ebfe960ec BBXtreme <marco.a.graf@icloud.com> 1774865831 +0200	commit: fix: refresh linked company card after changing company in contact detail page
+9addbe2e94f01ceb92e1da75917bd63ebfe960ec eb7bcd3c2169072423425cdffbde3f5b7d3e39b4 BBXtreme <marco.a.graf@icloud.com> 1774865858 +0200	commit: style: remove unused getContactById import
+eb7bcd3c2169072423425cdffbde3f5b7d3e39b4 e1958887513096900732d3371a11de797fccd5ec BBXtreme <marco.a.graf@icloud.com> 1774866027 +0200	commit: fix: enable updating linked company in contact details
+e1958887513096900732d3371a11de797fccd5ec d217651b6b4265107535077c8560cfe738695785 BBXtreme <marco.a.graf@icloud.com> 1774866109 +0200	commit: fix: add null check for contact before using in queries
+d217651b6b4265107535077c8560cfe738695785 7fccfe8d1d3259b4cbed6ec751a33592c0e3f327 BBXtreme <marco.a.graf@icloud.com> 1774866342 +0200	commit: fix: move early return after hooks to comply with Rules of Hooks
+7fccfe8d1d3259b4cbed6ec751a33592c0e3f327 6881f95998a77c805ba7ac5f4ae3a1c0967eadb5 BBXtreme <marco.a.graf@icloud.com> 1774866374 +0200	commit: chores
+6881f95998a77c805ba7ac5f4ae3a1c0967eadb5 fc09130c14825cdba544b424383170b272bdd786 BBXtreme <marco.a.graf@icloud.com> 1774866448 +0200	commit: feat: add DTOs for company and contact forms
+fc09130c14825cdba544b424383170b272bdd786 34dd5c25e6cbb48cc0bac929e0eec3768326b7d5 BBXtreme (aider) <marco.a.graf@icloud.com> 1774866687 +0200	commit: style: add file path comments to DTO files
+34dd5c25e6cbb48cc0bac929e0eec3768326b7d5 0ec2d96d6869322c28ed3bbd33a292e4e3255aef BBXtreme <marco.a.graf@icloud.com> 1774866707 +0200	commit: fix: correct erroneous comments in company and contact DTOs
+0ec2d96d6869322c28ed3bbd33a292e4e3255aef dea47ae0f7ed5498ed3f0358508dbcf480914897 BBXtreme (aider) <marco.a.graf@icloud.com> 1774866961 +0200	commit: docs: add company.dto.ts reference in contact.dto.ts comment
+dea47ae0f7ed5498ed3f0358508dbcf480914897 08361940ea3bb4112538a19fb6a7044d63fb9e27 BBXtreme <marco.a.graf@icloud.com> 1774866976 +0200	commit: refactor: polish DTO types for optional fields and fix comments
+08361940ea3bb4112538a19fb6a7044d63fb9e27 94b62bf67f897d4fc5f56a0ceee57420c60a118b BBXtreme <marco.a.graf@icloud.com> 1774867029 +0200	commit: feat: integrate ContactFormDTO into contact forms
+94b62bf67f897d4fc5f56a0ceee57420c60a118b 82cd6c30f3c0e9942598f3764c1882a1054703b1 BBXtreme <marco.a.graf@icloud.com> 1774867047 +0200	commit: style: reorganize imports in ContactDetailClient.tsx
+82cd6c30f3c0e9942598f3764c1882a1054703b1 3330d091a0e5c43044cdc3c485862bffac93d27a BBXtreme <marco.a.graf@icloud.com> 1774867115 +0200	commit: fix: resolve TypeScript type errors in ContactDetailClient
+3330d091a0e5c43044cdc3c485862bffac93d27a 9d0586697536c2a6a28afb7103328f8177202db0 BBXtreme <marco.a.graf@icloud.com> 1774867354 +0200	commit: refactor: integrate CompanyFormDTO into company forms
+9d0586697536c2a6a28afb7103328f8177202db0 15bfc63a63ac9e3d41f9a8ac301426f4a084e261 BBXtreme <marco.a.graf@icloud.com> 1774867361 +0200	commit: chore: remove duplicate and unused imports after linting
+15bfc63a63ac9e3d41f9a8ac301426f4a084e261 93e8b59f62fed2893deac75fbc9e4d5f3e5ba753 BBXtreme <marco.a.graf@icloud.com> 1774868875 +0200	commit: docs: update documentation for DTOs and middleware
+93e8b59f62fed2893deac75fbc9e4d5f3e5ba753 ee596c1099ea40d34a6046a40866021e7d98a50b BBXtreme <marco.a.graf@icloud.com> 1774868913 +0200	commit: fix: configure biome to format markdown files without linting
+ee596c1099ea40d34a6046a40866021e7d98a50b a50c6682f8a3e6ae484df552bf3e884e3d3362ef BBXtreme <marco.a.graf@icloud.com> 1774869209 +0200	commit: fix: resolve TypeScript errors in CompanyEditForm and add notes to DTO
+a50c6682f8a3e6ae484df552bf3e884e3d3362ef 24950e6864bad5970f0a60f7d226bfac8129b8df BBXtreme <marco.a.graf@icloud.com> 1774869263 +0200	commit: fix: remove unused CompanyFormValues type alias
+24950e6864bad5970f0a60f7d226bfac8129b8df d9ad28d6fd0598523fe441f106d9a1071e292e33 BBXtreme <marco.a.graf@icloud.com> 1774869310 +0200	commit: refactor: convert company detail page to server-client pattern
+d9ad28d6fd0598523fe441f106d9a1071e292e33 f7c9e70d6b945603b9923d3298a17b96f9215ca4 BBXtreme <marco.a.graf@icloud.com> 1774869328 +0200	commit: style: remove unused import and reorder imports
+f7c9e70d6b945603b9923d3298a17b96f9215ca4 4448222f9b6de8bfe313c21916648eec2c7aacf3 BBXtreme <marco.a.graf@icloud.com> 1774869417 +0200	commit: refactor: remove duplicated option arrays in company forms
+4448222f9b6de8bfe313c21916648eec2c7aacf3 621217f5d78b0ceeafc66906a3e5b003314ed989 BBXtreme <marco.a.graf@icloud.com> 1774869432 +0200	commit: chore: remove unused imports from company forms
+621217f5d78b0ceeafc66906a3e5b003314ed989 2f5bc25484e9ac1c3a4bbb7dc8eeb2b5d0b72a36 BBXtreme <marco.a.graf@icloud.com> 1774869553 +0200	commit: refactor: align validation schemas with DTOs
+2f5bc25484e9ac1c3a4bbb7dc8eeb2b5d0b72a36 841779641c516e8d8bec93dd17692abcd5109e2a BBXtreme <marco.a.graf@icloud.com> 1774869638 +0200	commit: fix: resolve TypeScript type errors in ContactCreateForm
+841779641c516e8d8bec93dd17692abcd5109e2a fbdec73ab1a0db443b5c735e660c2d7a4e13a9c3 BBXtreme <marco.a.graf@icloud.com> 1774869765 +0200	commit: fix: resolve TypeScript errors in company forms
+fbdec73ab1a0db443b5c735e660c2d7a4e13a9c3 ec06202b855b42f364ae34d50b7d83362664e894 BBXtreme <marco.a.graf@icloud.com> 1774869875 +0200	commit: feat: add Suspense boundaries with LoadingState fallback to pages
+ec06202b855b42f364ae34d50b7d83362664e894 a8ec346cb25e30bc94fdd48c8802a6e8d75001a2 BBXtreme <marco.a.graf@icloud.com> 1774869894 +0200	commit: style: reorder React imports to place Suspense first
+a8ec346cb25e30bc94fdd48c8802a6e8d75001a2 1577f5c3cc537759990b12591a28c64ec45cfb32 BBXtreme <marco.a.graf@icloud.com> 1774870010 +0200	commit: feat: add React Query Suspense pattern to list pages
+1577f5c3cc537759990b12591a28c64ec45cfb32 711ecf2c190fc5808ec9a35e3066efe7c81e2c2b BBXtreme <marco.a.graf@icloud.com> 1774870033 +0200	commit: chore: remove unused imports from companies and contacts pages
+711ecf2c190fc5808ec9a35e3066efe7c81e2c2b 37691a4eb6437a41046e2064002172e6d80c9c9b BBXtreme <marco.a.graf@icloud.com> 1774870085 +0200	commit: fix: fix TypeScript errors in companies and contacts pages
+37691a4eb6437a41046e2064002172e6d80c9c9b acb2f458d02e5f687a9c874290cd35f764620af6 BBXtreme <marco.a.graf@icloud.com> 1774870321 +0200	commit: refactor: align contact forms with DTOs and constants
+acb2f458d02e5f687a9c874290cd35f764620af6 3e2db9af38d78cb0016afcfc209da6267ba8e5aa BBXtreme <marco.a.graf@icloud.com> 1774870336 +0200	commit: style: reorder imports in contact forms
+3e2db9af38d78cb0016afcfc209da6267ba8e5aa b79b9eaeb142735667347a82b435a5a92ce26b31 BBXtreme <marco.a.graf@icloud.com> 1774870390 +0200	commit: fix: resolve type error in ContactEditForm Select defaultValue
+b79b9eaeb142735667347a82b435a5a92ce26b31 76758189841c2d90804b778441613fc59b036440 BBXtreme <marco.a.graf@icloud.com> 1774870527 +0200	commit: refactor: replace useQuery with useSuspenseQuery in dashboard page
+76758189841c2d90804b778441613fc59b036440 dff5d0005c62308b8b80a839133b28901e8752f4 BBXtreme <marco.a.graf@icloud.com> 1774870551 +0200	commit: fix: access dashboard stats via data property
+dff5d0005c62308b8b80a839133b28901e8752f4 63fd908c09b05617134754a7e739701f493c3ed1 BBXtreme <marco.a.graf@icloud.com> 1774870640 +0200	commit: refactor: move company filter options to shared constants and clean up unused code
+63fd908c09b05617134754a7e739701f493c3ed1 3d44071a8c3f70e894d6a0c91e776bb33e4fafde BBXtreme <marco.a.graf@icloud.com> 1774870655 +0200	commit: style: reorder imports
+3d44071a8c3f70e894d6a0c91e776bb33e4fafde 68b90a95d0f3ed8ab04ed6acc15f218d7feb0584 BBXtreme <marco.a.graf@icloud.com> 1774870721 +0200	commit: fix: adjust LoadingState count in dashboard Suspense fallback to 4
+68b90a95d0f3ed8ab04ed6acc15f218d7feb0584 8ff5e239f3bd39d499e0e1108421fab0881df6ae BBXtreme <marco.a.graf@icloud.com> 1774870818 +0200	commit: refactor: centralize reminder options in constants
+8ff5e239f3bd39d499e0e1108421fab0881df6ae 1b160db1fec6089ee75147fae3e903b1e196d124 BBXtreme <marco.a.graf@icloud.com> 1774870925 +0200	commit: chore: add Suspense boundary and remove debug logs in OpenMap
+1b160db1fec6089ee75147fae3e903b1e196d124 1c29752771a55ed38fbc476583934bd746efe9ba BBXtreme <marco.a.graf@icloud.com> 1774870950 +0200	commit: style: fix linting issues
+1c29752771a55ed38fbc476583934bd746efe9ba d9a0d5e0b916a39a70d16f405f5139a322242702 BBXtreme <marco.a.graf@icloud.com> 1774871211 +0200	commit: docs: add project README with features, tech stack, and setup instructions
+d9a0d5e0b916a39a70d16f405f5139a322242702 dfad3ab0b64d0db3e36bedf66a0c4aa1fbbda02b BBXtreme <marco.a.graf@icloud.com> 1774871268 +0200	commit: fix: include Markdown files in Biome configuration
+dfad3ab0b64d0db3e36bedf66a0c4aa1fbbda02b fbe586acd36bbbd287d162452bbc67856ab9f8e3 BBXtreme <marco.a.graf@icloud.com> 1774871337 +0200	commit: docs: update all documentation files in docs folder
+fbe586acd36bbbd287d162452bbc67856ab9f8e3 394072a8ae247a5822eceacb9840f95984e320ce BBXtreme <marco.a.graf@icloud.com> 1774871395 +0200	commit: fix: include docs directory in biome file processing
+394072a8ae247a5822eceacb9840f95984e320ce f7b94204ebdab77d180935bee7b2712d112395c7 BBXtreme <marco.a.graf@icloud.com> 1774871444 +0200	commit: fix: remove unknown ignore key from biome.json files config
+f7b94204ebdab77d180935bee7b2712d112395c7 ed5ecba11cef50e3f6f5474dbbfad2b68c71ee41 BBXtreme <marco.a.graf@icloud.com> 1774871864 +0200	commit: chore: remove debug console statements from services and utils
+ed5ecba11cef50e3f6f5474dbbfad2b68c71ee41 9603e628775e469806acc3b0a2570ddfab306378 BBXtreme <marco.a.graf@icloud.com> 1774871882 +0200	commit: style: prefix unused catch variables with underscore
+9603e628775e469806acc3b0a2570ddfab306378 1c9c25ce23aa50eec9969b3a3d5ae6c94287d309 BBXtreme <marco.a.graf@icloud.com> 1774871908 +0200	commit: fix: add comments to empty catch blocks in calculateWaterDistance.ts
+1c9c25ce23aa50eec9969b3a3d5ae6c94287d309 293775f6d441d792974d8d948d079bb89356b95f BBXtreme <marco.a.graf@icloud.com> 1774872210 +0200	commit: fix: correct change company button to open proper dialog in contact detail
+293775f6d441d792974d8d948d079bb89356b95f 90b8c376992f7914dfcbaedd917dedc42c3ea945 BBXtreme <marco.a.graf@icloud.com> 1774872220 +0200	commit: style: remove unused imports and rename unused variable
+90b8c376992f7914dfcbaedd917dedc42c3ea945 733fc84f08ec666b1e2ac0382dea04c74ff88064 BBXtreme <marco.a.graf@icloud.com> 1774872258 +0200	commit: fix: resolve TypeScript errors in ContactDetailClient component
+733fc84f08ec666b1e2ac0382dea04c74ff88064 f96b49bf0bc0821212ea389896ed5d7d17dbad08 BBXtreme <marco.a.graf@icloud.com> 1774872351 +0200	commit: fix: resolve linting warnings in ContactDetailClient
+f96b49bf0bc0821212ea389896ed5d7d17dbad08 d8498cdbf04d41d467807507c84d6950207be533 BBXtreme <marco.a.graf@icloud.com> 1774872420 +0200	commit: fix: assert contact type to resolve null errors
+d8498cdbf04d41d467807507c84d6950207be533 252f753b132f4b7ed4f90d580a0f667ffa106444 BBXtreme <marco.a.graf@icloud.com> 1774872564 +0200	commit: chores
+252f753b132f4b7ed4f90d580a0f667ffa106444 d0a4560c76118759619d28c3656fb020bd39ce2f BBXtreme <marco.a.graf@icloud.com> 1774872884 +0200	commit: fix: correct Change Company button to open select dialog instead of edit form
+d0a4560c76118759619d28c3656fb020bd39ce2f b0ae3572cc57d8d5d9cff1bac85f0a8e4e7c9f4b BBXtreme <marco.a.graf@icloud.com> 1774873274 +0200	commit: fix: correct Edit button to open dialog instead of triggering update mutation
+b0ae3572cc57d8d5d9cff1bac85f0a8e4e7c9f4b cd095f823c9397fcdb854c4dea6c613670199634 BBXtreme <marco.a.graf@icloud.com> 1774873294 +0200	commit: style: fix linting issues in companies page and table
+cd095f823c9397fcdb854c4dea6c613670199634 f4d3a58645e7258ac02ca8ddc1f8107092caa087 BBXtreme <marco.a.graf@icloud.com> 1774873341 +0200	commit: fix: resolve type errors for pagination and sorting in CompaniesTable
+f4d3a58645e7258ac02ca8ddc1f8107092caa087 9d2f2afa337042a13a8719d2baa7ce05bf7f1044 BBXtreme <marco.a.graf@icloud.com> 1774873680 +0200	commit: feat: add bulk delete functionality to companies table
+9d2f2afa337042a13a8719d2baa7ce05bf7f1044 1b568e63f6662cb25e3975e74c7921f84c7a0633 BBXtreme <marco.a.graf@icloud.com> 1774873703 +0200	commit: style: sort imports in companies page
+1b568e63f6662cb25e3975e74c7921f84c7a0633 017e2911f63b65041f1bd0a7347899ca54da9994 BBXtreme <marco.a.graf@icloud.com> 1774873927 +0200	commit: fix: correct Checkbox import and add type annotations in CompaniesTable
+017e2911f63b65041f1bd0a7347899ca54da9994 8913bb585a2f0677e48508dfc8141031bd261208 BBXtreme (aider) <marco.a.graf@icloud.com> 1774874425 +0200	commit: chore: add file path comment to CompaniesTable.tsx
+8913bb585a2f0677e48508dfc8141031bd261208 07334fe2b0aff94a52e1e79c281b3dce160b7fb9 BBXtreme <marco.a.graf@icloud.com> 1774874444 +0200	commit: fix: polish bulk delete button and fix TypeScript error
+07334fe2b0aff94a52e1e79c281b3dce160b7fb9 0eae2bb443f66fb60e15821765cc90a91280d970 BBXtreme <marco.a.graf@icloud.com> 1774874517 +0200	commit: fix: replace any type with Updater in onRowSelectionChange prop
+0eae2bb443f66fb60e15821765cc90a91280d970 8e0224fa716ed5ff5607f2046cdde39facdb89a8 BBXtreme <marco.a.graf@icloud.com> 1774874724 +0200	commit: feat: add filter count and company count display in accordion trigger
+8e0224fa716ed5ff5607f2046cdde39facdb89a8 54e1b4aba09c00d6ed4fee0a08d43ce5efa95106 BBXtreme <marco.a.graf@icloud.com> 1774874784 +0200	commit: Delete ContactDetailClient.tsx
+54e1b4aba09c00d6ed4fee0a08d43ce5efa95106 c39db18460cd517a033534ca0842ec5be038fe3b BBXtreme <marco.a.graf@icloud.com> 1774875361 +0200	commit: Update version.ts
+c39db18460cd517a033534ca0842ec5be038fe3b e36c48b15e72c511749ecef34baec76072bc9906 BBXtreme <marco.a.graf@icloud.com> 1774875761 +0200	commit: placeholder png
+e36c48b15e72c511749ecef34baec76072bc9906 2517866f9f95dba2791a2cbd77d7901c48e4dea0 BBXtreme <marco.a.graf@icloud.com> 1774876074 +0200	commit: feat: add React ErrorBoundary with retry and reload options
+2517866f9f95dba2791a2cbd77d7901c48e4dea0 78e18cfb0e844831cb5c33ac907f379266b6a50b BBXtreme <marco.a.graf@icloud.com> 1774876092 +0200	commit: style: reorder imports and remove empty line in layout.tsx
+78e18cfb0e844831cb5c33ac907f379266b6a50b ad48f7df9122d2d3891c4976975d5feedd7d7ac1 BBXtreme <marco.a.graf@icloud.com> 1774876111 +0200	commit: fix: import React properly in ErrorBoundary to resolve undeclared variable error
+ad48f7df9122d2d3891c4976975d5feedd7d7ac1 dc53f2650d3662f21bdf676c0e3a8fc62f6149bb BBXtreme <marco.a.graf@icloud.com> 1774876272 +0200	commit: fix: add 'use client' to ErrorBoundary for server component compatibility
+dc53f2650d3662f21bdf676c0e3a8fc62f6149bb d64f9615bec778b0a534dba7df4bfd154e621316 BBXtreme <marco.a.graf@icloud.com> 1774876289 +0200	commit: style: fix import order and remove blank line
+d64f9615bec778b0a534dba7df4bfd154e621316 39fa62782545f792521aefd68a468fac12798b56 BBXtreme <marco.a.graf@icloud.com> 1774876743 +0200	commit: feat: add key to version div to force re-render on version change
+39fa62782545f792521aefd68a468fac12798b56 33ab2fcff224fa759b3ecabbdf1d83855212c5b6 BBXtreme <marco.a.graf@icloud.com> 1774876911 +0200	commit: Update package.json
