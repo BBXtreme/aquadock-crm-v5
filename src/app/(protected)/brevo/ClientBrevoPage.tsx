@@ -2,13 +2,14 @@
 "use client";
 
 import { useState } from "react";
+import type { Database } from "@/types/database.types";
 import BrevoCampaignForm from "@/components/features/brevo/BrevoCampaignForm";
 import BrevoCampaignList from "@/components/features/brevo/BrevoCampaignList";
 import BrevoRecipientSelector from "@/components/features/brevo/BrevoRecipientSelector";
 import BrevoTemplateSelector from "@/components/features/brevo/BrevoTemplateSelector";
 
 interface ClientBrevoPageProps {
-  templates: any[];
+  templates: Database["public"]["Tables"]["email_templates"]["Row"][];
 }
 
 export default function ClientBrevoPage({ templates }: ClientBrevoPageProps) {

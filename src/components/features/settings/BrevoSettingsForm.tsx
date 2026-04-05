@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { type BrevoSettingsForm, brevoSettingsSchema } from "@/lib/validations/brevo";
+import { type BrevoSettingsFormData, brevoSettingsSchema } from "@/lib/validations/brevo";
 
 export default function BrevoSettingsForm() {
-  const form = useForm<BrevoSettingsForm>({ resolver: zodResolver(brevoSettingsSchema) });
+  const form = useForm<BrevoSettingsFormData>({ resolver: zodResolver(brevoSettingsSchema) });
 
-  const onSubmit = async (_data: BrevoSettingsForm) => {
+  const onSubmit = async (_data: BrevoSettingsFormData) => {
     // Implement save logic
   };
 

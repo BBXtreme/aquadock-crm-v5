@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createBrevoCampaign } from "@/lib/actions/brevo";
-import { type BrevoCampaignForm, brevoCampaignSchema } from "@/lib/validations/brevo";
+import { type BrevoCampaignFormData, brevoCampaignSchema } from "@/lib/validations/brevo";
 
 export default function BrevoCampaignForm() {
-  const form = useForm<BrevoCampaignForm>({ resolver: zodResolver(brevoCampaignSchema) });
+  const form = useForm<BrevoCampaignFormData>({ resolver: zodResolver(brevoCampaignSchema) });
 
-  const onSubmit = async (_data: BrevoCampaignForm) => {
+  const onSubmit = async (_data: BrevoCampaignFormData) => {
     await createBrevoCampaign(new FormData()); // Pass data
   };
 

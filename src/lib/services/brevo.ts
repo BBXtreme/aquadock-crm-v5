@@ -14,7 +14,7 @@ export async function getBrevoApiKey(userId: string): Promise<string | null> {
   return data?.value as string | null;
 }
 
-export async function createBrevoContact(apiKey: string, contact: { email: string; attributes: Record<string, any> }) {
+export async function createBrevoContact(apiKey: string, contact: { email: string; attributes: Record<string, unknown> }) {
   const response = await fetch(`${BREVO_API_URL}/contacts`, {
     method: "POST",
     headers: { "api-key": apiKey, "Content-Type": "application/json" },

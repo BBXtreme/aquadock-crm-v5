@@ -19,6 +19,6 @@ export const brevoSettingsSchema = z.object({
   enabled: z.boolean(),
 }).strict();
 
-export type BrevoCampaignForm = z.infer<typeof brevoCampaignSchema>;
-export type BrevoSyncForm = z.infer<typeof brevoSyncSchema>;
-export type BrevoSettingsForm = z.infer<typeof brevoSettingsSchema>;
+export type BrevoCampaignFormData = z.infer<typeof brevoCampaignSchema>;
+export type BrevoSyncFormData = z.infer<typeof brevoSyncSchema>;
+export type BrevoSettingsFormData = z.infer<typeof brevoSettingsSchema>;
