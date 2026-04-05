@@ -92,7 +92,7 @@ export default function Header() {
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
             <Image
-              src={theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+              src={mounted && theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
               alt="AquaDock CRM"
               width={0}
               height={0}
