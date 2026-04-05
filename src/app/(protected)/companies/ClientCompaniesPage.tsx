@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Anchor,
   Building,
@@ -30,6 +30,17 @@ import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -544,11 +555,25 @@ function ClientCompaniesPage() {
 
             {/* Bulk Delete Button */}
             {Object.keys(rowSelection).length > 0 && (
-              <div className="mb-4">
-                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} title="Delete selected companies">
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
+              <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" title="Delete selected companies">
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Bulk Delete</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete these {Object.keys(rowSelection).length} companies? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
 
             <CompaniesTable
@@ -589,23 +614,6 @@ function ClientCompaniesPage() {
         </Dialog>
       )}
 
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Bulk Delete</DialogTitle>
-          </DialogHeader>
-          <p>Are you sure you want to delete {Object.keys(rowSelection).length} selected companies? This action cannot be undone.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleBulkDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </>
   );
