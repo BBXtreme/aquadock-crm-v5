@@ -78,7 +78,7 @@ export default function CompanyEditForm({ company, onSuccess }: { company: Compa
       return updateCompany(company.id, mappedData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       if (company) {
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       }

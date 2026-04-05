@@ -4,6 +4,7 @@
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import type React from "react";
 
@@ -23,11 +24,18 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}>
-        <ErrorBoundary>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
-        </ErrorBoundary>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ErrorBoundary>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -13,6 +13,17 @@ import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,17 +35,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
+import { anredeOptions } from "@/lib/constants/contact-options";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
-
-const anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
 
 interface ContactDetailClientProps {
   contact: Contact;
@@ -51,6 +56,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
   const [notesValue, setNotesValue] = useState("");
   const [editCompanyDialog, setEditCompanyDialog] = useState(false);
   const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -90,14 +96,11 @@ export default function ContactDetailClient({ contact: initialContact, companies
   }
 
   const handleDeleteContact = async () => {
-    if (confirm("Are you sure you want to delete this contact?")) {
-      try {
-        const supabase = createClient();
-        await deleteContact(id, supabase);
-        router.push("/contacts");
-      } catch (_error) {
-        toast.error("Failed to delete contact");
-      }
+    try {
+      await deleteContact(id);
+      router.push("/contacts");
+    } catch (_error) {
+      toast.error("Failed to delete contact");
     }
   };
 
@@ -133,9 +136,25 @@ export default function ContactDetailClient({ contact: initialContact, companies
           <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
             <Edit className="w-4 h-4" />
           </Button>
-          <Button onClick={handleDeleteContact} variant="destructive" size="sm">
-            <Trash className="w-4 h-4" />
-          </Button>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button onClick={() => setDeleteDialogOpen(true)} variant="destructive" size="sm">
+                <Trash className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this contact? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteContact}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={() => router.push("/contacts")} size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>

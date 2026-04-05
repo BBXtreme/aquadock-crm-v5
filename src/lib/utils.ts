@@ -13,87 +13,41 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import {
+  countryFlags,
+  firmentypLabels,
+  kundentypLabels,
+  priorityLabels,
+  reminderStatusLabels,
+  statusLabels,
+} from "@/lib/constants/company-lables";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function getKundentypLabel(t: string): string {
-  const map: Record<string, string> = {
-    restaurant: "🍽 Restaurant",
-    hotel: "🏨 Hotel",
-    resort: "🌴 Resort",
-    camping: "⛺ Camping",
-    marina: "⚓ Marina",
-    segelschule: "⛵ Segelschule",
-    segelverein: "🏆 Segelverein",
-    bootsverleih: "🚤 Bootsverleih",
-    neukunde: "🆕 Neukunde",
-    bestandskunde: "⭐ Bestandskunde",
-    interessent: "👁 Interessent",
-    partner: "🤝 Partner",
-    sonstige: "Sonstige",
-  };
-  return map[t.toLowerCase()] || t;
+  return kundentypLabels[t.toLowerCase()] || t;
 }
 
 export function getStatusLabel(status: string): string {
-  const map: Record<string, string> = {
-    gewonnen: "✅ Gewonnen",
-    verloren: "❌ Verloren",
-    lead: "🔍 Lead",
-    interessant: "👀 Interessant",
-    qualifiziert: "⭐ Qualifiziert",
-    akquise: "🎯 Akquise",
-    angebot: "📄 Angebot",
-    kunde: "👤 Kunde",
-    partner: "🤝 Partner",
-    inaktiv: "⏸ Inaktiv",
-  };
-  return map[status.toLowerCase()] || status;
+  return statusLabels[status.toLowerCase()] || status;
 }
 
 export function getFirmentypLabel(firmentyp: string): string {
-  if (firmentyp.toLowerCase() === "kette") return "🏢 Kette";
-  return "🏠 Einzelbetrieb";
+  return firmentypLabels[firmentyp.toLowerCase()] || firmentyp;
 }
 
 export function getCountryFlag(country: string | null): string | null {
-  const flagMap: Record<string, string> = {
-    Deutschland: "🇩🇪",
-    Österreich: "🇦🇹",
-    Schweiz: "🇨🇭",
-    Frankreich: "🇫🇷",
-    Italien: "🇮🇹",
-    Spanien: "🇪🇸",
-    Niederlande: "🇳🇱",
-    Belgien: "🇧🇪",
-    Dänemark: "🇩🇰",
-    Schweden: "🇸🇪",
-    Norwegen: "🇳🇴",
-    Polen: "🇵🇱",
-    Ungarn: "🇭🇺",
-    Griechenland: "🇬🇷",
-    Portugal: "🇵🇹",
-    Großbritannien: "🇬🇧",
-  };
-  return country ? flagMap[country] || "🏳️" : null;
+  return country ? countryFlags[country] || "🏳️" : null;
 }
 
 export function getPriorityLabel(p: string | null | undefined): string {
-  const map: Record<string, string> = {
-    hoch: "🔴 Hoch",
-    normal: "🟡 Normal",
-    niedrig: "⚪ Niedrig",
-  };
-  return map[p?.toLowerCase() || ""] || p || "—";
+  return priorityLabels[p?.toLowerCase() || ""] || p || "—";
 }
 
 export function getReminderStatusLabel(s: string | null | undefined): string {
-  const map: Record<string, string> = {
-    open: "🔵 Offen",
-    closed: "✅ Erledigt",
-  };
-  return map[s?.toLowerCase() || ""] || s || "—";
+  return reminderStatusLabels[s?.toLowerCase() || ""] || s || "—";
 }
 
 export function formatDateDE(dateStr: string | null | undefined): string {

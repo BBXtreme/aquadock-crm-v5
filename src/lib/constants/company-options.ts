@@ -1,4 +1,5 @@
 // src/lib/constants/company-options.ts
+
 export const kundentypOptions = [
   { value: "restaurant", label: "Restaurant" },
   { value: "hotel", label: "Hotel" },
@@ -52,13 +53,6 @@ export const landOptions = [
   { value: "Großbritannien", label: "Großbritannien" },
 ];
 
-export const anredeOptions = [
-  { value: "Herr", label: "Herr" },
-  { value: "Frau", label: "Frau" },
-  { value: "Dr.", label: "Dr." },
-  { value: "Prof.", label: "Prof." },
-];
-
 export const priorityOptions = [
   { value: "hoch", label: "Hoch" },
   { value: "normal", label: "Normal" },
@@ -66,6 +60,6 @@ export const priorityOptions = [
 ];
 
 export const reminderStatusOptions = [
-  { value: "open", label: "Open" },
-  { value: "closed", label: "Closed" },
+  { value: "open", label: "Offen" },
+  { value: "closed", label: "Erledigt" },
 ];

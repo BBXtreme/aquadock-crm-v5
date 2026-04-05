@@ -78,6 +78,7 @@ export default function AquaDockCard({ company }: Props) {
                   <div className="text-sm font-medium text-gray-700">OSM ID</div>
                   <p className="text-sm text-gray-900">{formatOsmLink()}</p>
                 </div>
+                </div>
                 <Button
                   type="button"
                   variant="outline"
@@ -93,7 +94,7 @@ export default function AquaDockCard({ company }: Props) {
                   <MapPin className="h-4 w-4 mr-2" />
                   Show in OpenMap
                 </Button>
-              </div>
+              
             </div>
           </div>
         </CardContent>

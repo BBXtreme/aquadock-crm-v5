@@ -2,27 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
-  Anchor,
   Building,
-  Building2,
   DollarSign,
-  Eye,
-  Handshake,
-  Palmtree,
-  Sailboat,
-  Ship,
-  Sparkles,
-  Star,
-  Tent,
   Trash,
   Trophy,
   Users,
-  Utensils,
   X,
-  XCircle,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import type React from "react";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
@@ -30,14 +17,26 @@ import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
+import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -84,27 +83,19 @@ function ClientCompaniesPage() {
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
-  const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
-    lead: Sparkles,
-    gewonnen: Trophy,
-    verloren: XCircle,
-  };
-
-  const kategorieIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
-    restaurant: Utensils,
-    hotel: Building2,
-    resort: Palmtree,
-    camping: Tent,
-    marina: Anchor,
-    segelschule: Sailboat,
-    segelverein: Trophy,
-    bootsverleih: Ship,
-    neukunde: Sparkles,
-    bestandskunde: Star,
-    interessent: Eye,
-    partner: Handshake,
-    sonstige: null,
-  };
+  const { data: distinctLands = [] } = useQuery({
+    queryKey: ["distinct-lands"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("companies")
+        .select("land")
+        .not("land", "is", null);
+      if (error) throw error;
+      const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
+      return distinctLands;
+    },
+  });
 
   const { data: lands = [] } = useQuery({
     queryKey: ["distinct-lands"],
@@ -255,13 +246,13 @@ function ClientCompaniesPage() {
       toast.error("Update failed", { description: message });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       toast.success("Company updated");
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCompany(id, createClient()),
+    mutationFn: (id: string) => deleteCompany(id),
     onMutate: async (id) => {
       const queryKey = [
         "companies",
@@ -295,7 +286,7 @@ function ClientCompaniesPage() {
       toast.error("Deletion failed", { description: message });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       toast.success("Company deleted");
     },
   });
@@ -310,7 +301,7 @@ function ClientCompaniesPage() {
       if (error) throw error;
 
       toast.success(`Deleted ${selectedIds.length} companies`);
-      queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.refetchQueries({ queryKey: ["companies"] });
       setRowSelection({});
       setBulkDeleteDialogOpen(false);
     } catch (err) {
@@ -516,7 +507,7 @@ function ClientCompaniesPage() {
                     <h4 className="font-normal mb-2">Land</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
-                        const dynamicLandOptions = lands.map((land) => ({ value: land, label: land }));
+                        const dynamicLandOptions = distinctLands.map((land) => ({ value: land, label: land }));
                         return dynamicLandOptions.map((option) => {
                           const isActive = activeFilters.land.includes(option.value);
                           return (
@@ -544,11 +535,25 @@ function ClientCompaniesPage() {
 
             {/* Bulk Delete Button */}
             {Object.keys(rowSelection).length > 0 && (
-              <div className="mb-4">
-                <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} title="Delete selected companies">
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </div>
+              <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" title="Delete selected companies">
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirm Bulk Delete</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete these {Object.keys(rowSelection).length} companies? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
 
             <CompaniesTable
@@ -589,23 +594,6 @@ function ClientCompaniesPage() {
         </Dialog>
       )}
 
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Bulk Delete</DialogTitle>
-          </DialogHeader>
-          <p>Are you sure you want to delete {Object.keys(rowSelection).length} selected companies? This action cannot be undone.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleBulkDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <CSVImportDialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen} onSuccess={handleImportSuccess} />
     </>
   );

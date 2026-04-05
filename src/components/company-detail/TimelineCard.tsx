@@ -1,10 +1,11 @@
 // src/components/company-detail/TimelineCard.tsx
 "use client";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, Plus, Trash } from "lucide-react";
+import { Bell, Calendar, Edit, FileText, Mail, MoreHorizontal, Phone, Plus, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +23,28 @@ export default function TimelineCard({ companyId }: Props) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+
+  const getIcon = (t: string) => {
+    switch (t) {
+      case "note": return <FileText className="h-4 w-4" />;
+      case "call": return <Phone className="h-4 w-4" />;
+      case "email": return <Mail className="h-4 w-4" />;
+      case "meeting": return <Calendar className="h-4 w-4" />;
+      case "reminder": return <Bell className="h-4 w-4" />;
+      default: return <MoreHorizontal className="h-4 w-4" />;
+    }
+  };
+
+  const getVariant = (t: string) => {
+    switch (t) {
+      case "note": return "default";
+      case "call": return "secondary";
+      case "email": return "outline";
+      case "meeting": return "destructive";
+      case "reminder": return "secondary";
+      default: return "outline";
+    }
+  };
 
   const { data: user } = useQuery({
     queryKey: ["user"],
@@ -103,6 +126,7 @@ export default function TimelineCard({ companyId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      queryClient.refetchQueries({ queryKey: ["timeline", companyId] });
       toast.success("Timeline entry updated");
       setEditEntry(null);
     },
@@ -116,7 +140,7 @@ export default function TimelineCard({ companyId }: Props) {
     mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
       if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id });
+      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id, user_id: user.id });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -183,7 +207,8 @@ export default function TimelineCard({ companyId }: Props) {
                   <thead>
                     <tr>
                       <th className="text-left">Date</th>
-                      <th className="text-left">Event</th>
+                      <th className="text-left">Aktivität</th>
+                      <th className="text-left">Titel</th>
                       <th className="text-left">Company</th>
                       <th className="text-left">Contact</th>
                       <th className="text-left">User</th>
@@ -202,8 +227,12 @@ export default function TimelineCard({ companyId }: Props) {
                             : "—"}
                         </td>
                         <td>
-                          {entry.title} ({entry.activity_type})
+                          <Badge variant={getVariant(entry.activity_type)} className="flex items-center gap-1">
+                            {getIcon(entry.activity_type)}
+                            {entry.activity_type}
+                          </Badge>
                         </td>
+                        <td>{entry.title}</td>
                         <td>{entry.companies?.firmenname || "—"}</td>
                         <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
                         <td>{profiles.find(p => p.id === entry.created_by)?.display_name || "Unassigned"}</td>

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { toast } from "sonner";
-import { determineFirmentyp, determineKundentyp } from "@/lib/constants/kundentyp";
+import { determineFirmentyp, determineKundentyp } from "@/lib/constants/map-kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 import { createClient } from "@/lib/supabase/browser";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";

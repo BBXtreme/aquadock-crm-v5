@@ -16,7 +16,17 @@ import Link from "next/link";
 import Papa from "papaparse";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,6 +79,8 @@ export default function CompaniesTable({
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<CompanyWithContacts | null>(null);
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
@@ -201,29 +213,54 @@ export default function CompaniesTable({
             <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              onClick={() => {
-                if (confirm("Are you sure you want to delete this company?")) {
-                  try {
-                    onDelete?.(info.row.original);
-                  } catch (error) {
-                    console.error("Error deleting company:", error);
-                    toast.error("Failed to delete company");
-                  }
-                }
-              }}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+            <AlertDialog open={deleteDialogOpen && companyToDelete?.id === info.row.original.id} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    setCompanyToDelete(info.row.original);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this company? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (companyToDelete) {
+                        try {
+                          onDelete?.(companyToDelete);
+                        } catch (error) {
+                          console.error("Error deleting company:", error);
+                          toast.error("Failed to delete company");
+                        }
+                      }
+                      setDeleteDialogOpen(false);
+                      setCompanyToDelete(null);
+                    }}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ),
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
     ],
-    [onEdit, onDelete],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library
