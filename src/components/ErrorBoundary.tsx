@@ -5,7 +5,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,13 +19,11 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+function ErrorBoundary({ children }: ErrorBoundaryProps) {
+  const [state, setState] = useState<ErrorBoundaryState>({ hasError: false, error: null });
+  const queryClient = useQueryClient();
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  const handleError = (error: Error) => {
     // Check if it's a ChunkLoadError or related to chunk loading
     if (
       error.name === "ChunkLoadError" ||
@@ -34,68 +32,80 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       error.message.includes("hmr-client")
     ) {
       console.warn("Ignored error (likely chunk loading or HMR):", error);
-      return { hasError: false, error: null };
+      return;
     }
-    return { hasError: true, error };
-  }
+    setState({ hasError: true, error });
+  };
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Already handled in getDerivedStateFromError
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-  }
-
-  retry = () => {
-    this.setState({ hasError: false, error: null });
+  const retry = () => {
+    setState({ hasError: false, error: null });
     // Reset React Query cache
-    const queryClient = useQueryClient();
     queryClient.resetQueries();
   };
 
-  reload = () => {
+  const reload = () => {
     window.location.reload();
   };
 
-  render() {
-    if (this.state.hasError && this.state.error) {
-      return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
-              <CardTitle className="text-red-600">Oops! Something went wrong</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-center">
-              <p className="text-muted-foreground">
-                We encountered an unexpected error. Please try refreshing the page or contact support if the problem
-                persists.
-              </p>
-              {process.env.NODE_ENV === "development" && this.state.error && (
-                <details className="text-left">
-                  <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
-                    Error Details (Dev Mode)
-                  </summary>
-                  <pre className="mt-2 text-xs text-muted-foreground break-all whitespace-pre-wrap">
-                    {this.state.error.stack || this.state.error.message}
-                  </pre>
-                </details>
-              )}
-              <div className="flex gap-2">
-                <Button onClick={this.retry} className="flex-1">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Retry
-                </Button>
-                <Button onClick={this.reload} variant="outline" className="flex-1">
-                  Reload Page
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
+  React.useEffect(() => {
+    const errorHandler = (event: ErrorEvent) => {
+      handleError(event.error);
+    };
 
-    return this.props.children;
+    const rejectionHandler = (event: PromiseRejectionEvent) => {
+      if (event.reason instanceof Error) {
+        handleError(event.reason);
+      }
+    };
+
+    window.addEventListener("error", errorHandler);
+    window.addEventListener("unhandledrejection", rejectionHandler);
+
+    return () => {
+      window.removeEventListener("error", errorHandler);
+      window.removeEventListener("unhandledrejection", rejectionHandler);
+    };
+  }, []);
+
+  if (state.hasError && state.error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
+            <CardTitle className="text-red-600">Oops! Something went wrong</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 text-center">
+            <p className="text-muted-foreground">
+              We encountered an unexpected error. Please try refreshing the page or contact support if the problem
+              persists.
+            </p>
+            {process.env.NODE_ENV === "development" && state.error && (
+              <details className="text-left">
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+                  Error Details (Dev Mode)
+                </summary>
+                <pre className="mt-2 text-xs text-muted-foreground break-all whitespace-pre-wrap">
+                  {state.error.stack || state.error.message}
+                </pre>
+              </details>
+            )}
+            <div className="flex gap-2">
+              <Button onClick={retry} className="flex-1">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry
+              </Button>
+              <Button onClick={reload} variant="outline" className="flex-1">
+                Reload Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
+
+  return children;
 }
 
 export default ErrorBoundary;
