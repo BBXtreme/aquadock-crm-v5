@@ -3,7 +3,6 @@
 // src/components/ErrorBoundary.tsx
 // This component is a React error boundary that catches JavaScript errors anywhere in its child component tree, logs those errors, and displays a fallback UI instead of the component tree that crashed. It also provides options to retry the failed operation or reload the page. The error details are shown in development mode for easier debugging.
 
-import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import React, { useCallback, useState } from "react";
 
@@ -21,7 +20,6 @@ interface ErrorBoundaryState {
 
 function ErrorBoundary({ children }: ErrorBoundaryProps) {
   const [state, setState] = useState<ErrorBoundaryState>({ hasError: false, error: null });
-  const queryClient = useQueryClient();
 
   const handleError = useCallback((error: Error) => {
     // Check if it's a ChunkLoadError or related to chunk loading
@@ -39,8 +37,6 @@ function ErrorBoundary({ children }: ErrorBoundaryProps) {
 
   const retry = () => {
     setState({ hasError: false, error: null });
-    // Reset React Query cache
-    queryClient.resetQueries();
   };
 
   const reload = () => {
