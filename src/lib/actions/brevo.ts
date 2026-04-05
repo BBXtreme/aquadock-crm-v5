@@ -2,7 +2,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { createBrevoContact, getBrevoApiKey, sendBrevoCampaign } from "@/lib/services/brevo";
+import { createBrevoContact, getBrevoApiKey, sendBrevoCampaign, addContactToList, createBrevoList } from "@/lib/services/brevo";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
 
@@ -15,19 +15,18 @@ export async function syncContactsToBrevo(formData: FormData) {
   const validated = brevoSyncSchema.parse(data);
 
   const supabase = await createServerSupabaseClient();
-  let query = supabase.from("contacts").select("*").eq("user_id", user.id);
+  const { data: contacts } = await supabase
+    .from("contacts")
+    .select("*, companies(kundentyp, status)")
+    .eq("user_id", user.id);
 
-  if (validated.filterKundentyp) {
-    query = query.eq("kundentyp", validated.filterKundentyp);
-  }
+  const filteredContacts = contacts?.filter(contact => {
+    if (validated.filterKundentyp && contact.companies?.kundentyp !== validated.filterKundentyp) return false;
+    if (validated.filterStatus && contact.companies?.status !== validated.filterStatus) return false;
+    return true;
+  }) || [];
 
-  if (validated.filterStatus) {
-    query = query.eq("status", validated.filterStatus);
-  }
-
-  const { data: contacts } = await query;
-
-  for (const contact of contacts || []) {
+  for (const contact of filteredContacts) {
     await createBrevoContact(apiKey, {
       email: contact.email,
       attributes: { vorname: contact.vorname, nachname: contact.nachname },
@@ -41,11 +40,37 @@ export async function createBrevoCampaign(formData: FormData) {
   if (!apiKey) throw new Error("Brevo API key not configured");
 
   const data = Object.fromEntries(formData);
-  const validated = brevoCampaignSchema.parse(data);
+  const listIds = (data.listIds as string).split(',').map(Number).filter(n => !isNaN(n));
+  const selectedRecipients = data.selectedRecipients ? JSON.parse(data.selectedRecipients as string) : null;
+  const selectedTemplate = data.selectedTemplate as string;
 
-  const campaign = await sendBrevoCampaign(apiKey, validated);
+  let validated = brevoCampaignSchema.parse({ ...data, listIds });
 
   const supabase = await createServerSupabaseClient();
+
+  if (selectedTemplate) {
+    const { data: template } = await supabase.from("email_templates").select("*").eq("id", selectedTemplate).single();
+    if (template) {
+      validated = { ...validated, name: template.name, subject: template.subject, htmlContent: template.body };
+    }
+  }
+
+  let finalListIds = validated.listIds;
+  if (selectedRecipients && selectedRecipients.length > 0) {
+    const listName = `${validated.name} Recipients`;
+    const list = await createBrevoList(apiKey, listName);
+    const listId = list.id;
+    for (const id of selectedRecipients) {
+      const { data: contact } = await supabase.from("contacts").select("email").eq("id", id).single();
+      if (contact?.email) {
+        await addContactToList(apiKey, listId, contact.email);
+      }
+    }
+    finalListIds = [listId];
+  }
+
+  const campaign = await sendBrevoCampaign(apiKey, { ...validated, listIds: finalListIds });
+
   await supabase.from("email_log").insert({
     recipient_email: "campaign@brevo.com",
     subject: validated.subject,
