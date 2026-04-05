@@ -10,7 +10,6 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
-  getRowSelection,
   useReactTable,
 } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
@@ -19,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import companyOptions from "@/lib/constants/company-options";
+import { companyOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
@@ -98,7 +97,6 @@ export default function BrevoRecipientSelector({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getRowSelection: getRowSelection(),
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
