@@ -1,10 +1,14 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
+import { useState } from "react";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { deleteCompany } from "@/lib/actions/companies";
+import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
 
@@ -18,6 +22,7 @@ interface Props {
 
 export default function CompanyHeader({ company, router, onAddTimeline, onEdit }: Props) {
   const countryFlag = getCountryFlag(company.land);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   return (
     <>
@@ -40,18 +45,32 @@ export default function CompanyHeader({ company, router, onAddTimeline, onEdit }
           <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            type="button"
-            onClick={() => {
-              if (confirm("Delete this company?")) {
-                /* deleteCompany(id); router.push("/companies"); */
-              }
-            }}
-          >
-            <Trash className="w-4 h-4" />
-          </Button>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" type="button">
+                <Trash className="w-4 h-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this company? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    await deleteCompany(id, createClient());
+                    router.push("/companies");
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button onClick={() => router.push("/companies")} size="sm" type="button">
             <ArrowLeft className="w-4 h-4" />
           </Button>
