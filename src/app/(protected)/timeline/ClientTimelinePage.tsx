@@ -115,7 +115,7 @@ function ClientTimelinePage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Neuer Eintrag</Button>
+            <Button>New Activity - Yeah!</Button>
           </DialogTrigger>
           <WideDialogContent size="xl">
             <DialogHeader>

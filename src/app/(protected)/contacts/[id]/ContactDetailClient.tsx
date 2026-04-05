@@ -35,10 +35,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
+import { anredeOptions } from "@/lib/constants/contact-options";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
-import { anredeOptions } from "@/lib/constants/contact-options";
 import type { Contact } from "@/types/database.types";
 
 interface ContactDetailClientProps {

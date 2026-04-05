@@ -1,4 +1,6 @@
-import { type LucideIcon, Sparkles, Trophy, XCircle, Utensils, Building2, Palmtree, Tent, Anchor, Sailboat, Ship, Star, Eye, Handshake } from "lucide-react";
+// src/lib/constants/company-icons.ts
+
+import { Anchor, Building2, Eye, Handshake, type LucideIcon, Palmtree, Sailboat, Ship, Sparkles, Star, Tent, Trophy, Utensils, XCircle } from "lucide-react";
 
 export const statusIcons: Record<string, LucideIcon | null> = {
   lead: Sparkles,

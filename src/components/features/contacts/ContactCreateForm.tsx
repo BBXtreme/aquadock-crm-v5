@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createContact } from "@/lib/actions/contacts";
-import { anredeOptions } from "@/lib/constants/company-options";
+import { anredeOptions } from "@/lib/constants/contact-options";
 import { createClient } from "@/lib/supabase/browser";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 

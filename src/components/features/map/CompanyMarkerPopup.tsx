@@ -38,7 +38,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
         <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
         {fullAddress && (
           <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
-            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
             <span>{fullAddress}</span>
           </div>
         )}
@@ -68,11 +68,10 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
             💧 {company.wassertyp}
           </div>
         )}
-
-        {company.firmentyp && (
-          <div className="text-xs text-muted-foreground">• {getFirmentypLabel(company.firmentyp)}</div>
-        )}
       </div>
+        {company.firmentyp && (
+          <div className="text-xs text-muted-foreground">{getFirmentypLabel(company.firmentyp)}</div>
+        )}
 
       {/* Wasserdistanz */}
       {company.wasserdistanz !== null && company.wasserdistanz !== undefined && (

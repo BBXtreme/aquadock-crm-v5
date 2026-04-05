@@ -2,27 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import {
-  Anchor,
   Building,
-  Building2,
   DollarSign,
-  Eye,
-  Handshake,
-  Palmtree,
-  Sailboat,
-  Ship,
-  Sparkles,
-  Star,
-  Tent,
   Trash,
   Trophy,
   Users,
-  Utensils,
   X,
-  XCircle,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import type React from "react";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
@@ -49,8 +36,8 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
+import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
-import { statusIcons, kategorieIcons } from "@/lib/constants/company-icons";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import type { Company, Contact } from "@/types/database.types";

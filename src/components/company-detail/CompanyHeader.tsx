@@ -7,7 +7,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteCompany } from "@/lib/actions/companies";
-import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";

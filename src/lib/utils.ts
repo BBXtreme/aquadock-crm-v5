@@ -20,7 +20,7 @@ import {
   priorityLabels,
   reminderStatusLabels,
   statusLabels,
-} from "@/lib/constants/label-maps";
+} from "@/lib/constants/company-lables";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

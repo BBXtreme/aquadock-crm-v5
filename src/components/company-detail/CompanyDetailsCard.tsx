@@ -55,14 +55,11 @@ export default function CompanyDetailsCard({ company }: Props) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" /> Company Details
+              <Building className="w-5 h-5" /> Firmendaten
             </CardTitle>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setFirmendatenEditOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" /> Firmendaten
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" /> Adresse
+                <Edit className="h-4 w-4 mr-2" />
               </Button>
             </div>
           </div>
@@ -103,6 +100,16 @@ export default function CompanyDetailsCard({ company }: Props) {
             </div>
           </div>
           <hr className="my-4" />
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Building className="w-5 h-5" /> Adresse
+            </CardTitle>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
+                <Edit className="h-4 w-4 mr-2" /> 
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-gray-700">Straße</div>

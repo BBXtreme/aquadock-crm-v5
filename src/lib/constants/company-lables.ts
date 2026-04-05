@@ -34,7 +34,7 @@ export const statusLabels: Record<string, string> = {
 
 export const firmentypLabels: Record<string, string> = {
   kette: "🏢 Kette",
-  einzeln: "🏠 Einzelbetrieb",
+  einzeln: "Einzelbetrieb",
 };
 
 export const countryFlags: Record<string, string | null> = {
@@ -57,12 +57,12 @@ export const countryFlags: Record<string, string | null> = {
 };
 
 export const priorityLabels: Record<string, string> = {
-  hoch: "🔴 Hoch",
-  normal: "🟡 Normal",
-  niedrig: "⚪ Niedrig",
+  hoch: "Hoch",
+  normal: "Normal",
+  niedrig: "Niedrig",
 };
 
 export const reminderStatusLabels: Record<string, string> = {
-  open: "🔵 Offen",
-  closed: "✅ Erledigt",
+  open: "Offen",
+  closed: "Erledigt",
 };
