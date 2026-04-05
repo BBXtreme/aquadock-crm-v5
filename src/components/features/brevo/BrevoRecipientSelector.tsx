@@ -211,6 +211,7 @@ export default function BrevoRecipientSelector({
         </div>
         <div className="space-x-2">
           <button
+            type="button"
             className="px-2 py-1 border rounded"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
@@ -218,6 +219,7 @@ export default function BrevoRecipientSelector({
             Previous
           </button>
           <button
+            type="button"
             className="px-2 py-1 border rounded"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
