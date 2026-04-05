@@ -1,8 +1,8 @@
 // src/lib/actions/search.ts
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { handleSupabaseError } from "@/lib/supabase/error-handling";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { searchQuerySchema } from "@/lib/validations/search";
 import type { Company, Contact, Reminder, TimelineEntry } from "@/types/database.types";
 

@@ -2,13 +2,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Building, Search, Users, Bell, Clock } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "cmdk";
+import { Bell, Building, Clock, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "cmdk";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { searchKeys } from "@/lib/query/keys";
 import { performGlobalSearch } from "@/lib/actions/search";
+import { searchKeys } from "@/lib/query/keys";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 interface GlobalSearchDialogProps {
