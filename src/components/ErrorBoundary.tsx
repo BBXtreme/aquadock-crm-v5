@@ -5,7 +5,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ function ErrorBoundary({ children }: ErrorBoundaryProps) {
   const [state, setState] = useState<ErrorBoundaryState>({ hasError: false, error: null });
   const queryClient = useQueryClient();
 
-  const handleError = (error: Error) => {
+  const handleError = useCallback((error: Error) => {
     // Check if it's a ChunkLoadError or related to chunk loading
     if (
       error.name === "ChunkLoadError" ||
@@ -35,7 +35,7 @@ function ErrorBoundary({ children }: ErrorBoundaryProps) {
       return;
     }
     setState({ hasError: true, error });
-  };
+  }, []);
 
   const retry = () => {
     setState({ hasError: false, error: null });
