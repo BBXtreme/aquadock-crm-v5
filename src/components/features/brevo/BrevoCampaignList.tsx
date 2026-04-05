@@ -25,23 +25,23 @@ type BrevoCampaign = {
 
 const columnHelper = createColumnHelper<BrevoCampaign>();
 
-const columns: ColumnDef<BrevoCampaign>[] = [
+const columns = [
   columnHelper.accessor("name", {
     header: "Name",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<BrevoCampaign>,
   columnHelper.accessor("subject", {
     header: "Subject",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<BrevoCampaign>,
   columnHelper.accessor("status", {
     header: "Status",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<BrevoCampaign>,
   columnHelper.accessor("sentDate", {
     header: "Sent Date",
     cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-  }),
+  }) as ColumnDef<BrevoCampaign>,
 ];
 
 async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {

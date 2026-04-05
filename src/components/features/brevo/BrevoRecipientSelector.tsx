@@ -45,29 +45,30 @@ const columns = [
         aria-label="Select row"
       />
     ),
-  }),
+  }) as ColumnDef<ContactWithCompany>,
   columnHelper.accessor("vorname", {
     header: "Vorname",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<ContactWithCompany>,
   columnHelper.accessor("nachname", {
     header: "Nachname",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<ContactWithCompany>,
   columnHelper.accessor("email", {
     header: "Email",
     cell: (info) => info.getValue(),
-  }),
+  }) as ColumnDef<ContactWithCompany>,
   columnHelper.accessor("companies.kundentyp", {
     header: "Kundentyp",
     cell: (info) => info.getValue() || "",
-  }),
+  }) as ColumnDef<ContactWithCompany>,
   columnHelper.accessor("companies.status", {
     header: "Status",
     cell: (info) => info.getValue() || "",
-  }),
-] satisfies ColumnDef<ContactWithCompany>[];
+  }) as ColumnDef<ContactWithCompany>,
+];
 
+// biome-ignore lint/correctness/noUnusedFunctionParameters
 export default function BrevoRecipientSelector({
   selectedRecipients,
   setSelectedRecipients,

@@ -10,7 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { createBrevoCampaign } from "@/lib/actions/brevo";
 import { type BrevoCampaignFormData, brevoCampaignSchema } from "@/lib/validations/brevo";
 
-export default function BrevoCampaignForm() {
+interface BrevoCampaignFormProps {
+  selectedRecipients: string[];
+  selectedTemplate: string;
+}
+
+export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate }: BrevoCampaignFormProps) {
   const form = useForm<BrevoCampaignFormData>({ resolver: zodResolver(brevoCampaignSchema) });
 
   const onSubmit = async (data: BrevoCampaignFormData) => {
@@ -18,43 +23,45 @@ export default function BrevoCampaignForm() {
     formData.append('name', data.name);
     formData.append('subject', data.subject);
     formData.append('htmlContent', data.htmlContent);
-    formData.append('listIds', (data.listIds as any).toString()); // Assuming listIds is array, convert to string
-    if ((data as any).scheduledAt) formData.append('scheduledAt', (data as any).scheduledAt);
+    formData.append('listIds', data.listIds.join(','));
+    formData.append('selectedRecipients', JSON.stringify(selectedRecipients));
+    formData.append('selectedTemplate', selectedTemplate);
+    if (data.scheduledAt) formData.append('scheduledAt', data.scheduledAt);
     await createBrevoCampaign(formData);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField control={form.control as any} name="name" render={({ field }) => (
+        <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem>
             <FormLabel>Campaign Name</FormLabel>
             <FormControl><Input {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
-        <FormField control={form.control as any} name="subject" render={({ field }) => (
+        <FormField control={form.control} name="subject" render={({ field }) => (
           <FormItem>
             <FormLabel>Subject</FormLabel>
             <FormControl><Input {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
-        <FormField control={form.control as any} name="htmlContent" render={({ field }) => (
+        <FormField control={form.control} name="htmlContent" render={({ field }) => (
           <FormItem>
             <FormLabel>HTML Content</FormLabel>
             <FormControl><Textarea {...field} /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
-        <FormField control={form.control as any} name="listIds" render={({ field }) => (
+        <FormField control={form.control} name="listIds" render={({ field }) => (
           <FormItem>
             <FormLabel>List IDs (comma separated)</FormLabel>
             <FormControl><Input {...field} placeholder="1,2,3" /></FormControl>
             <FormMessage />
           </FormItem>
         )} />
-        <FormField control={form.control as any} name="scheduledAt" render={({ field }) => (
+        <FormField control={form.control} name="scheduledAt" render={({ field }) => (
           <FormItem>
             <FormLabel>Scheduled At (optional)</FormLabel>
             <FormControl><Input type="datetime-local" {...field} /></FormControl>

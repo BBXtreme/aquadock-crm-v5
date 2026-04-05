@@ -14,15 +14,16 @@ interface ClientBrevoPageProps {
 
 export default function ClientBrevoPage({ templates }: ClientBrevoPageProps) {
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   return (
     <div className="space-y-8">
-      <BrevoCampaignForm />
+      <BrevoCampaignForm selectedRecipients={selectedRecipients} selectedTemplate={selectedTemplate} />
       <BrevoRecipientSelector
         selectedRecipients={selectedRecipients}
         setSelectedRecipients={setSelectedRecipients}
       />
-      <BrevoTemplateSelector templates={templates} />
+      <BrevoTemplateSelector templates={templates} value={selectedTemplate} onChange={setSelectedTemplate} />
       <BrevoCampaignList />
     </div>
   );

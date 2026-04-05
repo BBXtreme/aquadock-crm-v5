@@ -6,6 +6,7 @@ export const brevoCampaignSchema = z.object({
   subject: z.string().trim().min(1),
   htmlContent: z.string().trim().min(1),
   listIds: z.array(z.number()).min(1),
+  selectedTemplate: z.string().optional(),
 }).strict();
 
 export const brevoSyncSchema = z.object({

@@ -53,3 +53,29 @@ export async function sendBrevoCampaign(apiKey: string, campaignData: { name: st
     throw new Error(`Failed to send Brevo campaign: ${error.message}`);
   }
 }
+
+export async function createBrevoList(apiKey: string, name: string) {
+  const brevo = new BrevoClient({ apiKey });
+  const listsApi = brevo.lists;
+
+  try {
+    const response = await listsApi.createList({
+      name,
+    });
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to create Brevo list: ${error.message}`);
+  }
+}
+
+export async function addContactToList(apiKey: string, listId: number, email: string) {
+  const brevo = new BrevoClient({ apiKey });
+  const listsApi = brevo.lists;
+
+  try {
+    const response = await listsApi.addContactToList(listId, { emails: [email] });
+    return response;
+  } catch (error: any) {
+    throw new Error(`Failed to add contact to list: ${error.message}`);
+  }
+}
