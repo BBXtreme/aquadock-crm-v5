@@ -83,7 +83,7 @@ function ClientCompaniesPage() {
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
-  const { data: lands = [] } = useQuery({
+  const { data: distinctLands = [] } = useQuery({
     queryKey: ["distinct-lands"],
     queryFn: async () => {
       const supabase = createClient();
@@ -493,7 +493,7 @@ function ClientCompaniesPage() {
                     <h4 className="font-normal mb-2">Land</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
-                        const dynamicLandOptions = lands.map((land) => ({ value: land, label: land }));
+                        const dynamicLandOptions = distinctLands.map((land) => ({ value: land, label: land }));
                         return dynamicLandOptions.map((option) => {
                           const isActive = activeFilters.land.includes(option.value);
                           return (
