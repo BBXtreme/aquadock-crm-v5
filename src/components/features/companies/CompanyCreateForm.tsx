@@ -50,7 +50,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
   const mutation = useMutation({
     mutationFn: (company: CompanyFormValues) => createCompany(company),
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
       toast.success("Unternehmen erfolgreich angelegt");
       form.reset();
       onSuccess?.();
