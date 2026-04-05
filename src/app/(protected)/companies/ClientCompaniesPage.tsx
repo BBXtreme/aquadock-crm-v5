@@ -50,6 +50,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { statusIcons, kategorieIcons } from "@/lib/constants/company-icons";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import type { Company, Contact } from "@/types/database.types";
@@ -94,28 +95,6 @@ function ClientCompaniesPage() {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
-
-  const statusIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
-    lead: Sparkles,
-    gewonnen: Trophy,
-    verloren: XCircle,
-  };
-
-  const kategorieIcons: Record<string, React.ComponentType<React.SVGProps<SVGSVGElement>> | null> = {
-    restaurant: Utensils,
-    hotel: Building2,
-    resort: Palmtree,
-    camping: Tent,
-    marina: Anchor,
-    segelschule: Sailboat,
-    segelverein: Trophy,
-    bootsverleih: Ship,
-    neukunde: Sparkles,
-    bestandskunde: Star,
-    interessent: Eye,
-    partner: Handshake,
-    sonstige: null,
-  };
 
   const { data: lands = [] } = useQuery({
     queryKey: ["distinct-lands"],
