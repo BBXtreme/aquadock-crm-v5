@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { companyOptions } from "@/lib/constants/company-options";
+import { kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
@@ -66,7 +66,7 @@ const columns = [
     header: "Status",
     cell: (info) => info.getValue() || "",
   }),
-] as ColumnDef<ContactWithCompany>[];
+] satisfies ColumnDef<ContactWithCompany>[];
 
 export default function BrevoRecipientSelector({
   selectedRecipients,
@@ -137,9 +137,9 @@ export default function BrevoRecipientSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All</SelectItem>
-            {companyOptions.kundentyp.map((option: string) => (
-              <SelectItem key={option} value={option}>
-                {option}
+            {kundentypOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -160,9 +160,9 @@ export default function BrevoRecipientSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All</SelectItem>
-            {companyOptions.status.map((option: string) => (
-              <SelectItem key={option} value={option}>
-                {option}
+            {statusOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
               </SelectItem>
             ))}
           </SelectContent>
