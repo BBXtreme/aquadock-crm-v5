@@ -4,7 +4,37 @@
 import { handleSupabaseError } from "@/lib/supabase/error-handling";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { searchQuerySchema } from "@/lib/validations/search";
-import type { Company, Contact, Reminder, TimelineEntry } from "@/types/database.types";
+
+interface SelectedCompany {
+  id: string;
+  firmenname: string;
+  stadt: string | null;
+  kundentyp: string;
+  status: string;
+  search_vector: any;
+}
+
+interface SelectedContact {
+  id: string;
+  vorname: string;
+  nachname: string;
+  email: string | null;
+  position: string | null;
+  search_vector: any;
+}
+
+interface SelectedReminder {
+  id: string;
+  title: string;
+  description: string | null;
+}
+
+interface SelectedTimelineEntry {
+  id: string;
+  title: string;
+  content: string | null;
+  activity_type: string;
+}
 
 export interface SearchResult {
   type: "company" | "contact" | "reminder" | "timeline";
@@ -30,12 +60,12 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
   const { data: companies, error: companiesError } = await supabase
     .from("companies")
     .select("id, firmenname, stadt, kundentyp, status, search_vector")
-    .or(`user_id.eq.${user.id},company_id.in.(select id from companies where user_id = ${user.id})`)
+    .eq("user_id", user.id)
     .order("ts_rank(search_vector, websearch_to_tsquery('german', query))", { ascending: false })
     .limit(20);
 
   if (companiesError) throw handleSupabaseError(companiesError);
-  companies?.forEach((c: Company) => {
+  companies?.forEach((c: SelectedCompany) => {
     results.push({
       type: "company",
       id: c.id,
@@ -54,7 +84,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     .limit(20);
 
   if (contactsError) throw handleSupabaseError(contactsError);
-  contacts?.forEach((c: Contact) => {
+  contacts?.forEach((c: SelectedContact) => {
     results.push({
       type: "contact",
       id: c.id,
@@ -74,7 +104,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     .limit(20);
 
   if (remindersError) throw handleSupabaseError(remindersError);
-  reminders?.forEach((r: Reminder) => {
+  reminders?.forEach((r: SelectedReminder) => {
     results.push({
       type: "reminder",
       id: r.id,
@@ -94,7 +124,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     .limit(20);
 
   if (timelineError) throw handleSupabaseError(timelineError);
-  timeline?.forEach((t: TimelineEntry) => {
+  timeline?.forEach((t: SelectedTimelineEntry) => {
     results.push({
       type: "timeline",
       id: t.id,
