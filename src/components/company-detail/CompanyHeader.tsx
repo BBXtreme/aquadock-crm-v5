@@ -1,14 +1,14 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { useState } from "react";
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { deleteCompany } from "@/lib/actions/companies";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
 
