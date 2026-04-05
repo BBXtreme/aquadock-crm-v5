@@ -1,19 +1,18 @@
 // src/components/features/brevo/BrevoCampaignForm.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { brevoCampaignSchema, type BrevoCampaignForm } from "@/lib/validations/brevo";
-import { createBrevoCampaign } from "@/lib/actions/brevo";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { createBrevoCampaign } from "@/lib/actions/brevo";
+import { type BrevoCampaignForm, brevoCampaignSchema } from "@/lib/validations/brevo";
 
 export default function BrevoCampaignForm() {
   const form = useForm<BrevoCampaignForm>({ resolver: zodResolver(brevoCampaignSchema) });
 
-  const onSubmit = async (data: BrevoCampaignForm) => {
+  const onSubmit = async (_data: BrevoCampaignForm) => {
     await createBrevoCampaign(new FormData()); // Pass data
   };
 

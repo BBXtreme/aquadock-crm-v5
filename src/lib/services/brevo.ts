@@ -1,6 +1,5 @@
 // src/lib/services/brevo.ts
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, Contact } from "@/types/database.types";
 
 const BREVO_API_URL = "https://api.brevo.com/v3";
 

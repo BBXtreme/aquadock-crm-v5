@@ -2,10 +2,9 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { createBrevoContact, createBrevoList, sendBrevoCampaign, getBrevoApiKey } from "@/lib/services/brevo";
-import { handleSupabaseError } from "@/lib/supabase/db-error-utils"; // Assuming exists
-import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
+import { createBrevoContact, getBrevoApiKey, sendBrevoCampaign } from "@/lib/services/brevo";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
 
 export async function syncContactsToBrevo(formData: FormData) {
   const user = await requireUser();
