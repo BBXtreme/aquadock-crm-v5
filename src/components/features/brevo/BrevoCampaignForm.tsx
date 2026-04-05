@@ -19,7 +19,7 @@ export default function BrevoCampaignForm() {
     formData.append('subject', data.subject);
     formData.append('htmlContent', data.htmlContent);
     formData.append('listIds', (data.listIds as any).toString()); // Assuming listIds is array, convert to string
-    if (data.scheduledAt) formData.append('scheduledAt', data.scheduledAt);
+    if ((data as any).scheduledAt) formData.append('scheduledAt', (data as any).scheduledAt);
     await createBrevoCampaign(formData);
   };
 
