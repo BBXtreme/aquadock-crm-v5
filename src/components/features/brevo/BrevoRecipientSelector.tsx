@@ -3,8 +3,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  ColumnDef,
-  ColumnFiltersState,
+  type ColumnDef,
+  type ColumnFiltersState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
@@ -19,8 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/browser";
 import { companyOptions } from "@/lib/constants/company-options";
+import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & {
@@ -112,7 +112,7 @@ export default function BrevoRecipientSelector({
   useEffect(() => {
     const selectedIds = table.getSelectedRowModel().rows.map((row) => row.original.id);
     setSelectedRecipients(selectedIds);
-  }, [rowSelection, contacts, setSelectedRecipients, table]);
+  }, [setSelectedRecipients, table]);
 
   return (
     <div className="space-y-4">
