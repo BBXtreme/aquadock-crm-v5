@@ -54,7 +54,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
   });
   const query = validated.query;
 
-  const { data: tsQuery, error: tsQueryError } = await supabase.rpc('websearch_to_tsquery', { config: 'german', query });
+  const { data: tsQuery, error: tsQueryError } = await supabase.rpc('websearch_to_tsquery', { query });
   if (tsQueryError) throw handleSupabaseError(tsQueryError);
 
   const results: SearchResult[] = [];
