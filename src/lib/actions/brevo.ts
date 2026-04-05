@@ -2,7 +2,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { createBrevoContact, getBrevoApiKey, sendBrevoCampaign, addContactToList, createBrevoList } from "@/lib/services/brevo";
+import { addContactToList, createBrevoContact, createBrevoList, getBrevoApiKey, sendBrevoCampaign } from "@/lib/services/brevo";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
 
@@ -40,7 +40,7 @@ export async function createBrevoCampaign(formData: FormData) {
   if (!apiKey) throw new Error("Brevo API key not configured");
 
   const data = Object.fromEntries(formData);
-  const listIds = (data.listIds as string).split(',').map(Number).filter(n => !isNaN(n));
+  const listIds = (data.listIds as string).split(',').map(Number).filter(n => !Number.isNaN(n));
   const selectedRecipients = data.selectedRecipients ? JSON.parse(data.selectedRecipients as string) : null;
   const selectedTemplate = data.selectedTemplate as string;
 
