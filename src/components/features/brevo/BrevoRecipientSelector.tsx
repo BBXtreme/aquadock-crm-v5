@@ -19,7 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { companyOptions } from "@/lib/constants/company-options";
+import companyOptions from "@/lib/constants/company-options";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
@@ -67,7 +67,7 @@ const columns = [
     header: "Status",
     cell: (info) => info.getValue() || "",
   }),
-] satisfies ColumnDef<ContactWithCompany>[];
+] as ColumnDef<ContactWithCompany>[];
 
 export default function BrevoRecipientSelector({
   selectedRecipients,
@@ -139,7 +139,7 @@ export default function BrevoRecipientSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All</SelectItem>
-            {companyOptions.kundentyp.map((option) => (
+            {companyOptions.kundentyp.map((option: string) => (
               <SelectItem key={option} value={option}>
                 {option}
               </SelectItem>
@@ -162,7 +162,7 @@ export default function BrevoRecipientSelector({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All</SelectItem>
-            {companyOptions.status.map((option) => (
+            {companyOptions.status.map((option: string) => (
               <SelectItem key={option} value={option}>
                 {option}
               </SelectItem>
