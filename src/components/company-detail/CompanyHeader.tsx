@@ -20,7 +20,7 @@ interface Props {
   onEdit: () => void;
 }
 
-export default function CompanyHeader({ company, router, onAddTimeline, onEdit }: Props) {
+export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
   const countryFlag = getCountryFlag(company.land);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
