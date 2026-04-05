@@ -65,7 +65,7 @@ function ErrorBoundary({ children }: ErrorBoundaryProps) {
       window.removeEventListener("error", errorHandler);
       window.removeEventListener("unhandledrejection", rejectionHandler);
     };
-  }, []);
+  }, [handleError]);
 
   if (state.hasError && state.error) {
     return (
