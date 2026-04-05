@@ -42,6 +42,7 @@ export async function sendBrevoCampaign(apiKey: string, campaignData: { name: st
       name: campaignData.name,
       subject: campaignData.subject,
       htmlContent: campaignData.htmlContent,
+      sender: { name: "AquaDock CRM", email: "noreply@aquadock.com" },
       recipients: {
         listIds: campaignData.listIds,
       },
