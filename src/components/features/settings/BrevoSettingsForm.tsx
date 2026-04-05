@@ -1,18 +1,18 @@
 // src/components/features/settings/BrevoSettingsForm.tsx
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { brevoSettingsSchema, type BrevoSettingsForm } from "@/lib/validations/brevo";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { type BrevoSettingsForm, brevoSettingsSchema } from "@/lib/validations/brevo";
 
 export default function BrevoSettingsForm() {
   const form = useForm<BrevoSettingsForm>({ resolver: zodResolver(brevoSettingsSchema) });
 
-  const onSubmit = async (data: BrevoSettingsForm) => {
+  const onSubmit = async (_data: BrevoSettingsForm) => {
     // Implement save logic
   };
 
