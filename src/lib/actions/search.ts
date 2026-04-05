@@ -68,7 +68,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     .limit(20);
 
   if (companiesError) throw handleSupabaseError(companiesError);
-  companies?.forEach((c: SelectedCompany) => {
+  (companies as SelectedCompany[])?.forEach((c: SelectedCompany) => {
     results.push({
       type: "company",
       id: c.id,
@@ -87,7 +87,7 @@ export async function performGlobalSearch(formData: FormData): Promise<SearchRes
     .limit(20);
 
   if (contactsError) throw handleSupabaseError(contactsError);
-  contacts?.forEach((c: SelectedContact) => {
+  (contacts as SelectedContact[])?.forEach((c: SelectedContact) => {
     results.push({
       type: "contact",
       id: c.id,
