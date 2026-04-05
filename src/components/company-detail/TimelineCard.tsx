@@ -1,7 +1,7 @@
 // src/components/company-detail/TimelineCard.tsx
 "use client";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Calendar, Edit, Plus, Trash } from "lucide-react";
+import { Bell, Calendar, Edit, FileText, Mail, MoreHorizontal, Phone, Plus, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { LoadingState } from "@/components/ui/LoadingState";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { createClient } from "@/lib/supabase/browser";
-import { Bell, FileText, Mail, MoreHorizontal, Phone } from "lucide-react";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface Props {
