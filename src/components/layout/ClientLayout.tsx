@@ -13,8 +13,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <TooltipProvider>
       <ReactQueryProvider>
         <AppearanceHydration />
-        {children}
         <Toaster richColors position="top-right" />
+        {children}
       </ReactQueryProvider>
     </TooltipProvider>
   );

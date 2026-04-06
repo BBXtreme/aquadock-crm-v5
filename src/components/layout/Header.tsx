@@ -101,7 +101,7 @@ export default function Header() {
         <Link href="/dashboard">
           <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
             <Image
-              src={mounted && theme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+              src={mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
               alt="AquaDock CRM"
               width={0}
               height={0}
@@ -182,7 +182,7 @@ export default function Header() {
           aria-label="Toggle theme"
           suppressHydrationWarning={true}
         >
-          {mounted && (theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />)}
+          {mounted && (resolvedTheme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />)}
         </Button>
 
         <DropdownMenu>
