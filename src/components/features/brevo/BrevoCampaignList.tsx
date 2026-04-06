@@ -14,6 +14,7 @@ import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Brevo } from '@getbrevo/brevo';
 
 type BrevoCampaign = {
   id: number;
@@ -36,16 +37,21 @@ const columns = [
 ] satisfies ColumnDef<BrevoCampaign>[];
 
 async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
-  if (!process.env.BREVO_API_KEY) throw new Error("BREVO_API_KEY not configured");
+  if (!process.env.BREVO_API_KEY) throw new Error('BREVO_API_KEY not configured');
   const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
-  const response = await brevo.emailCampaigns.getEmailCampaigns();
-  return (response.campaigns || []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    subject: c.subject,
-    status: c.status,
-    createdAt: c.createdAt,
-  }));
+  try {
+    const response: Brevo.EmailCampaignsApi.GetEmailCampaignsResponse = await brevo.emailCampaigns.getEmailCampaigns();
+    return (response.campaigns || []).map((c: Brevo.EmailCampaignsApi.EmailCampaign) => ({
+      id: c.id,
+      name: c.name,
+      subject: c.subject,
+      status: c.status,
+      createdAt: c.createdAt,
+    }));
+  } catch (err) {
+    console.error('Failed to fetch Brevo campaigns:', err);
+    throw err;
+  }
 }
 
 export default function BrevoCampaignList() {
@@ -65,7 +71,7 @@ export default function BrevoCampaignList() {
   const handleRefresh = () => queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
 
   if (isLoading) return <div className="text-muted-foreground">Loading campaigns...</div>;
-  if (error) return <div className="text-destructive">Error: {(error as Error).message}</div>;
+  if (error) return <div className="text-destructive">Error loading campaigns: {(error as Error).message}</div>;
 
   return (
     <div className="space-y-4">

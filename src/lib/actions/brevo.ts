@@ -23,13 +23,18 @@ export async function syncContactsToBrevo(formData: FormData) {
     return true;
   }) || [];
 
-  for (const contact of filteredContacts) {
-    if (contact.email) {
-      await createBrevoContact({
-        email: contact.email,
-        attributes: { vorname: contact.vorname, nachname: contact.nachname },
-      });
+  try {
+    for (const contact of filteredContacts) {
+      if (contact.email) {
+        await createBrevoContact({
+          email: contact.email,
+          attributes: { vorname: contact.vorname, nachname: contact.nachname },
+        });
+      }
     }
+  } catch (err) {
+    console.error('Brevo sync error:', err);
+    throw new Error(`Failed to sync contacts to Brevo: ${(err as Error).message}`);
   }
 }
 
@@ -68,39 +73,44 @@ export async function createBrevoCampaign(formData: FormData) {
 
   let finalListIds = validated.listIds;
 
-  if (selectedRecipients && selectedRecipients.length > 0) {
-    const listName = `${validated.name} Recipients`;
-    const list = await createBrevoList(listName);
-    const listId = list.id;
+  try {
+    if (selectedRecipients && selectedRecipients.length > 0) {
+      const listName = `${validated.name} Recipients`;
+      const list = await createBrevoList(listName);
+      const listId = list.id;
 
-    for (const id of selectedRecipients) {
-      const { data: contact } = await supabase
-        .from("contacts")
-        .select("email")
-        .eq("id", id)
-        .single();
-      if (contact?.email) {
-        await addContactToList(listId, contact.email);
+      for (const id of selectedRecipients) {
+        const { data: contact } = await supabase
+          .from("contacts")
+          .select("email")
+          .eq("id", id)
+          .single();
+        if (contact?.email) {
+          await addContactToList(listId, contact.email);
+        }
       }
+      finalListIds = [listId];
     }
-    finalListIds = [listId];
+
+    const campaign = await sendBrevoCampaign({
+      name: validated.name,
+      subject: validated.subject,
+      htmlContent: validated.htmlContent,
+      listIds: finalListIds,
+      scheduledAt: validated.scheduledAt,
+    });
+
+    await supabase.from("email_log").insert({
+      recipient_email: "campaign@brevo.com",
+      subject: validated.subject,
+      template_name: "Brevo Campaign",
+      status: "sent",
+      user_id: user.id,
+    });
+
+    return campaign;
+  } catch (err) {
+    console.error('Brevo campaign creation error:', err);
+    throw new Error(`Failed to create Brevo campaign: ${(err as Error).message}`);
   }
-
-  const campaign = await sendBrevoCampaign({
-    name: validated.name,
-    subject: validated.subject,
-    htmlContent: validated.htmlContent,
-    listIds: finalListIds,
-    scheduledAt: validated.scheduledAt,
-  });
-
-  await supabase.from("email_log").insert({
-    recipient_email: "campaign@brevo.com",
-    subject: validated.subject,
-    template_name: "Brevo Campaign",
-    status: "sent",
-    user_id: user.id,
-  });
-
-  return campaign;
 }
