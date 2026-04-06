@@ -4,12 +4,6 @@
 // all timeline entries for a user,
 // create a new timeline entry, update an existing entry, and delete
 // an entry.
-// The functions use the createServerSupabaseClient to interact with
-// the database
-// in a server-side context, ensuring proper handling of
-// authentication and
-// session management. Error handling is implemented using a utility
-// function to provide consistent error responses across the app.
 
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";

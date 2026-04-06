@@ -26,11 +26,17 @@ import { createClient } from "@/lib/supabase/browser";
 
 const BRAND_COLORS = ["#24BACC", "#1da0a8", "#0f7f85", "#065f63", "#10b981"];
 
+/** Recharts 3 defaults to -1×-1 until resize; avoids console noise and layout flash. */
+const CHART_INITIAL = { width: 640, height: 320 } as const;
+
 export default function DashboardClient() {
   const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
 
   const stats = useSuspenseQuery({
     queryKey: ["dashboard-stats", selectedPeriod],
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const supabase = createClient();
 
@@ -122,8 +128,13 @@ export default function DashboardClient() {
             </h3>
             <span className="text-xs text-muted-foreground">Conversion Pipeline</span>
           </div>
-          <div className="h-[320px]">   {/* Explicit height fix */}
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="min-h-[300px] h-[320px] w-full min-w-0">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              initialDimension={CHART_INITIAL}
+            >
               <BarChart data={data.funnelData} layout="vertical" barCategoryGap={18}>
                 <XAxis type="number" hide />
                 <YAxis 
@@ -158,8 +169,13 @@ export default function DashboardClient() {
               <Trophy className="h-5 w-5 text-primary" /> Status Overview
             </h3>
           </div>
-          <div className="h-[320px]">   {/* Explicit height fix */}
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="min-h-[300px] h-[320px] w-full min-w-0">
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+              minWidth={0}
+              initialDimension={CHART_INITIAL}
+            >
               <PieChart>
                 <Pie
                   data={data.funnelData}

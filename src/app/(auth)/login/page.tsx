@@ -8,7 +8,7 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { createClient } from "@/lib/supabase/browser";
 export default function LoginPage() {
   const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
   const router = useRouter();
+  const hasRedirectedRef = useRef(false);
 
   // Stable redirect path – wrapped in useCallback
   const getRedirectPath = useCallback((): string => {
@@ -37,25 +38,35 @@ export default function LoginPage() {
     : "/dashboard";
 
   useEffect(() => {
+    const redirectIfAuthed = () => {
+      if (hasRedirectedRef.current) return;
+      hasRedirectedRef.current = true;
+      const path = getRedirectPath();
+      // Defer until App Router is ready — avoids "Router action dispatched before initialization"
+      startTransition(() => {
+        router.replace(path);
+      });
+    };
+
     const checkUser = async () => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
-      if (user) {
-        router.push(getRedirectPath());
-      }
+      if (user) redirectIfAuthed();
     };
 
-    checkUser();
+    void checkUser();
 
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        router.push(getRedirectPath());
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        session &&
+        (event === "SIGNED_IN" || event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED")
+      ) {
+        redirectIfAuthed();
       }
     });
 

@@ -3,10 +3,10 @@
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
 import { Suspense } from "react";
+import BrevoSettingsForm from "@/components/features/settings/BrevoSettingsForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
-import BrevoSettingsForm from "@/components/features/settings/BrevoSettingsForm";
 import ClientSettingsPage from "./ClientSettingsPage";
 
 export default async function SettingsPage() {

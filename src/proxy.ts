@@ -3,16 +3,10 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./lib/supabase/proxy";
-import { createServerSupabaseClient } from "./lib/supabase/server";
 
 export async function proxy(request: NextRequest) {
-  // === STEP 1: Refresh session & cookies (Supabase + Next.js 16 best practice) ===
-  const response = await updateSession(request);
+  const { response, session } = await updateSession(request);
 
-  const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // Protected paths (URLs stay clean thanks to route groups)
   const protectedPaths = [
     "/dashboard",
     "/companies",
@@ -21,27 +15,26 @@ export async function proxy(request: NextRequest) {
     "/reminders",
     "/mass-email",
     "/openmap",
+    "/brevo",
     "/settings",
     "/profile",
   ];
 
   const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
+    request.nextUrl.pathname.startsWith(path),
   );
 
-  // Redirect unauthenticated users from protected routes
   if (isProtectedPath && !session) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect authenticated users away from login page
   if (request.nextUrl.pathname === "/login" && session) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return response;   // Return the response with updated cookies
+  return response;
 }
 
 export const config = {

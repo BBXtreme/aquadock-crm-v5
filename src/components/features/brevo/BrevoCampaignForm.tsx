@@ -17,10 +17,18 @@ interface BrevoCampaignFormProps {
   selectedTemplate: string;
 }
 
+const emptyCampaignDefaults: BrevoCampaignFormData = {
+  name: "",
+  subject: "",
+  htmlContent: "",
+  listIds: [],
+  scheduledAt: "",
+};
+
 export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate }: BrevoCampaignFormProps) {
   const form = useForm<BrevoCampaignFormData>({
     resolver: zodResolver(brevoCampaignSchema),
-    defaultValues: { listIds: [] },
+    defaultValues: emptyCampaignDefaults,
   });
 
   const onSubmit = async (data: BrevoCampaignFormData) => {
@@ -36,9 +44,10 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
     try {
       await createBrevoCampaign(formData);
       toast.success("Campaign created successfully in Brevo!");
-      form.reset();
+      form.reset(emptyCampaignDefaults);
     } catch (error) {
-      toast.error("Failed to create campaign");
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Kampagne konnte nicht erstellt werden", { description: message });
       console.error(error);
     }
   };
@@ -52,7 +61,9 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
           render={({ field }) => (
             <FormItem>
               <FormLabel>Campaign Name</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormControl>
+                <Input {...field} value={field.value ?? ""} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -63,7 +74,9 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
           render={({ field }) => (
             <FormItem>
               <FormLabel>Subject</FormLabel>
-              <FormControl><Input {...field} /></FormControl>
+              <FormControl>
+                <Input {...field} value={field.value ?? ""} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -74,7 +87,9 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
           render={({ field }) => (
             <FormItem>
               <FormLabel>HTML Content</FormLabel>
-              <FormControl><Textarea {...field} rows={6} /></FormControl>
+              <FormControl>
+                <Textarea {...field} value={field.value ?? ""} rows={6} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -85,7 +100,9 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
           render={({ field }) => (
             <FormItem>
               <FormLabel>Scheduled At (optional)</FormLabel>
-              <FormControl><Input type="datetime-local" {...field} /></FormControl>
+              <FormControl>
+                <Input type="datetime-local" {...field} value={field.value ?? ""} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

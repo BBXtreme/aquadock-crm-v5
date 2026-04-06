@@ -12,7 +12,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,9 @@ import type { Contact } from "@/types/database.types";
 type ContactWithCompany = Contact & {
   companies: { kundentyp: string | null; status: string | null } | null;
 };
+
+/** Radix Select reserves "" for clearing; use a sentinel for "no filter". */
+const FILTER_ALL = "__all__";
 
 const columnHelper = createColumnHelper<ContactWithCompany>();
 
@@ -87,6 +90,7 @@ export default function BrevoRecipientSelector({
       if (error) throw error;
       return data as ContactWithCompany[];
     },
+    staleTime: 60 * 1000,
   });
 
   const table = useReactTable({
@@ -105,10 +109,32 @@ export default function BrevoRecipientSelector({
     },
   });
 
+  // `table` from useReactTable changes identity often; depending on it + always
+  // calling setSelectedRecipients([]) (new array reference) caused parent re-render loops.
+  const tableRef = useRef(table);
+  tableRef.current = table;
+
+  const lastPushedIds = useRef<string[] | null>(null);
+
+  // rowSelection in deps: ref does not change when user toggles rows; Biome cannot see tableRef → selection.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rowSelection drives recipient sync
   useEffect(() => {
-    const selectedIds = table.getSelectedRowModel().rows.map((row) => row.original.id);
+    const selectedIds = tableRef.current
+      .getSelectedRowModel()
+      .rows.map((row) => row.original.id)
+      .filter((id): id is string => typeof id === "string");
+
+    const last = lastPushedIds.current;
+    if (
+      last !== null &&
+      last.length === selectedIds.length &&
+      last.every((id, i) => id === selectedIds[i])
+    ) {
+      return;
+    }
+    lastPushedIds.current = selectedIds;
     setSelectedRecipients(selectedIds);
-  }, [setSelectedRecipients, table]);
+  }, [rowSelection, setSelectedRecipients]);
 
   return (
     <div className="space-y-4">
@@ -121,20 +147,22 @@ export default function BrevoRecipientSelector({
         />
         <Select
           value={
-            (columnFilters.find((f) => f.id === "companies.kundentyp")?.value as string) || ""
+            (columnFilters.find((f) => f.id === "companies.kundentyp")?.value as string | undefined) ??
+            FILTER_ALL
           }
           onValueChange={(value) =>
-            setColumnFilters((prev) => [
-              ...prev.filter((f) => f.id !== "companies.kundentyp"),
-              { id: "companies.kundentyp", value },
-            ])
+            setColumnFilters((prev) => {
+              const rest = prev.filter((f) => f.id !== "companies.kundentyp");
+              if (value === FILTER_ALL) return rest;
+              return [...rest, { id: "companies.kundentyp", value }];
+            })
           }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Kundentyp" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value={FILTER_ALL}>All</SelectItem>
             {kundentypOptions.map((option) => (
               <SelectItem key={option.value} value={option.label}>
                 {option.label}
@@ -144,20 +172,22 @@ export default function BrevoRecipientSelector({
         </Select>
         <Select
           value={
-            (columnFilters.find((f) => f.id === "companies.status")?.value as string) || ""
+            (columnFilters.find((f) => f.id === "companies.status")?.value as string | undefined) ??
+            FILTER_ALL
           }
           onValueChange={(value) =>
-            setColumnFilters((prev) => [
-              ...prev.filter((f) => f.id !== "companies.status"),
-              { id: "companies.status", value },
-            ])
+            setColumnFilters((prev) => {
+              const rest = prev.filter((f) => f.id !== "companies.status");
+              if (value === FILTER_ALL) return rest;
+              return [...rest, { id: "companies.status", value }];
+            })
           }
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All</SelectItem>
+            <SelectItem value={FILTER_ALL}>All</SelectItem>
             {statusOptions.map((option) => (
               <SelectItem key={option.value} value={option.label}>
                 {option.label}

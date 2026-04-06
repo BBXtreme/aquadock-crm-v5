@@ -2,9 +2,19 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { addContactToList, createBrevoContact, createBrevoList, sendBrevoCampaign } from "@/lib/services/brevo";
+import {
+  addContactToList,
+  createBrevoContact,
+  createBrevoList,
+  mapBrevoClientError,
+  sendBrevoCampaign,
+} from "@/lib/services/brevo";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
+import {
+  brevoCampaignSchema,
+  brevoSelectedRecipientsSchema,
+  brevoSyncSchema,
+} from "@/lib/validations/brevo";
 import type { Contact } from "@/types/database.types";
 
 type BrevoCampaign = {
@@ -20,12 +30,26 @@ type ContactWithCompany = Contact & {
   companies: { kundentyp: string; status: string } | null;
 };
 
+function parseSelectedRecipientsFromForm(data: Record<string, FormDataEntryValue>): string[] | null {
+  const raw = data.selectedRecipients;
+  if (raw == null || raw === "") return null;
+  if (typeof raw !== "string") return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const result = brevoSelectedRecipientsSchema.safeParse(parsed);
+  return result.success ? result.data : null;
+}
+
 export async function syncContactsToBrevo(formData: FormData) {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
   const validated = brevoSyncSchema.parse(data);
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const { data: contacts } = await supabase
     .from("contacts")
@@ -51,8 +75,11 @@ export async function syncContactsToBrevo(formData: FormData) {
       }
     }
   } catch (err) {
-    console.error('Brevo sync error:', err);
-    throw new Error(`Failed to sync contacts to Brevo: ${(err as Error).message}`);
+    console.error("Brevo sync error:", err);
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error("Kontakte konnten nicht zu Brevo synchronisiert werden.");
   }
 }
 
@@ -60,7 +87,7 @@ export async function createBrevoCampaign(formData: FormData) {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
 
-  const selectedRecipients = data.selectedRecipients ? JSON.parse(data.selectedRecipients as string) : null;
+  const selectedRecipients = parseSelectedRecipientsFromForm(data);
   const selectedTemplate = data.selectedTemplate as string;
 
   const validated = brevoCampaignSchema.parse({
@@ -72,15 +99,15 @@ export async function createBrevoCampaign(formData: FormData) {
     scheduledAt: data.scheduledAt,
   });
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
-  // Template override (if selected)
+  // Template override (if selected) — visibility enforced by RLS on email_templates (no user_id column)
   if (selectedTemplate) {
     const { data: template } = await supabase
       .from("email_templates")
       .select("*")
       .eq("id", selectedTemplate)
-      .single();
+      .maybeSingle();
 
     if (template) {
       validated.name = template.name;
@@ -91,8 +118,16 @@ export async function createBrevoCampaign(formData: FormData) {
 
   let finalListIds = validated.listIds;
 
+  const hasRecipients = selectedRecipients !== null && selectedRecipients.length > 0;
+  const hasListIds = finalListIds.length > 0;
+  if (!hasRecipients && !hasListIds) {
+    throw new Error(
+      "Bitte mindestens eine Brevo-Liste angeben oder Empfänger in der Tabelle auswählen.",
+    );
+  }
+
   try {
-    if (selectedRecipients && selectedRecipients.length > 0) {
+    if (hasRecipients) {
       const listName = `${validated.name} Recipients`;
       const list = await createBrevoList(listName);
       const listId = list.id;
@@ -102,7 +137,8 @@ export async function createBrevoCampaign(formData: FormData) {
           .from("contacts")
           .select("email")
           .eq("id", id)
-          .single();
+          .eq("user_id", user.id)
+          .maybeSingle();
         if (contact?.email) {
           await addContactToList(listId, contact.email);
         }
@@ -128,15 +164,26 @@ export async function createBrevoCampaign(formData: FormData) {
 
     return campaign;
   } catch (err) {
-    console.error('Brevo campaign creation error:', err);
-    throw new Error(`Failed to create Brevo campaign: ${(err as Error).message}`);
+    console.error("Brevo campaign creation error:", err);
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error("Brevo-Kampagne konnte nicht erstellt werden.");
   }
 }
 
+/**
+ * Lists campaigns for the shared `BREVO_API_KEY` account (single-tenant Brevo).
+ * Any authenticated CRM user with access to /brevo sees the same list.
+ */
 export async function fetchBrevoCampaignsAction(): Promise<BrevoCampaign[]> {
-  const _user = await requireUser();
+  await requireUser();
   const apiKey = process.env.BREVO_API_KEY;
-  if (!apiKey) throw new Error('BREVO_API_KEY not configured');
+  if (!apiKey?.trim()) {
+    throw new Error(
+      "BREVO_API_KEY fehlt: in .env.local setzen und Server neu starten (Einstellungen → Brevo).",
+    );
+  }
   const { BrevoClient, logging } = await import('@getbrevo/brevo');
   const brevo = new BrevoClient({
     apiKey,
@@ -154,7 +201,7 @@ export async function fetchBrevoCampaignsAction(): Promise<BrevoCampaign[]> {
       createdAt: c.createdAt,
     }));
   } catch (err) {
-    console.error('Failed to fetch Brevo campaigns:', err);
-    throw err;
+    console.error("Failed to fetch Brevo campaigns:", err);
+    throw mapBrevoClientError(err);
   }
 }

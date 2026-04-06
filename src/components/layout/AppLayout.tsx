@@ -6,7 +6,7 @@
 
 import { usePathname } from "next/navigation";
 import type React from "react";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 
@@ -21,7 +21,6 @@ interface AppLayoutProps {
 export default function AppLayout({ children, user }: AppLayoutProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [_isMobile, setIsMobile] = useState(false);
 
   const isAuthPage = pathname === "/login" || pathname === "/unauthorized";
 
@@ -30,7 +29,6 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
 
     const check = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 768);
       setIsCollapsed(width < 1024);
     };
     check();
@@ -48,22 +46,17 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen overflow-hidden bg-background"> {/* ← added bg-background for safety */}
-        <Suspense fallback={<div className="w-16 bg-background border-r" />}>
-          <Sidebar
-            isCollapsed={isCollapsed}
-            onToggle={() => setIsCollapsed(!isCollapsed)}
-            user={user}
-          />
-        </Suspense>
+      <div className="flex h-screen overflow-hidden bg-background">
+        <Sidebar
+          isCollapsed={isCollapsed}
+          onToggle={() => setIsCollapsed(!isCollapsed)}
+          user={user}
+        />
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
 
-          {/* Improved main: better overflow handling + padding control */}
-          <main className="flex-1 overflow-auto p-0 relative">
-            {children}
-          </main>
+          <main className="relative flex-1 overflow-auto p-0">{children}</main>
         </div>
       </div>
     </ErrorBoundary>

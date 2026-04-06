@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useSuspenseQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
@@ -20,9 +20,10 @@ import {
 import { LoadingState } from "@/components/ui/LoadingState";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
-import type { Company, } from "@/types/database.types";
+import type { Company } from "@/types/database.types";
 
 function ClientTimelinePage() {
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: companies = [] } = useSuspenseQuery({

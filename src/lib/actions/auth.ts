@@ -1,4 +1,4 @@
-// src/lib/supabase/services/auth.ts
+// src/lib/actions/auth.ts
 // Server actions for authentication-related operations
 
 "use server";

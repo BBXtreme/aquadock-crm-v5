@@ -40,6 +40,8 @@ export default function BrevoCampaignList() {
   const { data: campaigns = [], isLoading, error } = useQuery({
     queryKey: ["brevo-campaigns"],
     queryFn: fetchBrevoCampaignsAction,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const table = useReactTable({
@@ -51,7 +53,10 @@ export default function BrevoCampaignList() {
   const handleRefresh = () => queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
 
   if (isLoading) return <div className="text-muted-foreground">Loading your campaigns...</div>;
-  if (error) return <div className="text-destructive">Error loading campaigns: {(error as Error).message}</div>;
+  if (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return <div className="text-destructive">Error loading campaigns: {message}</div>;
+  }
 
   return (
     <div className="space-y-4">

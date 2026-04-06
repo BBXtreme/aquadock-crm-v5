@@ -12,7 +12,6 @@ import { safeDisplay } from "@/lib/utils/data-format";
 import DashboardClient from "./DashboardClient";
 
 export default async function DashboardPage() {
-  // Auth before data
   const user = await requireUser();
 
   return (

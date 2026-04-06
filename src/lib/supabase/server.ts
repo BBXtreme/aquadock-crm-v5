@@ -19,23 +19,21 @@ type CookieOptions = {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables. Check your .env.local file.");
 }
 
+/**
+ * User-scoped server client (cookies + JWT). Always use the anon key so auth
+ * refresh and `setAll` stay aligned with middleware (`proxy.ts`). The service
+ * role must not be used here — use `src/lib/supabase/admin.ts` when RLS bypass
+ * is required for explicit admin jobs.
+ */
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
 
-  const key =
-    process.env.NODE_ENV === "development" && supabaseServiceRoleKey ? supabaseServiceRoleKey : supabaseAnonKey;
-
-  if (!key) {
-    throw new Error("Supabase key is missing");
-  }
-
-  return createServerClient(supabaseUrl as string, key, {
+  return createServerClient(supabaseUrl as string, supabaseAnonKey as string, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
