@@ -1,5 +1,5 @@
 // src/components/layout/Header.tsx
-// This component implements the header of the application, including the logo, search bar, theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
+// This component implements the header of the application, including the logo, search (placeholder dialog), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
 
 "use client";
 
@@ -10,6 +10,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +29,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { signOut } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -105,11 +114,26 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className="mx-4 max-w-md flex-1">
-        <div className="relative">
-          <Search className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input placeholder="Search..." className="pl-8" />
-        </div>
+      <div className="mx-4 flex min-w-0 flex-1 items-center justify-center md:max-w-md">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" aria-label="Search">
+              <Search className="h-4 w-4" aria-hidden />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Global search</AlertDialogTitle>
+              <AlertDialogDescription>
+                This isn&apos;t built yet — we&apos;ll add a proper global search here when it&apos;s ready.
+                Until then, jump in via the sidebar or the list pages.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>Got it</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <div className="flex items-center space-x-4">
