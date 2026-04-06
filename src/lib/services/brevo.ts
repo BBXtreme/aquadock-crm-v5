@@ -101,7 +101,7 @@ export async function addContactToList(listId: number, email: string) {
   try {
     const response = await brevo.contacts.addContactToList({
       listId,
-      contactEmails: [email],
+      emails: [email],
     });
     return response;
   } catch (err) {

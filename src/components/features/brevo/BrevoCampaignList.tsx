@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 type BrevoCampaign = {
   id: number;
   name: string;
-  subject: string;
+  subject?: string;
   status: string;
   createdAt: string;
 };
@@ -43,7 +43,7 @@ async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
     return (response.campaigns || []).map((c) => ({
       id: c.id,
       name: c.name,
-      subject: c.subject,
+      subject: c.subject || '',
       status: c.status,
       createdAt: c.createdAt,
     }));
