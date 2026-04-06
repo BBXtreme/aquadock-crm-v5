@@ -64,7 +64,7 @@ export async function fetchOsmPois(
 ): Promise<{ pois: OsmPoi[]; totalFound: number; query: string }> {
   if (poiFetchTimeout) clearTimeout(poiFetchTimeout);
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     poiFetchTimeout = setTimeout(async () => {
       const bbox = bounds.toBBoxString(); // "west,south,east,north"
       const [west, south, east, north] = bbox.split(",").map(Number);
@@ -116,8 +116,15 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
   out center;
 `;
 
+      if (conditions.length === 0) {
+        resolve({ pois: [], totalFound: 0, query });
+        return;
+      }
+
       // Basic deduplication by OSM ID
       const seen = new Set<string>();
+
+      const emptyResult = { pois: [] as OsmPoi[], totalFound: 0, query };
 
       for (const endpoint of OVERPASS_ENDPOINTS) {
         let retries = retryCount;
@@ -161,8 +168,7 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
           } catch (err: unknown) {
             if (err instanceof Error && err.name === "AbortError") break;
             if (endpoint === OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1] && retries >= maxRetries - 1) {
-              console.error("Failed to fetch OSM POIs after all retries", { bounds: bounds.toBBoxString(), activeCategories, retryCount, endpoint, error: err });
-              reject(new Error("Failed to fetch OSM POIs"));
+              resolve(emptyResult);
               return;
             }
             break;
@@ -170,8 +176,8 @@ ${conditions.map((cond) => `      way${cond};`).join("\n")}
         }
       }
 
-      console.error("Failed to fetch OSM POIs", { bounds: bounds.toBBoxString(), activeCategories, retryCount });
-      reject(new Error("Failed to fetch OSM POIs"));
+      // All mirrors failed or returned non-retryable errors — POI layer is best-effort; map still works.
+      resolve(emptyResult);
     }, 300);
   });
 }

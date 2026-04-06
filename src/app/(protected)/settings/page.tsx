@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/require-user";
-import { safeDisplay } from "@/lib/utils/data-format";
 import ClientSettingsPage from "./ClientSettingsPage";
 
 export default async function SettingsPage() {
@@ -15,19 +14,6 @@ export default async function SettingsPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        {/* Page Header */}
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Einstellungen</h1>
-          <p className="text-muted-foreground">
-            Verwalte deine Account- und CRM-Einstellungen
-          </p>
-        </div>
-
-        {/* Welcome line preserved */}
-        <div className="text-lg">
-          Willkommen, <span className="font-medium">{safeDisplay(user.display_name)}</span>
-        </div>
-
         {/* Nice Loading Skeleton for Settings */}
         <Suspense
           fallback={
@@ -80,7 +66,7 @@ export default async function SettingsPage() {
             </div>
           }
         >
-          <ClientSettingsPage />
+          <ClientSettingsPage displayName={user.display_name} />
         </Suspense>
 
         <div className="rounded-2xl border border-border bg-card p-8">

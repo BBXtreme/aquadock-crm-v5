@@ -34,7 +34,8 @@ export default function SmtpSettings() {
     });
   }, []);
 
-  const loadConfig = useCallback(async () => {
+  const loadConfig = useCallback(async (opts?: { notify?: boolean }) => {
+    const notify = opts?.notify === true;
     setIsLoadingConfig(true);
     try {
       const { getSmtpConfig } = await import("@/lib/services/smtp");
@@ -46,10 +47,12 @@ export default function SmtpSettings() {
         setPassword(config.password || "");
         setFromName(config.fromName || "");
         setSecure(config.secure || false);
-        toast.success("SMTP-Konfiguration geladen", {
-          description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
-        });
-      } else {
+        if (notify) {
+          toast.success("SMTP-Konfiguration geladen", {
+            description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
+          });
+        }
+      } else if (notify) {
         toast.success("SMTP-Konfiguration geladen", {
           description: "Keine gespeicherte Konfiguration gefunden. Felder sind leer.",
         });
@@ -66,7 +69,7 @@ export default function SmtpSettings() {
   }, []);
 
   useEffect(() => {
-    if (currentUser) loadConfig();
+    if (currentUser) void loadConfig();
   }, [currentUser, loadConfig]);
 
   const handleSave = async () => {
@@ -169,7 +172,13 @@ export default function SmtpSettings() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={loadConfig} disabled={isLoadingConfig} variant="outline" size="icon">
+            <Button
+              type="button"
+              onClick={() => void loadConfig({ notify: true })}
+              disabled={isLoadingConfig}
+              variant="outline"
+              size="icon"
+            >
               <RefreshCw className={`h-4 w-4 ${isLoadingConfig ? "animate-spin" : ""}`} />
             </Button>
             <Button onClick={handleTest} className="flex-1">

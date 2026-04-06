@@ -28,6 +28,7 @@
 // script.
 
 import Papa from "papaparse";
+import { buildColumnMappingsFromParserFields } from "@/lib/constants/csv-import-fields";
 import type { CompanyInsert } from "@/types/database.types";
 
 // Define the parsed row type from CSV
@@ -79,28 +80,12 @@ const LAND_NORMALIZE_MAP: Record<string, string> = {
   // Add more as needed
 };
 
-// Flexible column name mapping
-const COLUMN_MAPPINGS: Record<string, keyof ParsedCompanyRow> = {
-  name: "firmenname",
-  firmenname: "firmenname",
-  kategorie: "kundentyp",
-  kundentyp: "kundentyp",
-  "wasserdistanz (m)": "wasser_distanz",
-  wasser_distanz: "wasser_distanz",
-  wassertyp: "wassertyp",
-  strasse: "strasse",
-  straße: "strasse", // Handle umlaut
-  plz: "plz",
-  ort: "ort",
-  bundesland: "bundesland",
-  land: "land",
-  telefon: "telefon",
-  website: "website",
-  email: "email",
-  lat: "lat",
-  lon: "lon",
-  osm: "osm",
-};
+/**
+ * CSV column headers (after trim + toLowerCase) → ParsedCompanyRow keys.
+ * Delimiter: semicolon. Required per row: Firmenname + Kundentyp.
+ * Full list of accepted headers: `csvImportParserFieldRows` in `@/lib/constants/csv-import-fields`.
+ */
+const COLUMN_MAPPINGS: Record<string, keyof ParsedCompanyRow> = buildColumnMappingsFromParserFields();
 
 // Parse CSV file and return parsed rows
 export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {

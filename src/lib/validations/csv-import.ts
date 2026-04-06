@@ -1,0 +1,27 @@
+// Zod schemas for CSV import preview / server validation — aligned with ParsedCompanyRow from csv-import utils
+
+import { z } from "zod";
+
+export const parsedCompanyRowSchema = z
+  .object({
+    firmenname: z.string().trim().min(1, "Firmenname ist erforderlich"),
+    kundentyp: z.string().trim().min(1, "Kundentyp ist erforderlich"),
+    wasser_distanz: z.number().optional(),
+    wassertyp: z.string().trim().optional(),
+    strasse: z.string().trim().optional(),
+    plz: z.string().trim().optional(),
+    ort: z.string().trim().optional(),
+    bundesland: z.string().trim().optional(),
+    land: z.string().trim().optional(),
+    telefon: z.string().trim().optional(),
+    website: z.string().trim().optional(),
+    email: z.string().trim().optional(),
+    lat: z.number().optional(),
+    lon: z.number().optional(),
+    osm: z.string().trim().optional(),
+  })
+  .strict();
+
+export type ParsedCompanyRowForm = z.infer<typeof parsedCompanyRowSchema>;
+
+export const parsedCompanyRowsSchema = z.array(parsedCompanyRowSchema);
