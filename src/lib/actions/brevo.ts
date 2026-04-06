@@ -3,8 +3,9 @@
 
 import { requireUser } from "@/lib/auth/require-user";
 import { addContactToList, createBrevoContact, createBrevoList, sendBrevoCampaign } from "@/lib/services/brevo";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
+import type { Contact } from "@/types/database.types";
 
 type BrevoCampaign = {
   id: number;
@@ -14,22 +15,31 @@ type BrevoCampaign = {
   createdAt: string;
 };
 
+// Define type for joined query result (Contact with companies join)
+type ContactWithCompany = Contact & {
+  companies: { kundentyp: string; status: string } | null;
+};
+
 export async function syncContactsToBrevo(formData: FormData) {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
   const validated = brevoSyncSchema.parse(data);
 
-  const supabase = createServerClient();
+  const supabase = createServerSupabaseClient();
+
   const { data: contacts } = await supabase
     .from("contacts")
     .select("*, companies(kundentyp, status)")
     .eq("user_id", user.id);
 
-  const filteredContacts = contacts?.filter(contact => {
+  // Type contacts explicitly to avoid implicit any on contact parameter
+  const typedContacts: ContactWithCompany[] = contacts ?? [];
+
+  const filteredContacts = typedContacts.filter((contact) => {
     if (validated.filterKundentyp && contact.companies?.kundentyp !== validated.filterKundentyp) return false;
     if (validated.filterStatus && contact.companies?.status !== validated.filterStatus) return false;
     return true;
-  }) || [];
+  });
 
   try {
     for (const contact of filteredContacts) {
@@ -62,7 +72,7 @@ export async function createBrevoCampaign(formData: FormData) {
     scheduledAt: data.scheduledAt,
   });
 
-  const supabase = createServerClient();
+  const supabase = createServerSupabaseClient();
 
   // Template override (if selected)
   if (selectedTemplate) {
