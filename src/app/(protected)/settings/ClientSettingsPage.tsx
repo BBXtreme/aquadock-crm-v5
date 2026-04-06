@@ -5,9 +5,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Layers, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
+import {
+  appearanceResolvedIsDark,
+  applyAppearanceColorTokens,
+  persistAppearanceLocalMirror,
+} from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,13 +22,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import {
+  APPEARANCE_COLOR_LABELS,
+  APPEARANCE_COLOR_SCHEME_IDS,
+  APPEARANCE_COLOR_SWATCH,
+} from "@/lib/constants/theme";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
+import {
+  DEFAULT_APPEARANCE,
+  loadAppearanceSettings,
+  saveAppearanceColorScheme,
+  saveAppearanceLocale,
+  saveAppearanceTheme,
+} from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
+import { safeDisplay } from "@/lib/utils/data-format";
 import {
   type MapProviderId,
   mapProviderSchema,
   mapSettingsFormSchema,
 } from "@/lib/validations/map-settings";
+import {
+  type AppearanceSettingsRecord,
+  appearanceColorSchemeSchema,
+  appearanceLocaleSchema,
+  appearanceThemeSchema,
+} from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -68,11 +93,15 @@ out center;
   return query.trim();
 };
 
-function ClientSettingsPage() {
+type ClientSettingsPageProps = {
+  displayName: string | null;
+};
+
+function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
+  const { theme: nextTheme, setTheme, resolvedTheme } = useTheme();
+  const [selectMounted, setSelectMounted] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("en");
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -102,6 +131,10 @@ function ClientSettingsPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    setSelectMounted(true);
+  }, []);
+
   const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
     const duration = localStorage.getItem("openmap_cacheDuration");
@@ -117,14 +150,80 @@ function ClientSettingsPage() {
     });
   }, [defaultOverpassEndpoints]);
 
-  const { data: settings = {}, isLoading } = useQuery({
+  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_settings").select("*").single();
-      if (error && error.code !== "PGRST116") throw error; // PGRST116 is "not found"
-      return data || {};
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return {};
+      const { data, error } = await supabase.from("user_settings").select("key, value").eq("user_id", user.id);
+      if (error) throw error;
+      const map: Record<string, unknown> = {};
+      for (const row of data ?? []) {
+        map[row.key] = row.value;
+      }
+      return map;
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: appearance = DEFAULT_APPEARANCE, isLoading: appearanceLoading } = useQuery({
+    queryKey: ["appearance-settings"],
+    queryFn: async () => {
+      const loaded = await loadAppearanceSettings();
+      return loaded ?? DEFAULT_APPEARANCE;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const appearanceThemeMutation = useMutation({
+    mutationFn: saveAppearanceTheme,
+    onSuccess: (_, theme) => {
+      setTheme(theme);
+      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
+        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), theme };
+        persistAppearanceLocalMirror(next);
+        return next;
+      });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Theme konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceLocaleMutation = useMutation({
+    mutationFn: saveAppearanceLocale,
+    onSuccess: (_, locale) => {
+      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
+        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), locale };
+        persistAppearanceLocalMirror(next);
+        document.documentElement.lang = locale;
+        return next;
+      });
+      toast.success(locale === "de" ? "Sprache geändert" : "Language changed");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Sprache konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceColorMutation = useMutation({
+    mutationFn: saveAppearanceColorScheme,
+    onSuccess: (_, colorScheme) => {
+      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
+        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), colorScheme };
+        persistAppearanceLocalMirror(next);
+        applyAppearanceColorTokens(colorScheme, appearanceResolvedIsDark(resolvedTheme));
+        return next;
+      });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Farbschema konnte nicht gespeichert werden", { description: message });
+    },
   });
 
   const { data: mapProviderSettings } = useQuery({
@@ -291,7 +390,9 @@ function ClientSettingsPage() {
     setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
   }, [mapProviderSettings]);
 
-  if (isLoading) {
+  const pageLoading = settingsLoading || appearanceLoading;
+
+  if (pageLoading) {
     return (
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold mb-6">Settings</h1>
@@ -304,10 +405,15 @@ function ClientSettingsPage() {
   }
 
   return (
-    <div>
-      <div>
-        <p className="text-muted-foreground text-sm">Home {">"} Settings</p>
-        <h1 className="font-semibold text-3xl tracking-tight">Settings</h1>
+    <div className="space-y-8">
+      <div className="pb-6 border-b">
+        <div>
+          <div className="text-sm text-muted-foreground">Home → Settings</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Settings
+          </h1>
+          <p className="text-muted-foreground">Verwalte deine Account- und CRM-Einstellungen</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -343,13 +449,28 @@ function ClientSettingsPage() {
               <Palette className="mr-2 h-5 w-5" />
               Appearance
             </CardTitle>
+            <CardDescription className="text-sm leading-relaxed">
+              Wähle Hell-, Dunkel- oder Systemmodus (next-themes), die Oberflächensprache für{" "}
+              <span className="font-mono text-foreground">{"<html lang>"}</span>, und ein Farbschema für Primär-
+              und Akzentfarben (CSS-Variablen). Einstellungen werden im Konto gespeichert und lokal
+              gespiegelt. Das hier gespeicherte Theme ist die Voreinstellung beim nächsten App-Start;
+              in der laufenden Sitzung kannst du unabhängig davon in der Kopfzeile zwischen Hell und
+              Dunkel wechseln (ohne die gespeicherte Voreinstellung zu ändern).
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Theme</Label>
-              <Select value={theme} onValueChange={setTheme}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Label htmlFor="appearance-theme">Theme</Label>
+              <Select
+                value={selectMounted && nextTheme ? nextTheme : undefined}
+                onValueChange={(value) => {
+                  const parsed = appearanceThemeSchema.safeParse(value);
+                  if (parsed.success) appearanceThemeMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceThemeMutation.isPending}
+              >
+                <SelectTrigger id="appearance-theme" className="w-full max-w-md">
+                  <SelectValue placeholder={selectMounted ? undefined : "…"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Light</SelectItem>
@@ -359,19 +480,57 @@ function ClientSettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger>
+              <Label htmlFor="appearance-language">Language</Label>
+              <Select
+                value={appearance.locale}
+                onValueChange={(value) => {
+                  const parsed = appearanceLocaleSchema.safeParse(value);
+                  if (parsed.success) appearanceLocaleMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceLocaleMutation.isPending}
+              >
+                <SelectTrigger id="appearance-language" className="w-full max-w-md">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">Customize your app appearance</p>
+            <div className="space-y-2">
+              <Label htmlFor="appearance-color">Color theme</Label>
+              <Select
+                value={appearance.colorScheme}
+                onValueChange={(value) => {
+                  const parsed = appearanceColorSchemeSchema.safeParse(value);
+                  if (parsed.success) appearanceColorMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceColorMutation.isPending}
+              >
+                <SelectTrigger id="appearance-color" className="w-full max-w-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPEARANCE_COLOR_SCHEME_IDS.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="size-3 shrink-0 rounded-full border border-border"
+                          style={{ backgroundColor: APPEARANCE_COLOR_SWATCH[id] }}
+                          aria-hidden
+                        />
+                        {APPEARANCE_COLOR_LABELS[id]}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Vollständige Übersetzung der App-Inhalte kann später per i18n ergänzt werden; die Auswahl ist
+              bereits persistent.
+            </p>
           </CardContent>
         </Card>
 

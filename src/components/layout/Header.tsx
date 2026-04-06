@@ -33,7 +33,7 @@ import { signOut } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/browser";
 
 export default function Header() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const _router = useRouter();
@@ -168,7 +168,17 @@ export default function Header() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => {
+            const next =
+              theme === "system"
+                ? resolvedTheme === "dark"
+                  ? "light"
+                  : "dark"
+                : theme === "dark"
+                  ? "light"
+                  : "dark";
+            setTheme(next);
+          }}
           aria-label="Toggle theme"
           suppressHydrationWarning={true}
         >
