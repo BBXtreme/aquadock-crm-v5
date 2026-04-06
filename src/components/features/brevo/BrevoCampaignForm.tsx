@@ -90,7 +90,7 @@ export default function BrevoCampaignForm({ selectedRecipients, selectedTemplate
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Create & Send Campaign</Button>
+        <Button type="submit" className="w-full">Let's Create & Send Campaign</Button>
       </form>
     </Form>
   );

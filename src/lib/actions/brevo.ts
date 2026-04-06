@@ -3,15 +3,23 @@
 
 import { requireUser } from "@/lib/auth/require-user";
 import { addContactToList, createBrevoContact, createBrevoList, sendBrevoCampaign } from "@/lib/services/brevo";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServerClient } from "@/lib/supabase/server";
 import { brevoCampaignSchema, brevoSyncSchema } from "@/lib/validations/brevo";
+
+type BrevoCampaign = {
+  id: number;
+  name: string;
+  subject?: string;
+  status: string;
+  createdAt: string;
+};
 
 export async function syncContactsToBrevo(formData: FormData) {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
   const validated = brevoSyncSchema.parse(data);
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerClient();
   const { data: contacts } = await supabase
     .from("contacts")
     .select("*, companies(kundentyp, status)")
@@ -54,7 +62,7 @@ export async function createBrevoCampaign(formData: FormData) {
     scheduledAt: data.scheduledAt,
   });
 
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerClient();
 
   // Template override (if selected)
   if (selectedTemplate) {
@@ -112,5 +120,31 @@ export async function createBrevoCampaign(formData: FormData) {
   } catch (err) {
     console.error('Brevo campaign creation error:', err);
     throw new Error(`Failed to create Brevo campaign: ${(err as Error).message}`);
+  }
+}
+
+export async function fetchBrevoCampaignsAction(): Promise<BrevoCampaign[]> {
+  const user = await requireUser();
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error('BREVO_API_KEY not configured');
+  const { BrevoClient, logging } = await import('@getbrevo/brevo');
+  const brevo = new BrevoClient({
+    apiKey,
+    timeoutInSeconds: 30,
+    maxRetries: 3,
+    logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
+  });
+  try {
+    const response = await brevo.emailCampaigns.getEmailCampaigns();
+    return (response.campaigns || []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      subject: c.subject || '',
+      status: c.status,
+      createdAt: c.createdAt,
+    }));
+  } catch (err) {
+    console.error('Failed to fetch Brevo campaigns:', err);
+    throw err;
   }
 }

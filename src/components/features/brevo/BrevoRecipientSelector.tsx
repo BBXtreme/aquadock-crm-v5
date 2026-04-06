@@ -68,7 +68,6 @@ const columns = [
   }) as ColumnDef<ContactWithCompany>,
 ];
 
-// biome-ignore lint/correctness:noUnusedFunctionParameters
 export default function BrevoRecipientSelector({
   selectedRecipients,
   setSelectedRecipients,

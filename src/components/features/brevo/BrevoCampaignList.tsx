@@ -1,8 +1,6 @@
 // src/components/features/brevo/BrevoCampaignList.tsx
 "use client";
 
-import type { Brevo } from '@getbrevo/brevo';
-import { BrevoClient } from "@getbrevo/brevo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -14,6 +12,7 @@ import {
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { fetchBrevoCampaignsAction } from "@/lib/actions/brevo";
 
 type BrevoCampaign = {
   id: number;
@@ -35,30 +34,12 @@ const columns = [
   }) as ColumnDef<BrevoCampaign>,
 ] satisfies ColumnDef<BrevoCampaign>[];
 
-async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
-  if (!process.env.BREVO_API_KEY) throw new Error('BREVO_API_KEY not configured');
-  const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
-  try {
-    const response: Brevo.emailCampaigns.GetEmailCampaignsResponse = await brevo.emailCampaigns.getEmailCampaigns();
-    return (response.campaigns || []).map((c) => ({
-      id: c.id,
-      name: c.name,
-      subject: c.subject || '',
-      status: c.status,
-      createdAt: c.createdAt,
-    }));
-  } catch (err) {
-    console.error('Failed to fetch Brevo campaigns:', err);
-    throw err;
-  }
-}
-
 export default function BrevoCampaignList() {
   const queryClient = useQueryClient();
 
   const { data: campaigns = [], isLoading, error } = useQuery({
     queryKey: ["brevo-campaigns"],
-    queryFn: fetchBrevoCampaigns,
+    queryFn: fetchBrevoCampaignsAction,
   });
 
   const table = useReactTable({
@@ -69,13 +50,13 @@ export default function BrevoCampaignList() {
 
   const handleRefresh = () => queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
 
-  if (isLoading) return <div className="text-muted-foreground">Loading campaigns...</div>;
+  if (isLoading) return <div className="text-muted-foreground">Loading your campaigns...</div>;
   if (error) return <div className="text-destructive">Error loading campaigns: {(error as Error).message}</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Brevo Campaigns</h2>
+        <h2 className="text-lg font-semibold">Your Brevo Campaigns</h2>
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
