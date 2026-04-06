@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Building, Users } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import ContactCreateForm from "@/components/features/contacts/ContactCreateForm";
@@ -12,7 +12,6 @@ import ContactsTable from "@/components/tables/ContactsTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContacts } from "@/lib/actions/contacts";
@@ -22,7 +21,6 @@ import type { Contact } from "@/types/database.types";
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
 function ClientContactsPage() {
-  const _queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
@@ -33,15 +31,18 @@ function ClientContactsPage() {
 
   const queryClient = useQueryClient();
 
+  const sortId = sorting[0]?.id ?? "nachname";
+  const sortDesc = sorting[0]?.desc ?? false;
+
   const contactsData = useSuspenseQuery({
-    queryKey: ["contacts", pagination.pageIndex, pagination.pageSize, sorting],
+    queryKey: ["contacts", pagination.pageIndex, pagination.pageSize, sortId, sortDesc],
     queryFn: async () => {
       const supabase = createClient();
       return getContacts(supabase, {
         page: pagination.pageIndex,
         pageSize: pagination.pageSize,
-        sortBy: sorting[0]?.id,
-        sortDesc: sorting[0]?.desc,
+        sortBy: sortId,
+        sortDesc,
       });
     },
   });
@@ -52,12 +53,24 @@ function ClientContactsPage() {
 
   const statsData = useSuspenseQuery({
     queryKey: ["contacts-stats"],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("contacts").select("is_primary, company_id");
-      const total = data?.length || 0;
-      const primary = data?.filter((c) => c.is_primary).length || 0;
-      const companiesWithContacts = new Set(data?.map((c) => c.company_id)).size;
+      const [totalRes, primaryRes, companiesRes] = await Promise.all([
+        supabase.from("contacts").select("*", { count: "exact", head: true }),
+        supabase
+          .from("contacts")
+          .select("*", { count: "exact", head: true })
+          .eq("is_primary", true),
+        supabase
+          .from("companies")
+          .select("id, contacts!inner(id)", { count: "exact", head: true }),
+      ]);
+
+      const total = totalRes.count ?? 0;
+      const primary = primaryRes.count ?? 0;
+      const companiesWithContacts = companiesRes.error ? 0 : (companiesRes.count ?? 0);
+
       return { total, primary, companiesWithContacts };
     },
   });
@@ -69,7 +82,7 @@ function ClientContactsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContact(id, createClient()),
     onMutate: async (id) => {
-      const queryKey = ["contacts", pagination.pageIndex, pagination.pageSize, sorting];
+      const queryKey = ["contacts", pagination.pageIndex, pagination.pageSize, sortId, sortDesc];
       await queryClient.cancelQueries({ queryKey });
       const previousContacts = queryClient.getQueryData<{ data: ContactWithCompany[]; total: number }>(queryKey);
       if (previousContacts) {
@@ -114,12 +127,13 @@ function ClientContactsPage() {
   }, []);
 
   const searchParams = useSearchParams();
+  const createIntent = searchParams.get("create");
 
   useEffect(() => {
-    if (searchParams.get("create") === "true") {
+    if (createIntent === "true") {
       setDialogOpen(true);
     }
-  }, [searchParams]);
+  }, [createIntent]);
 
   return (
     <>
@@ -144,47 +158,45 @@ function ClientContactsPage() {
         </Dialog>
       </div>
 
-      <Suspense fallback={<LoadingState count={8} />}>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <StatCard
-            title="Total Contacts"
-            value={totalContacts.toLocaleString("de-DE")}
-            icon={<Users className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+8% from last month"
-          />
-          <StatCard
-            title="Primary Contacts"
-            value={primaryContacts.toLocaleString("de-DE")}
-            icon={<Users className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+5% from last month"
-          />
-          <StatCard
-            title="Companies with Contacts"
-            value={companiesWithContacts.toLocaleString("de-DE")}
-            icon={<Building className="h-5 w-5 text-muted-foreground" />}
-            className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+12% from last month"
-          />
-        </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          title="Total Contacts"
+          value={totalContacts.toLocaleString("de-DE")}
+          icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+8% from last month"
+        />
+        <StatCard
+          title="Primary Contacts"
+          value={primaryContacts.toLocaleString("de-DE")}
+          icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+5% from last month"
+        />
+        <StatCard
+          title="Companies with Contacts"
+          value={companiesWithContacts.toLocaleString("de-DE")}
+          icon={<Building className="h-5 w-5 text-muted-foreground" />}
+          className="border-none shadow-sm bg-card/90 hover:shadow-md"
+          change="+12% from last month"
+        />
+      </div>
 
-        <Card>
-          <CardContent>
-            <ContactsTable
-              contacts={contacts}
-              globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
-              onEdit={handleEdit}
-              onDelete={(id) => deleteMutation.mutate(id)}
-              pageCount={pageCount}
-              onPaginationChange={setPagination}
-              sorting={sorting}
-              onSortingChange={setSorting}
-            />
-          </CardContent>
-        </Card>
-      </Suspense>
+      <Card>
+        <CardContent>
+          <ContactsTable
+            contacts={contacts}
+            globalFilter={globalFilter}
+            onGlobalFilterChange={setGlobalFilter}
+            onEdit={handleEdit}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            pageCount={pageCount}
+            onPaginationChange={setPagination}
+            sorting={sorting}
+            onSortingChange={setSorting}
+          />
+        </CardContent>
+      </Card>
 
       {editContact && (
         <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>

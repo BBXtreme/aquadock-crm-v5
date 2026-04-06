@@ -1,9 +1,11 @@
 // src/lib/auth/get-current-user.ts
 
+import { cache } from "react";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { AuthUser } from "./types";
 
-export async function getCurrentUser(): Promise<AuthUser | null> {
+/** One Supabase user + profile load per request (layout + page both call requireUser). */
+export const getCurrentUser = cache(async (): Promise<AuthUser | null> => {
   const supabase = await createServerSupabaseClient();
 
   const {
@@ -15,7 +17,6 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
-  // Fetch profile for role and display_name
   const { data: profile } = await supabase
     .from("profiles")
     .select("role, display_name, avatar_url")
@@ -30,4 +31,4 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     display_name: profile?.display_name || null,
     avatar_url: profile?.avatar_url || null,
   };
-}
+});

@@ -1,11 +1,11 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
@@ -37,16 +38,12 @@ function ClientRemindersPage() {
     return "all";
   });
 
-  const { data: user, error: userError } = useQuery({
+  const { data: user } = useSuspenseQuery({
     queryKey: ["user"],
     queryFn: getCurrentUserClient,
   });
 
-  const {
-    data: reminders = [] as ReminderWithCompany[],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: reminders = [] } = useSuspenseQuery({
     queryKey: ["reminders"],
     queryFn: async () => {
       const supabase = createClient();
@@ -64,7 +61,7 @@ function ClientRemindersPage() {
     refetchOnReconnect: true,
   });
 
-  const { data: profiles = [] } = useQuery({
+  const { data: profiles = [] } = useSuspenseQuery({
     queryKey: ["profiles"],
     queryFn: async () => {
       const supabase = createClient();
@@ -127,48 +124,8 @@ function ClientRemindersPage() {
     }
   }, [searchParams]);
 
-  if (userError) {
-    return (
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Reminders
-          </h1>
-          <p className="text-red-600">Error loading user data. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Reminders
-          </h1>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Reminders
-          </h1>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <>
+    <Suspense fallback={<LoadingState count={20} />}>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Reminders</div>
@@ -346,7 +303,7 @@ function ClientRemindersPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </Suspense>
   );
 }
 

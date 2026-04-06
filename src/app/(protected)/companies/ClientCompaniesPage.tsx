@@ -85,20 +85,8 @@ function ClientCompaniesPage() {
 
   const { data: distinctLands = [] } = useQuery({
     queryKey: ["distinct-lands"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("companies")
-        .select("land")
-        .not("land", "is", null);
-      if (error) throw error;
-      const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
-      return distinctLands;
-    },
-  });
-
-  const { data: lands = [] } = useQuery({
-    queryKey: ["distinct-lands"],
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -181,11 +169,10 @@ function ClientCompaniesPage() {
       if (error) throw error;
       return { companies: data ?? [], totalCount: count ?? 0 };
     },
-    // Reliable refresh behavior (exactly like TimelineCard)
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     refetchOnReconnect: true,
-    // Keep cache for fast navigation, but always fetch fresh on hard refresh
     gcTime: 5 * 60 * 1000,
   });
 
@@ -195,6 +182,9 @@ function ClientCompaniesPage() {
 
   const statsData = useSuspenseQuery({
     queryKey: ["companies-stats"],
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     queryFn: async () => {
       const supabase = createClient();
       const { data } = await supabase.from("companies").select("status, value");
@@ -316,12 +306,13 @@ function ClientCompaniesPage() {
   };
 
   const searchParams = useSearchParams();
+  const openCreateFromQuery = searchParams.get("create") === "true";
 
   useEffect(() => {
-    if (searchParams.get("create") === "true") {
+    if (openCreateFromQuery) {
       setDialogOpen(true);
     }
-  }, [searchParams]);
+  }, [openCreateFromQuery]);
 
   return (
     <>

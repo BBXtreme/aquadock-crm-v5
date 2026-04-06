@@ -51,7 +51,15 @@ export default async function ProfilePage() {
   const email = user.email || "";
 
   // Fetch all users for admin only
-  let allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] = [];
+  let allUsers: {
+    id: string;
+    email: string;
+    display_name: string | null;
+    role: string;
+    created_at: string | null;
+    updated_at: string | null;
+    last_sign_in_at: string | null;
+  }[] = [];
   if (role === 'admin') {
     const adminSupabase = createAdminClient();
     const { data: authUsers } = await adminSupabase.auth.admin.listUsers();
@@ -66,6 +74,7 @@ export default async function ProfilePage() {
         role: profile?.role || 'user',
         created_at: profile?.created_at || null,
         updated_at: profile?.updated_at || null,
+        last_sign_in_at: profile?.last_sign_in_at ?? null,
       };
     });
   }

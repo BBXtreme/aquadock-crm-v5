@@ -41,6 +41,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     { name: "Timeline", href: "/timeline", icon: History },
     { name: "OpenMap", href: "/openmap", icon: MapPin },
     { name: "Mass Email", href: "/mass-email", icon: Mail },
+    { name: "Brevo Campaigns", href: "/brevo", icon: Mail },
   ];
 
   const filteredNavigation = navigation;
