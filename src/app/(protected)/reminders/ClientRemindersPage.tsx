@@ -5,7 +5,7 @@ import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
