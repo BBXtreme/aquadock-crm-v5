@@ -1,29 +1,16 @@
 // src/lib/services/brevo.ts
 import { BrevoClient } from "@getbrevo/brevo";
-import { createClient } from "@/lib/supabase/browser";
 
-export async function getBrevoApiKey(userId: string): Promise<string | null> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("user_settings")
-    .select("value")
-    .eq("user_id", userId)
-    .eq("key", "brevo_api_key")
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to fetch Brevo API key: ${error.message}`);
+export function createBrevoContact(contactData: { email: string; attributes?: Record<string, any> }) {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("Brevo API key not configured in .env.local");
   }
-
-  return ((data?.value as Json) as any)?.apiKey || (data?.value as string) || null;
-}
-
-export async function createBrevoContact(apiKey: string, contactData: { email: string; attributes?: Record<string, any> }) {
+  const apiKey = process.env.BREVO_API_KEY;
   const brevo = new BrevoClient({ apiKey });
   const contactsApi = brevo.contacts;
 
   try {
-    const response = await contactsApi.createContact({
+    const response = contactsApi.createContact({
       email: contactData.email,
       attributes: contactData.attributes || {},
     });
@@ -33,12 +20,16 @@ export async function createBrevoContact(apiKey: string, contactData: { email: s
   }
 }
 
-export async function sendBrevoCampaign(apiKey: string, campaignData: { name: string; subject: string; htmlContent: string; listIds: number[]; scheduledAt?: string }) {
+export function sendBrevoCampaign(campaignData: { name: string; subject: string; htmlContent: string; listIds: number[]; scheduledAt?: string }) {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("Brevo API key not configured in .env.local");
+  }
+  const apiKey = process.env.BREVO_API_KEY;
   const brevo = new BrevoClient({ apiKey });
   const emailCampaignsApi = brevo.emailCampaigns;
 
   try {
-    const response = await emailCampaignsApi.createEmailCampaign({
+    const response = emailCampaignsApi.createEmailCampaign({
       name: campaignData.name,
       subject: campaignData.subject,
       htmlContent: campaignData.htmlContent,
@@ -54,12 +45,16 @@ export async function sendBrevoCampaign(apiKey: string, campaignData: { name: st
   }
 }
 
-export async function createBrevoList(apiKey: string, name: string) {
+export function createBrevoList(name: string) {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("Brevo API key not configured in .env.local");
+  }
+  const apiKey = process.env.BREVO_API_KEY;
   const brevo = new BrevoClient({ apiKey });
   const listsApi = brevo.lists;
 
   try {
-    const response = await listsApi.createList({
+    const response = listsApi.createList({
       name,
     });
     return response;
@@ -68,12 +63,16 @@ export async function createBrevoList(apiKey: string, name: string) {
   }
 }
 
-export async function addContactToList(apiKey: string, listId: number, email: string) {
+export function addContactToList(listId: number, email: string) {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("Brevo API key not configured in .env.local");
+  }
+  const apiKey = process.env.BREVO_API_KEY;
   const brevo = new BrevoClient({ apiKey });
   const listsApi = brevo.lists;
 
   try {
-    const response = await listsApi.addContactToList(listId, { emails: [email] });
+    const response = listsApi.addContactToList(listId, { emails: [email] });
     return response;
   } catch (error: any) {
     throw new Error(`Failed to add contact to list: ${error.message}`);
