@@ -124,7 +124,7 @@ export async function createBrevoCampaign(formData: FormData) {
 }
 
 export async function fetchBrevoCampaignsAction(): Promise<BrevoCampaign[]> {
-  const user = await requireUser();
+  const _user = await requireUser();
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) throw new Error('BREVO_API_KEY not configured');
   const { BrevoClient, logging } = await import('@getbrevo/brevo');
