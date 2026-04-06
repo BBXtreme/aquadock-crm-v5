@@ -25,7 +25,7 @@ export async function createBrevoContact(contactData: { email: string; attribute
   } catch (err) {
     if (err instanceof BrevoError) {
       if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
-      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.get('retry-after') || 'unknown'}s`);
       throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
     }
     throw err;
@@ -59,7 +59,7 @@ export async function sendBrevoCampaign(campaignData: {
   } catch (err) {
     if (err instanceof BrevoError) {
       if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
-      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.get('retry-after') || 'unknown'}s`);
       throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
     }
     throw err;
@@ -83,7 +83,7 @@ export async function createBrevoList(name: string) {
   } catch (err) {
     if (err instanceof BrevoError) {
       if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
-      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.get('retry-after') || 'unknown'}s`);
       throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
     }
     throw err;
@@ -101,13 +101,13 @@ export async function addContactToList(listId: number, email: string) {
   try {
     const response = await brevo.contacts.addContactToList({
       listId,
-      emails: [email],
+      contactEmails: [email],
     });
     return response;
   } catch (err) {
     if (err instanceof BrevoError) {
       if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
-      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.get('retry-after') || 'unknown'}s`);
       throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
     }
     throw err;
