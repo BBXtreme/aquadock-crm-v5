@@ -24,34 +24,41 @@ export async function syncContactsToBrevo(formData: FormData) {
   }) || [];
 
   for (const contact of filteredContacts) {
-    await createBrevoContact({
-      email: contact.email,
-      attributes: { vorname: contact.vorname, nachname: contact.nachname },
-    });
+    if (contact.email) {
+      await createBrevoContact({
+        email: contact.email,
+        attributes: { vorname: contact.vorname, nachname: contact.nachname },
+      });
+    }
   }
 }
 
 export async function createBrevoCampaign(formData: FormData) {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
+
   const selectedRecipients = data.selectedRecipients ? JSON.parse(data.selectedRecipients as string) : null;
   const selectedTemplate = data.selectedTemplate as string;
 
   const validated = brevoCampaignSchema.parse({
-    name: data.name as string,
-    subject: data.subject as string,
-    htmlContent: data.htmlContent as string,
-    listIds: data.listIds as string,
-    selectedTemplate: data.selectedTemplate as string,
-    scheduledAt: data.scheduledAt as string,
+    name: data.name,
+    subject: data.subject,
+    htmlContent: data.htmlContent,
+    listIds: (data.listIds as string || "").split(",").map(Number).filter(n => !Number.isNaN(n)),
+    selectedTemplate,
+    scheduledAt: data.scheduledAt,
   });
-
-  const listIdsArray = validated.listIds.split(',').map(Number).filter(n => !Number.isNaN(n));
 
   const supabase = await createServerSupabaseClient();
 
+  // Template override (if selected)
   if (selectedTemplate) {
-    const { data: template } = await supabase.from("email_templates").select("*").eq("id", selectedTemplate).single();
+    const { data: template } = await supabase
+      .from("email_templates")
+      .select("*")
+      .eq("id", selectedTemplate)
+      .single();
+
     if (template) {
       validated.name = template.name;
       validated.subject = template.subject;
@@ -59,13 +66,19 @@ export async function createBrevoCampaign(formData: FormData) {
     }
   }
 
-  let finalListIds = listIdsArray;
+  let finalListIds = validated.listIds;
+
   if (selectedRecipients && selectedRecipients.length > 0) {
     const listName = `${validated.name} Recipients`;
     const list = await createBrevoList(listName);
     const listId = list.id;
+
     for (const id of selectedRecipients) {
-      const { data: contact } = await supabase.from("contacts").select("email").eq("id", id).single();
+      const { data: contact } = await supabase
+        .from("contacts")
+        .select("email")
+        .eq("id", id)
+        .single();
       if (contact?.email) {
         await addContactToList(listId, contact.email);
       }

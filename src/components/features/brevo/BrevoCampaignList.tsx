@@ -14,7 +14,6 @@ import { RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/browser";
 
 type BrevoCampaign = {
   id: number;
@@ -27,53 +26,31 @@ type BrevoCampaign = {
 const columnHelper = createColumnHelper<BrevoCampaign>();
 
 const columns = [
-  columnHelper.accessor("name", {
-    header: "Name",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("subject", {
-    header: "Subject",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("status", {
-    header: "Status",
-    cell: (info) => info.getValue(),
-  }),
+  columnHelper.accessor("name", { header: "Name" }) as ColumnDef<BrevoCampaign>,
+  columnHelper.accessor("subject", { header: "Subject" }) as ColumnDef<BrevoCampaign>,
+  columnHelper.accessor("status", { header: "Status" }) as ColumnDef<BrevoCampaign>,
   columnHelper.accessor("createdAt", {
     header: "Created At",
-    cell: (info) => new Date(info.getValue()).toLocaleDateString(),
-  }),
+    cell: (info) => new Date(info.getValue()).toLocaleDateString("de-DE"),
+  }) as ColumnDef<BrevoCampaign>,
 ] satisfies ColumnDef<BrevoCampaign>[];
 
 async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("User not authenticated");
-
-  const { data: settings } = await supabase
-    .from("user_settings")
-    .select("value")
-    .eq("user_id", user.id)
-    .eq("key", "brevo_api_key")
-    .single();
-
-  if (!settings?.value) throw new Error("Brevo API key not found");
-
-  const apiKey = settings.value as string;
-  const brevo = new BrevoClient({ apiKey });
-  const emailCampaignsApi = brevo.emailCampaigns;
-  const response = await emailCampaignsApi.getEmailCampaigns();
-  return response.campaigns.map((campaign: any) => ({
-    id: campaign.id,
-    name: campaign.name,
-    subject: campaign.subject,
-    status: campaign.status,
-    createdAt: campaign.createdAt,
+  if (!process.env.BREVO_API_KEY) throw new Error("BREVO_API_KEY not configured");
+  const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
+  const response = await brevo.emailCampaigns.getEmailCampaigns();
+  return (response.campaigns || []).map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    subject: c.subject,
+    status: c.status,
+    createdAt: c.createdAt,
   }));
 }
 
 export default function BrevoCampaignList() {
   const queryClient = useQueryClient();
+
   const { data: campaigns = [], isLoading, error } = useQuery({
     queryKey: ["brevo-campaigns"],
     queryFn: fetchBrevoCampaigns,
@@ -85,18 +62,16 @@ export default function BrevoCampaignList() {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
-  };
+  const handleRefresh = () => queryClient.invalidateQueries({ queryKey: ["brevo-campaigns"] });
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (isLoading) return <div className="text-muted-foreground">Loading campaigns...</div>;
+  if (error) return <div className="text-destructive">Error: {(error as Error).message}</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold">Brevo Campaigns</h2>
-        <Button onClick={handleRefresh} variant="outline">
+        <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
@@ -114,7 +89,7 @@ export default function BrevoCampaignList() {
           ))}
         </TableHeader>
         <TableBody>
-          {table.getRowModel().rows?.length ? (
+          {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
@@ -126,9 +101,7 @@ export default function BrevoCampaignList() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
+              <TableCell colSpan={4} className="h-24 text-center">No campaigns found</TableCell>
             </TableRow>
           )}
         </TableBody>
