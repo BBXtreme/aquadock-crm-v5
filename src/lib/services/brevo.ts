@@ -1,6 +1,6 @@
 // src/lib/services/brevo.ts
-import { BrevoClient, logging, UnauthorizedError, TooManyRequestsError, BrevoError } from '@getbrevo/brevo';
-import type { Brevo } from '@getbrevo/brevo';
+
+import { BrevoClient, BrevoError, logging, TooManyRequestsError, UnauthorizedError } from '@getbrevo/brevo';
 
 export const getApiKey = (): string => {
   const key = process.env.BREVO_API_KEY;

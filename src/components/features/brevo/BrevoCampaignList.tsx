@@ -1,6 +1,7 @@
 // src/components/features/brevo/BrevoCampaignList.tsx
 "use client";
 
+import type { Brevo } from '@getbrevo/brevo';
 import { BrevoClient } from "@getbrevo/brevo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,10 +12,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { RefreshCw } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Brevo } from '@getbrevo/brevo';
 
 type BrevoCampaign = {
   id: number;
