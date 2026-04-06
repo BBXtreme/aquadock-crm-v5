@@ -19,7 +19,7 @@ export async function createBrevoContact(contactData: { email: string; attribute
   try {
     const response = await brevo.contacts.createContact({
       email: contactData.email,
-      attributes: contactData.attributes as Record<string, any> || {},
+      attributes: contactData.attributes || {},
     });
     return response;
   } catch (err) {
@@ -51,7 +51,7 @@ export async function sendBrevoCampaign(campaignData: {
       name: campaignData.name,
       subject: campaignData.subject,
       htmlContent: campaignData.htmlContent,
-      sender: { name: 'AquaDock CRM', email: 'noreply@aquadock.com' },
+      sender: { name: 'Hey from AquaDock CRM', email: 'noreply@aquadock.com' },
       recipients: { listIds: campaignData.listIds },
       scheduledAt: campaignData.scheduledAt,
     });
