@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import ClientBrevoPage from "./ClientBrevoPage";
 
 export default async function BrevoPage() {
-  const user = await requireUser();
+  const _user = await requireUser();
   const supabase = await createServerSupabaseClient();
   const { data: templates } = await supabase
     .from("email_templates")
