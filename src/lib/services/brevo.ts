@@ -1,80 +1,59 @@
 // src/lib/services/brevo.ts
 import { BrevoClient } from "@getbrevo/brevo";
 
-export function createBrevoContact(contactData: { email: string; attributes?: Record<string, any> }) {
+const getApiKey = (): string => {
   if (!process.env.BREVO_API_KEY) {
     throw new Error("Brevo API key not configured in .env.local");
   }
-  const apiKey = process.env.BREVO_API_KEY;
-  const brevo = new BrevoClient({ apiKey });
-  const contactsApi = brevo.contacts;
+  return process.env.BREVO_API_KEY;
+};
 
-  try {
-    const response = contactsApi.createContact({
-      email: contactData.email,
-      attributes: contactData.attributes || {},
-    });
-    return response;
-  } catch (error: any) {
-    throw new Error(`Failed to create Brevo contact: ${error.message}`);
-  }
+export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, unknown> }) {
+  const apiKey = getApiKey();
+  const brevo = new BrevoClient({ apiKey });
+  const response = await brevo.contacts.createContact({
+    email: contactData.email,
+    attributes: contactData.attributes || {},
+  });
+  return response;
 }
 
-export function sendBrevoCampaign(campaignData: { name: string; subject: string; htmlContent: string; listIds: number[]; scheduledAt?: string }) {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("Brevo API key not configured in .env.local");
-  }
-  const apiKey = process.env.BREVO_API_KEY;
+export async function sendBrevoCampaign(campaignData: {
+  name: string;
+  subject: string;
+  htmlContent: string;
+  listIds: number[];
+  scheduledAt?: string;
+}) {
+  const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
-  const emailCampaignsApi = brevo.emailCampaigns;
-
-  try {
-    const response = emailCampaignsApi.createEmailCampaign({
-      name: campaignData.name,
-      subject: campaignData.subject,
-      htmlContent: campaignData.htmlContent,
-      sender: { name: "AquaDock CRM", email: "noreply@aquadock.com" },
-      recipients: {
-        listIds: campaignData.listIds,
-      },
-      scheduledAt: campaignData.scheduledAt,
-    });
-    return response;
-  } catch (error: any) {
-    throw new Error(`Failed to send Brevo campaign: ${error.message}`);
-  }
+  const response = await brevo.emailCampaigns.createEmailCampaign({
+    name: campaignData.name,
+    subject: campaignData.subject,
+    htmlContent: campaignData.htmlContent,
+    sender: { name: "AquaDock CRM", email: "noreply@aquadock.com" },
+    recipients: { listIds: campaignData.listIds },
+    scheduledAt: campaignData.scheduledAt,
+  });
+  return response;
 }
 
-export function createBrevoList(name: string) {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("Brevo API key not configured in .env.local");
-  }
-  const apiKey = process.env.BREVO_API_KEY;
+export async function createBrevoList(name: string) {
+  const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
-  const listsApi = brevo.lists;
-
-  try {
-    const response = listsApi.createList({
-      name,
-    });
-    return response;
-  } catch (error: any) {
-    throw new Error(`Failed to create Brevo list: ${error.message}`);
-  }
+  const response = await brevo.contacts.createList({
+    name,
+    folderId: 1, // Change to your actual Brevo folder ID if you have multiple folders
+  });
+  return response;
 }
 
-export function addContactToList(listId: number, email: string) {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("Brevo API key not configured in .env.local");
-  }
-  const apiKey = process.env.BREVO_API_KEY;
+export async function addContactToList(listId: number, email: string) {
+  const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
-  const listsApi = brevo.lists;
-
-  try {
-    const response = listsApi.addContactToList(listId, { emails: [email] });
-    return response;
-  } catch (error: any) {
-    throw new Error(`Failed to add contact to list: ${error.message}`);
-  }
+  // Correct SDK call: second argument must be the full request object
+  const response = await brevo.contacts.addContactToList(listId, {
+    emails: [email],
+  });
+  return response;
 }
