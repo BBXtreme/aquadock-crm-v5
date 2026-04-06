@@ -8,7 +8,7 @@ const getApiKey = (): string => {
   return process.env.BREVO_API_KEY;
 };
 
-export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, any> }) {
+export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, unknown> }) {
   const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
   const response = await brevo.contacts.createContact({
