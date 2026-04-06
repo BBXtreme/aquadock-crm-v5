@@ -51,8 +51,9 @@ export async function createBrevoList(name: string) {
 export async function addContactToList(listId: number, email: string) {
   const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
-  // Correct SDK call: second argument must be the full request object
-  const response = await brevo.contacts.addContactToList(listId, {
+  // SDK call with request object
+  const response = await brevo.contacts.addContactToList({
+    listId,
     emails: [email],
   });
   return response;
