@@ -5,6 +5,7 @@
  */
 
 import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 
 /**
  * Formats a number as currency in German locale (Euro).
@@ -25,7 +26,7 @@ export function formatCurrency(v: number | null | undefined): string {
 export function formatDateDistance(d: string | null | undefined): string {
   if (!d) return "—";
   try {
-    return formatDistanceToNow(new Date(d), { addSuffix: true });
+    return formatDistanceToNow(new Date(d), { addSuffix: true, locale: de });
   } catch {
     return "—";
   }

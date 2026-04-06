@@ -1,6 +1,8 @@
 // src/lib/actions/brevo.ts
 "use server";
 
+import { z } from "zod";
+
 import { requireUser } from "@/lib/auth/require-user";
 import type { BrevoListSummary } from "@/lib/services/brevo";
 import {
@@ -39,6 +41,34 @@ export type BrevoSyncContactsResult = {
   /** Brevo async import job id; omitted when nothing was submitted */
   processId?: number;
 };
+
+/** Result of `importBrevoContactsBulkAction` for UI toasts. */
+export type BrevoBulkImportContactsResult = {
+  processId: number;
+  submitted: number;
+  skippedNoEmail: number;
+};
+
+const importBrevoContactsBulkPayloadSchema = z
+  .object({
+    contactIds: z.array(z.string().uuid()).min(1),
+    listIds: z.array(z.number().int().positive()),
+    newListName: z.string().trim().optional(),
+  })
+  .strict()
+  .superRefine((data, ctx) => {
+    const hasLists = data.listIds.length > 0;
+    const name = data.newListName?.trim() ?? "";
+    const hasNew = name.length > 0;
+    if (!hasLists && !hasNew) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Bitte mindestens eine bestehende Brevo-Liste wählen oder unter „Neue Liste erstellen“ einen Listennamen angeben.",
+        path: ["listIds"],
+      });
+    }
+  });
 
 function parseSelectedRecipientsFromForm(data: Record<string, FormDataEntryValue>): string[] | null {
   const raw = data.selectedRecipients;
@@ -137,6 +167,65 @@ export async function syncContactsToBrevo(formData: FormData): Promise<BrevoSync
       throw err;
     }
     throw new Error("Kontakte konnten nicht zu Brevo synchronisiert werden.");
+  }
+}
+
+/**
+ * Bulk-import selected CRM contacts via Brevo `contacts/import` (uses `importBrevoContactsBulk`).
+ * Requires at least one target: existing list id(s) and/or a new list name.
+ */
+export async function importBrevoContactsBulkAction(
+  raw: z.infer<typeof importBrevoContactsBulkPayloadSchema>,
+): Promise<BrevoBulkImportContactsResult> {
+  const user = await requireUser();
+  const data = importBrevoContactsBulkPayloadSchema.parse(raw);
+
+  const supabase = await createServerSupabaseClient();
+  const { data: rows, error } = await supabase
+    .from("contacts")
+    .select("*, companies(kundentyp, status)")
+    .in("id", data.contactIds)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const typedRows: BrevoContactWithCompany[] = rows ?? [];
+  const skippedNoEmail = typedRows.filter((c) => !c.email?.trim()).length;
+  const jsonBody = typedRows
+    .map((contact) => {
+      const email = contact.email?.trim();
+      if (!email) return null;
+      return {
+        email,
+        attributes: { vorname: contact.vorname, nachname: contact.nachname },
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  if (jsonBody.length === 0) {
+    throw new Error("Keine der ausgewählten Kontakte hat eine gültige E-Mail-Adresse.");
+  }
+
+  const trimmedNewName = data.newListName?.trim() ?? "";
+  const newList =
+    trimmedNewName.length > 0 ? { listName: trimmedNewName, folderId: 1 as const } : undefined;
+
+  try {
+    const { processId } = await importBrevoContactsBulk({
+      jsonBody,
+      ...(data.listIds.length > 0 ? { listIds: data.listIds } : {}),
+      ...(newList ? { newList } : {}),
+      updateExistingContacts: true,
+    });
+    return { processId, submitted: jsonBody.length, skippedNoEmail };
+  } catch (err) {
+    console.error("Brevo bulk import error:", err);
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error("Brevo-Import ist fehlgeschlagen.");
   }
 }
 

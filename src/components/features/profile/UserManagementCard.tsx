@@ -17,10 +17,24 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/services/profile";
+import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 // Client Component for User Management
-function UserManagementCard({ allUsers }: { allUsers: { id: string; email: string; display_name: string | null; role: string; created_at: string | null; updated_at: string | null }[] }) {
+function UserManagementCard({
+  allUsers,
+}: {
+  allUsers: {
+    id: string;
+    email: string;
+    display_name: string | null;
+    role: string;
+    created_at: string | null;
+    updated_at: string | null;
+    last_sign_in_at: string | null;
+  }[];
+}) {
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
@@ -145,31 +159,50 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Display Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead>Updated At</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allUsers.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.display_name || 'No display name'}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="capitalize">
-                        {u.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : 'N/A'}</TableCell>
-                    <TableCell>
+          <TooltipProvider>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Display Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead>Updated At</TableHead>
+                    <TableHead>Zuletzt angemeldet</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allUsers.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="font-medium">{u.display_name || 'No display name'}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {u.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
+                      <TableCell>{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : 'N/A'}</TableCell>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-default tabular-nums text-muted-foreground">
+                              {formatDateDistance(u.last_sign_in_at)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {u.last_sign_in_at
+                              ? new Date(u.last_sign_in_at).toLocaleString("de-DE", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })
+                              : safeDisplay(u.last_sign_in_at)}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
                       <div className="flex space-x-2">
                         <Button
                           size="sm"
@@ -216,10 +249,11 @@ function UserManagementCard({ allUsers }: { allUsers: { id: string; email: strin
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 

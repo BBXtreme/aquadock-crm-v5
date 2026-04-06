@@ -12,6 +12,7 @@ import BrevoRecipientSelector from "@/components/features/brevo/BrevoRecipientSe
 import BrevoTemplateSelector from "@/components/features/brevo/BrevoTemplateSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -23,6 +24,7 @@ import {
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { createBrevoCampaign, fetchBrevoListsAction, fetchBrevoTemplatesAction } from "@/lib/actions/brevo";
 import { createClient } from "@/lib/supabase/browser";
@@ -41,6 +43,9 @@ interface BrevoCampaignFormProps {
   selectedTemplate?: string;
 }
 
+const labelClass = "text-sm font-medium";
+const descriptionClass = "text-sm text-muted-foreground leading-relaxed";
+
 const emptyCampaignDefaults: BrevoCampaignFormData = {
   name: "",
   subject: "",
@@ -49,6 +54,8 @@ const emptyCampaignDefaults: BrevoCampaignFormData = {
   selectedTemplate: undefined,
   scheduledAt: "",
 };
+
+const cardClass = "border-border rounded-xl shadow-sm";
 
 export default function BrevoCampaignForm(_: BrevoCampaignFormProps) {
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
@@ -96,6 +103,10 @@ export default function BrevoCampaignForm(_: BrevoCampaignFormProps) {
   const sortedLists = [...brevoLists].sort((a, b) => a.name.localeCompare(b.name, "de"));
 
   const isCrmTemplateApplied = Boolean(form.watch("selectedTemplate"));
+  const isBrevoTemplateApplied = Boolean(
+    brevoOfficialTemplateId && brevoOfficialTemplateId !== BREVO_OFFICIAL_TEMPLATE_NONE,
+  );
+  const showTemplateFieldHighlight = isCrmTemplateApplied || isBrevoTemplateApplied;
 
   const onSubmit = async (data: BrevoCampaignFormData) => {
     const formData = new FormData();
@@ -136,290 +147,366 @@ export default function BrevoCampaignForm(_: BrevoCampaignFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control as Control<BrevoCampaignFormData>}
-          name="selectedTemplate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CRM-E-Mail-Vorlage</FormLabel>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card className={cardClass}>
+          <CardHeader className="space-y-2 border-b border-border/60 bg-muted/20 px-6 py-6 sm:px-8">
+            <CardTitle className="text-xl font-semibold tracking-tight">Vorlagen</CardTitle>
+            <CardDescription className="text-base leading-relaxed">
+              CRM-Vorlagen aus dem AquaDock-Archiv oder offizielle Brevo-Templates — Auswahl füllt Betreff und Inhalt
+              vor.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8 px-6 py-8 sm:px-8">
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="selectedTemplate"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className={labelClass}>CRM-E-Mail-Vorlage</FormLabel>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                    <div className="min-w-0 flex-1">
+                      <BrevoTemplateSelector
+                        templates={templates}
+                        value={field.value ?? null}
+                        onChange={(id) => {
+                          field.onChange(id ? id : undefined);
+                          if (id) {
+                            setBrevoOfficialTemplateId(undefined);
+                          }
+                          const t = templates.find((row) => row.id === id);
+                          if (t) {
+                            form.setValue("name", t.name);
+                            form.setValue("subject", t.subject);
+                            form.setValue("htmlContent", t.body);
+                          }
+                        }}
+                        placeholder="Vorlage wählen (optional)"
+                      />
+                    </div>
+                    {field.value ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="border-primary/40 bg-primary/5 font-normal text-primary">
+                          Vorlage angewendet
+                        </Badge>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="shrink-0"
+                          onClick={() => field.onChange(undefined)}
+                        >
+                          Abwählen
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <FormDescription className={descriptionClass}>
+                    Nach Auswahl werden Kampagnenname, Betreff und HTML automatisch übernommen.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Separator className="bg-border/60" />
+
+            <FormItem className="space-y-3">
+              <FormLabel className={labelClass}>Brevo-Template (optional)</FormLabel>
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <div className="min-w-0 flex-1">
-                  <BrevoTemplateSelector
-                    templates={templates}
-                    value={field.value ?? null}
-                    onChange={(id) => {
-                      field.onChange(id ? id : undefined);
-                      if (id) {
+                  <Select
+                    value={brevoOfficialTemplateId ?? BREVO_OFFICIAL_TEMPLATE_NONE}
+                    onValueChange={(value) => {
+                      if (value === BREVO_OFFICIAL_TEMPLATE_NONE) {
                         setBrevoOfficialTemplateId(undefined);
+                        return;
                       }
-                      const t = templates.find((row) => row.id === id);
+                      setBrevoOfficialTemplateId(value);
+                      form.setValue("selectedTemplate", undefined);
+                      const t = brevoOfficialTemplates.find((row) => row.id === value);
                       if (t) {
-                        form.setValue("name", t.name);
                         form.setValue("subject", t.subject);
-                        form.setValue("htmlContent", t.body);
+                        form.setValue("htmlContent", t.htmlContent);
                       }
                     }}
-                    placeholder="Vorlage wählen (optional)"
-                  />
+                    disabled={brevoTplPending}
+                  >
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue placeholder="Offizielle Brevo-Vorlage (empfohlen für Zustellrate)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={BREVO_OFFICIAL_TEMPLATE_NONE}>Keine Brevo-Vorlage</SelectItem>
+                      {brevoOfficialTemplates.map((row) => (
+                        <SelectItem key={row.id} value={row.id}>
+                          {row.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                {field.value ? (
+                {isBrevoTemplateApplied ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className="border-primary/40 bg-primary/5 font-normal text-primary">
-                      Vorlage angewendet
+                      Brevo-Vorlage angewendet
                     </Badge>
                     <Button
                       type="button"
                       variant="secondary"
                       size="sm"
                       className="shrink-0"
-                      onClick={() => field.onChange(undefined)}
+                      onClick={() => setBrevoOfficialTemplateId(undefined)}
                     >
                       Abwählen
                     </Button>
                   </div>
                 ) : null}
               </div>
-              <FormDescription>Vorlage wählen → Formular wird automatisch ausgefüllt</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormItem>
-          <FormLabel>Brevo Template (optional)</FormLabel>
-          <Select
-            value={brevoOfficialTemplateId ?? BREVO_OFFICIAL_TEMPLATE_NONE}
-            onValueChange={(value) => {
-              if (value === BREVO_OFFICIAL_TEMPLATE_NONE) {
-                setBrevoOfficialTemplateId(undefined);
-                return;
-              }
-              setBrevoOfficialTemplateId(value);
-              form.setValue("selectedTemplate", undefined);
-              const t = brevoOfficialTemplates.find((row) => row.id === value);
-              if (t) {
-                form.setValue("subject", t.subject);
-                form.setValue("htmlContent", t.htmlContent);
-              }
-            }}
-            disabled={brevoTplPending}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Offizielle Brevo-Vorlage wählen (empfohlen für bessere Zustellrate)" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={BREVO_OFFICIAL_TEMPLATE_NONE}>Keine Brevo-Vorlage</SelectItem>
-              {brevoOfficialTemplates.map((row) => (
-                <SelectItem key={row.id} value={row.id}>
-                  {row.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            Aktive SMTP-Vorlagen aus Ihrem Brevo-Konto. Bei Auswahl werden Betreff und HTML zur Vorschau übernommen;
-            beim Senden nutzt Brevo die Vorlagen-ID (bessere Zustellung als reines HTML).
-          </FormDescription>
-          {brevoTplError ? (
-            <p className="text-destructive text-sm">
-              {brevoTplQueryError instanceof Error ? brevoTplQueryError.message : "Brevo-Vorlagen konnten nicht geladen werden."}
-            </p>
-          ) : null}
-        </FormItem>
-        <FormField
-          control={form.control as Control<BrevoCampaignFormData>}
-          name="name"
-          render={({ field }) => (
-            <FormItem
-              className={cn(
-                "transition-[border-color,background-color] duration-200",
-                isCrmTemplateApplied &&
-                  "rounded-lg border border-primary/35 bg-primary/5 p-3 shadow-sm ring-1 ring-primary/10",
-              )}
-            >
-              <FormLabel className="inline-flex items-center gap-1.5">
-                Campaign Name
-                {isCrmTemplateApplied ? (
-                  <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
-                ) : null}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value ?? ""}
-                  className={cn(isCrmTemplateApplied && "border-primary/30 bg-background/80")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control as Control<BrevoCampaignFormData>}
-          name="subject"
-          render={({ field }) => (
-            <FormItem
-              className={cn(
-                "transition-[border-color,background-color] duration-200",
-                isCrmTemplateApplied &&
-                  "rounded-lg border border-primary/35 bg-primary/5 p-3 shadow-sm ring-1 ring-primary/10",
-              )}
-            >
-              <FormLabel className="inline-flex items-center gap-1.5">
-                Subject
-                {isCrmTemplateApplied ? (
-                  <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
-                ) : null}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={field.value ?? ""}
-                  className={cn(isCrmTemplateApplied && "border-primary/30 bg-background/80")}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control as Control<BrevoCampaignFormData>}
-          name="htmlContent"
-          render={({ field }) => (
-            <FormItem
-              className={cn(
-                "transition-[border-color,background-color] duration-200",
-                isCrmTemplateApplied &&
-                  "rounded-lg border border-primary/35 bg-primary/5 p-3 shadow-sm ring-1 ring-primary/10",
-              )}
-            >
-              <FormLabel className="inline-flex items-center gap-1.5">
-                HTML Content
-                {isCrmTemplateApplied ? (
-                  <Sparkles className="size-3.5 shrink-0 text-primary" aria-hidden />
-                ) : null}
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  value={field.value ?? ""}
-                  rows={6}
-                  placeholder="Geben Sie hier den HTML-Inhalt der Kampagne ein..."
-                  className={cn(isCrmTemplateApplied && "border-primary/30 bg-background/80")}
-                />
-              </FormControl>
-              <FormDescription>
-                Ohne Vorlage: mindestens 20 Zeichen (Leerzeichen am Rand zählen nicht). Mit Vorlage werden Betreff und
-                HTML beim Speichern von der Vorlage übernommen, falls die Kampagne sie nutzt.
+              <FormDescription className={descriptionClass}>
+                Aktive SMTP-Vorlagen aus Ihrem Brevo-Konto. Bei Auswahl übernimmt das Formular Betreff und HTML; beim
+                Versand nutzt Brevo die Vorlagen-ID.
               </FormDescription>
-              <FormMessage />
+              {brevoTplError ? (
+                <p className="text-destructive text-sm">
+                  {brevoTplQueryError instanceof Error
+                    ? brevoTplQueryError.message
+                    : "Brevo-Vorlagen konnten nicht geladen werden."}
+                </p>
+              ) : null}
             </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control as Control<BrevoCampaignFormData>}
-          name="scheduledAt"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Scheduled At (optional)</FormLabel>
-              <FormControl>
-                <Input type="datetime-local" {...field} value={field.value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="space-y-4 rounded-lg border border-border/70 bg-muted/25 p-5">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold tracking-tight">Zielgruppe aus Brevo-Listen</h3>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Kontaktlisten aus Brevo — optional, wenn Sie Empfänger im CRM-Bereich auswählen.
-            </p>
-          </div>
-          <FormField
-            control={form.control as Control<BrevoCampaignFormData>}
-            name="listIds"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Brevo-Listen</FormLabel>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-between font-normal">
-                      <span className="truncate">
-                        {field.value.length === 0
-                          ? "Keine Listen ausgewählt (optional)"
-                          : `${field.value.length} Liste(n) gewählt`}
-                      </span>
-                      <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="max-h-64 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto"
-                    align="start"
-                  >
-                    <DropdownMenuLabel>Vorhandene Kontaktlisten</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {listsPending ? (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">Laden…</div>
-                    ) : null}
-                    {listsError ? (
-                      <div className="px-2 py-1.5 text-sm text-destructive">
-                        {listsQueryError instanceof Error
-                          ? listsQueryError.message
-                          : "Listen konnten nicht geladen werden."}
-                      </div>
-                    ) : null}
-                    {!listsPending && !listsError
-                      ? sortedLists.map((list) => (
-                          <DropdownMenuCheckboxItem
-                            key={list.id}
-                            checked={field.value.includes(list.id)}
-                            onCheckedChange={(checked) => {
-                              const next = checked
-                                ? [...new Set([...field.value, list.id])]
-                                : field.value.filter((id) => id !== list.id);
-                              field.onChange(next);
-                            }}
-                            onSelect={(e) => e.preventDefault()}
-                          >
-                            {list.name}
-                          </DropdownMenuCheckboxItem>
-                        ))
-                      : null}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              <FormDescription>
-                Optional, wenn Sie im Bereich „CRM-Kontakte“ Empfänger auswählen. Ohne CRM-Empfänger mindestens eine
-                Liste wählen.{" "}
-                <a
-                  href="https://app.brevo.com/campaigns/listing"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground underline underline-offset-4 hover:text-primary"
+          </CardContent>
+        </Card>
+
+        <Card className={cardClass}>
+          <CardHeader className="space-y-2 border-b border-border/60 bg-muted/20 px-6 py-6 sm:px-8">
+            <CardTitle className="text-xl font-semibold tracking-tight">Kampagnendetails</CardTitle>
+            <CardDescription className="text-base leading-relaxed">
+              Name, Betreff und Inhalt der E-Mail. Mit Vorlage sind die Felder hervorgehoben und vorbefüllt.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 px-6 py-8 sm:px-8">
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="name"
+              render={({ field }) => (
+                <FormItem
+                  className={cn(
+                    "space-y-3 transition-[border-color,background-color] duration-200",
+                    showTemplateFieldHighlight &&
+                      "rounded-lg border border-primary/35 bg-primary/5 p-4 shadow-sm ring-1 ring-primary/10",
+                  )}
                 >
-                  app.brevo.com/campaigns/listing
-                </a>
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  <FormLabel className={cn("inline-flex items-center gap-2", labelClass)}>
+                    Kampagnenname
+                    {showTemplateFieldHighlight ? (
+                      <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                    ) : null}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      className={cn(showTemplateFieldHighlight && "border-primary/30 bg-background/80")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="subject"
+              render={({ field }) => (
+                <FormItem
+                  className={cn(
+                    "space-y-3 transition-[border-color,background-color] duration-200",
+                    showTemplateFieldHighlight &&
+                      "rounded-lg border border-primary/35 bg-primary/5 p-4 shadow-sm ring-1 ring-primary/10",
+                  )}
+                >
+                  <FormLabel className={cn("inline-flex items-center gap-2", labelClass)}>
+                    Betreff
+                    {showTemplateFieldHighlight ? (
+                      <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                    ) : null}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      className={cn(showTemplateFieldHighlight && "border-primary/30 bg-background/80")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="htmlContent"
+              render={({ field }) => (
+                <FormItem
+                  className={cn(
+                    "space-y-3 transition-[border-color,background-color] duration-200",
+                    showTemplateFieldHighlight &&
+                      "rounded-lg border border-primary/35 bg-primary/5 p-4 shadow-sm ring-1 ring-primary/10",
+                  )}
+                >
+                  <FormLabel className={cn("inline-flex items-center gap-2", labelClass)}>
+                    HTML-Inhalt
+                    {showTemplateFieldHighlight ? (
+                      <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+                    ) : null}
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      value={field.value ?? ""}
+                      rows={8}
+                      placeholder="HTML-Inhalt der Kampagne …"
+                      className={cn(
+                        "min-h-[10rem] resize-y",
+                        showTemplateFieldHighlight && "border-primary/30 bg-background/80",
+                      )}
+                    />
+                  </FormControl>
+                  <FormDescription className={descriptionClass}>
+                    Ohne Vorlage: mindestens 20 Zeichen (ohne Rand-Leerzeichen). Mit Vorlage werden Betreff und Inhalt
+                    beim Speichern von der gewählten Vorlage übernommen, sofern die Kampagne diese nutzt.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Separator className="bg-border/60" />
+
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="scheduledAt"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className={labelClass}>Geplanter Versand (optional)</FormLabel>
+                  <FormControl>
+                    <Input type="datetime-local" {...field} value={field.value ?? ""} className="max-w-md bg-background" />
+                  </FormControl>
+                  <FormDescription className={descriptionClass}>
+                    Leer lassen für sofortige bzw. manuelle Freigabe in Brevo.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className={cardClass}>
+          <CardHeader className="space-y-2 border-b border-border/60 bg-muted/20 px-6 py-6 sm:px-8">
+            <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Zielgruppe aus Brevo-Listen</CardTitle>
+            <CardDescription className="text-base leading-relaxed">
+              Kontaktlisten aus Ihrem Brevo-Konto — optional, wenn Sie Empfänger zusätzlich oder ausschließlich im CRM
+              auswählen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 px-6 py-8 sm:px-8">
+            <FormField
+              control={form.control as Control<BrevoCampaignFormData>}
+              name="listIds"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-3">
+                  <FormLabel className={labelClass}>Brevo-Listen</FormLabel>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="outline" className="h-10 w-full max-w-lg justify-between font-normal bg-background">
+                        <span className="truncate">
+                          {field.value.length === 0
+                            ? "Keine Listen ausgewählt (optional)"
+                            : `${field.value.length} Liste(n) gewählt`}
+                        </span>
+                        <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="max-h-64 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto sm:max-w-md"
+                      align="start"
+                    >
+                      <DropdownMenuLabel>Vorhandene Kontaktlisten</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {listsPending ? (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">Laden…</div>
+                      ) : null}
+                      {listsError ? (
+                        <div className="px-2 py-1.5 text-sm text-destructive">
+                          {listsQueryError instanceof Error
+                            ? listsQueryError.message
+                            : "Listen konnten nicht geladen werden."}
+                        </div>
+                      ) : null}
+                      {!listsPending && !listsError
+                        ? sortedLists.map((list) => (
+                            <DropdownMenuCheckboxItem
+                              key={list.id}
+                              checked={field.value.includes(list.id)}
+                              onCheckedChange={(checked) => {
+                                const next = checked
+                                  ? [...new Set([...field.value, list.id])]
+                                  : field.value.filter((id) => id !== list.id);
+                                field.onChange(next);
+                              }}
+                              onSelect={(e) => e.preventDefault()}
+                            >
+                              {list.name}
+                            </DropdownMenuCheckboxItem>
+                          ))
+                        : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <FormDescription className={descriptionClass}>
+                    Optional, wenn Sie im Bereich „CRM-Kontakte“ Empfänger auswählen. Ohne CRM-Empfänger mindestens eine
+                    Liste wählen.{" "}
+                    <a
+                      href="https://app.brevo.com/campaigns/listing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                    >
+                      Kampagnen in Brevo öffnen
+                    </a>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className={cardClass}>
+          <CardHeader className="space-y-2 border-b border-border/60 bg-muted/20 px-6 py-6 sm:px-8">
+            <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Zielgruppe aus CRM-Kontakten</CardTitle>
+            <CardDescription className="text-base leading-relaxed">
+              Einzelne Kontakte in der Tabelle markieren. Mindestens eine Zielquelle (Listen und/oder CRM) ist
+              erforderlich.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 px-6 py-8 sm:px-8">
+            <Badge variant="secondary" className="h-8 px-3 text-xs font-medium">
+              {recipientIds.length} Empfänger ausgewählt
+            </Badge>
+            <BrevoRecipientSelector setSelectedRecipients={setRecipientIds} />
+          </CardContent>
+        </Card>
+
+        <div className="rounded-xl border border-border bg-muted/20 p-6 shadow-sm sm:p-8">
+          <Button
+            type="submit"
+            className="h-12 w-full text-base font-semibold shadow-sm sm:h-14 sm:text-lg"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Wird erstellt…" : "Kampagne in Brevo erstellen & senden"}
+          </Button>
+          <p className="mt-4 text-center text-sm text-muted-foreground sm:text-left">
+            Die Kampagne wird in Ihrem Brevo-Konto angelegt. Status und Versand steuern Sie dort.
+          </p>
         </div>
-        <div className="space-y-4 rounded-lg border border-border/70 bg-muted/25 p-5">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold tracking-tight">Zielgruppe aus CRM-Kontakten</h3>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Einzelne Kontakte in der Tabelle markieren; mindestens eine Zielgruppe (Listen oder CRM) ist erforderlich.
-            </p>
-          </div>
-          <Badge variant="secondary" className="font-normal">
-            {recipientIds.length} Empfänger ausgewählt
-          </Badge>
-          <BrevoRecipientSelector setSelectedRecipients={setRecipientIds} />
-        </div>
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Wird erstellt…" : "Kampagne in Brevo erstellen & senden"}
-        </Button>
       </form>
     </Form>
   );
