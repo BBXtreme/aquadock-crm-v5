@@ -1,6 +1,6 @@
 // src/lib/services/brevo.ts
 
-import { BrevoClient, BrevoError, logging, TooManyRequestsError, UnauthorizedError } from '@getbrevo/brevo';
+import { BrevoClient, BrevoError, logging } from '@getbrevo/brevo';
 
 export const getApiKey = (): string => {
   const key = process.env.BREVO_API_KEY;
@@ -19,13 +19,15 @@ export async function createBrevoContact(contactData: { email: string; attribute
   try {
     const response = await brevo.contacts.createContact({
       email: contactData.email,
-      attributes: contactData.attributes || {},
+      attributes: contactData.attributes as Record<string, any> || {},
     });
     return response;
   } catch (err) {
-    if (err instanceof UnauthorizedError) throw new Error('Invalid Brevo API key');
-    if (err instanceof TooManyRequestsError) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
-    if (err instanceof BrevoError) throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    if (err instanceof BrevoError) {
+      if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    }
     throw err;
   }
 }
@@ -55,9 +57,11 @@ export async function sendBrevoCampaign(campaignData: {
     });
     return response;
   } catch (err) {
-    if (err instanceof UnauthorizedError) throw new Error('Invalid Brevo API key');
-    if (err instanceof TooManyRequestsError) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
-    if (err instanceof BrevoError) throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    if (err instanceof BrevoError) {
+      if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    }
     throw err;
   }
 }
@@ -77,9 +81,11 @@ export async function createBrevoList(name: string) {
     });
     return response;
   } catch (err) {
-    if (err instanceof UnauthorizedError) throw new Error('Invalid Brevo API key');
-    if (err instanceof TooManyRequestsError) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
-    if (err instanceof BrevoError) throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    if (err instanceof BrevoError) {
+      if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    }
     throw err;
   }
 }
@@ -95,13 +101,15 @@ export async function addContactToList(listId: number, email: string) {
   try {
     const response = await brevo.contacts.addContactToList({
       listId,
-      contactEmails: [email],
+      emails: [email],
     });
     return response;
   } catch (err) {
-    if (err instanceof UnauthorizedError) throw new Error('Invalid Brevo API key');
-    if (err instanceof TooManyRequestsError) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
-    if (err instanceof BrevoError) throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    if (err instanceof BrevoError) {
+      if (err.statusCode === 401) throw new Error('Invalid Brevo API key');
+      if (err.statusCode === 429) throw new Error(`Rate limited; retry after ${err.rawResponse?.headers?.['retry-after'] || 'unknown'}s`);
+      throw new Error(`Brevo API error ${err.statusCode}: ${err.message}`);
+    }
     throw err;
   }
 }

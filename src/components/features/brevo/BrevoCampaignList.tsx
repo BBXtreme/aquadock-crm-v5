@@ -39,8 +39,8 @@ async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
   if (!process.env.BREVO_API_KEY) throw new Error('BREVO_API_KEY not configured');
   const brevo = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
   try {
-    const response: Brevo.EmailCampaignsApi.GetEmailCampaignsResponse = await brevo.emailCampaigns.getEmailCampaigns();
-    return (response.campaigns || []).map((c: Brevo.EmailCampaignsApi.EmailCampaign) => ({
+    const response: Brevo.emailCampaigns.GetEmailCampaignsResponse = await brevo.emailCampaigns.getEmailCampaigns();
+    return (response.campaigns || []).map((c: Brevo.emailCampaigns.EmailCampaign) => ({
       id: c.id,
       name: c.name,
       subject: c.subject,
