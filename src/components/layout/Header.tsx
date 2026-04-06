@@ -114,7 +114,7 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className="mx-4 flex min-w-0 flex-1 items-center justify-center md:max-w-md">
+      <div className="mx-4 flex min-w-0 flex-1 items-center justify-right md:max-w-md">
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button type="button" variant="ghost" size="icon" aria-label="Search">

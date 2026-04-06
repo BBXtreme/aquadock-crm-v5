@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
@@ -86,8 +86,11 @@ function ClientSettingsPage() {
     lastQuery: "",
   });
 
+  const [brevoSenderName, setBrevoSenderName] = useState("");
+  const [brevoSenderEmail, setBrevoSenderEmail] = useState("");
+
   const supabase = createClient();
-  const _queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
@@ -112,6 +115,55 @@ function ClientSettingsPage() {
       return data || {};
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: brevoSenderSettings } = useQuery({
+    queryKey: ["brevo-sender-settings"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return { name: "", email: "" };
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("key, value")
+        .eq("user_id", user.id)
+        .in("key", ["brevo_sender_name", "brevo_sender_email"]);
+      if (error) throw error;
+      let name = "";
+      let email = "";
+      for (const row of data ?? []) {
+        if (row.key === "brevo_sender_name" && typeof row.value === "string") name = row.value;
+        if (row.key === "brevo_sender_email" && typeof row.value === "string") email = row.value;
+      }
+      return { name, email };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const brevoSenderMutation = useMutation({
+    mutationFn: async (payload: { name: string; email: string }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Nicht angemeldet");
+      const rows = [
+        { user_id: user.id, key: "brevo_sender_name", value: payload.name.trim() },
+        { user_id: user.id, key: "brevo_sender_email", value: payload.email.trim() },
+      ];
+      for (const row of rows) {
+        const { error } = await supabase.from("user_settings").upsert(row, { onConflict: "user_id,key" });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["brevo-sender-settings"] });
+      toast.success("Brevo-Absender gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Brevo-Einstellungen konnten nicht gespeichert werden", { description: message });
+    },
   });
 
   const openMapMutation = useMutation({
@@ -180,6 +232,13 @@ function ClientSettingsPage() {
   useEffect(() => {
     loadFromLocalStorage();
   }, [loadFromLocalStorage]);
+
+  useEffect(() => {
+    if (brevoSenderSettings) {
+      setBrevoSenderName(brevoSenderSettings.name);
+      setBrevoSenderEmail(brevoSenderSettings.email);
+    }
+  }, [brevoSenderSettings]);
 
   if (isLoading) {
     return (
@@ -338,6 +397,49 @@ function ClientSettingsPage() {
                 {testOverpassMutation.isPending ? "Testing..." : "Test Overpass"}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Brevo Settings */}
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Mail className="mr-2 h-5 w-5" />
+              Brevo Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              Absender für Brevo-Kampagnen. Leer lassen, um{" "}
+              <span className="font-mono text-foreground">BREVO_SENDER_NAME</span> /{" "}
+              <span className="font-mono text-foreground">BREVO_SENDER_EMAIL</span> aus der Umgebung zu nutzen.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="brevo-sender-name">Sender Name</Label>
+              <Input
+                id="brevo-sender-name"
+                value={brevoSenderName}
+                onChange={(e) => setBrevoSenderName(e.target.value)}
+                placeholder="z. B. AquaDock CRM"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="brevo-sender-email">Sender Email</Label>
+              <Input
+                id="brevo-sender-email"
+                type="email"
+                value={brevoSenderEmail}
+                onChange={(e) => setBrevoSenderEmail(e.target.value)}
+                placeholder="noreply@example.com"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={() => brevoSenderMutation.mutate({ name: brevoSenderName, email: brevoSenderEmail })}
+              disabled={brevoSenderMutation.isPending}
+            >
+              {brevoSenderMutation.isPending ? "Speichern…" : "Brevo-Absender speichern"}
+            </Button>
           </CardContent>
         </Card>
 

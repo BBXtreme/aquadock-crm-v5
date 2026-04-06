@@ -4,15 +4,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/require-user";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import ClientBrevoPage from "./ClientBrevoPage";
 
 export default async function BrevoPage() {
-  const _user = await requireUser();
-  const supabase = await createServerSupabaseClient();
-  const { data: templates } = await supabase
-    .from("email_templates")
-    .select("*");
+  await requireUser();
 
   return (
     <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
@@ -33,7 +28,7 @@ export default async function BrevoPage() {
           </Button>
         </div>
         <Suspense fallback={<div>Loading...</div>}>
-          <ClientBrevoPage templates={templates || []} />
+          <ClientBrevoPage />
         </Suspense>
       </div>
     </div>

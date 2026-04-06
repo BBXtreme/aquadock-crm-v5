@@ -2,6 +2,8 @@
 
 import { BrevoClient, BrevoError, logging } from "@getbrevo/brevo";
 
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+
 /** User-facing hint when Brevo returns 401 (e.g. "Key not found"). */
 const BREVO_401_REST_KEY_HINT =
   "Brevo 401: Schlüssel ungültig oder falscher Typ. Für Kampagnen/Kontakte/Listen brauchst du einen v3-API-Key unter Brevo → SMTP & API → API keys (Präfix xkeysib-). SMTP-Relay-Schlüssel (xsmtpsib-) gelten nicht für api.brevo.com/v3.";
@@ -119,13 +121,70 @@ export async function createBrevoContact(contactData: { email: string; attribute
   }
 }
 
-export async function sendBrevoCampaign(campaignData: {
+const DEFAULT_BREVO_SENDER_NAME = "Hey from AquaDock CRM";
+const DEFAULT_BREVO_SENDER_EMAIL = "noreply@aquadock.com";
+
+function settingValueAsTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * Campaign sender: `user_settings` keys `brevo_sender_name` / `brevo_sender_email` (string values), else env, else defaults.
+ */
+export async function getBrevoSender(): Promise<{ name: string; email: string }> {
+  const envName = process.env.BREVO_SENDER_NAME?.trim() ?? "";
+  const envEmail = process.env.BREVO_SENDER_EMAIL?.trim() ?? "";
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return {
+        name: envName || DEFAULT_BREVO_SENDER_NAME,
+        email: envEmail || DEFAULT_BREVO_SENDER_EMAIL,
+      };
+    }
+
+    const { data: rows } = await supabase
+      .from("user_settings")
+      .select("key, value")
+      .eq("user_id", user.id)
+      .in("key", ["brevo_sender_name", "brevo_sender_email"]);
+
+    let dbName = "";
+    let dbEmail = "";
+    for (const row of rows ?? []) {
+      if (row.key === "brevo_sender_name") dbName = settingValueAsTrimmedString(row.value);
+      if (row.key === "brevo_sender_email") dbEmail = settingValueAsTrimmedString(row.value);
+    }
+
+    return {
+      name: dbName || envName || DEFAULT_BREVO_SENDER_NAME,
+      email: dbEmail || envEmail || DEFAULT_BREVO_SENDER_EMAIL,
+    };
+  } catch {
+    return {
+      name: envName || DEFAULT_BREVO_SENDER_NAME,
+      email: envEmail || DEFAULT_BREVO_SENDER_EMAIL,
+    };
+  }
+}
+
+/** Active SMTP/transactional templates from Brevo (`getSmtpTemplates`). IDs are valid for `createEmailCampaign.templateId`. */
+export type BrevoFetchedTemplate = {
+  id: number;
   name: string;
   subject: string;
   htmlContent: string;
-  listIds: number[];
-  scheduledAt?: string;
-}) {
+};
+
+/**
+ * Lists active transactional (SMTP) email templates. These are the template IDs Brevo accepts for marketing
+ * `createEmailCampaign` (`templateId` copies template content into the campaign).
+ */
+export async function fetchBrevoTemplates(): Promise<BrevoFetchedTemplate[]> {
   const apiKey = getApiKey();
   const brevo = new BrevoClient({
     apiKey,
@@ -134,12 +193,68 @@ export async function sendBrevoCampaign(campaignData: {
     logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
   });
   try {
+    const pageSize = 50;
+    const out: BrevoFetchedTemplate[] = [];
+    let offset = 0;
+    for (;;) {
+      const res = await brevo.transactionalEmails.getSmtpTemplates({
+        templateStatus: true,
+        limit: pageSize,
+        offset,
+      });
+      const templates = res.templates ?? [];
+      for (const t of templates) {
+        if (!t.isActive) continue;
+        out.push({
+          id: t.id,
+          name: t.name,
+          subject: t.subject,
+          htmlContent: t.htmlContent,
+        });
+      }
+      if (templates.length < pageSize) break;
+      offset += pageSize;
+    }
+    return out;
+  } catch (err) {
+    throw mapBrevoClientError(err);
+  }
+}
+
+export async function sendBrevoCampaign(campaignData: {
+  name: string;
+  subject: string;
+  htmlContent?: string;
+  listIds: number[];
+  scheduledAt?: string;
+  /** Brevo transactional template id; when set, `htmlContent` is omitted (API uses template body). */
+  templateId?: number;
+}) {
+  const apiKey = getApiKey();
+  const sender = await getBrevoSender();
+  const brevo = new BrevoClient({
+    apiKey,
+    timeoutInSeconds: 30,
+    maxRetries: 3,
+    logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
+  });
+  const listIds = campaignData.listIds.filter((id) => Number.isInteger(id) && id > 0);
+  if (listIds.length === 0) {
+    throw new Error(
+      "Brevo-Kampagne: mindestens eine gültige Empfängerliste ist erforderlich (Listen-ID fehlt oder ungültig).",
+    );
+  }
+
+  try {
+    const useTemplate = campaignData.templateId != null && Number.isInteger(campaignData.templateId);
     const response = await brevo.emailCampaigns.createEmailCampaign({
       name: campaignData.name,
       subject: campaignData.subject,
-      htmlContent: campaignData.htmlContent,
-      sender: { name: 'Hey from AquaDock CRM', email: 'noreply@aquadock.com' },
-      recipients: { listIds: campaignData.listIds },
+      ...(useTemplate
+        ? { templateId: campaignData.templateId }
+        : { htmlContent: campaignData.htmlContent ?? "" }),
+      sender: { name: sender.name, email: sender.email },
+      recipients: { listIds },
       scheduledAt: campaignData.scheduledAt,
     });
     return response;
