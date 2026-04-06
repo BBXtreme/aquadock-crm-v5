@@ -69,10 +69,8 @@ const columns = [
 ];
 
 export default function BrevoRecipientSelector({
-  selectedRecipients,
   setSelectedRecipients,
 }: {
-  selectedRecipients: string[];
   setSelectedRecipients: (recipients: string[]) => void;
 }) {
   const [rowSelection, setRowSelection] = useState({});
@@ -138,7 +136,7 @@ export default function BrevoRecipientSelector({
           <SelectContent>
             <SelectItem value="">All</SelectItem>
             {kundentypOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.label}>
                 {option.label}
               </SelectItem>
             ))}
@@ -161,7 +159,7 @@ export default function BrevoRecipientSelector({
           <SelectContent>
             <SelectItem value="">All</SelectItem>
             {statusOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.label}>
                 {option.label}
               </SelectItem>
             ))}

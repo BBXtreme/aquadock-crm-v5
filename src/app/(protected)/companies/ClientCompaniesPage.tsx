@@ -97,20 +97,6 @@ function ClientCompaniesPage() {
     },
   });
 
-  const { data: lands = [] } = useQuery({
-    queryKey: ["distinct-lands"],
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("companies")
-        .select("land")
-        .not("land", "is", null);
-      if (error) throw error;
-      const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
-      return distinctLands;
-    },
-  });
-
   const toggleFilter = (group: FilterGroup, value: string) => {
     setActiveFilters((prev) => ({
       ...prev,
