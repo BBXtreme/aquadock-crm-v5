@@ -1,6 +1,7 @@
 // src/components/features/brevo/BrevoCampaignList.tsx
 "use client";
 
+import { BrevoClient } from "@getbrevo/brevo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -20,7 +21,7 @@ type BrevoCampaign = {
   name: string;
   subject: string;
   status: string;
-  sentDate: string;
+  createdAt: string;
 };
 
 const columnHelper = createColumnHelper<BrevoCampaign>();
@@ -38,8 +39,8 @@ const columns = [
     header: "Status",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor("sentDate", {
-    header: "Sent Date",
+  columnHelper.accessor("createdAt", {
+    header: "Created At",
     cell: (info) => new Date(info.getValue()).toLocaleDateString(),
   }),
 ] satisfies ColumnDef<BrevoCampaign>[];
@@ -59,19 +60,15 @@ async function fetchBrevoCampaigns(): Promise<BrevoCampaign[]> {
   if (!settings?.value) throw new Error("Brevo API key not found");
 
   const apiKey = settings.value as string;
-  const response = await fetch("https://api.brevo.com/v3/emailCampaigns", {
-    headers: { "api-key": apiKey },
-  });
-
-  if (!response.ok) throw new Error("Failed to fetch campaigns");
-
-  const data = await response.json();
-  return data.campaigns.map((campaign: any) => ({
+  const brevo = new BrevoClient({ apiKey });
+  const emailCampaignsApi = brevo.emailCampaigns;
+  const response = await emailCampaignsApi.getEmailCampaigns();
+  return response.campaigns.map((campaign: any) => ({
     id: campaign.id,
     name: campaign.name,
     subject: campaign.subject,
     status: campaign.status,
-    sentDate: campaign.sentDate,
+    createdAt: campaign.createdAt,
   }));
 }
 
