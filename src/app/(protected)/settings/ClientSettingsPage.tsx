@@ -4,19 +4,25 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Layers, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  type MapProviderId,
+  mapProviderSchema,
+  mapSettingsFormSchema,
+} from "@/lib/validations/map-settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -89,6 +95,10 @@ function ClientSettingsPage() {
   const [brevoSenderName, setBrevoSenderName] = useState("");
   const [brevoSenderEmail, setBrevoSenderEmail] = useState("");
 
+  const [mapProvider, setMapProvider] = useState<MapProviderId>("osm");
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState("");
+  const [appleMapkitToken, setAppleMapkitToken] = useState("");
+
   const supabase = createClient();
   const queryClient = useQueryClient();
 
@@ -117,6 +127,12 @@ function ClientSettingsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: mapProviderSettings } = useQuery({
+    queryKey: ["map-provider-settings"],
+    queryFn: loadMapSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: brevoSenderSettings } = useQuery({
     queryKey: ["brevo-sender-settings"],
     queryFn: async () => {
@@ -139,6 +155,34 @@ function ClientSettingsPage() {
       return { name, email };
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const mapSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const parsed = mapSettingsFormSchema.safeParse({
+        map_provider: mapProvider,
+        google_maps_api_key: googleMapsApiKey,
+        apple_mapkit_token: appleMapkitToken,
+      });
+      if (!parsed.success) {
+        const errs = parsed.error.flatten().fieldErrors;
+        const first = errs.map_provider?.[0] ?? errs.google_maps_api_key?.[0] ?? errs.apple_mapkit_token?.[0];
+        throw new Error(first ?? "Ungültige Eingabe");
+      }
+      await saveMapSettings({
+        map_provider: parsed.data.map_provider,
+        google_maps_api_key: parsed.data.google_maps_api_key ?? null,
+        apple_mapkit_token: parsed.data.apple_mapkit_token ?? null,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["map-provider-settings"] });
+      toast.success("Karten-Einstellungen gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Karten-Einstellungen konnten nicht gespeichert werden", { description: message });
+    },
   });
 
   const brevoSenderMutation = useMutation({
@@ -240,6 +284,13 @@ function ClientSettingsPage() {
     }
   }, [brevoSenderSettings]);
 
+  useEffect(() => {
+    if (!mapProviderSettings) return;
+    setMapProvider(mapProviderSettings.map_provider);
+    setGoogleMapsApiKey(mapProviderSettings.google_maps_api_key ?? "");
+    setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
+  }, [mapProviderSettings]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6">
@@ -321,6 +372,87 @@ function ClientSettingsPage() {
               </Select>
             </div>
             <p className="text-muted-foreground text-sm">Customize your app appearance</p>
+          </CardContent>
+        </Card>
+
+        {/* Map provider (OpenMap basemap) */}
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+          <CardHeader className="space-y-2 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <Layers className="mr-2 h-5 w-5 shrink-0" />
+              OpenMap — Karten-Anbieter
+            </CardTitle>
+            <CardDescription className="text-sm leading-relaxed">
+              Voreinstellung:{" "}
+              <span className="font-medium text-foreground">OpenStreetMap (CARTO)</span> — unverändert zur bisherigen
+              Karte (Tiles, Attribution, Verhalten). Google und Apple sind optional.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-0">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-provider-select">
+                Basiskarte
+              </Label>
+              <Select
+                value={mapProvider}
+                onValueChange={(v) => {
+                  const parsed = mapProviderSchema.safeParse(v);
+                  if (parsed.success) setMapProvider(parsed.data);
+                }}
+              >
+                <SelectTrigger id="map-provider-select" className="w-full max-w-md">
+                  <SelectValue placeholder="Anbieter wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="osm">OpenStreetMap (CARTO) — Standard</SelectItem>
+                  <SelectItem value="google">Google Maps (Map Tiles API)</SelectItem>
+                  <SelectItem value="apple">Apple Maps (Basiskarte wie OSM)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-google-api-key">
+                Google API-Schlüssel
+              </Label>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Nur für Google-Basiskarte. Map Tiles API aktivieren und Abrechnung im Google-Cloud-Projekt erlauben.
+              </p>
+              <Input
+                id="map-google-api-key"
+                className="max-w-md"
+                type="password"
+                autoComplete="off"
+                value={googleMapsApiKey}
+                onChange={(e) => setGoogleMapsApiKey(e.target.value)}
+                placeholder="Leer lassen, wenn ungenutzt"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-apple-mapkit-token">
+                Apple MapKit JWT
+              </Label>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Optional für künftiges MapKit. Bis dahin: gleiche OSM/CARTO-Basiskarte wie beim Standard.
+              </p>
+              <Input
+                id="map-apple-mapkit-token"
+                className="max-w-md"
+                type="password"
+                autoComplete="off"
+                value={appleMapkitToken}
+                onChange={(e) => setAppleMapkitToken(e.target.value)}
+                placeholder="Leer lassen, wenn ungenutzt"
+              />
+            </div>
+            <div className="pt-1">
+              <Button
+                type="button"
+                onClick={() => mapSettingsMutation.mutate()}
+                disabled={mapSettingsMutation.isPending}
+              >
+                {mapSettingsMutation.isPending ? "Speichern…" : "Speichern"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
