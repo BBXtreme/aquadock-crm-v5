@@ -8,7 +8,7 @@ const getApiKey = (): string => {
   return process.env.BREVO_API_KEY;
 };
 
-export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, unknown> }) {
+export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, any> }) {
   const apiKey = getApiKey();
   const brevo = new BrevoClient({ apiKey });
   const response = await brevo.contacts.createContact({
@@ -54,7 +54,7 @@ export async function addContactToList(listId: number, email: string) {
   // SDK call with request object
   const response = await brevo.contacts.addContactToList({
     listId,
-    contactEmails: [email],
+    emails: [email],
   });
   return response;
 }
