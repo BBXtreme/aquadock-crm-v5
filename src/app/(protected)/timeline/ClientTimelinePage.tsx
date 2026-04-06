@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,15 +17,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company, } from "@/types/database.types";
 
 function ClientTimelinePage() {
-  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useSuspenseQuery({
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
@@ -39,7 +39,7 @@ function ClientTimelinePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: contacts = [] } = useQuery({
+  const { data: contacts = [] } = useSuspenseQuery({
     queryKey: ["contacts"],
     queryFn: async () => {
       const supabase = createClient();
@@ -104,7 +104,7 @@ function ClientTimelinePage() {
   }, []);
 
   return (
-    <>
+    <Suspense fallback={<LoadingState count={20} />}>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">Home → Timeline</div>
@@ -140,7 +140,7 @@ function ClientTimelinePage() {
           <TimelineTable />
         </CardContent>
       </Card>
-    </>
+    </Suspense>
   );
 }
 
