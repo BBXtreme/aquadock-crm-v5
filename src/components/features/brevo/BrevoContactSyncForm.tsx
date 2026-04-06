@@ -1,4 +1,4 @@
-// src/components/features/settings/BrevoSettingsForm.tsx
+// src/components/features/brevo/BrevoContactSyncForm.tsx
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,13 +8,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { syncContactsToBrevo } from "@/lib/actions/brevo";
+import { type BrevoSyncContactsResult, syncContactsToBrevo } from "@/lib/actions/brevo";
 import { kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { type BrevoSyncFormData, brevoSyncSchema } from "@/lib/validations/brevo";
 
 const ALL_VALUE = "__all__";
 
-export default function BrevoSettingsForm() {
+function describeSyncResult(r: BrevoSyncContactsResult): string {
+  const lines = [
+    `${r.matched} Kontakt(e) passen zum Filter`,
+    `${r.skippedNoEmail} ohne E-Mail übersprungen`,
+    `${r.submitted} zur Brevo-Massenimport-API übermittelt`,
+  ];
+  if (r.processId != null) {
+    lines.push(`Brevo-Prozess-ID ${r.processId} (Verarbeitung im Hintergrund)`);
+  }
+  return lines.join(" · ");
+}
+
+export default function BrevoContactSyncForm() {
   const form = useForm<BrevoSyncFormData>({
     resolver: zodResolver(brevoSyncSchema),
     defaultValues: {},
@@ -29,8 +41,28 @@ export default function BrevoSettingsForm() {
       formData.append("filterStatus", data.filterStatus.trim());
     }
     try {
-      await syncContactsToBrevo(formData);
-      toast.success("Kontakte wurden zu Brevo synchronisiert.");
+      const res = await syncContactsToBrevo(formData);
+      const description = describeSyncResult(res);
+
+      if (res.matched === 0) {
+        toast.warning("Keine Kontakte zum Synchronisieren", {
+          description:
+            "Kein Kontakt entspricht den Filtern (Kundentyp/Status) oder du hast noch keine Kontakte in diesem Account.",
+        });
+        return;
+      }
+
+      if (res.submitted > 0) {
+        toast.success("Brevo-Import gestartet", { description });
+        return;
+      }
+
+      toast.info("Nichts an Brevo übermittelt", {
+        description:
+          res.skippedNoEmail > 0
+            ? description
+            : "Alle passenden Kontakte wurden geprüft; es gab keine Zeilen mit E-Mail zum Import.",
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unbekannter Fehler";
       toast.error("Brevo-Synchronisation fehlgeschlagen", { description: message });
@@ -40,13 +72,18 @@ export default function BrevoSettingsForm() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Der API-Schlüssel wird über{" "}
+        Der API-Schlüssel steht in{" "}
         <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
-        <span className="font-mono text-foreground">.env.local</span> gesetzt (nach Änderung Server neu
-        starten). Verwende einen <strong>v3-API-Key</strong> aus Brevo → SMTP &amp; API → API keys
-        (meist Präfix <span className="font-mono">xkeysib-</span>) — SMTP-Relay-Keys (
-        <span className="font-mono">xsmtpsib-</span>) funktionieren nicht mit der REST-API. Optional
-        kannst du Kontakte nach Kundentyp oder Status filtern.
+        <span className="font-mono text-foreground">.env.local</span> (nach Änderung den Server neu starten).
+        Verwende einen <strong>v3-API-Key</strong> aus Brevo → SMTP &amp; API → API keys (meist{" "}
+        <span className="font-mono">xkeysib-</span>) — SMTP-Relay-Keys (<span className="font-mono">xsmtpsib-</span>)
+        funktionieren nicht mit der REST-API.
+      </p>
+      <p className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-3">
+        <strong className="text-foreground">Nur Massen-Sync:</strong> Diese Filter legen fest, welche CRM-Kontakte
+        in Brevo angelegt werden. Auf <span className="font-medium text-foreground">Brevo</span> (
+        <span className="font-mono text-foreground">/brevo</span>) filterst du die Empfängertabelle separat für
+        einzelne Kampagnen.
       </p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-md">
@@ -68,7 +105,7 @@ export default function BrevoSettingsForm() {
                   <SelectContent>
                     <SelectItem value={ALL_VALUE}>Alle</SelectItem>
                     {kundentypOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.label}>
+                      <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}
@@ -96,7 +133,7 @@ export default function BrevoSettingsForm() {
                   <SelectContent>
                     <SelectItem value={ALL_VALUE}>Alle</SelectItem>
                     {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.label}>
+                      <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
                     ))}

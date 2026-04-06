@@ -3,8 +3,8 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type CellContext,
   type ColumnDef,
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -19,19 +19,24 @@ type BrevoCampaign = {
   name: string;
   subject?: string;
   status: string;
-  createdAt: string;
+  createdAt?: string | null;
 };
 
-const columnHelper = createColumnHelper<BrevoCampaign>();
-
 const columns = [
-  columnHelper.accessor("name", { header: "Name" }) as ColumnDef<BrevoCampaign>,
-  columnHelper.accessor("subject", { header: "Subject" }) as ColumnDef<BrevoCampaign>,
-  columnHelper.accessor("status", { header: "Status" }) as ColumnDef<BrevoCampaign>,
-  columnHelper.accessor("createdAt", {
+  { accessorKey: "name", header: "Name" },
+  { accessorKey: "subject", header: "Subject" },
+  { accessorKey: "status", header: "Status" },
+  {
+    accessorKey: "createdAt",
     header: "Created At",
-    cell: (info) => new Date(info.getValue()).toLocaleDateString("de-DE"),
-  }) as ColumnDef<BrevoCampaign>,
+    cell: ({ getValue }: CellContext<BrevoCampaign, unknown>) => {
+      const raw = getValue();
+      if (typeof raw !== "string" || raw === "") return "—";
+      const date = new Date(raw);
+      if (Number.isNaN(date.getTime())) return "—";
+      return date.toLocaleDateString("de-DE");
+    },
+  },
 ] satisfies ColumnDef<BrevoCampaign>[];
 
 export default function BrevoCampaignList() {
@@ -44,7 +49,7 @@ export default function BrevoCampaignList() {
     refetchOnWindowFocus: false,
   });
 
-  const table = useReactTable({
+  const table = useReactTable<BrevoCampaign>({
     data: campaigns,
     columns,
     getCoreRowModel: getCoreRowModel(),

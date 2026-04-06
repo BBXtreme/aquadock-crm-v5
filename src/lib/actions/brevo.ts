@@ -2,10 +2,12 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/require-user";
+import type { BrevoListSummary } from "@/lib/services/brevo";
 import {
   addContactToList,
-  createBrevoContact,
   createBrevoList,
+  fetchBrevoLists,
+  importBrevoContactsBulk,
   mapBrevoClientError,
   sendBrevoCampaign,
 } from "@/lib/services/brevo";
@@ -15,7 +17,7 @@ import {
   brevoSelectedRecipientsSchema,
   brevoSyncSchema,
 } from "@/lib/validations/brevo";
-import type { Contact } from "@/types/database.types";
+import type { BrevoContactWithCompany } from "@/types/brevo";
 
 type BrevoCampaign = {
   id: number;
@@ -25,9 +27,16 @@ type BrevoCampaign = {
   createdAt: string;
 };
 
-// Define type for joined query result (Contact with companies join)
-type ContactWithCompany = Contact & {
-  companies: { kundentyp: string; status: string } | null;
+/** Result of `syncContactsToBrevo` for UI toasts (counts). */
+export type BrevoSyncContactsResult = {
+  /** Contacts matching CRM + filters */
+  matched: number;
+  /** In matched set but no usable e-mail */
+  skippedNoEmail: number;
+  /** Contacts submitted in one bulk import (with e-mail) */
+  submitted: number;
+  /** Brevo async import job id; omitted when nothing was submitted */
+  processId?: number;
 };
 
 function parseSelectedRecipientsFromForm(data: Record<string, FormDataEntryValue>): string[] | null {
@@ -44,7 +53,7 @@ function parseSelectedRecipientsFromForm(data: Record<string, FormDataEntryValue
   return result.success ? result.data : null;
 }
 
-export async function syncContactsToBrevo(formData: FormData) {
+export async function syncContactsToBrevo(formData: FormData): Promise<BrevoSyncContactsResult> {
   const user = await requireUser();
   const data = Object.fromEntries(formData);
   const validated = brevoSyncSchema.parse(data);
@@ -57,7 +66,7 @@ export async function syncContactsToBrevo(formData: FormData) {
     .eq("user_id", user.id);
 
   // Type contacts explicitly to avoid implicit any on contact parameter
-  const typedContacts: ContactWithCompany[] = contacts ?? [];
+  const typedContacts: BrevoContactWithCompany[] = contacts ?? [];
 
   const filteredContacts = typedContacts.filter((contact) => {
     if (validated.filterKundentyp && contact.companies?.kundentyp !== validated.filterKundentyp) return false;
@@ -65,15 +74,37 @@ export async function syncContactsToBrevo(formData: FormData) {
     return true;
   });
 
+  const skippedNoEmail = filteredContacts.filter((c) => !c.email?.trim()).length;
+  const jsonBody = filteredContacts
+    .map((contact) => {
+      const email = contact.email?.trim();
+      if (!email) return null;
+      return {
+        email,
+        attributes: { vorname: contact.vorname, nachname: contact.nachname },
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+
+  const result: BrevoSyncContactsResult = {
+    matched: filteredContacts.length,
+    skippedNoEmail,
+    submitted: jsonBody.length,
+  };
+
+  if (jsonBody.length === 0) {
+    return result;
+  }
+
+  const listName = `AquaDock CRM Sync ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+
   try {
-    for (const contact of filteredContacts) {
-      if (contact.email) {
-        await createBrevoContact({
-          email: contact.email,
-          attributes: { vorname: contact.vorname, nachname: contact.nachname },
-        });
-      }
-    }
+    const { processId } = await importBrevoContactsBulk({
+      jsonBody,
+      newList: { listName, folderId: 1 },
+      updateExistingContacts: true,
+    });
+    return { ...result, processId };
   } catch (err) {
     console.error("Brevo sync error:", err);
     if (err instanceof Error) {
@@ -116,7 +147,7 @@ export async function createBrevoCampaign(formData: FormData) {
     }
   }
 
-  let finalListIds = validated.listIds;
+  let finalListIds = [...validated.listIds];
 
   const hasRecipients = selectedRecipients !== null && selectedRecipients.length > 0;
   const hasListIds = finalListIds.length > 0;
@@ -143,7 +174,7 @@ export async function createBrevoCampaign(formData: FormData) {
           await addContactToList(listId, contact.email);
         }
       }
-      finalListIds = [listId];
+      finalListIds = [...new Set([...finalListIds, listId])];
     }
 
     const campaign = await sendBrevoCampaign({
@@ -176,6 +207,22 @@ export async function createBrevoCampaign(formData: FormData) {
  * Lists campaigns for the shared `BREVO_API_KEY` account (single-tenant Brevo).
  * Any authenticated CRM user with access to /brevo sees the same list.
  */
+export async function fetchBrevoListsAction(): Promise<BrevoListSummary[]> {
+  await requireUser();
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey?.trim()) {
+    throw new Error(
+      "BREVO_API_KEY fehlt: in .env.local setzen und Server neu starten (Einstellungen → Brevo).",
+    );
+  }
+  try {
+    return await fetchBrevoLists();
+  } catch (err) {
+    console.error("Failed to fetch Brevo lists:", err);
+    throw mapBrevoClientError(err);
+  }
+}
+
 export async function fetchBrevoCampaignsAction(): Promise<BrevoCampaign[]> {
   await requireUser();
   const apiKey = process.env.BREVO_API_KEY;

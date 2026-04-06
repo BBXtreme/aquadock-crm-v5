@@ -2,8 +2,8 @@
 // This file defines the Settings page of the application, where users can configure various settings related
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
+import Link from "next/link";
 import { Suspense } from "react";
-import BrevoSettingsForm from "@/components/features/settings/BrevoSettingsForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -83,10 +83,22 @@ export default async function SettingsPage() {
           <ClientSettingsPage />
         </Suspense>
 
-        {/* Brevo Settings Section */}
         <div className="rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold mb-6">Brevo Settings</h2>
-          <BrevoSettingsForm />
+          <h2 className="text-xl font-semibold mb-2">Brevo</h2>
+          <p className="text-sm text-muted-foreground">
+            Kampagnen unter{" "}
+            <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
+              /brevo
+            </Link>
+            , Kontakt-Sync unter{" "}
+            <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
+              /brevo/sync
+            </Link>
+            . API-Schlüssel: Umgebungsvariable{" "}
+            <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
+            <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
+            <span className="font-mono">xkeysib-</span>).
+          </p>
         </div>
       </div>
     </div>

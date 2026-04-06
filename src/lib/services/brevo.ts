@@ -50,6 +50,55 @@ export const getApiKey = (): string => {
   return key;
 };
 
+function isContactAlreadyExistsError(err: unknown): boolean {
+  if (!(err instanceof BrevoError)) return false;
+  const code = err.statusCode;
+  if (code !== 400 && code !== 409) return false;
+  const body = err.body;
+  if (body && typeof body === "object" && "code" in body) {
+    const c = String((body as { code?: string }).code ?? "").toLowerCase();
+    if (c.includes("duplicate")) return true;
+  }
+  const blob = `${err.message} ${typeof body === "object" ? JSON.stringify(body) : ""}`.toLowerCase();
+  return (
+    blob.includes("already exist") ||
+    blob.includes("already associated") ||
+    blob.includes("duplicate") ||
+    blob.includes("contact already")
+  );
+}
+
+export type CreateBrevoContactOutcome = "created" | "already_exists";
+
+/**
+ * Creates a Brevo contact; treats “already exists” style API responses as success path (no throw).
+ */
+export async function createBrevoContactUnlessExists(contactData: {
+  email: string;
+  attributes?: Record<string, unknown>;
+}): Promise<CreateBrevoContactOutcome> {
+  const apiKey = getApiKey();
+  const brevo = new BrevoClient({
+    apiKey,
+    timeoutInSeconds: 30,
+    maxRetries: 3,
+    logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
+  });
+  try {
+    const attributes = toBrevoAttributes(contactData.attributes);
+    await brevo.contacts.createContact({
+      email: contactData.email,
+      ...(attributes ? { attributes } : {}),
+    });
+    return "created";
+  } catch (err) {
+    if (isContactAlreadyExistsError(err)) {
+      return "already_exists";
+    }
+    throw mapBrevoClientError(err);
+  }
+}
+
 export async function createBrevoContact(contactData: { email: string; attributes?: Record<string, unknown> }) {
   const apiKey = getApiKey();
   const brevo = new BrevoClient({
@@ -132,6 +181,92 @@ export async function addContactToList(listId: number, email: string) {
       body: { emails: [email] },
     });
     return response;
+  } catch (err) {
+    throw mapBrevoClientError(err);
+  }
+}
+
+export type BrevoListSummary = {
+  id: number;
+  name: string;
+  folderId: number;
+};
+
+/**
+ * Fetches all contact lists (paginated under the hood).
+ */
+export async function fetchBrevoLists(): Promise<BrevoListSummary[]> {
+  const apiKey = getApiKey();
+  const brevo = new BrevoClient({
+    apiKey,
+    timeoutInSeconds: 30,
+    maxRetries: 3,
+    logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
+  });
+  try {
+    const pageSize = 50;
+    const out: BrevoListSummary[] = [];
+    let offset = 0;
+    for (;;) {
+      const res = await brevo.contacts.getLists({ limit: pageSize, offset, sort: "desc" });
+      const lists = res.lists ?? [];
+      for (const l of lists) {
+        out.push({ id: l.id, name: l.name, folderId: l.folderId });
+      }
+      if (lists.length < pageSize) break;
+      offset += pageSize;
+    }
+    return out;
+  } catch (err) {
+    throw mapBrevoClientError(err);
+  }
+}
+
+/**
+ * Single Brevo `contacts/import` call (async job on Brevo side; returns `processId`).
+ * Requires either `listIds` or `newList` per API rules.
+ */
+export async function importBrevoContactsBulk(params: {
+  jsonBody: { email: string; attributes?: Record<string, unknown> }[];
+  listIds?: number[];
+  newList?: { listName: string; folderId?: number };
+  updateExistingContacts?: boolean;
+}): Promise<{ processId: number }> {
+  const apiKey = getApiKey();
+  const brevo = new BrevoClient({
+    apiKey,
+    timeoutInSeconds: 60,
+    maxRetries: 2,
+    logging: { level: logging.LogLevel.Warn, logger: new logging.ConsoleLogger() },
+  });
+  const hasLists = (params.listIds?.length ?? 0) > 0;
+  const hasNewList = Boolean(params.newList?.listName?.trim());
+  if (!hasLists && !hasNewList) {
+    throw new Error("Brevo-Import: listIds oder newList.listName ist erforderlich.");
+  }
+  try {
+    const jsonBody = params.jsonBody.map((row) => {
+      const attributes = toBrevoAttributes(row.attributes);
+      return {
+        email: row.email,
+        ...(attributes ? { attributes: attributes as Record<string, unknown> } : {}),
+      };
+    });
+    const response = await brevo.contacts.importContacts({
+      jsonBody,
+      ...(hasLists ? { listIds: params.listIds } : {}),
+      ...(hasNewList && params.newList
+        ? {
+            newList: {
+              listName: params.newList.listName.trim(),
+              folderId: params.newList.folderId ?? 1,
+            },
+          }
+        : {}),
+      updateExistingContacts: params.updateExistingContacts ?? true,
+      disableNotification: true,
+    });
+    return { processId: response.processId };
   } catch (err) {
     throw mapBrevoClientError(err);
   }
