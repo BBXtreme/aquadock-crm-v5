@@ -19,8 +19,18 @@ import {
   NOTIFICATION_SETTING_KEYS_LIST,
   NOTIFICATION_UI,
 } from "@/lib/constants/notifications";
+import { DEFAULT_APPEARANCE_COLOR_SCHEME } from "@/lib/constants/theme";
 import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import {
+  type AppearanceColorScheme,
+  type AppearanceLocale,
+  type AppearanceSettingsRecord,
+  type AppearanceTheme,
+  parseAppearanceColorScheme,
+  parseAppearanceLocale,
+  parseAppearanceTheme,
+} from "@/lib/validations/appearance";
 import { notificationPreferencesSchema } from "@/lib/validations/settings";
 import type { Database, UserSetting, UserSettingInsert } from "@/types/database.types";
 import type { Json } from "@/types/supabase";

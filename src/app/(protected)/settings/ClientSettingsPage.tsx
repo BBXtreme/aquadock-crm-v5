@@ -4,15 +4,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import {
-  appearanceResolvedIsDark,
   applyAppearanceColorTokens,
-  persistAppearanceLocalMirror,
 } from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,8 +28,30 @@ import {
   NOTIFICATION_DEFAULTS,
   NOTIFICATION_UI,
 } from "@/lib/constants/notifications";
-import { fetchNotificationPreferences } from "@/lib/services/user-settings";
+import {
+  APPEARANCE_COLOR_LABELS,
+  APPEARANCE_COLOR_SCHEME_IDS,
+  APPEARANCE_COLOR_SWATCH,
+} from "@/lib/constants/theme";
+import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
+import {
+  DEFAULT_APPEARANCE,
+  fetchNotificationPreferences,
+  loadAppearanceSettings,
+  saveAppearanceColorScheme,
+  saveAppearanceLocale,
+  saveAppearanceTheme,
+} from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  type AppearanceColorScheme,
+  type AppearanceLocale,
+  type AppearanceTheme,
+  appearanceColorSchemeSchema,
+  appearanceLocaleSchema,
+  appearanceThemeSchema,
+} from "@/lib/validations/appearance";
+import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
 import type { NotificationPreferences } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
@@ -78,8 +99,7 @@ out center;
 };
 
 function ClientSettingsPage() {
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("en");
+  const [selectMounted, setSelectMounted] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -108,6 +128,7 @@ function ClientSettingsPage() {
 
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const { theme: nextTheme, setTheme } = useTheme();
 
   useEffect(() => {
     setSelectMounted(true);
@@ -145,6 +166,30 @@ function ClientSettingsPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
+    queryKey: ["map-provider-settings"],
+    queryFn: loadMapSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: appearanceRemote, isLoading: appearanceLoading } = useQuery({
+    queryKey: ["appearance-settings"],
+    queryFn: async () => {
+      const loaded = await loadAppearanceSettings();
+      return loaded ?? DEFAULT_APPEARANCE;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const appearance = appearanceRemote ?? DEFAULT_APPEARANCE;
+
+  useEffect(() => {
+    if (mapProviderSettings === undefined) return;
+    setMapProvider(mapProviderSettings.map_provider);
+    setGoogleMapsApiKey(mapProviderSettings.google_maps_api_key ?? "");
+    setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
+  }, [mapProviderSettings]);
 
   const { data: notificationPrefs, isLoading: notificationPrefsLoading } = useQuery({
     queryKey: ["notification-preferences"],
@@ -195,6 +240,52 @@ function ClientSettingsPage() {
     saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "push";
   const savingEmail =
     saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
+
+  const appearanceThemeMutation = useMutation({
+    mutationFn: async (next: AppearanceTheme) => {
+      await saveAppearanceTheme(next);
+    },
+    onSuccess: async (_data, next) => {
+      setTheme(next);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Theme gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Theme konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceLocaleMutation = useMutation({
+    mutationFn: async (locale: AppearanceLocale) => {
+      await saveAppearanceLocale(locale);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Sprache gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Sprache konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceColorMutation = useMutation({
+    mutationFn: async (colorScheme: AppearanceColorScheme) => {
+      await saveAppearanceColorScheme(colorScheme);
+    },
+    onSuccess: async (_data, colorScheme) => {
+      const isDark =
+        typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      applyAppearanceColorTokens(colorScheme, isDark);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Farbschema gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Farbschema konnte nicht gespeichert werden", { description: message });
+    },
+  });
 
   const { data: brevoSenderSettings } = useQuery({
     queryKey: ["brevo-sender-settings"],
@@ -346,6 +437,9 @@ function ClientSettingsPage() {
       setBrevoSenderEmail(brevoSenderSettings.email);
     }
   }, [brevoSenderSettings]);
+
+  const isLoading =
+    settingsLoading || notificationPrefsLoading || mapProviderLoading || appearanceLoading;
 
   if (isLoading) {
     return <SettingsPageSkeleton />;

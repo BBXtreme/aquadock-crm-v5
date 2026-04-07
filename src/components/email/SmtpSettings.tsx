@@ -34,8 +34,9 @@ export default function SmtpSettings() {
     });
   }, []);
 
-  const loadConfig = useCallback(async (opts?: { signal?: AbortSignal }) => {
+  const loadConfig = useCallback(async (opts?: { signal?: AbortSignal; notify?: boolean }) => {
     const signal = opts?.signal;
+    const notify = opts?.notify === true;
     setIsLoadingConfig(true);
     try {
       const { getSmtpConfig } = await import("@/lib/services/smtp");

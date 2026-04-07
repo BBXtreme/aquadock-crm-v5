@@ -8,3 +8,5 @@ export const notificationPreferencesSchema = z
   .strict();
 
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
+
+export * from "./appearance";

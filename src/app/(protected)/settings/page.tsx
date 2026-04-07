@@ -5,6 +5,7 @@
 import { Suspense } from "react";
 import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { requireUser } from "@/lib/auth/require-user";
+import { safeDisplay } from "@/lib/utils/data-format";
 import ClientSettingsPage from "./ClientSettingsPage";
 
 export default async function SettingsPage() {
