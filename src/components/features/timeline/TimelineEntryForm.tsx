@@ -4,7 +4,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -13,29 +13,20 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/types/database.types";
 
-const formSchema = z.object({
-  title: z.string().min(1, "Titel ist erforderlich"),
-  content: z.string().optional(),
-  activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
-
-  company_id: z
-    .union([z.literal("none"), z.string().uuid(), z.null()])
-    .transform((val) => (val === "none" || val === null ? null : val))
-    .optional(),
-
-  contact_id: z
-    .union([z.literal("none"), z.string().uuid(), z.null()])
-    .transform((val) => (val === "none" || val === null ? null : val))
-    .optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+export type TimelineEntryFormValues = {
+  title: string;
+  content?: string | undefined;
+  activity_type: "note" | "call" | "email" | "meeting" | "reminder" | "other";
+  company_id?: string | null;
+  contact_id?: string | null;
+};
 
 interface Props {
-  onSubmit: (values: FormValues) => Promise<void>;
+  onSubmit: (values: TimelineEntryFormValues) => Promise<void>;
   isSubmitting: boolean;
   companies: { id: string; firmenname: string; kundentyp?: string }[];
   contacts: {
@@ -49,7 +40,7 @@ interface Props {
   editEntry?: TimelineEntry | null;
   onCancel?: () => void;
   preselectedCompanyId?: string | null;
-  defaultValues?: Partial<FormValues>;
+  defaultValues?: Partial<TimelineEntryFormValues>;
 }
 
 export default function TimelineEntryForm({
@@ -63,15 +54,43 @@ export default function TimelineEntryForm({
   defaultValues,
 }: Props) {
   const [localCompanies, setLocalCompanies] = useState<{ id: string; firmenname: string; kundentyp?: string }[]>([]);
+  const t = useT("timeline");
 
-  // ALL HOOKS FIRST — strict AIDER-RULES.md compliance
-  const form = useForm<FormValues>({
+  const formSchema = useMemo(
+    () =>
+      z.object({
+        title: z.string().min(1, t("formTitleRequired")),
+        content: z.string().optional(),
+        activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
+        company_id: z
+          .union([z.literal("none"), z.string().uuid(), z.null()])
+          .transform((val) => (val === "none" || val === null ? null : val))
+          .optional(),
+        contact_id: z
+          .union([z.literal("none"), z.string().uuid(), z.null()])
+          .transform((val) => (val === "none" || val === null ? null : val))
+          .optional(),
+      }),
+    [t],
+  );
+
+  type TimelineFormFields = {
+    title: string;
+    content?: string;
+    activity_type: TimelineEntryFormValues["activity_type"];
+    company_id?: string | null;
+    contact_id?: string | null;
+  };
+
+  const form = useForm<TimelineFormFields>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: editEntry?.title || defaultValues?.title || "",
       content: editEntry?.content || defaultValues?.content || "",
       activity_type:
-        (editEntry?.activity_type as FormValues["activity_type"]) || defaultValues?.activity_type || "note",
+        (editEntry?.activity_type as TimelineEntryFormValues["activity_type"]) ||
+        defaultValues?.activity_type ||
+        "note",
       company_id: editEntry?.company_id || preselectedCompanyId || "none",
       contact_id: editEntry?.contact_id || defaultValues?.contact_id || "none",
     },
@@ -124,15 +143,16 @@ export default function TimelineEntryForm({
       form.reset({
         title: editEntry.title || "",
         content: editEntry.content || "",
-        activity_type: editEntry.activity_type as FormValues["activity_type"] || "note",
+        activity_type: (editEntry.activity_type as TimelineEntryFormValues["activity_type"]) || "note",
         company_id: editEntry.company_id || "none",
         contact_id: editEntry.contact_id || "none",
       });
     }
   }, [editEntry, form]);
 
-  // Early return AFTER all hooks
-  if (!companies) return null;
+  if (!companies) {
+    return null;
+  }
 
   return (
     <Form {...form}>
@@ -142,9 +162,9 @@ export default function TimelineEntryForm({
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>{t("formTitleLabel")}</FormLabel>
               <FormControl>
-                <Input placeholder="Enter title" {...field} />
+                <Input placeholder={t("formTitlePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -156,9 +176,9 @@ export default function TimelineEntryForm({
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Content (optional)</FormLabel>
+              <FormLabel>{t("formContentLabel")}</FormLabel>
               <FormControl>
-                <Textarea placeholder="Enter content" {...field} value={field.value ?? ""} />
+                <Textarea placeholder={t("formContentPlaceholder")} {...field} value={field.value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -170,20 +190,20 @@ export default function TimelineEntryForm({
           name="activity_type"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Activity Type</FormLabel>
+              <FormLabel>{t("formActivityTypeLabel")}</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select activity type" />
+                    <SelectValue placeholder={t("formActivityTypePlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="note">Note</SelectItem>
-                  <SelectItem value="call">Call</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="reminder">Reminder</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="note">{t("activityNote")}</SelectItem>
+                  <SelectItem value="call">{t("activityCall")}</SelectItem>
+                  <SelectItem value="email">{t("activityEmail")}</SelectItem>
+                  <SelectItem value="meeting">{t("activityMeeting")}</SelectItem>
+                  <SelectItem value="reminder">{t("activityReminder")}</SelectItem>
+                  <SelectItem value="other">{t("activityOther")}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -196,18 +216,18 @@ export default function TimelineEntryForm({
           name="company_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company (optional)</FormLabel>
+              <FormLabel>{t("formCompanyLabel")}</FormLabel>
               <Select
                 onValueChange={(val) => field.onChange(val === "none" ? null : val)}
                 value={field.value ?? "none"}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Kein Unternehmen ausgewählt" />
+                    <SelectValue placeholder={t("formCompanyPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="none">Kein Unternehmen</SelectItem>
+                  <SelectItem value="none">{t("formCompanyNone")}</SelectItem>
                   {localCompanies
                     .filter((company, index, self) => self.findIndex((c) => c.id === company.id) === index)
                     .map((company) => (
@@ -228,18 +248,18 @@ export default function TimelineEntryForm({
           name="contact_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Contact (optional)</FormLabel>
+              <FormLabel>{t("formContactLabel")}</FormLabel>
               <Select
                 onValueChange={(val) => field.onChange(val === "none" ? null : val)}
                 value={field.value ?? "none"}
               >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Kein Kontakt ausgewählt" />
+                    <SelectValue placeholder={t("formContactPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="none">Kein Kontakt</SelectItem>
+                  <SelectItem value="none">{t("formContactNone")}</SelectItem>
                   {contacts.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.vorname} {c.nachname}
@@ -256,11 +276,11 @@ export default function TimelineEntryForm({
 
         <div className="flex gap-2">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit"}
+            {isSubmitting ? t("formSubmitting") : t("formSubmit")}
           </Button>
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
+              {t("formCancel")}
             </Button>
           )}
         </div>

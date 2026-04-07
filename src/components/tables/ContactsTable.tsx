@@ -11,7 +11,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useT } from "@/lib/i18n/use-translations";
 import { safeDisplay } from "@/lib/utils/data-format";
 import type { Contact } from "@/types/database.types";
 
@@ -56,6 +57,8 @@ export default function ContactsTable({
   sorting,
   onSortingChange,
 }: ContactsTableProps) {
+  const t = useT("contacts");
+  const tCommon = useT("common");
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
@@ -64,133 +67,140 @@ export default function ContactsTable({
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
 
-  const handleGlobalFilterChange = (value: string) => {
-    setGlobalFilter(value);
-    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-    onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
-  };
+  const handleGlobalFilterChange = useCallback(
+    (value: string) => {
+      setGlobalFilter(value);
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+      onPaginationChange({ pageIndex: 0, pageSize: pagination.pageSize });
+    },
+    [setGlobalFilter, onPaginationChange, pagination.pageSize],
+  );
 
-  const columns: ColumnDef<ContactWithCompany>[] = [
-    columnHelper.display({
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.display({
-      id: "name",
-      header: "Name",
-      cell: (info) => {
-        const vorname = info.row.original.vorname;
-        const nachname = info.row.original.nachname;
-        const position = info.row.original.position;
-        return (
-          <div>
-            <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-              <div>
-                {vorname} {nachname}
-              </div>
+  const columns = useMemo<ColumnDef<ContactWithCompany>[]>(
+    () => [
+      columnHelper.display({
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label={t("tableSelectAllAria")}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={t("tableSelectRowAria")}
+          />
+        ),
+        enableSorting: false,
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.display({
+        id: "name",
+        header: t("tableColName"),
+        cell: (info) => {
+          const vorname = info.row.original.vorname;
+          const nachname = info.row.original.nachname;
+          const position = info.row.original.position;
+          return (
+            <div>
+              <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
+                <div>
+                  {vorname} {nachname}
+                </div>
+              </Link>
+              {position && <div className="text-xs text-gray-500">{position}</div>}
+            </div>
+          );
+        },
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("is_primary", {
+        id: "is_primary",
+        header: t("tableColPrimary"),
+        cell: (info) =>
+          info.getValue() ? <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge> : tCommon("dash"),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("anrede", {
+        id: "anrede",
+        header: t("tableColSalutation"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.display({
+        id: "company",
+        header: t("tableColCompany"),
+        cell: (info) => {
+          const company = info.row.original.companies;
+          if (!company) return tCommon("dash");
+          return (
+            <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
+              {company.firmenname}
             </Link>
-            {position && <div className="text-xs text-gray-500">{position}</div>}
-          </div>
-        );
-      },
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("is_primary", {
-      id: "is_primary",
-      header: "Primary",
-      cell: (info) => (info.getValue() ? <Badge variant="secondary">Primary</Badge> : "—"),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("anrede", {
-      id: "anrede",
-      header: "Anrede",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.display({
-      id: "company",
-      header: "Firma",
-      cell: (info) => {
-        const company = info.row.original.companies;
-        if (!company) return "—";
-        return (
-          <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
-            {company.firmenname}
-          </Link>
-        );
-      },
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("email", {
-      id: "email",
-      header: "Email",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("telefon", {
-      id: "telefon",
-      header: "Telefon",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("mobil", {
-      id: "mobil",
-      header: "Mobil",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("durchwahl", {
-      id: "durchwahl",
-      header: "Durchwahl",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.accessor("notes", {
-      id: "notes",
-      header: "Notes",
-      cell: (info) => safeDisplay(info.getValue()),
-    }) as ColumnDef<ContactWithCompany>,
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: (info) => (
-        <div className="flex space-x-2">
-          <Link href={`/contacts/${info.row.original.id}`}>
-            <Button variant="ghost" size="sm" type="button">
-              <Eye className="h-4 w-4" />
+          );
+        },
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("email", {
+        id: "email",
+        header: t("tableColEmail"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("telefon", {
+        id: "telefon",
+        header: t("tableColPhone"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("mobil", {
+        id: "mobil",
+        header: t("tableColMobile"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("durchwahl", {
+        id: "durchwahl",
+        header: t("tableColExtension"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.accessor("notes", {
+        id: "notes",
+        header: t("tableColNotes"),
+        cell: (info) => safeDisplay(info.getValue()),
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.display({
+        id: "actions",
+        header: t("tableColActions"),
+        cell: (info) => (
+          <div className="flex space-x-2">
+            <Link href={`/contacts/${info.row.original.id}`}>
+              <Button variant="ghost" size="sm" type="button">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
+              <Edit className="h-4 w-4" />
             </Button>
-          </Link>
-          <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            type="button"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this contact?")) {
-                try {
-                  onDelete?.(info.row.original.id);
-                } catch (error) {
-                  console.error("Error deleting contact:", error);
-                  toast.error("Failed to delete contact");
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => {
+                if (window.confirm(t("tableDeleteConfirm"))) {
+                  try {
+                    onDelete?.(info.row.original.id);
+                  } catch (error) {
+                    console.error("Error deleting contact:", error);
+                    toast.error(t("tableToastDeleteFailed"));
+                  }
                 }
-              }
-            }}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-      enableSorting: false,
-    }) as ColumnDef<ContactWithCompany>,
-  ];
+              }}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+        enableSorting: false,
+      }) as ColumnDef<ContactWithCompany>,
+    ],
+    [t, tCommon, onEdit, onDelete],
+  );
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
@@ -242,7 +252,7 @@ export default function ContactsTable({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Failed to export data");
+      toast.error(t("tableToastExportFailed"));
     }
   };
 
@@ -263,23 +273,41 @@ export default function ContactsTable({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Failed to export data");
+      toast.error(t("tableToastExportFailed"));
     }
   };
+
+  const columnMenuLabel = useCallback(
+    (id: string) => {
+      if (id === "select") return t("tableColSelect");
+      if (id === "name") return t("tableColName");
+      if (id === "is_primary") return t("tableColPrimary");
+      if (id === "anrede") return t("tableColSalutation");
+      if (id === "company") return t("tableColCompany");
+      if (id === "email") return t("tableColEmail");
+      if (id === "telefon") return t("tableColPhone");
+      if (id === "mobil") return t("tableColMobile");
+      if (id === "durchwahl") return t("tableColExtension");
+      if (id === "notes") return t("tableColNotes");
+      if (id === "actions") return t("tableColActions");
+      return id;
+    },
+    [t],
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Input
-            placeholder="Search contacts..."
+            placeholder={t("tableSearchPlaceholder")}
             value={globalFilter ?? ""}
             onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {table.getFilteredSelectedRowModel().rows.length} selected
+              {t("tableSelectedCount", { count: table.getFilteredSelectedRowModel().rows.length })}
             </span>
           )}
         </div>
@@ -302,10 +330,10 @@ export default function ContactsTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
-                <Link href="/import/csv">Import CSV</Link>
+                <Link href="/import/csv">{t("tableImportCsv")}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/import/json">Import JSON</Link>
+                <Link href="/import/json">{t("tableImportJson")}</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -316,8 +344,8 @@ export default function ContactsTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={handleExportCSV}>Export CSV</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportJSON}>Export JSON</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV}>{t("tableExportCsv")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportJSON}>{t("tableExportJson")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -338,7 +366,7 @@ export default function ContactsTable({
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(!!value)}
                     >
-                      {column.id}
+                      {columnMenuLabel(column.id)}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -356,7 +384,7 @@ export default function ContactsTable({
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
                       <button
                         type="button"
-                        className="flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium" // ← justify-start added
+                        className="flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -385,7 +413,7 @@ export default function ContactsTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  {t("tableEmpty")}
                 </TableCell>
               </TableRow>
             )}
@@ -394,8 +422,10 @@ export default function ContactsTable({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-muted-foreground text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+          {t("tableRowsSelectedSummary", {
+            selected: table.getFilteredSelectedRowModel().rows.length,
+            total: table.getFilteredRowModel().rows.length,
+          })}
         </div>
         <div className="space-x-2">
           <Button
@@ -405,7 +435,7 @@ export default function ContactsTable({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t("tablePrevious")}
           </Button>
           <Button
             variant="outline"
@@ -414,7 +444,7 @@ export default function ContactsTable({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            {t("tableNext")}
           </Button>
         </div>
       </div>

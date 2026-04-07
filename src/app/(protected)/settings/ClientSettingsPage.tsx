@@ -23,16 +23,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
 import {
-  getNotificationPreferenceSuccessToast,
-  NOTIFICATION_DEFAULTS,
-  NOTIFICATION_UI,
-} from "@/lib/constants/notifications";
-import {
-  APPEARANCE_COLOR_LABELS,
   APPEARANCE_COLOR_SCHEME_IDS,
   APPEARANCE_COLOR_SWATCH,
+  type AppearanceColorSchemeId,
 } from "@/lib/constants/theme";
+import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import {
   DEFAULT_APPEARANCE,
@@ -129,6 +126,30 @@ function ClientSettingsPage() {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const { theme: nextTheme, setTheme } = useTheme();
+  const t = useT("settings");
+  const format = useFormat();
+
+  const colorSchemeLabel = useCallback(
+    (id: AppearanceColorSchemeId) => {
+      switch (id) {
+        case "teal":
+          return t("appearance.colors.teal");
+        case "slate":
+          return t("appearance.colors.slate");
+        case "zinc":
+          return t("appearance.colors.zinc");
+        case "blue":
+          return t("appearance.colors.blue");
+        case "emerald":
+          return t("appearance.colors.emerald");
+        case "rose":
+          return t("appearance.colors.rose");
+        case "amber":
+          return t("appearance.colors.amber");
+      }
+    },
+    [t],
+  );
 
   useEffect(() => {
     setSelectMounted(true);
@@ -223,16 +244,25 @@ function ClientSettingsPage() {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(["notification-preferences"], context.previous);
       }
-      const message = error instanceof Error ? error.message : NOTIFICATION_UI.unknownError;
+      const message = error instanceof Error ? error.message : t("common.unknownError");
       if (message === NOTIFICATION_UI.toastValidationError) {
-        toast.error(NOTIFICATION_UI.toastValidationError);
+        toast.error(t("notifications.validationError"));
       } else {
-        toast.error(NOTIFICATION_UI.toastSaveErrorTitle, { description: message });
+        toast.error(t("notifications.saveErrorTitle"), { description: message });
       }
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
-      toast.success(getNotificationPreferenceSuccessToast(result.changed, result.prefs));
+      const { prefs, changed } = result;
+      const successMessage =
+        changed === "push"
+          ? prefs.pushEnabled
+            ? t("notifications.toastPushOn")
+            : t("notifications.toastPushOff")
+          : prefs.emailEnabled
+            ? t("notifications.toastEmailOn")
+            : t("notifications.toastEmailOff");
+      toast.success(successMessage);
     },
   });
 
@@ -248,11 +278,11 @@ function ClientSettingsPage() {
     onSuccess: async (_data, next) => {
       setTheme(next);
       await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
-      toast.success("Theme gespeichert");
+      toast.success(t("appearance.themeSaved"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error("Theme konnte nicht gespeichert werden", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("appearance.themeSaveErrorTitle"), { description: message });
     },
   });
 
@@ -262,11 +292,15 @@ function ClientSettingsPage() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
-      toast.success("Sprache gespeichert");
+      toast.success(
+        t.rich("appearance.localeSavedRich", {
+          b: (chunks) => <strong>{chunks}</strong>,
+        }),
+      );
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error("Sprache konnte nicht gespeichert werden", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("appearance.localeSaveErrorTitle"), { description: message });
     },
   });
 
@@ -279,11 +313,11 @@ function ClientSettingsPage() {
         typeof document !== "undefined" && document.documentElement.classList.contains("dark");
       applyAppearanceColorTokens(colorScheme, isDark);
       await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
-      toast.success("Farbschema gespeichert");
+      toast.success(t("appearance.colorSaved"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error("Farbschema konnte nicht gespeichert werden", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("appearance.colorSaveErrorTitle"), { description: message });
     },
   });
 
@@ -321,7 +355,7 @@ function ClientSettingsPage() {
       if (!parsed.success) {
         const errs = parsed.error.flatten().fieldErrors;
         const first = errs.map_provider?.[0] ?? errs.google_maps_api_key?.[0] ?? errs.apple_mapkit_token?.[0];
-        throw new Error(first ?? "Ungültige Eingabe");
+        throw new Error(first ?? t("common.invalidInput"));
       }
       await saveMapSettings({
         map_provider: parsed.data.map_provider,
@@ -331,11 +365,11 @@ function ClientSettingsPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["map-provider-settings"] });
-      toast.success("Karten-Einstellungen gespeichert");
+      toast.success(t("map.savedToast"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error("Karten-Einstellungen konnten nicht gespeichert werden", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("map.saveErrorTitle"), { description: message });
     },
   });
 
@@ -344,7 +378,7 @@ function ClientSettingsPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) throw new Error("Nicht angemeldet");
+      if (!user) throw new Error(t("brevo.notSignedIn"));
       const rows = [
         { user_id: user.id, key: "brevo_sender_name", value: payload.name.trim() },
         { user_id: user.id, key: "brevo_sender_email", value: payload.email.trim() },
@@ -356,11 +390,15 @@ function ClientSettingsPage() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["brevo-sender-settings"] });
-      toast.success("Brevo-Absender gespeichert");
+      toast.success(t("brevo.savedToast"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-      toast.error("Brevo-Einstellungen konnten nicht gespeichert werden", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      if (message === t("brevo.notSignedIn")) {
+        toast.error(t("brevo.notSignedIn"));
+        return;
+      }
+      toast.error(t("brevo.saveErrorTitle"), { description: message });
     },
   });
 
@@ -375,11 +413,11 @@ function ClientSettingsPage() {
     onSuccess: () => {
       loadFromLocalStorage();
       window.dispatchEvent(new CustomEvent("openmap-settings-changed"));
-      toast.success("OpenMap settings saved successfully");
+      toast.success(t("openMap.savedToast"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to save OpenMap settings", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("openMap.saveErrorTitle"), { description: message });
     },
   });
 
@@ -387,21 +425,21 @@ function ClientSettingsPage() {
     mutationFn: async () => {
       const query = generateSampleQuery();
       const endpoint = openMapSettings.overpassEndpoints[0];
-      if (!endpoint) throw new Error("No Overpass endpoint configured");
+      if (!endpoint) throw new Error(t("openMap.errorNoEndpoint"));
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `data=${encodeURIComponent(query)}`,
       });
-      if (!response.ok) throw new Error("Overpass test failed");
+      if (!response.ok) throw new Error(t("openMap.errorTestFailed"));
       return response.json();
     },
     onSuccess: () => {
-      toast.success("Overpass test successful");
+      toast.success(t("openMap.testSuccess"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Overpass test failed", { description: message });
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("openMap.testErrorTitle"), { description: message });
     },
   });
 
@@ -422,7 +460,7 @@ function ClientSettingsPage() {
 
   const clearCache = () => {
     localStorage.removeItem("openmap-poi-cache");
-    if (confirm("Clear POI cache and reload the page to apply changes?")) {
+    if (confirm(t("openMap.confirmClear"))) {
       window.location.reload();
     }
   };
@@ -453,9 +491,9 @@ function ClientSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
-              {NOTIFICATION_UI.cardTitle}
+              {t("notifications.cardTitle")}
             </CardTitle>
-            <CardDescription>{NOTIFICATION_UI.cardDescription}</CardDescription>
+            <CardDescription>{t("notifications.cardDescription")}</CardDescription>
           </CardHeader>
           <CardContent
             className={`space-y-6 ${notificationPrefsLoading ? "animate-pulse" : ""}`}
@@ -464,9 +502,9 @@ function ClientSettingsPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 space-y-1">
                 <Label htmlFor="notifications-push" className="text-sm font-medium">
-                  {NOTIFICATION_UI.pushLabel}
+                  {t("notifications.pushLabel")}
                 </Label>
-                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.pushHelp}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">{t("notifications.pushHelp")}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Switch
@@ -488,7 +526,7 @@ function ClientSettingsPage() {
                       className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
                       aria-hidden
                     />
-                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                    <span className="text-muted-foreground text-xs tabular-nums">{t("notifications.saving")}</span>
                   </>
                 ) : null}
               </div>
@@ -496,9 +534,9 @@ function ClientSettingsPage() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 space-y-1">
                 <Label htmlFor="notifications-email" className="text-sm font-medium">
-                  {NOTIFICATION_UI.emailLabel}
+                  {t("notifications.emailLabel")}
                 </Label>
-                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.emailHelp}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">{t("notifications.emailHelp")}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Switch
@@ -520,11 +558,18 @@ function ClientSettingsPage() {
                       className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
                       aria-hidden
                     />
-                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                    <span className="text-muted-foreground text-xs tabular-nums">{t("notifications.saving")}</span>
                   </>
                 ) : null}
               </div>
             </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {t("notifications.activeChannels", {
+                count:
+                  ((notificationPrefs ?? NOTIFICATION_DEFAULTS).pushEnabled ? 1 : 0) +
+                  ((notificationPrefs ?? NOTIFICATION_DEFAULTS).emailEnabled ? 1 : 0),
+              })}
+            </p>
           </CardContent>
         </Card>
 
@@ -533,20 +578,22 @@ function ClientSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Palette className="mr-2 h-5 w-5" />
-              Appearance
+              {t("appearance.title")}
             </CardTitle>
             <CardDescription className="text-sm leading-relaxed">
-              Wähle Hell-, Dunkel- oder Systemmodus (next-themes), die Oberflächensprache für{" "}
-              <span className="font-mono text-foreground">{"<html lang>"}</span>, und ein Farbschema für Primär-
-              und Akzentfarben (CSS-Variablen). Einstellungen werden im Konto gespeichert und lokal
-              gespiegelt. Das hier gespeicherte Theme ist die Voreinstellung beim nächsten App-Start;
-              in der laufenden Sitzung kannst du unabhängig davon in der Kopfzeile zwischen Hell und
-              Dunkel wechseln (ohne die gespeicherte Voreinstellung zu ändern).
+              {t.rich("appearance.descriptionRich", {
+                code: () => <span className="font-mono text-foreground">{"<html lang>"}</span>,
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-muted-foreground text-xs">
+              {t("appearance.datePreview", {
+                date: format.dateTime(new Date(), { dateStyle: "medium" }),
+              })}
+            </p>
             <div className="space-y-2">
-              <Label htmlFor="appearance-theme">Theme</Label>
+              <Label htmlFor="appearance-theme">{t("appearance.themeLabel")}</Label>
               <Select
                 value={selectMounted && nextTheme ? nextTheme : undefined}
                 onValueChange={(value) => {
@@ -556,17 +603,17 @@ function ClientSettingsPage() {
                 disabled={appearanceThemeMutation.isPending}
               >
                 <SelectTrigger id="appearance-theme" className="w-full max-w-md">
-                  <SelectValue placeholder={selectMounted ? undefined : "…"} />
+                  <SelectValue placeholder={selectMounted ? undefined : t("common.ellipsis")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="light">{t("appearance.themeLight")}</SelectItem>
+                  <SelectItem value="dark">{t("appearance.themeDark")}</SelectItem>
+                  <SelectItem value="system">{t("appearance.themeSystem")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="appearance-language">Language</Label>
+              <Label htmlFor="appearance-language">{t("appearance.languageLabel")}</Label>
               <Select
                 value={appearance.locale}
                 onValueChange={(value) => {
@@ -579,14 +626,14 @@ function ClientSettingsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="fr">Croatian</SelectItem>
+                  <SelectItem value="en">{t("appearance.localeOptionEnglish")}</SelectItem>
+                  <SelectItem value="de">{t("appearance.localeOptionGerman")}</SelectItem>
+                  <SelectItem value="hr">{t("appearance.localeOptionCroatian")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="appearance-color">Color theme</Label>
+              <Label htmlFor="appearance-color">{t("appearance.colorLabel")}</Label>
               <Select
                 value={appearance.colorScheme}
                 onValueChange={(value) => {
@@ -607,7 +654,7 @@ function ClientSettingsPage() {
                           style={{ backgroundColor: APPEARANCE_COLOR_SWATCH[id] }}
                           aria-hidden
                         />
-                        {APPEARANCE_COLOR_LABELS[id]}
+                        {colorSchemeLabel(id)}
                       </span>
                     </SelectItem>
                   ))}
@@ -615,8 +662,9 @@ function ClientSettingsPage() {
               </Select>
             </div>
             <p className="text-muted-foreground text-sm">
-              Vollständige Übersetzung der App-Inhalte kann später per i18n ergänzt werden; die Auswahl ist
-              bereits persistent.
+              {t.rich("appearance.footerRich", {
+                strong: (chunks) => <strong>{chunks}</strong>,
+              })}
             </p>
           </CardContent>
         </Card>
@@ -626,18 +674,18 @@ function ClientSettingsPage() {
           <CardHeader className="space-y-2 pb-2">
             <CardTitle className="flex items-center text-lg">
               <Layers className="mr-2 h-5 w-5 shrink-0" />
-              OpenMap — Karten-Anbieter
+              {t("map.title")}
             </CardTitle>
             <CardDescription className="text-sm leading-relaxed">
-              Voreinstellung:{" "}
-              <span className="font-medium text-foreground">OpenStreetMap (CARTO)</span> — unverändert zur bisherigen
-              Karte (Tiles, Attribution, Verhalten). Google und Apple sind optional.
+              {t.rich("map.descriptionRich", {
+                em: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5 pt-0">
             <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="map-provider-select">
-                Basiskarte
+                {t("map.basemapLabel")}
               </Label>
               <Select
                 value={mapProvider}
@@ -647,22 +695,20 @@ function ClientSettingsPage() {
                 }}
               >
                 <SelectTrigger id="map-provider-select" className="w-full max-w-md">
-                  <SelectValue placeholder="Anbieter wählen" />
+                  <SelectValue placeholder={t("common.selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="osm">OpenStreetMap (CARTO) — Standard</SelectItem>
-                  <SelectItem value="google">Google Maps (Map Tiles API)</SelectItem>
-                  <SelectItem value="apple">Apple Maps (Basiskarte wie OSM)</SelectItem>
+                  <SelectItem value="osm">{t("map.providerOsm")}</SelectItem>
+                  <SelectItem value="google">{t("map.providerGoogle")}</SelectItem>
+                  <SelectItem value="apple">{t("map.providerApple")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="map-google-api-key">
-                Google API-Schlüssel
+                {t("map.googleKeyLabel")}
               </Label>
-              <p className="text-muted-foreground text-xs leading-snug">
-                Nur für Google-Basiskarte. Map Tiles API aktivieren und Abrechnung im Google-Cloud-Projekt erlauben.
-              </p>
+              <p className="text-muted-foreground text-xs leading-snug">{t("map.googleKeyHelp")}</p>
               <Input
                 id="map-google-api-key"
                 className="max-w-md"
@@ -670,16 +716,14 @@ function ClientSettingsPage() {
                 autoComplete="off"
                 value={googleMapsApiKey}
                 onChange={(e) => setGoogleMapsApiKey(e.target.value)}
-                placeholder="Leer lassen, wenn ungenutzt"
+                placeholder={t("map.googleKeyPlaceholder")}
               />
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium" htmlFor="map-apple-mapkit-token">
-                Apple MapKit JWT
+                {t("map.appleTokenLabel")}
               </Label>
-              <p className="text-muted-foreground text-xs leading-snug">
-                Optional für künftiges MapKit. Bis dahin: gleiche OSM/CARTO-Basiskarte wie beim Standard.
-              </p>
+              <p className="text-muted-foreground text-xs leading-snug">{t("map.appleTokenHelp")}</p>
               <Input
                 id="map-apple-mapkit-token"
                 className="max-w-md"
@@ -687,7 +731,7 @@ function ClientSettingsPage() {
                 autoComplete="off"
                 value={appleMapkitToken}
                 onChange={(e) => setAppleMapkitToken(e.target.value)}
-                placeholder="Leer lassen, wenn ungenutzt"
+                placeholder={t("map.appleTokenPlaceholder")}
               />
             </div>
             <div className="pt-1">
@@ -696,7 +740,7 @@ function ClientSettingsPage() {
                 onClick={() => mapSettingsMutation.mutate()}
                 disabled={mapSettingsMutation.isPending}
               >
-                {mapSettingsMutation.isPending ? "Speichern…" : "Speichern"}
+                {mapSettingsMutation.isPending ? t("common.saving") : t("common.save")}
               </Button>
             </div>
           </CardContent>
@@ -707,12 +751,12 @@ function ClientSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
-              OpenMap Settings
+              {t("openMap.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Overpass Endpoints</Label>
+              <Label>{t("openMap.overpassLabel")}</Label>
               <Textarea
                 value={openMapSettings.overpassEndpoints.join("\n")}
                 onChange={(e) =>
@@ -721,13 +765,13 @@ function ClientSettingsPage() {
                     overpassEndpoints: e.target.value.split("\n").filter(Boolean),
                   }))
                 }
-                placeholder="One endpoint per line"
+                placeholder={t("openMap.overpassPlaceholder")}
                 rows={4}
               />
             </div>
             <div className="flex items-center justify-between">
               <Label htmlFor="autoLoadPois" className="text-sm font-medium">
-                Auto Load POIs
+                {t("openMap.autoLoadLabel")}
               </Label>
               <Switch
                 id="autoLoadPois"
@@ -736,7 +780,7 @@ function ClientSettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Cache Duration (minutes)</Label>
+              <Label>{t("openMap.cacheDurationLabel")}</Label>
               <Input
                 type="number"
                 value={openMapSettings.cacheDuration}
@@ -746,7 +790,7 @@ function ClientSettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Max Cache Size (MB)</Label>
+              <Label>{t("openMap.maxCacheLabel")}</Label>
               <Input
                 type="number"
                 value={openMapSettings.maxCacheSize}
@@ -756,23 +800,23 @@ function ClientSettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Sample Overpass Query</Label>
+              <Label>{t("openMap.sampleQueryLabel")}</Label>
               <Textarea value={generateSampleQuery()} readOnly rows={10} />
             </div>
             <div className="flex gap-2">
               <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
-                {openMapMutation.isPending ? "Saving..." : "Save OpenMap Settings"}
+                {openMapMutation.isPending ? t("common.saving") : t("openMap.save")}
               </Button>
               <Button variant="outline" onClick={clearCache}>
                 <Trash2 className="mr-2 h-4 w-4" />
-                Clear POI Cache
+                {t("openMap.clearCache")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => testOverpassMutation.mutate()}
                 disabled={testOverpassMutation.isPending}
               >
-                {testOverpassMutation.isPending ? "Testing..." : "Test Overpass"}
+                {testOverpassMutation.isPending ? t("openMap.testing") : t("openMap.test")}
               </Button>
             </div>
           </CardContent>
@@ -783,32 +827,33 @@ function ClientSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Mail className="mr-2 h-5 w-5" />
-              Brevo Settings
+              {t("brevo.title")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground text-sm">
-              Absender für Brevo-Kampagnen. Leer lassen, um{" "}
-              <span className="font-mono text-foreground">BREVO_SENDER_NAME</span> /{" "}
-              <span className="font-mono text-foreground">BREVO_SENDER_EMAIL</span> aus der Umgebung zu nutzen.
+              {t.rich("brevo.introRich", {
+                name: () => <span className="font-mono text-foreground">BREVO_SENDER_NAME</span>,
+                email: () => <span className="font-mono text-foreground">BREVO_SENDER_EMAIL</span>,
+              })}
             </p>
             <div className="space-y-2">
-              <Label htmlFor="brevo-sender-name">Sender Name</Label>
+              <Label htmlFor="brevo-sender-name">{t("brevo.senderName")}</Label>
               <Input
                 id="brevo-sender-name"
                 value={brevoSenderName}
                 onChange={(e) => setBrevoSenderName(e.target.value)}
-                placeholder="z. B. AquaDock CRM"
+                placeholder={t("brevo.namePlaceholder")}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="brevo-sender-email">Sender Email</Label>
+              <Label htmlFor="brevo-sender-email">{t("brevo.senderEmail")}</Label>
               <Input
                 id="brevo-sender-email"
                 type="email"
                 value={brevoSenderEmail}
                 onChange={(e) => setBrevoSenderEmail(e.target.value)}
-                placeholder="noreply@example.com"
+                placeholder={t("brevo.emailPlaceholder")}
               />
             </div>
             <Button
@@ -816,21 +861,24 @@ function ClientSettingsPage() {
               onClick={() => brevoSenderMutation.mutate({ name: brevoSenderName, email: brevoSenderEmail })}
               disabled={brevoSenderMutation.isPending}
             >
-              {brevoSenderMutation.isPending ? "Speichern…" : "Brevo-Absender speichern"}
+              {brevoSenderMutation.isPending ? t("common.saving") : t("brevo.save")}
             </Button>
             <p className="text-sm text-muted-foreground">
-              Kampagnen unter{" "}
-              <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
-                /brevo
-              </Link>
-              , Kontakt-Sync unter{" "}
-              <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
-                /brevo/sync
-              </Link>
-              . API-Schlüssel: Umgebungsvariable{" "}
-              <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
-              <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
-              <span className="font-mono">xkeysib-</span>).
+              {t.rich("brevo.footerRich", {
+                campaign: (chunks) => (
+                  <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+                sync: (chunks) => (
+                  <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+                key: (chunks) => <span className="font-mono text-foreground">{chunks}</span>,
+                env: (chunks) => <span className="font-mono text-foreground">{chunks}</span>,
+                prefix: (chunks) => <span className="font-mono">{chunks}</span>,
+              })}
             </p>
             </CardContent>
         </Card>

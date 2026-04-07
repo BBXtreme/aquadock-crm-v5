@@ -10,13 +10,14 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/map-kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";
 
-async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
-  const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
+async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string, displayName: string, notes: string) {
+  const name = displayName;
 
   // Filter out undefined values to match expected type
   const tags = Object.fromEntries(Object.entries(poi.tags || {}).filter(([_, v]) => v !== undefined)) as Record<
@@ -30,8 +31,8 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
 
   // Extract short ID from poi.id (handle full URL if present)
   let osmId = poi.id;
-  if (typeof osmId === 'string' && osmId.startsWith('https://www.openstreetmap.org/')) {
-    const parts = osmId.split('/');
+  if (typeof osmId === "string" && osmId.startsWith("https://www.openstreetmap.org/")) {
+    const parts = osmId.split("/");
     osmId = parts[parts.length - 1] as string;
   }
 
@@ -48,15 +49,13 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     website: poi.tags?.website || poi.tags?.["contact:website"] || "",
     lat: (poi.lat || poi.center?.lat) as number,
     lon: (poi.lon || poi.center?.lon) as number,
-    osm: `${poi.type}/${osmId}`,  // Updated to short format: e.g., "node/123456"
-    user_id: userId || null, // Explicitly set to null if no userId
+    osm: `${poi.type}/${osmId}`,
+    user_id: userId || null,
     value: 0,
     wassertyp: poi.wassertyp ?? wassertyp,
     wasserdistanz: poi.wasserdistanz ?? null,
-    notes: `Importiert aus OSM am ${new Date().toLocaleDateString("de-DE")}`,
+    notes,
   };
-
-  console.log("📤 Sending to /api/companies:", formData); // ← hilft beim Debuggen
 
   const res = await fetch("/api/companies", {
     method: "POST",
@@ -67,7 +66,7 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
   const responseData = await res.json().catch(() => ({}));
 
   if (!res.ok || !responseData.success) {
-    console.error("❌ API Response Error - Full response:", {
+    console.error("API Response Error - Full response:", {
       status: res.status,
       statusText: res.statusText,
       data: responseData,
@@ -76,13 +75,14 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string) {
     throw new Error(responseData.error || `HTTP ${res.status} - ${JSON.stringify(responseData)}`);
   }
 
-  console.log("✅ Import successful:", responseData);
   return responseData;
 }
 
 export function useMapPopupActions() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const t = useT("openmap");
+  const localeTag = useNumberLocaleTag();
 
   const openCompanyDetail = (id: string) => {
     router.push(`/companies/${id}`);
@@ -92,39 +92,42 @@ export function useMapPopupActions() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  const calculateWaterForPoi = useCallback(async (poi: OsmPoi) => {
-    const lat = poi.lat || poi.center?.lat;
-    const lon = poi.lon || poi.center?.lon;
-    if (!lat || !lon) {
-      toast.error("Keine Koordinaten für Wasserberechnung");
-      return;
-    }
-    toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
-    try {
-      const distance = await calculateWaterDistance(lat, lon);
-      Object.assign(poi, { wasserdistanz: distance });
-      console.log(`Calculated water distance: ${distance}m for POI ${poi.id}`);
-      if (distance !== null) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        toast.success(`Wasser-Info berechnet: ${distance} m`, { id: "water-calc" });
-      } else {
-        toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
+  const calculateWaterForPoi = useCallback(
+    async (poi: OsmPoi) => {
+      const lat = poi.lat || poi.center?.lat;
+      const lon = poi.lon || poi.center?.lon;
+      if (!lat || !lon) {
+        toast.error(t("waterCalcNoCoords"));
+        return;
       }
-    } catch (_error) {
-      toast.error("Fehler bei Wasserberechnung", { id: "water-calc" });
-    }
-  }, []);
+      toast.loading(t("waterCalcLoading"), { id: "water-calc" });
+      try {
+        const distance = await calculateWaterDistance(lat, lon);
+        Object.assign(poi, { wasserdistanz: distance });
+        if (distance !== null) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const msg =
+            distance === 0 ? t("waterAtWater") : t("waterDistanceMeters", { meters: String(distance) });
+          toast.success(msg, { id: "water-calc" });
+        } else {
+          toast.error(t("waterNotFound"), { id: "water-calc" });
+        }
+      } catch (_error) {
+        toast.error(t("waterCalcError"), { id: "water-calc" });
+      }
+    },
+    [t],
+  );
 
   const importOsmPoi = async (poi: OsmPoi) => {
-    const name = poi.tags?.name || "POI";
+    const displayName = poi.tags?.name || poi.tags?.["name:de"] || t("poiUnnamed");
+    const importNotes = t("importNotes", { date: new Date().toLocaleDateString(localeTag) });
 
     try {
-      toast.loading(`"${name}" wird importiert...`, { id: "osm-import" });
+      toast.loading(t("importLoading", { name: displayName }), { id: "osm-import" });
 
-      // Always use mock user ID for now
       const userId = "dev-mock-user-11111111-2222-3333-4444-555555555555";
 
-      // Check for duplicate by OSM URL
       const osmUrl = `https://www.openstreetmap.org/${poi.type}/${poi.id}`;
       const supabase = createClient();
       const { data: existingCompanies, error: fetchError } = await supabase
@@ -138,11 +141,11 @@ export function useMapPopupActions() {
       } else if (existingCompanies && existingCompanies.length > 0) {
         const existing = existingCompanies[0];
         if (existing) {
-          toast.error(`"${name}" ist bereits importiert`, {
+          toast.error(t("importDuplicateTitle", { name: displayName }), {
             id: "osm-import",
-            description: `Firma "${existing.firmenname}" existiert bereits.`,
+            description: t("importDuplicateDescription", { firmenname: existing.firmenname }),
             action: {
-              label: "Firma öffnen",
+              label: t("popupOpenCompany"),
               onClick: () => openCompanyDetail(existing.id),
             },
           });
@@ -150,34 +153,31 @@ export function useMapPopupActions() {
         return;
       }
 
-      const result = await createCompanyFromOsmPoi(poi, userId);
+      const result = await createCompanyFromOsmPoi(poi, userId, displayName, importNotes);
 
-      // Sichere ID-Extraktion – funktioniert mit verschiedenen API-Antwort-Formaten
       const newCompanyId = result.id;
 
       if (!newCompanyId) {
-        throw new Error("Keine Firmen-ID zurückgegeben");
+        throw new Error(t("unknownError"));
       }
 
-      toast.success(`✅ "${name}" erfolgreich angelegt!`, {
+      toast.success(t("importSuccessTitle", { name: displayName }), {
         id: "osm-import",
-        description: "Firma ist jetzt in der Liste verfügbar.",
+        description: t("importSuccessDescription"),
         action: {
-          label: "Firma öffnen",
+          label: t("popupOpenCompany"),
           onClick: () => openCompanyDetail(newCompanyId),
         },
       });
 
-      // Dispatch event to refresh company markers
       window.dispatchEvent(new CustomEvent("company-imported"));
 
-      // Invalidate React Query cache for companies
       queryClient.invalidateQueries({ queryKey: ["companies"] });
     } catch (err: unknown) {
       console.error("Import failed:", err);
-      toast.error(`Import von "${name}" fehlgeschlagen`, {
+      toast.error(t("importFailedTitle", { name: displayName }), {
         id: "osm-import",
-        description: err instanceof Error ? err.message : "Unbekannter Fehler",
+        description: err instanceof Error ? err.message : t("unknownError"),
       });
     }
   };

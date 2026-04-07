@@ -5,7 +5,7 @@ export const appearanceThemeSchema = z.enum(["light", "dark", "system"]);
 
 export type AppearanceTheme = z.infer<typeof appearanceThemeSchema>;
 
-export const appearanceLocaleSchema = z.enum(["en", "de", "fr"]);
+export const appearanceLocaleSchema = z.enum(["en", "de", "hr"]);
 
 export type AppearanceLocale = z.infer<typeof appearanceLocaleSchema>;
 
@@ -29,7 +29,11 @@ export function parseAppearanceTheme(value: unknown): AppearanceTheme | null {
 export function parseAppearanceLocale(value: unknown): AppearanceLocale | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== "string") return null;
-  const result = appearanceLocaleSchema.safeParse(value.trim());
+  const trimmed = value.trim();
+  if (trimmed === "fr") {
+    return "de";
+  }
+  const result = appearanceLocaleSchema.safeParse(trimmed);
   return result.success ? result.data : null;
 }
 

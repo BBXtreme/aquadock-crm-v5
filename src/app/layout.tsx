@@ -10,6 +10,7 @@ import type React from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ClientLayout from "@/components/layout/ClientLayout";
+import { RootDocumentLang } from "@/components/layout/RootDocumentLang";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
@@ -22,8 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    // Default `de`; RootDocumentLang + AppearanceHydration align `lang` with saved appearance on the client.
     <html lang="de" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}>
+        <RootDocumentLang />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

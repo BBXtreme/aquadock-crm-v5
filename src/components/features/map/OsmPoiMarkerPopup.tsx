@@ -6,15 +6,14 @@
 
 import { ExternalLink } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-
-import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
+import { useT } from "@/lib/i18n/use-translations";
 import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 import type { OsmPoiMarkerPopupProps } from "./types";
 
 export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupProps) {
-  const name = poi.tags?.name || poi.tags?.["name:de"] || "Unbenannter POI";
+  const t = useT("openmap");
+  const name = poi.tags?.name || poi.tags?.["name:de"] || t("poiUnnamed");
   const category = poi.tags?.amenity || poi.tags?.tourism || poi.tags?.leisure || "POI";
 
   const phone = poi.tags?.phone || poi.tags?.["contact:phone"];
@@ -29,9 +28,9 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
   const fullAddress = [address, postcode, city].filter(Boolean).join(", ");
 
   let osmId = `${poi.type}/${poi.id}`;
-  if (osmId.includes('https://www.openstreetmap.org/')) {
-    const parts = osmId.split('/');
-    osmId = `${parts[parts.length-2]}/${parts[parts.length-1]}`;
+  if (osmId.includes("https://www.openstreetmap.org/")) {
+    const parts = osmId.split("/");
+    osmId = `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
   }
   const osmUrl = getOpenStreetMapUrl(osmId);
 
@@ -43,39 +42,12 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
 
   const hasWaterInfo = localWater !== null && localWater.distance !== null;
 
-  const _handleCalculateWater = async () => {
-    if (hasWaterInfo) return;
-
-    const lat = poi.lat || poi.center?.lat;
-    const lon = poi.lon || poi.center?.lon;
-
-    if (!lat || !lon) {
-      toast.error("Keine Koordinaten für Wasserberechnung verfügbar");
-      return;
-    }
-
-    toast.loading("Wasser-Info wird berechnet...", { id: "water-calc" });
-
-    try {
-      const result = await calculateWaterDistance(lat, lon);
-
-      // Update both local state and original POI object
-      setLocalWater(result);
-      Object.assign(poi, {
-        wasserdistanz: result.distance,
-        wassertyp: result.wassertyp,
-      });
-
-      if (result.distance !== null) {
-        const msg = result.distance === 0 ? "Direkt am Wasser" : `${result.distance} m zum Wasser`;
-        toast.success(msg, { id: "water-calc" });
-      } else {
-        toast.error("Kein Wasser in der Nähe gefunden", { id: "water-calc" });
-      }
-    } catch (_error) {
-      toast.error("Fehler bei der Wasserberechnung. Bitte später erneut versuchen.", { id: "water-calc" });
-    }
-  };
+  const waterDisplayText =
+    localWater !== null && localWater.distance !== null
+      ? localWater.distance === 0
+        ? t("waterAtWater")
+        : t("waterDistanceMeters", { meters: String(localWater.distance) })
+      : null;
 
   return (
     <div className="min-w-[320px] space-y-4 text-sm p-1">
@@ -118,19 +90,21 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
               rel="noopener"
               className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors truncate"
             >
-              Website öffnen
+              {t("poiWebsiteOpen")}
             </a>
           </div>
         )}
 
         {/* Water Info */}
-        {hasWaterInfo && (
+        {hasWaterInfo && waterDisplayText !== null && (
           <div className="bg-muted/50 border border-muted rounded-md p-3">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <span className="text-lg">💧</span>
               <span>
-                {localWater.distance === 0 ? "Direkt am Wasser" : `${localWater.distance} m zum Wasser`}
-                {localWater.wassertyp && <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>}
+                {waterDisplayText}
+                {localWater.wassertyp && (
+                  <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>
+                )}
               </span>
             </div>
           </div>
@@ -139,19 +113,10 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
 
       {/* Actions */}
       <div className="flex gap-2 pt-3 border-t border-border">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex-1"
-          asChild
-        >
-          <a
-            href={osmUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <Button size="sm" variant="outline" className="flex-1" asChild>
+          <a href={osmUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4 mr-2" />
-            In OSM ansehen
+            {t("poiViewInOsm")}
           </a>
         </Button>
         <Button
@@ -159,8 +124,8 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
           variant="default"
           className="flex-1"
           onClick={() => {
-            if (typeof poi.id === 'string' && poi.id.startsWith('https://www.openstreetmap.org/')) {
-              const parts = poi.id.split('/');
+            if (typeof poi.id === "string" && poi.id.startsWith("https://www.openstreetmap.org/")) {
+              const parts = poi.id.split("/");
               const lastPart = parts[parts.length - 1];
               if (lastPart) {
                 poi.id = lastPart;
@@ -169,7 +134,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
             onImport?.(poi);
           }}
         >
-          In CRM importieren
+          {t("poiImportCrm")}
         </Button>
       </div>
     </div>

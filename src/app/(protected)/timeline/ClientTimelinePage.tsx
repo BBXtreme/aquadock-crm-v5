@@ -6,7 +6,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import TimelineEntryForm, { type TimelineEntryFormValues } from "@/components/features/timeline/TimelineEntryForm";
 import TimelineTable from "@/components/tables/TimelineTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/types/database.types";
 
 function ClientTimelinePage() {
+  const t = useT("timeline");
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -57,19 +59,13 @@ function ClientTimelinePage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (values: {
-      title: string;
-      content?: string;
-      company_id?: string | null;
-      contact_id?: string | null;
-      activity_type?: string;
-    }) => {
+    mutationFn: async (values: TimelineEntryFormValues) => {
       const payload = {
-        title: values.title.trim() || "Untitled entry",
+        title: values.title.trim() || t("defaultEntryTitle"),
         content: values.content?.trim() || null,
         activity_type: values.activity_type || "note",
         company_id: values.company_id || null,
-        contact_id: values.contact_id === "none" || !values.contact_id ? null : values.contact_id,
+        contact_id: values.contact_id ?? null,
       };
 
       const res = await fetch("/api/timeline", {
@@ -87,11 +83,11 @@ function ClientTimelinePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
       setDialogOpen(false);
-      toast.success("Eintrag erstellt");
+      toast.success(t("toastCreated"));
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("Erstellen fehlgeschlagen", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastCreateFailed"), { description: message });
     },
   });
 
@@ -108,20 +104,20 @@ function ClientTimelinePage() {
     <Suspense fallback={<LoadingState count={20} />}>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">Home → Timeline</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Timeline
+          <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t("title")}
           </h1>
-          <p className="text-muted-foreground">Aktivitäten & Historie</p>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>New Activity - Yeah!</Button>
+            <Button>{t("newActivity")}</Button>
           </DialogTrigger>
           <WideDialogContent size="xl">
             <DialogHeader>
-              <DialogTitle>Create New Timeline Entry</DialogTitle>
-              <DialogDescription>Add a new activity to the timeline.</DialogDescription>
+              <DialogTitle>{t("createDialogTitle")}</DialogTitle>
+              <DialogDescription>{t("createDialogDescription")}</DialogDescription>
             </DialogHeader>
             <TimelineEntryForm
               onSubmit={async (values) => {

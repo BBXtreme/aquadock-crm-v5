@@ -6,16 +6,19 @@
 import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { badgeColors } from "@/lib/constants/map-status-colors";
+import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
+import { useT } from "@/lib/i18n/use-translations";
 import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
 export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps) {
+  const t = useT("openmap");
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
-  const statusLabel = statusLabels[statusKey] || "Lead";
+  const statusLabel = t(getOpenmapStatusMsgKey(statusKey));
 
   // Full address
   const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
@@ -30,6 +33,13 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
       ? company.website
       : `https://${company.website}`
     : null;
+
+  const waterLine =
+    company.wasserdistanz !== null && company.wasserdistanz !== undefined
+      ? company.wasserdistanz === 0
+        ? t("waterAtWater")
+        : t("waterDistanceMeters", { meters: String(company.wasserdistanz) })
+      : null;
 
   return (
     <div className="min-w-[320px] space-y-4 text-sm p-1">
@@ -69,16 +79,12 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
           </div>
         )}
       </div>
-        {company.firmentyp && (
-          <div className="text-xs text-muted-foreground">{getFirmentypLabel(company.firmentyp)}</div>
-        )}
+      {company.firmentyp && (
+        <div className="text-xs text-muted-foreground">{getFirmentypLabel(company.firmentyp)}</div>
+      )}
 
       {/* Wasserdistanz */}
-      {company.wasserdistanz !== null && company.wasserdistanz !== undefined && (
-        <div className="text-xs text-muted-foreground">
-          {company.wasserdistanz === 0 ? "?" : company.wasserdistanz} m zum Wasser
-        </div>
-      )}
+      {waterLine !== null && <div className="text-xs text-muted-foreground">{waterLine}</div>}
 
       {/* Contact Info – Email + Website */}
       <div className="space-y-2">
@@ -100,7 +106,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 hover:underline truncate"
             >
-              Website öffnen
+              {t("popupWebsiteOpen")}
             </a>
           </div>
         )}
@@ -116,7 +122,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
             className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
           >
             <Globe className="h-3.5 w-3.5" />
-            OpenStreetMap Eintrag
+            {t("popupOpenOsm")}
           </a>
         </div>
       )}
@@ -131,12 +137,12 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
           type="button"
         >
           <ExternalLink className="h-4 w-4 mr-2" />
-          Firma öffnen
+          {t("popupOpenCompany")}
         </Button>
 
         {company.telefon && (
           <Button size="sm" variant="outline" asChild type="button">
-            <a href={`tel:${company.telefon}`} title="Anrufen">
+            <a href={`tel:${company.telefon}`} title={t("popupCallTitle")}>
               <Phone className="h-4 w-4" />
             </a>
           </Button>

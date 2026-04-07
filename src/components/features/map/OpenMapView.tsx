@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
 import type { CompanyForOpenMap } from "@/lib/actions/companies";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
+import { useT } from "@/lib/i18n/use-translations";
 import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provider";
 import { loadMapSettings } from "@/lib/services/map-settings";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
@@ -44,6 +46,7 @@ const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => 
 };
 
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
+  const t = useT("openmap");
   const mapRef = useRef<L.Map | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mapReady, setMapReady] = useState(false);
@@ -175,9 +178,9 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const trimmed = googleApiKeyForTiles?.trim();
     if (!trimmed) {
       setGoogleSession(null);
-      toast.error("Google-Karten: Kein API-Schlüssel", {
+      toast.error(t("googleNoApiKeyTitle"), {
         id: "google-map-tiles-session",
-        description: "Unter Einstellungen einen Schlüssel mit freigeschalteter Map Tiles API hinterlegen.",
+        description: t("googleNoApiKeyDescription"),
       });
       return;
     }
@@ -202,11 +205,11 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         setGoogleSession(null);
         const description =
           result.error === "network"
-            ? "Netzwerk prüfen und erneut versuchen."
+            ? t("googleSessionErrorNetwork")
             : result.error === "http"
-              ? "HTTP-Fehler: Schlüssel, Abrechnung und „Map Tiles API“ im Google-Projekt prüfen."
-              : "Unerwartete Antwort von Google — Session konnte nicht gelesen werden.";
-        toast.error("Google-Karten: Session fehlgeschlagen", {
+              ? t("googleSessionErrorHttp")
+              : t("googleSessionErrorUnexpected");
+        toast.error(t("googleSessionFailedTitle"), {
           id: "google-map-tiles-session",
           description,
         });
@@ -216,7 +219,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => {
       googleSessionRequestEpochRef.current += 1;
     };
-  }, [mapProvider, googleApiKeyForTiles, isDarkMode]);
+  }, [mapProvider, googleApiKeyForTiles, isDarkMode, t]);
 
   // New effect to handle initial map view from URL params
   useEffect(() => {
@@ -431,7 +434,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           className="absolute top-14 left-1/2 z-[1000] max-w-[min(92vw,24rem)] -translate-x-1/2 rounded-md border bg-card/90 px-2.5 py-1 text-center text-[11px] leading-snug text-muted-foreground shadow-sm backdrop-blur"
           role="status"
         >
-          Hinweis: Apple-Karten nutzen vorerst dieselbe OpenStreetMap/CARTO-Basiskarte wie zuvor.
+          {t("appleBasemapNotice")}
         </div>
       )}
 
@@ -441,12 +444,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {loadingOsm ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading POIs...
+              {t("loadingPois")}
             </>
           ) : (
             <>
               <MapPin className="h-4 w-4" />
-              {osmPois.length} OSM POIs
+              {t("poiCount", { count: osmPois.length })}
             </>
           )}
         </div>
@@ -459,7 +462,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           onClick={resetView}
           className="bg-card border shadow-md"
-          title="Alle Firmen anzeigen"
+          title={t("titleFitAllCompanies")}
           type="button"
         >
           <Building className="h-4 w-4 text-foreground" />
@@ -485,7 +488,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             }
           }}
           className="bg-card border shadow-md"
-          title="Cache leeren und POIs neu laden"
+          title={t("titleClearCacheReload")}
           type="button"
         >
           <RefreshCw className="h-4 w-4 text-foreground" />
@@ -505,7 +508,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       {showLegend && (
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
-            Status Legende
+            {t("legendTitle")}
             <button
               type="button"
               onClick={() => setShowLegend(false)}
@@ -515,10 +518,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
             </button>
           </div>
           <div className="space-y-2">
-            {Object.entries(statusLabels).map(([key, label]) => (
+            {Object.keys(statusLabels).map((key) => (
               <div key={key} className="flex items-center gap-3">
                 <div className="w-4 h-4 rounded-full" style={{ backgroundColor: statusColors[key] || "#6b7280" }} />
-                <span>{label}</span>
+                <span>{t(getOpenmapStatusMsgKey(key))}</span>
               </div>
             ))}
           </div>
