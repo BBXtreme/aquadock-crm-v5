@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
    "supabase:types": "npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
-    "supabase:types:local": "npx supabase gen types typescript --local > src/types/supabase.ts", 
     "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev",
     "dev:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next dev",
     "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" next build",
@@ -108,7 +107,6 @@
     "lint-staged": "^15.5.2",
     "postcss": "^8.5.8",
     "prettier": "3.8.1",
-    "supabase": "^2.84.7",
     "tailwindcss": "4.2.2",
     "typescript": "^5.9.3",
     "vitest": "^4.1.2"
