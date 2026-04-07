@@ -36,10 +36,6 @@ export async function getContacts(
 
   if (error) throw handleSupabaseError(error, "getContacts");
 
-  if (process.env.NODE_ENV === "development") {
-    console.log("[DEBUG] Raw contacts data sample:", data?.slice(0, 2));
-  }
-
   return { data: (data ?? []) as Contact[], total: count || 0 };
 }
 
@@ -76,14 +72,6 @@ export async function createContact(contact: ContactInsert, client?: SupabaseCli
 
   // Temporary fallback until auth is implemented
   contact.user_id = null;
-
-  // Log the exact payload for debugging
-  if (process.env.NODE_ENV === "development") {
-    console.log("[DEBUG] Creating contact with payload:", JSON.stringify(contact, null, 2));
-    if (contact.user_id) {
-      console.log("[DEBUG] Contact user_id:", contact.user_id);
-    }
-  }
 
   const { data, error } = await supabaseClient.from("contacts").insert(contact).select().single();
   if (error) throw handleSupabaseError(error, "createContact");

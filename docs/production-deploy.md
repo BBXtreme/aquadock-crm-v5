@@ -25,8 +25,13 @@
 
 ## Supabase Configuration
 
+### Storage (profile avatars)
+- [ ] Public bucket `avatars` exists (see [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql))
+- [ ] Storage policies allow each user to write only under `{auth.uid()}/…` and public `SELECT` on `avatars` (script above)
+- [ ] `profiles.avatar_url` can be updated by authenticated users per your table RLS (app stores the public object URL after upload)
+
 ### Row Level Security (RLS)
-- [ ] RLS enabled on all tables (companies, contacts, reminders, timeline, email_templates, email_log)
+- [ ] RLS enabled on all tables (companies, contacts, reminders, timeline, email_templates, email_log, profiles, user_settings)
 - [ ] User policies created for data isolation
 - [ ] Service role key used only for server-side operations
 - [ ] No direct client access to sensitive operations

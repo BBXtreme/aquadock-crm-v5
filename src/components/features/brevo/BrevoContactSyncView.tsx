@@ -29,7 +29,7 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -161,30 +161,137 @@ function useBrevoContactSyncTable(
 ) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const dataLenRef = useRef(0);
+  dataLenRef.current = data.length;
 
-  return useReactTable({
-    data,
-    columns: brevoContactSyncColumns,
-    getRowId: (row) => row.id,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    globalFilterFn: brevoContactSyncGlobalFilterFn,
-    onSortingChange: setSorting,
-    onRowSelectionChange: setRowSelection,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    initialState: {
-      pagination: { pageSize: 20 },
+  const onSortingChange = useCallback<OnChangeFn<SortingState>>((updater) => {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+      body: JSON.stringify({
+        sessionId: "c3d00c",
+        runId: "post-fix",
+        hypothesisId: "A",
+        location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onSortingChange",
+        message: "table onSortingChange invoked",
+        data: { dataLen: dataLenRef.current },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      void 0;
+    });
+    // #endregion
+    setSorting(updater);
+  }, []);
+
+  const onRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>((updater) => {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+      body: JSON.stringify({
+        sessionId: "c3d00c",
+        runId: "post-fix",
+        hypothesisId: "A",
+        location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onRowSelectionChange",
+        message: "table onRowSelectionChange invoked",
+        data: { dataLen: dataLenRef.current },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      void 0;
+    });
+    // #endregion
+    setRowSelection(updater);
+  }, []);
+
+  const onGlobalFilterChange = useCallback<OnChangeFn<string>>(
+    (updater) => {
+      // #region agent log
+      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+        body: JSON.stringify({
+          sessionId: "c3d00c",
+          runId: "post-fix",
+          hypothesisId: "B",
+          location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onGlobalFilterChange",
+          message: "table onGlobalFilterChange invoked",
+          data: { dataLen: dataLenRef.current },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {
+        void 0;
+      });
+      // #endregion
+      setGlobalFilter(updater);
     },
-    state: {
+    [setGlobalFilter],
+  );
+
+  const onColumnFiltersChange = useCallback<OnChangeFn<ColumnFiltersState>>(
+    (updater) => {
+      // #region agent log
+      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+        body: JSON.stringify({
+          sessionId: "c3d00c",
+          runId: "post-fix",
+          hypothesisId: "B",
+          location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onColumnFiltersChange",
+          message: "table onColumnFiltersChange invoked",
+          data: { dataLen: dataLenRef.current },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {
+        void 0;
+      });
+      // #endregion
+      setColumnFilters(updater);
+    },
+    [setColumnFilters],
+  );
+
+  const tableOptions = useMemo(
+    () => ({
+      data,
+      columns: brevoContactSyncColumns,
+      getRowId: (row: BrevoContactSyncRow) => row.id,
+      getCoreRowModel: getCoreRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      globalFilterFn: brevoContactSyncGlobalFilterFn,
+      onSortingChange,
+      onRowSelectionChange,
+      onGlobalFilterChange,
+      onColumnFiltersChange,
+      initialState: {
+        pagination: { pageSize: 20 },
+      },
+      state: {
+        sorting,
+        rowSelection,
+        globalFilter,
+        columnFilters,
+      },
+    }),
+    [
+      data,
       sorting,
       rowSelection,
       globalFilter,
       columnFilters,
-    },
-  });
+      onSortingChange,
+      onRowSelectionChange,
+      onGlobalFilterChange,
+      onColumnFiltersChange,
+    ],
+  );
+
+  return useReactTable(tableOptions);
 }
 
 function BrevoContactSyncSkeletonBody() {
@@ -290,6 +397,66 @@ export default function BrevoContactSyncView() {
   const queryClient = useQueryClient();
   const filters = useBrevoContactSyncFilters();
   const { data = [], isPending, isError, error } = useBrevoContactSyncContacts();
+  const prevPendingRef = useRef<boolean | undefined>(undefined);
+  if (prevPendingRef.current !== isPending) {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+      body: JSON.stringify({
+        sessionId: "c3d00c",
+        runId: "post-fix",
+        hypothesisId: "E",
+        location: "BrevoContactSyncView.tsx:BrevoContactSyncView:pendingTransition",
+        message: "contacts query isPending changed",
+        data: { isPending, dataLen: data.length },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      void 0;
+    });
+    // #endregion
+    prevPendingRef.current = isPending;
+  }
+
+  useEffect(() => {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+      body: JSON.stringify({
+        sessionId: "c3d00c",
+        runId: "post-fix",
+        hypothesisId: "E",
+        location: "BrevoContactSyncView.tsx:BrevoContactSyncView:mount",
+        message: "BrevoContactSyncView mounted",
+        data: {},
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      void 0;
+    });
+    // #endregion
+    return () => {
+      // #region agent log
+      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+        body: JSON.stringify({
+          sessionId: "c3d00c",
+          runId: "post-fix",
+          hypothesisId: "E",
+          location: "BrevoContactSyncView.tsx:BrevoContactSyncView:unmount",
+          message: "BrevoContactSyncView unmounted",
+          data: {},
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {
+      void 0;
+    });
+      // #endregion
+    };
+  }, []);
   const {
     data: brevoLists = [],
     isPending: listsPending,
@@ -503,7 +670,26 @@ export default function BrevoContactSyncView() {
                 <span className="text-sm text-muted-foreground whitespace-nowrap">Zeilen pro Seite</span>
                 <Select
                   value={String(table.getState().pagination.pageSize)}
-                  onValueChange={(v) => table.setPageSize(Number(v))}
+                  onValueChange={(v) => {
+                    // #region agent log
+                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+                      body: JSON.stringify({
+                        sessionId: "c3d00c",
+                        runId: "post-fix",
+                        hypothesisId: "C",
+                        location: "BrevoContactSyncView.tsx:pageSizeSelect:onValueChange",
+                        message: "page size Select onValueChange",
+                        data: { v },
+                        timestamp: Date.now(),
+                      }),
+                    }).catch(() => {
+      void 0;
+    });
+                    // #endregion
+                    table.setPageSize(Number(v));
+                  }}
                 >
                   <SelectTrigger size="sm" className="h-9 w-[4.5rem] bg-background">
                     <SelectValue />

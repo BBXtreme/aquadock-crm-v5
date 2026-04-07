@@ -14,6 +14,7 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 - **Dashboard**: KPIs and statistics with period filtering
 - **Mass Email**: Bulk email sending with templates
 - **Settings**: User preferences and SMTP configuration
+- **Profile**: Display name + profile photo (Supabase Storage `avatars` bucket)
 - Multi-user CRM with Row Level Security (RLS)
 - Companies + Contacts separation
 - Timeline & reminders per company
@@ -68,11 +69,19 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
 
 3. Configure Supabase variables
 
-   - NEXT_PUBLIC_SUPABASE_URL
-   - NEXT_PUBLIC_SUPABASE_ANON_KEY
-   - (optional) SUPABASE_SERVICE_ROLE_KEY
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - (optional) `SUPABASE_SERVICE_ROLE_KEY` — server-only; required for some admin flows
 
-4. Start development server
+4. Storage (profile avatars)
+
+   For **Profile → photo upload** and header avatars, create the public `avatars` bucket and storage policies once per Supabase project. In the Supabase dashboard → **SQL Editor**, run:
+
+   [`src/sql/storage-avatars-bucket.sql`](src/sql/storage-avatars-bucket.sql)
+
+   Details: [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) (section *Supabase Storage – avatars bucket*).
+
+5. Start development server
 
    Bash
 
@@ -80,9 +89,7 @@ Modern CRM for marinas, hotels, restaurants & water-sports businesses
    pnpm dev
    ```
 
-   Open
-
-   http://localhost:3000
+   Open `http://localhost:3000`.
 
 ## 4. Documentation
 
@@ -241,15 +248,15 @@ vercel
 
 ## 9. Supabase Schema & Types
 
-See SUPABASE_SCHEMA.md
+See [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) (database tables, RLS overview, **Storage `avatars`**, type generation).
 
-After schema changes:
+After **public** schema changes:
 
-Bash
-
+```bash
+pnpm supabase:types
 ```
-mkdir -p src/types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts
-```
+
+(Regenerates `src/types/supabase.ts`; project types re-export from `src/types/database.types.ts`. Replace the project id in `package.json` → `scripts.supabase:types` if you use a different Supabase project.)
 
 ## 10. Routing & Layout
 

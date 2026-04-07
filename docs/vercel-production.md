@@ -10,6 +10,7 @@
 - [ ] Middleware protection active for protected routes (/dashboard, /companies, /contacts, /reminders, /mass-email, /timeline, /settings)
 - [ ] Row Level Security (RLS) enabled on companies and contacts tables
 - [ ] User policies created for data access control
+- [ ] Supabase Storage: public `avatars` bucket + policies applied ([`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql)) — required for profile photos
 
 ## Build Settings
 - [ ] Build Command: `next build`

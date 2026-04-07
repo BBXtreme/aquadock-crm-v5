@@ -9,13 +9,14 @@ import type React from "react";
 import { useEffect, useState } from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
+import type { AuthUser } from "@/lib/auth/types";
 
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  user: { role: string; display_name?: string | null };
+  user: AuthUser;
 }
 
 export default function AppLayout({ children, user }: AppLayoutProps) {
@@ -54,7 +55,7 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
         />
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
+          <Header user={user} />
 
           <main className="relative flex-1 overflow-auto p-0">{children}</main>
         </div>

@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-01  
+**Last audited**: 2026-04-07  
 **Environment**: Supabase PostgreSQL 15+  
 
 ## 1. Database Overview
@@ -165,6 +165,9 @@
 **Constraints**: `role` must be 'user' or 'admin'
 **RLS**: Users can view/update own profile. Admins can view all profiles.
 
+**`avatar_url` (profile pictures)**  
+Holds the **public** Storage URL of the user’s avatar, or `null` if none. The app uploads files with the **browser** Supabase client (`createClient()` from `@/lib/supabase/browser`) and persists the URL via the server action `updateProfileAvatar` in `@/lib/actions/profile.ts`, which validates that the URL belongs to the current user’s folder under the `avatars` bucket.
+
 ## 3. Important Enums & Constraints
 
 - `companies.status`: `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren'`
@@ -184,34 +187,39 @@ OR
 (auth.role() IN ('admin', 'service_role'))
 
 -- Insert: WITH CHECK (auth.uid() = user_id)
-Admin & service_role bypass for maintenance & migrations.
-5. Performance Indexes (active)
-
-companies: status, kundentyp, user_id
-contacts: company_id, user_id, (company_id + is_primary)
-reminders: company_id, due_date, status, user_id
-timeline: company_id, user_id
-user_settings: user_id, key
-
 ```
 
+Admin and `service_role` bypass for maintenance and migrations where applicable.
 
+## 5. Performance indexes (summary)
+
+- companies: `status`, `kundentyp`, `user_id`
+- contacts: `company_id`, `user_id`, `(company_id + is_primary)`
+- reminders: `company_id`, `due_date`, `status`, `user_id`
+- timeline: `company_id`, `user_id`
+- user_settings: `user_id`, `key`
 
 ## 6. Maintenance & Type Safety
 
-Regenerate types after schema change
+Regenerate types after any **public** schema change:
 
-npx supabase gen types typescript --project-id <your-project-ref> > src/types/database.types.ts
+```bash
+pnpm supabase:types
+```
+
+This writes generated types to `src/types/supabase.ts` (consumed via `src/types/database.types.ts`).
 
 Service layer pattern (example):
-TypeScript// src/lib/supabase/services/companies.ts
-import { createServerClient } from "@/lib/supabase/server";
-import type { Database } from "@/lib/supabase/database.types";
+
+```ts
+// Example – align imports with the current codebase
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 export async function getCompanies(userId: string): Promise<Company[]> {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
     .from("companies")
     .select("*")
@@ -221,6 +229,8 @@ export async function getCompanies(userId: string): Promise<Company[]> {
   if (error) throw handleSupabaseError(error);
   return data ?? [];
 }
+```
+
 ## 7. Zod Validations
 
 The application uses Zod schemas for client-side form validation, ensuring data integrity before submission. These schemas are defined in `@/lib/validations/` and used with React Hook Form.
@@ -233,15 +243,40 @@ Key Zod schemas include:
 - `contactSchema`: Validates contact information (vorname, nachname, email, telefon, etc.)
 - `reminderSchema`: Validates reminder fields (title, due_date, priority, status, description)
 - `timelineEntrySchema`: Validates timeline entry fields (type, title, description)
-- `displayNameSchema`: Validates user display name
+- `displayNameSchema`: Validates user display name (profile form)
+- `profileAvatarSchema` / `parseProfileAvatarFile` (`@/lib/validations/profile.ts`): Validates `avatar_url` for server updates and file size/MIME before client upload
 
 All schemas include trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
 
 ## 8. Auth & Authorization
 
-Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are 'user' or 'admin', enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). No user_metadata is used for authorization.
+Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are `user` or `admin`, enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). Authorization does not rely on `user_metadata` for roles; `display_name` and `avatar_url` are read from `profiles` in `getCurrentUser()` for the shell (sidebar, header) and profile page.
 
-## 9. Change Log
+## 9. Supabase Storage – `avatars` bucket
+
+Profile photos use **Storage**, not bytea columns in Postgres.
+
+| Item | Detail |
+|------|--------|
+| Bucket id | `avatars` |
+| Public | Yes (public URLs for `AvatarImage` / `next/image`) |
+| Object path | `{user_uuid}/{user_uuid}-{timestamp}-{sanitized_filename}` — first path segment **must** equal `auth.uid()` for RLS |
+| App validation | Server action checks that `avatar_url` starts with `{NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/{user.id}/` |
+
+**One-time setup (new project or missing bucket)**  
+Run the script in the Supabase SQL Editor (idempotent policies via `DROP POLICY IF EXISTS`):
+
+- [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql)
+
+That creates the bucket (if missing), sets it public, and adds policies so authenticated users can **insert/update/delete** only under their own `{uid}/` prefix and **anyone can read** objects in `avatars` (suitable for public avatar URLs).
+
+**Operational notes**
+
+- Without this bucket, the client upload API returns `StorageError: Bucket not found`.
+- Table RLS for `profiles` is unchanged; only `avatar_url` text is updated.
+- Related UI: `@/components/ui/avatar-upload.tsx` (profile card), header avatar in `@/components/layout/Header.tsx`.
+
+## 10. Change Log
 
 2026-03-20 Initial v5 snapshot
 2026-03-21 Refined documentation, added index overview
@@ -256,3 +291,5 @@ Supabase Auth provides authentication with the `profiles` table as the single so
 2026-03-31 Added Zod validations section for form schemas
 2026-03-31 Added Auth & Authorization section summarizing Supabase Auth integration
 2026-04-01 Updated schema to reflect new columns: added created_by, updated_by, deleted_at, search_vector, and additional fields in companies, contacts, reminders, timeline, email_log. Updated timeline to use activity_type and content instead of type and description. Added relationships to profiles via created_by and updated_by.
+
+2026-04-07 Documented Storage `avatars` bucket, setup SQL, profile `avatar_url` flow, and `profileAvatarSchema`. Repaired RLS / indexes section formatting; aligned typegen docs with `pnpm supabase:types` → `src/types/supabase.ts`.

@@ -1,6 +1,6 @@
 // src/components/features/profile/ProfileForm.tsx
 // Client Component for Profile Form
-// This component renders a form for updating the user's display name and uploading a profile picture (upload functionality is not implemented yet).
+// This component renders a form for updating the user's display name.
 // It uses React Hook Form for form state management and Zod for validation. The form includes loading states and displays success or error toasts based on the outcome of the update operation.
 
 "use client";
@@ -13,7 +13,6 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { updateDisplayName } from "@/lib/services/profile";
 import type { Database } from "@/types/database.types";
 
@@ -70,18 +69,6 @@ export default function ProfilForm({ profile }: { profile: Profile }) {
             </FormItem>
           )}
         />
-
-        <div className="space-y-3">
-          <Label htmlFor="profilePicture" className="text-sm font-medium">Profile Picture</Label>
-          <Input 
-            id="profilePicture" 
-            type="file" 
-            accept="image/*" 
-            disabled 
-            className="h-11" 
-          />
-          <p className="text-muted-foreground text-sm">Upload functionality coming soon</p>
-        </div>
 
         <Button 
           type="submit" 

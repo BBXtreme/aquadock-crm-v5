@@ -95,7 +95,26 @@ export default function BrevoContactSyncForm() {
                 <FormLabel>Kundentyp-Filter</FormLabel>
                 <Select
                   value={field.value && field.value.length > 0 ? field.value : ALL_VALUE}
-                  onValueChange={(v) => field.onChange(v === ALL_VALUE ? undefined : v)}
+                  onValueChange={(v) => {
+                    // #region agent log
+                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+                      body: JSON.stringify({
+                        sessionId: "c3d00c",
+                        runId: "post-fix",
+                        hypothesisId: "D",
+                        location: "BrevoContactSyncForm.tsx:filterKundentyp:onValueChange",
+                        message: "mass sync Select kundentyp",
+                        data: { v },
+                        timestamp: Date.now(),
+                      }),
+                    }).catch(() => {
+                    void 0;
+                  });
+                    // #endregion
+                    field.onChange(v === ALL_VALUE ? undefined : v);
+                  }}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -123,7 +142,26 @@ export default function BrevoContactSyncForm() {
                 <FormLabel>Status-Filter</FormLabel>
                 <Select
                   value={field.value && field.value.length > 0 ? field.value : ALL_VALUE}
-                  onValueChange={(v) => field.onChange(v === ALL_VALUE ? undefined : v)}
+                  onValueChange={(v) => {
+                    // #region agent log
+                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
+                      body: JSON.stringify({
+                        sessionId: "c3d00c",
+                        runId: "post-fix",
+                        hypothesisId: "D",
+                        location: "BrevoContactSyncForm.tsx:filterStatus:onValueChange",
+                        message: "mass sync Select status",
+                        data: { v },
+                        timestamp: Date.now(),
+                      }),
+                    }).catch(() => {
+                    void 0;
+                  });
+                    // #endregion
+                    field.onChange(v === ALL_VALUE ? undefined : v);
+                  }}
                 >
                   <FormControl>
                     <SelectTrigger>
