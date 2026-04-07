@@ -11,28 +11,28 @@ const ROW_KEYS = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r
 const FILTER_CHIP_KEYS = ["fc0", "fc1", "fc2", "fc3", "fc4", "fc5", "fc6", "fc7"] as const;
 
 /**
- * Skeleton card chrome — NO borders, NO rings, NO lines at all.
- * Only soft background for clean grouping (premium airy look).
+ * Skeleton card chrome — NO borders, NO rings, NO lines.
+ * Only soft background with subtle fade transition.
  */
 export const skeletonCardChrome = cn(
-  "bg-card/92 text-card-foreground shadow-none dark:bg-card/88",
+  "bg-card/92 text-card-foreground shadow-none dark:bg-card/88 transition-all duration-300 ease-out",
 );
 
-/** Chart / wide panels — no borders */
+/** Chart / wide panels — no borders, with fade */
 export const skeletonPanelChrome = cn(
-  "rounded-2xl bg-card/92 p-6 shadow-none dark:bg-card/85",
+  "rounded-2xl bg-card/92 p-6 shadow-none dark:bg-card/85 transition-all duration-300 ease-out",
 );
 
-/** Dense row shell — completely borderless */
+/** Dense row shell — completely borderless with fade */
 export const skeletonDenseRowShell = cn(
-  "flex gap-4 rounded-lg bg-card/45 p-4 dark:bg-card/25",
+  "flex gap-4 rounded-lg bg-card/45 p-4 dark:bg-card/25 transition-all duration-300 ease-out",
 );
 
 const skeletonHeaderRule = "border-b border-transparent"; // invisible
 
 export const skeletonUltraLightDivider = "border-b border-transparent";
 
-/** Page root */
+/** Page root with subtle fade-in */
 function PageSkeletonRoot({
   children,
   label,
@@ -45,7 +45,7 @@ function PageSkeletonRoot({
   return (
     <div
       role="status"
-      className={cn(skeletonPageStack, className)}
+      className={cn(skeletonPageStack, "animate-in fade-in duration-500", className)}
       aria-busy="true"
       aria-live="polite"
       aria-label={label}
@@ -98,7 +98,7 @@ export function SkeletonStatStrip({
       {keys.map((key) => (
         <Skeleton
           key={key}
-          className="h-28 rounded-2xl bg-card/90 dark:bg-card/80"
+          className="h-28 rounded-2xl bg-card/90 dark:bg-card/80 transition-all duration-300 ease-out"
         />
       ))}
     </div>
@@ -116,7 +116,10 @@ export function SkeletonFilterStrip({
   return (
     <div className={cn("flex flex-wrap items-center gap-2 pb-4", className)}>
       {chips.map((chip, i) => (
-        <Skeleton key={keys[i]} className={cn("h-8 rounded-md", chip.width)} />
+        <Skeleton
+          key={keys[i]}
+          className={cn("h-8 rounded-md transition-all duration-300 ease-out", chip.width)}
+        />
       ))}
     </div>
   );
@@ -361,7 +364,7 @@ const MASS_EMAIL_RECIPIENT_ROW_KEYS = ["me-r0", "me-r1", "me-r2", "me-r3", "me-r
 const BREVO_FORM_FIELD_KEYS = ["bf-0", "bf-1", "bf-2", "bf-3", "bf-4", "bf-5"] as const;
 const BREVO_LIST_ROW_KEYS = ["bc-0", "bc-1", "bc-2", "bc-3", "bc-4", "bc-5"] as const;
 
-/** Mass email: header, two-column composer + recipients, preview strip */
+/** Mass email skeleton */
 export function MassEmailPageSkeleton() {
   return (
     <PageSkeletonRoot label="Massen-E-Mail wird geladen">
@@ -445,7 +448,7 @@ export function MassEmailPageSkeleton() {
   );
 }
 
-/** Brevo main area below static page header — no lines */
+/** Brevo main area — no lines, with fade */
 export function BrevoMarketingContentSkeleton() {
   return (
     <div
@@ -515,7 +518,7 @@ export function BrevoMarketingContentSkeleton() {
 
 const SETTINGS_SMTP_ROW_KEYS = ["ss0", "ss1", "ss2", "ss3", "ss4", "ss5"] as const;
 
-/** Settings grid below page header */
+/** Settings grid */
 export function SettingsPageSkeleton() {
   return (
     <div
@@ -780,11 +783,11 @@ export function DashboardContentSkeleton() {
 
 const OPENMAP_CONTROL_KEYS = ["omc-0", "omc-1", "omc-2"] as const;
 
-/** OpenMap skeleton — no borders */
+/** OpenMap skeleton — no borders, with fade */
 export function OpenMapViewSkeleton() {
   return (
     <div
-      className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-muted/18 dark:bg-muted/22"
+      className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-muted/18 dark:bg-muted/22 transition-all duration-500 ease-out"
       role="status"
       aria-busy="true"
       aria-live="polite"
@@ -799,7 +802,7 @@ export function OpenMapViewSkeleton() {
         aria-hidden
       />
 
-      <div className="absolute top-4 left-4 z-[1000] rounded-md bg-card/88 px-3 py-2 shadow-none backdrop-blur-sm dark:bg-card/85">
+      <div className="absolute top-4 left-4 z-[1000] rounded-md bg-card/88 px-3 py-2 shadow-none backdrop-blur-sm dark:bg-card/85 transition-all duration-300 ease-out">
         <Skeleton className="h-4 w-36" />
       </div>
 
