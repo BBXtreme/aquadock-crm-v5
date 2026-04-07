@@ -4,19 +4,55 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
+import {
+  applyAppearanceColorTokens,
+} from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import {
+  getNotificationPreferenceSuccessToast,
+  NOTIFICATION_DEFAULTS,
+  NOTIFICATION_UI,
+} from "@/lib/constants/notifications";
+import {
+  APPEARANCE_COLOR_LABELS,
+  APPEARANCE_COLOR_SCHEME_IDS,
+  APPEARANCE_COLOR_SWATCH,
+} from "@/lib/constants/theme";
+import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
+import {
+  DEFAULT_APPEARANCE,
+  fetchNotificationPreferences,
+  loadAppearanceSettings,
+  saveAppearanceColorScheme,
+  saveAppearanceLocale,
+  saveAppearanceTheme,
+} from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  type AppearanceColorScheme,
+  type AppearanceLocale,
+  type AppearanceTheme,
+  appearanceColorSchemeSchema,
+  appearanceLocaleSchema,
+  appearanceThemeSchema,
+} from "@/lib/validations/appearance";
+import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
+import type { NotificationPreferences } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -63,10 +99,7 @@ out center;
 };
 
 function ClientSettingsPage() {
-  const [notifications, setNotifications] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [theme, setTheme] = useState("system");
-  const [language, setLanguage] = useState("en");
+  const [selectMounted, setSelectMounted] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -89,8 +122,17 @@ function ClientSettingsPage() {
   const [brevoSenderName, setBrevoSenderName] = useState("");
   const [brevoSenderEmail, setBrevoSenderEmail] = useState("");
 
+  const [mapProvider, setMapProvider] = useState<MapProviderId>("osm");
+  const [googleMapsApiKey, setGoogleMapsApiKey] = useState("");
+  const [appleMapkitToken, setAppleMapkitToken] = useState("");
+
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const { theme: nextTheme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setSelectMounted(true);
+  }, []);
 
   const loadFromLocalStorage = useCallback(() => {
     const maxSize = localStorage.getItem("openmap_maxCacheSize");
@@ -107,14 +149,142 @@ function ClientSettingsPage() {
     });
   }, [defaultOverpassEndpoints]);
 
-  const { data: settings = {}, isLoading } = useQuery({
+  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_settings").select("*").single();
-      if (error && error.code !== "PGRST116") throw error; // PGRST116 is "not found"
-      return data || {};
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return {};
+      const { data, error } = await supabase.from("user_settings").select("key, value").eq("user_id", user.id);
+      if (error) throw error;
+      const map: Record<string, unknown> = {};
+      for (const row of data ?? []) {
+        map[row.key] = row.value;
+      }
+      return map;
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
+    queryKey: ["map-provider-settings"],
+    queryFn: loadMapSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: appearanceRemote, isLoading: appearanceLoading } = useQuery({
+    queryKey: ["appearance-settings"],
+    queryFn: async () => {
+      const loaded = await loadAppearanceSettings();
+      return loaded ?? DEFAULT_APPEARANCE;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const appearance = appearanceRemote ?? DEFAULT_APPEARANCE;
+
+  useEffect(() => {
+    if (mapProviderSettings === undefined) return;
+    setMapProvider(mapProviderSettings.map_provider);
+    setGoogleMapsApiKey(mapProviderSettings.google_maps_api_key ?? "");
+    setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
+  }, [mapProviderSettings]);
+
+  const { data: notificationPrefs, isLoading: notificationPrefsLoading } = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return {
+          pushEnabled: NOTIFICATION_DEFAULTS.pushEnabled,
+          emailEnabled: NOTIFICATION_DEFAULTS.emailEnabled,
+        };
+      }
+      return fetchNotificationPreferences(supabase, user.id);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveNotificationMutation = useMutation({
+    mutationFn: async (vars: { prefs: NotificationPreferences; changed: "push" | "email" }) => {
+      await saveNotificationPreferencesAction(vars.prefs);
+      return { changed: vars.changed, prefs: vars.prefs };
+    },
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ["notification-preferences"] });
+      const previous = queryClient.getQueryData<NotificationPreferences>(["notification-preferences"]);
+      queryClient.setQueryData(["notification-preferences"], vars.prefs);
+      return { previous };
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["notification-preferences"], context.previous);
+      }
+      const message = error instanceof Error ? error.message : NOTIFICATION_UI.unknownError;
+      if (message === NOTIFICATION_UI.toastValidationError) {
+        toast.error(NOTIFICATION_UI.toastValidationError);
+      } else {
+        toast.error(NOTIFICATION_UI.toastSaveErrorTitle, { description: message });
+      }
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+      toast.success(getNotificationPreferenceSuccessToast(result.changed, result.prefs));
+    },
+  });
+
+  const savingPush =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "push";
+  const savingEmail =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
+
+  const appearanceThemeMutation = useMutation({
+    mutationFn: async (next: AppearanceTheme) => {
+      await saveAppearanceTheme(next);
+    },
+    onSuccess: async (_data, next) => {
+      setTheme(next);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Theme gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Theme konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceLocaleMutation = useMutation({
+    mutationFn: async (locale: AppearanceLocale) => {
+      await saveAppearanceLocale(locale);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Sprache gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Sprache konnte nicht gespeichert werden", { description: message });
+    },
+  });
+
+  const appearanceColorMutation = useMutation({
+    mutationFn: async (colorScheme: AppearanceColorScheme) => {
+      await saveAppearanceColorScheme(colorScheme);
+    },
+    onSuccess: async (_data, colorScheme) => {
+      const isDark =
+        typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      applyAppearanceColorTokens(colorScheme, isDark);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Farbschema gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Farbschema konnte nicht gespeichert werden", { description: message });
+    },
   });
 
   const { data: brevoSenderSettings } = useQuery({
@@ -139,6 +309,34 @@ function ClientSettingsPage() {
       return { name, email };
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  const mapSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const parsed = mapSettingsFormSchema.safeParse({
+        map_provider: mapProvider,
+        google_maps_api_key: googleMapsApiKey,
+        apple_mapkit_token: appleMapkitToken,
+      });
+      if (!parsed.success) {
+        const errs = parsed.error.flatten().fieldErrors;
+        const first = errs.map_provider?.[0] ?? errs.google_maps_api_key?.[0] ?? errs.apple_mapkit_token?.[0];
+        throw new Error(first ?? "Ungültige Eingabe");
+      }
+      await saveMapSettings({
+        map_provider: parsed.data.map_provider,
+        google_maps_api_key: parsed.data.google_maps_api_key ?? null,
+        apple_mapkit_token: parsed.data.apple_mapkit_token ?? null,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["map-provider-settings"] });
+      toast.success("Karten-Einstellungen gespeichert");
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      toast.error("Karten-Einstellungen konnten nicht gespeichert werden", { description: message });
+    },
   });
 
   const brevoSenderMutation = useMutation({
@@ -240,48 +438,93 @@ function ClientSettingsPage() {
     }
   }, [brevoSenderSettings]);
 
+  const isLoading =
+    settingsLoading || notificationPrefsLoading || mapProviderLoading || appearanceLoading;
+
   if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-        </div>
-      </div>
-    );
+    return <SettingsPageSkeleton />;
   }
 
   return (
     <div>
-      <div>
-        <p className="text-muted-foreground text-sm">Home {">"} Settings</p>
-        <h1 className="font-semibold text-3xl tracking-tight">Settings</h1>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Notifications Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
-              Notifications
+              {NOTIFICATION_UI.cardTitle}
             </CardTitle>
+            <CardDescription>{NOTIFICATION_UI.cardDescription}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="notifications" className="text-sm font-medium">
-                Push Notifications
-              </Label>
-              <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
+          <CardContent
+            className={`space-y-6 ${notificationPrefsLoading ? "animate-pulse" : ""}`}
+            aria-busy={notificationPrefsLoading || saveNotificationMutation.isPending}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-push" className="text-sm font-medium">
+                  {NOTIFICATION_UI.pushLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.pushHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-push"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).pushEnabled}
+                  disabled={notificationPrefsLoading || savingPush}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: checked, emailEnabled: base.emailEnabled },
+                      changed: "push",
+                    });
+                  }}
+                />
+                {savingPush ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="emailAlerts" className="text-sm font-medium">
-                Email Alerts
-              </Label>
-              <Switch id="emailAlerts" checked={emailAlerts} onCheckedChange={setEmailAlerts} />
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-email" className="text-sm font-medium">
+                  {NOTIFICATION_UI.emailLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.emailHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-email"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).emailEnabled}
+                  disabled={notificationPrefsLoading || savingEmail}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: base.pushEnabled, emailEnabled: checked },
+                      changed: "email",
+                    });
+                  }}
+                />
+                {savingEmail ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm">Configure how you receive notifications</p>
           </CardContent>
         </Card>
 
@@ -292,13 +535,28 @@ function ClientSettingsPage() {
               <Palette className="mr-2 h-5 w-5" />
               Appearance
             </CardTitle>
+            <CardDescription className="text-sm leading-relaxed">
+              Wähle Hell-, Dunkel- oder Systemmodus (next-themes), die Oberflächensprache für{" "}
+              <span className="font-mono text-foreground">{"<html lang>"}</span>, und ein Farbschema für Primär-
+              und Akzentfarben (CSS-Variablen). Einstellungen werden im Konto gespeichert und lokal
+              gespiegelt. Das hier gespeicherte Theme ist die Voreinstellung beim nächsten App-Start;
+              in der laufenden Sitzung kannst du unabhängig davon in der Kopfzeile zwischen Hell und
+              Dunkel wechseln (ohne die gespeicherte Voreinstellung zu ändern).
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Theme</Label>
-              <Select value={theme} onValueChange={setTheme}>
-                <SelectTrigger>
-                  <SelectValue />
+              <Label htmlFor="appearance-theme">Theme</Label>
+              <Select
+                value={selectMounted && nextTheme ? nextTheme : undefined}
+                onValueChange={(value) => {
+                  const parsed = appearanceThemeSchema.safeParse(value);
+                  if (parsed.success) appearanceThemeMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceThemeMutation.isPending}
+              >
+                <SelectTrigger id="appearance-theme" className="w-full max-w-md">
+                  <SelectValue placeholder={selectMounted ? undefined : "…"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Light</SelectItem>
@@ -308,9 +566,16 @@ function ClientSettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger>
+              <Label htmlFor="appearance-language">Language</Label>
+              <Select
+                value={appearance.locale}
+                onValueChange={(value) => {
+                  const parsed = appearanceLocaleSchema.safeParse(value);
+                  if (parsed.success) appearanceLocaleMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceLocaleMutation.isPending}
+              >
+                <SelectTrigger id="appearance-language" className="w-full max-w-md">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,7 +585,120 @@ function ClientSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">Customize your app appearance</p>
+            <div className="space-y-2">
+              <Label htmlFor="appearance-color">Color theme</Label>
+              <Select
+                value={appearance.colorScheme}
+                onValueChange={(value) => {
+                  const parsed = appearanceColorSchemeSchema.safeParse(value);
+                  if (parsed.success) appearanceColorMutation.mutate(parsed.data);
+                }}
+                disabled={appearanceColorMutation.isPending}
+              >
+                <SelectTrigger id="appearance-color" className="w-full max-w-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {APPEARANCE_COLOR_SCHEME_IDS.map((id) => (
+                    <SelectItem key={id} value={id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="size-3 shrink-0 rounded-full border border-border"
+                          style={{ backgroundColor: APPEARANCE_COLOR_SWATCH[id] }}
+                          aria-hidden
+                        />
+                        {APPEARANCE_COLOR_LABELS[id]}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Vollständige Übersetzung der App-Inhalte kann später per i18n ergänzt werden; die Auswahl ist
+              bereits persistent.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Map provider (OpenMap basemap) */}
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+          <CardHeader className="space-y-2 pb-2">
+            <CardTitle className="flex items-center text-lg">
+              <Layers className="mr-2 h-5 w-5 shrink-0" />
+              OpenMap — Karten-Anbieter
+            </CardTitle>
+            <CardDescription className="text-sm leading-relaxed">
+              Voreinstellung:{" "}
+              <span className="font-medium text-foreground">OpenStreetMap (CARTO)</span> — unverändert zur bisherigen
+              Karte (Tiles, Attribution, Verhalten). Google und Apple sind optional.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-0">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-provider-select">
+                Basiskarte
+              </Label>
+              <Select
+                value={mapProvider}
+                onValueChange={(v) => {
+                  const parsed = mapProviderSchema.safeParse(v);
+                  if (parsed.success) setMapProvider(parsed.data);
+                }}
+              >
+                <SelectTrigger id="map-provider-select" className="w-full max-w-md">
+                  <SelectValue placeholder="Anbieter wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="osm">OpenStreetMap (CARTO) — Standard</SelectItem>
+                  <SelectItem value="google">Google Maps (Map Tiles API)</SelectItem>
+                  <SelectItem value="apple">Apple Maps (Basiskarte wie OSM)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-google-api-key">
+                Google API-Schlüssel
+              </Label>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Nur für Google-Basiskarte. Map Tiles API aktivieren und Abrechnung im Google-Cloud-Projekt erlauben.
+              </p>
+              <Input
+                id="map-google-api-key"
+                className="max-w-md"
+                type="password"
+                autoComplete="off"
+                value={googleMapsApiKey}
+                onChange={(e) => setGoogleMapsApiKey(e.target.value)}
+                placeholder="Leer lassen, wenn ungenutzt"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium" htmlFor="map-apple-mapkit-token">
+                Apple MapKit JWT
+              </Label>
+              <p className="text-muted-foreground text-xs leading-snug">
+                Optional für künftiges MapKit. Bis dahin: gleiche OSM/CARTO-Basiskarte wie beim Standard.
+              </p>
+              <Input
+                id="map-apple-mapkit-token"
+                className="max-w-md"
+                type="password"
+                autoComplete="off"
+                value={appleMapkitToken}
+                onChange={(e) => setAppleMapkitToken(e.target.value)}
+                placeholder="Leer lassen, wenn ungenutzt"
+              />
+            </div>
+            <div className="pt-1">
+              <Button
+                type="button"
+                onClick={() => mapSettingsMutation.mutate()}
+                disabled={mapSettingsMutation.isPending}
+              >
+                {mapSettingsMutation.isPending ? "Speichern…" : "Speichern"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -440,9 +818,23 @@ function ClientSettingsPage() {
             >
               {brevoSenderMutation.isPending ? "Speichern…" : "Brevo-Absender speichern"}
             </Button>
-          </CardContent>
+            <p className="text-sm text-muted-foreground">
+              Kampagnen unter{" "}
+              <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo
+              </Link>
+              , Kontakt-Sync unter{" "}
+              <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo/sync
+              </Link>
+              . API-Schlüssel: Umgebungsvariable{" "}
+              <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
+              <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
+              <span className="font-mono">xkeysib-</span>).
+            </p>
+            </CardContent>
         </Card>
-
+        
         {/* SMTP Settings */}
         <div className="md:col-span-2">
           <SmtpSettings />

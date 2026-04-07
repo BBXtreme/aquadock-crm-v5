@@ -3,24 +3,9 @@ import { Users } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { BrevoMarketingContentSkeleton } from "@/components/ui/page-list-skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import ClientBrevoPage from "./ClientBrevoPage";
-
-function BrevoPageSkeleton() {
-  return (
-    <div className="space-y-10">
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-64 max-w-full" />
-        <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-48 w-full rounded-xl" />
-      </div>
-    </div>
-  );
-}
 
 export default async function BrevoPage() {
   await requireUser();
@@ -47,7 +32,7 @@ export default async function BrevoPage() {
           </Button>
         </header>
 
-        <Suspense fallback={<BrevoPageSkeleton />}>
+        <Suspense fallback={<BrevoMarketingContentSkeleton />}>
           <ClientBrevoPage />
         </Suspense>
       </div>

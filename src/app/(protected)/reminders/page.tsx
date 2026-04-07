@@ -6,6 +6,7 @@
 // The page also handles loading and error states, providing feedback to the user accordingly.
 
 import { Suspense } from "react";
+import { RemindersPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import ClientRemindersPage from "./ClientRemindersPage";
 
@@ -13,9 +14,9 @@ export default async function RemindersPage() {
   const _user = await requireUser();
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">  
-      <div className="container mx-auto space-y-8 p-6 sm:p-6 lg:p-8">
-        <Suspense fallback={<div>Loading reminders...</div>}>
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
+      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
+        <Suspense fallback={<RemindersPageSkeleton />}>
           <ClientRemindersPage />
         </Suspense>
       </div>

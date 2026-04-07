@@ -22,9 +22,13 @@ function makeQueryClient() {
         const queryKey = query?.meta?.queryKey || query?.queryKey;
         const context = queryKey ? ` (Query: ${Array.isArray(queryKey) ? queryKey.join(" > ") : queryKey})` : "";
 
-        toast.error("An error occurred", {
-          description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
-          id: "query-error",
+        // Defer toast until after the current commit so Sonner has mounted (Toaster is ordered before
+        // {children} in ClientLayout; microtask avoids sync updates during React mount).
+        queueMicrotask(() => {
+          toast.error("An error occurred", {
+            description: `${error instanceof Error ? error.message : "An unexpected error occurred"}${context}`,
+            id: "query-error",
+          });
         });
       },
     }),

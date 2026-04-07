@@ -34,11 +34,16 @@ export default function SmtpSettings() {
     });
   }, []);
 
-  const loadConfig = useCallback(async () => {
+  const loadConfig = useCallback(async (opts?: { signal?: AbortSignal; notify?: boolean }) => {
+    const signal = opts?.signal;
+    const notify = opts?.notify === true;
     setIsLoadingConfig(true);
     try {
       const { getSmtpConfig } = await import("@/lib/services/smtp");
       const config = await getSmtpConfig();
+      if (signal?.aborted) {
+        return;
+      }
       if (config) {
         setHost(config.host || "");
         setPort(String(config.port) || "587");
@@ -46,27 +51,41 @@ export default function SmtpSettings() {
         setPassword(config.password || "");
         setFromName(config.fromName || "");
         setSecure(config.secure || false);
-        toast.success("SMTP-Konfiguration geladen", {
-          description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
-        });
-      } else {
+        if (notify) {
+          toast.success("SMTP-Konfiguration geladen", {
+            description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
+          });
+        }
+      } else if (notify) {
         toast.success("SMTP-Konfiguration geladen", {
           description: "Keine gespeicherte Konfiguration gefunden. Felder sind leer.",
         });
       }
     } catch (error) {
+      if (signal?.aborted) {
+        return;
+      }
       console.error("Failed to load SMTP config:", error);
       const message = error instanceof Error ? error.message : "Unbekannter Fehler beim Laden der Konfiguration";
       toast.error("Fehler beim Laden der SMTP-Konfiguration", {
         description: message,
       });
     } finally {
-      setIsLoadingConfig(false);
+      if (!signal?.aborted) {
+        setIsLoadingConfig(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (currentUser) loadConfig();
+    if (!currentUser) {
+      return;
+    }
+    const ac = new AbortController();
+    void loadConfig({ signal: ac.signal });
+    return () => {
+      ac.abort();
+    };
   }, [currentUser, loadConfig]);
 
   const handleSave = async () => {
@@ -169,7 +188,7 @@ export default function SmtpSettings() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={loadConfig} disabled={isLoadingConfig} variant="outline" size="icon">
+            <Button onClick={() => void loadConfig()} disabled={isLoadingConfig} variant="outline" size="icon">
               <RefreshCw className={`h-4 w-4 ${isLoadingConfig ? "animate-spin" : ""}`} />
             </Button>
             <Button onClick={handleTest} className="flex-1">
