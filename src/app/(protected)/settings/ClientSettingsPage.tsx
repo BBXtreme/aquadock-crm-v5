@@ -316,7 +316,7 @@ function ClientSettingsPage() {
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="fr">Croatian</SelectItem>
                 </SelectContent>
               </Select>
             </div>
