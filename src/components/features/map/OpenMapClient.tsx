@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
 import type { CompanyForOpenMap } from "@/lib/actions/companies";
 
 const OpenMapView = dynamic(() => import("./OpenMapView"), { ssr: false });
@@ -31,7 +31,7 @@ export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
 
   return (
     <ErrorBoundary>
-      <Suspense fallback={<LoadingState count={8} />}>
+      <Suspense fallback={<OpenMapViewSkeleton />}>
         <OpenMapView initialCompanies={initialCompanies} />
       </Suspense>
     </ErrorBoundary>

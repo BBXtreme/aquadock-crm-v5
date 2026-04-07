@@ -21,7 +21,7 @@ import {
 } from "@/lib/constants/notifications";
 import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
-import { safeParseNotificationPreferences } from "@/lib/validations/settings";
+import { notificationPreferencesSchema } from "@/lib/validations/settings";
 import type { Database, UserSetting, UserSettingInsert } from "@/types/database.types";
 import type { Json } from "@/types/supabase";
 
@@ -85,7 +85,7 @@ export async function saveNotificationPreferencesFromInput(
   userId: string,
   input: unknown,
 ): Promise<NotificationPreferencesState> {
-  const parsed = safeParseNotificationPreferences(input);
+  const parsed = notificationPreferencesSchema.safeParse(input);
   if (!parsed.success) {
     throw new Error(NOTIFICATION_UI.toastValidationError);
   }

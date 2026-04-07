@@ -118,14 +118,15 @@ typography settings for the body and headings.
 }
 
 @layer components {
-	[data-slot="skeleton"] {
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"] {
 		position: relative;
 		overflow: hidden;
 	}
-	[data-slot="skeleton"]::after {
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
 		content: "";
 		position: absolute;
 		inset: 0;
+		pointer-events: none;
 		transform: translateX(-100%);
 		background: linear-gradient(
 			90deg,
@@ -134,6 +135,13 @@ typography settings for the body and headings.
 			transparent
 		);
 		animation: skeleton-shimmer 1.65s ease-in-out infinite;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
+		animation: none;
+		opacity: 0;
 	}
 }
 

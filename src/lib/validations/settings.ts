@@ -8,8 +8,3 @@ export const notificationPreferencesSchema = z
   .strict();
 
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
-
-/** Client and server use the same parse path for notification payloads */
-export function safeParseNotificationPreferences(input: unknown) {
-  return notificationPreferencesSchema.safeParse(input);
-}

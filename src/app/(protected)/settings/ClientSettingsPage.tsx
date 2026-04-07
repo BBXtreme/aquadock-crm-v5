@@ -13,15 +13,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
+import {
+  getNotificationPreferenceSuccessToast,
+  NOTIFICATION_DEFAULTS,
+  NOTIFICATION_UI,
+} from "@/lib/constants/notifications";
 import { fetchNotificationPreferences } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
-import { type NotificationPreferences, safeParseNotificationPreferences } from "@/lib/validations/settings";
+import type { NotificationPreferences } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -139,21 +144,13 @@ function ClientSettingsPage() {
 
   const saveNotificationMutation = useMutation({
     mutationFn: async (vars: { prefs: NotificationPreferences; changed: "push" | "email" }) => {
-      const parsed = safeParseNotificationPreferences(vars.prefs);
-      if (!parsed.success) {
-        throw new Error(NOTIFICATION_UI.toastValidationError);
-      }
-      await saveNotificationPreferencesAction(parsed.data);
-      return { changed: vars.changed, prefs: parsed.data };
+      await saveNotificationPreferencesAction(vars.prefs);
+      return { changed: vars.changed, prefs: vars.prefs };
     },
     onMutate: async (vars) => {
-      const parsed = safeParseNotificationPreferences(vars.prefs);
-      if (!parsed.success) {
-        return {};
-      }
       await queryClient.cancelQueries({ queryKey: ["notification-preferences"] });
       const previous = queryClient.getQueryData<NotificationPreferences>(["notification-preferences"]);
-      queryClient.setQueryData(["notification-preferences"], parsed.data);
+      queryClient.setQueryData(["notification-preferences"], vars.prefs);
       return { previous };
     },
     onError: (error, _vars, context) => {
@@ -169,15 +166,7 @@ function ClientSettingsPage() {
     },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
-      if (result.changed === "push") {
-        toast.success(
-          result.prefs.pushEnabled ? NOTIFICATION_UI.toastPushActivated : NOTIFICATION_UI.toastPushDeactivated,
-        );
-      } else {
-        toast.success(
-          result.prefs.emailEnabled ? NOTIFICATION_UI.toastEmailActivated : NOTIFICATION_UI.toastEmailDeactivated,
-        );
-      }
+      toast.success(getNotificationPreferenceSuccessToast(result.changed, result.prefs));
     },
   });
 
@@ -310,15 +299,7 @@ function ClientSettingsPage() {
   }, [brevoSenderSettings]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-        </div>
-      </div>
-    );
+    return <SettingsPageSkeleton />;
   }
 
   return (

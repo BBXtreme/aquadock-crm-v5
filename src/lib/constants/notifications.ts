@@ -1,5 +1,7 @@
 // Keys and defaults for notification preferences in user_settings (EAV).
 
+import type { NotificationPreferences } from "@/lib/validations/settings";
+
 export const NOTIFICATION_SETTING_KEYS = {
   push: "notification_push_enabled",
   email: "notification_email_enabled",
@@ -35,3 +37,16 @@ export const NOTIFICATION_UI = {
   toastValidationError: "Ungültige Benachrichtigungseinstellungen",
   unknownError: "Unbekannter Fehler",
 } as const;
+
+export type NotificationPreferenceChannel = "push" | "email";
+
+/** Success toast for the channel that was toggled (all strings from NOTIFICATION_UI). */
+export function getNotificationPreferenceSuccessToast(
+  changed: NotificationPreferenceChannel,
+  prefs: NotificationPreferences,
+): string {
+  if (changed === "push") {
+    return prefs.pushEnabled ? NOTIFICATION_UI.toastPushActivated : NOTIFICATION_UI.toastPushDeactivated;
+  }
+  return prefs.emailEnabled ? NOTIFICATION_UI.toastEmailActivated : NOTIFICATION_UI.toastEmailDeactivated;
+}
