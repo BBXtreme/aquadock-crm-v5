@@ -50,10 +50,12 @@ export default function SmtpSettings() {
         setPassword(config.password || "");
         setFromName(config.fromName || "");
         setSecure(config.secure || false);
-        toast.success("SMTP-Konfiguration geladen", {
-          description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
-        });
-      } else {
+        if (notify) {
+          toast.success("SMTP-Konfiguration geladen", {
+            description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
+          });
+        }
+      } else if (notify) {
         toast.success("SMTP-Konfiguration geladen", {
           description: "Keine gespeicherte Konfiguration gefunden. Felder sind leer.",
         });

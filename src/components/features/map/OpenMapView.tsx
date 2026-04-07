@@ -4,11 +4,13 @@
 
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import L from "leaflet";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
+import { toast } from "sonner";
 
 import "leaflet/dist/leaflet.css";
 
@@ -18,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
 import type { CompanyForOpenMap } from "@/lib/actions/companies";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provider";
+import { loadMapSettings } from "@/lib/services/map-settings";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
@@ -54,10 +58,22 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
   const [hasCentered, setHasCentered] = useState(false);
+  const [googleSession, setGoogleSession] = useState<string | null>(null);
+  const googleTilesCacheRef = useRef<{ cacheKey: string; session: string } | null>(null);
+  const googleSessionRequestEpochRef = useRef(0);
 
   const searchParams = useSearchParams();
 
   const { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi } = useMapPopupActions();
+
+  const { data: mapPrefs } = useQuery({
+    queryKey: ["map-provider-settings"],
+    queryFn: loadMapSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const mapProvider = mapPrefs?.map_provider ?? "osm";
+  const googleApiKeyForTiles = mapPrefs?.google_maps_api_key ?? null;
 
   // Load POI cache from localStorage
   useEffect(() => {
@@ -147,6 +163,61 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (mapProvider === "google") return;
+    setGoogleSession(null);
+    toast.dismiss("google-map-tiles-session");
+  }, [mapProvider]);
+
+  useEffect(() => {
+    if (mapProvider !== "google") return;
+
+    const trimmed = googleApiKeyForTiles?.trim();
+    if (!trimmed) {
+      setGoogleSession(null);
+      toast.error("Google-Karten: Kein API-Schlüssel", {
+        id: "google-map-tiles-session",
+        description: "Unter Einstellungen einen Schlüssel mit freigeschalteter Map Tiles API hinterlegen.",
+      });
+      return;
+    }
+
+    const cacheKey = `${trimmed}\u0000${isDarkMode ? "dark" : "light"}`;
+    const cached = googleTilesCacheRef.current;
+    if (cached !== null && cached.cacheKey === cacheKey) {
+      setGoogleSession(cached.session);
+      toast.dismiss("google-map-tiles-session");
+    } else {
+      googleSessionRequestEpochRef.current += 1;
+      const requestEpoch = googleSessionRequestEpochRef.current;
+
+      void createGoogleMapTilesSession(trimmed, { isDarkMode }).then((result) => {
+        if (googleSessionRequestEpochRef.current !== requestEpoch) return;
+        if (result.success) {
+          googleTilesCacheRef.current = { cacheKey, session: result.session };
+          setGoogleSession(result.session);
+          toast.dismiss("google-map-tiles-session");
+          return;
+        }
+        setGoogleSession(null);
+        const description =
+          result.error === "network"
+            ? "Netzwerk prüfen und erneut versuchen."
+            : result.error === "http"
+              ? "HTTP-Fehler: Schlüssel, Abrechnung und „Map Tiles API“ im Google-Projekt prüfen."
+              : "Unerwartete Antwort von Google — Session konnte nicht gelesen werden.";
+        toast.error("Google-Karten: Session fehlgeschlagen", {
+          id: "google-map-tiles-session",
+          description,
+        });
+      });
+    }
+
+    return () => {
+      googleSessionRequestEpochRef.current += 1;
+    };
+  }, [mapProvider, googleApiKeyForTiles, isDarkMode]);
+
   // New effect to handle initial map view from URL params
   useEffect(() => {
     if (!mapReady || !mapRef.current) return;
@@ -226,11 +297,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => clearTimeout(timer);
   }, [mapReady, hasCentered, handleLoad]);
 
-  const tileUrl = isDarkMode
-    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-    : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-
-  const attribution = `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>`;
+  const basemap = useMemo(
+    () =>
+      resolveBasemap({
+        provider: mapProvider,
+        isDark: isDarkMode,
+        googleSessionId: googleSession,
+        googleApiKey: googleApiKeyForTiles,
+      }),
+    [mapProvider, isDarkMode, googleSession, googleApiKeyForTiles],
+  );
 
   const validCompanies = useMemo(
     () => companies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
@@ -311,7 +387,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         }}
         preferCanvas={true}
       >
-        <TileLayer attribution={attribution} url={tileUrl} />
+        <TileLayer key={basemap.tileLayerReactKey} attribution={basemap.attribution} url={basemap.url} />
 
         {/* Company Markers */}
         {validCompanies.map((company) => (
@@ -349,6 +425,15 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           {osmMarkers}
         </MarkerClusterGroup>
       </MapContainer>
+
+      {basemap.showAppleBasemapNotice && (
+        <div
+          className="absolute top-14 left-1/2 z-[1000] max-w-[min(92vw,24rem)] -translate-x-1/2 rounded-md border bg-card/90 px-2.5 py-1 text-center text-[11px] leading-snug text-muted-foreground shadow-sm backdrop-blur"
+          role="status"
+        >
+          Hinweis: Apple-Karten nutzen vorerst dieselbe OpenStreetMap/CARTO-Basiskarte wie zuvor.
+        </div>
+      )}
 
       {/* POI Count */}
       {currentZoom >= 13 && (

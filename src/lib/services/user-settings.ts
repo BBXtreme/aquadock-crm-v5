@@ -93,6 +93,24 @@ export async function saveNotificationPreferencesFromInput(
   return parsed.data;
 }
 
+export const APPEARANCE_SETTING_KEYS = {
+  theme: "appearance_theme",
+  locale: "appearance_locale",
+  colorScheme: "appearance_color_scheme",
+} as const;
+
+/** Defaults when no rows exist in `user_settings` (or unauthenticated fallback). */
+export const DEFAULT_APPEARANCE: AppearanceSettingsRecord = {
+  theme: "system",
+  locale: "de",
+  colorScheme: DEFAULT_APPEARANCE_COLOR_SCHEME,
+};
+
+function rowValueToString(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  return null;
+}
+
 export async function getUserColumnOrder(): Promise<string[] | null> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -134,4 +152,103 @@ export async function upsertUserSetting(setting: UserSettingInsert): Promise<Use
     .single();
   if (error) throw handleSupabaseError(error, "upsertUserSetting");
   return data;
+}
+
+export async function loadAppearanceSettings(): Promise<AppearanceSettingsRecord | null> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const keys = [
+    APPEARANCE_SETTING_KEYS.theme,
+    APPEARANCE_SETTING_KEYS.locale,
+    APPEARANCE_SETTING_KEYS.colorScheme,
+  ] as const;
+
+  const { data, error } = await supabase
+    .from("user_settings")
+    .select("key, value")
+    .eq("user_id", user.id)
+    .in("key", [...keys]);
+
+  if (error) throw handleSupabaseError(error, "loadAppearanceSettings");
+
+  let theme: AppearanceTheme = DEFAULT_APPEARANCE.theme;
+  let locale: AppearanceLocale = DEFAULT_APPEARANCE.locale;
+  let colorScheme: AppearanceColorScheme = DEFAULT_APPEARANCE.colorScheme;
+
+  for (const row of data ?? []) {
+    const str = rowValueToString(row.value);
+    if (str === null) continue;
+    if (row.key === APPEARANCE_SETTING_KEYS.theme) {
+      const parsed = parseAppearanceTheme(str.trim());
+      if (parsed) theme = parsed;
+    }
+    if (row.key === APPEARANCE_SETTING_KEYS.locale) {
+      const parsed = parseAppearanceLocale(str.trim());
+      if (parsed) locale = parsed;
+    }
+    if (row.key === APPEARANCE_SETTING_KEYS.colorScheme) {
+      const parsed = parseAppearanceColorScheme(str.trim());
+      if (parsed) colorScheme = parsed;
+    }
+  }
+
+  return { theme, locale, colorScheme };
+}
+
+export async function saveAppearanceTheme(theme: AppearanceTheme): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User ID is required for user settings");
+
+  const { error } = await supabase.from("user_settings").upsert(
+    {
+      user_id: user.id,
+      key: APPEARANCE_SETTING_KEYS.theme,
+      value: theme,
+    },
+    { onConflict: "user_id,key" },
+  );
+  if (error) throw handleSupabaseError(error, "saveAppearanceTheme");
+}
+
+export async function saveAppearanceLocale(locale: AppearanceLocale): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User ID is required for user settings");
+
+  const { error } = await supabase.from("user_settings").upsert(
+    {
+      user_id: user.id,
+      key: APPEARANCE_SETTING_KEYS.locale,
+      value: locale,
+    },
+    { onConflict: "user_id,key" },
+  );
+  if (error) throw handleSupabaseError(error, "saveAppearanceLocale");
+}
+
+export async function saveAppearanceColorScheme(colorScheme: AppearanceColorScheme): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User ID is required for user settings");
+
+  const { error } = await supabase.from("user_settings").upsert(
+    {
+      user_id: user.id,
+      key: APPEARANCE_SETTING_KEYS.colorScheme,
+      value: colorScheme,
+    },
+    { onConflict: "user_id,key" },
+  );
+  if (error) throw handleSupabaseError(error, "saveAppearanceColorScheme");
 }

@@ -1,18 +1,32 @@
-// src/components/features/CSVImportDialog.tsx
-// This component provides a dialog for importing company data from a CSV file. It includes a drag-and-drop area, file parsing, preview of parsed data, and an import action that sends the data to the backend.
+// CSV import: compact dialog for file drop + parse, then fullscreen preview (CSVPreviewView).
 
 "use client";
 
-import { FileText, Loader2, Upload } from "lucide-react";
-import { useCallback, useState } from "react";
+import { AlertCircle, BookOpen, FileText, Loader2, Upload } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
 
+import {
+  CSVFieldGuide,
+  csvImportFullscreenDialogContentClassName,
+  csvImportFullscreenOverlayClassName,
+} from "@/components/features/companies/CSVFieldGuide";
+import { CSVPreviewView } from "@/components/features/companies/CSVPreviewView";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { importCompaniesFromCSV } from "@/lib/actions/companies";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
+import { parsedCompanyRowsSchema } from "@/lib/validations/csv-import";
 
 interface CSVImportDialogProps {
   open: boolean;
@@ -23,14 +37,31 @@ interface CSVImportDialogProps {
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedCompanyRow[]>([]);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const guideOpenRef = useRef(guideOpen);
+  guideOpenRef.current = guideOpen;
+
+  useEffect(() => {
+    if (!open) {
+      setGuideOpen(false);
+      return;
+    }
+    setPreviewOpen(false);
+    setFile(null);
+    setParsedRows([]);
+    setParseError(null);
+  }, [open]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setFile(file);
+    const next = acceptedFiles[0];
+    if (next) {
+      setFile(next);
       setParsedRows([]);
+      setParseError(null);
     }
   }, []);
 
@@ -43,153 +74,206 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   });
 
   const handleParse = async () => {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
+    setParseError(null);
     setIsParsing(true);
     try {
       const rows = await parseCSVFile(file);
+      if (rows.length === 0) {
+        setParseError("Keine gültigen Zeilen gefunden (Firmenname und Kundentyp erforderlich).");
+        return;
+      }
       setParsedRows(rows);
+      onOpenChange(false);
+      requestAnimationFrame(() => {
+        setPreviewOpen(true);
+      });
     } catch (error) {
-      console.error("Parse error:", error);
+      const message = error instanceof Error ? error.message : "CSV konnte nicht gelesen werden.";
+      setParseError(message);
     } finally {
       setIsParsing(false);
     }
   };
 
+  const handlePreviewCancel = () => {
+    setPreviewOpen(false);
+    setParsedRows([]);
+    setFile(null);
+  };
+
+  const handleBackToEdit = () => {
+    setPreviewOpen(false);
+    setParsedRows([]);
+    onOpenChange(true);
+  };
+
   const handleImport = async () => {
-    if (parsedRows.length === 0) return;
+    if (parsedRows.length === 0) {
+      return;
+    }
+
+    const validated = parsedCompanyRowsSchema.safeParse(parsedRows);
+    if (!validated.success) {
+      const msg = validated.error.issues.map((i) => i.message).join("; ");
+      toast.error("Validierungsfehler", { description: msg });
+      return;
+    }
 
     setIsImporting(true);
     try {
-      const result = await importCompaniesFromCSV(parsedRows);
-      onSuccess?.(result);
-      onOpenChange(false);
-      setFile(null);
+      const result = await importCompaniesFromCSV(validated.data);
+      if (result.errors.length > 0 || result.imported === 0) {
+        toast.error("Import fehlgeschlagen", {
+          description:
+            result.errors.length > 0 ? result.errors.join("; ") : "Keine Zeilen importiert.",
+        });
+        return;
+      }
+      onSuccess?.({ imported: result.imported, errors: [] });
+      setPreviewOpen(false);
       setParsedRows([]);
-    } catch (error) {
-      console.error("Import error:", error);
-      onSuccess?.({ imported: 0, errors: [error instanceof Error ? error.message : "Unknown error"] });
+      setFile(null);
     } finally {
       setIsImporting(false);
     }
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
-    setFile(null);
-    setParsedRows([]);
+  const handleSmallOpenChange = (next: boolean) => {
+    // Import dialog is unmounted while the field guide is open (`open && !guideOpen`). Radix may still
+    // emit onOpenChange(false) before the next paint; use a ref so we never clear the parent session.
+    if (!next && guideOpenRef.current) {
+      return;
+    }
+    if (!next) {
+      setFile(null);
+      setParsedRows([]);
+      setParseError(null);
+      setPreviewOpen(false);
+      setGuideOpen(false);
+    }
+    onOpenChange(next);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <WideDialogContent size="2xl" className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Import Companies from CSV</DialogTitle>
-          <DialogDescription>
-            Upload a CSV file with company data. The file should have columns like Firmenname, Kundentyp, etc.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open && !guideOpen} onOpenChange={handleSmallOpenChange}>
+        <WideDialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-0 text-left">
+            <DialogTitle>Unternehmen aus CSV importieren</DialogTitle>
+            <DialogDescription className="pt-2">
+              CSV-Datei mit Unternehmensdaten hochladen. Erwartete Spalten u. a. Firmenname, Kundentyp, Adresse.
+            </DialogDescription>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3 w-full gap-2 sm:w-auto"
+              onClick={() => {
+                guideOpenRef.current = true;
+                setGuideOpen(true);
+              }}
+            >
+              <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+              Feldreferenz &amp; Header
+            </Button>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Drag & Drop Zone */}
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-              isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-            }`}
-          >
-            <input {...getInputProps()} />
-            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            {isDragActive ? (
-              <p className="text-lg font-medium">Drop the CSV file here...</p>
-            ) : (
-              <p className="text-lg font-medium">Drag & drop a CSV file here, or click to select</p>
-            )}
-            <p className="text-sm text-muted-foreground mt-2">Only CSV files are accepted</p>
+          <div className="space-y-6">
+            <div
+              {...getRootProps()}
+              className={`cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+              }`}
+            >
+              <input {...getInputProps()} />
+              <Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden />
+              {isDragActive ? (
+                <p className="font-medium text-lg">CSV-Datei hier ablegen …</p>
+              ) : (
+                <p className="font-medium text-lg">Datei per Drag &amp; Drop ablegen oder klicken zur Auswahl</p>
+              )}
+              <p className="mt-2 text-muted-foreground text-sm">Nur CSV-Dateien</p>
+            </div>
+
+            {file ? (
+              <div className="flex items-center gap-2 rounded-lg bg-muted p-4">
+                <FileText className="h-5 w-5 shrink-0" aria-hidden />
+                <span className="font-medium">{file.name}</span>
+                <span className="text-muted-foreground text-sm">({(file.size / 1024).toFixed(1)} KB)</span>
+              </div>
+            ) : null}
+
+            {parseError ? (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" aria-hidden />
+                <AlertTitle>CSV konnte nicht verarbeitet werden</AlertTitle>
+                <AlertDescription>{parseError}</AlertDescription>
+              </Alert>
+            ) : null}
+
+            {file ? (
+              <Button type="button" onClick={handleParse} disabled={isParsing} className="w-full">
+                {isParsing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                    Wird gelesen …
+                  </>
+                ) : (
+                  "CSV einlesen"
+                )}
+              </Button>
+            ) : null}
           </div>
 
-          {/* File Name Display */}
-          {file && (
-            <div className="flex items-center gap-2 p-4 bg-muted rounded-lg">
-              <FileText className="h-5 w-5" />
-              <span className="font-medium">{file.name}</span>
-              <span className="text-sm text-muted-foreground">({(file.size / 1024).toFixed(1)} KB)</span>
-            </div>
-          )}
-
-          {/* Parse Button */}
-          {file && parsedRows.length === 0 && (
-            <Button onClick={handleParse} disabled={isParsing} className="w-full">
-              {isParsing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Parsing...
-                </>
-              ) : (
-                "Parse CSV"
-              )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => handleSmallOpenChange(false)}>
+              Abbrechen
             </Button>
-          )}
+          </DialogFooter>
+        </WideDialogContent>
+      </Dialog>
 
-          {/* Preview Table */}
-          {parsedRows.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Preview ({parsedRows.length} rows)</h3>
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Firmenname</TableHead>
-                      <TableHead>Kundentyp</TableHead>
-                      <TableHead>Wasserdistanz</TableHead>
-                      <TableHead>Lat/Lon</TableHead>
-                      <TableHead>OSM</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {parsedRows.slice(0, 10).map((row, _index) => (
-                      <TableRow key={`preview-${row.firmenname}-${row.kundentyp}`}>
-                        <TableCell>{row.firmenname}</TableCell>
-                        <TableCell>{row.kundentyp}</TableCell>
-                        <TableCell>{row.wasser_distanz ?? "-"}</TableCell>
-                        <TableCell>
-                          {row.lat && row.lon ? `${row.lat.toFixed(4)}, ${row.lon.toFixed(4)}` : "-"}
-                        </TableCell>
-                        <TableCell>{row.osm ?? "-"}</TableCell>
-                      </TableRow>
-                    ))}
-                    {parsedRows.length > 10 && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
-                          ... and {parsedRows.length - 10} more rows
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+      <CSVPreviewView
+        open={previewOpen}
+        rows={parsedRows}
+        fileName={file?.name ?? ""}
+        isImporting={isImporting}
+        onImportNow={handleImport}
+        onBackToEdit={handleBackToEdit}
+        onCancel={handlePreviewCancel}
+      />
+
+      <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
+        <DialogContent
+          showCloseButton={true}
+          overlayClassName={csvImportFullscreenOverlayClassName}
+          className={csvImportFullscreenDialogContentClassName}
+        >
+          <div className="flex h-full min-h-0 flex-col bg-background">
+            <DialogHeader className="shrink-0 space-y-1 border-b border-border px-6 py-4 text-left">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden />
+                <DialogTitle className="text-lg">Feldreferenz &amp; Header-Guide</DialogTitle>
               </div>
+              <DialogDescription>
+                Unterstützte Spaltenüberschriften und Beispiele für den CSV-Import von Unternehmen.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-10 sm:py-8">
+              <CSVFieldGuide spacious />
             </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          {parsedRows.length > 0 && (
-            <Button onClick={handleImport} disabled={isImporting}>
-              {isImporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                `Import ${parsedRows.length} Companies`
-              )}
-            </Button>
-          )}
-        </DialogFooter>
-      </WideDialogContent>
-    </Dialog>
+            <div className="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/30 px-6 py-4">
+              <Button type="button" variant="outline" onClick={() => setGuideOpen(false)}>
+                Schließen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
