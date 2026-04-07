@@ -199,7 +199,10 @@ export function DataTable<TData>({
           <TableBody>
             {loading ? (
               Array.from({ length: skeletonRows || pageSize }, (_, i) => `loading-row-${i + 1}`).map((key) => (
-                <TableRow key={key}>
+                <TableRow
+                  key={key}
+                  className="border-border/10 dark:border-border/14 hover:bg-transparent"
+                >
                   {columns.map((column, colIndex) => (
                     <TableCell key={`loading-cell-${column.id || colIndex}`}>
                       <Skeleton className="h-4 w-full" />

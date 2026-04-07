@@ -131,10 +131,19 @@ typography settings for the body and headings.
 		background: linear-gradient(
 			90deg,
 			transparent,
-			color-mix(in oklch, var(--foreground) 11%, transparent),
+			color-mix(in oklch, var(--foreground) 5%, transparent),
 			transparent
 		);
-		animation: skeleton-shimmer 1.65s ease-in-out infinite;
+		animation: skeleton-shimmer 1.85s ease-in-out infinite;
+	}
+
+	.dark [data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in oklch, var(--foreground) 3.5%, transparent),
+			transparent
+		);
 	}
 }
 
@@ -147,23 +156,31 @@ typography settings for the body and headings.
 
 @layer base {
 	* {
-		@apply border-border outline-ring/50;
+	  @apply border-border outline-ring/50;
 	}
+  
+	/* Critical fix for Tailwind v4: prevent "currentColor" black borders */
+	*, ::after, ::before, ::backdrop, ::file-selector-button {
+	  border-color: var(--border);
+	}
+  
+	.dark *, .dark ::after, .dark ::before, .dark ::backdrop, .dark ::file-selector-button {
+	  border-color: var(--border);
+	}
+  
 	body {
-		@apply bg-background text-foreground antialiased leading-7 font-sans;
+	  @apply bg-background text-foreground antialiased leading-7 font-sans;
 	}
+  
 	html {
-		@apply font-sans;
+	  @apply font-sans;
 	}
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
-		@apply font-semibold tracking-tight;
+  
+	h1, h2, h3, h4, h5, h6 {
+	  @apply font-semibold tracking-tight;
 	}
+  
 	p {
-		@apply leading-6;
+	  @apply leading-6;
 	}
-}
+  }

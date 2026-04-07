@@ -25,13 +25,13 @@ const SKELETON_LIST_KEYS = [
 const skeletonVariants = cva("rounded-md", {
   variants: {
     animation: {
-      shimmer: "bg-muted/70 dark:bg-muted/50",
-      none: "bg-muted/70 dark:bg-muted/50",
-      pulse: "animate-pulse bg-muted/70 dark:bg-muted/50",
+      shimmer: "bg-muted/50 dark:bg-muted/38",
+      none: "bg-muted/50 dark:bg-muted/38",
+      pulse: "animate-pulse bg-muted/50 dark:bg-muted/38",
     },
     surface: {
       default: "",
-      inset: "bg-muted/55 dark:bg-muted/35",
+      inset: "bg-muted/42 dark:bg-muted/28",
     },
   },
   defaultVariants: {

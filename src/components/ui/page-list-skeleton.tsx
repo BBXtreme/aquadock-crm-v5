@@ -3,18 +3,36 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-/** Vertical rhythm for list-style protected pages (matches reminders). */
+/** Vertical rhythm for list-style protected pages */
 export const skeletonPageStack = "space-y-8";
 
 const STAT_SLOT_KEYS = ["stat-a", "stat-b", "stat-c", "stat-d"] as const;
 const ROW_KEYS = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11"] as const;
 const FILTER_CHIP_KEYS = ["fc0", "fc1", "fc2", "fc3", "fc4", "fc5", "fc6", "fc7"] as const;
 
-/** List row shell — reminders template: flat card, no gradient panel. */
-export const skeletonDenseRowShell = cn(
-  "flex gap-4 rounded-lg border border-border bg-card/50 p-4",
+/**
+ * Skeleton card chrome — NO borders, NO rings, NO lines at all.
+ * Only soft background for clean grouping (premium airy look).
+ */
+export const skeletonCardChrome = cn(
+  "bg-card/92 text-card-foreground shadow-none dark:bg-card/88",
 );
 
+/** Chart / wide panels — no borders */
+export const skeletonPanelChrome = cn(
+  "rounded-2xl bg-card/92 p-6 shadow-none dark:bg-card/85",
+);
+
+/** Dense row shell — completely borderless */
+export const skeletonDenseRowShell = cn(
+  "flex gap-4 rounded-lg bg-card/45 p-4 dark:bg-card/25",
+);
+
+const skeletonHeaderRule = "border-b border-transparent"; // invisible
+
+export const skeletonUltraLightDivider = "border-b border-transparent";
+
+/** Page root */
 function PageSkeletonRoot({
   children,
   label,
@@ -49,7 +67,12 @@ export function SkeletonPageHeader({
   subtitleWidth?: string;
 }) {
   return (
-    <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={cn(
+        "flex flex-col gap-4 pb-6 sm:flex-row sm:items-center sm:justify-between",
+        skeletonHeaderRule,
+      )}
+    >
       <div className="space-y-3">
         <Skeleton className={cn("h-3", breadcrumbWidth)} />
         <Skeleton className={cn("h-9 max-w-full", titleWidth)} />
@@ -73,7 +96,10 @@ export function SkeletonStatStrip({
   return (
     <div className={cn("grid grid-cols-1 gap-4 pb-6", gridClassName, className)}>
       {keys.map((key) => (
-        <Skeleton key={key} className="h-28 rounded-2xl" />
+        <Skeleton
+          key={key}
+          className="h-28 rounded-2xl bg-card/90 dark:bg-card/80"
+        />
       ))}
     </div>
   );
@@ -104,7 +130,7 @@ export function SkeletonListCard({
   children: ReactNode;
 }) {
   return (
-    <Card>
+    <Card className={skeletonCardChrome}>
       <CardHeader>
         <Skeleton className={cn("h-5", titleWidth)} />
       </CardHeader>
@@ -283,16 +309,21 @@ export function TimelinePageSkeleton({ rowCount = 6 }: { rowCount?: number }) {
   return (
     <PageSkeletonRoot label="Timeline wird geladen">
       <SkeletonPageHeader actionClassName="w-52 sm:w-56" breadcrumbWidth="w-36" titleWidth="w-44" />
-      <Card>
+      <Card className={skeletonCardChrome}>
         <CardContent className="space-y-4 p-6">
-          <div className="flex flex-col gap-3 border-b border-border/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className={cn(
+              "flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between",
+              skeletonHeaderRule,
+            )}
+          >
             <Skeleton className="h-9 w-full max-w-md rounded-md" />
             <div className="flex gap-2">
               <Skeleton className="h-9 w-24 rounded-md" />
               <Skeleton className="h-9 w-24 rounded-md" />
             </div>
           </div>
-          <div className="hidden grid-cols-12 gap-3 border-b border-border/40 pb-2 md:grid">
+          <div className="hidden grid-cols-12 gap-3 pb-2 md:grid">
             <Skeleton className="col-span-2 h-3" />
             <Skeleton className="col-span-2 h-3" />
             <Skeleton className="col-span-3 h-3" />
@@ -330,11 +361,16 @@ const MASS_EMAIL_RECIPIENT_ROW_KEYS = ["me-r0", "me-r1", "me-r2", "me-r3", "me-r
 const BREVO_FORM_FIELD_KEYS = ["bf-0", "bf-1", "bf-2", "bf-3", "bf-4", "bf-5"] as const;
 const BREVO_LIST_ROW_KEYS = ["bc-0", "bc-1", "bc-2", "bc-3", "bc-4", "bc-5"] as const;
 
-/** Mass email: header, two-column composer + recipients, preview strip (matches ClientMassEmailPage). */
+/** Mass email: header, two-column composer + recipients, preview strip */
 export function MassEmailPageSkeleton() {
   return (
     <PageSkeletonRoot label="Massen-E-Mail wird geladen">
-      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        className={cn(
+          "flex flex-col gap-4 pb-6 sm:flex-row sm:items-center sm:justify-between",
+          skeletonHeaderRule,
+        )}
+      >
         <div className="space-y-2">
           <Skeleton className="h-9 w-56 max-w-full" />
           <Skeleton className="h-4 w-72 max-w-full" />
@@ -346,7 +382,7 @@ export function MassEmailPageSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <Card>
+        <Card className={skeletonCardChrome}>
           <CardHeader className="space-y-3">
             <Skeleton className="h-5 w-44" />
             <div className="flex gap-2">
@@ -368,7 +404,7 @@ export function MassEmailPageSkeleton() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={skeletonCardChrome}>
           <CardHeader>
             <Skeleton className="h-5 w-40" />
           </CardHeader>
@@ -389,7 +425,7 @@ export function MassEmailPageSkeleton() {
         </Card>
       </div>
 
-      <Card>
+      <Card className={skeletonCardChrome}>
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <Skeleton className="h-5 w-36" />
           <div className="flex flex-wrap gap-2">
@@ -398,7 +434,7 @@ export function MassEmailPageSkeleton() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border border-border/60 bg-muted/20 p-4 space-y-3">
+          <div className="space-y-3 rounded-lg bg-muted/12 p-4 dark:bg-muted/18">
             <Skeleton className="h-4 w-3/4 max-w-xl" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />
@@ -409,7 +445,7 @@ export function MassEmailPageSkeleton() {
   );
 }
 
-/** Brevo main area below static page header (matches ClientBrevoPage sections). */
+/** Brevo main area below static page header — no lines */
 export function BrevoMarketingContentSkeleton() {
   return (
     <div
@@ -420,12 +456,13 @@ export function BrevoMarketingContentSkeleton() {
       aria-label="Brevo-Inhalt wird geladen"
     >
       <section className="space-y-8">
-        <div className="space-y-3 border-b border-border/60 pb-6">
+        <div className={cn("space-y-3 pb-6", skeletonHeaderRule)}>
           <Skeleton className="h-8 w-72 max-w-full" />
           <Skeleton className="h-4 w-full max-w-3xl" />
           <Skeleton className="h-4 w-full max-w-2xl" />
         </div>
-        <Card>
+
+        <Card className={skeletonCardChrome}>
           <CardContent className="space-y-6 p-6">
             {BREVO_FORM_FIELD_KEYS.map((key) => (
               <div key={key} className="space-y-2">
@@ -446,21 +483,23 @@ export function BrevoMarketingContentSkeleton() {
       </section>
 
       <section className="space-y-6">
-        <div className="space-y-2 border-b border-border/60 pb-6">
+        <div className={cn("space-y-2 pb-6", skeletonHeaderRule)}>
           <Skeleton className="h-7 w-56 max-w-full" />
           <Skeleton className="h-4 w-full max-w-lg" />
         </div>
-        <div className="space-y-2 rounded-xl border border-border bg-card/40 p-4">
-          <div className="grid grid-cols-4 gap-3 border-b border-border/40 pb-3">
+
+        <div className="space-y-2 rounded-xl bg-card/45 p-4 dark:bg-card/38">
+          <div className="grid grid-cols-4 gap-3 pb-3">
             <Skeleton className="h-3 w-14" />
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-3 w-24" />
           </div>
+
           {BREVO_LIST_ROW_KEYS.map((key) => (
             <div
               key={key}
-              className="grid grid-cols-4 items-center gap-3 border-b border-border/30 py-2.5 last:border-0"
+              className="grid grid-cols-4 items-center gap-3 py-2.5 last:pb-0"
             >
               <Skeleton className="h-4 w-full max-w-[10rem]" />
               <Skeleton className="h-4 w-full max-w-[12rem]" />
@@ -476,7 +515,7 @@ export function BrevoMarketingContentSkeleton() {
 
 const SETTINGS_SMTP_ROW_KEYS = ["ss0", "ss1", "ss2", "ss3", "ss4", "ss5"] as const;
 
-/** Settings grid below page header (matches ClientSettingsPage layout). */
+/** Settings grid below page header */
 export function SettingsPageSkeleton() {
   return (
     <div
@@ -487,7 +526,7 @@ export function SettingsPageSkeleton() {
       aria-label="Einstellungen werden geladen"
     >
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className={skeletonCardChrome}>
           <CardHeader className="space-y-2">
             <Skeleton className="h-6 w-52 max-w-full" />
             <Skeleton className="h-4 w-full max-w-md" />
@@ -510,7 +549,7 @@ export function SettingsPageSkeleton() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className={skeletonCardChrome}>
           <CardHeader>
             <Skeleton className="h-6 w-36" />
           </CardHeader>
@@ -527,7 +566,7 @@ export function SettingsPageSkeleton() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className={cn(skeletonCardChrome, "md:col-span-2")}>
           <CardHeader>
             <Skeleton className="h-6 w-44" />
           </CardHeader>
@@ -562,7 +601,7 @@ export function SettingsPageSkeleton() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className={cn(skeletonCardChrome, "md:col-span-2")}>
           <CardHeader>
             <Skeleton className="h-6 w-40" />
           </CardHeader>
@@ -583,7 +622,7 @@ export function SettingsPageSkeleton() {
         </Card>
 
         <div className="md:col-span-2">
-          <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <Card className={skeletonCardChrome}>
             <CardHeader>
               <Skeleton className="h-6 w-36" />
             </CardHeader>
@@ -606,7 +645,7 @@ export function SettingsPageSkeleton() {
   );
 }
 
-/** Full profile route shell (use in `profile/loading.tsx`). */
+/** Full profile route shell */
 export function ProfilePageSkeleton() {
   return (
     <div
@@ -622,30 +661,36 @@ export function ProfilePageSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg">
+        <Card className={skeletonCardChrome}>
           <CardHeader className="pb-6">
             <Skeleton className="h-7 w-52 max-w-full" />
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
-                <Skeleton className="h-32 w-32 rounded-full border-4 border-transparent ring-2 ring-border/60" />
-                <Skeleton className="absolute bottom-0 right-0 h-10 w-10 rounded-full" />
+                <Skeleton className="h-32 w-32 rounded-full" />
+                <Skeleton className="absolute right-0 bottom-0 h-10 w-10 rounded-full shadow-none ring-1 ring-foreground/[0.02] dark:ring-foreground/[0.04]" />
               </div>
               <div className="flex w-full flex-col items-center space-y-2">
                 <Skeleton className="h-7 w-48" />
                 <Skeleton className="h-4 w-56 max-w-full" />
                 <Skeleton className="h-6 w-20 rounded-full" />
               </div>
-              <div className="w-full space-y-2 border-t border-border/50 pt-4">
-                <Skeleton className="mx-auto h-3 w-52" />
-                <Skeleton className="mx-auto h-3 w-56" />
+              <div className="w-full space-y-3 pt-2">
+                <div
+                  className="mx-auto h-px max-w-xs bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent dark:via-foreground/[0.1]"
+                  aria-hidden
+                />
+                <div className="space-y-2">
+                  <Skeleton className="mx-auto h-3 w-52" />
+                  <Skeleton className="mx-auto h-3 w-56" />
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg">
+        <Card className={skeletonCardChrome}>
           <CardHeader className="pb-6">
             <Skeleton className="h-7 w-40" />
           </CardHeader>
@@ -663,7 +708,7 @@ export function ProfilePageSkeleton() {
         </Card>
       </div>
 
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg">
+      <Card className={skeletonCardChrome}>
         <CardHeader className="pb-6">
           <Skeleton className="h-7 w-44" />
         </CardHeader>
@@ -683,7 +728,7 @@ const DASHBOARD_FUNNEL_ROWS = [
   { key: "df-4", bar: "max-w-[36%] w-full" },
 ] as const;
 
-/** Dashboard KPI strip + chart cards + period control (matches DashboardClient). */
+/** Dashboard KPI strip + chart cards */
 export function DashboardContentSkeleton() {
   return (
     <div
@@ -696,7 +741,7 @@ export function DashboardContentSkeleton() {
       <SkeletonStatStrip count={4} gridClassName="md:grid-cols-2 lg:grid-cols-4" className="pb-0" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className={skeletonPanelChrome}>
           <div className="mb-6 flex items-center justify-between gap-4">
             <Skeleton className="h-6 w-44 max-w-[55%]" />
             <Skeleton className="h-3 w-32 shrink-0" />
@@ -711,7 +756,7 @@ export function DashboardContentSkeleton() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <div className={skeletonPanelChrome}>
           <div className="mb-6 flex items-center justify-between">
             <Skeleton className="h-6 w-48 max-w-[70%]" />
           </div>
@@ -735,14 +780,11 @@ export function DashboardContentSkeleton() {
 
 const OPENMAP_CONTROL_KEYS = ["omc-0", "omc-1", "omc-2"] as const;
 
-/**
- * Full-viewport map placeholder (toolbar + faux map area). Matches OpenMapView layout.
- * Safe to use from client components (e.g. dynamic import / Leaflet mount).
- */
+/** OpenMap skeleton — no borders */
 export function OpenMapViewSkeleton() {
   return (
     <div
-      className="relative h-[calc(100vh-4rem)] w-full overflow-hidden border border-border/40 bg-muted/25"
+      className="relative h-[calc(100vh-4rem)] w-full overflow-hidden bg-muted/18 dark:bg-muted/22"
       role="status"
       aria-busy="true"
       aria-live="polite"
@@ -753,17 +795,20 @@ export function OpenMapViewSkeleton() {
         aria-hidden
       />
       <div
-        className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklch,var(--border)_35%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--border)_35%,transparent)_1px,transparent_1px)] bg-size-[44px_44px] opacity-50 dark:opacity-40"
+        className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklch,var(--border)_8%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--border)_8%,transparent)_1px,transparent_1px)] bg-size-[44px_44px] opacity-[0.38] dark:opacity-[0.26]"
         aria-hidden
       />
 
-      <div className="absolute top-4 left-4 z-[1000] rounded-md border border-border/60 bg-card/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+      <div className="absolute top-4 left-4 z-[1000] rounded-md bg-card/88 px-3 py-2 shadow-none backdrop-blur-sm dark:bg-card/85">
         <Skeleton className="h-4 w-36" />
       </div>
 
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         {OPENMAP_CONTROL_KEYS.map((key) => (
-          <Skeleton key={key} className="h-9 w-9 shrink-0 rounded-md shadow-md" />
+          <Skeleton
+            key={key}
+            className="h-9 w-9 shrink-0 rounded-md shadow-none ring-1 ring-inset ring-foreground/[0.015] dark:ring-foreground/[0.03]"
+          />
         ))}
       </div>
 
