@@ -51,13 +51,19 @@ export async function updateSession(request: NextRequest): Promise<{
     },
   });
 
+  // Align with `getCurrentUser` / `requireUser` (JWT validation). `getSession()` alone can
+  // report a cookie-backed session while `getUser()` fails → /login ⟷ /dashboard loops.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { response, session: null };
+  }
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Do not call getUser() here: it hits Supabase on every navigation (~hundreds of ms),
-  // may rotate cookies on each response, and duplicates work with requireUser() in RSC.
-  // Route protection still uses verified identity via getCurrentUser() in layouts/pages.
-
-  return { response, session };
+  return { response, session: session ?? null };
 }

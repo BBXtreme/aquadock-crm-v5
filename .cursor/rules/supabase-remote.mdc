@@ -9,7 +9,8 @@ alwaysApply: true
 - Use generated types from `src/types/supabase.ts` (run `pnpm supabase:types` after schema changes).
 - Prefer exported types like `Company`, `Contact`, `Reminder` from the types file.
 - All database operations **must** go through Server Components, Server Actions, or the service layer.
-- Client-side: only use `createClient()` from `src/lib/supabase/browser` for public/read-only operations.
+- Client-side: only use `createClient()` from `src/lib/supabase/browser` for public/read-only operations (and authenticated Storage uploads where RLS allows, e.g. profile photos to bucket `avatars` under `user_id/…`).
+- **Storage**: Public bucket `avatars` is required for profile pictures; one-time SQL is in `src/sql/storage-avatars-bucket.sql` (documented in `docs/SUPABASE_SCHEMA.md`).
 - Server-side: always use `createServerSupabaseClient()` from `src/lib/supabase/server`.
 - Combine Zod schemas with Supabase types for forms and runtime validation.
 - Strictly respect RLS — never expose service_role key to the client.

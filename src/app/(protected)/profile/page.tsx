@@ -2,10 +2,10 @@
 // This file defines the Profile page of the application, which displays the user's profile information and allows them to update their display name and manage their account.
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
-import { LogOut, Upload, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import ProfilForm from "@/components/features/profile/ProfileForm";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,7 +47,6 @@ export default async function ProfilePage() {
 
   const displayName = safeDisplay(profileData.display_name || user.display_name);
   const role = profileData.role || "user";
-  const avatarUrl = profileData.avatar_url || "";
   const email = user.email || "";
 
   // Fetch all users for admin only
@@ -98,17 +97,16 @@ export default async function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="relative">
-                <Avatar className="h-32 w-32 border-4 border-primary/10">
-                  <AvatarImage src={avatarUrl || "/placeholder-avatar.png"} alt="Profile" />
-                  <AvatarFallback className="text-2xl font-semibold">
-                    {email?.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 shadow-lg">
-                  <Upload className="h-4 w-4" />
-                </div>
+            <div className="flex flex-col items-center space-y-5">
+              <div className="w-full max-w-sm">
+                <AvatarUpload
+                  userId={user.id}
+                  displayName={
+                    profileData.display_name ??
+                    safeDisplay(user.email?.split("@")[0] ?? "", "")
+                  }
+                  initialAvatarUrl={profileData.avatar_url}
+                />
               </div>
               <div className="text-center space-y-1">
                 <p className="text-2xl font-semibold">{displayName || "No display name"}</p>

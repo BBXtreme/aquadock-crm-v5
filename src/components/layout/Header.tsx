@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Bell, LogOut, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import {
@@ -29,14 +28,36 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "@/lib/actions/auth";
+import type { AuthUser } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/browser";
+import { safeDisplay } from "@/lib/utils/data-format";
 
-export default function Header() {
+const PLACEHOLDER_AVATAR_SRC = "/placeholder-avatar.png";
+
+function headerAvatarInitials(displayName: string | null, email: string | null): string {
+  const label = (displayName?.trim() || email?.split("@")[0]?.trim() || "").trim();
+  if (label.length === 0) {
+    return "?";
+  }
+  const parts = label.split(/\s+/).filter((p) => p.length > 0);
+  if (parts.length >= 2) {
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    if (first !== undefined && last !== undefined) {
+      return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+    }
+  }
+  return label.slice(0, 2).toUpperCase();
+}
+
+type HeaderProps = {
+  user: AuthUser;
+};
+
+export default function Header({ user }: HeaderProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const _router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -87,9 +108,24 @@ export default function Header() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const handleSignOut = async () => {
-    await signOut();
+  // Radix DropdownMenuItem uses pointer handlers that block native <form> submit on
+  // the slotted button. Sign out via the browser Supabase client, then hard-navigate
+  // so middleware and RSC see cleared cookies (same outcome as the server action).
+  const handleHeaderSignOut = () => {
+    void (async () => {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        return;
+      }
+      window.location.assign("/login");
+    })();
   };
+
+  const avatarAlt = safeDisplay(user.display_name ?? user.email?.split("@")[0] ?? "", "User");
+  const avatarSrc =
+    user.avatar_url && user.avatar_url.length > 0 ? user.avatar_url : PLACEHOLDER_AVATAR_SRC;
+  const avatarFallback = headerAvatarInitials(user.display_name, user.email);
 
   return (
     <header
@@ -112,28 +148,6 @@ export default function Header() {
             />
           </div>
         </Link>
-      </div>
-
-      <div className="mx-4 flex min-w-0 flex-1 items-center justify-right md:max-w-md">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" aria-label="Search">
-              <Search className="h-4 w-4" aria-hidden />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Global search</AlertDialogTitle>
-              <AlertDialogDescription>
-                This isn&apos;t built yet — we&apos;ll add a proper global search here when it&apos;s ready.
-                Until then, jump in via the sidebar or the list pages.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction>Got it</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
 
       <div className="flex items-center space-x-4">
@@ -165,6 +179,26 @@ export default function Header() {
           </Link>
         )}
 
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button type="button" variant="ghost" size="icon" aria-label="Search">
+              <Search className="h-4 w-4" aria-hidden />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Global search</AlertDialogTitle>
+              <AlertDialogDescription>
+                This isn&apos;t built yet — we&apos;ll add a proper global search here when it&apos;s ready.
+                Until then, jump in via the sidebar or the list pages.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction>Got it</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <Button
           variant="ghost"
           size="icon"
@@ -189,8 +223,8 @@ export default function Header() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder-avatar.png" alt="User" />
-                <AvatarFallback>U</AvatarFallback>
+                <AvatarImage src={avatarSrc} alt={avatarAlt} />
+                <AvatarFallback className="text-xs font-medium">{avatarFallback}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
@@ -208,8 +242,12 @@ export default function Header() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={handleSignOut}
-              className="text-destructive focus:text-destructive cursor-pointer"
+              variant="destructive"
+              className="cursor-pointer"
+              onSelect={(e) => {
+                e.preventDefault();
+                handleHeaderSignOut();
+              }}
             >
               <LogOut className="mr-2 h-4 w-4" />
               Sign out
