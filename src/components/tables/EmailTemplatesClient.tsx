@@ -18,10 +18,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { skeletonCardChrome } from "@/components/ui/page-list-skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 import { emailTemplateSchema } from "@/lib/validations/email-template";
 import type { EmailTemplate } from "@/types/database.types";
 
@@ -158,18 +161,18 @@ export default function TemplatesClient() {
       )}
 
       {templatesLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {["skeleton-1", "skeleton-2", "skeleton-3", "skeleton-4", "skeleton-5", "skeleton-6"].map((key) => (
-            <Card key={key} className="animate-pulse">
+            <Card key={key} className={cn(skeletonCardChrome, "rounded-xl")}>
               <CardHeader>
-                <div className="h-4 bg-muted rounded" />
+                <Skeleton className="h-4 w-3/5 max-w-[12rem]" />
               </CardHeader>
-              <CardContent>
-                <div className="h-3 bg-muted rounded mb-2" />
-                <div className="h-3 bg-muted rounded w-3/4" />
+              <CardContent className="space-y-2">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-3/4" />
               </CardContent>
               <CardFooter>
-                <div className="h-8 bg-muted rounded w-full" />
+                <Skeleton className="h-8 w-full rounded-md" />
               </CardFooter>
             </Card>
           ))}

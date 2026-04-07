@@ -17,6 +17,7 @@ import "leaflet/dist/leaflet.css";
 import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
 import type { CompanyForOpenMap } from "@/lib/actions/companies";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provider";
@@ -366,11 +367,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   );
 
   if (!mounted) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return <OpenMapViewSkeleton />;
   }
 
   return (
@@ -381,7 +378,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="z-0"
-        whenReady={() => setMapReady(true)}
+        whenReady={() => {
+          // react-leaflet can invoke whenReady during commit; defer so React 19 does not warn
+          // about setState on a component that has not finished mounting.
+          queueMicrotask(() => {
+            setMapReady(true);
+          });
+        }}
         preferCanvas={true}
       >
         <TileLayer key={basemap.tileLayerReactKey} attribution={basemap.attribution} url={basemap.url} />

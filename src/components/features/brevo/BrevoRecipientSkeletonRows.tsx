@@ -9,7 +9,10 @@ export function BrevoRecipientSkeletonRows() {
   return (
     <TableBody>
       {BREVO_RECIPIENT_SKELETON_ROW_KEYS.map((rowKey) => (
-        <TableRow key={rowKey}>
+        <TableRow
+          key={rowKey}
+          className="border-border/10 dark:border-border/14 hover:bg-transparent"
+        >
           {BREVO_RECIPIENT_SKELETON_COL_KEYS.map((colKey) => (
             <TableCell key={`${rowKey}-${colKey}`}>
               <Skeleton className="h-4 w-full" />

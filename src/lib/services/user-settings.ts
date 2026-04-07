@@ -11,6 +11,14 @@
 // The code is designed to be reusable across different parts of the
 // app that need to access or modify user settings.
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import {
+  NOTIFICATION_DEFAULTS,
+  NOTIFICATION_SETTING_KEYS,
+  NOTIFICATION_SETTING_KEYS_LIST,
+  NOTIFICATION_UI,
+} from "@/lib/constants/notifications";
 import { DEFAULT_APPEARANCE_COLOR_SCHEME } from "@/lib/constants/theme";
 import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
@@ -22,8 +30,78 @@ import {
   parseAppearanceColorScheme,
   parseAppearanceLocale,
   parseAppearanceTheme,
-} from "@/lib/validations/settings";
-import type { UserSetting, UserSettingInsert } from "@/types/database.types";
+} from "@/lib/validations/appearance";
+import { notificationPreferencesSchema } from "@/lib/validations/settings";
+import type { Database, UserSetting, UserSettingInsert } from "@/types/database.types";
+import type { Json } from "@/types/supabase";
+
+function jsonToBoolean(value: Json | undefined, fallback: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+export type NotificationPreferencesState = {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+};
+
+export async function fetchNotificationPreferences(
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<NotificationPreferencesState> {
+  const { data, error } = await client
+    .from("user_settings")
+    .select("key, value")
+    .eq("user_id", userId)
+    .in("key", [...NOTIFICATION_SETTING_KEYS_LIST]);
+
+  if (error) throw handleSupabaseError(error, "fetchNotificationPreferences");
+
+  let pushEnabled: boolean = NOTIFICATION_DEFAULTS.pushEnabled;
+  let emailEnabled: boolean = NOTIFICATION_DEFAULTS.emailEnabled;
+  for (const row of data ?? []) {
+    if (row.key === NOTIFICATION_SETTING_KEYS.push) {
+      pushEnabled = jsonToBoolean(row.value, NOTIFICATION_DEFAULTS.pushEnabled);
+    }
+    if (row.key === NOTIFICATION_SETTING_KEYS.email) {
+      emailEnabled = jsonToBoolean(row.value, NOTIFICATION_DEFAULTS.emailEnabled);
+    }
+  }
+  return { pushEnabled, emailEnabled };
+}
+
+export async function upsertNotificationPreferences(
+  client: SupabaseClient<Database>,
+  userId: string,
+  prefs: NotificationPreferencesState,
+): Promise<void> {
+  const rows = [
+    { user_id: userId, key: NOTIFICATION_SETTING_KEYS.push, value: prefs.pushEnabled },
+    { user_id: userId, key: NOTIFICATION_SETTING_KEYS.email, value: prefs.emailEnabled },
+  ];
+  for (const row of rows) {
+    const { error } = await client.from("user_settings").upsert(row, { onConflict: "user_id,key" });
+    if (error) throw handleSupabaseError(error, "upsertNotificationPreferences");
+  }
+}
+
+/**
+ * Validates with Zod, then persists. Single entry point for writes from server actions.
+ */
+export async function saveNotificationPreferencesFromInput(
+  client: SupabaseClient<Database>,
+  userId: string,
+  input: unknown,
+): Promise<NotificationPreferencesState> {
+  const parsed = notificationPreferencesSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(NOTIFICATION_UI.toastValidationError);
+  }
+  await upsertNotificationPreferences(client, userId, parsed.data);
+  return parsed.data;
+}
 
 export const APPEARANCE_SETTING_KEYS = {
   theme: "appearance_theme",

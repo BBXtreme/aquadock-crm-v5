@@ -108,25 +108,79 @@ typography settings for the body and headings.
 	--sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer base {
-	* {
-		@apply border-border outline-ring/50;
+@keyframes skeleton-shimmer {
+	0% {
+		transform: translateX(-100%);
 	}
-	body {
-		@apply bg-background text-foreground antialiased leading-7 font-sans;
-	}
-	html {
-		@apply font-sans;
-	}
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
-		@apply font-semibold tracking-tight;
-	}
-	p {
-		@apply leading-6;
+	100% {
+		transform: translateX(100%);
 	}
 }
+
+@layer components {
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"] {
+		position: relative;
+		overflow: hidden;
+	}
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in oklch, var(--foreground) 5%, transparent),
+			transparent
+		);
+		animation: skeleton-shimmer 1.85s ease-in-out infinite;
+	}
+
+	.dark [data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in oklch, var(--foreground) 3.5%, transparent),
+			transparent
+		);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-slot="skeleton"][data-skeleton-animate="shimmer"]::after {
+		animation: none;
+		opacity: 0;
+	}
+}
+
+@layer base {
+	* {
+	  @apply border-border outline-ring/50;
+	}
+  
+	/* Critical fix for Tailwind v4: prevent "currentColor" black borders */
+	*, ::after, ::before, ::backdrop, ::file-selector-button {
+	  border-color: var(--border);
+	}
+  
+	.dark *, .dark ::after, .dark ::before, .dark ::backdrop, .dark ::file-selector-button {
+	  border-color: var(--border);
+	}
+  
+	body {
+	  @apply bg-background text-foreground antialiased leading-7 font-sans;
+	}
+  
+	html {
+	  @apply font-sans;
+	}
+  
+	h1, h2, h3, h4, h5, h6 {
+	  @apply font-semibold tracking-tight;
+	}
+  
+	p {
+	  @apply leading-6;
+	}
+  }

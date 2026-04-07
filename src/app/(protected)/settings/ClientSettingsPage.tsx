@@ -4,24 +4,30 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Layers, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import {
-  appearanceResolvedIsDark,
   applyAppearanceColorTokens,
-  persistAppearanceLocalMirror,
 } from "@/components/theme/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import {
+  getNotificationPreferenceSuccessToast,
+  NOTIFICATION_DEFAULTS,
+  NOTIFICATION_UI,
+} from "@/lib/constants/notifications";
 import {
   APPEARANCE_COLOR_LABELS,
   APPEARANCE_COLOR_SCHEME_IDS,
@@ -30,24 +36,23 @@ import {
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import {
   DEFAULT_APPEARANCE,
+  fetchNotificationPreferences,
   loadAppearanceSettings,
   saveAppearanceColorScheme,
   saveAppearanceLocale,
   saveAppearanceTheme,
 } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
-import { safeDisplay } from "@/lib/utils/data-format";
 import {
-  type MapProviderId,
-  mapProviderSchema,
-  mapSettingsFormSchema,
-} from "@/lib/validations/map-settings";
-import {
-  type AppearanceSettingsRecord,
+  type AppearanceColorScheme,
+  type AppearanceLocale,
+  type AppearanceTheme,
   appearanceColorSchemeSchema,
   appearanceLocaleSchema,
   appearanceThemeSchema,
-} from "@/lib/validations/settings";
+} from "@/lib/validations/appearance";
+import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
+import type { NotificationPreferences } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -93,15 +98,8 @@ out center;
   return query.trim();
 };
 
-type ClientSettingsPageProps = {
-  displayName: string | null;
-};
-
-function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
-  const { theme: nextTheme, setTheme, resolvedTheme } = useTheme();
+function ClientSettingsPage() {
   const [selectMounted, setSelectMounted] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
 
   const defaultOverpassEndpoints = useMemo(
     () => [
@@ -130,6 +128,7 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
 
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const { theme: nextTheme, setTheme } = useTheme();
 
   useEffect(() => {
     setSelectMounted(true);
@@ -168,7 +167,13 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: appearance = DEFAULT_APPEARANCE, isLoading: appearanceLoading } = useQuery({
+  const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
+    queryKey: ["map-provider-settings"],
+    queryFn: loadMapSettings,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: appearanceRemote, isLoading: appearanceLoading } = useQuery({
     queryKey: ["appearance-settings"],
     queryFn: async () => {
       const loaded = await loadAppearanceSettings();
@@ -177,15 +182,73 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const appearance = appearanceRemote ?? DEFAULT_APPEARANCE;
+
+  useEffect(() => {
+    if (mapProviderSettings === undefined) return;
+    setMapProvider(mapProviderSettings.map_provider);
+    setGoogleMapsApiKey(mapProviderSettings.google_maps_api_key ?? "");
+    setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
+  }, [mapProviderSettings]);
+
+  const { data: notificationPrefs, isLoading: notificationPrefsLoading } = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return {
+          pushEnabled: NOTIFICATION_DEFAULTS.pushEnabled,
+          emailEnabled: NOTIFICATION_DEFAULTS.emailEnabled,
+        };
+      }
+      return fetchNotificationPreferences(supabase, user.id);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveNotificationMutation = useMutation({
+    mutationFn: async (vars: { prefs: NotificationPreferences; changed: "push" | "email" }) => {
+      await saveNotificationPreferencesAction(vars.prefs);
+      return { changed: vars.changed, prefs: vars.prefs };
+    },
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ["notification-preferences"] });
+      const previous = queryClient.getQueryData<NotificationPreferences>(["notification-preferences"]);
+      queryClient.setQueryData(["notification-preferences"], vars.prefs);
+      return { previous };
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["notification-preferences"], context.previous);
+      }
+      const message = error instanceof Error ? error.message : NOTIFICATION_UI.unknownError;
+      if (message === NOTIFICATION_UI.toastValidationError) {
+        toast.error(NOTIFICATION_UI.toastValidationError);
+      } else {
+        toast.error(NOTIFICATION_UI.toastSaveErrorTitle, { description: message });
+      }
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+      toast.success(getNotificationPreferenceSuccessToast(result.changed, result.prefs));
+    },
+  });
+
+  const savingPush =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "push";
+  const savingEmail =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
+
   const appearanceThemeMutation = useMutation({
-    mutationFn: saveAppearanceTheme,
-    onSuccess: (_, theme) => {
-      setTheme(theme);
-      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
-        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), theme };
-        persistAppearanceLocalMirror(next);
-        return next;
-      });
+    mutationFn: async (next: AppearanceTheme) => {
+      await saveAppearanceTheme(next);
+    },
+    onSuccess: async (_data, next) => {
+      setTheme(next);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Theme gespeichert");
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -194,15 +257,12 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
   });
 
   const appearanceLocaleMutation = useMutation({
-    mutationFn: saveAppearanceLocale,
-    onSuccess: (_, locale) => {
-      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
-        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), locale };
-        persistAppearanceLocalMirror(next);
-        document.documentElement.lang = locale;
-        return next;
-      });
-      toast.success(locale === "de" ? "Sprache geändert" : "Language changed");
+    mutationFn: async (locale: AppearanceLocale) => {
+      await saveAppearanceLocale(locale);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Sprache gespeichert");
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -211,25 +271,20 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
   });
 
   const appearanceColorMutation = useMutation({
-    mutationFn: saveAppearanceColorScheme,
-    onSuccess: (_, colorScheme) => {
-      queryClient.setQueryData(["appearance-settings"], (prev: AppearanceSettingsRecord | undefined) => {
-        const next: AppearanceSettingsRecord = { ...(prev ?? DEFAULT_APPEARANCE), colorScheme };
-        persistAppearanceLocalMirror(next);
-        applyAppearanceColorTokens(colorScheme, appearanceResolvedIsDark(resolvedTheme));
-        return next;
-      });
+    mutationFn: async (colorScheme: AppearanceColorScheme) => {
+      await saveAppearanceColorScheme(colorScheme);
+    },
+    onSuccess: async (_data, colorScheme) => {
+      const isDark =
+        typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      applyAppearanceColorTokens(colorScheme, isDark);
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success("Farbschema gespeichert");
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
       toast.error("Farbschema konnte nicht gespeichert werden", { description: message });
     },
-  });
-
-  const { data: mapProviderSettings } = useQuery({
-    queryKey: ["map-provider-settings"],
-    queryFn: loadMapSettings,
-    staleTime: 5 * 60 * 1000,
   });
 
   const { data: brevoSenderSettings } = useQuery({
@@ -383,62 +438,93 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
     }
   }, [brevoSenderSettings]);
 
-  useEffect(() => {
-    if (!mapProviderSettings) return;
-    setMapProvider(mapProviderSettings.map_provider);
-    setGoogleMapsApiKey(mapProviderSettings.google_maps_api_key ?? "");
-    setAppleMapkitToken(mapProviderSettings.apple_mapkit_token ?? "");
-  }, [mapProviderSettings]);
+  const isLoading =
+    settingsLoading || notificationPrefsLoading || mapProviderLoading || appearanceLoading;
 
-  const pageLoading = settingsLoading || appearanceLoading;
-
-  if (pageLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Settings</h1>
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="h-4 bg-gray-200 rounded w-1/2" />
-        </div>
-      </div>
-    );
+  if (isLoading) {
+    return <SettingsPageSkeleton />;
   }
 
   return (
-    <div className="space-y-8">
-      <div className="pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">Home → Settings</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Settings
-          </h1>
-          <p className="text-muted-foreground">Verwalte deine Account- und CRM-Einstellungen</p>
-        </div>
-      </div>
-
+    <div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Notifications Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
-              Notifications
+              {NOTIFICATION_UI.cardTitle}
             </CardTitle>
+            <CardDescription>{NOTIFICATION_UI.cardDescription}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="notifications" className="text-sm font-medium">
-                Push Notifications
-              </Label>
-              <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
+          <CardContent
+            className={`space-y-6 ${notificationPrefsLoading ? "animate-pulse" : ""}`}
+            aria-busy={notificationPrefsLoading || saveNotificationMutation.isPending}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-push" className="text-sm font-medium">
+                  {NOTIFICATION_UI.pushLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.pushHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-push"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).pushEnabled}
+                  disabled={notificationPrefsLoading || savingPush}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: checked, emailEnabled: base.emailEnabled },
+                      changed: "push",
+                    });
+                  }}
+                />
+                {savingPush ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="emailAlerts" className="text-sm font-medium">
-                Email Alerts
-              </Label>
-              <Switch id="emailAlerts" checked={emailAlerts} onCheckedChange={setEmailAlerts} />
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-email" className="text-sm font-medium">
+                  {NOTIFICATION_UI.emailLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.emailHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-email"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).emailEnabled}
+                  disabled={notificationPrefsLoading || savingEmail}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: base.pushEnabled, emailEnabled: checked },
+                      changed: "email",
+                    });
+                  }}
+                />
+                {savingEmail ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm">Configure how you receive notifications</p>
           </CardContent>
         </Card>
 
@@ -495,6 +581,7 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="de">Deutsch</SelectItem>
+                  <SelectItem value="fr">Croatian</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -731,9 +818,23 @@ function ClientSettingsPage({ displayName }: ClientSettingsPageProps) {
             >
               {brevoSenderMutation.isPending ? "Speichern…" : "Brevo-Absender speichern"}
             </Button>
-          </CardContent>
+            <p className="text-sm text-muted-foreground">
+              Kampagnen unter{" "}
+              <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo
+              </Link>
+              , Kontakt-Sync unter{" "}
+              <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo/sync
+              </Link>
+              . API-Schlüssel: Umgebungsvariable{" "}
+              <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
+              <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
+              <span className="font-mono">xkeysib-</span>).
+            </p>
+            </CardContent>
         </Card>
-
+        
         {/* SMTP Settings */}
         <div className="md:col-span-2">
           <SmtpSettings />
