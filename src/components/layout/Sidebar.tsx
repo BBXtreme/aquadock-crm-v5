@@ -53,13 +53,11 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         isCollapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex h-16 items-center justify-center px-4 shrink-0">
+      <div className="flex h-14 shrink-0 items-center justify-center border-b border-border px-4">
         <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
           {isCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
       </div>
-
-      <div className="border-b shrink-0" />
 
       <nav className={cn("flex-1 space-y-1 p-4 overflow-y-auto")} suppressHydrationWarning={true}>
         {filteredNavigation.map((item) => {

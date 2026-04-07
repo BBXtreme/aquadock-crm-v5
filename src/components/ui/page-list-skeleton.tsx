@@ -675,6 +675,64 @@ export function ProfilePageSkeleton() {
   );
 }
 
+const DASHBOARD_FUNNEL_ROWS = [
+  { key: "df-0", bar: "max-w-[90%] w-full" },
+  { key: "df-1", bar: "max-w-[75%] w-full" },
+  { key: "df-2", bar: "max-w-[62%] w-full" },
+  { key: "df-3", bar: "max-w-[48%] w-full" },
+  { key: "df-4", bar: "max-w-[36%] w-full" },
+] as const;
+
+/** Dashboard KPI strip + chart cards + period control (matches DashboardClient). */
+export function DashboardContentSkeleton() {
+  return (
+    <div
+      className="space-y-8"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label="Dashboard wird geladen"
+    >
+      <SkeletonStatStrip count={4} gridClassName="md:grid-cols-2 lg:grid-cols-4" className="pb-0" />
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <Skeleton className="h-6 w-44 max-w-[55%]" />
+            <Skeleton className="h-3 w-32 shrink-0" />
+          </div>
+          <div className="flex min-h-[300px] h-[320px] flex-col justify-center gap-4">
+            {DASHBOARD_FUNNEL_ROWS.map((row) => (
+              <div key={row.key} className="flex items-center gap-3">
+                <Skeleton className="h-4 w-24 shrink-0" />
+                <Skeleton className={cn("h-8 rounded-lg", row.bar)} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
+            <Skeleton className="h-6 w-48 max-w-[70%]" />
+          </div>
+          <div className="flex min-h-[300px] h-[320px] flex-col items-center justify-center gap-6">
+            <Skeleton className="h-[13rem] w-[13rem] shrink-0 rounded-full" />
+            <div className="flex w-full max-w-xs flex-wrap justify-center gap-3">
+              <Skeleton className="h-3 w-20 rounded-full" />
+              <Skeleton className="h-3 w-24 rounded-full" />
+              <Skeleton className="h-3 w-16 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-44 rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
 const OPENMAP_CONTROL_KEYS = ["omc-0", "omc-1", "omc-2"] as const;
 
 /**
