@@ -4,19 +4,24 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { Bell, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
+import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
+import { fetchNotificationPreferences } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
+import { type NotificationPreferences, safeParseNotificationPreferences } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -63,8 +68,6 @@ out center;
 };
 
 function ClientSettingsPage() {
-  const [notifications, setNotifications] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
   const [theme, setTheme] = useState("system");
   const [language, setLanguage] = useState("en");
 
@@ -116,6 +119,72 @@ function ClientSettingsPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  const { data: notificationPrefs, isLoading: notificationPrefsLoading } = useQuery({
+    queryKey: ["notification-preferences"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return {
+          pushEnabled: NOTIFICATION_DEFAULTS.pushEnabled,
+          emailEnabled: NOTIFICATION_DEFAULTS.emailEnabled,
+        };
+      }
+      return fetchNotificationPreferences(supabase, user.id);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveNotificationMutation = useMutation({
+    mutationFn: async (vars: { prefs: NotificationPreferences; changed: "push" | "email" }) => {
+      const parsed = safeParseNotificationPreferences(vars.prefs);
+      if (!parsed.success) {
+        throw new Error(NOTIFICATION_UI.toastValidationError);
+      }
+      await saveNotificationPreferencesAction(parsed.data);
+      return { changed: vars.changed, prefs: parsed.data };
+    },
+    onMutate: async (vars) => {
+      const parsed = safeParseNotificationPreferences(vars.prefs);
+      if (!parsed.success) {
+        return {};
+      }
+      await queryClient.cancelQueries({ queryKey: ["notification-preferences"] });
+      const previous = queryClient.getQueryData<NotificationPreferences>(["notification-preferences"]);
+      queryClient.setQueryData(["notification-preferences"], parsed.data);
+      return { previous };
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["notification-preferences"], context.previous);
+      }
+      const message = error instanceof Error ? error.message : NOTIFICATION_UI.unknownError;
+      if (message === NOTIFICATION_UI.toastValidationError) {
+        toast.error(NOTIFICATION_UI.toastValidationError);
+      } else {
+        toast.error(NOTIFICATION_UI.toastSaveErrorTitle, { description: message });
+      }
+    },
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["notification-preferences"] });
+      if (result.changed === "push") {
+        toast.success(
+          result.prefs.pushEnabled ? NOTIFICATION_UI.toastPushActivated : NOTIFICATION_UI.toastPushDeactivated,
+        );
+      } else {
+        toast.success(
+          result.prefs.emailEnabled ? NOTIFICATION_UI.toastEmailActivated : NOTIFICATION_UI.toastEmailDeactivated,
+        );
+      }
+    },
+  });
+
+  const savingPush =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "push";
+  const savingEmail =
+    saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
 
   const { data: brevoSenderSettings } = useQuery({
     queryKey: ["brevo-sender-settings"],
@@ -254,34 +323,84 @@ function ClientSettingsPage() {
 
   return (
     <div>
-      <div>
-        <p className="text-muted-foreground text-sm">Home {">"} Settings</p>
-        <h1 className="font-semibold text-3xl tracking-tight">Settings</h1>
-      </div>
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Notifications Card */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
-              Notifications
+              {NOTIFICATION_UI.cardTitle}
             </CardTitle>
+            <CardDescription>{NOTIFICATION_UI.cardDescription}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="notifications" className="text-sm font-medium">
-                Push Notifications
-              </Label>
-              <Switch id="notifications" checked={notifications} onCheckedChange={setNotifications} />
+          <CardContent
+            className={`space-y-6 ${notificationPrefsLoading ? "animate-pulse" : ""}`}
+            aria-busy={notificationPrefsLoading || saveNotificationMutation.isPending}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-push" className="text-sm font-medium">
+                  {NOTIFICATION_UI.pushLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.pushHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-push"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).pushEnabled}
+                  disabled={notificationPrefsLoading || savingPush}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: checked, emailEnabled: base.emailEnabled },
+                      changed: "push",
+                    });
+                  }}
+                />
+                {savingPush ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="emailAlerts" className="text-sm font-medium">
-                Email Alerts
-              </Label>
-              <Switch id="emailAlerts" checked={emailAlerts} onCheckedChange={setEmailAlerts} />
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="notifications-email" className="text-sm font-medium">
+                  {NOTIFICATION_UI.emailLabel}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{NOTIFICATION_UI.emailHelp}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="notifications-email"
+                  className="shrink-0"
+                  checked={(notificationPrefs ?? NOTIFICATION_DEFAULTS).emailEnabled}
+                  disabled={notificationPrefsLoading || savingEmail}
+                  onCheckedChange={(checked) => {
+                    const base = notificationPrefs ?? NOTIFICATION_DEFAULTS;
+                    saveNotificationMutation.mutate({
+                      prefs: { pushEnabled: base.pushEnabled, emailEnabled: checked },
+                      changed: "email",
+                    });
+                  }}
+                />
+                {savingEmail ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{NOTIFICATION_UI.saving}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <p className="text-muted-foreground text-sm">Configure how you receive notifications</p>
           </CardContent>
         </Card>
 
@@ -440,9 +559,23 @@ function ClientSettingsPage() {
             >
               {brevoSenderMutation.isPending ? "Speichern…" : "Brevo-Absender speichern"}
             </Button>
-          </CardContent>
+            <p className="text-sm text-muted-foreground">
+              Kampagnen unter{" "}
+              <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo
+              </Link>
+              , Kontakt-Sync unter{" "}
+              <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
+                /brevo/sync
+              </Link>
+              . API-Schlüssel: Umgebungsvariable{" "}
+              <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
+              <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
+              <span className="font-mono">xkeysib-</span>).
+            </p>
+            </CardContent>
         </Card>
-
+        
         {/* SMTP Settings */}
         <div className="md:col-span-2">
           <SmtpSettings />

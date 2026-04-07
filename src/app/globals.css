@@ -108,6 +108,35 @@ typography settings for the body and headings.
 	--sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes skeleton-shimmer {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@layer components {
+	[data-slot="skeleton"] {
+		position: relative;
+		overflow: hidden;
+	}
+	[data-slot="skeleton"]::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		transform: translateX(-100%);
+		background: linear-gradient(
+			90deg,
+			transparent,
+			color-mix(in oklch, var(--foreground) 11%, transparent),
+			transparent
+		);
+		animation: skeleton-shimmer 1.65s ease-in-out infinite;
+	}
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50;

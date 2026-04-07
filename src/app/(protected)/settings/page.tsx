@@ -17,7 +17,7 @@ export default async function SettingsPage() {
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
         {/* Page Header */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-semibold tracking-tight">Einstellungen</h1>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Einstellungen</h1>
           <p className="text-muted-foreground">
             Verwalte deine Account- und CRM-Einstellungen
           </p>
@@ -25,7 +25,7 @@ export default async function SettingsPage() {
 
         {/* Welcome line preserved */}
         <div className="text-lg">
-          Willkommen, <span className="font-medium">{safeDisplay(user.display_name)}</span>
+          Willkommen, <span className="font-extralight">{safeDisplay(user.display_name)}</span>
         </div>
 
         {/* Nice Loading Skeleton for Settings */}
@@ -82,24 +82,6 @@ export default async function SettingsPage() {
         >
           <ClientSettingsPage />
         </Suspense>
-
-        <div className="rounded-2xl border border-border bg-card p-8">
-          <h2 className="text-xl font-semibold mb-2">Brevo</h2>
-          <p className="text-sm text-muted-foreground">
-            Kampagnen unter{" "}
-            <Link href="/brevo" className="font-medium text-primary underline-offset-4 hover:underline">
-              /brevo
-            </Link>
-            , Kontakt-Sync unter{" "}
-            <Link href="/brevo/sync" className="font-medium text-primary underline-offset-4 hover:underline">
-              /brevo/sync
-            </Link>
-            . API-Schlüssel: Umgebungsvariable{" "}
-            <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
-            <span className="font-mono text-foreground">.env.local</span> (v3-Key, meist{" "}
-            <span className="font-mono">xkeysib-</span>).
-          </p>
-        </div>
       </div>
     </div>
   );
