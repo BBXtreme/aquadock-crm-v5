@@ -32,7 +32,7 @@ export default function AquaDockCard({ company }: Props) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-medium break-all"
+        className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline font-medium break-all"
       >
         <MapPin className="w-4 h-4" />
         <span className="font-mono text-sm">{company.osm}</span>
@@ -57,26 +57,26 @@ export default function AquaDockCard({ company }: Props) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-gray-700">Wasserdistanz</div>
-              <p className="text-sm text-gray-900">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Wasserdistanz</div>
+              <p className="text-sm text-foreground">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Wassertyp</div>
-              <p className="text-sm text-gray-900">{company.wassertyp || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Wassertyp</div>
+              <p className="text-sm text-foreground">{company.wassertyp || "—"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Latitude</div>
-              <p className="text-sm text-gray-900">{company.lat ?? "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Latitude</div>
+              <p className="text-sm text-foreground">{company.lat ?? "—"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Longitude</div>
-              <p className="text-sm text-gray-900">{company.lon ?? "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Longitude</div>
+              <p className="text-sm text-foreground">{company.lon ?? "—"}</p>
             </div>
             <div className="lg:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-medium text-gray-700">OSM ID</div>
-                  <p className="text-sm text-gray-900">{formatOsmLink()}</p>
+                  <div className="text-sm font-medium text-muted-foreground">OSM ID</div>
+                  <p className="text-sm text-foreground">{formatOsmLink()}</p>
                 </div>
                 </div>
                 <Button

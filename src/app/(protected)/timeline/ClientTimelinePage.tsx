@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { createTimelineEntryAction } from "@/lib/actions/timeline-forms";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/types/database.types";
@@ -60,25 +61,13 @@ function ClientTimelinePage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: TimelineEntryFormValues) => {
-      const payload = {
+      return createTimelineEntryAction({
         title: values.title.trim() || t("defaultEntryTitle"),
         content: values.content?.trim() || null,
         activity_type: values.activity_type || "note",
         company_id: values.company_id || null,
         contact_id: values.contact_id ?? null,
-      };
-
-      const res = await fetch("/api/timeline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || errData.details || `HTTP ${res.status}`);
-      }
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline"] });

@@ -55,7 +55,24 @@
       "themeSaveErrorTitle": "Theme konnte nicht gespeichert werden",
       "localeSaveErrorTitle": "Sprache konnte nicht gespeichert werden",
       "colorSaved": "Farbschema gespeichert",
-      "colorSaveErrorTitle": "Farbschema konnte nicht gespeichert werden"
+      "colorSaveErrorTitle": "Farbschema konnte nicht gespeichert werden",
+      "timezoneLabel": "Zeitzone",
+      "timezoneSearchPlaceholder": "Zeitzone suchen …",
+      "timezoneDialogTitle": "Zeitzone wählen",
+      "timezoneEmpty": "Keine Zeitzone gefunden.",
+      "timezoneSaved": "Zeitzone gespeichert",
+      "timezoneSaveErrorTitle": "Zeitzone konnte nicht gespeichert werden",
+      "timezoneRegionEurope": "Europa",
+      "timezoneRegionAmericas": "Amerika",
+      "timezoneRegionAfrica": "Afrika",
+      "timezoneRegionAsia": "Asien",
+      "timezoneRegionAustralia": "Australien",
+      "timezoneRegionPacific": "Pazifik",
+      "timezoneRegionAtlantic": "Atlantik",
+      "timezoneRegionIndian": "Indischer Ozean",
+      "timezoneRegionAntarctica": "Antarktis",
+      "timezoneRegionArctic": "Arktis",
+      "timezoneRegionOther": "Sonstige"
     },
     "map": {
       "title": "OpenMap — Karten-Anbieter",
@@ -233,6 +250,8 @@
     "tableNext": "Weiter",
     "tableEmpty": "Keine Ergebnisse.",
     "tableDeleteConfirm": "Diesen Kontakt wirklich löschen?",
+    "tableDeleteConfirmTitle": "Löschen bestätigen",
+    "tableDeleteConfirmDescription": "Diesen Kontakt wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
     "tableToastDeleteFailed": "Kontakt konnte nicht gelöscht werden",
     "tableToastExportFailed": "Export fehlgeschlagen",
     "tableExportCsv": "CSV exportieren",
@@ -381,7 +400,83 @@
     "syncResultSkipped": "{count} ohne E-Mail übersprungen",
     "syncResultSubmitted": "{count} zur Brevo-Massenimport-API übermittelt",
     "syncResultProcessId": "Brevo-Prozess-ID {id} (Verarbeitung im Hintergrund)",
-    "unknownError": "Unbekannter Fehler"
+    "unknownError": "Unbekannter Fehler",
+    "syncColVorname": "Vorname",
+    "syncColNachname": "Nachname",
+    "syncColEmail": "E-Mail",
+    "syncColFirma": "Firmenname",
+    "syncColKundentyp": "Kundentyp",
+    "syncColStatus": "Status",
+    "syncColTelefon": "Telefon",
+    "syncSelectAllPageAria": "Alle auf dieser Seite auswählen",
+    "syncSelectRowAria": "Zeile auswählen",
+    "syncContactsCardTitle": "Kontakte für den Import",
+    "syncContactsCardDescription": "Suchen und filtern Sie nach Kundentyp und Status. Markierte Zeilen werden beim Import an Brevo übermittelt.",
+    "syncSearchPlaceholder": "Kontakte suchen (Name, E-Mail, Firma …)",
+    "syncSearchAriaLabel": "Globale Suche",
+    "syncSelectedCount": "{count} ausgewählt",
+    "syncFilterKundentypChip": "Kundentyp · {summary}",
+    "syncFilterStatusChip": "Status · {summary}",
+    "syncFilterSummaryAll": "Alle",
+    "syncFilterSummaryOne": "1 aktiv",
+    "syncFilterSummaryMany": "{count} aktiv",
+    "syncFilterMultiLabel": "Mehrfachauswahl",
+    "syncFilterReset": "Filter zurücksetzen",
+    "syncRowsPerPage": "Zeilen pro Seite",
+    "syncLoadContactsError": "Kontakte konnten nicht geladen werden.",
+    "syncTableEmpty": "Keine Kontakte für die aktuellen Filter.",
+    "syncFooterSelectedVisible": "{selected} von {visible} sichtbaren Zeilen ausgewählt",
+    "syncFooterPage": "Seite {page} von {pageCount}",
+    "syncPagerFirst": "Erste Seite",
+    "syncPagerPrev": "Zurück",
+    "syncPagerNext": "Weiter",
+    "syncPagerLast": "Letzte Seite",
+    "syncImportCardTitle": "Import-Einstellungen (Brevo)",
+    "syncImportCardDescription": "Ziel-Listen wählen und optional eine neue Liste anlegen. Es werden nur markierte CRM-Kontakte mit gültiger E-Mail-Adresse importiert.",
+    "syncListsLabel": "Bestehende Brevo-Listen",
+    "syncListsHelp": "Mehrfachauswahl möglich — Kontakte werden den gewählten Listen zugeordnet.",
+    "syncListsLoadError": "Listen konnten nicht geladen werden.",
+    "syncListsLoading": "Listen werden geladen…",
+    "syncListsTrigger": "Listen · {summary}",
+    "syncListsEmpty": "Keine Listen im Brevo-Konto",
+    "syncClearListSelection": "Auswahl leeren",
+    "syncListSummaryNone": "Keine gewählt",
+    "syncListSummaryOne": "1 Liste",
+    "syncListSummaryMany": "{count} Listen",
+    "syncNewListLegend": "Neue Liste erstellen",
+    "syncNewListHelp": "Optional: ergänzend oder anstelle bestehender Listen. Brevo legt die Liste beim Import an und ordnet die Kontakte zu.",
+    "syncNewListSwitchAria": "Neue Brevo-Liste beim Import anlegen",
+    "syncNewListNameLabel": "Listenname",
+    "syncNewListPlaceholder": "z. B. AquaDock CRM — ausgewählte Kontakte",
+    "syncImportSelectionButton": "Auswahl nach Brevo importieren",
+    "syncImportHintNone": "Wählen Sie mindestens einen Kontakt in der Tabelle aus.",
+    "syncImportHintNoTarget": "Wählen Sie mindestens eine Liste oder aktivieren Sie „Neue Liste erstellen“ mit einem Namen.",
+    "syncImportHintReady": "Der Import läuft asynchron bei Brevo; in der Bestätigung sehen Sie die Prozess-ID.",
+    "syncLastImportTitle": "Letzter Import",
+    "syncLastImportDesc": "{submitted} Kontakt(e) übermittelt · Prozess #{processId}{skippedPart}",
+    "syncLastImportSkippedPart": " · {count} ohne E-Mail übersprungen",
+    "syncShowDetails": "Details anzeigen",
+    "syncOpenBrevo": "Brevo öffnen",
+    "syncResultDialogTitle": "Import erfolgreich gestartet",
+    "syncResultDialogDescription": "Die Brevo-API hat den Import angenommen. Die Aufteilung neu angelegt vs. bereits vorhanden liefert Brevo erst nach Abschluss des Hintergrund-Jobs — die übermittelte Menge entspricht allen gültigen E-Mails aus Ihrer Auswahl.",
+    "syncStatMatchedLabel": "Gematcht (Auswahl)",
+    "syncStatMatchedHint": "Kontakte, die Sie in der Tabelle markiert hatten.",
+    "syncStatSkippedLabel": "Übersprungen (keine E-Mail)",
+    "syncStatSkippedHint": "Ohne nutzbare E-Mail-Adresse — nicht an Brevo gesendet.",
+    "syncStatSubmittedLabel": "Erstellt (übermittelt)",
+    "syncStatSubmittedHint": "Kontakte in der Brevo-Import-Warteschlange — umfasst neue Datensätze und Aktualisierungen, bis der Job fertig ist.",
+    "syncStatExistingLabel": "Bereits vorhanden",
+    "syncStatExistingHint": "Wie viele Kontakte nur aktualisiert wurden, sehen Sie nach Abschluss des Imports in Brevo.",
+    "syncProcessIdLabel": "Prozess-ID",
+    "syncProcessIdHelp": "Zum Nachverfolgen in Brevo oder im Support.",
+    "syncCopyId": "ID kopieren",
+    "syncClose": "Schließen",
+    "syncToastImportStarted": "Import in Brevo gestartet",
+    "syncToastImportStartedDesc": "{submitted} übermittelt · {skipped} ohne E-Mail · Prozess #{processId}",
+    "syncToastImportFailed": "Brevo-Import fehlgeschlagen",
+    "syncToastProcessIdCopied": "Prozess-ID kopiert",
+    "syncToastCopyFailed": "Kopieren fehlgeschlagen",
+    "syncToastCopyFailedDesc": "Zwischenablage nicht verfügbar."
   },
   "massEmail": {
     "breadcrumb": "Home → Massen-E-Mail",
@@ -400,7 +495,60 @@
     "progressWait": "Bitte warten…",
     "previewName": "Max Mustermann",
     "previewCompany": "Beispiel GmbH",
-    "previewEmail": "max@beispiel.de"
+    "previewEmail": "max@beispiel.de",
+    "logTitle": "E-Mail Versandlog",
+    "logSubtitle": "Übersicht über alle gesendeten E-Mails",
+    "logBack": "Zurück",
+    "logFilterAll": "Alle",
+    "logFilterSent": "Erfolgreich",
+    "logFilterError": "Fehlgeschlagen",
+    "logSearchPlaceholder": "Suche nach Empfänger oder Betreff…",
+    "logColMode": "Modus",
+    "logColRecipient": "Empfänger",
+    "logColSubject": "Betreff",
+    "logColTemplate": "Vorlage",
+    "logColDate": "Datum",
+    "logColStatus": "Status",
+    "logEmpty": "Keine E-Mail-Logs gefunden.",
+    "logModeTest": "Test",
+    "logModeMass": "Massenversand",
+    "logStatusSent": "Gesendet",
+    "logStatusError": "Fehler",
+    "logDateUnknown": "Unbekannt",
+    "templatesTitle": "E-Mail-Vorlagen",
+    "templatesPageSubtitle": "Wiederverwendbare Vorlagen für Massenversand und Schnellmails verwalten",
+    "templatesManageSubtitle": "Verwalten Sie Ihre E-Mail-Vorlagen",
+    "templatesLoadError": "Fehler beim Laden der Vorlagen: {message}",
+    "templatesEmpty": "Noch keine Vorlagen vorhanden.",
+    "templatesCreateFirst": "Erste Vorlage erstellen",
+    "templatesUpdated": "Aktualisiert: {date}",
+    "templatesPreview": "Vorschau",
+    "templatesEdit": "Bearbeiten",
+    "templatesDelete": "Löschen",
+    "templatesDeleteTitle": "Vorlage löschen?",
+    "templatesDeleteDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Die Vorlage \"{name}\" wird dauerhaft gelöscht.",
+    "templateFormCreateTitle": "Neue Vorlage erstellen",
+    "templateFormEditTitle": "Vorlage bearbeiten",
+    "templateFormDescription": "Erstellen oder bearbeiten Sie eine E-Mail-Vorlage mit Platzhaltern für personalisierte Nachrichten.",
+    "templateFormNameLabel": "Name *",
+    "templateFormNamePlaceholder": "z. B. Einführungs-E-Mail",
+    "templateFormSubjectLabel": "Betreff *",
+    "templateFormSubjectPlaceholder": "z. B. Willkommen bei AquaDock",
+    "templateFormBodyLabel": "Inhalt",
+    "templateFormBodyPlaceholder": "Hallo {{vorname}},\n\nwir freuen uns, Sie als {{firmenname}} begrüßen zu dürfen.\n\nVerfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}",
+    "templateFormSave": "Speichern",
+    "templateFormCancel": "Abbrechen",
+    "templatePreviewTitle": "Vorlagen-Vorschau",
+    "templatePreviewDescription": "Vorschau der E-Mail-Vorlage mit Platzhaltern.",
+    "templatePreviewSubjectLabel": "Betreff",
+    "templatePreviewBodyLabel": "Inhalt",
+    "newTemplate": "Neue Vorlage",
+    "toastTemplateCreated": "Vorlage erstellt",
+    "toastTemplateUpdated": "Vorlage aktualisiert",
+    "toastTemplateDeleted": "Vorlage gelöscht",
+    "toastTemplateCreateError": "Fehler beim Erstellen",
+    "toastTemplateUpdateError": "Fehler beim Aktualisieren",
+    "toastTemplateDeleteError": "Fehler beim Löschen"
   },
   "timeline": {
     "breadcrumb": "Home → Timeline",
@@ -455,6 +603,190 @@
     "formCancel": "Abbrechen"
   },
   "common": {
-    "dash": "—"
+    "dash": "—",
+    "ellipsis": "…"
+  },
+  "csvImport": {
+    "dialogTitle": "Unternehmen aus CSV importieren",
+    "dialogDescription": "CSV-Datei mit Unternehmensdaten hochladen. Erwartete Spalten u. a. Firmenname, Kundentyp, Adresse.",
+    "fieldGuideButton": "Feldreferenz & Header",
+    "dropActive": "CSV-Datei hier ablegen …",
+    "dropHint": "Datei per Drag & Drop ablegen oder klicken zur Auswahl",
+    "csvOnly": "Nur CSV-Dateien",
+    "parseErrorTitle": "CSV konnte nicht verarbeitet werden",
+    "parseButtonParsing": "Wird gelesen …",
+    "parseButton": "CSV einlesen",
+    "cancel": "Abbrechen",
+    "guideDialogTitle": "Feldreferenz & Header-Guide",
+    "guideDialogDescription": "Unterstützte Spaltenüberschriften und Beispiele für den CSV-Import von Unternehmen.",
+    "guideClose": "Schließen",
+    "toastValidateErrorTitle": "Validierungsfehler",
+    "toastImportFailedTitle": "Import fehlgeschlagen",
+    "toastNoRowsImported": "Keine Zeilen importiert.",
+    "toastReadErrorFallback": "CSV konnte nicht gelesen werden.",
+    "parseErrorNoRows": "Keine gültigen Zeilen gefunden (Firmenname und Kundentyp erforderlich).",
+    "previewTitle": "CSV-Vorschau",
+    "previewMeta": "{fileName} · {count} Zeilen · erkannte Felder: {fields}",
+    "previewMetaNoFields": "—",
+    "previewTabPreview": "Vorschau",
+    "previewTabGuide": "Feldreferenz",
+    "previewFooter": "{count} Datensätze werden importiert. Bitte prüfen Sie die Vorschau, bevor Sie fortfahren.",
+    "previewCancel": "Abbrechen",
+    "previewBack": "Zurück zur Bearbeitung",
+    "previewImporting": "Import läuft …",
+    "previewImport": "Jetzt importieren ({count})",
+    "formatAlertTitle": "CSV-Format",
+    "formatAlertDescription": "Trennzeichen: Semikolon (;). Erste Zeile enthält die Spaltenüberschriften. Groß-/Kleinschreibung ist egal; Leerzeichen am Rand werden entfernt. Pro Zeile werden nur Zeilen mit Firmenname und Kundentyp importiert.",
+    "sectionParserTitle": "Vom Importer erkannt",
+    "sectionParserDescription": "Diese Spalten werden eingelesen und in der Vorschau sowie beim Import verwendet.",
+    "sectionFutureTitle": "Noch nicht aus CSV übernommen",
+    "sectionFutureDescription": "Die folgenden Spalten können Sie in Exporten sehen oder vorbereiten — der aktuelle Unternehmens-CSV-Import ignoriert sie.",
+    "tableField": "Feld",
+    "tableRecommendedHeader": "Empfohlener Header",
+    "tableAcceptedVariants": "Akzeptierte Varianten",
+    "tableExample": "Beispiel",
+    "tableRequired": "Pflicht",
+    "tableNotes": "Hinweise",
+    "requiredYes": "Ja",
+    "requiredNo": "Nein",
+    "toastHeaderCopied": "Header kopiert",
+    "toastCopyFailedTitle": "Kopieren fehlgeschlagen",
+    "copyHeaderAria": "Header {header} kopieren",
+    "cols": {
+      "firmenname": "Firmenname",
+      "kundentyp": "Kundentyp",
+      "wasser_distanz": "Wasserdistanz (m)",
+      "wassertyp": "Wassertyp",
+      "strasse": "Straße",
+      "plz": "PLZ",
+      "ort": "Ort",
+      "bundesland": "Bundesland",
+      "land": "Land",
+      "telefon": "Telefon",
+      "website": "Website",
+      "email": "E-Mail",
+      "lat": "Lat",
+      "lon": "Lon",
+      "osm": "OSM"
+    },
+    "fields": {
+      "firmenname": {
+        "label": "Firmenname",
+        "notes": "Pflichtfeld. Mindestens ein Name pro Zeile.",
+        "dataType": "Text"
+      },
+      "kundentyp": {
+        "label": "Kundentyp / Kategorie",
+        "notes": "Pflichtfeld. Kleinbuchstaben, z. B. restaurant, hotel, resort, camping, marina, segelschule, segelverein, bootsverleih, neukunde, bestandskunde, interessent, partner, sonstige.",
+        "dataType": "Text (Enum)"
+      },
+      "strasse": {
+        "label": "Straße / Adresse",
+        "notes": "Adresszeile ohne PLZ/Ort.",
+        "dataType": "Text"
+      },
+      "plz": {
+        "label": "Postleitzahl",
+        "notes": "",
+        "dataType": "Text"
+      },
+      "ort": {
+        "label": "Ort / Stadt",
+        "notes": "Wird beim Import in der Datenbank als Stadt gespeichert.",
+        "dataType": "Text"
+      },
+      "bundesland": {
+        "label": "Bundesland / Region",
+        "notes": "",
+        "dataType": "Text"
+      },
+      "land": {
+        "label": "Land",
+        "notes": "Kürzel DE, AT, CH werden zu Landnamen normalisiert.",
+        "dataType": "Text"
+      },
+      "telefon": {
+        "label": "Telefon",
+        "notes": "",
+        "dataType": "Text"
+      },
+      "email": {
+        "label": "E-Mail",
+        "notes": "",
+        "dataType": "Text"
+      },
+      "website": {
+        "label": "Website",
+        "notes": "",
+        "dataType": "Text (URL)"
+      },
+      "lat": {
+        "label": "Breitengrad",
+        "notes": "Dezimalzahl; Komma oder Punkt möglich.",
+        "dataType": "Zahl (deutsch: Komma)"
+      },
+      "lon": {
+        "label": "Längengrad",
+        "notes": "Dezimalzahl; Komma oder Punkt möglich.",
+        "dataType": "Zahl (deutsch: Komma)"
+      },
+      "wasser_distanz": {
+        "label": "Wasserdistanz (m)",
+        "notes": "Meter als Zahl.",
+        "dataType": "Zahl (m)"
+      },
+      "wassertyp": {
+        "label": "Wassertyp",
+        "notes": "Emojis werden beim Import entfernt.",
+        "dataType": "Text"
+      },
+      "osm": {
+        "label": "OpenStreetMap-Referenz",
+        "notes": "Format node/ID, way/ID oder relation/ID.",
+        "dataType": "Text"
+      }
+    },
+    "futureFields": {
+      "rechtsform": {
+        "label": "Rechtsform",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen (geplante Erweiterung).",
+        "dataType": "Text"
+      },
+      "firmentyp": {
+        "label": "Firmentyp",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen. Erlaubte Werte im CRM: kette, einzeln.",
+        "dataType": "Text"
+      },
+      "value": {
+        "label": "Wert (€)",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen.",
+        "dataType": "Zahl"
+      },
+      "notes": {
+        "label": "Notizen",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen.",
+        "dataType": "Text"
+      },
+      "ap1_vorname": {
+        "label": "Ansprechpartner 1 – Vorname",
+        "notes": "Kontaktspalten werden beim Unternehmens-CSV-Import ignoriert; Kontakte separat anlegen.",
+        "dataType": "Text"
+      },
+      "ap1_nachname": {
+        "label": "Ansprechpartner 1 – Nachname",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen.",
+        "dataType": "Text"
+      },
+      "ap1_email": {
+        "label": "Ansprechpartner 1 – E-Mail",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen.",
+        "dataType": "Text"
+      },
+      "ap1_telefon": {
+        "label": "Ansprechpartner 1 – Telefon",
+        "notes": "Wird beim CSV-Import derzeit nicht übernommen.",
+        "dataType": "Text"
+      }
+    }
   }
 }

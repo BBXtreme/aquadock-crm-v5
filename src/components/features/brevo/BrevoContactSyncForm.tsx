@@ -10,23 +10,26 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type BrevoSyncContactsResult, syncContactsToBrevo } from "@/lib/actions/brevo";
 import { kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { useT } from "@/lib/i18n/use-translations";
 import { type BrevoSyncFormData, brevoSyncSchema } from "@/lib/validations/brevo";
 
 const ALL_VALUE = "__all__";
 
-function describeSyncResult(r: BrevoSyncContactsResult): string {
-  const lines = [
-    `${r.matched} Kontakt(e) passen zum Filter`,
-    `${r.skippedNoEmail} ohne E-Mail übersprungen`,
-    `${r.submitted} zur Brevo-Massenimport-API übermittelt`,
-  ];
-  if (r.processId != null) {
-    lines.push(`Brevo-Prozess-ID ${r.processId} (Verarbeitung im Hintergrund)`);
-  }
-  return lines.join(" · ");
-}
-
 export default function BrevoContactSyncForm() {
+  const t = useT("brevo");
+
+  const describeSyncResult = (r: BrevoSyncContactsResult): string => {
+    const lines = [
+      t("syncResultMatched", { count: r.matched }),
+      t("syncResultSkipped", { count: r.skippedNoEmail }),
+      t("syncResultSubmitted", { count: r.submitted }),
+    ];
+    if (r.processId != null) {
+      lines.push(t("syncResultProcessId", { id: r.processId }));
+    }
+    return lines.join(" · ");
+  };
+
   const form = useForm<BrevoSyncFormData>({
     resolver: zodResolver(brevoSyncSchema),
     defaultValues: {},
@@ -45,46 +48,31 @@ export default function BrevoContactSyncForm() {
       const description = describeSyncResult(res);
 
       if (res.matched === 0) {
-        toast.warning("Keine Kontakte zum Synchronisieren", {
-          description:
-            "Kein Kontakt entspricht den Filtern (Kundentyp/Status) oder du hast noch keine Kontakte in diesem Account.",
+        toast.warning(t("syncToastNoContactsTitle"), {
+          description: t("syncToastNoContactsDescription"),
         });
         return;
       }
 
       if (res.submitted > 0) {
-        toast.success("Brevo-Import gestartet", { description });
+        toast.success(t("syncToastStarted"), { description });
         return;
       }
 
-      toast.info("Nichts an Brevo übermittelt", {
+      toast.info(t("syncToastNothingTitle"), {
         description:
-          res.skippedNoEmail > 0
-            ? description
-            : "Alle passenden Kontakte wurden geprüft; es gab keine Zeilen mit E-Mail zum Import.",
+          res.skippedNoEmail > 0 ? description : t("syncToastNothingDescription"),
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("Brevo-Synchronisation fehlgeschlagen", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("syncToastFailed"), { description: message });
     }
   };
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Der API-Schlüssel steht in{" "}
-        <span className="font-mono text-foreground">BREVO_API_KEY</span> in{" "}
-        <span className="font-mono text-foreground">.env.local</span> (nach Änderung den Server neu starten).
-        Verwende einen <strong>v3-API-Key</strong> aus Brevo → SMTP &amp; API → API keys (meist{" "}
-        <span className="font-mono">xkeysib-</span>) — SMTP-Relay-Keys (<span className="font-mono">xsmtpsib-</span>)
-        funktionieren nicht mit der REST-API.
-      </p>
-      <p className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-3">
-        <strong className="text-foreground">Nur Massen-Sync:</strong> Diese Filter legen fest, welche CRM-Kontakte
-        in Brevo angelegt werden. Auf <span className="font-medium text-foreground">Brevo</span> (
-        <span className="font-mono text-foreground">/brevo</span>) filterst du die Empfängertabelle separat für
-        einzelne Kampagnen.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("syncFormApiKeyHelp")}</p>
+      <p className="text-sm text-muted-foreground border-l-2 border-primary/30 pl-3">{t("syncFormMassSyncHelp")}</p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-md">
           <FormField
@@ -92,37 +80,20 @@ export default function BrevoContactSyncForm() {
             name="filterKundentyp"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Kundentyp-Filter</FormLabel>
+                <FormLabel>{t("syncFormFilterKundentyp")}</FormLabel>
                 <Select
                   value={field.value && field.value.length > 0 ? field.value : ALL_VALUE}
                   onValueChange={(v) => {
-                    // #region agent log
-                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-                      body: JSON.stringify({
-                        sessionId: "c3d00c",
-                        runId: "post-fix",
-                        hypothesisId: "D",
-                        location: "BrevoContactSyncForm.tsx:filterKundentyp:onValueChange",
-                        message: "mass sync Select kundentyp",
-                        data: { v },
-                        timestamp: Date.now(),
-                      }),
-                    }).catch(() => {
-                    void 0;
-                  });
-                    // #endregion
                     field.onChange(v === ALL_VALUE ? undefined : v);
                   }}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Alle Kundentypen" />
+                      <SelectValue placeholder={t("syncFormPlaceholderKundentyp")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={ALL_VALUE}>Alle</SelectItem>
+                    <SelectItem value={ALL_VALUE}>{t("syncFormOptionAll")}</SelectItem>
                     {kundentypOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -139,37 +110,20 @@ export default function BrevoContactSyncForm() {
             name="filterStatus"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status-Filter</FormLabel>
+                <FormLabel>{t("syncFormFilterStatus")}</FormLabel>
                 <Select
                   value={field.value && field.value.length > 0 ? field.value : ALL_VALUE}
                   onValueChange={(v) => {
-                    // #region agent log
-                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-                      body: JSON.stringify({
-                        sessionId: "c3d00c",
-                        runId: "post-fix",
-                        hypothesisId: "D",
-                        location: "BrevoContactSyncForm.tsx:filterStatus:onValueChange",
-                        message: "mass sync Select status",
-                        data: { v },
-                        timestamp: Date.now(),
-                      }),
-                    }).catch(() => {
-                    void 0;
-                  });
-                    // #endregion
                     field.onChange(v === ALL_VALUE ? undefined : v);
                   }}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Alle Status" />
+                      <SelectValue placeholder={t("syncFormPlaceholderStatus")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={ALL_VALUE}>Alle</SelectItem>
+                    <SelectItem value={ALL_VALUE}>{t("syncFormOptionAll")}</SelectItem>
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -181,7 +135,7 @@ export default function BrevoContactSyncForm() {
               </FormItem>
             )}
           />
-          <Button type="submit">Kontakte zu Brevo synchronisieren</Button>
+          <Button type="submit">{t("syncFormSubmit")}</Button>
         </form>
       </Form>
     </div>

@@ -16,7 +16,7 @@ import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 
 import type { OsmPoi } from "./types";
 
-async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string, displayName: string, notes: string) {
+async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string | null, displayName: string, notes: string) {
   const name = displayName;
 
   // Filter out undefined values to match expected type
@@ -102,12 +102,14 @@ export function useMapPopupActions() {
       }
       toast.loading(t("waterCalcLoading"), { id: "water-calc" });
       try {
-        const distance = await calculateWaterDistance(lat, lon);
-        Object.assign(poi, { wasserdistanz: distance });
-        if (distance !== null) {
+        const result = await calculateWaterDistance(lat, lon);
+        Object.assign(poi, { wasserdistanz: result.distance, wassertyp: result.wassertyp });
+        if (result.distance !== null) {
           await new Promise((resolve) => setTimeout(resolve, 100));
           const msg =
-            distance === 0 ? t("waterAtWater") : t("waterDistanceMeters", { meters: String(distance) });
+            result.distance === 0
+              ? t("waterAtWater")
+              : t("waterDistanceMeters", { meters: String(result.distance) });
           toast.success(msg, { id: "water-calc" });
         } else {
           toast.error(t("waterNotFound"), { id: "water-calc" });
@@ -126,10 +128,13 @@ export function useMapPopupActions() {
     try {
       toast.loading(t("importLoading", { name: displayName }), { id: "osm-import" });
 
-      const userId = "dev-mock-user-11111111-2222-3333-4444-555555555555";
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userId = user?.id ?? null;
 
       const osmUrl = `https://www.openstreetmap.org/${poi.type}/${poi.id}`;
-      const supabase = createClient();
       const { data: existingCompanies, error: fetchError } = await supabase
         .from("companies")
         .select("id, firmenname")

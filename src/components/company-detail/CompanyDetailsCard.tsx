@@ -23,7 +23,7 @@ export default function CompanyDetailsCard({ company }: Props) {
     if (!website) return safeDisplay(website);
     const url = website.startsWith("http") ? website : `https://${website}`;
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-4 hover:underline">
         {website}
       </a>
     );
@@ -32,7 +32,7 @@ export default function CompanyDetailsCard({ company }: Props) {
   const formatTelefon = (telefon: string | null) => {
     if (!telefon) return safeDisplay(telefon);
     return (
-      <a href={`tel:${telefon}`} className="text-blue-600 hover:underline">
+      <a href={`tel:${telefon}`} className="text-primary underline-offset-4 hover:underline">
         {telefon}
       </a>
     );
@@ -41,7 +41,7 @@ export default function CompanyDetailsCard({ company }: Props) {
   const formatEmail = (email: string | null) => {
     if (!email) return safeDisplay(email);
     return (
-      <a href={`mailto:${email}`} className="text-blue-600 hover:underline">
+      <a href={`mailto:${email}`} className="text-primary underline-offset-4 hover:underline">
         {email}
       </a>
     );
@@ -67,36 +67,36 @@ export default function CompanyDetailsCard({ company }: Props) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-gray-700">Firmenname</div>
-              <p className="text-sm text-gray-900">{safeDisplay(company.firmenname)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Firmenname</div>
+              <p className="text-sm text-foreground">{safeDisplay(company.firmenname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Rechtsform</div>
-              <p className="text-sm text-gray-900">{safeDisplay(company.rechtsform)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Rechtsform</div>
+              <p className="text-sm text-foreground">{safeDisplay(company.rechtsform)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Kundentyp</div>
-              <p className="text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Kundentyp</div>
+              <p className="text-sm text-foreground">
                 {company.kundentyp
                   ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1)
                   : safeDisplay(company.kundentyp)}
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Firmentyp</div>
-              <p className="text-sm text-gray-900">{safeDisplay(company.firmentyp)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Firmentyp</div>
+              <p className="text-sm text-foreground">{safeDisplay(company.firmentyp)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Website</div>
-              <p className="text-sm text-gray-900">{formatWebsite(company.website)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Website</div>
+              <p className="text-sm text-foreground">{formatWebsite(company.website)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Telefon</div>
-              <p className="text-sm text-gray-900">{formatTelefon(company.telefon)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Telefon</div>
+              <p className="text-sm text-foreground">{formatTelefon(company.telefon)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Email</div>
-              <p className="text-sm text-gray-900">{formatEmail(company.email)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Email</div>
+              <p className="text-sm text-foreground">{formatEmail(company.email)}</p>
             </div>
           </div>
           <hr className="my-4" />
@@ -112,23 +112,23 @@ export default function CompanyDetailsCard({ company }: Props) {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-gray-700">Straße</div>
-              <p className="text-sm text-gray-900">{company.strasse || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Straße</div>
+              <p className="text-sm text-foreground">{company.strasse || "—"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">PLZ / Stadt</div>
-              <p className="text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">PLZ / Stadt</div>
+              <p className="text-sm text-foreground">
                 {company.plz ? `${company.plz} ` : ""}
                 {company.stadt || "—"}
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Bundesland</div>
-              <p className="text-sm text-gray-900">{company.bundesland || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">Bundesland</div>
+              <p className="text-sm text-foreground">{company.bundesland || "—"}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Land</div>
-              <p className="text-sm text-gray-900 flex items-center gap-2">
+              <div className="text-sm font-medium text-muted-foreground">Land</div>
+              <p className="text-sm text-foreground flex items-center gap-2">
                 {countryFlag && <span className="text-xl">{countryFlag}</span>}
                 {company.land || "—"}
               </p>

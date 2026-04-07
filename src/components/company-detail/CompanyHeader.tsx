@@ -25,7 +25,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
 
   return (
     <>
-      <nav className="text-sm text-gray-600">
+      <nav className="text-sm text-muted-foreground">
         <Link href="/companies" className="hover:underline">
           Companies
         </Link>{" "}
@@ -34,8 +34,8 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{company.firmenname}</h1>
-          {company.rechtsform && <p className="text-gray-600 mt-1">{company.rechtsform}</p>}
+          <h1 className="text-3xl font-bold text-foreground">{company.firmenname}</h1>
+          {company.rechtsform && <p className="text-muted-foreground mt-1">{company.rechtsform}</p>}
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
@@ -99,10 +99,10 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
           </Badge>
         )}
         {company.created_at && (
-          <span className="text-sm text-gray-500">Created: {new Date(company.created_at).toLocaleDateString()}</span>
+          <span className="text-sm text-muted-foreground">Created: {new Date(company.created_at).toLocaleDateString()}</span>
         )}
         {company.updated_at && (
-          <span className="text-sm text-gray-500">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+          <span className="text-sm text-muted-foreground">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
         )}
       </div>
     </>

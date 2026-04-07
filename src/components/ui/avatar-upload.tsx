@@ -1,3 +1,5 @@
+// src/components/ui/avatar-upload.tsx
+// This file contains the avatar upload component.  
 "use client";
 
 import { Check, Loader2, Pencil } from "lucide-react";

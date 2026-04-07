@@ -14,21 +14,24 @@ export default function ClientBrevoPage() {
         <header className="border-b border-border/60 pb-6">
           <h2
             id="brevo-new-campaign-heading"
-            className="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"
+            className="text-2xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent"
           >
             {t("newCampaignTitle")}
           </h2>
-          <p className="mt-2 max-w-3xl text-muted-foreground leading-relaxed">{t("newCampaignDescription")}</p>
+          <p className="mt-2 max-w-3xl leading-relaxed text-muted-foreground">{t("newCampaignDescription")}</p>
         </header>
         <BrevoCampaignForm />
       </section>
 
       <section className="space-y-6" aria-labelledby="brevo-campaign-list-heading">
         <header className="border-b border-border/60 pb-6">
-          <h2 id="brevo-campaign-list-heading" className="text-xl font-semibold tracking-tight text-foreground">
+          <h2
+            id="brevo-campaign-list-heading"
+            className="text-xl font-semibold tracking-tight text-foreground"
+          >
             {t("campaignListTitle")}
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t("campaignListDescription")}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t("campaignListDescription")}</p>
         </header>
         <BrevoCampaignList />
       </section>

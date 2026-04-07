@@ -71,7 +71,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {contacts.length === 0 ? (
-              <p className="text-gray-500">No contacts linked to this company.</p>
+              <p className="text-muted-foreground">No contacts linked to this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -103,12 +103,12 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               ) : (
                                 <span>{displayName}</span>
                               )}
-                              {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
+                              {contact.position && <div className="text-xs text-muted-foreground">{contact.position}</div>}
                             </div>
                           </td>
                           <td>
                             {contact.email ? (
-                              <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                              <a href={`mailto:${contact.email}`} className="text-primary underline-offset-4 hover:underline">
                                 {contact.email}
                               </a>
                             ) : (
@@ -126,7 +126,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                className="h-8 w-8 text-destructive hover:text-destructive/90"
                                 onClick={() => handleDelete(contact.id)}
                               >
                                 <Trash className="h-4 w-4" />

@@ -167,12 +167,12 @@ export default function ContactDetailClient({ contact: initialContact, companies
           {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
           {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
           {contact.created_at && (
-            <span className="text-sm text-gray-500" suppressHydrationWarning={true}>
+            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
               Created: {new Date(contact.created_at).toLocaleDateString()}
             </span>
           )}
           {contact.updated_at && (
-            <span className="text-sm text-gray-500" suppressHydrationWarning={true}>
+            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
               Updated: {new Date(contact.updated_at).toLocaleDateString()}
             </span>
           )}
@@ -192,7 +192,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
               }
             }}
           />
-          <label htmlFor="primary-contact" className="text-sm font-medium text-gray-700">
+          <label htmlFor="primary-contact" className="text-sm font-medium text-foreground">
             Primary Contact
           </label>
         </div>
@@ -209,26 +209,26 @@ export default function ContactDetailClient({ contact: initialContact, companies
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-gray-700">Vorname</div>
-              <p className="text-sm text-gray-900">{safeDisplay(contact.vorname)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Vorname</div>
+              <p className="text-sm text-foreground">{safeDisplay(contact.vorname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Nachname</div>
-              <p className="text-sm text-gray-900">{safeDisplay(contact.nachname)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Nachname</div>
+              <p className="text-sm text-foreground">{safeDisplay(contact.nachname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Anrede</div>
-              <p className="text-sm text-gray-900">{safeDisplay(contact.anrede)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Anrede</div>
+              <p className="text-sm text-foreground">{safeDisplay(contact.anrede)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Position</div>
-              <p className="text-sm text-gray-900">{safeDisplay(contact.position)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Position</div>
+              <p className="text-sm text-foreground">{safeDisplay(contact.position)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Email</div>
-              <p className="text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Email</div>
+              <p className="text-sm text-foreground">
                 {contact.email ? (
-                  <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                  <a href={`mailto:${contact.email}`} className="text-primary underline-offset-4 hover:underline">
                     {contact.email}
                   </a>
                 ) : (
@@ -237,10 +237,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Telefon</div>
-              <p className="text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Telefon</div>
+              <p className="text-sm text-foreground">
                 {contact.telefon ? (
-                  <a href={`tel:${contact.telefon}`} className="text-blue-600 hover:underline">
+                  <a href={`tel:${contact.telefon}`} className="text-primary underline-offset-4 hover:underline">
                     {contact.telefon}
                   </a>
                 ) : (
@@ -249,10 +249,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Mobil</div>
-              <p className="text-sm text-gray-900">
+              <div className="text-sm font-medium text-muted-foreground">Mobil</div>
+              <p className="text-sm text-foreground">
                 {contact.mobil ? (
-                  <a href={`tel:${contact.mobil}`} className="text-blue-600 hover:underline">
+                  <a href={`tel:${contact.mobil}`} className="text-primary underline-offset-4 hover:underline">
                     {contact.mobil}
                   </a>
                 ) : (
@@ -261,11 +261,11 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-gray-700">Durchwahl</div>
-              <p className="text-sm text-gray-900">{safeDisplay(contact.durchwahl)}</p>
+              <div className="text-sm font-medium text-muted-foreground">Durchwahl</div>
+              <p className="text-sm text-foreground">{safeDisplay(contact.durchwahl)}</p>
             </div>
             <div className="md:col-span-2">
-              <div className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 Notes
                 <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
                   <Edit className="h-4 w-4" />
@@ -294,7 +294,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-900">{safeDisplay(contact.notes)}</p>
+                <p className="text-sm text-foreground">{safeDisplay(contact.notes)}</p>
               )}
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     href={linkedCompany.osm}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline block"
+                    className="text-primary underline-offset-4 hover:underline block"
                   >
                     OSM Link →
                   </a>

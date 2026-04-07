@@ -120,7 +120,7 @@ export default function RemindersCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {reminders.length === 0 ? (
-              <p className="text-gray-500">No reminders for this company.</p>
+              <p className="text-muted-foreground">No reminders for this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -146,8 +146,8 @@ export default function RemindersCard({ companyId }: Props) {
                             >
                               {safeDisplay(reminder.title)}
                             </button>
-                            {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
-                            <div className="text-xs text-gray-500">
+                            {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
+                            <div className="text-xs text-muted-foreground">
                               Created on: {formatDateDE(reminder.created_at)} | Updated on: {formatDateDE(reminder.updated_at)}
                             </div>
                           </div>
@@ -160,7 +160,7 @@ export default function RemindersCard({ companyId }: Props) {
                                 ? "bg-orange-500 text-white"
                                 : reminder.priority === "normal"
                                   ? "bg-blue-500 text-white"
-                                  : "bg-gray-500 text-white"
+                                  : "bg-muted text-foreground"
                             }
                           >
                             {getPriorityLabel(reminder.priority)}
@@ -186,7 +186,7 @@ export default function RemindersCard({ companyId }: Props) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
                               onClick={() => handleDelete(reminder.id)}
                             >

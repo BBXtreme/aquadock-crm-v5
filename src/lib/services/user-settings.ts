@@ -12,7 +12,7 @@
 // app that need to access or modify user settings.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-
+import { getDefaultAppearanceTimeZone } from "@/lib/constants/appearance-timezones";
 import {
   NOTIFICATION_DEFAULTS,
   NOTIFICATION_SETTING_KEYS,
@@ -27,9 +27,11 @@ import {
   type AppearanceLocale,
   type AppearanceSettingsRecord,
   type AppearanceTheme,
+  type AppearanceTimeZone,
   parseAppearanceColorScheme,
   parseAppearanceLocale,
   parseAppearanceTheme,
+  parseAppearanceTimeZone,
 } from "@/lib/validations/appearance";
 import { notificationPreferencesSchema } from "@/lib/validations/settings";
 import type { Database, UserSetting, UserSettingInsert } from "@/types/database.types";
@@ -107,6 +109,7 @@ export const APPEARANCE_SETTING_KEYS = {
   theme: "appearance_theme",
   locale: "appearance_locale",
   colorScheme: "appearance_color_scheme",
+  timezone: "appearance_timezone",
 } as const;
 
 /** Defaults when no rows exist in `user_settings` (or unauthenticated fallback). */
@@ -114,6 +117,7 @@ export const DEFAULT_APPEARANCE: AppearanceSettingsRecord = {
   theme: "system",
   locale: "de",
   colorScheme: DEFAULT_APPEARANCE_COLOR_SCHEME,
+  timeZone: "UTC",
 };
 
 function rowValueToString(value: unknown): string | null {
@@ -175,6 +179,7 @@ export async function loadAppearanceSettings(): Promise<AppearanceSettingsRecord
     APPEARANCE_SETTING_KEYS.theme,
     APPEARANCE_SETTING_KEYS.locale,
     APPEARANCE_SETTING_KEYS.colorScheme,
+    APPEARANCE_SETTING_KEYS.timezone,
   ] as const;
 
   const { data, error } = await supabase
@@ -188,6 +193,8 @@ export async function loadAppearanceSettings(): Promise<AppearanceSettingsRecord
   let theme: AppearanceTheme = DEFAULT_APPEARANCE.theme;
   let locale: AppearanceLocale = DEFAULT_APPEARANCE.locale;
   let colorScheme: AppearanceColorScheme = DEFAULT_APPEARANCE.colorScheme;
+  let timeZone: string = DEFAULT_APPEARANCE.timeZone;
+  let hasSavedTimeZone = false;
 
   for (const row of data ?? []) {
     const str = rowValueToString(row.value);
@@ -204,9 +211,38 @@ export async function loadAppearanceSettings(): Promise<AppearanceSettingsRecord
       const parsed = parseAppearanceColorScheme(str.trim());
       if (parsed) colorScheme = parsed;
     }
+    if (row.key === APPEARANCE_SETTING_KEYS.timezone) {
+      const parsed = parseAppearanceTimeZone(str.trim());
+      if (parsed) {
+        timeZone = parsed;
+        hasSavedTimeZone = true;
+      }
+    }
   }
 
-  return { theme, locale, colorScheme };
+  if (!hasSavedTimeZone && typeof window !== "undefined") {
+    timeZone = getDefaultAppearanceTimeZone();
+  }
+
+  // #region agent log
+  if (typeof window !== "undefined") {
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "290de7" },
+      body: JSON.stringify({
+        sessionId: "290de7",
+        runId: "pre-fix",
+        hypothesisId: "H2",
+        location: "user-settings.ts:loadAppearanceSettings",
+        message: "loadAppearanceSettings result",
+        data: { theme, locale, colorScheme, timeZone, hasSavedTimeZone },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => undefined);
+  }
+  // #endregion
+
+  return { theme, locale, colorScheme, timeZone };
 }
 
 export async function saveAppearanceTheme(theme: AppearanceTheme): Promise<void> {
@@ -261,4 +297,22 @@ export async function saveAppearanceColorScheme(colorScheme: AppearanceColorSche
     { onConflict: "user_id,key" },
   );
   if (error) throw handleSupabaseError(error, "saveAppearanceColorScheme");
+}
+
+export async function saveAppearanceTimeZone(timeZone: AppearanceTimeZone): Promise<void> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User ID is required for user settings");
+
+  const { error } = await supabase.from("user_settings").upsert(
+    {
+      user_id: user.id,
+      key: APPEARANCE_SETTING_KEYS.timezone,
+      value: timeZone,
+    },
+    { onConflict: "user_id,key" },
+  );
+  if (error) throw handleSupabaseError(error, "saveAppearanceTimeZone");
 }

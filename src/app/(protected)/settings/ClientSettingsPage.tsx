@@ -10,6 +10,7 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
+import { AppearanceTimezoneSelect } from "@/components/features/settings/AppearanceTimezoneSelect";
 import {
   applyAppearanceColorTokens,
 } from "@/components/theme/ThemeProvider";
@@ -24,11 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
-import {
-  APPEARANCE_COLOR_SCHEME_IDS,
-  APPEARANCE_COLOR_SWATCH,
-  type AppearanceColorSchemeId,
-} from "@/lib/constants/theme";
+import { APPEARANCE_COLOR_SCHEME_IDS, APPEARANCE_COLOR_SWATCH } from "@/lib/constants/theme";
 import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import {
@@ -38,15 +35,18 @@ import {
   saveAppearanceColorScheme,
   saveAppearanceLocale,
   saveAppearanceTheme,
+  saveAppearanceTimeZone,
 } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import {
   type AppearanceColorScheme,
   type AppearanceLocale,
   type AppearanceTheme,
+  type AppearanceTimeZone,
   appearanceColorSchemeSchema,
   appearanceLocaleSchema,
   appearanceThemeSchema,
+  appearanceTimeZoneSchema,
 } from "@/lib/validations/appearance";
 import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
 import type { NotificationPreferences } from "@/lib/validations/settings";
@@ -128,28 +128,6 @@ function ClientSettingsPage() {
   const { theme: nextTheme, setTheme } = useTheme();
   const t = useT("settings");
   const format = useFormat();
-
-  const colorSchemeLabel = useCallback(
-    (id: AppearanceColorSchemeId) => {
-      switch (id) {
-        case "teal":
-          return t("appearance.colors.teal");
-        case "slate":
-          return t("appearance.colors.slate");
-        case "zinc":
-          return t("appearance.colors.zinc");
-        case "blue":
-          return t("appearance.colors.blue");
-        case "emerald":
-          return t("appearance.colors.emerald");
-        case "rose":
-          return t("appearance.colors.rose");
-        case "amber":
-          return t("appearance.colors.amber");
-      }
-    },
-    [t],
-  );
 
   useEffect(() => {
     setSelectMounted(true);
@@ -318,6 +296,20 @@ function ClientSettingsPage() {
     onError: (error) => {
       const message = error instanceof Error ? error.message : t("common.unknownError");
       toast.error(t("appearance.colorSaveErrorTitle"), { description: message });
+    },
+  });
+
+  const appearanceTimezoneMutation = useMutation({
+    mutationFn: async (next: AppearanceTimeZone) => {
+      await saveAppearanceTimeZone(next);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success(t("appearance.timezoneSaved"));
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("appearance.timezoneSaveErrorTitle"), { description: message });
     },
   });
 
@@ -633,6 +625,18 @@ function ClientSettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="appearance-timezone">{t("appearance.timezoneLabel")}</Label>
+              <AppearanceTimezoneSelect
+                id="appearance-timezone"
+                value={appearance.timeZone}
+                disabled={appearanceTimezoneMutation.isPending}
+                onValueChange={(tz) => {
+                  const parsed = appearanceTimeZoneSchema.safeParse(tz);
+                  if (parsed.success) appearanceTimezoneMutation.mutate(parsed.data);
+                }}
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="appearance-color">{t("appearance.colorLabel")}</Label>
               <Select
                 value={appearance.colorScheme}
@@ -654,7 +658,7 @@ function ClientSettingsPage() {
                           style={{ backgroundColor: APPEARANCE_COLOR_SWATCH[id] }}
                           aria-hidden
                         />
-                        {colorSchemeLabel(id)}
+                        {t(`appearance.colors.${id}`)}
                       </span>
                     </SelectItem>
                   ))}

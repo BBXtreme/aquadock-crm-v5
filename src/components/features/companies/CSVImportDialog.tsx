@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { importCompaniesFromCSV } from "@/lib/actions/companies";
+import { useT } from "@/lib/i18n/use-translations";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 import { parsedCompanyRowsSchema } from "@/lib/validations/csv-import";
 
@@ -35,6 +36,7 @@ interface CSVImportDialogProps {
 }
 
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
+  const t = useT("csvImport");
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedCompanyRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     try {
       const rows = await parseCSVFile(file);
       if (rows.length === 0) {
-        setParseError("Keine gültigen Zeilen gefunden (Firmenname und Kundentyp erforderlich).");
+        setParseError(t("parseErrorNoRows"));
         return;
       }
       setParsedRows(rows);
@@ -92,7 +94,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         setPreviewOpen(true);
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "CSV konnte nicht gelesen werden.";
+      const message = error instanceof Error ? error.message : t("toastReadErrorFallback");
       setParseError(message);
     } finally {
       setIsParsing(false);
@@ -119,7 +121,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     const validated = parsedCompanyRowsSchema.safeParse(parsedRows);
     if (!validated.success) {
       const msg = validated.error.issues.map((i) => i.message).join("; ");
-      toast.error("Validierungsfehler", { description: msg });
+      toast.error(t("toastValidateErrorTitle"), { description: msg });
       return;
     }
 
@@ -127,9 +129,9 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     try {
       const result = await importCompaniesFromCSV(validated.data);
       if (result.errors.length > 0 || result.imported === 0) {
-        toast.error("Import fehlgeschlagen", {
+        toast.error(t("toastImportFailedTitle"), {
           description:
-            result.errors.length > 0 ? result.errors.join("; ") : "Keine Zeilen importiert.",
+            result.errors.length > 0 ? result.errors.join("; ") : t("toastNoRowsImported"),
         });
         return;
       }
@@ -143,8 +145,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   };
 
   const handleSmallOpenChange = (next: boolean) => {
-    // Import dialog is unmounted while the field guide is open (`open && !guideOpen`). Radix may still
-    // emit onOpenChange(false) before the next paint; use a ref so we never clear the parent session.
     if (!next && guideOpenRef.current) {
       return;
     }
@@ -163,10 +163,8 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
       <Dialog open={open && !guideOpen} onOpenChange={handleSmallOpenChange}>
         <WideDialogContent size="lg" className="max-h-[90vh] overflow-y-auto">
           <DialogHeader className="space-y-0 text-left">
-            <DialogTitle>Unternehmen aus CSV importieren</DialogTitle>
-            <DialogDescription className="pt-2">
-              CSV-Datei mit Unternehmensdaten hochladen. Erwartete Spalten u. a. Firmenname, Kundentyp, Adresse.
-            </DialogDescription>
+            <DialogTitle>{t("dialogTitle")}</DialogTitle>
+            <DialogDescription className="pt-2">{t("dialogDescription")}</DialogDescription>
             <Button
               type="button"
               variant="outline"
@@ -178,7 +176,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
               }}
             >
               <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
-              Feldreferenz &amp; Header
+              {t("fieldGuideButton")}
             </Button>
           </DialogHeader>
 
@@ -192,11 +190,11 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
               <input {...getInputProps()} />
               <Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden />
               {isDragActive ? (
-                <p className="font-medium text-lg">CSV-Datei hier ablegen …</p>
+                <p className="font-medium text-lg">{t("dropActive")}</p>
               ) : (
-                <p className="font-medium text-lg">Datei per Drag &amp; Drop ablegen oder klicken zur Auswahl</p>
+                <p className="font-medium text-lg">{t("dropHint")}</p>
               )}
-              <p className="mt-2 text-muted-foreground text-sm">Nur CSV-Dateien</p>
+              <p className="mt-2 text-muted-foreground text-sm">{t("csvOnly")}</p>
             </div>
 
             {file ? (
@@ -210,7 +208,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             {parseError ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" aria-hidden />
-                <AlertTitle>CSV konnte nicht verarbeitet werden</AlertTitle>
+                <AlertTitle>{t("parseErrorTitle")}</AlertTitle>
                 <AlertDescription>{parseError}</AlertDescription>
               </Alert>
             ) : null}
@@ -220,10 +218,10 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
                 {isParsing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                    Wird gelesen …
+                    {t("parseButtonParsing")}
                   </>
                 ) : (
-                  "CSV einlesen"
+                  t("parseButton")
                 )}
               </Button>
             ) : null}
@@ -231,7 +229,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleSmallOpenChange(false)}>
-              Abbrechen
+              {t("cancel")}
             </Button>
           </DialogFooter>
         </WideDialogContent>
@@ -257,18 +255,16 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             <DialogHeader className="shrink-0 space-y-1 border-b border-border px-6 py-4 text-left">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden />
-                <DialogTitle className="text-lg">Feldreferenz &amp; Header-Guide</DialogTitle>
+                <DialogTitle className="text-lg">{t("guideDialogTitle")}</DialogTitle>
               </div>
-              <DialogDescription>
-                Unterstützte Spaltenüberschriften und Beispiele für den CSV-Import von Unternehmen.
-              </DialogDescription>
+              <DialogDescription>{t("guideDialogDescription")}</DialogDescription>
             </DialogHeader>
             <div className="min-h-0 flex-1 overflow-auto px-6 py-6 sm:px-10 sm:py-8">
               <CSVFieldGuide spacious />
             </div>
             <div className="flex shrink-0 justify-end gap-2 border-t border-border bg-muted/30 px-6 py-4">
               <Button type="button" variant="outline" onClick={() => setGuideOpen(false)}>
-                Schließen
+                {t("guideClose")}
               </Button>
             </div>
           </div>

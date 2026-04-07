@@ -200,7 +200,7 @@ export default function TimelineCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {timeline.length === 0 ? (
-              <p className="text-gray-500">No timeline entries for this company.</p>
+              <p className="text-muted-foreground">No timeline entries for this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -250,7 +250,7 @@ export default function TimelineCard({ companyId }: Props) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
                               onClick={() => handleDelete(entry.id)}
                             >

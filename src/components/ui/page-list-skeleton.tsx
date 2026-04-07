@@ -1,3 +1,5 @@
+// src/components/ui/page-list-skeleton.tsx
+// This file contains the skeleton components for the page list.
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

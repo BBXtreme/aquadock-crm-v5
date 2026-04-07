@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { sendMassEmailAction } from "@/lib/actions/mass-email";
+import { useT } from "@/lib/i18n/use-translations";
 import { fillPlaceholders, getEmailTemplates, getMassEmailRecipients } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
 import type { EmailTemplate } from "@/types/database.types";
@@ -29,6 +30,7 @@ type SendResults = {
 };
 
 export default function ClientMassEmailPage() {
+  const t = useT("massEmail");
   const [mode, setMode] = useState<"contacts" | "companies">("contacts");
   const [search, setSearch] = useState("");
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<string[]>([]);
@@ -70,7 +72,7 @@ export default function ClientMassEmailPage() {
 
   const handleSend = async (isTest = false, testEmail?: string) => {
     if (!isTest && selectedRecipientIds.length === 0) {
-      toast.error("Bitte wählen Sie mindestens einen Empfänger aus.");
+      toast.error(t("toastSelectRecipients"));
       return;
     }
 
@@ -89,16 +91,16 @@ export default function ClientMassEmailPage() {
       setSendResults(result);
       setProgress(100);
 
-      toast.success(`${result.sent} von ${result.total} E-Mails erfolgreich versendet!`);
-      if (result.errors > 0) toast.warning(`${result.errors} E-Mails fehlgeschlagen.`);
+      toast.success(t("toastSuccess", { sent: result.sent, total: result.total }));
+      if (result.errors > 0) toast.warning(t("toastErrors", { count: result.errors }));
       if (result.filteredCount && result.filteredCount > 0) {
-        toast.warning(`${result.filteredCount} ungültige E-Mail-Adressen wurden automatisch entfernt.`);
+        toast.warning(t("toastFiltered", { count: result.filteredCount }));
       }
 
       setSelectedRecipientIds([]);
     } catch (error: unknown) {
       const err = error as Error;
-      toast.error("Versand fehlgeschlagen", { description: err.message });
+      toast.error(t("toastSendFailed"), { description: err.message });
     } finally {
       setTimeout(() => setShowProgress(false), 1500);
     }
@@ -113,8 +115,11 @@ export default function ClientMassEmailPage() {
   };
 
   // Live preview
-  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) ||
-    { name: "Max Mustermann", firmenname: "Beispiel GmbH", email: "max@beispiel.de" };
+  const previewRecipient = recipients.find((r) => selectedRecipientIds.includes(r.id)) || {
+    name: t("previewName"),
+    firmenname: t("previewCompany"),
+    email: t("previewEmail"),
+  };
   const previewSubject = useMemo(() => fillPlaceholders(subject, previewRecipient), [subject, previewRecipient]);
   const previewBody = useMemo(() => fillPlaceholders(body, previewRecipient), [body, previewRecipient]);
 
@@ -122,17 +127,19 @@ export default function ClientMassEmailPage() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <div className="text-sm text-muted-foreground">Home → Mass Email</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">Massen-E-Mail</h1>
-            <p className="text-muted-foreground">Professionelle Kampagnen versenden</p>
+          <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t("title")}
+          </h1>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="gap-1.5">
-            <Users className="h-4 w-4" /> {selectedRecipientIds.length} ausgewählt
+            <Users className="h-4 w-4" /> {t("selectedBadge", { count: selectedRecipientIds.length })}
           </Badge>
           <Link href="/mass-email/log">
             <Button variant="outline" size="sm">
-              Versandlog ansehen
+              {t("viewLog")}
             </Button>
           </Link>
         </div>
@@ -173,15 +180,15 @@ export default function ClientMassEmailPage() {
       <Dialog open={showProgress} onOpenChange={setShowProgress}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>E-Mails werden versendet...</DialogTitle>
-            <DialogDescription>
-              Ihre E-Mails werden im Hintergrund versendet. Bitte warten Sie, bis der Vorgang abgeschlossen ist.
-            </DialogDescription>
+            <DialogTitle>{t("progressTitle")}</DialogTitle>
+            <DialogDescription>{t("progressDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-6">
             <Progress value={progress} className="h-2" />
             <p className="text-center text-sm text-muted-foreground">
-              {sendResults ? `${sendResults.sent} erfolgreich • ${sendResults.errors} Fehler` : "Bitte warten..."}
+              {sendResults
+                ? t("progressSummary", { sent: sendResults.sent, errors: sendResults.errors })
+                : t("progressWait")}
             </p>
           </div>
         </DialogContent>

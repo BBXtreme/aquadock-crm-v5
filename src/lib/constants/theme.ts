@@ -206,3 +206,4 @@ export const APPEARANCE_COLOR_LABELS: Record<AppearanceColorSchemeId, string> = 
 export const LS_APPEARANCE_THEME = "aquadock_appearance_theme";
 export const LS_APPEARANCE_LOCALE = "aquadock_appearance_locale";
 export const LS_APPEARANCE_COLOR = "aquadock_appearance_color_scheme";
+export const LS_APPEARANCE_TIMEZONE = "aquadock_appearance_timezone";

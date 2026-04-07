@@ -11,6 +11,9 @@ import { kundentypOptions, statusOptions } from "@/lib/constants/company-options
 import { safeDisplay } from "@/lib/utils/data-format";
 import type { Contact } from "@/types/database.types";
 
+type BrevoRoot = typeof import("@/messages/de.json");
+type BrevoMessageKey = keyof BrevoRoot["brevo"] & string;
+
 /** Row shape for Brevo sync table (contacts + joined company fields). */
 export type BrevoContactSyncRow = Contact & {
   companies: {
@@ -22,8 +25,12 @@ export type BrevoContactSyncRow = Contact & {
 
 const columnHelper = createColumnHelper<BrevoContactSyncRow>();
 
-function labelFromOptions(value: string, options: { value: string; label: string }[]): string {
-  if (!value) return "—";
+function labelFromOptions(
+  value: string,
+  options: { value: string; label: string }[],
+  emptyLabel: string,
+): string {
+  if (!value) return emptyLabel;
   const found = options.find((o) => o.value === value);
   return found?.label ?? value;
 }
@@ -62,138 +69,143 @@ function multiSelectCompanyFieldFilter(getRaw: (row: BrevoContactSyncRow) => str
   };
 }
 
-/** Typed as table `columns` option so mixed accessors stay compatible with TanStack v8. */
-export const brevoContactSyncColumns: TableOptions<BrevoContactSyncRow>["columns"] = [
-  columnHelper.display({
-    id: "select",
-    enableSorting: false,
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected()
-            ? true
-            : table.getIsSomePageRowsSelected()
-              ? "indeterminate"
-              : false
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Alle auf dieser Seite auswählen"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Zeile auswählen"
-      />
-    ),
-  }),
-  columnHelper.accessor("vorname", {
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Vorname
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => safeDisplay(info.getValue()),
-  }),
-  columnHelper.accessor("nachname", {
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Nachname
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => safeDisplay(info.getValue()),
-  }),
-  columnHelper.accessor("email", {
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        E-Mail
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => safeDisplay(info.getValue()),
-  }),
-  columnHelper.accessor((row) => row.companies?.firmenname ?? "", {
-    id: "firmenname",
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Firmenname
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => safeDisplay(info.getValue() || null),
-  }),
-  columnHelper.accessor((row) => row.companies?.kundentyp ?? "", {
-    id: "companies.kundentyp",
-    filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.kundentyp ?? ""),
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Kundentyp
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => labelFromOptions(info.getValue(), kundentypOptions),
-  }),
-  columnHelper.accessor((row) => row.companies?.status ?? "", {
-    id: "companies.status",
-    filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.status ?? ""),
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Status
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => labelFromOptions(info.getValue(), statusOptions),
-  }),
-  columnHelper.accessor("telefon", {
-    header: ({ column }) => (
-      <Button
-        type="button"
-        variant="ghost"
-        className="-ml-3 h-8 gap-1 px-3 font-medium"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Telefon
-        <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
-      </Button>
-    ),
-    cell: (info) => safeDisplay(info.getValue()),
-  }),
-];
+/** Build column defs with `useT("brevo")` and `tCommon("dash")` for the empty marker. */
+export function buildBrevoContactSyncColumns(
+  t: (key: BrevoMessageKey, values?: Record<string, string | number>) => string,
+  dash: string,
+): TableOptions<BrevoContactSyncRow>["columns"] {
+  return [
+    columnHelper.display({
+      id: "select",
+      enableSorting: false,
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+                ? "indeterminate"
+                : false
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label={t("syncSelectAllPageAria")}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label={t("syncSelectRowAria")}
+        />
+      ),
+    }),
+    columnHelper.accessor("vorname", {
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColVorname")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => safeDisplay(info.getValue()),
+    }),
+    columnHelper.accessor("nachname", {
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColNachname")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => safeDisplay(info.getValue()),
+    }),
+    columnHelper.accessor("email", {
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColEmail")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => safeDisplay(info.getValue()),
+    }),
+    columnHelper.accessor((row) => row.companies?.firmenname ?? "", {
+      id: "firmenname",
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColFirma")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => safeDisplay(info.getValue() || null),
+    }),
+    columnHelper.accessor((row) => row.companies?.kundentyp ?? "", {
+      id: "companies.kundentyp",
+      filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.kundentyp ?? ""),
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColKundentyp")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => labelFromOptions(info.getValue(), kundentypOptions, dash),
+    }),
+    columnHelper.accessor((row) => row.companies?.status ?? "", {
+      id: "companies.status",
+      filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.status ?? ""),
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColStatus")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => labelFromOptions(info.getValue(), statusOptions, dash),
+    }),
+    columnHelper.accessor("telefon", {
+      header: ({ column }) => (
+        <Button
+          type="button"
+          variant="ghost"
+          className="-ml-3 h-8 gap-1 px-3 font-medium"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          {t("syncColTelefon")}
+          <ArrowUpDown className="size-3.5 opacity-60" aria-hidden />
+        </Button>
+      ),
+      cell: (info) => safeDisplay(info.getValue()),
+    }),
+  ];
+}
 
-export const BREVO_CONTACT_SYNC_COLUMN_COUNT = brevoContactSyncColumns.length;
+export const BREVO_CONTACT_SYNC_COLUMN_COUNT = 8;
 
 /** Stable React keys for loading skeleton rows (avoid index-only keys). */
 export const BREVO_CONTACT_SYNC_SKELETON_ROW_KEYS = [
@@ -202,17 +214,15 @@ export const BREVO_CONTACT_SYNC_SKELETON_ROW_KEYS = [
   "brevo-contact-sync-row-3",
   "brevo-contact-sync-row-4",
   "brevo-contact-sync-row-5",
-  "brevo-contact-sync-row-6",
 ] as const;
 
-/** Must stay aligned with `brevoContactSyncColumns` order and count. */
 export const BREVO_CONTACT_SYNC_SKELETON_COL_KEYS = [
-  "select",
-  "vorname",
-  "nachname",
-  "email",
-  "firmenname",
-  "companies.kundentyp",
-  "companies.status",
-  "telefon",
+  "c1",
+  "c2",
+  "c3",
+  "c4",
+  "c5",
+  "c6",
+  "c7",
+  "c8",
 ] as const;

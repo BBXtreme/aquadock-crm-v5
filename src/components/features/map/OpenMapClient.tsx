@@ -25,7 +25,7 @@ export function OpenMapClient({ initialCompanies, mapLoadFailed }: OpenMapProps)
     return (
       <div className="h-full flex items-center justify-center bg-muted/40">
         <div className="text-center">
-          <p className="text-lg font-medium text-red-600">{t("loadErrorTitle")}</p>
+          <p className="text-lg font-medium text-destructive">{t("loadErrorTitle")}</p>
           <p className="text-sm text-muted-foreground mt-2">{t("loadErrorDescription")}</p>
         </div>
       </div>

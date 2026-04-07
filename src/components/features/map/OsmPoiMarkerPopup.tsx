@@ -4,7 +4,7 @@
 
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { Droplets, ExternalLink, Globe, MapPin, Phone } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/use-translations";
@@ -35,7 +35,7 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
   const osmUrl = getOpenStreetMapUrl(osmId);
 
   // Local state for water info (shows cached values immediately)
-  const [localWater, setLocalWater] = useState<{
+  const [localWater, _setLocalWater] = useState<{
     distance: number | null;
     wassertyp: string | null;
   } | null>(poi.wasserdistanz !== undefined ? { distance: poi.wasserdistanz, wassertyp: poi.wassertyp ?? null } : null);
@@ -50,30 +50,30 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
       : null;
 
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-1">
+    <div className="min-w-[min(320px,85vw)] max-w-[min(360px,92vw)] space-y-4 text-sm text-card-foreground p-0.5">
       {/* Header */}
-      <div>
-        <div className="font-semibold text-base text-foreground">{name}</div>
-        <p className="text-muted-foreground text-sm mt-1 capitalize">{category}</p>
+      <div className="space-y-1">
+        <div className="font-semibold text-base leading-snug text-foreground">{name}</div>
+        <p className="text-muted-foreground text-sm capitalize leading-normal">{category}</p>
       </div>
 
       {/* Details */}
       <div className="space-y-3">
         {/* Address */}
         {fullAddress && (
-          <div className="flex items-start gap-3 text-sm">
-            <span className="text-muted-foreground mt-0.5 shrink-0">📍</span>
-            <span className="text-foreground">{fullAddress}</span>
+          <div className="flex items-start gap-2.5 text-sm">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="min-w-0 leading-relaxed text-foreground">{fullAddress}</span>
           </div>
         )}
 
         {/* Phone */}
         {phone && (
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground shrink-0">📞</span>
+          <div className="flex items-center gap-2.5 text-sm">
+            <Phone className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <a
               href={`tel:${phone}`}
-              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+              className="min-w-0 text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
             >
               {phone}
             </a>
@@ -82,13 +82,13 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
 
         {/* Website */}
         {website && (
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-muted-foreground shrink-0">🌐</span>
+          <div className="flex items-center gap-2.5 text-sm">
+            <Globe className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <a
               href={website}
               target="_blank"
-              rel="noopener"
-              className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors truncate"
+              rel="noopener noreferrer"
+              className="min-w-0 truncate text-primary underline underline-offset-2 transition-colors hover:text-primary/80"
             >
               {t("poiWebsiteOpen")}
             </a>
@@ -97,13 +97,13 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
 
         {/* Water Info */}
         {hasWaterInfo && waterDisplayText !== null && (
-          <div className="bg-muted/50 border border-muted rounded-md p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <span className="text-lg">💧</span>
-              <span>
+          <div className="rounded-md border border-border bg-muted/40 p-3 dark:bg-muted/50">
+            <div className="flex items-start gap-2.5 text-sm font-medium text-foreground">
+              <Droplets className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <span className="min-w-0 leading-relaxed">
                 {waterDisplayText}
                 {localWater.wassertyp && (
-                  <span className="text-muted-foreground ml-1">({localWater.wassertyp})</span>
+                  <span className="font-normal text-muted-foreground"> ({localWater.wassertyp})</span>
                 )}
               </span>
             </div>
@@ -112,17 +112,17 @@ export default function OsmPoiMarkerPopup({ poi, onImport }: OsmPoiMarkerPopupPr
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-3 border-t border-border">
-        <Button size="sm" variant="outline" className="flex-1" asChild>
+      <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+        <Button size="sm" variant="outline" className="min-h-9 flex-1 border-border bg-background/80 dark:bg-background/50" asChild>
           <a href={osmUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="h-4 w-4 mr-2" />
+            <ExternalLink className="mr-2 h-4 w-4" />
             {t("poiViewInOsm")}
           </a>
         </Button>
         <Button
           size="sm"
           variant="default"
-          className="flex-1"
+          className="min-h-9 flex-1"
           onClick={() => {
             if (typeof poi.id === "string" && poi.id.startsWith("https://www.openstreetmap.org/")) {
               const parts = poi.id.split("/");

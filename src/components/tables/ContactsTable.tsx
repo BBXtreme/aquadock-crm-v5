@@ -1,3 +1,5 @@
+// src/components/tables/ContactsTable.tsx
+// This file contains the ContactsTable component, which displays a table of contacts with sorting, filtering, and pagination.
 "use client";
 
 import {
@@ -14,6 +16,17 @@ import Papa from "papaparse";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -63,6 +76,8 @@ export default function ContactsTable({
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<ContactWithCompany | null>(null);
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
@@ -177,29 +192,52 @@ export default function ContactsTable({
             <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
               <Edit className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              onClick={() => {
-                if (window.confirm(t("tableDeleteConfirm"))) {
-                  try {
-                    onDelete?.(info.row.original.id);
-                  } catch (error) {
-                    console.error("Error deleting contact:", error);
-                    toast.error(t("tableToastDeleteFailed"));
-                  }
-                }
-              }}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+            <AlertDialog open={deleteDialogOpen && contactToDelete?.id === info.row.original.id} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    setContactToDelete(info.row.original);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (contactToDelete) {
+                        try {
+                          onDelete?.(contactToDelete.id);
+                        } catch (error) {
+                          console.error("Error deleting contact:", error);
+                          toast.error(t("tableToastDeleteFailed"));
+                        }
+                      }
+                      setDeleteDialogOpen(false);
+                      setContactToDelete(null);
+                    }}
+                  >
+                    {t("delete")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         ),
         enableSorting: false,
       }) as ColumnDef<ContactWithCompany>,
     ],
-    [t, tCommon, onEdit, onDelete],
+    [t, tCommon, onEdit, onDelete, deleteDialogOpen, contactToDelete],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library

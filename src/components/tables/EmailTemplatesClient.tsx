@@ -11,7 +11,17 @@ import { useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +32,7 @@ import { skeletonCardChrome } from "@/components/ui/page-list-skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { createEmailTemplate, deleteEmailTemplate, getEmailTemplates, updateEmailTemplate } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -37,6 +48,8 @@ export default function TemplatesClient() {
   const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
 
   const queryClient = useQueryClient();
+  const t = useT("massEmail");
+  const format = useFormat();
 
   const form = useForm<EmailTemplateForm>({
     resolver: zodResolver(emailTemplateSchema),
@@ -47,7 +60,6 @@ export default function TemplatesClient() {
     },
   });
 
-  // Templates
   const { data: templates = [], isLoading: templatesLoading, error } = useQuery({
     queryKey: ["email-templates"],
     queryFn: async () => {
@@ -56,7 +68,6 @@ export default function TemplatesClient() {
     },
   });
 
-  // Mutations for templates
   const createMutation = useMutation({
     mutationFn: async (data: EmailTemplateForm) => {
       const client = createClient();
@@ -64,12 +75,12 @@ export default function TemplatesClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
-      toast.success("Vorlage erstellt");
+      toast.success(t("toastTemplateCreated"));
       setDialogOpen(false);
       form.reset();
     },
-    onError: (error: Error) => {
-      toast.error("Fehler beim Erstellen", { description: error.message });
+    onError: (err: Error) => {
+      toast.error(t("toastTemplateCreateError"), { description: err.message });
     },
   });
 
@@ -80,12 +91,12 @@ export default function TemplatesClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
-      toast.success("Vorlage aktualisiert");
+      toast.success(t("toastTemplateUpdated"));
       setDialogOpen(false);
       form.reset();
     },
-    onError: (error: Error) => {
-      toast.error("Fehler beim Aktualisieren", { description: error.message });
+    onError: (err: Error) => {
+      toast.error(t("toastTemplateUpdateError"), { description: err.message });
     },
   });
 
@@ -96,10 +107,10 @@ export default function TemplatesClient() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
-      toast.success("Vorlage gelöscht");
+      toast.success(t("toastTemplateDeleted"));
     },
-    onError: (error: Error) => {
-      toast.error("Fehler beim Löschen", { description: error.message });
+    onError: (err: Error) => {
+      toast.error(t("toastTemplateDeleteError"), { description: err.message });
     },
   });
 
@@ -140,8 +151,8 @@ export default function TemplatesClient() {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">E-Mail Vorlagen</h1>
-          <p className="text-muted-foreground">Verwalten Sie Ihre E-Mail-Vorlagen</p>
+          <h1 className="text-3xl font-bold">{t("templatesTitle")}</h1>
+          <p className="text-muted-foreground">{t("templatesPageSubtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/mass-email">
@@ -151,14 +162,14 @@ export default function TemplatesClient() {
           </Link>
           <Button onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
-            Neue Vorlage
+            {t("newTemplate")}
           </Button>
         </div>
       </div>
 
-      {error && (
-        <div className="text-red-500">Fehler beim Laden der Vorlagen: {error.message}</div>
-      )}
+      {error ? (
+        <div className="text-red-500">{t("templatesLoadError", { message: error.message })}</div>
+      ) : null}
 
       {templatesLoading ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -179,10 +190,10 @@ export default function TemplatesClient() {
         </div>
       ) : templates.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Noch keine Vorlagen vorhanden.</p>
+          <p className="text-muted-foreground mb-4">{t("templatesEmpty")}</p>
           <Button onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
-            Erste Vorlage erstellen
+            {t("templatesCreateFirst")}
           </Button>
         </div>
       ) : (
@@ -195,35 +206,41 @@ export default function TemplatesClient() {
               <CardContent>
                 <p className="text-sm text-muted-foreground truncate">{template.subject}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Aktualisiert: {new Date(template.updated_at || template.created_at || new Date()).toLocaleDateString()}
+                  {t("templatesUpdated", {
+                    date: format.dateTime(new Date(template.updated_at || template.created_at || new Date()), {
+                      dateStyle: "medium",
+                    }),
+                  })}
                 </p>
               </CardContent>
               <CardFooter className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => openPreviewDialog(template)}>
                   <Eye className="mr-1 h-3 w-3" />
-                  Vorschau
+                  {t("templatesPreview")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => openEditDialog(template)}>
                   <Edit className="mr-1 h-3 w-3" />
-                  Bearbeiten
+                  {t("templatesEdit")}
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="sm">
                       <Trash2 className="mr-1 h-3 w-3" />
-                      Löschen
+                      {t("templatesDelete")}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Vorlage löschen?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("templatesDeleteTitle")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Diese Aktion kann nicht rückgängig gemacht werden. Die Vorlage "{template.name}" wird dauerhaft gelöscht.
+                        {t("templatesDeleteDescription", { name: template.name })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteTemplate(template.id)}>Löschen</AlertDialogAction>
+                      <AlertDialogCancel>{t("templateFormCancel")}</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteTemplate(template.id)}>
+                        {t("templatesDelete")}
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -233,14 +250,13 @@ export default function TemplatesClient() {
         </div>
       )}
 
-      {/* Template Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingTemplate ? "Vorlage bearbeiten" : "Neue Vorlage erstellen"}</DialogTitle>
-            <DialogDescription>
-              Erstellen oder bearbeiten Sie eine E-Mail-Vorlage mit Platzhaltern für personalisierte Nachrichten.
-            </DialogDescription>
+            <DialogTitle>
+              {editingTemplate ? t("templateFormEditTitle") : t("templateFormCreateTitle")}
+            </DialogTitle>
+            <DialogDescription>{t("templateFormDescription")}</DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={handleSaveTemplate} className="space-y-4">
@@ -249,9 +265,9 @@ export default function TemplatesClient() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name *</FormLabel>
+                    <FormLabel>{t("templateFormNameLabel")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="z.B. Einführung E-Mail" />
+                      <Input {...field} placeholder={t("templateFormNamePlaceholder")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -262,9 +278,9 @@ export default function TemplatesClient() {
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Betreff *</FormLabel>
+                    <FormLabel>{t("templateFormSubjectLabel")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="z.B. Willkommen bei AquaDock" />
+                      <Input {...field} placeholder={t("templateFormSubjectPlaceholder")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -275,17 +291,9 @@ export default function TemplatesClient() {
                 name="body"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Inhalt</FormLabel>
+                    <FormLabel>{t("templateFormBodyLabel")}</FormLabel>
                     <FormControl>
-                      <Textarea
-                        {...field}
-                        rows={8}
-                        placeholder={`Hallo {{vorname}},
-
-wir freuen uns, Sie als {{firmenname}} begrüßen zu dürfen.
-
-Verfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}`}
-                      />
+                      <Textarea {...field} rows={8} placeholder={t("templateFormBodyPlaceholder")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -293,10 +301,10 @@ Verfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, 
               />
               <div className="flex justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Abbrechen
+                  {t("templateFormCancel")}
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  Speichern
+                  {t("templateFormSave")}
                 </Button>
               </div>
             </form>
@@ -304,29 +312,26 @@ Verfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, 
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
       <Dialog open={previewDialogOpen} onOpenChange={setPreviewDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Vorlagen-Vorschau</DialogTitle>
-            <DialogDescription>
-              Vorschau der E-Mail-Vorlage mit Platzhaltern.
-            </DialogDescription>
+            <DialogTitle>{t("templatePreviewTitle")}</DialogTitle>
+            <DialogDescription>{t("templatePreviewDescription")}</DialogDescription>
           </DialogHeader>
-          {previewTemplate && (
+          {previewTemplate ? (
             <div className="space-y-4">
               <div>
-                <Label>Betreff</Label>
+                <Label>{t("templatePreviewSubjectLabel")}</Label>
                 <div className="font-semibold text-lg border rounded p-2 bg-muted">{previewTemplate.subject}</div>
               </div>
               <div>
-                <Label>Inhalt</Label>
+                <Label>{t("templatePreviewBodyLabel")}</Label>
                 <ScrollArea className="h-64 border rounded p-4 bg-muted">
                   <div className="whitespace-pre-wrap">{previewTemplate.body}</div>
                 </ScrollArea>
               </div>
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>

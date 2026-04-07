@@ -12,6 +12,7 @@ import {
   type OnChangeFn,
   type RowSelectionState,
   type SortingState,
+  type TableOptions,
   useReactTable,
 } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
@@ -29,7 +30,7 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -37,8 +38,8 @@ import {
   BREVO_CONTACT_SYNC_SKELETON_COL_KEYS,
   BREVO_CONTACT_SYNC_SKELETON_ROW_KEYS,
   type BrevoContactSyncRow,
-  brevoContactSyncColumns,
   brevoContactSyncGlobalFilterFn,
+  buildBrevoContactSyncColumns,
 } from "@/components/features/brevo/brevo-contact-columns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { fetchBrevoListsAction, importBrevoContactsBulkAction } from "@/lib/actions/brevo";
 import { kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 
@@ -153,6 +155,7 @@ function useBrevoContactSyncFilters() {
 }
 
 function useBrevoContactSyncTable(
+  columns: TableOptions<BrevoContactSyncRow>["columns"],
   data: BrevoContactSyncRow[],
   globalFilter: string,
   setGlobalFilter: OnChangeFn<string>,
@@ -161,70 +164,17 @@ function useBrevoContactSyncTable(
 ) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const dataLenRef = useRef(0);
-  dataLenRef.current = data.length;
 
   const onSortingChange = useCallback<OnChangeFn<SortingState>>((updater) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-      body: JSON.stringify({
-        sessionId: "c3d00c",
-        runId: "post-fix",
-        hypothesisId: "A",
-        location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onSortingChange",
-        message: "table onSortingChange invoked",
-        data: { dataLen: dataLenRef.current },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
     setSorting(updater);
   }, []);
 
   const onRowSelectionChange = useCallback<OnChangeFn<RowSelectionState>>((updater) => {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-      body: JSON.stringify({
-        sessionId: "c3d00c",
-        runId: "post-fix",
-        hypothesisId: "A",
-        location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onRowSelectionChange",
-        message: "table onRowSelectionChange invoked",
-        data: { dataLen: dataLenRef.current },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
     setRowSelection(updater);
   }, []);
 
   const onGlobalFilterChange = useCallback<OnChangeFn<string>>(
     (updater) => {
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-        body: JSON.stringify({
-          sessionId: "c3d00c",
-          runId: "post-fix",
-          hypothesisId: "B",
-          location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onGlobalFilterChange",
-          message: "table onGlobalFilterChange invoked",
-          data: { dataLen: dataLenRef.current },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        void 0;
-      });
-      // #endregion
       setGlobalFilter(updater);
     },
     [setGlobalFilter],
@@ -232,23 +182,6 @@ function useBrevoContactSyncTable(
 
   const onColumnFiltersChange = useCallback<OnChangeFn<ColumnFiltersState>>(
     (updater) => {
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-        body: JSON.stringify({
-          sessionId: "c3d00c",
-          runId: "post-fix",
-          hypothesisId: "B",
-          location: "BrevoContactSyncView.tsx:useBrevoContactSyncTable:onColumnFiltersChange",
-          message: "table onColumnFiltersChange invoked",
-          data: { dataLen: dataLenRef.current },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        void 0;
-      });
-      // #endregion
       setColumnFilters(updater);
     },
     [setColumnFilters],
@@ -257,7 +190,7 @@ function useBrevoContactSyncTable(
   const tableOptions = useMemo(
     () => ({
       data,
-      columns: brevoContactSyncColumns,
+      columns,
       getRowId: (row: BrevoContactSyncRow) => row.id,
       getCoreRowModel: getCoreRowModel(),
       getFilteredRowModel: getFilteredRowModel(),
@@ -279,6 +212,7 @@ function useBrevoContactSyncTable(
       },
     }),
     [
+      columns,
       data,
       sorting,
       rowSelection,
@@ -308,18 +242,6 @@ function BrevoContactSyncSkeletonBody() {
       ))}
     </TableBody>
   );
-}
-
-function filterTriggerSummary(selected: string[]): string {
-  if (selected.length === 0) return "Alle";
-  if (selected.length === 1) return "1 aktiv";
-  return `${selected.length} aktiv`;
-}
-
-function brevoListTriggerSummary(selectedIds: number[]): string {
-  if (selectedIds.length === 0) return "Keine gewählt";
-  if (selectedIds.length === 1) return "1 Liste";
-  return `${selectedIds.length} Listen`;
 }
 
 function useBrevoListsForContactSync() {
@@ -394,69 +316,12 @@ async function copyTextToClipboard(text: string): Promise<boolean> {
 }
 
 export default function BrevoContactSyncView() {
+  const t = useT("brevo");
+  const tCommon = useT("common");
   const queryClient = useQueryClient();
   const filters = useBrevoContactSyncFilters();
   const { data = [], isPending, isError, error } = useBrevoContactSyncContacts();
-  const prevPendingRef = useRef<boolean | undefined>(undefined);
-  if (prevPendingRef.current !== isPending) {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-      body: JSON.stringify({
-        sessionId: "c3d00c",
-        runId: "post-fix",
-        hypothesisId: "E",
-        location: "BrevoContactSyncView.tsx:BrevoContactSyncView:pendingTransition",
-        message: "contacts query isPending changed",
-        data: { isPending, dataLen: data.length },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
-    prevPendingRef.current = isPending;
-  }
 
-  useEffect(() => {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-      body: JSON.stringify({
-        sessionId: "c3d00c",
-        runId: "post-fix",
-        hypothesisId: "E",
-        location: "BrevoContactSyncView.tsx:BrevoContactSyncView:mount",
-        message: "BrevoContactSyncView mounted",
-        data: {},
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
-    return () => {
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-        body: JSON.stringify({
-          sessionId: "c3d00c",
-          runId: "post-fix",
-          hypothesisId: "E",
-          location: "BrevoContactSyncView.tsx:BrevoContactSyncView:unmount",
-          message: "BrevoContactSyncView unmounted",
-          data: {},
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-      void 0;
-    });
-      // #endregion
-    };
-  }, []);
   const {
     data: brevoLists = [],
     isPending: listsPending,
@@ -470,7 +335,35 @@ export default function BrevoContactSyncView() {
   const [lastImportSummary, setLastImportSummary] = useState<BrevoImportResultSummary | null>(null);
   const [importResultDialogOpen, setImportResultDialogOpen] = useState(false);
 
+  const columnDefs = useMemo(
+    () =>
+      buildBrevoContactSyncColumns(
+        (key, values) => t(key as Parameters<typeof t>[0], values),
+        tCommon("dash"),
+      ),
+    [t, tCommon],
+  );
+
+  const filterSummary = useCallback(
+    (selected: string[]) => {
+      if (selected.length === 0) return t("syncFilterSummaryAll");
+      if (selected.length === 1) return t("syncFilterSummaryOne");
+      return t("syncFilterSummaryMany", { count: selected.length });
+    },
+    [t],
+  );
+
+  const listSummary = useCallback(
+    (selectedIds: number[]) => {
+      if (selectedIds.length === 0) return t("syncListSummaryNone");
+      if (selectedIds.length === 1) return t("syncListSummaryOne");
+      return t("syncListSummaryMany", { count: selectedIds.length });
+    },
+    [t],
+  );
+
   const table = useBrevoContactSyncTable(
+    columnDefs,
     data,
     filters.globalFilter,
     filters.setGlobalFilter,
@@ -509,17 +402,18 @@ export default function BrevoContactSyncView() {
       setLastImportSummary(summary);
       setImportResultDialogOpen(true);
 
-      const toastParts = [
-        `${result.submitted} übermittelt`,
-        result.skippedNoEmail > 0 ? `${result.skippedNoEmail} ohne E-Mail` : null,
-        `Prozess #${result.processId}`,
-      ].filter(Boolean);
-      toast.success("Import in Brevo gestartet", { description: toastParts.join(" · ") });
+      toast.success(t("syncToastImportStarted"), {
+        description: t("syncToastImportStartedDesc", {
+          submitted: result.submitted,
+          skipped: result.skippedNoEmail,
+          processId: result.processId,
+        }),
+      });
       void queryClient.invalidateQueries({ queryKey: brevoSyncListsQueryKey });
     },
     onError: (err) => {
-      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("Brevo-Import fehlgeschlagen", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("syncToastImportFailed"), { description: message });
     },
   });
 
@@ -544,20 +438,18 @@ export default function BrevoContactSyncView() {
     if (!lastImportSummary) return;
     const ok = await copyTextToClipboard(String(lastImportSummary.processId));
     if (ok) {
-      toast.success("Prozess-ID kopiert");
+      toast.success(t("syncToastProcessIdCopied"));
     } else {
-      toast.error("Kopieren fehlgeschlagen", { description: "Zwischenablage nicht verfügbar." });
+      toast.error(t("syncToastCopyFailed"), { description: t("syncToastCopyFailedDesc") });
     }
-  }, [lastImportSummary]);
+  }, [lastImportSummary, t]);
 
   return (
     <div className="space-y-8">
       <Card className="border-border rounded-xl shadow-sm">
         <CardHeader className="space-y-2 pb-2 sm:pb-4">
-          <CardTitle className="text-xl font-semibold tracking-tight">Kontakte für den Import</CardTitle>
-          <CardDescription className="max-w-3xl text-base leading-relaxed">
-            Suchen und filtern Sie nach Kundentyp und Status. Markierte Zeilen werden beim Import an Brevo übermittelt.
-          </CardDescription>
+          <CardTitle className="text-xl font-semibold tracking-tight">{t("syncContactsCardTitle")}</CardTitle>
+          <CardDescription className="max-w-3xl text-base leading-relaxed">{t("syncContactsCardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-2 sm:pt-0">
           <div className="flex flex-col gap-4 border-b border-border/60 pb-6">
@@ -569,16 +461,16 @@ export default function BrevoContactSyncView() {
                     aria-hidden
                   />
                   <Input
-                    placeholder="Kontakte suchen (Name, E-Mail, Firma …)"
+                    placeholder={t("syncSearchPlaceholder")}
                     value={filters.globalFilter}
                     onChange={(e) => filters.setGlobalFilter(e.target.value)}
                     className="bg-background pl-9"
-                    aria-label="Globale Suche"
+                    aria-label={t("syncSearchAriaLabel")}
                   />
                 </div>
                 {selectedCount > 0 && (
                   <Badge variant="secondary" className="h-8 shrink-0 px-3 text-xs font-medium">
-                    {selectedCount} ausgewählt
+                    {t("syncSelectedCount", { count: selectedCount })}
                   </Badge>
                 )}
                 <DropdownMenu>
@@ -592,13 +484,15 @@ export default function BrevoContactSyncView() {
                         filters.kundentypSelected.length > 0 ? "border-primary/40 bg-primary/5" : "bg-background",
                       )}
                     >
-                      <span className="truncate">Kundentyp · {filterTriggerSummary(filters.kundentypSelected)}</span>
+                      <span className="truncate">
+                        {t("syncFilterKundentypChip", { summary: filterSummary(filters.kundentypSelected) })}
+                      </span>
                       <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-64" onCloseAutoFocus={(e) => e.preventDefault()}>
                     <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                      Mehrfachauswahl
+                      {t("syncFilterMultiLabel")}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -608,7 +502,7 @@ export default function BrevoContactSyncView() {
                         filters.clearKundentyp();
                       }}
                     >
-                      Filter zurücksetzen
+                      {t("syncFilterReset")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {kundentypOptions.map((opt) => (
@@ -634,13 +528,15 @@ export default function BrevoContactSyncView() {
                         filters.statusSelected.length > 0 ? "border-primary/40 bg-primary/5" : "bg-background",
                       )}
                     >
-                      <span className="truncate">Status · {filterTriggerSummary(filters.statusSelected)}</span>
+                      <span className="truncate">
+                        {t("syncFilterStatusChip", { summary: filterSummary(filters.statusSelected) })}
+                      </span>
                       <ChevronDown className="size-4 shrink-0 opacity-60" aria-hidden />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
                     <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                      Mehrfachauswahl
+                      {t("syncFilterMultiLabel")}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -650,7 +546,7 @@ export default function BrevoContactSyncView() {
                         filters.clearStatus();
                       }}
                     >
-                      Filter zurücksetzen
+                      {t("syncFilterReset")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {statusOptions.map((opt) => (
@@ -667,27 +563,10 @@ export default function BrevoContactSyncView() {
                 </DropdownMenu>
               </div>
               <div className="flex shrink-0 items-center gap-2 border-border/60 lg:border-l lg:pl-6">
-                <span className="text-sm text-muted-foreground whitespace-nowrap">Zeilen pro Seite</span>
+                <span className="text-sm text-muted-foreground whitespace-nowrap">{t("syncRowsPerPage")}</span>
                 <Select
                   value={String(table.getState().pagination.pageSize)}
                   onValueChange={(v) => {
-                    // #region agent log
-                    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "c3d00c" },
-                      body: JSON.stringify({
-                        sessionId: "c3d00c",
-                        runId: "post-fix",
-                        hypothesisId: "C",
-                        location: "BrevoContactSyncView.tsx:pageSizeSelect:onValueChange",
-                        message: "page size Select onValueChange",
-                        data: { v },
-                        timestamp: Date.now(),
-                      }),
-                    }).catch(() => {
-      void 0;
-    });
-                    // #endregion
                     table.setPageSize(Number(v));
                   }}
                 >
@@ -707,7 +586,7 @@ export default function BrevoContactSyncView() {
 
           {isError ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              {error instanceof Error ? error.message : "Kontakte konnten nicht geladen werden."}
+              {error instanceof Error ? error.message : t("syncLoadContactsError")}
             </p>
           ) : null}
 
@@ -736,7 +615,7 @@ export default function BrevoContactSyncView() {
                         colSpan={BREVO_CONTACT_SYNC_COLUMN_COUNT}
                         className="h-32 text-center text-sm text-muted-foreground"
                       >
-                        Keine Kontakte für die aktuellen Filter.
+                        {t("syncTableEmpty")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -758,12 +637,15 @@ export default function BrevoContactSyncView() {
           <div className="flex flex-col gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               {isPending ? (
-                "…"
+                tCommon("ellipsis")
               ) : (
                 <>
-                  <span className="font-medium text-foreground">{selectedCount}</span> von{" "}
-                  <span className="font-medium text-foreground">{filteredTotal}</span> sichtbaren Zeilen ausgewählt · Seite{" "}
-                  {table.getState().pagination.pageIndex + 1} von {Math.max(table.getPageCount(), 1)}
+                  {t("syncFooterSelectedVisible", { selected: selectedCount, visible: filteredTotal })}
+                  {" · "}
+                  {t("syncFooterPage", {
+                    page: table.getState().pagination.pageIndex + 1,
+                    pageCount: Math.max(table.getPageCount(), 1),
+                  })}
                 </>
               )}
             </p>
@@ -775,6 +657,7 @@ export default function BrevoContactSyncView() {
                 className="h-8"
                 onClick={() => table.setPageIndex(0)}
                 disabled={isPending || !table.getCanPreviousPage()}
+                aria-label={t("syncPagerFirst")}
               >
                 {"<<"}
               </Button>
@@ -786,7 +669,7 @@ export default function BrevoContactSyncView() {
                 onClick={() => table.previousPage()}
                 disabled={isPending || !table.getCanPreviousPage()}
               >
-                Zurück
+                {t("syncPagerPrev")}
               </Button>
               <Button
                 type="button"
@@ -796,7 +679,7 @@ export default function BrevoContactSyncView() {
                 onClick={() => table.nextPage()}
                 disabled={isPending || !table.getCanNextPage()}
               >
-                Weiter
+                {t("syncPagerNext")}
               </Button>
               <Button
                 type="button"
@@ -805,6 +688,7 @@ export default function BrevoContactSyncView() {
                 className="h-8"
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={isPending || !table.getCanNextPage()}
+                aria-label={t("syncPagerLast")}
               >
                 {">>"}
               </Button>
@@ -815,23 +699,18 @@ export default function BrevoContactSyncView() {
 
       <Card className="border-border rounded-xl shadow-sm">
         <CardHeader className="space-y-2 border-b border-border/60 bg-muted/20 px-6 py-6 sm:px-8">
-          <CardTitle className="text-xl font-semibold tracking-tight">Import-Einstellungen (Brevo)</CardTitle>
-          <CardDescription className="max-w-2xl text-base leading-relaxed">
-            Ziel-Listen wählen und optional eine neue Liste anlegen. Es werden nur markierte CRM-Kontakte mit gültiger
-            E-Mail-Adresse importiert.
-          </CardDescription>
+          <CardTitle className="text-xl font-semibold tracking-tight">{t("syncImportCardTitle")}</CardTitle>
+          <CardDescription className="max-w-2xl text-base leading-relaxed">{t("syncImportCardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8 px-6 py-8 sm:px-8">
           <div className="space-y-3">
             <div>
-              <Label className="text-sm font-medium">Bestehende Brevo-Listen</Label>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Mehrfachauswahl möglich — Kontakte werden den gewählten Listen zugeordnet.
-              </p>
+              <Label className="text-sm font-medium">{t("syncListsLabel")}</Label>
+              <p className="mt-1.5 text-sm text-muted-foreground">{t("syncListsHelp")}</p>
             </div>
             {listsError ? (
               <p className="text-sm text-destructive">
-                {listsErrorObj instanceof Error ? listsErrorObj.message : "Listen konnten nicht geladen werden."}
+                {listsErrorObj instanceof Error ? listsErrorObj.message : t("syncListsLoadError")}
               </p>
             ) : null}
             <DropdownMenu>
@@ -846,7 +725,9 @@ export default function BrevoContactSyncView() {
                   disabled={listsPending || listsError}
                 >
                   <span className="truncate">
-                    {listsPending ? "Listen werden geladen…" : `Listen · ${brevoListTriggerSummary(selectedBrevoListIds)}`}
+                    {listsPending
+                      ? t("syncListsLoading")
+                      : t("syncListsTrigger", { summary: listSummary(selectedBrevoListIds) })}
                   </span>
                   {listsPending ? (
                     <Loader2 className="size-4 shrink-0 animate-spin opacity-60" aria-hidden />
@@ -860,7 +741,9 @@ export default function BrevoContactSyncView() {
                 className="w-(--radix-dropdown-menu-trigger-width) max-h-72 sm:max-w-md"
                 onCloseAutoFocus={(e) => e.preventDefault()}
               >
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Mehrfachauswahl</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  {t("syncFilterMultiLabel")}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-xs"
@@ -869,12 +752,12 @@ export default function BrevoContactSyncView() {
                     clearBrevoListSelection();
                   }}
                 >
-                  Auswahl leeren
+                  {t("syncClearListSelection")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {brevoLists.length === 0 && !listsPending ? (
                   <DropdownMenuItem disabled className="text-xs text-muted-foreground">
-                    Keine Listen im Brevo-Konto
+                    {t("syncListsEmpty")}
                   </DropdownMenuItem>
                 ) : (
                   brevoLists.map((list) => (
@@ -897,13 +780,10 @@ export default function BrevoContactSyncView() {
 
           <fieldset className="space-y-5 rounded-lg border border-border bg-card p-5 shadow-sm sm:p-6">
             <legend className="mb-0 w-full border-0 p-0 text-left text-sm font-medium leading-none">
-              Neue Liste erstellen
+              {t("syncNewListLegend")}
             </legend>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <p className="max-w-prose flex-1 text-sm leading-relaxed text-muted-foreground">
-                Optional: ergänzend oder anstelle bestehender Listen. Brevo legt die Liste beim Import an und ordnet die
-                Kontakte zu.
-              </p>
+              <p className="max-w-prose flex-1 text-sm leading-relaxed text-muted-foreground">{t("syncNewListHelp")}</p>
               <Switch
                 id="brevo-sync-new-list-toggle"
                 checked={createNewListEnabled}
@@ -914,17 +794,17 @@ export default function BrevoContactSyncView() {
                   }
                 }}
                 className="shrink-0 sm:mt-0.5"
-                aria-label="Neue Brevo-Liste beim Import anlegen"
+                aria-label={t("syncNewListSwitchAria")}
               />
             </div>
             {createNewListEnabled ? (
               <div className="space-y-2">
                 <Label htmlFor="brevo-sync-new-list-name" className="text-sm font-medium">
-                  Listenname
+                  {t("syncNewListNameLabel")}
                 </Label>
                 <Input
                   id="brevo-sync-new-list-name"
-                  placeholder="z. B. AquaDock CRM — ausgewählte Kontakte"
+                  placeholder={t("syncNewListPlaceholder")}
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   className="max-w-lg bg-background"
@@ -947,14 +827,14 @@ export default function BrevoContactSyncView() {
             ) : (
               <CloudUpload className="size-5" aria-hidden />
             )}
-            Auswahl nach Brevo importieren
+            {t("syncImportSelectionButton")}
           </Button>
           <p className="text-center text-sm text-muted-foreground sm:text-right">
             {selectedCount === 0
-              ? "Wählen Sie mindestens einen Kontakt in der Tabelle aus."
+              ? t("syncImportHintNone")
               : !hasListTargets && !hasNewListTarget
-                ? "Wählen Sie mindestens eine Liste oder aktivieren Sie „Neue Liste erstellen“ mit einem Namen."
-                : "Der Import läuft asynchron bei Brevo; in der Bestätigung sehen Sie die Prozess-ID."}
+                ? t("syncImportHintNoTarget")
+                : t("syncImportHintReady")}
           </p>
         </CardFooter>
       </Card>
@@ -964,23 +844,27 @@ export default function BrevoContactSyncView() {
           <CardHeader className="space-y-1 px-6 pb-2 pt-6 sm:px-8 sm:pt-8">
             <div className="flex flex-wrap items-center gap-2">
               <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" aria-hidden />
-              <CardTitle className="text-base">Letzter Import</CardTitle>
+              <CardTitle className="text-base">{t("syncLastImportTitle")}</CardTitle>
             </div>
             <CardDescription>
-              {lastImportSummary.submitted} Kontakt(e) übermittelt · Prozess #{lastImportSummary.processId}
-              {lastImportSummary.skippedNoEmail > 0
-                ? ` · ${lastImportSummary.skippedNoEmail} ohne E-Mail übersprungen`
-                : ""}
+              {t("syncLastImportDesc", {
+                submitted: lastImportSummary.submitted,
+                processId: lastImportSummary.processId,
+                skippedPart:
+                  lastImportSummary.skippedNoEmail > 0
+                    ? t("syncLastImportSkippedPart", { count: lastImportSummary.skippedNoEmail })
+                    : "",
+              })}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2 px-6 pb-6 pt-0 sm:px-8 sm:pb-8">
             <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => setImportResultDialogOpen(true)}>
-              Details anzeigen
+              {t("syncShowDetails")}
             </Button>
             <Button type="button" variant="outline" size="sm" className="gap-2" asChild>
               <a href={BREVO_APP_CONTACTS_URL} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="size-4" aria-hidden />
-                Brevo öffnen
+                {t("syncOpenBrevo")}
               </a>
             </Button>
           </CardContent>
@@ -995,12 +879,8 @@ export default function BrevoContactSyncView() {
                 <Sparkles className="size-5" aria-hidden />
               </span>
               <div>
-                <DialogTitle>Import erfolgreich gestartet</DialogTitle>
-                <DialogDescription className="mt-1.5 text-pretty">
-                  Die Brevo-API hat den Import angenommen. Aufteilung <strong>neu angelegt</strong> vs.{" "}
-                  <strong>bereits vorhanden</strong> liefert Brevo erst nach Abschluss des Hintergrund-Jobs — die
-                  übermittelte Menge entspricht allen gültigen E-Mails aus Ihrer Auswahl.
-                </DialogDescription>
+                <DialogTitle>{t("syncResultDialogTitle")}</DialogTitle>
+                <DialogDescription className="mt-1.5 text-pretty">{t("syncResultDialogDescription")}</DialogDescription>
               </div>
             </div>
           </DialogHeader>
@@ -1010,30 +890,30 @@ export default function BrevoContactSyncView() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <ImportResultStatTile
                   icon={Users}
-                  label="Gematcht (Auswahl)"
+                  label={t("syncStatMatchedLabel")}
                   value={lastImportSummary.matched}
-                  hint="Kontakte, die Sie in der Tabelle markiert hatten."
+                  hint={t("syncStatMatchedHint")}
                   tone="neutral"
                 />
                 <ImportResultStatTile
                   icon={MailWarning}
-                  label="Übersprungen (keine E-Mail)"
+                  label={t("syncStatSkippedLabel")}
                   value={lastImportSummary.skippedNoEmail}
-                  hint="Ohne nutzbare E-Mail-Adresse — nicht an Brevo gesendet."
+                  hint={t("syncStatSkippedHint")}
                   tone="warning"
                 />
                 <ImportResultStatTile
                   icon={CheckCircle2}
-                  label="Erstellt (übermittelt)"
+                  label={t("syncStatSubmittedLabel")}
                   value={lastImportSummary.submitted}
-                  hint="Kontakte in der Brevo-Import-Warteschlange — umfasst neue Datensätze und Aktualisierungen, bis der Job fertig ist."
+                  hint={t("syncStatSubmittedHint")}
                   tone="success"
                 />
                 <ImportResultStatTile
                   icon={UserRoundCheck}
-                  label="Bereits vorhanden"
-                  value="—"
-                  hint="Wie viele Kontakte nur aktualisiert wurden, sehen Sie nach Abschluss des Imports in Brevo."
+                  label={t("syncStatExistingLabel")}
+                  value={tCommon("dash")}
+                  hint={t("syncStatExistingHint")}
                   tone="pending"
                 />
               </div>
@@ -1046,20 +926,20 @@ export default function BrevoContactSyncView() {
                     <Hash className="size-5" aria-hidden />
                   </span>
                   <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Prozess-ID</p>
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{t("syncProcessIdLabel")}</p>
                     <p className="font-mono text-lg font-semibold tabular-nums">{lastImportSummary.processId}</p>
-                    <p className="text-xs text-muted-foreground">Zum Nachverfolgen in Brevo oder im Support.</p>
+                    <p className="text-xs text-muted-foreground">{t("syncProcessIdHelp")}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
                   <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => void handleCopyProcessId()}>
                     <ClipboardCopy className="size-4" aria-hidden />
-                    ID kopieren
+                    {t("syncCopyId")}
                   </Button>
                   <Button type="button" size="sm" className="gap-2" asChild>
                     <a href={BREVO_APP_CONTACTS_URL} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="size-4" aria-hidden />
-                      Brevo öffnen
+                      {t("syncOpenBrevo")}
                     </a>
                   </Button>
                 </div>
@@ -1069,7 +949,7 @@ export default function BrevoContactSyncView() {
 
           <DialogFooter className="border-t-0 bg-transparent p-0 sm:justify-end">
             <Button type="button" variant="secondary" onClick={() => setImportResultDialogOpen(false)}>
-              Schließen
+              {t("syncClose")}
             </Button>
           </DialogFooter>
         </DialogContent>
