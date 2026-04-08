@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/services/profile";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
@@ -35,6 +36,8 @@ function UserManagementCard({
     last_sign_in_at: string | null;
   }[];
 }) {
+  const t = useT("settings");
+  const localeTag = useNumberLocaleTag();
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
@@ -58,11 +61,11 @@ function UserManagementCard({
       formData.append('userId', userId);
       formData.append('newRole', newRole);
       await changeUserRole(formData);
-      toast.success("Role updated successfully");
+      toast.success(t("userManagement.toastRoleUpdated"));
       queryClient.invalidateQueries();
       router.refresh();
     } catch (_error) {
-      toast.error("Failed to update role");
+      toast.error(t("userManagement.toastRoleUpdateFailed"));
     } finally {
       setLoadingRole(null);
     }
@@ -74,9 +77,9 @@ function UserManagementCard({
       const formData = new FormData();
       formData.append('userId', userId);
       await triggerPasswordReset(formData);
-      toast.success("Password reset email sent");
+      toast.success(t("userManagement.toastResetEmailSent"));
     } catch (_error) {
-      toast.error("Failed to send reset email");
+      toast.error(t("userManagement.toastResetEmailFailed"));
     } finally {
       setLoadingReset(null);
     }
@@ -90,12 +93,12 @@ function UserManagementCard({
       formData.append('userId', editUserId);
       formData.append('display_name', editDisplayName);
       await updateUserDisplayName(formData);
-      toast.success("Display name updated successfully");
+      toast.success(t("userManagement.toastDisplayNameUpdated"));
       setEditUserId(null);
       queryClient.invalidateQueries();
       router.refresh();
     } catch (_error) {
-      toast.error("Failed to update display name");
+      toast.error(t("userManagement.toastDisplayNameFailed"));
     } finally {
       setLoadingEdit(null);
     }
@@ -109,7 +112,7 @@ function UserManagementCard({
       formData.append('display_name', createDisplayName);
       formData.append('role', createRole);
       await createUser(formData);
-      toast.success("User created successfully.");
+      toast.success(t("userManagement.toastUserCreated"));
       setCreateDialogOpen(false);
       setCreateEmail('');
       setCreateDisplayName('');
@@ -118,7 +121,7 @@ function UserManagementCard({
       router.refresh();
     } catch (error) {
       console.error("Create user error:", error);
-      toast.error("Failed to create user");
+      toast.error(t("userManagement.toastUserCreateFailed"));
     } finally {
       setLoadingCreate(false);
     }
@@ -131,12 +134,12 @@ function UserManagementCard({
       const formData = new FormData();
       formData.append('userId', deleteUserId);
       await deleteUser(formData);
-      toast.success("User deleted successfully");
+      toast.success(t("userManagement.toastUserDeleted"));
       setDeleteUserId(null);
       queryClient.invalidateQueries();
       router.refresh();
     } catch (_error) {
-      toast.error("Failed to delete user");
+      toast.error(t("userManagement.toastUserDeleteFailed"));
     } finally {
       setLoadingDelete(null);
     }
@@ -148,14 +151,14 @@ function UserManagementCard({
         <CardHeader className="flex justify-between items-center pb-6">
           <CardTitle className="flex items-center text-xl">
             <Users className="mr-3 h-6 w-6 text-primary" />
-            User Management
+            {t("userManagement.cardTitle")}
           </CardTitle>
           <Button
             onClick={() => setCreateDialogOpen(true)}
             className="flex items-center"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New User Account
+            {t("userManagement.newUserAccount")}
           </Button>
         </CardHeader>
         <CardContent>
@@ -164,27 +167,33 @@ function UserManagementCard({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Display Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead>Updated At</TableHead>
-                    <TableHead>Zuletzt angemeldet</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("userManagement.colDisplayName")}</TableHead>
+                    <TableHead>{t("userManagement.colEmail")}</TableHead>
+                    <TableHead>{t("userManagement.colRole")}</TableHead>
+                    <TableHead>{t("userManagement.colCreatedAt")}</TableHead>
+                    <TableHead>{t("userManagement.colUpdatedAt")}</TableHead>
+                    <TableHead>{t("userManagement.colLastSignIn")}</TableHead>
+                    <TableHead>{t("userManagement.colActions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {allUsers.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.display_name || 'No display name'}</TableCell>
+                      <TableCell className="font-medium">
+                        {u.display_name || t("userManagement.noDisplayName")}
+                      </TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="capitalize">
                           {u.role}
                         </Badge>
                       </TableCell>
-                      <TableCell>{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</TableCell>
-                      <TableCell>{u.updated_at ? new Date(u.updated_at).toLocaleDateString() : 'N/A'}</TableCell>
+                      <TableCell>
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString(localeTag) : t("userManagement.notAvailable")}
+                      </TableCell>
+                      <TableCell>
+                        {u.updated_at ? new Date(u.updated_at).toLocaleDateString(localeTag) : t("userManagement.notAvailable")}
+                      </TableCell>
                       <TableCell>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -194,7 +203,7 @@ function UserManagementCard({
                           </TooltipTrigger>
                           <TooltipContent>
                             {u.last_sign_in_at
-                              ? new Date(u.last_sign_in_at).toLocaleString("de-DE", {
+                              ? new Date(u.last_sign_in_at).toLocaleString(localeTag, {
                                   dateStyle: "medium",
                                   timeStyle: "short",
                                 })
@@ -223,7 +232,7 @@ function UserManagementCard({
                           ) : (
                             <Shield className="h-4 w-4 mr-1" />
                           )}
-                          {u.role === 'admin' ? 'Demote' : 'Promote'}
+                          {u.role === "admin" ? t("userManagement.demote") : t("userManagement.promote")}
                         </Button>
                         <Button
                           size="sm"
@@ -236,7 +245,7 @@ function UserManagementCard({
                           ) : (
                             <Mail className="h-4 w-4 mr-1" />
                           )}
-                          Reset
+                          {t("userManagement.resetPassword")}
                         </Button>
                         <Button
                           size="sm"
@@ -260,36 +269,34 @@ function UserManagementCard({
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New User Account</DialogTitle>
-            <DialogDescription>
-              Create a new user account. A password reset email will be sent to the user.
-            </DialogDescription>
+            <DialogTitle>{t("userManagement.createDialogTitle")}</DialogTitle>
+            <DialogDescription>{t("userManagement.createDialogDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               value={createEmail}
               onChange={(e) => setCreateEmail(e.target.value)}
-              placeholder="Email"
+              placeholder={t("userManagement.emailPlaceholder")}
               type="email"
             />
             <Input
               value={createDisplayName}
               onChange={(e) => setCreateDisplayName(e.target.value)}
-              placeholder="Display name"
+              placeholder={t("userManagement.displayNamePlaceholder")}
             />
             <Select value={createRole} onValueChange={(value: 'user' | 'admin') => setCreateRole(value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select role" />
+                <SelectValue placeholder={t("userManagement.selectRolePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="user">{t("userManagement.roleUser")}</SelectItem>
+                <SelectItem value="admin">{t("userManagement.roleAdmin")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancel
+              {t("userManagement.cancel")}
             </Button>
             <Button
               onClick={handleCreateUser}
@@ -298,7 +305,7 @@ function UserManagementCard({
               {loadingCreate ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Create User
+              {t("userManagement.createUser")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -307,21 +314,19 @@ function UserManagementCard({
       <Dialog open={!!editUserId} onOpenChange={() => setEditUserId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Display Name</DialogTitle>
-            <DialogDescription>
-              Update the display name for this user.
-            </DialogDescription>
+            <DialogTitle>{t("userManagement.editDisplayNameTitle")}</DialogTitle>
+            <DialogDescription>{t("userManagement.editDisplayNameDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               value={editDisplayName}
               onChange={(e) => setEditDisplayName(e.target.value)}
-              placeholder="Display name"
+              placeholder={t("userManagement.displayNamePlaceholder")}
             />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditUserId(null)}>
-              Cancel
+              {t("userManagement.cancel")}
             </Button>
             <Button
               onClick={handleEditDisplayName}
@@ -330,7 +335,7 @@ function UserManagementCard({
               {loadingEdit === editUserId ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Save
+              {t("userManagement.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -339,14 +344,12 @@ function UserManagementCard({
       <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
-            </DialogDescription>
+            <DialogTitle>{t("userManagement.deleteConfirmTitle")}</DialogTitle>
+            <DialogDescription>{t("userManagement.deleteConfirmDescription")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteUserId(null)}>
-              Cancel
+              {t("userManagement.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -356,7 +359,7 @@ function UserManagementCard({
               {loadingDelete === deleteUserId ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Delete
+              {t("userManagement.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

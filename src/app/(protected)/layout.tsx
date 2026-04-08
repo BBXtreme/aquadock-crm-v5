@@ -17,11 +17,11 @@ export default async function ProtectedLayout({
 }) {
   const user = await requireUser();
 
-  // I18nProvider sits inside AppLayout (under ReactQueryProvider via root ClientLayout)
-  // so protected page trees (e.g. Settings) receive next-intl context.
+  // I18nProvider must wrap AppLayout so shell (Header, Sidebar) sits under NextIntlClientProvider.
+  // It remains under ReactQueryProvider from root ClientLayout (I18nProvider uses React Query).
   return (
-    <AppLayout user={user}>
-      <I18nProvider>{children}</I18nProvider>
-    </AppLayout>
+    <I18nProvider>
+      <AppLayout user={user}>{children}</AppLayout>
+    </I18nProvider>
   );
 }

@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/contact-options";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
@@ -47,6 +48,10 @@ interface ContactDetailClientProps {
 }
 
 export default function ContactDetailClient({ contact: initialContact, companies }: ContactDetailClientProps) {
+  const t = useT("contacts");
+  const tCommon = useT("common");
+  const tCompanies = useT("companies");
+  const localeTag = useNumberLocaleTag();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -92,7 +97,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
   }, [contact]);
 
   if (!contact) {
-    return <div>Contact not found</div>;
+    return <div>{t("detailNotFound")}</div>;
   }
 
   const handleDeleteContact = async () => {
@@ -100,7 +105,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
       await deleteContact(id);
       router.push("/contacts");
     } catch (_error) {
-      toast.error("Failed to delete contact");
+      toast.error(t("tableToastDeleteFailed"));
     }
   };
 
@@ -109,11 +114,11 @@ export default function ContactDetailClient({ contact: initialContact, companies
     try {
       const supabase = createClient();
       await updateContact(contact.id, { notes: notesValue }, supabase);
-      toast.success("Notes updated");
+      toast.success(t("toastNotesSaved"));
       setEditingNotes(false);
       queryClient.invalidateQueries({ queryKey: ["contact", id] });
     } catch (error) {
-      toast.error("Failed to update notes", {
+      toast.error(t("toastNotesSaveFailed"), {
         description: (error as Error).message,
       });
     }
@@ -125,7 +130,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">
-            Contacts → {contact.vorname} {contact.nachname}
+            {t("title")} → {contact.vorname} {contact.nachname}
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
@@ -144,14 +149,12 @@ export default function ContactDetailClient({ contact: initialContact, companies
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this contact? This action cannot be undone.
-                </AlertDialogDescription>
+                <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteContact}>Delete</AlertDialogAction>
+                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteContact}>{t("delete")}</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -164,16 +167,16 @@ export default function ContactDetailClient({ contact: initialContact, companies
       {/* Badges and Primary Contact Checkbox */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">Primary Contact</Badge>}
+          {contact.is_primary && <Badge variant="secondary">{t("formIsPrimary")}</Badge>}
           {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
           {contact.created_at && (
             <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
-              Created: {new Date(contact.created_at).toLocaleDateString()}
+              {tCommon("metaCreated")} {new Date(contact.created_at).toLocaleDateString(localeTag)}
             </span>
           )}
           {contact.updated_at && (
             <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
-              Updated: {new Date(contact.updated_at).toLocaleDateString()}
+              {tCommon("metaUpdated")} {new Date(contact.updated_at).toLocaleDateString(localeTag)}
             </span>
           )}
         </div>
@@ -185,15 +188,15 @@ export default function ContactDetailClient({ contact: initialContact, companies
               const supabase = createClient();
               try {
                 await updateContact(contact.id, { is_primary: !!checked }, supabase);
-                toast.success("Primary contact updated");
+                toast.success(t("toastPrimaryContactSaved"));
                 queryClient.invalidateQueries({ queryKey: ["contact", id] });
               } catch (err) {
-                toast.error("Update failed", { description: (err as Error).message });
+                toast.error(t("toastPrimaryContactFailed"), { description: (err as Error).message });
               }
             }}
           />
           <label htmlFor="primary-contact" className="text-sm font-medium text-foreground">
-            Primary Contact
+            {t("formIsPrimary")}
           </label>
         </div>
       </div>
@@ -203,29 +206,29 @@ export default function ContactDetailClient({ contact: initialContact, companies
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Contact Details
+            {t("detailSectionContactDetails")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Vorname</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formVorname")}</div>
               <p className="text-sm text-foreground">{safeDisplay(contact.vorname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Nachname</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formNachname")}</div>
               <p className="text-sm text-foreground">{safeDisplay(contact.nachname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Anrede</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formSalutation")}</div>
               <p className="text-sm text-foreground">{safeDisplay(contact.anrede)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Position</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formPosition")}</div>
               <p className="text-sm text-foreground">{safeDisplay(contact.position)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Email</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formEmail")}</div>
               <p className="text-sm text-foreground">
                 {contact.email ? (
                   <a href={`mailto:${contact.email}`} className="text-primary underline-offset-4 hover:underline">
@@ -237,7 +240,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Telefon</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formTelefon")}</div>
               <p className="text-sm text-foreground">
                 {contact.telefon ? (
                   <a href={`tel:${contact.telefon}`} className="text-primary underline-offset-4 hover:underline">
@@ -249,7 +252,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Mobil</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formMobil")}</div>
               <p className="text-sm text-foreground">
                 {contact.mobil ? (
                   <a href={`tel:${contact.mobil}`} className="text-primary underline-offset-4 hover:underline">
@@ -261,12 +264,12 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Durchwahl</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("formDurchwahl")}</div>
               <p className="text-sm text-foreground">{safeDisplay(contact.durchwahl)}</p>
             </div>
             <div className="md:col-span-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                Notes
+                {t("formNotes")}
                 <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -279,7 +282,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   />
                   <div className="flex gap-2 mt-2">
                     <Button size="sm" onClick={handleSaveNotes}>
-                      Save
+                      {t("detailNotesSave")}
                     </Button>
                     <Button
                       size="sm"
@@ -289,7 +292,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                         setNotesValue(contact.notes || "");
                       }}
                     >
-                      Cancel
+                      {t("cancel")}
                     </Button>
                   </div>
                 </div>
@@ -306,7 +309,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building className="w-5 h-5" />
-            Linked Company
+            {t("detailSectionLinkedCompany")}
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
@@ -360,20 +363,20 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     rel="noopener noreferrer"
                     className="text-primary underline-offset-4 hover:underline block"
                   >
-                    OSM Link →
+                    {t("detailOsmLink")}
                   </a>
                 )}
               </div>
 
               <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
-                Change Company
+                {t("detailChangeCompany")}
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-muted-foreground">No company linked yet.</p>
+              <p className="text-muted-foreground">{t("detailNoCompanyLinked")}</p>
               <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
-                Link Company
+                {t("detailLinkCompany")}
               </Button>
             </div>
           )}
@@ -384,7 +387,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <WideDialogContent size="xl">
           <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <EditContactForm
             contact={contact}
@@ -400,7 +403,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
       <Dialog open={editCompanyDialog} onOpenChange={setEditCompanyDialog}>
         <WideDialogContent size="2xl">
           <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
+            <DialogTitle>{tCompanies("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <CompanyEditForm
             company={linkedCompany || null}
@@ -417,19 +420,19 @@ export default function ContactDetailClient({ contact: initialContact, companies
       <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
         <WideDialogContent size="xl">
           <DialogHeader>
-            <DialogTitle>Change Linked Company</DialogTitle>
+            <DialogTitle>{t("changeLinkedCompanyDialogTitle")}</DialogTitle>
           </DialogHeader>
           <Select
             onValueChange={async (value) => {
               const supabase = createClient();
               try {
                 await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
-                toast.success("Company updated");
+                toast.success(t("toastCompanyLinkUpdated"));
                 await queryClient.invalidateQueries({ queryKey: ["contact", id] });
                 await queryClient.invalidateQueries({ queryKey: ["company", value === "none" ? null : value] });
                 setChangeCompanyDialog(false);
               } catch (err) {
-                toast.error("Update failed", {
+                toast.error(t("toastOperationFailed"), {
                   description: (err as Error).message,
                 });
               }
@@ -437,10 +440,10 @@ export default function ContactDetailClient({ contact: initialContact, companies
             defaultValue={contact.company_id || "none"}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select company" />
+              <SelectValue placeholder={t("formCompanyPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="none">{t("companyUnlinkedOption")}</SelectItem>
               {companies.map((company) => (
                 <SelectItem key={company.id} value={company.id}>
                   {company.firmenname}
@@ -455,6 +458,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
 }
 
 function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: () => void }) {
+  const t = useT("contacts");
   const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -476,10 +480,10 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
     try {
       const supabase = createClient();
       await updateContact(contact.id, data, supabase);
-      toast.success("Contact updated");
+      toast.success(t("toastUpdated"));
       onSuccess();
     } catch (error) {
-      toast.error("Failed to update contact", {
+      toast.error(t("toastContactSaveFailed"), {
         description: (error as Error).message,
       });
     }
@@ -493,7 +497,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="vorname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vorname</FormLabel>
+              <FormLabel>{t("formVorname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -506,7 +510,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="nachname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nachname</FormLabel>
+              <FormLabel>{t("formNachname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -519,11 +523,11 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="anrede"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Anrede</FormLabel>
+              <FormLabel>{t("formSalutation")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select anrede" />
+                    <SelectValue placeholder={t("formSalutationPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -543,7 +547,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel>{t("formPosition")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -556,7 +560,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("formEmail")}</FormLabel>
               <FormControl>
                 <Input type="email" {...field} value={field.value || ""} />
               </FormControl>
@@ -569,7 +573,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="telefon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Telefon</FormLabel>
+              <FormLabel>{t("formTelefon")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -582,7 +586,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="mobil"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobil</FormLabel>
+              <FormLabel>{t("formMobil")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -595,7 +599,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Durchwahl</FormLabel>
+              <FormLabel>{t("formDurchwahl")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -608,7 +612,7 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>{t("formNotes")}</FormLabel>
               <FormControl>
                 <Textarea {...field} value={field.value || ""} />
               </FormControl>
@@ -625,12 +629,12 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Primary Contact</FormLabel>
+                <FormLabel>{t("formIsPrimary")}</FormLabel>
               </div>
             </FormItem>
           )}
         />
-        <Button type="submit">Save</Button>
+        <Button type="submit">{t("formSubmitUpdate")}</Button>
       </form>
     </Form>
   );

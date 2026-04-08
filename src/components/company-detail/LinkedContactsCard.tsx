@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function LinkedContactsCard({ companyId }: Props) {
+  const t = useT("contacts");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -147,7 +149,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <ContactEditForm
             key={editContact?.id}
@@ -164,7 +166,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Contact</DialogTitle>
+            <DialogTitle>{t("createDialogTitle")}</DialogTitle>
           </DialogHeader>
           <ContactEditForm
             contact={null}

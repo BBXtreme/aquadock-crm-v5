@@ -7,6 +7,7 @@ import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function AquaDockCard({ company }: Props) {
+  const t = useT("companies");
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
@@ -104,7 +106,7 @@ export default function AquaDockCard({ company }: Props) {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>AquaDock Daten bearbeiten</DialogTitle>
+            <DialogTitle>{t("dialogEditAquadockTitle")}</DialogTitle>
           </DialogHeader>
           <AquaDockEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
         </DialogContent>

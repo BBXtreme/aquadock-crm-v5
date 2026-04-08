@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
 import { AppearanceTimezoneSelect } from "@/components/features/settings/AppearanceTimezoneSelect";
@@ -25,6 +25,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
+import {
+  OPENMAP_DEFAULT_MAX_POIS,
+  OPENMAP_DEFAULT_TTL_MINUTES,
+  type OpenmapCacheTtlMinutes,
+  type OpenmapMaxPoisMemory,
+} from "@/lib/constants/openmap-user-settings";
 import { APPEARANCE_COLOR_SCHEME_IDS, APPEARANCE_COLOR_SWATCH } from "@/lib/constants/theme";
 import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
@@ -108,11 +114,19 @@ function ClientSettingsPage() {
     [],
   );
 
-  const [openMapSettings, setOpenMapSettings] = useState({
+  const [openMapSettings, setOpenMapSettings] = useState<{
+    overpassEndpoints: string[];
+    autoLoadPois: boolean;
+    cacheTtlMinutes: OpenmapCacheTtlMinutes;
+    maxPoisInMemory: OpenmapMaxPoisMemory;
+    aggressiveCaching: boolean;
+    lastQuery: string;
+  }>({
     overpassEndpoints: defaultOverpassEndpoints,
     autoLoadPois: true,
-    cacheDuration: 10,
-    maxCacheSize: 30,
+    cacheTtlMinutes: OPENMAP_DEFAULT_TTL_MINUTES,
+    maxPoisInMemory: OPENMAP_DEFAULT_MAX_POIS,
+    aggressiveCaching: false,
     lastQuery: "",
   });
 
@@ -133,20 +147,28 @@ function ClientSettingsPage() {
     setSelectMounted(true);
   }, []);
 
+  const openmapDbHydratedRef = useRef(false);
+
+  const normalizeCacheTtlMinutes = useCallback((raw: string | null): OpenmapCacheTtlMinutes | null => {
+    if (raw === null || raw === "") return null;
+    const n = Number.parseInt(raw, 10);
+    if (n === 10 || n === 30 || n === 120 || n === 1440) return n;
+    return null;
+  }, []);
+
   const loadFromLocalStorage = useCallback(() => {
-    const maxSize = localStorage.getItem("openmap_maxCacheSize");
     const duration = localStorage.getItem("openmap_cacheDuration");
     const endpoints = localStorage.getItem("openmap_overpassEndpoints");
     const autoLoad = localStorage.getItem("openmap_autoLoadPois");
 
-    setOpenMapSettings({
+    setOpenMapSettings((prev) => ({
+      ...prev,
       overpassEndpoints: endpoints ? JSON.parse(endpoints) : defaultOverpassEndpoints,
-      autoLoadPois: autoLoad !== null ? autoLoad === "true" : true,
-      cacheDuration: duration ? parseInt(duration, 10) : 10,
-      maxCacheSize: maxSize ? parseInt(maxSize, 10) : 30,
+      autoLoadPois: autoLoad !== null ? autoLoad === "true" : prev.autoLoadPois,
+      cacheTtlMinutes: normalizeCacheTtlMinutes(duration) ?? prev.cacheTtlMinutes,
       lastQuery: "",
-    });
-  }, [defaultOverpassEndpoints]);
+    }));
+  }, [defaultOverpassEndpoints, normalizeCacheTtlMinutes]);
 
   const { data: settings = {}, isLoading: settingsLoading } = useQuery({
     queryKey: ["settings"],
@@ -165,6 +187,37 @@ function ClientSettingsPage() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (settingsLoading) return;
+    if (openmapDbHydratedRef.current) return;
+    openmapDbHydratedRef.current = true;
+
+    setOpenMapSettings((prev) => {
+      const next = { ...prev };
+      const av = settings.openmap_auto_load_pois;
+      if (typeof av === "boolean") next.autoLoadPois = av;
+      else if (av === "true" || av === 1 || av === "1") next.autoLoadPois = true;
+      else if (av === "false" || av === 0 || av === "0") next.autoLoadPois = false;
+
+      const ttl = Number(settings.openmap_cache_ttl_minutes);
+      if (ttl === 10 || ttl === 30 || ttl === 120 || ttl === 1440) {
+        next.cacheTtlMinutes = ttl;
+      }
+
+      const max = Number(settings.openmap_max_pois_memory);
+      if (max === 3000 || max === 6000 || max === 12000) {
+        next.maxPoisInMemory = max;
+      }
+
+      const ag = settings.openmap_aggressive_caching;
+      if (typeof ag === "boolean") next.aggressiveCaching = ag;
+      else if (ag === "true" || ag === 1 || ag === "1") next.aggressiveCaching = true;
+      else if (ag === "false" || ag === 0 || ag === "0") next.aggressiveCaching = false;
+
+      return next;
+    });
+  }, [settings, settingsLoading]);
 
   const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
     queryKey: ["map-provider-settings"],
@@ -396,19 +449,39 @@ function ClientSettingsPage() {
 
   const openMapMutation = useMutation({
     mutationFn: async () => {
-      localStorage.setItem("openmap_maxCacheSize", openMapSettings.maxCacheSize.toString());
-      localStorage.setItem("openmap_cacheDuration", openMapSettings.cacheDuration.toString());
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error(t("brevo.notSignedIn"));
+
+      const rows = [
+        { user_id: user.id, key: "openmap_auto_load_pois", value: openMapSettings.autoLoadPois },
+        { user_id: user.id, key: "openmap_cache_ttl_minutes", value: openMapSettings.cacheTtlMinutes },
+        { user_id: user.id, key: "openmap_max_pois_memory", value: openMapSettings.maxPoisInMemory },
+        { user_id: user.id, key: "openmap_aggressive_caching", value: openMapSettings.aggressiveCaching },
+      ];
+      for (const row of rows) {
+        const { error } = await supabase.from("user_settings").upsert(row, { onConflict: "user_id,key" });
+        if (error) throw error;
+      }
+
       localStorage.setItem("openmap_overpassEndpoints", JSON.stringify(openMapSettings.overpassEndpoints));
       localStorage.setItem("openmap_autoLoadPois", openMapSettings.autoLoadPois.toString());
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      localStorage.setItem("openmap_cacheDuration", openMapSettings.cacheTtlMinutes.toString());
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["settings"] });
+      await queryClient.invalidateQueries({ queryKey: ["openmap-user-preferences"] });
       loadFromLocalStorage();
       window.dispatchEvent(new CustomEvent("openmap-settings-changed"));
       toast.success(t("openMap.savedToast"));
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : t("common.unknownError");
+      if (message === t("brevo.notSignedIn")) {
+        toast.error(t("brevo.notSignedIn"));
+        return;
+      }
       toast.error(t("openMap.saveErrorTitle"), { description: message });
     },
   });
@@ -766,49 +839,115 @@ function ClientSettingsPage() {
                 rows={4}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="autoLoadPois" className="text-sm font-medium">
-                {t("openMap.autoLoadLabel")}
-              </Label>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="autoLoadPois" className="text-sm font-medium">
+                  {t("openMap.autoLoadLabel")}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{t("openMap.autoLoadHelp")}</p>
+              </div>
               <Switch
                 id="autoLoadPois"
+                className="shrink-0"
                 checked={openMapSettings.autoLoadPois}
                 onCheckedChange={(checked) => setOpenMapSettings((prev) => ({ ...prev, autoLoadPois: checked }))}
               />
             </div>
             <div className="space-y-2">
-              <Label>{t("openMap.cacheDurationLabel")}</Label>
-              <Input
-                type="number"
-                value={openMapSettings.cacheDuration}
-                onChange={(e) =>
-                  setOpenMapSettings((prev) => ({ ...prev, cacheDuration: parseInt(e.target.value, 10) || 10 }))
+              <Label htmlFor="openmap-cache-ttl" className="text-sm font-medium">
+                {t("openMap.cacheValidityLabel")}
+              </Label>
+              <div className="space-y-2 text-xs leading-relaxed text-muted-foreground">
+                <p>{t("openMap.cacheValidityWhat")}</p>
+                <p>{t("openMap.cacheValidityTradeoff")}</p>
+                <p>{t("openMap.cacheValidityRecommend")}</p>
+              </div>
+              {selectMounted ? (
+                <Select
+                  value={String(openMapSettings.cacheTtlMinutes)}
+                  onValueChange={(v) => {
+                    const n = Number.parseInt(v, 10) as OpenmapCacheTtlMinutes;
+                    if (n === 10 || n === 30 || n === 120 || n === 1440) {
+                      setOpenMapSettings((prev) => ({ ...prev, cacheTtlMinutes: n }));
+                    }
+                  }}
+                >
+                  <SelectTrigger id="openmap-cache-ttl" className="max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">{t("openMap.cacheTtl10m")}</SelectItem>
+                    <SelectItem value="30">{t("openMap.cacheTtl30m")}</SelectItem>
+                    <SelectItem value="120">{t("openMap.cacheTtl2h")}</SelectItem>
+                    <SelectItem value="1440">{t("openMap.cacheTtl24h")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex h-9 max-w-xs items-center rounded-md border border-border px-3 text-sm text-muted-foreground">
+                  {t("common.ellipsis")}
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="openmap-max-pois">{t("openMap.maxPoisLabel")}</Label>
+              <p className="text-muted-foreground text-xs leading-relaxed">{t("openMap.maxPoisHelp")}</p>
+              {selectMounted ? (
+                <Select
+                  value={String(openMapSettings.maxPoisInMemory)}
+                  onValueChange={(v) => {
+                    const n = Number.parseInt(v, 10) as OpenmapMaxPoisMemory;
+                    if (n === 3000 || n === 6000 || n === 12000) {
+                      setOpenMapSettings((prev) => ({ ...prev, maxPoisInMemory: n }));
+                    }
+                  }}
+                >
+                  <SelectTrigger id="openmap-max-pois" className="max-w-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3000">3000</SelectItem>
+                    <SelectItem value="6000">6000</SelectItem>
+                    <SelectItem value="12000">12000</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex h-9 max-w-xs items-center rounded-md border border-border px-3 text-sm text-muted-foreground">
+                  {t("common.ellipsis")}
+                </div>
+              )}
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="openmap-aggressive" className="text-sm font-medium">
+                  {t("openMap.aggressiveCachingLabel")}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{t("openMap.aggressiveCachingHelp")}</p>
+              </div>
+              <Switch
+                id="openmap-aggressive"
+                className="shrink-0"
+                checked={openMapSettings.aggressiveCaching}
+                onCheckedChange={(checked) =>
+                  setOpenMapSettings((prev) => ({ ...prev, aggressiveCaching: checked }))
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label>{t("openMap.maxCacheLabel")}</Label>
-              <Input
-                type="number"
-                value={openMapSettings.maxCacheSize}
-                onChange={(e) =>
-                  setOpenMapSettings((prev) => ({ ...prev, maxCacheSize: parseInt(e.target.value, 10) || 30 }))
-                }
-              />
+            <div className="border-t border-border pt-4">
+              <Button type="button" variant="outline" onClick={clearCache}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t("openMap.clearCache")}
+              </Button>
             </div>
             <div className="space-y-2">
               <Label>{t("openMap.sampleQueryLabel")}</Label>
               <Textarea value={generateSampleQuery()} readOnly rows={10} />
             </div>
-            <div className="flex gap-2">
-              <Button onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" onClick={() => openMapMutation.mutate()} disabled={openMapMutation.isPending}>
                 {openMapMutation.isPending ? t("common.saving") : t("openMap.save")}
               </Button>
-              <Button variant="outline" onClick={clearCache}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t("openMap.clearCache")}
-              </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => testOverpassMutation.mutate()}
                 disabled={testOverpassMutation.isPending}

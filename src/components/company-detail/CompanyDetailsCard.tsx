@@ -7,6 +7,7 @@ import FirmendatenEditForm from "@/components/features/companies/FirmendatenEdit
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useT } from "@/lib/i18n/use-translations";
 import { getCountryFlag } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 import type { Company } from "@/types/database.types";
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function CompanyDetailsCard({ company }: Props) {
+  const t = useT("companies");
   const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
   const [adresseEditOpen, setAdresseEditOpen] = useState(false);
 
@@ -139,7 +141,7 @@ export default function CompanyDetailsCard({ company }: Props) {
       <Dialog open={firmendatenEditOpen} onOpenChange={setFirmendatenEditOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Firmendaten</DialogTitle>
+            <DialogTitle>{t("dialogEditFirmendatenTitle")}</DialogTitle>
           </DialogHeader>
           <FirmendatenEditForm company={company} onSuccess={() => setFirmendatenEditOpen(false)} />
         </DialogContent>
@@ -147,7 +149,7 @@ export default function CompanyDetailsCard({ company }: Props) {
       <Dialog open={adresseEditOpen} onOpenChange={setAdresseEditOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Adresse bearbeiten</DialogTitle>
+            <DialogTitle>{t("dialogEditAddressTitle")}</DialogTitle>
           </DialogHeader>
           <AdresseEditForm company={company} onSuccess={() => setAdresseEditOpen(false)} />
         </DialogContent>

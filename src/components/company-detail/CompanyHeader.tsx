@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteCompany } from "@/lib/actions/companies";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
@@ -20,6 +21,9 @@ interface Props {
 }
 
 export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
+  const t = useT("companies");
+  const tCommon = useT("common");
+  const localeTag = useNumberLocaleTag();
   const countryFlag = getCountryFlag(company.land);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -27,7 +31,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
     <>
       <nav className="text-sm text-muted-foreground">
         <Link href="/companies" className="hover:underline">
-          Companies
+          {t("title")}
         </Link>{" "}
         &gt; {company.firmenname}
       </nav>
@@ -39,7 +43,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
-            <Plus className="h-4 w-4 mr-2" /> Add Timeline
+            <Plus className="h-4 w-4 mr-2" /> {t("headerAddTimeline")}
           </Button>
           <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
@@ -52,20 +56,18 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this company? This action cannot be undone.
-                </AlertDialogDescription>
+                <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={async () => {
                     await deleteCompany(id);
                     router.push("/companies");
                   }}
                 >
-                  Delete
+                  {t("delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -99,10 +101,14 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
           </Badge>
         )}
         {company.created_at && (
-          <span className="text-sm text-muted-foreground">Created: {new Date(company.created_at).toLocaleDateString()}</span>
+          <span className="text-sm text-muted-foreground">
+            {tCommon("metaCreated")} {new Date(company.created_at).toLocaleDateString(localeTag)}
+          </span>
         )}
         {company.updated_at && (
-          <span className="text-sm text-muted-foreground">Updated: {new Date(company.updated_at).toLocaleDateString()}</span>
+          <span className="text-sm text-muted-foreground">
+            {tCommon("metaUpdated")} {new Date(company.updated_at).toLocaleDateString(localeTag)}
+          </span>
         )}
       </div>
     </>

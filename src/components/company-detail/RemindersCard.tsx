@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
 import type { Reminder } from "@/types/database.types";
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function RemindersCard({ companyId }: Props) {
+  const t = useT("reminders");
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -99,7 +101,7 @@ export default function RemindersCard({ companyId }: Props) {
   const handleAdd = () => setAddDialogOpen(true);
   const handleEdit = (reminder: Reminder) => setEditReminder(reminder);
   const handleDelete = (id: string) => {
-    if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
+    if (confirm(t("deleteDescription"))) deleteMutation.mutate(id);
   };
 
   return (
@@ -207,7 +209,7 @@ export default function RemindersCard({ companyId }: Props) {
       <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Reminder</DialogTitle>
+            <DialogTitle>{t("dialogEditTitle")}</DialogTitle>
           </DialogHeader>
           <ReminderEditForm
             key={editReminder?.id}
@@ -226,7 +228,7 @@ export default function RemindersCard({ companyId }: Props) {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Reminder</DialogTitle>
+            <DialogTitle>{t("dialogCreateTitle")}</DialogTitle>
           </DialogHeader>
           <ReminderCreateForm
             preselectedCompanyId={companyId}
