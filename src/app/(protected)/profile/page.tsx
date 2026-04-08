@@ -3,6 +3,7 @@
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
 import { User } from "lucide-react";
+import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
 import ProfilForm from "@/components/features/profile/ProfileForm";
 import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
@@ -149,6 +150,8 @@ export default async function ProfilePage() {
 
       {/* User Management - ONLY visible to admins */}
       {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
+
+      {role === 'admin' ? <AdminTrashBinCard /> : null}
     </div>
   );
 }

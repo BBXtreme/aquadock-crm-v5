@@ -7,6 +7,45 @@
 
 import { toast } from "sonner";
 
+/**
+ * Supabase PostgREST errors are usually plain objects `{ message, code, details, hint }`, not `Error` instances.
+ * Some paths nest another object under `error`, or only expose `code` / `hint`.
+ */
+function collectErrorParts(o: Record<string, unknown>): string | null {
+  const parts: string[] = [];
+  for (const key of ["message", "details", "hint", "code"] as const) {
+    const v = o[key];
+    if (typeof v === "string" && v.trim() !== "") {
+      parts.push(key === "code" ? `Code ${v}` : v);
+    }
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+function formatDatabaseUserMessage(error: unknown): string {
+  if (typeof error === "string" && error.trim() !== "") {
+    return error;
+  }
+  if (error instanceof Error && error.message.trim() !== "") {
+    return error.message;
+  }
+  if (typeof error === "object" && error !== null) {
+    const o = error as Record<string, unknown>;
+    const nested = o.error;
+    if (typeof nested === "object" && nested !== null && !Array.isArray(nested)) {
+      const fromNested = collectErrorParts(nested as Record<string, unknown>);
+      if (fromNested !== null) {
+        return fromNested;
+      }
+    }
+    const combined = collectErrorParts(o);
+    if (combined !== null) {
+      return combined;
+    }
+  }
+  return "An unknown database error occurred";
+}
+
 export function handleSupabaseError(error: unknown, context: string): Error {
   console.group(`🚨 Supabase Error in ${context}`);
   console.error("Full error:", error);
@@ -27,7 +66,7 @@ export function handleSupabaseError(error: unknown, context: string): Error {
   }
   console.groupEnd();
 
-  const errorMessage = error instanceof Error ? error.message : "An unknown database error occurred";
+  const errorMessage = formatDatabaseUserMessage(error);
 
   if (typeof window !== "undefined") {
     toast.error(`Error in ${context}`, { description: errorMessage });

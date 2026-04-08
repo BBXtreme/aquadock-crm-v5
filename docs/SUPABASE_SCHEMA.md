@@ -4,6 +4,8 @@
 **Last audited**: 2026-04-07  
 **Environment**: Supabase PostgreSQL 15+  
 
+**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
+
 ## 1. Database Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
@@ -28,7 +30,7 @@
 | rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
 | firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
-| status     | text        | false    | 'lead'            | lead, interessannt, qualifiziert, gewonnen, verloren, … | Indexed       |
+| status     | text        | false    | 'lead'            | lead, interessant, qualifiziert, gewonnen, verloren, … | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
 | strasse    | text        | true     | —                 | Street address                            | —             |
 | plz        | text        | true     | —                 | Postal code                               | —             |
@@ -51,6 +53,7 @@
 | created_at | timestamptz | true     | now()             | —                                         | —             |
 | updated_at | timestamptz | true     | now()             | —                                         | —             |
 | deleted_at | timestamptz | true     | —                 | Soft delete timestamp                     | —             |
+| deleted_by | uuid        | true     | —                 | User who soft-deleted (`auth.users.id`)   | FK → auth.users |
 
 ### contacts
 
@@ -75,6 +78,7 @@
 | created_at  | timestamptz | true     | now()             | —                             | —             |
 | updated_at  | timestamptz | true     | now()             | —                             | —             |
 | deleted_at  | timestamptz | true     | —                 | Soft delete timestamp         | —             |
+| deleted_by  | uuid        | true     | —                 | User who soft-deleted         | FK → auth.users |
 
 ### reminders
 
@@ -92,6 +96,8 @@
 | created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
 | updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
 | completed_at | timestamptz | true     | —                 | Completion timestamp     | —             |
+| deleted_at | timestamptz | true     | —                 | Soft-delete (Papierkorb) | Indexed       |
+| deleted_by | uuid        | true     | —                 | User who soft-deleted    | FK → auth.users |
 | created_at | timestamptz | true     | now()             | —                        | —             |
 
 ### timeline
@@ -108,6 +114,8 @@
 | user_name  | text        | true     | —                 | User name                | —             |
 | created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
 | updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
+| deleted_at | timestamptz | true     | —                 | Soft-delete (Papierkorb) | Indexed       |
+| deleted_by | uuid        | true     | —                 | User who soft-deleted    | FK → auth.users |
 | created_at | timestamptz | true     | now()             | —                        | —             |
 
 ### email_log
@@ -151,6 +159,8 @@
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
+**Known `key` values (EAV)**: `notification_preferences` (JSON object), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
+
 ### profiles
 
 | Column       | Type        | Nullable | Default | Business Meaning         | Notes / Index    |
@@ -191,6 +201,12 @@ OR
 
 Admin and `service_role` bypass for maintenance and migrations where applicable.
 
+**Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, and `timeline` support optional soft deletion. On soft delete the app sets `deleted_by` to the acting `auth.users` id; on restore both `deleted_at` and `deleted_by` are cleared. Hard deletes remove rows and do not use `deleted_by`. Active reads use `.is("deleted_at", null)`; trashed rows are listed only in admin tooling. RLS was **not** extended for these columns in this iteration—rely on server actions and query filters.
+
+**Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`AdminTrashBinCard`, `safeDisplay`).
+
+**Detail routes**: `src/lib/actions/resolve-detail.ts` exposes `resolveReminderDetail` and `resolveTimelineDetail` (same pattern as `resolveCompanyDetail` / `resolveContactDetail`: fetch by id, `missing` if no row, `trashed` if `deleted_at` is set, else `active` with the typed row). Used by `/reminders/[id]` and `/timeline/[id]` server pages.
+
 ## 5. Performance indexes (summary)
 
 - companies: `status`, `kundentyp`, `user_id`
@@ -198,6 +214,7 @@ Admin and `service_role` bypass for maintenance and migrations where applicable.
 - reminders: `company_id`, `due_date`, `status`, `user_id`
 - timeline: `company_id`, `user_id`
 - user_settings: `user_id`, `key`
+- Soft-delete: composite `(user_id, deleted_at, deleted_by)` (replaces former two-column index) and partial “trashed” `(user_id) WHERE deleted_at IS NOT NULL` on `companies`, `contacts`, `reminders`, `timeline` — run `src/sql/soft-delete-trash.sql` then `src/sql/deleted-by-audit.sql`
 
 ## 6. Maintenance & Type Safety
 
@@ -293,3 +310,7 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-01 Updated schema to reflect new columns: added created_by, updated_by, deleted_at, search_vector, and additional fields in companies, contacts, reminders, timeline, email_log. Updated timeline to use activity_type and content instead of type and description. Added relationships to profiles via created_by and updated_by.
 
 2026-04-07 Documented Storage `avatars` bucket, setup SQL, profile `avatar_url` flow, and `profileAvatarSchema`. Repaired RLS / indexes section formatting; aligned typegen docs with `pnpm supabase:types` → `src/types/supabase.ts`.
+
+2026-04-08 Added `deleted_at` on `reminders` and `timeline` (with indexes), `user_settings` key `trash_bin_enabled`, admin Profile Papierkorb UI, and app-level soft/hard delete + restore + timeline audit. Migration: `src/sql/soft-delete-trash.sql`.
+
+2026-04-09 Added nullable `deleted_by` → `auth.users(id)` on `companies`, `contacts`, `reminders`, `timeline`; composite indexes `(user_id, deleted_at, deleted_by)`; audit timeline titles include actor `display_name`; detail URLs for trashed company/contact redirect to list with toast. SQL: `src/sql/deleted-by-audit.sql`.

@@ -34,7 +34,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { deleteContact, getContactById, updateContact } from "@/lib/actions/contacts";
+import { getContactById, updateContact } from "@/lib/actions/contacts";
+import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -76,7 +77,12 @@ export default function ContactDetailClient({ contact: initialContact, companies
     queryFn: async () => {
       if (!contact?.company_id) return null;
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("*").eq("id", contact.company_id).single();
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("id", contact.company_id)
+        .is("deleted_at", null)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -102,7 +108,22 @@ export default function ContactDetailClient({ contact: initialContact, companies
 
   const handleDeleteContact = async () => {
     try {
-      await deleteContact(id);
+      const mode = await deleteContactWithTrash(id);
+      setDeleteDialogOpen(false);
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreContactWithTrash(id).then(() => {
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
       router.push("/contacts");
     } catch (_error) {
       toast.error(t("tableToastDeleteFailed"));

@@ -21,6 +21,7 @@ export async function getAllTimelineForUser(_userId: string): Promise<TimelineEn
       companies!left (id, firmenname),
       contacts!left (id, vorname, nachname, email, telefon, position)
     `)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -86,20 +87,3 @@ export async function updateTimelineEntry(id: string, updates: Partial<TimelineE
   return data;
 }
 
-/**
- * Delete a timeline entry
- */
-export async function deleteTimelineEntry(id: string): Promise<void> {
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.from("timeline").delete().eq("id", id);
-
-  if (error) {
-    console.error("Supabase error in deleteTimelineEntry:", {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
-    throw handleSupabaseError(error, "Failed to delete timeline entry");
-  }
-}

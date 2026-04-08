@@ -1,223 +1,101 @@
-# Production Deployment Guide
+# Production deployment guide
 
-## Vercel Settings Checklist
+**Purpose:** A practical checklist for taking AquaDock CRM v5 live. **Authentication is Supabase Auth** (not NextAuth); ignore any legacy NextAuth variables unless you have a different fork.
 
-### Environment Variables
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL (public)
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key (public)
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` - Service role key (server-side only, for admin operations)
-- [ ] `NEXTAUTH_SECRET` - If using NextAuth (generate a secure random string)
-- [ ] `NEXTAUTH_URL` - Production domain URL (e.g., https://yourapp.vercel.app)
+**Companion:** For a shorter Vercel-only list, see [`vercel-production.md`](vercel-production.md).
 
-### Build Configuration
-- [ ] Build Command: `npm run build` or `yarn build`
-- [ ] Output Directory: `.next` (default)
-- [ ] Root Directory: `/` (default)
-- [ ] Node.js Version: 20.x or higher
-- [ ] Install Command: `npm install` or `yarn install`
+---
 
-### Deployment Settings
-- [ ] Framework Preset: Next.js
-- [ ] Build Settings: Automatic (Git integration)
-- [ ] Preview Deployments: Enabled for feature branches
-- [ ] Production Branch: `main` or `master`
-- [ ] Custom Domain: Configured (see Domain Setup section)
+## 1. Vercel — environment variables
 
-## Supabase Configuration
+| Variable | Required | Who sees it | Meaning |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Browser + server | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Browser + server | Public anon key (RLS still applies) |
+| `SUPABASE_SERVICE_ROLE_KEY` | If your deployment uses it | **Server only** | Bypasses RLS; never commit or expose to the client |
 
-### Storage (profile avatars)
-- [ ] Public bucket `avatars` exists (see [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql))
-- [ ] Storage policies allow each user to write only under `{auth.uid()}/…` and public `SELECT` on `avatars` (script above)
-- [ ] `profiles.avatar_url` can be updated by authenticated users per your table RLS (app stores the public object URL after upload)
+Add any other keys your fork uses (e.g. Brevo API keys if configured in your environment).
+
+**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (e.g. **22.x** — see `.github/workflows/ci.yml`). Framework preset: **Next.js**; output directory **`.next`**.
+
+---
+
+## 2. Supabase
+
+### Storage (avatars)
+
+- [ ] Public bucket **`avatars`** exists and policies are applied — run [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql) once per project.  
+- [ ] Profile updates store only URLs under the user’s allowed path (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md)).
 
 ### Row Level Security (RLS)
-- [ ] RLS enabled on all tables (companies, contacts, reminders, timeline, email_templates, email_log, profiles, user_settings)
-- [ ] User policies created for data isolation
-- [ ] Service role key used only for server-side operations
-- [ ] No direct client access to sensitive operations
 
-### Connection Pooling
-- [ ] Supavisor enabled for connection pooling
-- [ ] Connection string updated to use pooled connections
-- [ ] Environment variables updated for pooled connections:
-  - `DATABASE_URL` - Pooled connection string
-  - `DIRECT_URL` - Direct connection string (for migrations)
+- [ ] RLS enabled on application tables (`companies`, `contacts`, `reminders`, `timeline`, email tables, `profiles`, `user_settings`, etc.).  
+- [ ] Policies match your org’s rules (per-user data, admin paths).  
+- [ ] Service role key used only in server code, never in client bundles.
 
-### Database Settings
-- [ ] Database size appropriate for expected load
-- [ ] Point-in-time recovery enabled
-- [ ] Database password rotated regularly
-- [ ] Connection limits configured appropriately
+### Operations
 
-## Security Checklist
+- [ ] Backups / point-in-time recovery per your Supabase plan.  
+- [ ] Connection pooling (e.g. Supavisor) if you add direct Postgres clients or migrations — follow Supabase docs for `DATABASE_URL` vs `DIRECT_URL`.
 
-### Client-Side Security
-- [ ] No sensitive environment variables exposed to client
-- [ ] All API calls use proper authentication
-- [ ] Supabase keys are public keys (anon key)
-- [ ] No service role keys in client code
-- [ ] All user inputs sanitized and validated
+---
 
-### Server-Side Security
-- [ ] Server actions use proper authentication
-- [ ] Database queries use parameterized statements
-- [ ] File uploads validated and stored securely
-- [ ] Rate limiting implemented for API endpoints
-- [ ] CORS configured appropriately
+## 3. Security (plain language)
 
-### Authentication & Authorization
-- [ ] Supabase Auth configured with proper providers
-- [ ] Password policies enforced
-- [ ] Session management configured
-- [ ] User roles and permissions implemented
-- [ ] Admin access restricted
+- **Browser bundle:** Only `NEXT_PUBLIC_*` and the anon key are visible to users. Treat the anon key as public but rely on RLS.  
+- **Service role:** Equivalent to full database access — secrets manager or Vercel encrypted env only.  
+- **Uploads:** Validate file type and size in app code; Storage policies enforce folder ownership.  
+- **Input:** Zod on forms; never trust raw client input on the server.
 
-## Monitoring & Observability
+---
 
-### Vercel Analytics
-- [ ] Vercel Analytics enabled
-- [ ] Custom events tracked for user actions
-- [ ] Performance metrics monitored
-- [ ] Error tracking configured
+## 4. Domain and HTTPS
 
-### Supabase Monitoring
-- [ ] Database performance monitored
-- [ ] Query logs reviewed regularly
-- [ ] API usage tracked
-- [ ] Error logs monitored
-- [ ] Real-time metrics enabled
+1. Add your domain in the Vercel project → **Domains**.  
+2. Set DNS records exactly as Vercel shows (often `CNAME` for subdomains).  
+3. Wait for propagation; Vercel provisions **HTTPS** automatically.
 
-### Application Monitoring
-- [ ] Error boundaries implemented
-- [ ] Client-side error tracking (e.g., Sentry)
-- [ ] Server-side error logging
-- [ ] Performance monitoring (e.g., Web Vitals)
-- [ ] User feedback collection
+---
 
-## Backup & Recovery
+## 5. Performance and monitoring
 
-### Supabase Backups
-- [ ] Daily automated backups enabled
-- [ ] Backup retention period configured (30 days minimum)
-- [ ] Backup testing performed regularly
-- [ ] Point-in-time recovery tested
+- Enable **Vercel Analytics** (and optional Speed Insights) if you want real-user metrics.  
+- Use **Supabase** dashboards for slow queries and API usage.  
+- Optional: Sentry or similar for client/server errors — not required by the repo but common for production.
 
-### Data Export
-- [ ] CSV export functionality working
-- [ ] Regular data exports scheduled
-- [ ] Export files stored securely
-- [ ] Export process documented
+---
 
-### Disaster Recovery
-- [ ] Recovery plan documented
-- [ ] Backup restoration tested
-- [ ] Failover procedures documented
-- [ ] Contact information for support teams
+## 6. Before and after go-live
 
-## Domain & SSL Setup
+**Before**
 
-### Custom Domain Configuration
-1. Purchase domain from registrar (e.g., Namecheap, GoDaddy)
-2. Add domain to Vercel project:
-   - Go to Project Settings > Domains
-   - Enter your domain (e.g., crm.yourcompany.com)
-   - Vercel will provide DNS records to add
+- [ ] Staging deploy with production-like env vars.  
+- [ ] Login, CRUD on companies/contacts, email paths you use, map, settings.  
+- [ ] Mobile smoke test.
 
-3. Update DNS records at your registrar:
-   - CNAME record: `www.yourdomain.com` → `cname.vercel-dns.com`
-   - A record: `yourdomain.com` → `76.76.21.21` (Vercel's load balancer)
+**After**
 
-4. Wait for DNS propagation (can take up to 48 hours)
-5. Enable SSL certificate (automatic with Vercel)
+- [ ] Confirm redirects for unauthenticated users.  
+- [ ] Confirm cron or background jobs (if you add any) and rate limits on external APIs (e.g. Brevo).
 
-### SSL Certificate
-- [ ] SSL certificate automatically provisioned by Vercel
-- [ ] HTTPS enforced (redirect HTTP to HTTPS)
-- [ ] Certificate renewal automatic
-- [ ] Mixed content warnings resolved
+---
 
-### Domain Security
-- [ ] DNSSEC enabled if supported
-- [ ] CAA records configured
-- [ ] Domain privacy enabled
-- [ ] WHOIS information protected
+## 7. Maintenance
 
-## Performance Optimization
+- Dependency updates: security patches regularly; run `pnpm build` and tests after upgrades.  
+- Regenerate types after DB changes: `pnpm supabase:types`.
 
-### Vercel Optimizations
-- [ ] Image optimization enabled
-- [ ] Static asset optimization
-- [ ] Edge functions configured where appropriate
-- [ ] CDN distribution verified
+---
 
-### Application Performance
-- [ ] Code splitting implemented
-- [ ] Bundle size optimized
-- [ ] Database queries optimized
-- [ ] Caching strategies implemented
-- [ ] Lazy loading for components
+## Emergency / ownership
 
-## Testing Checklist
+Replace placeholders with your team’s contacts:
 
-### Pre-Deployment Testing
-- [ ] All features tested in staging environment
-- [ ] Load testing performed
-- [ ] Security testing completed
-- [ ] Accessibility testing done
-- [ ] Cross-browser testing completed
+- **Application / repo:** [your team]  
+- **Vercel:** [Vercel support / dashboard]  
+- **Supabase:** [Supabase support / dashboard]  
+- **Domain registrar:** [registrar support]
 
-### Post-Deployment Verification
-- [ ] Application loads correctly
-- [ ] Authentication works
-- [ ] Data operations functional
-- [ ] Email functionality working
-- [ ] Mobile responsiveness verified
-- [ ] Performance metrics acceptable
+---
 
-## Maintenance & Updates
-
-### Regular Maintenance
-- [ ] Dependencies updated regularly
-- [ ] Security patches applied promptly
-- [ ] Database maintenance performed
-- [ ] Log files rotated and archived
-
-### Update Procedures
-- [ ] Deployment process documented
-- [ ] Rollback procedures defined
-- [ ] Feature flags implemented for gradual rollouts
-- [ ] Blue-green deployment strategy considered
-
-## Support & Documentation
-
-### User Documentation
-- [ ] User guide created
-- [ ] API documentation available
-- [ ] Troubleshooting guide provided
-- [ ] Contact information for support
-
-### Developer Documentation
-- [ ] Code documentation complete
-- [ ] Deployment guide updated
-- [ ] Architecture documentation current
-- [ ] Runbook for common issues
-
-## Emergency Contacts
-
-- Development Team: [contact info]
-- Hosting Provider (Vercel): [support links]
-- Database Provider (Supabase): [support links]
-- Domain Registrar: [contact info]
-- Security Team: [contact info]
-
-## Final Checklist
-
-- [ ] All environment variables configured
-- [ ] Domain and SSL working
-- [ ] Monitoring and alerts set up
-- [ ] Backup and recovery tested
-- [ ] Security measures verified
-- [ ] Performance optimized
-- [ ] Documentation complete
-- [ ] Support contacts updated
-- [ ] Go-live approval obtained
+Last reviewed: April 2026

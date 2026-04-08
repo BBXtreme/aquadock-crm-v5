@@ -146,6 +146,8 @@ export async function getMassEmailRecipients(
         email,
         companies!inner(id, firmenname)
       `)
+      .is('deleted_at', null)
+      .is('companies.deleted_at', null)
       .not('email', 'is', null)
       .neq('email', '');
 
@@ -184,6 +186,7 @@ export async function getMassEmailRecipients(
     let query = client
       .from('companies')
       .select('id, firmenname, email')
+      .is('deleted_at', null)
       .not('email', 'is', null)
       .neq('email', '');
 

@@ -483,7 +483,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const refreshCompanies = useCallback(async () => {
     const supabase = (await import("@/lib/supabase/browser")).createClient();
 
-    let query = supabase.from("companies").select("*").not("lat", "is", null).not("lon", "is", null);
+    let query = supabase
+      .from("companies")
+      .select("*")
+      .is("deleted_at", null)
+      .not("lat", "is", null)
+      .not("lon", "is", null);
 
     query = query.order("firmenname", { ascending: true });
 

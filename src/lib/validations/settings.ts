@@ -9,4 +9,12 @@ export const notificationPreferencesSchema = z
 
 export type NotificationPreferences = z.infer<typeof notificationPreferencesSchema>;
 
+export const trashBinPreferenceSchema = z
+  .object({
+    trashBinEnabled: z.boolean(),
+  })
+  .strict();
+
+export type TrashBinPreference = z.infer<typeof trashBinPreferenceSchema>;
+
 export * from "./appearance";

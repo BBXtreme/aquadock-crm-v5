@@ -19,7 +19,10 @@ export async function getContacts(
   client: SupabaseClient,
   options?: { page?: number; pageSize?: number; sortBy?: string; sortDesc?: boolean },
 ): Promise<{ data: Contact[]; total: number }> {
-  let query = client.from("contacts").select("*, companies!company_id(firmenname)", { count: "exact" });
+  let query = client
+    .from("contacts")
+    .select("*, companies!company_id(firmenname)", { count: "exact" })
+    .is("deleted_at", null);
 
   if (options?.sortBy) {
     query = query.order(options.sortBy, { ascending: !options.sortDesc });
@@ -40,28 +43,53 @@ export async function getContacts(
 }
 
 /**
- * Get contact by ID
+ * Resolve contact detail: active list row, Papierkorb, or missing.
+ */
+export type ResolveContactDetailResult =
+  | { kind: "active"; contact: Contact }
+  | { kind: "trashed" }
+  | { kind: "missing" };
+
+export async function resolveContactDetail(
+  id: string,
+  client: SupabaseClient,
+): Promise<ResolveContactDetailResult> {
+  const { data, error } = await client
+    .from("contacts")
+    .select(
+      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, deleted_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw handleSupabaseError(error, "resolveContactDetail");
+
+  if (data === null) {
+    return { kind: "missing" };
+  }
+
+  if (data.deleted_at !== null && data.deleted_at !== undefined) {
+    return { kind: "trashed" };
+  }
+
+  return { kind: "active", contact: data as Contact };
+}
+
+/**
+ * Get contact by ID (active rows only; null if missing or trashed)
  */
 export async function getContactById(id: string, client: SupabaseClient): Promise<Contact | null> {
-  try {
-    const { data, error } = await client
-      .from("contacts")
-      .select(
-        "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at",
-      )
-      .eq("id", id)
-      .single();
+  const { data, error } = await client
+    .from("contacts")
+    .select(
+      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at",
+    )
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
 
-    if (error) {
-      console.error("getContactById error:", error);
-      throw handleSupabaseError(error, "getContactById");
-    }
-
-    return data as Contact | null;
-  } catch (err) {
-    console.error("getContactById unexpected error:", err);
-    throw err;
-  }
+  if (error) throw handleSupabaseError(error, "getContactById");
+  return data as Contact | null;
 }
 
 /**
@@ -88,11 +116,3 @@ export async function updateContact(id: string, updates: Partial<Contact>, clien
   return data as Contact;
 }
 
-/**
- * Delete a contact
- */
-export async function deleteContact(id: string, client?: SupabaseClient): Promise<void> {
-  const supabaseClient = client || createClient();
-  const { error } = await supabaseClient.from("contacts").delete().eq("id", id);
-  if (error) throw handleSupabaseError(error, "deleteContact");
-}

@@ -1,11 +1,11 @@
 // src/app/(protected)/companies/[id]/page.tsx
 // This file defines the Company Detail page of the application, which displays detailed information about a single company.
 // It uses server-side rendering to fetch the company data based on the provided ID and renders a client component (CompanyDetailClient) to display the company's details.
-// The page also handles redirection if the company is not found, ensuring a smooth user experience when navigating to company details.  
+// It handles missing IDs with notFound() and soft-deleted firms with a redirect to the list plus a query flag for a toast message.
 // Server component for Company Detail page, fetching company data and handling redirection if not found.
 
-import { redirect } from "next/navigation";
-import { getCompanyById } from "@/lib/actions/companies";
+import { notFound, redirect } from "next/navigation";
+import { resolveCompanyDetail } from "@/lib/actions/companies";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import CompanyDetailClient from "./CompanyDetailClient";
 
@@ -13,11 +13,15 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
 
   const supabase = await createServerSupabaseClient();
-  const company = await getCompanyById(id, supabase);
+  const resolved = await resolveCompanyDetail(id, supabase);
 
-  if (!company) {
-    redirect("/companies");
+  if (resolved.kind === "missing") {
+    notFound();
   }
 
-  return <CompanyDetailClient company={company} />;
+  if (resolved.kind === "trashed") {
+    redirect("/companies?trashedCompany=1");
+  }
+
+  return <CompanyDetailClient company={resolved.company} />;
 }

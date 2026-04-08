@@ -139,6 +139,7 @@ export function useMapPopupActions() {
         .from("companies")
         .select("id, firmenname")
         .eq("osm", osmUrl)
+        .is("deleted_at", null)
         .limit(1);
 
       if (fetchError) {

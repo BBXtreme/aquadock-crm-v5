@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -67,7 +68,8 @@ export default function TimelineCard({ companyId }: Props) {
       const { data, error } = await supabase
         .from("timeline")
         .select("*, companies!company_id(firmenname), contacts!contact_id(vorname,nachname,position), profiles!created_by(display_name)")
-        .eq("company_id", companyId);
+        .eq("company_id", companyId)
+        .is("deleted_at", null);
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
     },
@@ -77,7 +79,10 @@ export default function TimelineCard({ companyId }: Props) {
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname, kundentyp");
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp")
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },
@@ -87,7 +92,10 @@ export default function TimelineCard({ companyId }: Props) {
     queryKey: ["contacts"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("contacts").select("id, vorname, nachname, position, email, telefon");
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, vorname, nachname, position, email, telefon")
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },
@@ -104,14 +112,26 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const supabase = createClient();
-      const { error } = await supabase.from("timeline").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: async (id: string) => deleteTimelineEntryWithTrash(id),
+    onSuccess: (mode, id) => {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
-      toast.success("Timeline entry deleted");
+      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreTimelineEntryWithTrash(id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+                queryClient.invalidateQueries({ queryKey: ["timeline"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Unknown error";

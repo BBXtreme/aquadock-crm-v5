@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 
+import { deleteContactWithTrash } from "@/lib/actions/crm-trash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .from("contacts")
     .select("*, companies!company_id(firmenname)")
     .eq("id", id)
+    .is("deleted_at", null)
     .single();
 
   if (error) {
@@ -46,17 +48,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
-  const supabase = await createServerSupabaseClient();
   const { id } = await params;
-  const { error } = await supabase.from("contacts").delete().eq("id", id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await deleteContactWithTrash(id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Delete failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json({ success: true });
 }

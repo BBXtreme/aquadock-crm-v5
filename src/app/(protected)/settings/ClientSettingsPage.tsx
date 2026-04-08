@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { ArchiveRestore, Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
+import { saveTrashBinPreferenceAction } from "@/lib/actions/trash-settings";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
 import {
@@ -37,11 +38,14 @@ import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import {
   DEFAULT_APPEARANCE,
   fetchNotificationPreferences,
+  fetchTrashBinPreference,
   loadAppearanceSettings,
   saveAppearanceColorScheme,
   saveAppearanceLocale,
   saveAppearanceTheme,
   saveAppearanceTimeZone,
+  TRASH_BIN_DEFAULT_ENABLED,
+  TRASH_BIN_UI,
 } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import {
@@ -55,7 +59,7 @@ import {
   appearanceTimeZoneSchema,
 } from "@/lib/validations/appearance";
 import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
-import type { NotificationPreferences } from "@/lib/validations/settings";
+import type { NotificationPreferences, TrashBinPreference } from "@/lib/validations/settings";
 
 const generateSampleQuery = () => {
   const bbox = "50.0,8.0,51.0,9.0"; // sample bbox
@@ -302,6 +306,50 @@ function ClientSettingsPage() {
   const savingEmail =
     saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
 
+  const { data: trashBinPrefs, isLoading: trashPrefsLoading } = useQuery({
+    queryKey: ["trash-bin-preference"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return { trashBinEnabled: TRASH_BIN_DEFAULT_ENABLED };
+      }
+      return fetchTrashBinPreference(supabase, user.id);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveTrashBinMutation = useMutation({
+    mutationFn: async (prefs: TrashBinPreference) => {
+      await saveTrashBinPreferenceAction(prefs);
+      return prefs;
+    },
+    onMutate: async (prefs) => {
+      await queryClient.cancelQueries({ queryKey: ["trash-bin-preference"] });
+      const previous = queryClient.getQueryData<TrashBinPreference>(["trash-bin-preference"]);
+      queryClient.setQueryData(["trash-bin-preference"], prefs);
+      return { previous };
+    },
+    onError: (error, _prefs, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["trash-bin-preference"], context.previous);
+      }
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      if (message === TRASH_BIN_UI.toastValidationError) {
+        toast.error(t("trashBin.validationError"));
+      } else {
+        toast.error(t("trashBin.saveError"), { description: message });
+      }
+    },
+    onSuccess: (prefs) => {
+      void queryClient.invalidateQueries({ queryKey: ["trash-bin-preference"] });
+      toast.success(prefs.trashBinEnabled ? t("trashBin.toastOn") : t("trashBin.toastOff"));
+    },
+  });
+
+  const savingTrashBin = saveTrashBinMutation.isPending;
+
   const appearanceThemeMutation = useMutation({
     mutationFn: async (next: AppearanceTheme) => {
       await saveAppearanceTheme(next);
@@ -542,7 +590,11 @@ function ClientSettingsPage() {
   }, [brevoSenderSettings]);
 
   const isLoading =
-    settingsLoading || notificationPrefsLoading || mapProviderLoading || appearanceLoading;
+    settingsLoading ||
+    notificationPrefsLoading ||
+    trashPrefsLoading ||
+    mapProviderLoading ||
+    appearanceLoading;
 
   if (isLoading) {
     return <SettingsPageSkeleton />;
@@ -735,6 +787,50 @@ function ClientSettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Trash bin preference */}
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ArchiveRestore className="mr-2 h-5 w-5" />
+              {t("trashBin.cardTitle")}
+            </CardTitle>
+            <CardDescription>{t("trashBin.cardDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent
+            className={`space-y-4 ${trashPrefsLoading ? "animate-pulse" : ""}`}
+            aria-busy={trashPrefsLoading || savingTrashBin}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="settings-trash-bin" className="text-sm font-medium">
+                  {t("trashBin.label")}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">{t("trashBin.help")}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Switch
+                  id="settings-trash-bin"
+                  className="shrink-0"
+                  checked={(trashBinPrefs ?? { trashBinEnabled: TRASH_BIN_DEFAULT_ENABLED }).trashBinEnabled}
+                  disabled={trashPrefsLoading || savingTrashBin}
+                  onCheckedChange={(checked) => {
+                    saveTrashBinMutation.mutate({ trashBinEnabled: checked });
+                  }}
+                />
+                {savingTrashBin ? (
+                  <>
+                    <Loader2
+                      className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="text-muted-foreground text-xs tabular-nums">{t("trashBin.saving")}</span>
+                  </>
+                ) : null}
+              </div>
             </div>
           </CardContent>
         </Card>

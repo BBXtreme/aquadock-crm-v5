@@ -1,26 +1,34 @@
-# TanStack React Table v8 – TypeScript Patterns & Gotchas  
+# TanStack Table v8 — TypeScript patterns (AquaDock CRM)
 
-**AquaDock CRM** – March 2026
+**Last updated:** April 2026  
+**Package:** `@tanstack/react-table` (see `package.json` for exact version).
 
-## The Classic Type Error
+---
 
-```text
-Type 'AccessorKeyColumnDef<Company, string>' is not assignable to type 'ColumnDef<Company>'
-...
-Type 'unknown' is not assignable to type 'string'.
-(long chain involving accessorFn, HeaderContext, footer, etc.)
-Root Cause
-createColumnHelper<T>() generates narrowly typed column definitions:
+## Why this document exists
 
-accessor("firmenname") → produces ColumnDef<Company, string>
-accessor("value")      → produces ColumnDef<Company, number | null>
+Tables in TypeScript often show **long, scary errors** even when the UI works. The cause is usually **generics**: each column can carry a different cell value type (`string`, `number | null`, etc.), while the table type expects one unified column definition type. This doc lists **approved patterns** used in this repo so we stay type-safe **without** resorting to `as any`.
 
-However, the array type ColumnDef<Company>[] expects every element to be compatible with ColumnDef<Company, unknown>.
-→ TypeScript detects a contravariant mismatch on the second generic parameter → massive, cascading error.
-Recommended Patterns (2026 – Next.js 16 / TS strict)
-Pattern A – Preferred (cleanest & modern)
-Use satisfies (TypeScript 4.9+)
-TypeScriptconst columnHelper = createColumnHelper<Company>();
+**Non-developers:** You can skip this file; it is only for people editing table column definitions.
+
+---
+
+## The usual error (symptom)
+
+TypeScript may report that `AccessorKeyColumnDef<Company, string>` is not assignable to `ColumnDef<Company>` (or similar). That means the **inferred column types** do not match the **array** type you declared.
+
+---
+
+## Pattern A — `satisfies` (preferred)
+
+Define the array with `satisfies ColumnDef<YourRowType>[]`. TypeScript checks the whole array without widening every column to `unknown`.
+
+```typescript
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import type { Company } from "@/types/database.types";
+import { safeDisplay } from "@/lib/utils/data-format";
+
+const columnHelper = createColumnHelper<Company>();
 
 const columns = [
   columnHelper.accessor("firmenname", {
@@ -31,49 +39,54 @@ const columns = [
     header: "Value",
     cell: (info) => formatCurrency(info.getValue()),
   }),
-  columnHelper.accessor("status", { … }),
   columnHelper.display({
     id: "actions",
     header: "Actions",
-    cell: (info) => (/* … */),
+    cell: () => null,
   }),
 ] satisfies ColumnDef<Company>[];
-→ Validates shape without forcing the value type to unknown.
-Pattern B – Explicit casts (most reliable fallback)
-TypeScriptconst columns: ColumnDef<Company>[] = [
-  columnHelper.accessor("firmenname", { … }) as ColumnDef<Company>,
-  columnHelper.accessor("kundentyp",   { … }) as ColumnDef<Company>,
-  columnHelper.accessor("value",       { … }) as ColumnDef<Company>,
-  columnHelper.accessor("status",      { … }) as ColumnDef<Company>,
-  columnHelper.accessor("stadt",       { … }) as ColumnDef<Company>,
-  columnHelper.accessor("land",        { … }) as ColumnDef<Company>,
-  columnHelper.accessor("created_at",  { … }) as ColumnDef<Company>,
-  columnHelper.display({ id: "actions", … }) as ColumnDef<Company>,
+```
+
+---
+
+## Pattern B — cast each column
+
+If `satisfies` fights your table wrapper, cast **each** column to `ColumnDef<YourRowType>`:
+
+```typescript
+const columns: ColumnDef<Company>[] = [
+  columnHelper.accessor("firmenname", { /* ... */ }) as ColumnDef<Company>,
+  columnHelper.accessor("value", { /* ... */ }) as ColumnDef<Company>,
 ];
 ```
 
-→ Every column must receive the cast — verbose but eliminates inference fights.
-Pattern C – Quick & dirty (only when desperate)
-TypeScriptconst columns: ColumnDef<Company, unknown>[] = [ … ];
-→ Works, but info.getValue() returns unknown → forces extra casts inside cells.
-Avoid unless you have very little time.
-Quick Checklist – Before Committing Any Table Component
+Verbose, but explicit and reliable.
 
- Columns array uses satisfies ColumnDef<T>[]or explicit as ColumnDef<T> on each entry
- No remaining as string, as any, String(…), unsafe info.getValue() as …
- All nullable fields protected with ??, ?., or format helpers (formatCurrency, safeDisplay, formatDateDistance, …)
-tsc --noEmit passes cleanly
-next build completes without type errors
+---
 
-## Useful References
+## Pattern C — `ColumnDef<T, unknown>[]` (last resort)
 
-Official TanStack Table TypeScript Guide:
-https://tanstack.com/table/v8/docs/guide/typescript
-Related GitHub issues & discussions:
-https://github.com/TanStack/table/issues/4302
-https://github.com/TanStack/table/issues/4382
-https://github.com/TanStack/table/discussions/4241
+```typescript
+const columns: ColumnDef<Company, unknown>[] = [ /* ... */ ];
+```
 
-**Last updated: 2026-03-27**
-Applies to: @tanstack/react-table ^8.10 – ^8.20 (verify in package.json)
-AquaDock CRM rule: see also AIDER-RULES.md section 7
+`info.getValue()` becomes `unknown` inside cells, so you need extra narrowing. Use only when time-constrained.
+
+---
+
+## Checklist before committing table code
+
+- [ ] Columns use **Pattern A** or **Pattern B** (not scattered `as string` / `as any`).  
+- [ ] Nullable DB fields use **`safeDisplay`**, `??`, or dedicated formatters (`formatCurrency`, dates, etc.).  
+- [ ] `pnpm typecheck` and `pnpm build` pass.
+
+---
+
+## References
+
+- [TanStack Table — TypeScript guide](https://tanstack.com/table/latest/docs/guide/typescript)  
+- Related discussions: [TanStack/table#4302](https://github.com/TanStack/table/issues/4302), [TanStack/table#4382](https://github.com/TanStack/table/issues/4382)
+
+---
+
+AquaDock CRM v5 · 2026
