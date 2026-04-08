@@ -112,7 +112,12 @@ export default function TimelineEntryForm({
     if (preselectedCompanyId && !localCompanies.find((c) => c.id === preselectedCompanyId)) {
       const fetchCompany = async () => {
         const supabase = createClient();
-        const { data } = await supabase.from("companies").select("*").eq("id", preselectedCompanyId).single();
+        const { data } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", preselectedCompanyId)
+          .is("deleted_at", null)
+          .single();
         if (data) {
           setLocalCompanies((prev) => {
             if (!prev.find((c) => c.id === data.id)) {

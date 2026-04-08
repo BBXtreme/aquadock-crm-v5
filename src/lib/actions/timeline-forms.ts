@@ -2,16 +2,20 @@
 // This file contains server-side functions for creating and updating timeline entries.
 "use server";
 
-import {
-  type AuthenticatedTimelineCreateInput,
-  createAuthenticatedTimelineEntry,
-} from "@/lib/server/timeline-insert";
+import { createAuthenticatedTimelineEntry } from "@/lib/server/timeline-insert";
 import type { TimelineEntry } from "@/types/database.types";
 
-export type { AuthenticatedTimelineCreateInput };
+/** Local shape only — Next.js server-action compilation can leave stray references to imported type aliases at runtime (`ReferenceError`). */
+type CreateTimelineEntryActionInput = {
+  title: string;
+  content?: string | null;
+  activity_type?: string;
+  company_id?: string | null;
+  contact_id?: string | null;
+};
 
 export async function createTimelineEntryAction(
-  input: AuthenticatedTimelineCreateInput,
+  input: CreateTimelineEntryActionInput,
 ): Promise<TimelineEntry> {
   return createAuthenticatedTimelineEntry(input);
 }

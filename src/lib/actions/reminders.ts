@@ -20,7 +20,10 @@ type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | nul
  * Get all reminders with joined company data
  */
 export async function getReminders(client: SupabaseClient): Promise<ReminderWithCompany[]> {
-  const { data, error } = await client.from("reminders").select("*, companies!company_id (firmenname)");
+  const { data, error } = await client
+    .from("reminders")
+    .select("*, companies!company_id (firmenname)")
+    .is("deleted_at", null);
   if (error) throw handleSupabaseError(error, "getReminders");
   return (data ?? []) as ReminderWithCompany[];
 }
@@ -29,9 +32,14 @@ export async function getReminders(client: SupabaseClient): Promise<ReminderWith
  * Get reminder by ID
  */
 export async function getReminderById(id: string, client: SupabaseClient): Promise<Reminder | null> {
-  const { data, error } = await client.from("reminders").select("*").eq("id", id).single();
+  const { data, error } = await client
+    .from("reminders")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
   if (error) throw handleSupabaseError(error, "getReminderById");
-  return (data as Reminder | null) ?? null;
+  return data as Reminder | null;
 }
 
 /**
@@ -52,10 +60,3 @@ export async function updateReminder(id: string, updates: ReminderUpdate, client
   return data as Reminder;
 }
 
-/**
- * Delete a reminder
- */
-export async function deleteReminder(id: string, client: SupabaseClient): Promise<void> {
-  const { error } = await client.from("reminders").delete().eq("id", id);
-  if (error) throw handleSupabaseError(error, "deleteReminder");
-}

@@ -14,7 +14,8 @@ export function useBrevoRecipientContacts() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("contacts")
-        .select("*, companies(kundentyp, status)");
+        .select("*, companies(kundentyp, status)")
+        .is("deleted_at", null);
       if (error) throw error;
       return data as BrevoContactWithCompany[];
     },

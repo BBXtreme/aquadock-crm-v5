@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { deleteTimelineEntry, updateTimelineEntry } from "@/lib/services/timeline";
+import { deleteTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
+import { updateTimelineEntry } from "@/lib/services/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -35,7 +36,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await deleteTimelineEntry(id, supabase);
+    await deleteTimelineEntryWithTrash(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting timeline entry:", error);

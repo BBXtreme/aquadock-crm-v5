@@ -3,10 +3,12 @@
 import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteCompany } from "@/lib/actions/companies";
+import { restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
@@ -63,7 +65,22 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
                 <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={async () => {
-                    await deleteCompany(id);
+                    const mode = await deleteCompany(id);
+                    setDeleteDialogOpen(false);
+                    if (mode === "soft") {
+                      toast.success(t("toastDeleted"), {
+                        action: {
+                          label: "Rückgängig",
+                          onClick: () => {
+                            void restoreCompanyWithTrash(id).then(() => {
+                              toast.success(t("toastUpdated"));
+                            });
+                          },
+                        },
+                      });
+                    } else {
+                      toast.success(t("toastDeleted"));
+                    }
                     router.push("/companies");
                   }}
                 >

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
@@ -59,7 +60,8 @@ export default function RemindersCard({ companyId }: Props) {
       let query = supabase
         .from("reminders")
         .select("*")
-        .eq("company_id", companyId);
+        .eq("company_id", companyId)
+        .is("deleted_at", null);
       if (userId) {  // <-- Add: Only add .or if userId exists
         query = query.or(`user_id.eq.${userId},assigned_to.eq.${userId}`);
       }
@@ -81,16 +83,26 @@ export default function RemindersCard({ companyId }: Props) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const supabase = createClient();
-      const { error } = await supabase.from("reminders").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: async (id: string) => deleteReminderWithTrash(id),
+    onSuccess: (mode, id) => {
       queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
       queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
       queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
-      toast.success("Reminder deleted");
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreReminderWithTrash(id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Unknown error";

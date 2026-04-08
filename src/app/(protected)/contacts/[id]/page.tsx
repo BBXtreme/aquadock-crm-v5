@@ -4,11 +4,11 @@
 // The page includes sections for contact details, and options to edit the contact and change the linked company.
 // Note: The main page is a server component for data fetching, while interactive parts are handled by the client component.
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoadingState } from "@/components/ui/LoadingState";
-import { getContactById } from "@/lib/actions/contacts";
+import { resolveContactDetail } from "@/lib/actions/contacts";
 import { requireUser } from "@/lib/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import ContactDetailClient from "./ContactDetailClient";
@@ -18,29 +18,25 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
 
   const _user = await requireUser();
 
-  try {
-    const supabase = await createServerSupabaseClient();
-    const contact = await getContactById(id, supabase);
+  const supabase = await createServerSupabaseClient();
+  const resolved = await resolveContactDetail(id, supabase);
 
-    if (!contact) {
-      notFound();
-    }
-
-    const { data: companies } = await supabase.from("companies").select("id, firmenname");
-
-    return (
-      <Suspense fallback={<LoadingState count={8} />}>
-        <ContactDetailClient contact={contact} companies={companies || []} />
-      </Suspense>
-    );
-  } catch (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="text-gray-600">{error instanceof Error ? error.message : "Failed to load contact"}</p>
-        </div>
-      </div>
-    );
+  if (resolved.kind === "missing") {
+    notFound();
   }
+
+  if (resolved.kind === "trashed") {
+    redirect("/contacts?trashedContact=1");
+  }
+
+  const { data: companies } = await supabase
+    .from("companies")
+    .select("id, firmenname")
+    .is("deleted_at", null);
+
+  return (
+    <Suspense fallback={<LoadingState count={8} />}>
+      <ContactDetailClient contact={resolved.contact} companies={companies || []} />
+    </Suspense>
+  );
 }

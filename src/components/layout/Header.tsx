@@ -89,6 +89,7 @@ export default function Header({ user }: HeaderProps) {
       const { count } = await supabase
         .from("reminders")
         .select("*", { count: "exact", head: true })
+        .is("deleted_at", null)
         .eq("status", "open")
         .gte("due_date", startOfWeek.toISOString())
         .lte("due_date", endOfWeek.toISOString());
@@ -104,6 +105,7 @@ export default function Header({ user }: HeaderProps) {
       const { count } = await supabase
         .from("reminders")
         .select("*", { count: "exact", head: true })
+        .is("deleted_at", null)
         .eq("status", "open")
         .lt("due_date", new Date().toISOString());
       return count || 0;

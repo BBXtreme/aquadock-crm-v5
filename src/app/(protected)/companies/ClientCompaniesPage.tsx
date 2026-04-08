@@ -9,7 +9,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
@@ -36,6 +36,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
+import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
@@ -65,6 +66,7 @@ const useDebounce = (value: string, delay: number) => {
 
 function ClientCompaniesPage() {
   const t = useT("companies");
+  const router = useRouter();
   const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -95,6 +97,7 @@ function ClientCompaniesPage() {
       const { data, error } = await supabase
         .from("companies")
         .select("land")
+        .is("deleted_at", null)
         .not("land", "is", null);
       if (error) throw error;
       const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
@@ -120,19 +123,23 @@ function ClientCompaniesPage() {
     queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter],
     queryFn: async () => {
       const supabase = createClient();
-      let query = supabase.from("companies").select(
-        `
+      let query = supabase
+        .from("companies")
+        .select(
+          `
           *,
           contacts (
             id,
             vorname,
             nachname,
             position,
-            is_primary
+            is_primary,
+            deleted_at
           )
         `,
-        { count: "exact" },
-      );
+          { count: "exact" },
+        )
+        .is("deleted_at", null);
 
       // Apply global filter
       if (debouncedGlobalFilter) {
@@ -170,7 +177,14 @@ function ClientCompaniesPage() {
 
       const { data, error, count } = await query;
       if (error) throw error;
-      return { companies: data ?? [], totalCount: count ?? 0 };
+      const raw = data ?? [];
+      const companies = raw.map((row) => ({
+        ...row,
+        contacts: (row.contacts ?? []).filter(
+          (ct: { deleted_at?: string | null }) => ct.deleted_at == null,
+        ),
+      })) as CompanyWithContacts[];
+      return { companies, totalCount: count ?? 0 };
     },
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
@@ -190,7 +204,7 @@ function ClientCompaniesPage() {
     refetchOnMount: false,
     queryFn: async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("companies").select("status, value");
+      const { data } = await supabase.from("companies").select("status, value").is("deleted_at", null);
       const total = data?.length || 0;
       const leads = data?.filter((c) => c.status === "lead").length || 0;
       const won = data?.filter((c) => c.status === "gewonnen").length || 0;
@@ -278,9 +292,25 @@ function ClientCompaniesPage() {
       const message = err instanceof Error ? err.message : t("unknownError");
       toast.error(t("toastDeleteFailed"), { description: message });
     },
-    onSuccess: () => {
+    onSuccess: (mode, id) => {
       queryClient.refetchQueries({ queryKey: ["companies"] });
-      toast.success(t("toastDeleted"));
+      queryClient.refetchQueries({ queryKey: ["companies-stats"] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreCompanyWithTrash(id).then(() => {
+                queryClient.refetchQueries({ queryKey: ["companies"] });
+                queryClient.refetchQueries({ queryKey: ["companies-stats"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
   });
 
@@ -289,9 +319,7 @@ function ClientCompaniesPage() {
     if (selectedIds.length === 0) return;
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("companies").delete().in("id", selectedIds);
-      if (error) throw error;
+      await bulkDeleteCompaniesWithTrash(selectedIds);
 
       toast.success(t("toastBulkDeleted", { count: selectedIds.length }));
       queryClient.refetchQueries({ queryKey: ["companies"] });
@@ -310,12 +338,21 @@ function ClientCompaniesPage() {
 
   const searchParams = useSearchParams();
   const openCreateFromQuery = searchParams.get("create") === "true";
+  const trashedCompanyRedirect = searchParams.get("trashedCompany") === "1";
 
   useEffect(() => {
     if (openCreateFromQuery) {
       setDialogOpen(true);
     }
   }, [openCreateFromQuery]);
+
+  useEffect(() => {
+    if (!trashedCompanyRedirect) {
+      return;
+    }
+    toast.message(t("toastTrashedCompany"));
+    router.replace("/companies", { scroll: false });
+  }, [trashedCompanyRedirect, router, t]);
 
   return (
     <>

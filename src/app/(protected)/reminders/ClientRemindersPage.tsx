@@ -4,7 +4,7 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { endOfWeek, startOfWeek } from "date-fns";
 import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
+import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -28,6 +29,7 @@ type ReminderWithCompany = Reminder & {
 
 function ClientRemindersPage() {
   const t = useT("reminders");
+  const router = useRouter();
   const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -41,6 +43,16 @@ function ClientRemindersPage() {
     return "all";
   });
 
+  const trashedReminderRedirect = searchParams.get("trashedReminder") === "1";
+
+  useEffect(() => {
+    if (!trashedReminderRedirect) {
+      return;
+    }
+    toast.message(t("toastTrashedReminder"));
+    router.replace("/reminders", { scroll: false });
+  }, [trashedReminderRedirect, router, t]);
+
   const { data: user } = useSuspenseQuery({
     queryKey: ["user"],
     queryFn: getCurrentUserClient,
@@ -53,6 +65,7 @@ function ClientRemindersPage() {
       const { data, error } = await supabase
         .from("reminders")
         .select("*, companies(firmenname)")
+        .is("deleted_at", null)
         .order("due_date", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ReminderWithCompany[];
@@ -98,14 +111,26 @@ function ClientRemindersPage() {
   }, [reminders, statusFilter, user?.id]);
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const supabase = createClient();
-      const { error } = await supabase.from("reminders").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
+    mutationFn: async (id: string) => deleteReminderWithTrash(id),
+    onSuccess: (mode, id) => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success(t("toastDeleted"));
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+      queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreReminderWithTrash(id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["reminders"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : t("unknownError");

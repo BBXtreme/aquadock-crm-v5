@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Building, Users } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,7 +14,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { deleteContact, getContacts } from "@/lib/actions/contacts";
+import { getContacts } from "@/lib/actions/contacts";
+import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
@@ -23,6 +24,7 @@ type ContactWithCompany = Contact & { companies?: { firmenname: string } | null 
 
 function ClientContactsPage() {
   const t = useT("contacts");
+  const router = useRouter();
   const localeTag = useNumberLocaleTag();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
@@ -60,14 +62,16 @@ function ClientContactsPage() {
     queryFn: async () => {
       const supabase = createClient();
       const [totalRes, primaryRes, companiesRes] = await Promise.all([
-        supabase.from("contacts").select("*", { count: "exact", head: true }),
+        supabase.from("contacts").select("*", { count: "exact", head: true }).is("deleted_at", null),
         supabase
           .from("contacts")
           .select("*", { count: "exact", head: true })
+          .is("deleted_at", null)
           .eq("is_primary", true),
         supabase
           .from("companies")
-          .select("id, contacts!inner(id)", { count: "exact", head: true }),
+          .select("id, contacts!inner(id)", { count: "exact", head: true })
+          .is("deleted_at", null),
       ]);
 
       const total = totalRes.count ?? 0;
@@ -83,7 +87,7 @@ function ClientContactsPage() {
   const companiesWithContacts = statsData.data.companiesWithContacts;
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteContact(id, createClient()),
+    mutationFn: (id: string) => deleteContactWithTrash(id),
     onMutate: async (id) => {
       const queryKey = ["contacts", pagination.pageIndex, pagination.pageSize, sortId, sortDesc];
       await queryClient.cancelQueries({ queryKey });
@@ -103,9 +107,25 @@ function ClientContactsPage() {
       const message = err instanceof Error ? err.message : t("unknownError");
       toast.error(t("toastDeleteFailed"), { description: message });
     },
-    onSuccess: () => {
+    onSuccess: (mode, id) => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success(t("toastDeleted"));
+      queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreContactWithTrash(id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["contacts"] });
+                queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
   });
 
@@ -114,7 +134,7 @@ function ClientContactsPage() {
     if (selectedIds.length === 0) return;
     if (!confirm(t("confirmBulkDelete", { count: selectedIds.length }))) return;
     try {
-      await Promise.all(selectedIds.map((id) => deleteContact(id, createClient())));
+      await Promise.all(selectedIds.map((id) => deleteContactWithTrash(id)));
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       toast.success(t("toastBulkDeleted", { count: selectedIds.length }));
       setRowSelection({});
@@ -131,12 +151,21 @@ function ClientContactsPage() {
 
   const searchParams = useSearchParams();
   const createIntent = searchParams.get("create");
+  const trashedContactRedirect = searchParams.get("trashedContact") === "1";
 
   useEffect(() => {
     if (createIntent === "true") {
       setDialogOpen(true);
     }
   }, [createIntent]);
+
+  useEffect(() => {
+    if (!trashedContactRedirect) {
+      return;
+    }
+    toast.message(t("toastTrashedContact"));
+    router.replace("/contacts", { scroll: false });
+  }, [trashedContactRedirect, router, t]);
 
   return (
     <>

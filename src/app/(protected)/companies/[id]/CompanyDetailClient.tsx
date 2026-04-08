@@ -47,7 +47,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname, kundentyp");
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp")
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },
@@ -57,7 +60,10 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     queryKey: ["contacts"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("contacts").select("id, vorname, nachname, position, email, telefon");
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, vorname, nachname, position, email, telefon")
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },

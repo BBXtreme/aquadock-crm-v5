@@ -90,7 +90,7 @@ export default function ReminderEditForm({
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname");
+      const { data, error } = await supabase.from("companies").select("id, firmenname").is("deleted_at", null);
       if (error) throw error;
       return data;
     },

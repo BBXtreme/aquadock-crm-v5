@@ -13,7 +13,11 @@ export default function CompanyKpiCards({ company }: Props) {
     queryKey: ["contacts", company.id],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("contacts").select("id, is_primary").eq("company_id", company.id);
+      const { data, error } = await supabase
+        .from("contacts")
+        .select("id, is_primary")
+        .eq("company_id", company.id)
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },
@@ -26,7 +30,8 @@ export default function CompanyKpiCards({ company }: Props) {
       const { data, error } = await supabase
         .from("reminders")
         .select("id, status, due_date")
-        .eq("company_id", company.id);
+        .eq("company_id", company.id)
+        .is("deleted_at", null);
       if (error) throw error;
       return data;
     },

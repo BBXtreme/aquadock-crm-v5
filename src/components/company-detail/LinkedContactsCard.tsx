@@ -34,6 +34,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
         .from("contacts")
         .select("*, companies!company_id(firmenname)")
         .eq("company_id", companyId)
+        .is("deleted_at", null)
         .order("nachname", { ascending: true });
 
       if (error) throw error;

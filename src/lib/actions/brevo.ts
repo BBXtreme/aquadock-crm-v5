@@ -119,7 +119,8 @@ export async function syncContactsToBrevo(formData: FormData): Promise<BrevoSync
   const { data: contacts } = await supabase
     .from("contacts")
     .select("*, companies(kundentyp, status)")
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
 
   // Type contacts explicitly to avoid implicit any on contact parameter
   const typedContacts: BrevoContactWithCompany[] = contacts ?? [];
@@ -185,7 +186,8 @@ export async function importBrevoContactsBulkAction(
     .from("contacts")
     .select("*, companies(kundentyp, status)")
     .in("id", data.contactIds)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .is("deleted_at", null);
 
   if (error) {
     throw new Error(error.message);
@@ -286,6 +288,7 @@ export async function createBrevoCampaign(formData: FormData) {
             .select("email")
             .eq("id", id)
             .eq("user_id", user.id)
+            .is("deleted_at", null)
             .maybeSingle();
           if (contact?.email) {
             await addContactToList(listId, contact.email);
@@ -299,6 +302,7 @@ export async function createBrevoCampaign(formData: FormData) {
             .select("email")
             .eq("id", id)
             .eq("user_id", user.id)
+            .is("deleted_at", null)
             .maybeSingle();
           if (!contact?.email) continue;
           for (const listId of finalListIds) {
@@ -332,7 +336,8 @@ export async function createBrevoCampaign(formData: FormData) {
         .from("contacts")
         .select("id, company_id")
         .in("id", recipientIds)
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .is("deleted_at", null);
 
       if (contactsTimelineError) {
         console.error("Contacts load for timeline after campaign:", contactsTimelineError);
@@ -347,6 +352,7 @@ export async function createBrevoCampaign(formData: FormData) {
           user_id: user.id,
           created_by: user.id,
           user_name: user.display_name,
+          deleted_at: null,
         }));
         const { error: timelineError } = await supabase.from("timeline").insert(timelineRows);
         if (timelineError) {

@@ -32,16 +32,12 @@ export async function updateTimelineEntry(
   return result;
 }
 
-export async function deleteTimelineEntry(id: string, supabase: SupabaseClient): Promise<void> {
-  const { error } = await supabase.from("timeline").delete().eq("id", id);
-  if (error) throw error;
-}
-
 export async function getTimelineEntries(userId: string, supabase: SupabaseClient): Promise<TimelineEntry[]> {
   const { data, error } = await supabase
     .from("timeline")
     .select("*")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

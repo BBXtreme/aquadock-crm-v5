@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -76,6 +77,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       const { data, error } = await supabase
         .from("companies")
         .select("id, firmenname, kundentyp")
+        .is("deleted_at", null)
         .order("firmenname", { ascending: true });
       if (error) throw error;
       return (data ?? []) as { id: string; firmenname: string; kundentyp?: string }[];
@@ -90,6 +92,7 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       const { data, error } = await supabase
         .from("contacts")
         .select("id, vorname, nachname, email, telefon, position")
+        .is("deleted_at", null)
         .order("nachname")
         .order("vorname")
         .limit(100);
@@ -101,10 +104,23 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
 
   const handleDelete = async () => {
     try {
-      const res = await fetch(`/api/timeline/${entry.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
-      toast.success(t("toastDeleted"));
+      const mode = await deleteTimelineEntryWithTrash(entry.id);
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreTimelineEntryWithTrash(entry.id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["timeline"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     } catch {
       toast.error(t("toastDeleteFailed"));
     }
@@ -316,6 +332,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
           contacts:contact_id (vorname, nachname, position, email),
           profiles:updated_by (display_name)
         `)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;

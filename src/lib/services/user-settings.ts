@@ -33,7 +33,7 @@ import {
   parseAppearanceTheme,
   parseAppearanceTimeZone,
 } from "@/lib/validations/appearance";
-import { notificationPreferencesSchema } from "@/lib/validations/settings";
+import { notificationPreferencesSchema, trashBinPreferenceSchema } from "@/lib/validations/settings";
 import type { Database, UserSetting, UserSettingInsert } from "@/types/database.types";
 import type { Json } from "@/types/supabase";
 
@@ -102,6 +102,66 @@ export async function saveNotificationPreferencesFromInput(
     throw new Error(NOTIFICATION_UI.toastValidationError);
   }
   await upsertNotificationPreferences(client, userId, parsed.data);
+  return parsed.data;
+}
+
+/** `user_settings.key` — absent row means trash bin is enabled (default true). */
+export const TRASH_BIN_SETTING_KEY = "trash_bin_enabled" as const;
+
+export const TRASH_BIN_DEFAULT_ENABLED = true;
+
+export const TRASH_BIN_UI = {
+  toastValidationError: "Ungültige Papierkorb-Einstellung",
+} as const;
+
+export type TrashBinPreferenceState = {
+  trashBinEnabled: boolean;
+};
+
+export async function fetchTrashBinPreference(
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<TrashBinPreferenceState> {
+  const { data, error } = await client
+    .from("user_settings")
+    .select("value")
+    .eq("user_id", userId)
+    .eq("key", TRASH_BIN_SETTING_KEY)
+    .maybeSingle();
+
+  if (error) throw handleSupabaseError(error, "fetchTrashBinPreference");
+
+  return {
+    trashBinEnabled: jsonToBoolean(data?.value, TRASH_BIN_DEFAULT_ENABLED),
+  };
+}
+
+export async function upsertTrashBinPreference(
+  client: SupabaseClient<Database>,
+  userId: string,
+  state: TrashBinPreferenceState,
+): Promise<void> {
+  const { error } = await client.from("user_settings").upsert(
+    {
+      user_id: userId,
+      key: TRASH_BIN_SETTING_KEY,
+      value: state.trashBinEnabled,
+    },
+    { onConflict: "user_id,key" },
+  );
+  if (error) throw handleSupabaseError(error, "upsertTrashBinPreference");
+}
+
+export async function saveTrashBinPreferenceFromInput(
+  client: SupabaseClient<Database>,
+  userId: string,
+  input: unknown,
+): Promise<TrashBinPreferenceState> {
+  const parsed = trashBinPreferenceSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(TRASH_BIN_UI.toastValidationError);
+  }
+  await upsertTrashBinPreference(client, userId, parsed.data);
   return parsed.data;
 }
 

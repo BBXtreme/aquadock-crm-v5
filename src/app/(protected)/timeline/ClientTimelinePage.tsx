@@ -3,6 +3,7 @@
 "use client";
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -26,8 +27,20 @@ import type { Company } from "@/types/database.types";
 
 function ClientTimelinePage() {
   const t = useT("timeline");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const trashedTimelineRedirect = searchParams.get("trashedTimeline") === "1";
+
+  useEffect(() => {
+    if (!trashedTimelineRedirect) {
+      return;
+    }
+    toast.message(t("toastTrashedTimeline"));
+    router.replace("/timeline", { scroll: false });
+  }, [trashedTimelineRedirect, router, t]);
 
   const { data: companies = [] } = useSuspenseQuery({
     queryKey: ["companies"],
@@ -36,6 +49,7 @@ function ClientTimelinePage() {
       const { data, error } = await supabase
         .from("companies")
         .select("id, firmenname, kundentyp")
+        .is("deleted_at", null)
         .order("firmenname", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Company[];
@@ -50,6 +64,7 @@ function ClientTimelinePage() {
       const { data, error } = await supabase
         .from("contacts")
         .select("id, vorname, nachname, email, telefon, position")
+        .is("deleted_at", null)
         .order("nachname")
         .order("vorname")
         .limit(100);

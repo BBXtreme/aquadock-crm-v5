@@ -4,25 +4,25 @@ overview: Add `deleted_at` on reminders/timeline, wire `trash_bin_enabled` (EAV,
 todos:
   - id: sql-migration
     content: Apply idempotent migration SQL on Supabase; run pnpm supabase:types
-    status: in_progress
+    status: completed
   - id: trash-pref
     content: trash_bin_enabled in user-settings service + Zod + Settings toggle (default true)
-    status: pending
+    status: completed
   - id: delete-restore-actions
     content: Server helpers + actions for soft/hard delete, restore, audit; company cascade
-    status: pending
+    status: completed
   - id: wire-call-sites
     content: Replace raw deletes; add deleted_at null filter on all active reads
-    status: pending
+    status: completed
   - id: profile-trash-ui
     content: Admin Trash Bin (Tabs + TanStack Table) on Profile; bulk restore/hard delete
     status: pending
   - id: undo-toasts
     content: Sonner Rückgängig after single-row soft delete
-    status: pending
+    status: completed
   - id: docs-verify
     content: SUPABASE_SCHEMA.md changelog; pnpm typecheck && pnpm check:fix
-    status: pending
+    status: completed
 isProject: false
 ---
 

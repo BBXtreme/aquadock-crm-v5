@@ -4,6 +4,7 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
@@ -31,10 +32,15 @@ export async function getCompaniesForOpenMap(
     .select(`
       *,
       contacts (*)
-    `);
+    `)
+    .is("deleted_at", null);
 
   if (error) throw handleSupabaseError(error, "getCompaniesForOpenMap");
-  return data ?? [];
+  const rows = data ?? [];
+  return rows.map((row) => ({
+    ...row,
+    contacts: (row.contacts ?? []).filter((c: { deleted_at?: string | null }) => c.deleted_at == null),
+  })) as CompanyForOpenMap[];
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -64,7 +70,7 @@ export async function getCompanies(
     sortDesc = false,
   } = options;
 
-  let query = supabase.from("companies").select("*", { count: "exact" });
+  let query = supabase.from("companies").select("*", { count: "exact" }).is("deleted_at", null);
 
   if (statusFilters?.length) query = query.in("status", statusFilters);
   if (kundentypFilters?.length) query = query.in("kundentyp", kundentypFilters);
@@ -87,24 +93,39 @@ export async function getCompanies(
 }
 
 /* ──────────────────────────────────────────────────────────────
-   GET SINGLE COMPANY BY ID
+   RESOLVE COMPANY DETAIL (active vs Papierkorb vs missing)
    ────────────────────────────────────────────────────────────── */
-export async function getCompanyById(
+export type ResolveCompanyDetailResult =
+  | { kind: "active"; company: Company }
+  | { kind: "trashed" }
+  | { kind: "missing" };
+
+export async function resolveCompanyDetail(
   id: string,
-  supabase: SupabaseClient
-): Promise<Company> {
+  supabase: SupabaseClient,
+): Promise<ResolveCompanyDetailResult> {
   const { data, error } = await supabase
     .from("companies")
     .select(`
       id, firmenname, status, kundentyp, firmentyp, rechtsform, value,
       strasse, plz, stadt, bundesland, land, telefon, email, website,
-      lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at
+      lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at,
+      deleted_at
     `)
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
-  if (error) throw handleSupabaseError(error, "getCompanyById");
-  return data as Company;
+  if (error) throw handleSupabaseError(error, "resolveCompanyDetail");
+
+  if (data === null) {
+    return { kind: "missing" };
+  }
+
+  if (data.deleted_at !== null && data.deleted_at !== undefined) {
+    return { kind: "trashed" };
+  }
+
+  return { kind: "active", company: data as Company };
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -143,20 +164,17 @@ export async function updateCompany(
 }
 
 /* ──────────────────────────────────────────────────────────────
-   DELETE COMPANY
+   DELETE COMPANY (soft or hard via user trash_bin_enabled)
    ────────────────────────────────────────────────────────────── */
-export async function deleteCompany(id: string, supabase?: SupabaseClient): Promise<void> {
-  const client = supabase ?? await createServerSupabaseClient();
-  const { error } = await client.from("companies").delete().eq("id", id);
-
-  if (error) throw handleSupabaseError(error, "deleteCompany");
+export async function deleteCompany(id: string): Promise<TrashDeleteMode> {
+  return deleteCompanyWithTrash(id);
 }
 
 /* ──────────────────────────────────────────────────────────────
    GET KPI SUMMARY
    ────────────────────────────────────────────────────────────── */
 export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
-  const { data, error } = await supabase.from("companies").select("status");
+  const { data, error } = await supabase.from("companies").select("status").is("deleted_at", null);
 
   if (error) throw handleSupabaseError(error, "getKpis");
 

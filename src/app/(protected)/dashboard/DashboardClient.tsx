@@ -47,11 +47,14 @@ export default function DashboardClient() {
     queryFn: async () => {
       const supabase = createClient();
 
-      const { data: companies } = await supabase.from("companies").select("status, value, created_at");
+      const { data: companies } = await supabase
+        .from("companies")
+        .select("status, value, created_at")
+        .is("deleted_at", null);
 
-      const { data: contacts } = await supabase.from("contacts").select("created_at");
+      const { data: contacts } = await supabase.from("contacts").select("created_at").is("deleted_at", null);
 
-      const { data: timeline } = await supabase.from("timeline").select("created_at");
+      const { data: timeline } = await supabase.from("timeline").select("created_at").is("deleted_at", null);
 
       const now = new Date();
       const periodDays = selectedPeriod === "7d" ? 7 : selectedPeriod === "30d" ? 30 : 90;

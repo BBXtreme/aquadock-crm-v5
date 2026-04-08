@@ -20,6 +20,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           deleted_at: string | null
+          deleted_by: string | null
           email: string | null
           firmenname: string
           firmentyp: string | null
@@ -51,6 +52,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           firmenname: string
           firmentyp?: string | null
@@ -82,6 +84,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          deleted_by?: string | null
           email?: string | null
           firmenname?: string
           firmentyp?: string | null
@@ -132,6 +135,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           deleted_at: string | null
+          deleted_by: string | null
           durchwahl: string | null
           email: string | null
           id: string
@@ -153,6 +157,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          deleted_by?: string | null
           durchwahl?: string | null
           email?: string | null
           id?: string
@@ -174,6 +179,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          deleted_by?: string | null
           durchwahl?: string | null
           email?: string | null
           id?: string
@@ -314,6 +320,8 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           due_date: string
           id: string
@@ -329,6 +337,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date: string
           id?: string
@@ -344,6 +354,8 @@ export type Database = {
           completed_at?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           due_date?: string
           id?: string
@@ -371,6 +383,8 @@ export type Database = {
           content: string | null
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           id: string
           title: string
           updated_by: string | null
@@ -384,6 +398,8 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           title: string
           updated_by?: string | null
@@ -397,6 +413,8 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           id?: string
           title?: string
           updated_by?: string | null
