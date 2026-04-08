@@ -1,85 +1,72 @@
-# OpenMap Documentation (Aquadock CRM)
+# OpenMap — interactive map (AquaDock CRM v5)
 
-## Overview
-**OpenMap** is the modern interactive map view in **Aquadock CRM v5**.  
-It displays:
-- **Your CRM companies** as colored status markers
-- **Public OSM POIs** (from Overpass API) as neutral gray `?` markers
+**Last updated:** April 2026  
 
-Users can import POIs directly into the CRM with one click (becomes a company with `status: "lead"` and populated `osm` field).
+**In one sentence:** OpenMap shows your **CRM companies** on a map and, when zoomed in enough, nearby **OpenStreetMap (OSM) points of interest**; you can **import** an OSM place as a new company (typically as a **lead**).
 
-**Last updated**: March 2026 (Full React + Leaflet refactor)
+---
 
-## Architecture
+## Who should read this
 
-| File                                            | Purpose                                                      |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `src/components/features/map/OpenMapClient.tsx` | Thin wrapper + ErrorBoundary + Suspense + dynamic import (SSR-safe)     |
-| `src/components/features/map/OpenMapView.tsx`   | Main Leaflet map UI, state, clustering, dark mode            |
-| `src/lib/utils/map-utils.ts`                    | Core utilities (`getStatusIcon`, `getOsmPoiIcon`, `fetchOsmPois`) |
-| `src/lib/constants/map-poi-config.ts`           | POI categories & Overpass tag definitions                    |
-| `src/lib/constants/map-status-colors.ts`        | Status colors + labels                                       |
-| `src/lib/constants/kundentyp.ts`                | OSM tag → `kundentyp` mapping                                |
-| `src/lib/constants/wassertyp.ts`                | Water type detection                                         |
-| `src/lib/utils/calculateWaterDistance.ts`       | Distance + type to nearest water body                        |
-| src/lib/constants/overpass-endpoints.ts         | Overpass API endpoints                                       |
+- **Product / ops:** Understand what the map does and that POI data is **public OSM data**, not private CRM data until imported.  
+- **Developers:** File layout, data flow, and why Overpass is called from the browser.
 
-**Key supporting files**: `CompanyMarkerPopup.tsx`, `OsmPoiMarkerPopup.tsx`
+---
 
-## How It Works
+## User-visible behavior
 
-1. Open **OpenMap** from the sidebar.
-2. Companies with `lat`/`lon` are fetched server-side and rendered as colored markers.
-3. When zoomed to **level 13 or higher**, OSM POIs load automatically (debounced, cached in localStorage).
-4. Gray `?` markers = public OSM data.
-5. Click a gray marker → rich popup with:
-   - Address, phone, website
-   - "In CRM importieren"
-   - "Wasser-Info berechnen"
-   - "In OSM ansehen"
-6. On import the POI becomes a new company (`status: "lead"`, `osm` field set, optional water data).
+1. Open **OpenMap** from the app navigation (`/openmap`).  
+2. Companies that have **latitude and longitude** appear as **colored markers** (colors reflect CRM **status**).  
+3. From **zoom level 13** upward, **gray “?” markers** appear for OSM POIs (debounced requests, cached to reduce load on public Overpass servers).  
+4. Click a company marker → CRM-focused popup. Click an OSM marker → popup with address/phone/website and actions such as **import to CRM**, **water info** (distance/type), **view on OSM**.  
+5. **Import** creates a **company** with `status: "lead"`, sets the **`osm`** field, and may fill **water**-related fields when the user runs that action.
 
-## Controls & Features
+---
 
-- Auto POI loading at zoom ≥ 13 (configurable)
-- Smart caching (10 min per viewport + localStorage)
-- Multiple Overpass mirror servers with fallback + retry
-- Marker clustering for OSM POIs
-- Full dark/light mode support (Carto basemaps)
-- Status legend toggle
-- Refresh companies + Clear cache buttons
-- Water distance calculation with geometry sampling + containment fallback
+## Architecture (code map)
 
-## Technical Highlights
+Paths are from the repository root. (Parentheses in route folders break some Markdown link parsers, so paths are shown as code.)
 
-- Direct browser `fetch` to Overpass (no API routes)
-- Debounced + cached queries (respects rate limits)
-- Deduplication by OSM `type/id`
-- Leaflet + react-leaflet with proper SSR handling
-- No `!` assertions, full null safety, strict TypeScript
-- Follows AIDER-RULES.md (hooks ordering, Biome compliance)
-- Event-driven refresh via custom `company-imported` event
-- Suspense boundary for loading states
+| Path | Role |
+| --- | --- |
+| `src/app/(protected)/openmap/page.tsx` | Server page: loads companies via services / RLS |
+| `src/components/features/map/OpenMapClient.tsx` | Client wrapper: dynamic import, error boundary, Suspense |
+| `src/components/features/map/OpenMapView.tsx` | Leaflet map, clustering, theme, controls |
+| `src/lib/utils/map-utils.ts` | Icons, `fetchOsmPois`, shared helpers |
+| `src/lib/constants/map-poi-config.ts` | POI categories and Overpass tag definitions |
+| `src/lib/constants/map-status-colors.ts` | Status → color / label |
+| `src/lib/constants/kundentyp.ts` | OSM tags → CRM `kundentyp` |
+| `src/lib/constants/wassertyp.ts` | Water type hints |
+| `src/lib/utils/calculateWaterDistance.ts` | Distance / type to water |
+| `src/lib/constants/overpass-endpoints.ts` | Overpass API endpoints and fallback |
 
-## Why No `route.ts` API Routes?
+**Popups:** `CompanyMarkerPopup.tsx`, `OsmPoiMarkerPopup.tsx`.
 
-We deliberately do **not** use API routes for OpenMap because:
+---
 
-1. **Companies** are loaded server-side in `app/openmap/page.tsx` using the service layer (`getCompaniesForOpenMap`). This is faster, more secure, and respects RLS natively.
-2. **OSM POIs** and water distance calculations are lightweight client-side operations — direct `fetch` to Overpass is simpler and more efficient.
-3. No unnecessary proxy layer, lower latency, better DX.
-4. Popup actions use the Supabase browser client + existing service layer.
+## Why companies load on the server but OSM loads in the browser
 
-An API route would only be added if heavy server-side processing (e.g. bulk PostGIS operations) is introduced later.
+- **Companies** are private, **RLS-protected** data → fetched with the **server** Supabase client on the page, consistent with the rest of the app.  
+- **OSM / Overpass** is **public** data; calling it from the browser avoids an extra proxy, keeps latency low, and matches the current scale of requests. Heavy server-side geoprocessing would be a reason to add API routes later.
 
-## Future Improvements
+---
 
-- Extract business logic into dedicated `useOpenMap.ts` hook
-- Persist user settings (auto-load, filters) in `user_settings` table
-- Admin interface for POI categories
-- Fuzzy deduplication before import
-- Supabase Realtime marker updates
+## Controls and technical notes
 
-**Status**: Production-ready, clean, and fully aligned with v5 architecture.
+- POI auto-load at zoom **≥ 13** (tunable in code).  
+- **Caching** (e.g. viewport + `localStorage`) limits repeat queries.  
+- **Multiple Overpass mirrors** with fallback help when one instance is slow.  
+- **Marker clustering** for dense OSM results.  
+- **Basemaps** follow light/dark theme (e.g. Carto).  
+- **Refresh** / **clear cache** actions and a **status legend** where implemented.  
+- After CRM import, components may listen for a **`company-imported`** event to refresh markers without a full navigation.
 
-Built with ❤️ at Waterfront Beach • 2026
+---
+
+## Standards
+
+Map code follows the same rules as the rest of the repo: strict TypeScript, Biome, no non-null assertions, null-safe display helpers.
+
+---
+
+AquaDock CRM v5 · 2026

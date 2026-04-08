@@ -4,6 +4,8 @@
 **Last audited**: 2026-04-07  
 **Environment**: Supabase PostgreSQL 15+  
 
+**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
+
 ## 1. Database Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |
@@ -28,7 +30,7 @@
 | rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
 | firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
-| status     | text        | false    | 'lead'            | lead, interessannt, qualifiziert, gewonnen, verloren, … | Indexed       |
+| status     | text        | false    | 'lead'            | lead, interessant, qualifiziert, gewonnen, verloren, … | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
 | strasse    | text        | true     | —                 | Street address                            | —             |
 | plz        | text        | true     | —                 | Postal code                               | —             |

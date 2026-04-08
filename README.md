@@ -1,279 +1,153 @@
 # AquaDock CRM v5
 
-Modern CRM for marinas, hotels, restaurants & water-sports businesses  
-**Next.js 16 • React 19 • Supabase • Tailwind v4 • shadcn/ui (radix-nova)**
+**What it is:** A web-based CRM for marinas, hotels, restaurants, and water-sports businesses. Teams sign in, manage companies and contacts, plan reminders, send email campaigns, and view records on an interactive map. Data lives in **Supabase** (PostgreSQL) with **Row Level Security** so each user only sees their own records (admins have broader access where the schema allows).
+
+**How it is built:** **Next.js 16** (App Router), **React 19**, **Supabase**, **Tailwind CSS v4**, **shadcn/ui**, **pnpm**.
+
+---
 
 ## Features
 
-- **Company Management**: Create, edit, and track companies with detailed information
-- **Contact Management**: Manage contacts associated with companies
-- **Interactive Map (OpenMap)**: Visualize companies and import OSM POIs
-- **Reminders & Tasks**: Schedule and track follow-ups
-- **Email Integration**: Send emails with templates
-- **Timeline**: Activity logging and history
-- **Dashboard**: KPIs and statistics with period filtering
-- **Mass Email**: Bulk email sending with templates
-- **Settings**: User preferences and SMTP configuration
-- **Profile**: Display name + profile photo (Supabase Storage `avatars` bucket)
-- Multi-user CRM with Row Level Security (RLS)
-- Companies + Contacts separation
-- Timeline & reminders per company
-- **Interactive OpenMap** with colored company markers + OSM POI import (zoom ≥ 13)
-- Geo data (lat/lon, water distance calculation)
-- CSV import & OpenStreetMap POI import
-- Responsive dashboard & TanStack Tables
-- Dark mode & theme persistence
+- **Companies & contacts** — Full lifecycle, search, CSV import, German-oriented fields (address, customer type, status).
+- **OpenMap** — Map of CRM companies plus optional **OpenStreetMap** POIs; import POIs as leads (zoom ≥ 13).
+- **Reminders & timeline** — Tasks per company and activity history; soft-delete / trash workflows where implemented.
+- **Email** — Templates, logging, mass email; optional **Brevo** integration for campaigns/sync (see `docs/BREVO_SDK.md`).
+- **Dashboard** — KPIs and tables (**TanStack Table**).
+- **Settings & profile** — Preferences, SMTP-related settings, display name and avatar (**Supabase Storage** bucket `avatars`).
+- **Theming** — Dark/light mode and responsive layout.
 
-## 2. Tech Stack
+---
 
-| Layer              | Technology                         | Version / Note                 |
-| ------------------ | ---------------------------------- | ------------------------------ |
-| Framework          | Next.js                            | 16.2+ (App Router)             |
-| UI                 | React 19 • shadcn/ui (radix-nova)  | latest • CSS variables enabled |
-| Styling            | Tailwind CSS                       | exactly 4.2.2 (config-less)    |
-| Fonts              | Geist Sans + Mono                  | official Vercel package        |
-| State / Data       | TanStack React Query + Table v8    | v5 / v8                        |
-| Mapping            | Leaflet + react-leaflet            | OSM Overpass integration       |
-| Backend / DB       | Supabase (PostgreSQL + Auth + RLS) | Full service layer pattern     |
-| Toasts             | sonner                             | ^2.0+                          |
-| Icons              | lucide-react                       | latest                         |
-| Package Manager    | pnpm                               | —                              |
-| Linting/Formatting | Biome                              | 2.4.9+                         |
-| Other              | next-themes, vaul, cmdk, zustand   | All present                    |
+## Tech stack
 
-> [!IMPORTANT]
-> Protected routes are handled via root `app/layout.tsx` + Supabase Auth + sidebar wrapper. Flat app structure (no route groups).
+| Layer | Technology | Notes |
+| --- | --- | --- |
+| Framework | Next.js 16+ | App Router, Server Components by default |
+| UI | React 19, shadcn/ui | Radix-based components |
+| Styling | Tailwind CSS 4.2.x | Project pins compatible versions in `package.json` |
+| Data & cache | TanStack Query 5, TanStack Table 8 | Tables use strict TypeScript patterns (see `docs/react-table-v8-ts-tricks.md`) |
+| Map | Leaflet, react-leaflet | Overpass API for OSM POIs (browser `fetch`) |
+| Backend | Supabase | PostgreSQL, Auth, RLS, Storage |
+| Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
+| Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
+| Tests | Vitest, Testing Library | `pnpm test:run`; CI runs `pnpm test:ci` |
 
-## 3. Getting Started
+---
 
-1. Clone & enter directory
-   ```bash
-   git clone <your-repo-url> aquadock-crm
-   cd aquadock-crm
+## Getting started
 
-1. Install dependencies
+### 1. Clone and install
 
-   Bash
-
-   ```
-   pnpm install
-   ```
-
-2. Copy environment file
-
-   Bash
-
-   ```
-   cp .env.example .env.local
-   ```
-
-3. Configure Supabase variables
-
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - (optional) `SUPABASE_SERVICE_ROLE_KEY` — server-only; required for some admin flows
-
-4. Storage (profile avatars)
-
-   For **Profile → photo upload** and header avatars, create the public `avatars` bucket and storage policies once per Supabase project. In the Supabase dashboard → **SQL Editor**, run:
-
-   [`src/sql/storage-avatars-bucket.sql`](src/sql/storage-avatars-bucket.sql)
-
-   Details: [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) (section *Supabase Storage – avatars bucket*).
-
-5. Start development server
-
-   Bash
-
-   ```
-   pnpm dev
-   ```
-
-   Open `http://localhost:3000`.
-
-## 4. Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Supabase Schema](docs/SUPABASE_SCHEMA.md)
-- [OpenMap Documentation](docs/README_OpenMap.md)
-- [React Table Patterns](docs/react-table-v8-ts-tricks.md)
-- [Aider Rules](docs/AIDER-RULES.md)
-- [Aider Conventions](docs/aider.conventions.md)
-
-## 5. Core Commands
-
-Bash
-
-```
-pnpm dev          # development server "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev"
-pnpm build        # production build
-pnpm start        # run production build
-pnpm check        # biome lint + type check
-pnpm format       # format all files
-pnpm check:fix    # lint + auto-fix
-supabase:types:   # "mkdir -p src/types && npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts"
-
-    "dev:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next dev",
-    "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" next build",
-    "build:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next build",
-    "start": "next start",
-    "lint": "biome lint",
-    "pre-commit": "lint-staged",
-    "format": "biome format --write",
-    "check": "biome check",
-    "check:fix": "biome check --write --unsafe",
-    "check:quick": "biome check --write --max-diagnostics=50",
-    "typecheck": "tsc --noEmit --pretty",
-    "prepare": "husky",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:ui": "vitest --ui",
-    "version": "changeset version",
-    "release": "changeset publish"
+```bash
+git clone <your-repo-url> aquadock-crm-v5
+cd aquadock-crm-v5
+pnpm install
 ```
 
-## 6. Development Guidelines
+### 2. Environment
 
-- Root app/layout.tsx → Server Component only
-- Interactive components → "use client" at top
-- Data fetching → prefer Server Components + Supabase server client
-- Map/OSM logic → direct browser fetches to Overpass
-- Forms → react-hook-form + zod resolver
-- Tables → TanStack Table v8 with generated types + satisfies
-- Always use safeDisplay(value) from @/lib/utils/data-format for table cells and cards. Static skeletons must use predefined string keys (e.g. 'dashboard-skeleton-1') to satisfy Biome noArrayIndexKey rule.
-- Use safeDisplay from @/lib/utils/data-format.ts for all null/empty fallbacks. Never use ! assertions. For static skeletons use static string keys.
-- Strictly follow AIDER-RULES.md on every change
-- Input sanitization: All forms use Zod with .trim() and length limits. 
-- Static skeletons use predefined string keys. No ! assertions allowed.
-
-## 7. Folder Structure
-
-text
-
-```
-src/app/
-├── (auth)/
-│   └── login/
-│       └── page.tsx                 # Public login page (no sidebar/header)
-├── (protected)/
-│   ├── layout.tsx                   # Applies AppLayout (Sidebar + Header) to all protected routes
-│   ├── dashboard/
-│   ├── companies/
-│   ├── contacts/
-│   ├── timeline/
-│   ├── reminders/
-│   ├── mass-email/
-│   ├── openmap/
-│   ├── profile/
-│   └── settings/
-├── api/                             # All API routes (unaffected by route groups)
-├── unauthorized/
-├── layout.tsx              # Root layout (clean - only ClientLayout + ErrorBoundary)
-├── page.tsx                         # Home → redirect to /dashboard
-└── globals.css
-├── components/
-│   ├── ui/
-│   ├── layout/                   # Sidebar + Header
-│   ├── features/
-│   │   ├── map/                  # OpenMapClient, OpenMapView, popups
-│   │   ├── companies/
-│   │   ├── contacts/
-│   │   ├── reminders/
-│   └── ErrorBoundary.tsx
-└── hooks/
-│ proxy.ts
-
-
-src/lib/
-├── actions/                    # ← All Server Actions (thin layer)
-│   ├── companies.ts
-│   ├── contacts.ts
-│   ├── reminders.ts
-│   ├── timeline.ts
-│   ├── email-log.ts
-│   ├── mass-email.ts
-│   ├── auth.ts                 # signOut, etc.
-│   └── index.ts                # optional barrel
-│
-├── validations/                # ← Zod schemas (single source of truth)
-│   ├── company.ts
-│   ├── contact.ts
-│   ├── reminder.ts
-│   ├── email.ts
-│   └── index.ts
-│
-├── supabase/                   # ← Pure Supabase clients & low-level utils
-│   ├── browser.ts              # createClient() for client components
-│   ├── server.ts               # createServerSupabaseClient()
-│   ├── admin.ts                # createAdminClient() (service role)
-│   ├── types.ts                # CookieOptions, custom Supabase types
-│   ├── utils.ts                # handleSupabaseError, safeDisplay, formatDateDE, etc.
-│   └── proxy.ts                # session/cookie proxy (if needed)
-│
-├── services/                   # ← Complex business logic & reusable operations
-│   ├── email.ts                # mass email logic, placeholder filling, recipient queries
-│   ├── smtp.ts                 # SMTP config handling
-│   └── ...                     # only heavy, reusable, non-action logic
-│
-├── query/                      # ← TanStack Query setup (if used heavily)
-│   ├── provider.tsx
-│   └── keys.ts                 # query key constants
-│
-├── utils/                      # ← Pure utilities (no DB, no side effects)
-│   ├── cn.ts
-│   ├── csv-import.ts
-│   ├── data-format.ts
-│   └── constants/              # company-options.ts, etc.
-│
-├── auth/                       # ← Auth-specific helpers (optional, but clean)
-│   ├── get-current-user.ts
-│   ├── require-user.ts
-│   ├── require-admin.ts
-│   └── types.ts
-│
-└── types/                      # ← Global TypeScript types (outside lib if preferred)
-    ├── database.types.ts
-    └── index.ts
+```bash
+cp .env.example .env.local
 ```
 
-## 8. Deployment
+Set at least:
 
-**Recommended**: Vercel
+- `NEXT_PUBLIC_SUPABASE_URL` — Project URL from Supabase.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Anonymous (public) key; safe for the browser within RLS rules.
 
-Bash
+Optional / server-only:
 
+- `SUPABASE_SERVICE_ROLE_KEY` — **Never** expose to the client. Some admin or batch operations may need it; follow existing Server Actions and service code.
+
+### 3. Storage (profile photos)
+
+For avatar uploads, create the public **`avatars`** bucket and policies once per project. In the Supabase **SQL Editor**, run:
+
+[`src/sql/storage-avatars-bucket.sql`](src/sql/storage-avatars-bucket.sql)
+
+Details: [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) (Storage section).
+
+### 4. Run locally
+
+```bash
+pnpm dev
 ```
-vercel
-```
 
-## 9. Supabase Schema & Types
+Open [http://localhost:3000](http://localhost:3000). If the dev server runs out of memory on large pages, try `pnpm dev:large`.
 
-See [`docs/SUPABASE_SCHEMA.md`](docs/SUPABASE_SCHEMA.md) (database tables, RLS overview, **Storage `avatars`**, type generation).
+---
 
-After **public** schema changes:
+## Documentation (`docs/`)
+
+| Document | Audience | Content |
+| --- | --- | --- |
+| [architecture.md](docs/architecture.md) | Developers | Layers, validation, data flow, layout |
+| [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables, RLS overview, Storage, type generation |
+| [README_OpenMap.md](docs/README_OpenMap.md) | Developers | Map and OSM POI behavior |
+| [react-table-v8-ts-tricks.md](docs/react-table-v8-ts-tricks.md) | Developers | TypeScript patterns for tables |
+| [production-deploy.md](docs/production-deploy.md) | DevOps / leads | Production checklist (Vercel + Supabase) |
+| [vercel-production.md](docs/vercel-production.md) | DevOps | Shorter Vercel-focused checklist |
+| [BREVO_SDK.md](docs/BREVO_SDK.md) | Developers | How this repo uses Brevo’s Node SDK |
+
+**Coding standards:** Enforced with Biome and TypeScript; optional AI/editor guidance lives under [`.cursor/rules/`](.cursor/rules/) (e.g. architecture, Supabase, Zod forms).
+
+---
+
+## Common commands
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Development server (raised Node heap for stability) |
+| `pnpm dev:large` | Dev server with a larger heap if needed |
+| `pnpm build` / `pnpm start` | Production build and run |
+| `pnpm check` | Biome check (lint + format) |
+| `pnpm check:fix` | Biome with auto-fix |
+| `pnpm format` | Format with Biome |
+| `pnpm typecheck` | TypeScript, no emit |
+| `pnpm test` | Vitest (watch) |
+| `pnpm test:run` | Vitest once |
+| `pnpm test:ci` | Coverage + verbose reporter (matches CI) |
+| `pnpm supabase:types` | Regenerate `src/types/supabase.ts` (edit `--project-id` in `package.json` if you fork the DB) |
+
+---
+
+## Project layout (high level)
+
+- `src/app/` — Routes: `(auth)` (e.g. login), `(protected)` (CRM pages with shell), `api/` routes.
+- `src/lib/actions/` — Server Actions (thin; validate and call services).
+- `src/lib/services/` — Business logic and Supabase access patterns shared by actions.
+- `src/lib/validations/` — Zod schemas (single source of truth for forms).
+- `src/lib/supabase/` — Browser and server Supabase clients.
+- `src/components/` — UI primitives (`ui/`), layout, feature modules (`features/`).
+
+A more detailed tree lived in older README versions; explore `src/app/(protected)/` for feature routes (`dashboard`, `companies`, `contacts`, `openmap`, `settings`, etc.).
+
+---
+
+## Deployment
+
+**Recommended:** [Vercel](https://vercel.com) connected to your Git repository. Use **pnpm** as the install command and align **Node** with CI (see `.github/workflows/ci.yml`, currently Node 22).
+
+Step-by-step checklists: [`docs/production-deploy.md`](docs/production-deploy.md) and [`docs/vercel-production.md`](docs/vercel-production.md).
+
+---
+
+## Supabase types after schema changes
 
 ```bash
 pnpm supabase:types
 ```
 
-(Regenerates `src/types/supabase.ts`; project types re-export from `src/types/database.types.ts`. Replace the project id in `package.json` → `scripts.supabase:types` if you use a different Supabase project.)
+Writes generated types to `src/types/supabase.ts`. App code imports through `src/types/database.types.ts` where applicable.
 
-## 10. Routing & Layout
+---
 
-We use Next.js App Router with **route groups** for clean separation:
+## Contributing
 
-- `(auth)` → Public pages (login)
-- `(protected)` → All authenticated pages (automatically get Sidebar + Header)
+- Prefer branches such as `feature/…`, `fix/…`, `chore/…`.
+- Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior).
+- After schema changes: `pnpm supabase:types` and commit updated types if the project shares one Supabase project.
 
-This gives us:
-- Clean URLs
-- Automatic layout wrapping
-- Easy protection with `requireUser()`
+---
 
-## 11. Contributing
-
-- Branch naming: feature/xxx, fix/xxx, chore/xxx
-- Run pnpm check:fix before commit
-- Run pnpm build after type changes
-
-Built with ❤️ at Waterfront Beach • 2026
+Built with care for Waterfront Beach · 2026

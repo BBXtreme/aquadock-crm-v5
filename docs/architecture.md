@@ -1,62 +1,83 @@
-# AquaDock CRM v5 – Architecture Overview
+# AquaDock CRM v5 — Architecture overview
 
-**Last updated**: April 2026  
-**Goal**: Clean separation of concerns, maximum type safety, RLS enforcement, professional form validation with Zod + Supabase
+**Last updated:** April 2026  
 
-## 1. Core Principles
+This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
-- **App Router** (Next.js 16+) with Server Components by default
-- **Interactive parts** → `"use client"` only where necessary
-- **Data fetching** → Server Components + Supabase server client
-- **Type safety** → Generated Supabase types (`supabase.ts`) + Zod schemas as **single source of truth** for forms
-- **Form Validation** → React Hook Form + Zod (`src/lib/validations/`) with `.strict()`, `.trim()`, enums from constants, UUID validation, and empty-string → `null` transforms
-- **Error handling** → centralized via `handleSupabaseError`
-- **UI consistency** → shadcn/ui (radix-nova) + Tailwind v4.2.2
-- **Auth** → Supabase Auth + RLS enforced in service layer
-- **State management** → TanStack React Query 5
-- **Suspense for data loading** → `useSuspenseQuery` + Suspense boundaries
+---
 
-## 2. Validation Strategy (Zod Layer – Current Standard)
+## Big picture
 
-- All forms use schemas from `src/lib/validations/`
-- Zod schemas are the **single source of truth** for form shape, validation, and mapping to Supabase
-- Schema rules (enforced):
-  - `.strict()` – reject unknown fields
-  - `.trim()` on all text inputs
-  - `z.enum()` using values from `src/lib/constants/company-options.ts`
-  - `z.string().uuid()` for all ID fields
-  - `emptyStringToNull` transform for nullable DB columns
-  - Inferred types: `type CompanyForm = z.infer<typeof companyFormSchema>`
-- Schemas stay in sync with `supabase.ts` (Row / Insert / Update)
+1. **Users sign in** with Supabase Auth.  
+2. **Pages** are mostly **React Server Components**: they load data on the server using a Supabase client that sees the user’s session.  
+3. **Interactive pieces** (forms, maps, tables with client sorting) are **Client Components** (`"use client"`) and stay as small as possible.  
+4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete).  
+5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.
 
-All former DTO files have been removed. Zod schemas in src/lib/validations/ are now the single source of truth for all forms, with full alignment to supabase.ts types and proper nullable handling.
+---
 
-## 3. Data Flow & Service Layer
+## Core principles
 
-All database operations **must** go through `src/lib/supabase/services/`.
+| Topic | Approach |
+| --- | --- |
+| Rendering | Next.js App Router; Server Components by default |
+| Interactivity | `"use client"` only where needed |
+| Data access | Server: `createServerSupabaseClient()`; browser: `createClient()` from `@/lib/supabase/browser` for allowed cases (e.g. avatar upload) |
+| Types | Generated `Database` types from Supabase + Zod-inferred form types |
+| Validation | `src/lib/validations/` — `.strict()`, `.trim()`, enums from constants, UUIDs, `emptyStringToNull` for nullable columns |
+| Business logic | `src/lib/services/` — reusable operations; Server Actions stay thin |
+| Mutations | Server Actions in `src/lib/actions/` — re-validate with Zod before persisting |
+| UI | shadcn/ui + Tailwind CSS v4 |
+| Client state | TanStack Query where remote state needs caching/refetch |
+| Quality | Biome + `tsc --noEmit`; no non-null assertions (`!`); use `safeDisplay` and helpers from `@/lib/utils/data-format` for empty/null UI |
 
-Supabase types (`supabase.ts`) define exact `Row`, `Insert`, `Update` shapes.  
-Zod schemas → mapped to Supabase types via helper functions (`toCompanyInsert`, etc.) in the service layer.
+---
 
-## 4. Route Groups & Layout
+## Validation (Zod)
 
-- `(protected)` routes get full AppLayout (Sidebar + Header)
-- `(auth)` routes stay clean (login only)
-- All protected pages call `requireUser()` early
+- All forms use schemas from `src/lib/validations/`.  
+- Schemas are the **single source of truth** for shape, validation, and mapping toward Supabase insert/update payloads (often via helpers like `toCompanyInsert`).  
+- Keep schemas aligned with `src/types/supabase.ts` after migrations (`pnpm supabase:types`).
 
-## 5. Geo & Mapping Layer (OpenMap)
+Former standalone DTO layers have been removed in favor of Zod + generated DB types.
 
-- Companies loaded server-side via service layer
-- OSM POIs & water distance calculations performed client-side
-- No unnecessary API routes (performance + simplicity)
+---
 
-## 6. Helpers & Quality Rules
+## Data flow
 
-- Never use `!` non-null assertions
-- Use `safeDisplay` from `@/lib/utils/data-format.ts` for null/empty handling
-- Static string keys for all skeleton loaders
-- Every single change **must** pass `pnpm typecheck && pnpm check:fix` with zero errors/warnings (see AIDER-RULES.md)
+```text
+User → Page (Server Component) → requireUser() / data fetch → service layer → Supabase (RLS)
+User → Form (Client) → Server Action → Zod.parse → service layer → Supabase
+```
 
-**Enforcement**: Strictly follow **AIDER-RULES.md** on every change (zero tolerance for type/lint errors).
+**Important:** Prefer loading sensitive or authoritative lists on the server. The OpenMap feature loads companies on the server; OSM POI calls go from the browser to Overpass (public data), by design.
 
-Built with ❤️ at Waterfront Beach • 2026
+---
+
+## Route groups and layout
+
+- **`(auth)`** — Public routes (e.g. login); no full app chrome.  
+- **`(protected)`** — Authenticated CRM: sidebar, header, and pages under routes like `/dashboard`, `/companies`, `/openmap`.  
+- Protected entry points should call `requireUser()` (or equivalent) early so unauthorized users never see data.
+
+---
+
+## Geo and OpenMap
+
+Companies with coordinates are loaded for the map via the service layer. OSM POIs and water-distance helpers run in the browser. See [`README_OpenMap.md`](README_OpenMap.md).
+
+---
+
+## Checks before you merge
+
+Run:
+
+```bash
+pnpm typecheck && pnpm check:fix
+```
+
+Add tests when behavior is non-trivial (`pnpm test:run`). CI on `main` / PRs runs typecheck, Biome, tests with coverage, and a production build (see `.github/workflows/ci.yml`).
+
+---
+
+AquaDock CRM v5 · 2026

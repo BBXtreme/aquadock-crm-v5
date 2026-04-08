@@ -1,56 +1,67 @@
-# Vercel Production Deployment Checklist
+# Vercel production checklist (AquaDock CRM v5)
 
-## Environment Variables
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` - Service role key (if needed for server-side operations)
-- [ ] Any other environment-specific variables
+Short checklist for deploying this Next.js app on **Vercel**. For a fuller runbook (Supabase security, backups, domains), use [`production-deploy.md`](production-deploy.md).
 
-## Security & Configuration
-- [ ] Middleware protection active for protected routes (/dashboard, /companies, /contacts, /reminders, /mass-email, /timeline, /settings)
-- [ ] Row Level Security (RLS) enabled on companies and contacts tables
-- [ ] User policies created for data access control
-- [ ] Supabase Storage: public `avatars` bucket + policies applied ([`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql)) — required for profile photos
+---
 
-## Build Settings
-- [ ] Build Command: `next build`
-- [ ] Output Directory: `.next`
-- [ ] Root Directory: `/`
-- [ ] Environment: Node.js 20.x or higher
+## Environment variables
 
-## Deployment
-- [ ] Connected to GitHub repository
-- [ ] Automatic redeploy enabled for every push to main branch
-- [ ] Preview deployments disabled for production
-- [ ] Domain configured (e.g., aquadock-crm.vercel.app)
+- [ ] `NEXT_PUBLIC_SUPABASE_URL`  
+- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` — only if server code in your fork requires it; **never** `NEXT_PUBLIC_*`  
 
-## Custom Domain Setup (Optional)
-1. Go to Vercel dashboard > Project Settings > Domains
-2. Add your custom domain (e.g., crm.yourcompany.com)
-3. Update DNS records as instructed:
-   - CNAME record pointing to cname.vercel-dns.com
-   - Or A records for apex domain
-4. Wait for SSL certificate provisioning (automatic)
-5. Test the domain in production
+Add Brevo or SMTP-related variables only if you use those features and they read from env.
 
-## Post-Deployment Verification
-- [ ] Login functionality works
-- [ ] Protected routes redirect to login when not authenticated
-- [ ] Data fetching works correctly
-- [ ] Dark mode toggles properly
-- [ ] Mobile responsiveness on all pages
-- [ ] Email templates and mass email features functional
-- [ ] CSV import works with proper permissions
+---
 
-## Monitoring & Maintenance
-- [ ] Enable Vercel Analytics for performance monitoring
-- [ ] Set up error tracking (e.g., Sentry) if needed
-- [ ] Configure backup strategies for Supabase data
-- [ ] Regular security updates for dependencies
+## Project settings
+
+| Setting | Value |
+| --- | --- |
+| Framework | Next.js |
+| Install command | `pnpm install` (enable pnpm in project settings) |
+| Build command | `pnpm build` |
+| Output | `.next` (default) |
+| Node.js | **22.x** recommended (aligned with CI in `.github/workflows/ci.yml`) |
+
+---
+
+## Auth and routes
+
+- [ ] **Supabase Auth** configured (redirect URLs include your production domain and preview URLs if you use previews).  
+- [ ] Unauthenticated users cannot access protected routes (`/dashboard`, `/companies`, `/contacts`, `/reminders`, `/timeline`, `/mass-email`, `/openmap`, `/settings`, `/profile`, `/brevo`, etc.).  
+
+---
+
+## Storage
+
+- [ ] **`avatars`** bucket and SQL policies applied: [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql)  
+
+---
+
+## Git integration
+
+- [ ] Repo connected; **Production** branch (e.g. `main`) deploys to production.  
+- [ ] **Preview deployments** for PRs are optional but recommended for review.
+
+---
+
+## After deploy
+
+- [ ] Sign-in flow  
+- [ ] Create/edit company and contact  
+- [ ] Map loads for accounts with coordinates  
+- [ ] Email features you rely on (templates / mass / Brevo)  
+- [ ] Dark mode and mobile layout  
+
+---
 
 ## Troubleshooting
-- Check Vercel build logs for any build failures
-- Verify environment variables are set correctly
-- Ensure Supabase project is accessible from Vercel
-- Test all features in production environment
-- Monitor for any CORS or authentication issues
+
+1. **Build fails:** Read the Vercel build log; often missing env or wrong Node version.  
+2. **Auth loops:** Check Supabase URL configuration and cookie/session domain.  
+3. **RLS errors:** Confirm user is logged in and policies allow the operation; avoid using the service role on the client.
+
+---
+
+Last reviewed: April 2026
