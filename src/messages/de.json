@@ -722,7 +722,26 @@
     "globalSearchTitle": "Globale Suche",
     "globalSearchDescription": "Die globale Suche ist noch nicht fertig — hier kommt später die richtige Suche hin. Bis dahin nutzen Sie die Seitenleiste oder die Listen.",
     "globalSearchGotIt": "Verstanden",
-    "searchAriaLabel": "Suche"
+    "searchAriaLabel": "Suche",
+    "sidebar": {
+      "groupSales": "Vertrieb",
+      "groupMarketing": "Marketing",
+      "dashboard": "Dashboard",
+      "reminders": "Erinnerungen",
+      "companies": "Unternehmen",
+      "contacts": "Kontakte",
+      "timeline": "Timeline",
+      "openmap": "OpenMap",
+      "massEmail": "Massen-E-Mail",
+      "brevoCampaigns": "Brevo-Kampagnen",
+      "quickActions": "Schnellaktionen",
+      "newCompany": "Neues Unternehmen",
+      "newContact": "Neuer Kontakt",
+      "newReminder": "Neue Erinnerung",
+      "newTimeline": "Neuer Timeline-Eintrag",
+      "toggleExpand": "Seitenleiste einblenden",
+      "toggleCollapse": "Seitenleiste ausblenden"
+    }
   },
   "profile": {
     "trashBinTitle": "Papierkorb (Admin)",

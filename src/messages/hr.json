@@ -722,7 +722,26 @@
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",
-    "searchAriaLabel": "Pretraga"
+    "searchAriaLabel": "Pretraga",
+    "sidebar": {
+      "groupSales": "Prodaja",
+      "groupMarketing": "Marketing",
+      "dashboard": "Nadzorna ploča",
+      "reminders": "Podsjetnici",
+      "companies": "Tvrtke",
+      "contacts": "Kontakti",
+      "timeline": "Vremenska crta",
+      "openmap": "OpenMap",
+      "massEmail": "Masovna e-pošta",
+      "brevoCampaigns": "Brevo kampanje",
+      "quickActions": "Brze radnje",
+      "newCompany": "Nova tvrtka",
+      "newContact": "Novi kontakt",
+      "newReminder": "Novi podsjetnik",
+      "newTimeline": "Novi zapis na vremenskoj crti",
+      "toggleExpand": "Proširi bočnu traku",
+      "toggleCollapse": "Sažmi bočnu traku"
+    }
   },
   "profile": {
     "trashBinTitle": "Korpa za smeće (admin)",
