@@ -7,8 +7,8 @@
 import { useQuery } from "@tanstack/react-query";
 import L from "leaflet";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from "react-leaflet";
+import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { toast } from "sonner";
 
@@ -39,6 +39,75 @@ interface CacheEntry {
   bounds: L.LatLngBounds;
 }
 
+/** Accepts DB/JSON lat-lon as number or numeric string; rejects NaN. */
+function toFiniteLatLon(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+/** Rejects bogus coordinates (e.g. microdegrees or corrupted imports) that blow up LatLngBounds / fitBounds. */
+function isWgs84Degrees(lat: number, lon: number): boolean {
+  return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+}
+
+function collectCompanyLatLngs(companies: CompanyForOpenMap[]): L.LatLng[] {
+  const out: L.LatLng[] = [];
+  for (const c of companies) {
+    const lat = toFiniteLatLon(c.lat);
+    const lon = toFiniteLatLon(c.lon);
+    if (lat !== null && lon !== null && isWgs84Degrees(lat, lon)) {
+      out.push(L.latLng(lat, lon));
+    }
+  }
+  return out;
+}
+
+/** Fit the map to all CRM company coordinates (tight zoom, shared by initial load + “all companies” control). */
+function fitMapToCompanyLatLngs(map: L.Map, latLngs: L.LatLng[]) {
+  map.invalidateSize();
+  const apply = () => {
+    if (latLngs.length === 0) {
+      map.flyTo([51.1657, 10.4515], 7);
+      return;
+    }
+
+    if (latLngs.length === 1) {
+      const [only] = latLngs;
+      if (!only) return;
+      const z = Math.min(map.getMaxZoom(), 16);
+      map.flyTo(only, z);
+      return;
+    }
+
+    const bounds = L.latLngBounds(latLngs);
+    const maxZ = map.getMaxZoom();
+    map.flyToBounds(bounds, {
+      padding: [48, 48],
+      maxZoom: maxZ,
+      animate: true,
+    });
+  };
+  requestAnimationFrame(apply);
+}
+
+/** Binds the Leaflet map instance to a ref (reliable with React 19; avoids MapContainer ref edge cases). */
+function MapRefBinder({ mapRef }: { mapRef: MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  useEffect(() => {
+    mapRef.current = map;
+    return () => {
+      mapRef.current = null;
+    };
+  }, [map, mapRef]);
+  return null;
+}
+
 const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => {
   useMapEvents({
     moveend: onBoundsChange,
@@ -66,6 +135,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [googleSession, setGoogleSession] = useState<string | null>(null);
   const googleTilesCacheRef = useRef<{ cacheKey: string; session: string } | null>(null);
   const googleSessionRequestEpochRef = useRef(0);
+  const didInitialCompanyFitRef = useRef(false);
 
   const searchParams = useSearchParams();
 
@@ -223,9 +293,55 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     };
   }, [mapProvider, googleApiKeyForTiles, isDarkMode, t]);
 
-  // New effect to handle initial map view from URL params
+  // Initial view: deep-link from URL, otherwise zoom to fit all CRM company markers once
   useEffect(() => {
-    if (!mapReady || !mapRef.current) return;
+    initialViewEffectRunCountRef.current += 1;
+    const runN = initialViewEffectRunCountRef.current;
+    const hasMap = Boolean(mapRef.current);
+    const didBefore = didInitialCompanyFitRef.current;
+    const qs = searchParams.toString();
+
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
+      body: JSON.stringify({
+        sessionId: "b69f09",
+        hypothesisId: "H1-H4-H5",
+        location: "OpenMapView.tsx:initialViewEffect:entry",
+        message: "initial view effect run",
+        data: {
+          runN,
+          instanceId: openMapInstanceIdRef.current,
+          mapReady,
+          hasMapRef: hasMap,
+          didInitialBefore: didBefore,
+          companiesLen: companies.length,
+          qsLen: qs.length,
+          qs,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => undefined);
+    // #endregion
+
+    if (!mapReady || !mapRef.current) {
+      // #region agent log
+      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
+        body: JSON.stringify({
+          sessionId: "b69f09",
+          hypothesisId: "H4",
+          location: "OpenMapView.tsx:initialViewEffect:earlyReturn",
+          message: "early return (map not ready or ref null)",
+          data: { runN, mapReady, hasMapRef: hasMap },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => undefined);
+      // #endregion
+      return;
+    }
 
     const lat = searchParams.get("lat");
     const lon = searchParams.get("lon");
@@ -238,16 +354,53 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
       if (!Number.isNaN(latNum) && !Number.isNaN(lonNum)) {
         mapRef.current.setView([latNum, lonNum], zoomNum);
+        didInitialCompanyFitRef.current = true;
+      } else if (!didInitialCompanyFitRef.current) {
+        fitMapToCompanyLatLngs(mapRef.current, collectCompanyLatLngs(companies));
+        didInitialCompanyFitRef.current = true;
       }
+    } else if (!didInitialCompanyFitRef.current) {
+      fitMapToCompanyLatLngs(mapRef.current, collectCompanyLatLngs(companies));
+      didInitialCompanyFitRef.current = true;
     }
+
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
+      body: JSON.stringify({
+        sessionId: "b69f09",
+        hypothesisId: "H1",
+        location: "OpenMapView.tsx:initialViewEffect:afterBranches",
+        message: "initial view effect completed branches",
+        data: { runN, didInitialAfter: didInitialCompanyFitRef.current },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => undefined);
+    // #endregion
+
     setHasCentered(true);
-  }, [mapReady, searchParams]);
+  }, [mapReady, searchParams, companies]);
 
   // Main POI load handler with debounce
   const handleLoad = useCallback(() => {
     if (!mapRef.current) return;
 
     const zoom = mapRef.current.getZoom();
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
+      body: JSON.stringify({
+        sessionId: "b69f09",
+        hypothesisId: "H2",
+        location: "OpenMapView.tsx:handleLoad",
+        message: "handleLoad (moveend/zoomend debounced path)",
+        data: { zoom, autoLoadPois },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => undefined);
+    // #endregion
     setCurrentZoom(zoom);
 
     if (!autoLoadPois || zoom < 13) return;
@@ -313,19 +466,19 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     [mapProvider, isDarkMode, googleSession, googleApiKeyForTiles],
   );
 
-  const validCompanies = useMemo(
-    () => companies.filter((c) => typeof c.lat === "number" && typeof c.lon === "number"),
-    [companies],
-  );
+  const validCompanies = useMemo(() => {
+    return companies.filter((c) => {
+      const lat = toFiniteLatLon(c.lat);
+      const lon = toFiniteLatLon(c.lon);
+      return lat !== null && lon !== null && isWgs84Degrees(lat, lon);
+    });
+  }, [companies]);
 
-  const resetView = () => {
-    if (mapRef.current && validCompanies.length > 0) {
-      const bounds = L.latLngBounds(validCompanies.map((c) => [c.lat ?? 0, c.lon ?? 0]));
-      mapRef.current.fitBounds(bounds, { padding: [80, 80] });
-    } else if (mapRef.current) {
-      mapRef.current.flyTo([51.1657, 10.4515], 7);
-    }
-  };
+  const resetView = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    fitMapToCompanyLatLngs(map, collectCompanyLatLngs(validCompanies));
+  }, [validCompanies]);
 
   const handleImportOsmPoi = useCallback(
     async (poi: OsmPoi) => {
@@ -378,7 +531,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   return (
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
       <MapContainer
-        ref={mapRef}
         center={[50.1109, 8.6821]}
         zoom={7}
         style={{ height: "100%", width: "100%" }}
@@ -395,13 +547,20 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <TileLayer key={basemap.tileLayerReactKey} attribution={basemap.attribution} url={basemap.url} />
 
         {/* Company Markers */}
-        {validCompanies.map((company) => (
-          <Marker key={company.id} position={[company.lat ?? 0, company.lon ?? 0]} icon={getStatusIcon(company.status)}>
-            <Popup>
-              <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
-            </Popup>
-          </Marker>
-        ))}
+        <MapRefBinder mapRef={mapRef} />
+
+        {validCompanies.map((company) => {
+          const lat = toFiniteLatLon(company.lat);
+          const lon = toFiniteLatLon(company.lon);
+          if (lat === null || lon === null) return null;
+          return (
+            <Marker key={company.id} position={[lat, lon]} icon={getStatusIcon(company.status)}>
+              <Popup>
+                <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
+              </Popup>
+            </Marker>
+          );
+        })}
 
         <MapEventHandler onBoundsChange={debounced} />
 
