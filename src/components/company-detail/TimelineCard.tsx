@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
@@ -19,13 +20,14 @@ interface Props {
 }
 
 export default function TimelineCard({ companyId }: Props) {
+  const t = useT("timeline");
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
-  const getIcon = (t: string) => {
-    switch (t) {
+  const getIcon = (activityType: string) => {
+    switch (activityType) {
       case "note": return <FileText className="h-4 w-4" />;
       case "call": return <Phone className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
@@ -35,8 +37,8 @@ export default function TimelineCard({ companyId }: Props) {
     }
   };
 
-  const getVariant = (t: string) => {
-    switch (t) {
+  const getVariant = (activityType: string) => {
+    switch (activityType) {
       case "note": return "default";
       case "call": return "secondary";
       case "email": return "outline";
@@ -164,7 +166,7 @@ export default function TimelineCard({ companyId }: Props) {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Delete this timeline entry?")) {
+    if (confirm(t("deleteConfirmDescription"))) {
       deleteMutation.mutate(id);
     }
   };
@@ -200,7 +202,7 @@ export default function TimelineCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {timeline.length === 0 ? (
-              <p className="text-gray-500">No timeline entries for this company.</p>
+              <p className="text-muted-foreground">No timeline entries for this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -250,7 +252,7 @@ export default function TimelineCard({ companyId }: Props) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
                               onClick={() => handleDelete(entry.id)}
                             >
@@ -271,7 +273,7 @@ export default function TimelineCard({ companyId }: Props) {
       <Dialog open={!!editEntry} onOpenChange={() => setEditEntry(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Timeline Entry</DialogTitle>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
             key={editEntry?.id}
@@ -288,7 +290,7 @@ export default function TimelineCard({ companyId }: Props) {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Timeline Entry</DialogTitle>
+            <DialogTitle>{t("createDialogTitle")}</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
             onSubmit={handleTimelineSubmit}

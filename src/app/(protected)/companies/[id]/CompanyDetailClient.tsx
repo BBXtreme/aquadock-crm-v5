@@ -21,6 +21,7 @@ import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/types/database.types";
 
@@ -31,6 +32,8 @@ interface CompanyDetailClientProps {
 }
 
 export default function CompanyDetailClient({ company }: CompanyDetailClientProps) {
+  const tCompanies = useT("companies");
+  const tTimeline = useT("timeline");
   const router = useRouter();
   const queryClient = useQueryClient();
   const id = company.id;
@@ -93,7 +96,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       <Dialog open={editCompanyDialogOpen} onOpenChange={setEditCompanyDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
+            <DialogTitle>{tCompanies("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <CompanyEditForm
             company={company}
@@ -109,7 +112,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
       <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add Timeline Entry</DialogTitle>
+            <DialogTitle>{tTimeline("createDialogTitle")}</DialogTitle>
           </DialogHeader>
           <TimelineEntryForm
             onSubmit={async (values) => {

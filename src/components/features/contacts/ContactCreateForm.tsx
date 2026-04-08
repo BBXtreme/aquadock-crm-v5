@@ -1,10 +1,11 @@
-// src/components/features/ContactCreateForm.tsx
+// src/components/features/contacts/ContactCreateForm.tsx
 // This component renders a form for creating contact data. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create contact records. It also handles form state and displays success/error toasts.
 
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -15,10 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/contact-options";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 
 export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
+  const t = useT("contacts");
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
@@ -49,29 +52,33 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: (contact: ContactForm) => createContact({
-      vorname: contact.vorname,
-      nachname: contact.nachname,
-      anrede: contact.anrede ?? undefined,
-      position: contact.position ?? undefined,
-      email: contact.email ?? undefined,
-      telefon: contact.telefon ?? undefined,
-      mobil: contact.mobil ?? undefined,
-      durchwahl: contact.durchwahl ?? undefined,
-      notes: contact.notes ?? undefined,
-      company_id: contact.company_id ?? undefined,
-      is_primary: contact.is_primary,
-    }, createClient()),
+    mutationFn: (contact: ContactForm) =>
+      createContact(
+        {
+          vorname: contact.vorname,
+          nachname: contact.nachname,
+          anrede: contact.anrede ?? undefined,
+          position: contact.position ?? undefined,
+          email: contact.email ?? undefined,
+          telefon: contact.telefon ?? undefined,
+          mobil: contact.mobil ?? undefined,
+          durchwahl: contact.durchwahl ?? undefined,
+          notes: contact.notes ?? undefined,
+          company_id: contact.company_id ?? undefined,
+          is_primary: contact.is_primary,
+        },
+        createClient(),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       if (companyId) {
         queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
       }
-      toast.success("Contact created");
+      toast.success(t("toastCreated"));
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
+    onError: (err) => toast.error(t("toastCreateFailed"), { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
@@ -80,11 +87,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="vorname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vorname</FormLabel>
+              <FormLabel>{t("formVorname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -93,11 +100,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="nachname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nachname</FormLabel>
+              <FormLabel>{t("formNachname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -106,15 +113,15 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="anrede"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Anrede</FormLabel>
+              <FormLabel>{t("formSalutation")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select salutation" />
+                    <SelectValue placeholder={t("formSalutationPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -130,11 +137,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel>{t("formPosition")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} />
               </FormControl>
@@ -143,11 +150,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("formEmail")}</FormLabel>
               <FormControl>
                 <Input type="email" {...field} value={field.value ?? ""} />
               </FormControl>
@@ -156,11 +163,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="telefon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Telefon</FormLabel>
+              <FormLabel>{t("formTelefon")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} />
               </FormControl>
@@ -169,11 +176,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="mobil"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobil</FormLabel>
+              <FormLabel>{t("formMobil")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} />
               </FormControl>
@@ -182,11 +189,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Durchwahl</FormLabel>
+              <FormLabel>{t("formDurchwahl")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value ?? ""} />
               </FormControl>
@@ -195,11 +202,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>{t("formNotes")}</FormLabel>
               <FormControl>
                 <Textarea {...field} value={field.value ?? ""} />
               </FormControl>
@@ -208,15 +215,15 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="company_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company</FormLabel>
+              <FormLabel>{t("formCompany")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value ?? ""} disabled={!!companyId}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
+                    <SelectValue placeholder={t("formCompanyPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -232,7 +239,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating..." : "Create Contact"}
+          {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
         </Button>
       </form>
     </Form>

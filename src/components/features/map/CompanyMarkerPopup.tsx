@@ -3,19 +3,23 @@
 
 "use client";
 
-import { ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Droplets, ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { badgeColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { badgeColors } from "@/lib/constants/map-status-colors";
+import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
+import { useT } from "@/lib/i18n/use-translations";
 import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 import { getOpenStreetMapUrl } from "@/lib/utils/map-utils";
 
 import type { CompanyMarkerPopupProps } from "./types";
 
 export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps) {
+  const t = useT("openmap");
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
-  const statusLabel = statusLabels[statusKey] || "Lead";
+  const statusLabel = t(getOpenmapStatusMsgKey(statusKey));
 
   // Full address
   const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
@@ -31,113 +35,137 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
       : `https://${company.website}`
     : null;
 
+  const waterLine =
+    company.wasserdistanz !== null && company.wasserdistanz !== undefined
+      ? company.wasserdistanz === 0
+        ? t("waterAtWater")
+        : t("waterDistanceMeters", { meters: String(company.wasserdistanz) })
+      : null;
+
+  const hasContactBlock = Boolean(company.email || company.website || company.osm);
+  const hasDetailsSection = Boolean(fullAddress || waterLine !== null || hasContactBlock);
+
+  const actionButtonClass =
+    "flex h-auto min-h-10 w-full flex-row items-center justify-center gap-2 whitespace-nowrap px-4 py-2.5 text-sm font-medium leading-snug [&_svg]:shrink-0";
+
   return (
-    <div className="min-w-[320px] space-y-4 text-sm p-1">
-      {/* Header */}
-      <div>
-        <div className="font-semibold text-base text-foreground">{company.firmenname}</div>
-        {fullAddress && (
-          <div className="flex items-start gap-2 text-sm text-muted-foreground mt-1">
-            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-            <span>{fullAddress}</span>
-          </div>
-        )}
+    <div className="box-border w-full max-w-full min-w-[min(288px,100%)] space-y-5 p-0 text-sm text-card-foreground">
+      <div className="pr-1">
+        <div className="text-balance font-semibold text-base leading-snug tracking-tight text-foreground">{company.firmenname}</div>
       </div>
 
       {/* Badges */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex flex-wrap items-center gap-2">
         <div
-          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          className="whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-white shadow-sm ring-1 ring-border/60 dark:ring-border"
           style={{ backgroundColor: statusColor }}
         >
           {statusLabel}
         </div>
 
         <div
-          className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+          className="whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-white shadow-sm ring-1 ring-border/60 dark:ring-border"
           style={{ backgroundColor: kundentypColor }}
         >
-          <span>{getKundentypLabel(company.kundentyp?.toLowerCase() || "sonstige")}</span>
+          {getKundentypLabel(company.kundentyp?.toLowerCase() || "sonstige")}
         </div>
 
         {company.wassertyp && (
           <div
-            className="px-3 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
+            className="flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-white shadow-sm ring-1 ring-border/60 dark:ring-border"
             style={{ backgroundColor: wassertypColor }}
           >
-            💧 {company.wassertyp}
+            <Droplets className="h-3.5 w-3.5 opacity-95" aria-hidden />
+            {company.wassertyp}
           </div>
         )}
-      </div>
+
         {company.firmentyp && (
-          <div className="text-xs text-muted-foreground">{getFirmentypLabel(company.firmentyp)}</div>
-        )}
-
-      {/* Wasserdistanz */}
-      {company.wasserdistanz !== null && company.wasserdistanz !== undefined && (
-        <div className="text-xs text-muted-foreground">
-          {company.wasserdistanz === 0 ? "?" : company.wasserdistanz} m zum Wasser
-        </div>
-      )}
-
-      {/* Contact Info – Email + Website */}
-      <div className="space-y-2">
-        {company.email && (
-          <div className="flex items-center gap-2 text-sm">
-            <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <a href={`mailto:${company.email}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-              {company.email}
-            </a>
-          </div>
-        )}
-
-        {company.website && (
-          <div className="flex items-center gap-2 text-sm">
-            <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <a
-              href={websiteUrl || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline truncate"
-            >
-              Website öffnen
-            </a>
-          </div>
+          <Badge
+            variant="secondary"
+            className="h-auto max-w-full min-w-0 justify-start whitespace-normal rounded-lg px-2.5 py-1 text-left text-xs leading-snug"
+          >
+            {getFirmentypLabel(company.firmentyp)}
+          </Badge>
         )}
       </div>
 
-      {/* OSM Link */}
-      {company.osm && (
-        <div className="text-xs">
-          <a
-            href={getOpenStreetMapUrl(company.osm)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            OpenStreetMap Eintrag
-          </a>
+      {hasDetailsSection && (
+        <div className="space-y-2.5">
+          {fullAddress && (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 leading-relaxed">{fullAddress}</span>
+            </div>
+          )}
+
+          {waterLine !== null && (
+            <div className="flex items-start gap-2 text-sm font-medium text-foreground">
+              <Droplets className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+              <span className="min-w-0 leading-relaxed">{waterLine}</span>
+            </div>
+          )}
+
+          {company.email && (
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <a
+                href={`mailto:${company.email}`}
+                className="min-w-0 break-all font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {company.email}
+              </a>
+            </div>
+          )}
+
+          {company.website && (
+            <div className="flex items-center gap-2 text-sm">
+              <Globe className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <a
+                href={websiteUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 truncate font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {t("popupWebsiteOpen")}
+              </a>
+            </div>
+          )}
+
+          {company.osm && (
+            <div className="flex items-center gap-2 text-sm">
+              <Globe className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <a
+                href={getOpenStreetMapUrl(company.osm)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 font-medium text-primary underline underline-offset-2 transition-colors hover:text-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                {t("popupOpenOsm")}
+              </a>
+            </div>
+          )}
         </div>
       )}
 
       {/* Quick Actions */}
-      <div className="flex gap-2 pt-3 border-t border-border">
+      <div className="flex flex-col gap-2.5 border-t border-border/80 pt-4">
         <Button
-          size="sm"
+          size="default"
           variant="default"
-          className="flex-1"
+          className={actionButtonClass}
           onClick={() => window.open(`/companies/${company.id}`, "_blank")}
           type="button"
         >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          Firma öffnen
+          <ExternalLink className="size-4" aria-hidden />
+            <span className="min-w-0 max-w-full truncate text-center">{t("popupOpenCompany")}</span>
         </Button>
 
         {company.telefon && (
-          <Button size="sm" variant="outline" asChild type="button">
-            <a href={`tel:${company.telefon}`} title="Anrufen">
-              <Phone className="h-4 w-4" />
+          <Button size="default" variant="outline" className={actionButtonClass} asChild type="button">
+            <a href={`tel:${company.telefon}`}>
+              <Phone className="size-4" aria-hidden />
+              <span className="min-w-0 max-w-full truncate text-center">{t("popupCallTitle")}</span>
             </a>
           </Button>
         )}

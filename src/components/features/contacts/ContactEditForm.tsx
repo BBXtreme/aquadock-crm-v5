@@ -1,4 +1,4 @@
-// src/components/features/ContactEditForm.tsx
+// src/components/features/contacts/ContactEditForm.tsx
 // This component renders a form for editing contact data. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create or update contact records. It also handles form state and displays success/error toasts.
 
 "use client";
@@ -6,6 +6,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
+import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createContact, updateContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/contact-options";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Database } from "@/types/database.types";
@@ -30,6 +32,7 @@ export default function ContactEditForm({
   onSuccess?: () => void;
   preselectedCompanyId?: string;
 }) {
+  const t = useT("contacts");
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -37,7 +40,6 @@ export default function ContactEditForm({
       if (contact) {
         return updateContact(contact.id, data as Database["public"]["Tables"]["contacts"]["Update"], createClient());
       }
-      // create
       const supabase = createClient();
       return await createContact(data as Database["public"]["Tables"]["contacts"]["Insert"], supabase);
     },
@@ -49,11 +51,11 @@ export default function ContactEditForm({
       }
       queryClient.invalidateQueries({ queryKey: ["contacts", data?.company_id] });
       queryClient.invalidateQueries({ queryKey: ["reminders", data?.company_id] });
-      toast.success(contact ? "Contact updated" : "Contact created");
+      toast.success(contact ? t("toastUpdated") : t("toastCreated"));
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Operation failed", { description: err.message }),
+    onError: (err) => toast.error(t("toastOperationFailed"), { description: err.message }),
   });
 
   const form = useForm<ContactForm>({
@@ -107,11 +109,11 @@ export default function ContactEditForm({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="vorname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Vorname</FormLabel>
+              <FormLabel>{t("formVorname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -120,11 +122,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="nachname"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nachname</FormLabel>
+              <FormLabel>{t("formNachname")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -133,15 +135,15 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="anrede"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Anrede</FormLabel>
+              <FormLabel>{t("formSalutation")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select anrede" />
+                    <SelectValue placeholder={t("formSalutationPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -157,11 +159,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="position"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Position</FormLabel>
+              <FormLabel>{t("formPosition")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -170,11 +172,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>{t("formEmail")}</FormLabel>
               <FormControl>
                 <Input type="email" {...field} value={field.value || ""} />
               </FormControl>
@@ -183,11 +185,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="telefon"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Telefon</FormLabel>
+              <FormLabel>{t("formTelefon")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -196,11 +198,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="mobil"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobil</FormLabel>
+              <FormLabel>{t("formMobil")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -209,11 +211,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="durchwahl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Durchwahl</FormLabel>
+              <FormLabel>{t("formDurchwahl")}</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} />
               </FormControl>
@@ -222,11 +224,11 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>{t("formNotes")}</FormLabel>
               <FormControl>
                 <Textarea {...field} value={field.value || ""} />
               </FormControl>
@@ -235,15 +237,15 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="company_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company</FormLabel>
+              <FormLabel>{t("formCompany")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
+                    <SelectValue placeholder={t("formCompanyPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -259,7 +261,7 @@ export default function ContactEditForm({
           )}
         />
         <FormField
-          control={form.control}
+          control={form.control as Control<ContactForm>}
           name="is_primary"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
@@ -267,7 +269,7 @@ export default function ContactEditForm({
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Primary Contact</FormLabel>
+                <FormLabel>{t("formIsPrimary")}</FormLabel>
               </div>
             </FormItem>
           )}
@@ -275,11 +277,11 @@ export default function ContactEditForm({
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending
             ? contact
-              ? "Updating..."
-              : "Creating..."
+              ? t("formSubmitUpdating")
+              : t("formSubmitCreating")
             : contact
-              ? "Update Contact"
-              : "Create Contact"}
+              ? t("formSubmitUpdate")
+              : t("formSubmitCreate")}
         </Button>
       </form>
     </Form>

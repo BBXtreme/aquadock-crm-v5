@@ -9,21 +9,24 @@ import { Suspense } from "react";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
 import type { CompanyForOpenMap } from "@/lib/actions/companies";
+import { useT } from "@/lib/i18n/use-translations";
 
 const OpenMapView = dynamic(() => import("./OpenMapView"), { ssr: false });
 
 type OpenMapProps = {
   initialCompanies: CompanyForOpenMap[];
-  error?: string | null;
+  mapLoadFailed?: boolean;
 };
 
-export function OpenMapClient({ initialCompanies, error }: OpenMapProps) {
-  if (error) {
+export function OpenMapClient({ initialCompanies, mapLoadFailed }: OpenMapProps) {
+  const t = useT("openmap");
+
+  if (mapLoadFailed) {
     return (
       <div className="h-full flex items-center justify-center bg-muted/40">
         <div className="text-center">
-          <p className="text-lg font-medium text-red-600">Fehler beim Laden der Karte</p>
-          <p className="text-sm text-muted-foreground mt-2">{error}</p>
+          <p className="text-lg font-medium text-destructive">{t("loadErrorTitle")}</p>
+          <p className="text-sm text-muted-foreground mt-2">{t("loadErrorDescription")}</p>
         </div>
       </div>
     );

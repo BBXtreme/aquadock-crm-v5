@@ -38,6 +38,7 @@ import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import type { Company, Contact } from "@/types/database.types";
@@ -63,6 +64,8 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 function ClientCompaniesPage() {
+  const t = useT("companies");
+  const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -232,12 +235,12 @@ function ClientCompaniesPage() {
       if (ctx?.previousCompanies && ctx.queryKey) {
         queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      toast.error("Update failed", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastUpdateFailed"), { description: message });
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["companies"] });
-      toast.success("Company updated");
+      toast.success(t("toastUpdated"));
     },
   });
 
@@ -272,12 +275,12 @@ function ClientCompaniesPage() {
       if (ctx?.previousCompanies && ctx.queryKey) {
         queryClient.setQueryData(ctx.queryKey, ctx.previousCompanies);
       }
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      toast.error("Deletion failed", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastDeleteFailed"), { description: message });
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["companies"] });
-      toast.success("Company deleted");
+      toast.success(t("toastDeleted"));
     },
   });
 
@@ -290,19 +293,19 @@ function ClientCompaniesPage() {
       const { error } = await supabase.from("companies").delete().in("id", selectedIds);
       if (error) throw error;
 
-      toast.success(`Deleted ${selectedIds.length} companies`);
+      toast.success(t("toastBulkDeleted", { count: selectedIds.length }));
       queryClient.refetchQueries({ queryKey: ["companies"] });
       setRowSelection({});
       setBulkDeleteDialogOpen(false);
     } catch (err) {
-      toast.error("Bulk delete failed", { description: (err as Error).message });
+      toast.error(t("toastBulkDeleteFailed"), { description: (err as Error).message });
     }
   };
 
   const handleImportSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
     window.dispatchEvent(new CustomEvent("company-imported"));
-    toast.success("Companies successfully imported from CSV");
+    toast.success(t("toastImportSuccess"));
   };
 
   const searchParams = useSearchParams();
@@ -318,19 +321,19 @@ function ClientCompaniesPage() {
     <>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">Home → Companies</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Companies
+          <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t("title")}
           </h1>
-          <p className="text-muted-foreground">Leads, Partners & Friends</p>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>New Company</Button>
+            <Button>{t("newCompany")}</Button>
           </DialogTrigger>
           <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Create New Company</DialogTitle>
+              <DialogTitle>{t("createDialogTitle")}</DialogTitle>
             </DialogHeader>
             <CompanyCreateForm onSuccess={() => setDialogOpen(false)} />
           </WideDialogContent>
@@ -341,32 +344,32 @@ function ClientCompaniesPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Gesamt Firmen"
-            value={stats.total.toLocaleString("de-DE")}
+            title={t("statTotal")}
+            value={stats.total.toLocaleString(localeTag)}
             icon={<Building className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+12% from last month"
+            change={t("statTrend")}
           />
           <StatCard
-            title="Leads"
-            value={stats.leads.toLocaleString("de-DE")}
+            title={t("statLeads")}
+            value={stats.leads.toLocaleString(localeTag)}
             icon={<Users className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+8% from last month"
+            change={t("statTrend")}
           />
           <StatCard
-            title="Gewonnene Deals"
-            value={stats.won.toLocaleString("de-DE")}
+            title={t("statWon")}
+            value={stats.won.toLocaleString(localeTag)}
             icon={<Trophy className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+15% from last month"
+            change={t("statTrend")}
           />
           <StatCard
-            title="Gesamtwert"
-            value={`€${stats.value.toLocaleString("de-DE")}`}
+            title={t("statValue")}
+            value={`€${stats.value.toLocaleString(localeTag)}`}
             icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
             className="border-none shadow-sm bg-card/90 hover:shadow-md"
-            change="+22% from last month"
+            change={t("statTrend")}
           />
         </div>
 
@@ -401,7 +404,7 @@ function ClientCompaniesPage() {
                     })
                   }
                 >
-                  Clear all
+                  {t("clearAllFilters")}
                 </Button>
               )}
             </div>
@@ -410,13 +413,16 @@ function ClientCompaniesPage() {
               <AccordionItem>
                 <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
                   {Object.values(activeFilters).flat().length > 0
-                    ? `Filters (${Object.values(activeFilters).flat().length}) • ${total} companies found`
-                    : "Filters"}
+                    ? t("filtersWithCount", {
+                        count: Object.values(activeFilters).flat().length,
+                        total,
+                      })
+                    : t("filters")}
                 </AccordionTrigger>
                 <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
                   {/* Status */}
                   <div className="mb-4">
-                    <h4 className="font-normal mb-2">Status</h4>
+                    <h4 className="font-normal mb-2">{t("filterStatus")}</h4>
                     <div className="flex flex-wrap gap-2">
                       {statusOptions.map((option) => {
                         const Icon = statusIcons[option.value];
@@ -443,7 +449,7 @@ function ClientCompaniesPage() {
 
                   {/* Kategorie */}
                   <div className="mb-4">
-                    <h4 className="font-normal mb-2">Kategorie</h4>
+                    <h4 className="font-normal mb-2">{t("filterCategory")}</h4>
                     <div className="flex flex-wrap gap-2">
                       {kundentypOptions.map((option) => {
                         const Icon = kategorieIcons[option.value];
@@ -470,7 +476,7 @@ function ClientCompaniesPage() {
 
                   {/* Betriebstyp */}
                   <div className="mb-4">
-                    <h4 className="font-normal mb-2">Betriebstyp</h4>
+                    <h4 className="font-normal mb-2">{t("filterBusinessType")}</h4>
                     <div className="flex flex-wrap gap-2">
                       {firmentypOptions.map((option) => {
                         const isActive = activeFilters.betriebstyp.includes(option.value);
@@ -495,7 +501,7 @@ function ClientCompaniesPage() {
 
                   {/* Land */}
                   <div>
-                    <h4 className="font-normal mb-2">Land</h4>
+                    <h4 className="font-normal mb-2">{t("filterCountry")}</h4>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
                         const dynamicLandOptions = distinctLands.map((land) => ({ value: land, label: land }));
@@ -528,20 +534,20 @@ function ClientCompaniesPage() {
             {Object.keys(rowSelection).length > 0 && (
               <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" title="Delete selected companies">
+                  <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>
                     <Trash className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Confirm Bulk Delete</AlertDialogTitle>
+                    <AlertDialogTitle>{t("bulkDeleteTitle")}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete these {Object.keys(rowSelection).length} companies? This action cannot be undone.
+                      {t("bulkDeleteDescription", { count: Object.keys(rowSelection).length })}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleBulkDelete}>Delete</AlertDialogAction>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleBulkDelete}>{t("delete")}</AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
@@ -572,7 +578,7 @@ function ClientCompaniesPage() {
         <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
           <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Edit Company</DialogTitle>
+              <DialogTitle>{t("editDialogTitle")}</DialogTitle>
             </DialogHeader>
             <CompanyEditForm
               company={editingCompany}

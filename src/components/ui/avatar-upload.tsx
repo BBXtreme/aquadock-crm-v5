@@ -1,3 +1,5 @@
+// src/components/ui/avatar-upload.tsx
+// This file contains the avatar upload component.  
 "use client";
 
 import { Check, Loader2, Pencil } from "lucide-react";
@@ -17,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { updateProfileAvatar } from "@/lib/actions/profile";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -119,6 +122,7 @@ type AvatarUploadProps = {
 };
 
 export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUploadProps) {
+  const t = useT("profile");
   const router = useRouter();
   const inputId = useId();
   const dropZoneRef = useRef<HTMLElement>(null);
@@ -391,10 +395,10 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
           {removing ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-              Wird entfernt…
+              {t("removeInProgress")}
             </>
           ) : (
-            "Profilbild entfernen"
+            t("removeAvatar")
           )}
         </Button>
       ) : null}
@@ -409,16 +413,14 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
       >
         <DialogContent className="sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <DialogTitle>Vorschau</DialogTitle>
-            <DialogDescription>
-              So wird Ihr Profilbild angezeigt. Bestätigen Sie den Upload oder brechen Sie ab.
-            </DialogDescription>
+            <DialogTitle>{t("avatarPreviewTitle")}</DialogTitle>
+            <DialogDescription>{t("avatarPreviewDescription")}</DialogDescription>
           </DialogHeader>
           {previewObjectUrl !== null ? (
             <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-lg border border-border bg-muted">
               <Image
                 src={previewObjectUrl}
-                alt="Vorschau Profilbild"
+                alt={t("avatarPreviewAlt")}
                 fill
                 className="object-cover"
                 sizes="280px"
@@ -428,16 +430,16 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
           ) : null}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button type="button" variant="outline" onClick={cancelPreview} disabled={uploading}>
-              Abbrechen
+              {t("cancel")}
             </Button>
             <Button type="button" onClick={confirmUpload} disabled={uploading || pendingFile === null}>
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  Wird hochgeladen…
+                  {t("uploading")}
                 </>
               ) : (
-                "Hochladen"
+                t("confirmUpload")
               )}
             </Button>
           </DialogFooter>

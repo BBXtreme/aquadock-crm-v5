@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { changeUserRole, deleteUser, triggerPasswordReset } from "@/lib/services/profile";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
@@ -30,6 +31,8 @@ function UserManagementCard({
     last_sign_in_at: string | null;
   }[];
 }) {
+  const t = useT("settings");
+  const localeTag = useNumberLocaleTag();
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
@@ -43,10 +46,10 @@ function UserManagementCard({
       formData.append('userId', userId);
       formData.append('newRole', newRole);
       await changeUserRole(formData);
-      toast.success("Role updated successfully");
+      toast.success(t("userManagement.toastRoleUpdated"));
       window.location.reload();
     } catch (_error) {
-      toast.error("Failed to update role");
+      toast.error(t("userManagement.toastRoleUpdateFailed"));
     } finally {
       setLoadingRole(null);
     }
@@ -58,9 +61,9 @@ function UserManagementCard({
       const formData = new FormData();
       formData.append('userId', userId);
       await triggerPasswordReset(formData);
-      toast.success("Password reset email sent");
+      toast.success(t("userManagement.toastResetEmailSent"));
     } catch (_error) {
-      toast.error("Failed to send reset email");
+      toast.error(t("userManagement.toastResetEmailFailed"));
     } finally {
       setLoadingReset(null);
     }
@@ -73,11 +76,11 @@ function UserManagementCard({
       const formData = new FormData();
       formData.append('userId', deleteUserId);
       await deleteUser(formData);
-      toast.success("User deleted successfully");
+      toast.success(t("userManagement.toastUserDeleted"));
       setDeleteUserId(null);
       window.location.reload();
     } catch (_error) {
-      toast.error("Failed to delete user");
+      toast.error(t("userManagement.toastUserDeleteFailed"));
     } finally {
       setLoadingDelete(null);
     }
@@ -89,7 +92,7 @@ function UserManagementCard({
         <CardHeader className="pb-6">
           <CardTitle className="flex items-center text-xl">
             <Users className="mr-3 h-6 w-6 text-primary" />
-            User Management
+            {t("userManagement.cardTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -98,17 +101,19 @@ function UserManagementCard({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Zuletzt angemeldet</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t("userManagement.colName")}</TableHead>
+                    <TableHead>{t("userManagement.colEmail")}</TableHead>
+                    <TableHead>{t("userManagement.colRole")}</TableHead>
+                    <TableHead>{t("userManagement.colLastSignIn")}</TableHead>
+                    <TableHead>{t("userManagement.colActions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {allUsers.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell className="font-medium">{u.display_name || 'No display name'}</TableCell>
+                      <TableCell className="font-medium">
+                        {u.display_name || t("userManagement.noDisplayName")}
+                      </TableCell>
                       <TableCell>{u.email}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="capitalize">
@@ -124,7 +129,7 @@ function UserManagementCard({
                           </TooltipTrigger>
                           <TooltipContent>
                             {u.last_sign_in_at
-                              ? new Date(u.last_sign_in_at).toLocaleString("de-DE", {
+                              ? new Date(u.last_sign_in_at).toLocaleString(localeTag, {
                                   dateStyle: "medium",
                                   timeStyle: "short",
                                 })
@@ -144,7 +149,7 @@ function UserManagementCard({
                           ) : (
                             <Shield className="h-4 w-4 mr-1" />
                           )}
-                          {u.role === 'admin' ? 'Demote' : 'Promote'}
+                          {u.role === "admin" ? t("userManagement.demote") : t("userManagement.promote")}
                         </Button>
                         <Button
                           size="sm"
@@ -157,7 +162,7 @@ function UserManagementCard({
                           ) : (
                             <Mail className="h-4 w-4 mr-1" />
                           )}
-                          Reset
+                          {t("userManagement.resetPassword")}
                         </Button>
                         <Button
                           size="sm"
@@ -166,7 +171,7 @@ function UserManagementCard({
                           disabled={loadingDelete === u.id}
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
+                          {t("userManagement.delete")}
                         </Button>
                       </div>
                     </TableCell>
@@ -182,14 +187,12 @@ function UserManagementCard({
       <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
-            </DialogDescription>
+            <DialogTitle>{t("userManagement.deleteConfirmTitle")}</DialogTitle>
+            <DialogDescription>{t("userManagement.deleteConfirmDescription")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteUserId(null)}>
-              Cancel
+              {t("userManagement.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -199,7 +202,7 @@ function UserManagementCard({
               {loadingDelete === deleteUserId ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Delete
+              {t("userManagement.delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,15 +2,14 @@
 // This file defines the Profile page of the application, which displays the user's profile information and allows them to update their display name and manage their account.
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
-import { LogOut, User } from "lucide-react";
+import { User } from "lucide-react";
 import ProfilForm from "@/components/features/profile/ProfileForm";
+import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/require-user";
-import { signOut } from "@/lib/services/profile";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -144,12 +143,7 @@ export default async function ProfilePage() {
           <CardTitle className="text-xl">Account Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={signOut}>
-            <Button variant="destructive" className="flex items-center h-11 px-6" type="submit">
-              <LogOut className="mr-2 h-5 w-5" />
-              Sign Out
-            </Button>
-          </form>
+          <ProfileSignOutButton />
         </CardContent>
       </Card>
 

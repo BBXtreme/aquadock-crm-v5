@@ -4,11 +4,11 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { RefreshCw } from "lucide-react";
+import { Mail, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -123,78 +123,124 @@ export default function SmtpSettings() {
   };
 
   return (
-    <Card>
+    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
       <CardHeader>
-        <CardTitle>SMTP-Konfiguration</CardTitle>
+        <CardTitle className="flex items-center">
+          <Mail className="mr-2 h-5 w-5" />
+          SMTP-Konfiguration
+        </CardTitle>
+        <CardDescription>
+          Versand von E-Mails über Ihren SMTP-Server. Zugangsdaten werden pro Benutzer gespeichert.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label>Host</Label>
+        <div className="space-y-2">
+          <Label htmlFor="smtp-host" className="text-sm font-medium">
+            Host
+          </Label>
           <Input
+            id="smtp-host"
+            className="max-w-md"
             value={host}
             onChange={(e) => setHost(e.target.value)}
             placeholder="smtp.example.com"
+            autoComplete="off"
           />
         </div>
-        <div>
-          <Label>Port</Label>
+        <div className="space-y-2">
+          <Label htmlFor="smtp-port" className="text-sm font-medium">
+            Port
+          </Label>
           <Input
+            id="smtp-port"
+            className="max-w-md"
             value={port}
             onChange={(e) => setPort(e.target.value)}
             placeholder="587"
+            inputMode="numeric"
+            autoComplete="off"
           />
         </div>
-        <div>
-          <Label>User (E-Mail)</Label>
+        <div className="space-y-2">
+          <Label htmlFor="smtp-user" className="text-sm font-medium">
+            User (E-Mail)
+          </Label>
           <Input
+            id="smtp-user"
+            className="max-w-md"
             value={user}
             onChange={(e) => setUser(e.target.value)}
             placeholder="your@email.com"
+            autoComplete="username"
           />
         </div>
-        <div>
-          <Label>Password</Label>
+        <div className="space-y-2">
+          <Label htmlFor="smtp-password" className="text-sm font-medium">
+            Password
+          </Label>
           <Input
+            id="smtp-password"
+            className="max-w-md"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
         </div>
-        <div>
-          <Label>From Name</Label>
+        <div className="space-y-2">
+          <Label htmlFor="smtp-from-name" className="text-sm font-medium">
+            From Name
+          </Label>
           <Input
+            id="smtp-from-name"
+            className="max-w-md"
             value={fromName}
             onChange={(e) => setFromName(e.target.value)}
             placeholder="AquaDock CRM"
+            autoComplete="off"
           />
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Checkbox
             id="secure"
             checked={secure}
             onCheckedChange={(checked) => setSecure(checked === true)}
           />
-          <Label htmlFor="secure">SSL/TLS verwenden</Label>
+          <Label htmlFor="secure" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            SSL/TLS verwenden
+          </Label>
         </div>
-        <div className="space-y-3">
-          <div>
-            <Label>Test-E-Mail-Adresse</Label>
+
+        <div className="border-t border-border pt-4 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="smtp-test-email" className="text-sm font-medium">
+              Test-E-Mail-Adresse
+            </Label>
             <Input
+              id="smtp-test-email"
+              className="max-w-md"
               type="email"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               placeholder="deine@email.de"
+              autoComplete="email"
             />
           </div>
-
-          <div className="flex gap-4">
-            <Button onClick={() => void loadConfig()} disabled={isLoadingConfig} variant="outline" size="icon">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => void loadConfig()}
+              disabled={isLoadingConfig}
+              variant="outline"
+              size="icon"
+              title="Konfiguration neu laden"
+            >
               <RefreshCw className={`h-4 w-4 ${isLoadingConfig ? "animate-spin" : ""}`} />
             </Button>
-            <Button onClick={handleTest} className="flex-1">
+            <Button type="button" onClick={() => void handleTest()} disabled={isTesting}>
               {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
             </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="flex-1">
+            <Button type="button" onClick={() => void handleSave()} disabled={isSaving}>
               {isSaving ? "Speichere..." : "Konfiguration speichern"}
             </Button>
           </div>

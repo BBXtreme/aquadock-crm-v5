@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useT } from "@/lib/i18n/use-translations";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
 
 const PREVIEW_FIELD_KEYS: (keyof ParsedCompanyRow)[] = [
@@ -39,27 +40,9 @@ const PREVIEW_FIELD_KEYS: (keyof ParsedCompanyRow)[] = [
   "osm",
 ];
 
-const COLUMN_LABELS: Record<keyof ParsedCompanyRow, string> = {
-  firmenname: "Firmenname",
-  kundentyp: "Kundentyp",
-  wasser_distanz: "Wasserdistanz (m)",
-  wassertyp: "Wassertyp",
-  strasse: "Straße",
-  plz: "PLZ",
-  ort: "Ort",
-  bundesland: "Bundesland",
-  land: "Land",
-  telefon: "Telefon",
-  website: "Website",
-  email: "E-Mail",
-  lat: "Lat",
-  lon: "Lon",
-  osm: "OSM",
-};
-
-function cellString(value: string | number | undefined | null): string {
+function cellString(value: string | number | undefined | null, dash: string): string {
   if (value === undefined || value === null || value === "") {
-    return "—";
+    return dash;
   }
   return String(value);
 }
@@ -78,23 +61,6 @@ function getDetectedColumnKeys(rows: ParsedCompanyRow[]): string[] {
 }
 
 const columnHelper = createColumnHelper<ParsedCompanyRow>();
-
-function buildColumns(): ColumnDef<ParsedCompanyRow>[] {
-  return PREVIEW_FIELD_KEYS.map((key) =>
-    columnHelper.accessor(key, {
-      id: key,
-      header: COLUMN_LABELS[key],
-      cell: (info) => {
-        const value = info.getValue();
-        if (key === "lat" || key === "lon") {
-          const n = value as number | undefined;
-          return <span className="whitespace-nowrap">{n !== undefined ? n.toFixed(4) : "—"}</span>;
-        }
-        return <span className="whitespace-nowrap">{cellString(value as string | number | undefined)}</span>;
-      },
-    }),
-  ) as ColumnDef<ParsedCompanyRow>[];
-}
 
 export interface CSVPreviewViewProps {
   open: boolean;
@@ -115,7 +81,27 @@ export function CSVPreviewView({
   onBackToEdit,
   onCancel,
 }: CSVPreviewViewProps) {
-  const columns = useMemo(() => buildColumns(), []);
+  const t = useT("csvImport");
+  const tCommon = useT("common");
+  const dash = tCommon("dash");
+  const columns = useMemo(
+    () =>
+      PREVIEW_FIELD_KEYS.map((key) =>
+        columnHelper.accessor(key, {
+          id: key,
+          header: t(`cols.${key}`),
+          cell: (info) => {
+            const value = info.getValue();
+            if (key === "lat" || key === "lon") {
+              const n = value as number | undefined;
+              return <span className="whitespace-nowrap">{n !== undefined ? n.toFixed(4) : dash}</span>;
+            }
+            return <span className="whitespace-nowrap">{cellString(value as string | number | undefined, dash)}</span>;
+          },
+        }),
+      ) as ColumnDef<ParsedCompanyRow>[],
+    [t, dash],
+  );
   const detectedKeys = useMemo(() => getDetectedColumnKeys(rows), [rows]);
 
   const table = useReactTable({
@@ -124,6 +110,9 @@ export function CSVPreviewView({
     getCoreRowModel: getCoreRowModel(),
     getRowId: (_row, index) => `csv-preview-row-${String(index)}`,
   });
+
+  const fieldsSummary =
+    detectedKeys.length > 0 ? detectedKeys.join(", ") : t("previewMetaNoFields");
 
   return (
     <Dialog
@@ -143,10 +132,10 @@ export function CSVPreviewView({
           <DialogHeader className="shrink-0 space-y-1 border-b border-border px-6 py-4 text-left">
             <div className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-muted-foreground" aria-hidden />
-              <DialogTitle className="text-lg">CSV-Vorschau</DialogTitle>
+              <DialogTitle className="text-lg">{t("previewTitle")}</DialogTitle>
             </div>
             <DialogDescription className="text-muted-foreground text-sm">
-              {fileName} · {rows.length} Zeilen · erkannte Felder: {detectedKeys.length > 0 ? detectedKeys.join(", ") : "—"}
+              {t("previewMeta", { fileName, count: rows.length, fields: fieldsSummary })}
             </DialogDescription>
           </DialogHeader>
 
@@ -154,10 +143,10 @@ export function CSVPreviewView({
             <div className="shrink-0 border-b border-border px-6 py-2">
               <TabsList variant="line" className="w-full justify-start sm:w-auto">
                 <TabsTrigger value="preview" className="px-3">
-                  Vorschau
+                  {t("previewTabPreview")}
                 </TabsTrigger>
                 <TabsTrigger value="guide" className="px-3">
-                  Feldreferenz
+                  {t("previewTabGuide")}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -202,24 +191,22 @@ export function CSVPreviewView({
           </Tabs>
 
           <div className="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/30 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">
-              {rows.length} Datensätze werden importiert. Bitte prüfen Sie die Vorschau, bevor Sie fortfahren.
-            </p>
+            <p className="text-muted-foreground text-xs sm:text-sm">{t("previewFooter", { count: rows.length })}</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isImporting}>
-                Abbrechen
+                {t("previewCancel")}
               </Button>
               <Button type="button" variant="secondary" onClick={onBackToEdit} disabled={isImporting}>
-                Zurück zur Bearbeitung
+                {t("previewBack")}
               </Button>
               <Button type="button" onClick={onImportNow} disabled={isImporting || rows.length === 0}>
                 {isImporting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                    Import läuft…
+                    {t("previewImporting")}
                   </>
                 ) : (
-                  `Jetzt importieren (${rows.length})`
+                  t("previewImport", { count: rows.length })
                 )}
               </Button>
             </div>

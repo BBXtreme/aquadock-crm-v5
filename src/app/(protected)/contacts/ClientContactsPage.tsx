@@ -15,12 +15,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContact, getContacts } from "@/lib/actions/contacts";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
 function ClientContactsPage() {
+  const t = useT("contacts");
+  const localeTag = useNumberLocaleTag();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
@@ -97,28 +100,28 @@ function ClientContactsPage() {
       if (context?.previousContacts && context.queryKey) {
         queryClient.setQueryData(context.queryKey, context.previousContacts);
       }
-      const message = err instanceof Error ? err.message : "An unknown error occurred";
-      toast.error("Deletion failed", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastDeleteFailed"), { description: message });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success("Contact deleted");
+      toast.success(t("toastDeleted"));
     },
   });
 
   const _handleBulkDelete = useCallback(async () => {
     const selectedIds = Object.keys(rowSelection);
     if (selectedIds.length === 0) return;
-    if (!confirm(`Delete ${selectedIds.length} contacts?`)) return;
+    if (!confirm(t("confirmBulkDelete", { count: selectedIds.length }))) return;
     try {
       await Promise.all(selectedIds.map((id) => deleteContact(id, createClient())));
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      toast.success(`${selectedIds.length} contacts deleted`);
+      toast.success(t("toastBulkDeleted", { count: selectedIds.length }));
       setRowSelection({});
     } catch (error) {
-      toast.error("Bulk delete failed", { description: (error as Error).message });
+      toast.error(t("toastBulkDeleteFailed"), { description: (error as Error).message });
     }
-  }, [rowSelection, queryClient]);
+  }, [rowSelection, queryClient, t]);
 
   const handleEdit = useCallback((contact: Contact | null) => {
     if (contact) {
@@ -139,19 +142,19 @@ function ClientContactsPage() {
     <>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">Home → Contacts</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Contacts
+          <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t("title")}
           </h1>
-          <p className="text-muted-foreground">Leute, die am Wasser leben</p>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>New Contact</Button>
+            <Button>{t("newContact")}</Button>
           </DialogTrigger>
           <WideDialogContent size="2xl">
             <DialogHeader>
-              <DialogTitle>Create New Contact</DialogTitle>
+              <DialogTitle>{t("createDialogTitle")}</DialogTitle>
             </DialogHeader>
             <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
           </WideDialogContent>
@@ -160,25 +163,25 @@ function ClientContactsPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
-          title="Total Contacts"
-          value={totalContacts.toLocaleString("de-DE")}
+          title={t("statTotal")}
+          value={totalContacts.toLocaleString(localeTag)}
           icon={<Users className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+8% from last month"
+          change={t("statTrendContacts")}
         />
         <StatCard
-          title="Primary Contacts"
-          value={primaryContacts.toLocaleString("de-DE")}
+          title={t("statPrimary")}
+          value={primaryContacts.toLocaleString(localeTag)}
           icon={<Users className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+5% from last month"
+          change={t("statTrendPrimary")}
         />
         <StatCard
-          title="Companies with Contacts"
-          value={companiesWithContacts.toLocaleString("de-DE")}
+          title={t("statCompanies")}
+          value={companiesWithContacts.toLocaleString(localeTag)}
           icon={<Building className="h-5 w-5 text-muted-foreground" />}
           className="border-none shadow-sm bg-card/90 hover:shadow-md"
-          change="+12% from last month"
+          change={t("statTrendCompanies")}
         />
       </div>
 
@@ -202,7 +205,7 @@ function ClientContactsPage() {
         <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Contact</DialogTitle>
+              <DialogTitle>{t("editDialogTitle")}</DialogTitle>
             </DialogHeader>
             <ContactEditForm
               contact={editContact}

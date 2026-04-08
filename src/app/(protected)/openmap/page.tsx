@@ -16,17 +16,17 @@ export default async function OpenMapPage() {
   const _user = await requireUser();
 
   let companies: CompanyForOpenMap[] = [];
-  let error: string | null = null;
+  let mapLoadFailed = false;
 
   try {
     companies = await getCompaniesForOpenMap(await createServerSupabaseClient());
   } catch (_err: unknown) {
-    error = "Fehler beim Laden der Karte. Bitte versuche es erneut.";
+    mapLoadFailed = true;
   }
 
   return (
     <div className="h-[calc(100vh-4rem)] w-full relative">
-      <OpenMapClient initialCompanies={companies} error={error} />
+      <OpenMapClient initialCompanies={companies} mapLoadFailed={mapLoadFailed} />
     </div>
   );
 }

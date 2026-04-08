@@ -1,20 +1,29 @@
 // src/app/layout.tsx
-// This is the root layout for the entire application. It wraps all pages and components, providing a consistent structure and styling across the app.
+// This is the root layout for the entire application. It wraps all pages and components, providing a consistent structure and styling across the application.
 
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
+import Script from "next/script";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import type React from "react";
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ClientLayout from "@/components/layout/ClientLayout";
+import { RootDocumentLang } from "@/components/layout/RootDocumentLang";
+import { LS_APPEARANCE_LOCALE } from "@/lib/constants/theme";
 
 export const metadata: Metadata = {
   title: "AquaDock CRM",
   description: "Marine CRM for managing companies and contacts",
 };
+
+/**
+ * Runs before first paint (blocking). Mirrors `parseAppearanceLocale` + `resolveAppLocale` for en/de/hr (fr → de).
+ * SSR keeps `lang="de"`; this aligns the live document with the appearance locale mirror when localStorage is available.
+ */
+const rootLangBootstrapScript = `(function(){try{var k=${JSON.stringify(LS_APPEARANCE_LOCALE)};var raw=localStorage.getItem(k);if(raw==null||raw==="")return;var t=String(raw).trim();if(t==="fr")t="de";if(t==="en"||t==="hr"||t==="de")document.documentElement.lang=t;}catch(_){}})();`;
 
 export default function RootLayout({
   children,
@@ -24,6 +33,13 @@ export default function RootLayout({
   return (
     <html lang="de" suppressHydrationWarning>
       <body className={`${GeistSans.variable} ${GeistMono.variable} antialiased min-h-screen bg-background`}>
+        <Script
+          id="aquadock-root-lang-bootstrap"
+          strategy="beforeInteractive"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Build-time-only script; sets html lang from LS_APPEARANCE_LOCALE mirror (en/de/hr); no user input.
+          dangerouslySetInnerHTML={{ __html: rootLangBootstrapScript }}
+        />
+        <RootDocumentLang />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

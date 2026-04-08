@@ -18,6 +18,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
@@ -26,6 +27,8 @@ type ReminderWithCompany = Reminder & {
 };
 
 function ClientRemindersPage() {
+  const t = useT("reminders");
+  const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
@@ -102,11 +105,11 @@ function ClientRemindersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success("Reminder deleted");
+      toast.success(t("toastDeleted"));
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to delete reminder", { description: message });
+      const message = error instanceof Error ? error.message : t("unknownError");
+      toast.error(t("toastDeleteFailed"), { description: message });
     },
   });
 
@@ -128,24 +131,24 @@ function ClientRemindersPage() {
     <Suspense fallback={<LoadingState count={20} />}>
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
-          <div className="text-sm text-muted-foreground">Home → Reminders</div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Reminders
+          <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
+          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            {t("title")}
           </h1>
-          <p className="text-muted-foreground">Carpe Diem</p>
+          <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => setReminderDialogOpen(true)}>New Reminder</Button>
+        <Button onClick={() => setReminderDialogOpen(true)}>{t("newReminder")}</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6">
-        <StatCard title="Total Reminders" value={stats.total.toString()} icon={<FileText className="h-4 w-4" />} />
-        <StatCard title="Open Reminders" value={stats.open.toString()} icon={<CheckCircle className="h-4 w-4" />} />
+        <StatCard title={t("statTotal")} value={stats.total.toString()} icon={<FileText className="h-4 w-4" />} />
+        <StatCard title={t("statOpen")} value={stats.open.toString()} icon={<CheckCircle className="h-4 w-4" />} />
         <StatCard
-          title="Overdue Reminders"
+          title={t("statOverdue")}
           value={<span className={stats.overdue > 0 ? "text-red-600" : ""}>{stats.overdue.toString()}</span>}
           icon={<AlertTriangle className="h-4 w-4" />}
         />
-        <StatCard title="This Week" value={stats.thisWeek.toString()} icon={<Calendar className="h-4 w-4" />} />
+        <StatCard title={t("statThisWeek")} value={stats.thisWeek.toString()} icon={<Calendar className="h-4 w-4" />} />
       </div>
 
       <div className="flex items-center gap-2 pb-4">
@@ -154,45 +157,45 @@ function ClientRemindersPage() {
           size="sm"
           onClick={() => handleFilterChange("all")}
         >
-          All
+          {t("filterAll")}
         </Button>
         <Button
           variant={statusFilter === "open" ? "default" : "outline"}
           size="sm"
           onClick={() => handleFilterChange("open")}
         >
-          Open
+          {t("filterOpen")}
         </Button>
         <Button
           variant={statusFilter === "overdue" ? "default" : "outline"}
           size="sm"
           onClick={() => handleFilterChange("overdue")}
         >
-          Overdue
+          {t("filterOverdue")}
         </Button>
         <Button
           variant={statusFilter === "closed" ? "default" : "outline"}
           size="sm"
           onClick={() => handleFilterChange("closed")}
         >
-          Closed
+          {t("filterClosed")}
         </Button>
         <Button
           variant={statusFilter === "my" ? "default" : "outline"}
           size="sm"
           onClick={() => handleFilterChange("my")}
         >
-          My Tasks
+          {t("filterMy")}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Reminders ({filteredReminders.length})</CardTitle>
+          <CardTitle>{t("cardTitle", { count: filteredReminders.length })}</CardTitle>
         </CardHeader>
         <CardContent>
           {filteredReminders.length === 0 ? (
-            <p className="text-muted-foreground">No reminders yet.</p>
+            <p className="text-muted-foreground">{t("empty")}</p>
           ) : (
             <div className="space-y-4">
               {filteredReminders.map((reminder) => (
@@ -210,18 +213,35 @@ function ClientRemindersPage() {
                                 : "bg-gray-500 text-white"
                           }
                         >
-                          {reminder.priority}
+                          {reminder.priority === "hoch"
+                            ? t("priorityHoch")
+                            : reminder.priority === "normal"
+                              ? t("priorityNormal")
+                              : reminder.priority === "niedrig"
+                                ? t("priorityNiedrig")
+                                : reminder.priority}
                         </Badge>
-                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>{reminder.status}</Badge>
+                        <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
+                          {reminder.status === "open"
+                            ? t("statusOpen")
+                            : reminder.status === "closed"
+                              ? t("statusClosed")
+                              : reminder.status}
+                        </Badge>
                       </div>
                       {reminder.description && (
                         <p className="text-sm text-muted-foreground mb-2">{reminder.description}</p>
                       )}
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Due: {new Date(reminder.due_date).toLocaleDateString()}</span>
-                        <span>Assigned to: {profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</span>
                         <span>
-                          Company:{" "}
+                          {t("due")}: {new Date(reminder.due_date).toLocaleDateString(localeTag)}
+                        </span>
+                        <span>
+                          {t("assignedTo")}:{" "}
+                          {profiles.find((p) => p.id === reminder.assigned_to)?.display_name || t("unassigned")}
+                        </span>
+                        <span>
+                          {t("company")}:{" "}
                           <Link href={`/companies/${reminder.company_id}`}>{reminder.companies?.firmenname}</Link>
                         </span>
                       </div>
@@ -258,8 +278,10 @@ function ClientRemindersPage() {
       }}>
         <WideDialogContent size="xl">
           <DialogHeader>
-            <DialogTitle>{editReminder ? "Edit Reminder" : "Create New Reminder"}</DialogTitle>
-            <DialogDescription>{editReminder ? "Edit the reminder." : "Add a new reminder."}</DialogDescription>
+            <DialogTitle>{editReminder ? t("dialogEditTitle") : t("dialogCreateTitle")}</DialogTitle>
+            <DialogDescription>
+              {editReminder ? t("dialogEditDescription") : t("dialogCreateDescription")}
+            </DialogDescription>
           </DialogHeader>
           {editReminder ? (
             <ReminderEditForm
@@ -278,14 +300,12 @@ function ClientRemindersPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Reminder</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this reminder? This action cannot be undone.
-            </DialogDescription>
+            <DialogTitle>{t("deleteTitle")}</DialogTitle>
+            <DialogDescription>{t("deleteDescription")}</DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -298,7 +318,7 @@ function ClientRemindersPage() {
               }}
               disabled={deleteMutation.isPending}
             >
-              Delete
+              {t("delete")}
             </Button>
           </div>
         </DialogContent>

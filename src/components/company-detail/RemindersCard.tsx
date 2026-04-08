@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
 import type { Reminder } from "@/types/database.types";
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export default function RemindersCard({ companyId }: Props) {
+  const t = useT("reminders");
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -99,7 +101,7 @@ export default function RemindersCard({ companyId }: Props) {
   const handleAdd = () => setAddDialogOpen(true);
   const handleEdit = (reminder: Reminder) => setEditReminder(reminder);
   const handleDelete = (id: string) => {
-    if (confirm("Delete this reminder?")) deleteMutation.mutate(id);
+    if (confirm(t("deleteDescription"))) deleteMutation.mutate(id);
   };
 
   return (
@@ -120,7 +122,7 @@ export default function RemindersCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {reminders.length === 0 ? (
-              <p className="text-gray-500">No reminders for this company.</p>
+              <p className="text-muted-foreground">No reminders for this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -146,8 +148,8 @@ export default function RemindersCard({ companyId }: Props) {
                             >
                               {safeDisplay(reminder.title)}
                             </button>
-                            {reminder.description && <div className="text-xs text-gray-500">{reminder.description}</div>}
-                            <div className="text-xs text-gray-500">
+                            {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
+                            <div className="text-xs text-muted-foreground">
                               Created on: {formatDateDE(reminder.created_at)} | Updated on: {formatDateDE(reminder.updated_at)}
                             </div>
                           </div>
@@ -160,7 +162,7 @@ export default function RemindersCard({ companyId }: Props) {
                                 ? "bg-orange-500 text-white"
                                 : reminder.priority === "normal"
                                   ? "bg-blue-500 text-white"
-                                  : "bg-gray-500 text-white"
+                                  : "bg-muted text-foreground"
                             }
                           >
                             {getPriorityLabel(reminder.priority)}
@@ -186,7 +188,7 @@ export default function RemindersCard({ companyId }: Props) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-600 hover:text-red-700"
+                              className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
                               onClick={() => handleDelete(reminder.id)}
                             >
@@ -207,7 +209,7 @@ export default function RemindersCard({ companyId }: Props) {
       <Dialog open={!!editReminder} onOpenChange={() => setEditReminder(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Reminder</DialogTitle>
+            <DialogTitle>{t("dialogEditTitle")}</DialogTitle>
           </DialogHeader>
           <ReminderEditForm
             key={editReminder?.id}
@@ -226,7 +228,7 @@ export default function RemindersCard({ companyId }: Props) {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Reminder</DialogTitle>
+            <DialogTitle>{t("dialogCreateTitle")}</DialogTitle>
           </DialogHeader>
           <ReminderCreateForm
             preselectedCompanyId={companyId}

@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 import type { Company, Contact } from "@/types/database.types";
@@ -76,6 +77,8 @@ export default function CompaniesTable({
   rowSelection,
   onRowSelectionChange,
 }: CompaniesTableProps) {
+  const t = useT("companies");
+  const tCommon = useT("common");
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
@@ -102,21 +105,21 @@ export default function CompaniesTable({
           <Checkbox
             checked={table.getIsAllRowsSelected()}
             onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-            aria-label="Select all"
+            aria-label={t("tableSelectAllAria")}
           />
         ),
         cell: ({ row }) => (
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
+            aria-label={t("tableSelectRowAria")}
           />
         ),
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("firmenname", {
         id: "firmenname",
-        header: "Firmenname",
+        header: t("tableColFirmenname"),
         cell: (info) => (
           <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
             {safeDisplay(info.getValue())}
@@ -124,11 +127,11 @@ export default function CompaniesTable({
         ),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("kundentyp", {
-        header: "Kundentyp",
+        header: t("tableColKundentyp"),
         cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("status", {
-        header: "Status",
+        header: t("tableColStatus"),
         cell: (info) => {
           const value = info.getValue();
           return (
@@ -147,17 +150,17 @@ export default function CompaniesTable({
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("contacts", {
         id: "hauptkontakt",
-        header: "Hauptkontakt",
+        header: t("tableColHauptkontakt"),
         cell: (info) => {
           const contacts = info.row.original.contacts || [];
           const primary = contacts.find((c) => c.is_primary);
-          if (!primary) return "—";
+          if (!primary) return tCommon("dash");
           return (
             <div className="flex flex-col">
               <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
                 {`${primary.vorname} ${primary.nachname}`}
               </Link>
-              <span className="text-xs text-muted-foreground">{primary.position || "—"}</span>
+              <span className="text-xs text-muted-foreground">{primary.position || tCommon("dash")}</span>
             </div>
           );
         },
@@ -165,15 +168,15 @@ export default function CompaniesTable({
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("contacts", {
         id: "kontaktanzahl",
-        header: "Kontakte",
+        header: t("tableColKontaktanzahl"),
         cell: (info) => {
           const contacts = info.row.original.contacts || [];
           const count = contacts.length;
-          if (count === 0) return <Badge variant="outline">Keine</Badge>;
+          if (count === 0) return <Badge variant="outline">{t("tableContactsNone")}</Badge>;
           const hasPrimary = contacts.some((c) => c.is_primary);
           return (
             <Badge variant={hasPrimary ? "default" : "secondary"}>
-              {count} {hasPrimary ? "(Primär)" : ""}
+              {count} {hasPrimary ? t("tableContactsPrimary") : ""}
             </Badge>
           );
         },
@@ -181,7 +184,7 @@ export default function CompaniesTable({
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("stadt", {
         id: "adresse",
-        header: "Adresse",
+        header: t("tableColAdresse"),
         cell: (info) => {
           const row = info.row.original;
           const strasse = row.strasse || "";
@@ -197,12 +200,13 @@ export default function CompaniesTable({
         },
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("created_at", {
-        header: "Created",
+        id: "created_at",
+        header: t("tableColCreated"),
         cell: (info) => formatDateDistance(info.getValue()),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.display({
         id: "actions",
-        header: "Actions",
+        header: t("tableColActions"),
         cell: (info) => (
           <div className="flex space-x-2">
             <Link href={`/companies/${info.row.original.id}`}>
@@ -229,13 +233,11 @@ export default function CompaniesTable({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to delete this company? This action cannot be undone.
-                  </AlertDialogDescription>
+                  <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       if (companyToDelete) {
@@ -243,14 +245,14 @@ export default function CompaniesTable({
                           onDelete?.(companyToDelete);
                         } catch (error) {
                           console.error("Error deleting company:", error);
-                          toast.error("Failed to delete company");
+                          toast.error(t("tableToastDeleteFailed"));
                         }
                       }
                       setDeleteDialogOpen(false);
                       setCompanyToDelete(null);
                     }}
                   >
-                    Delete
+                    {t("delete")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -260,7 +262,7 @@ export default function CompaniesTable({
         enableSorting: false,
       }) as ColumnDef<CompanyWithContacts>,
     ],
-    [onEdit, onDelete, deleteDialogOpen, companyToDelete],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, tCommon],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -315,7 +317,7 @@ export default function CompaniesTable({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Failed to export data");
+      toast.error(t("tableToastExportFailed"));
     }
   };
 
@@ -336,7 +338,7 @@ export default function CompaniesTable({
       document.body.removeChild(link);
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Failed to export data");
+      toast.error(t("tableToastExportFailed"));
     }
   };
 
@@ -346,14 +348,14 @@ export default function CompaniesTable({
         <div className="flex items-center space-x-4">
           <Input
             key="companies-search-input"
-            placeholder="Search companies..."
+            placeholder={t("tableSearchPlaceholder")}
             value={globalFilter ?? ""}
             onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {table.getFilteredSelectedRowModel().rows.length} selected
+              {t("tableSelectedCount", { count: table.getFilteredSelectedRowModel().rows.length })}
             </span>
           )}
         </div>
@@ -381,8 +383,8 @@ export default function CompaniesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onSelect={onImportCSV}>CSV</DropdownMenuItem>
-              <DropdownMenuItem disabled>JSON (coming soon)</DropdownMenuItem>
+              <DropdownMenuItem onSelect={onImportCSV}>{t("tableImportCsv")}</DropdownMenuItem>
+              <DropdownMenuItem disabled>{t("tableJsonComingSoon")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -392,8 +394,8 @@ export default function CompaniesTable({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={handleExportCSV}>Export CSV</DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportJSON}>Export JSON</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV}>{t("tableExportCsv")}</DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportJSON}>{t("tableExportJson")}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
@@ -407,6 +409,27 @@ export default function CompaniesTable({
                 .getAllColumns()
                 .filter((column) => column.getCanHide())
                 .map((column) => {
+                  const id = column.id;
+                  const label =
+                    id === "select"
+                      ? t("tableColSelect")
+                      : id === "firmenname"
+                        ? t("tableColFirmenname")
+                        : id === "kundentyp"
+                          ? t("tableColKundentyp")
+                          : id === "status"
+                            ? t("tableColStatus")
+                            : id === "hauptkontakt"
+                              ? t("tableColHauptkontakt")
+                              : id === "kontaktanzahl"
+                                ? t("tableColKontaktanzahl")
+                                : id === "adresse"
+                                  ? t("tableColAdresse")
+                                  : id === "created_at"
+                                    ? t("tableColCreated")
+                                    : id === "actions"
+                                      ? t("tableColActions")
+                                      : id;
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
@@ -414,7 +437,7 @@ export default function CompaniesTable({
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(!!value)}
                     >
-                      {column.id}
+                      {label}
                     </DropdownMenuCheckboxItem>
                   );
                 })}
@@ -461,7 +484,7 @@ export default function CompaniesTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  {t("tableEmpty")}
                 </TableCell>
               </TableRow>
             )}
@@ -470,8 +493,10 @@ export default function CompaniesTable({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-muted-foreground text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+          {t("tableRowsSelectedSummary", {
+            selected: table.getFilteredSelectedRowModel().rows.length,
+            total: table.getFilteredRowModel().rows.length,
+          })}
         </div>
         <div className="space-x-2">
           <Button
@@ -481,7 +506,7 @@ export default function CompaniesTable({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t("tablePrevious")}
           </Button>
           <Button
             variant="outline"
@@ -490,7 +515,7 @@ export default function CompaniesTable({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            {t("tableNext")}
           </Button>
         </div>
       </div>

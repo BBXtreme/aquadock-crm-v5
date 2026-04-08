@@ -1,9 +1,9 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.29",
+  "version": "0.5.30",
   "private": true,
   "scripts": {
-   "supabase:types": "npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
+    "supabase:types": "npx supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
     "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev",
     "dev:large": "NODE_OPTIONS=\"--max-old-space-size=12288\" next dev",
     "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" next build",
@@ -16,6 +16,7 @@
     "check:fix": "biome check --write --unsafe",
     "check:quick": "biome check --write --max-diagnostics=50",
     "typecheck": "tsc --noEmit --pretty",
+    "messages:validate": "node scripts/validate-message-keys.mjs",
     "prepare": "husky",
     "test": "vitest",
     "test:run": "vitest run",

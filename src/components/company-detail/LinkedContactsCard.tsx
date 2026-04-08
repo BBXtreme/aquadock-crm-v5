@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function LinkedContactsCard({ companyId }: Props) {
+  const t = useT("contacts");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -71,7 +73,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {contacts.length === 0 ? (
-              <p className="text-gray-500">No contacts linked to this company.</p>
+              <p className="text-muted-foreground">No contacts linked to this company.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -103,12 +105,12 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               ) : (
                                 <span>{displayName}</span>
                               )}
-                              {contact.position && <div className="text-xs text-gray-500">{contact.position}</div>}
+                              {contact.position && <div className="text-xs text-muted-foreground">{contact.position}</div>}
                             </div>
                           </td>
                           <td>
                             {contact.email ? (
-                              <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">
+                              <a href={`mailto:${contact.email}`} className="text-primary underline-offset-4 hover:underline">
                                 {contact.email}
                               </a>
                             ) : (
@@ -126,7 +128,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-red-600 hover:text-red-700"
+                                className="h-8 w-8 text-destructive hover:text-destructive/90"
                                 onClick={() => handleDelete(contact.id)}
                               >
                                 <Trash className="h-4 w-4" />
@@ -147,7 +149,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Contact</DialogTitle>
+            <DialogTitle>{t("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <ContactEditForm
             key={editContact?.id}
@@ -164,7 +166,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Contact</DialogTitle>
+            <DialogTitle>{t("createDialogTitle")}</DialogTitle>
           </DialogHeader>
           <ContactEditForm
             contact={null}

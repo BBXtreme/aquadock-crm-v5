@@ -28,7 +28,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
 
@@ -55,6 +57,7 @@ type HeaderProps = {
 };
 
 export default function Header({ user }: HeaderProps) {
+  const t = useT("layout");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -112,14 +115,7 @@ export default function Header({ user }: HeaderProps) {
   // the slotted button. Sign out via the browser Supabase client, then hard-navigate
   // so middleware and RSC see cleared cookies (same outcome as the server action).
   const handleHeaderSignOut = () => {
-    void (async () => {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        return;
-      }
-      window.location.assign("/login");
-    })();
+    void performBrowserSignOutToLogin();
   };
 
   const avatarAlt = safeDisplay(user.display_name ?? user.email?.split("@")[0] ?? "", "User");
@@ -181,20 +177,17 @@ export default function Header({ user }: HeaderProps) {
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" aria-label="Search">
+            <Button type="button" variant="ghost" size="icon" aria-label={t("searchAriaLabel")}>
               <Search className="h-4 w-4" aria-hidden />
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Global search</AlertDialogTitle>
-              <AlertDialogDescription>
-                This isn&apos;t built yet — we&apos;ll add a proper global search here when it&apos;s ready.
-                Until then, jump in via the sidebar or the list pages.
-              </AlertDialogDescription>
+              <AlertDialogTitle>{t("globalSearchTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("globalSearchDescription")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogAction>Got it</AlertDialogAction>
+              <AlertDialogAction>{t("globalSearchGotIt")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -16,6 +16,7 @@ import {
   LS_APPEARANCE_COLOR,
   LS_APPEARANCE_LOCALE,
   LS_APPEARANCE_THEME,
+  LS_APPEARANCE_TIMEZONE,
 } from "@/lib/constants/theme";
 import { DEFAULT_APPEARANCE, loadAppearanceSettings } from "@/lib/services/user-settings";
 import type { AppearanceSettingsRecord } from "@/lib/validations/settings";
@@ -40,6 +41,7 @@ export function persistAppearanceLocalMirror(record: AppearanceSettingsRecord): 
     localStorage.setItem(LS_APPEARANCE_THEME, record.theme);
     localStorage.setItem(LS_APPEARANCE_LOCALE, record.locale);
     localStorage.setItem(LS_APPEARANCE_COLOR, record.colorScheme);
+    localStorage.setItem(LS_APPEARANCE_TIMEZONE, record.timeZone);
   } catch {
     // storage quota / private mode
   }
@@ -53,7 +55,7 @@ export function applyAppearanceDom(record: AppearanceSettingsRecord, resolvedThe
 }
 
 function appearanceRecordKey(record: AppearanceSettingsRecord): string {
-  return `${record.theme}|${record.locale}|${record.colorScheme}`;
+  return `${record.theme}|${record.locale}|${record.colorScheme}|${record.timeZone}`;
 }
 
 function themeFromAppearanceKey(key: string): string | null {

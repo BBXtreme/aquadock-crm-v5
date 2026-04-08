@@ -3,6 +3,7 @@ import type React from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { requireUser } from "@/lib/auth/require-user";
+import { I18nProvider } from "@/lib/i18n/provider";
 
 /**
  * Protected route boundary: one auth gate per segment tree.
@@ -16,5 +17,11 @@ export default async function ProtectedLayout({
 }) {
   const user = await requireUser();
 
-  return <AppLayout user={user}>{children}</AppLayout>;
+  // I18nProvider must wrap AppLayout so shell (Header, Sidebar) sits under NextIntlClientProvider.
+  // It remains under ReactQueryProvider from root ClientLayout (I18nProvider uses React Query).
+  return (
+    <I18nProvider>
+      <AppLayout user={user}>{children}</AppLayout>
+    </I18nProvider>
+  );
 }

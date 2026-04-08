@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useFormat, useT } from "@/lib/i18n/use-translations";
 import type { EmailLog } from "@/types/database.types";
 
 type ClientEmailLogPageProps = {
@@ -21,6 +22,9 @@ type ClientEmailLogPageProps = {
 
 export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
   const router = useRouter();
+  const t = useT("massEmail");
+  const tCommon = useT("common");
+  const format = useFormat();
   const safeLogs = logs ?? [];
   const [filter, setFilter] = useState<"all" | "sent" | "error">("all");
   const [search, setSearch] = useState("");
@@ -36,19 +40,26 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
     return true;
   });
 
+  const formatLogDate = (iso: string | null | undefined) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    return format.dateTime(d, { dateStyle: "medium", timeStyle: "short" });
+  };
+
   return (
     <div className="container mx-auto space-y-8 p-6 lg:p-8">
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            <h1 className="text-3xl font-bold">E-Mail Versandlog</h1>
+            <h1 className="text-3xl font-bold">{t("logTitle")}</h1>
           </div>
-          <p className="text-muted-foreground">Übersicht über alle gesendeten E-Mails</p>
+          <p className="text-muted-foreground">{t("logSubtitle")}</p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück
+          {t("logBack")}
         </Button>
       </div>
 
@@ -58,13 +69,13 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            <SelectItem value="sent">Erfolgreich</SelectItem>
-            <SelectItem value="error">Fehlgeschlagen</SelectItem>
+            <SelectItem value="all">{t("logFilterAll")}</SelectItem>
+            <SelectItem value="sent">{t("logFilterSent")}</SelectItem>
+            <SelectItem value="error">{t("logFilterError")}</SelectItem>
           </SelectContent>
         </Select>
         <Input
-          placeholder="Suche nach Empfänger oder Betreff..."
+          placeholder={t("logSearchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
@@ -75,19 +86,19 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-20">Modus</TableHead>
-              <TableHead className="min-w-48">Empfänger</TableHead>
-              <TableHead className="min-w-32">Betreff</TableHead>
-              <TableHead className="w-32">Vorlage</TableHead>
-              <TableHead className="w-32">Datum</TableHead>
-              <TableHead className="w-24">Status</TableHead>
+              <TableHead className="w-20">{t("logColMode")}</TableHead>
+              <TableHead className="min-w-48">{t("logColRecipient")}</TableHead>
+              <TableHead className="min-w-32">{t("logColSubject")}</TableHead>
+              <TableHead className="w-32">{t("logColTemplate")}</TableHead>
+              <TableHead className="w-32">{t("logColDate")}</TableHead>
+              <TableHead className="w-24">{t("logColStatus")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {safeLogs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  <div className="text-muted-foreground">Keine E-Mail-Logs gefunden.</div>
+                  <div className="text-muted-foreground">{t("logEmpty")}</div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -95,7 +106,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                 <TableRow key={log.id}>
                   <TableCell>
                     <Badge variant="outline" className="text-xs">
-                      {log.mode === "test" ? "Test" : "Massenversand"}
+                      {log.mode === "test" ? t("logModeTest") : t("logModeMass")}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-medium">
@@ -104,14 +115,14 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                   <TableCell className="max-w-xs">
                     <div className="truncate">
                       {log.subject == null
-                        ? "—"
+                        ? tCommon("dash")
                         : log.subject.length > 50
                           ? `${log.subject.slice(0, 50)}...`
                           : log.subject}
                     </div>
-                    {log.status === "error" && log.error_msg && (
+                    {log.status === "error" && log.error_msg ? (
                       <div className="text-xs text-red-500 mt-1 truncate">{log.error_msg}</div>
-                    )}
+                    ) : null}
                   </TableCell>
                   <TableCell>
                     {log.template_name ? (
@@ -121,25 +132,27 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                         </Badge>
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground">{tCommon("dash")}</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    {log.sent_at ? new Date(log.sent_at).toLocaleString('de-DE') : log.created_at ? new Date(log.created_at).toLocaleString('de-DE') : 'Unbekannt'}
+                    {formatLogDate(log.sent_at) ??
+                      formatLogDate(log.created_at) ??
+                      t("logDateUnknown")}
                   </TableCell>
                   <TableCell>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
                           <Badge variant={log.status === "sent" ? "default" : "destructive"}>
-                            {log.status === "sent" ? "Gesendet" : "Fehler"}
+                            {log.status === "sent" ? t("logStatusSent") : t("logStatusError")}
                           </Badge>
                         </TooltipTrigger>
-                        {log.status === "error" && log.error_msg && (
+                        {log.status === "error" && log.error_msg ? (
                           <TooltipContent>
                             <p>{log.error_msg}</p>
                           </TooltipContent>
-                        )}
+                        ) : null}
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>

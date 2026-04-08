@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/lib/i18n/use-translations";
 
 type LivePreviewProps = {
   previewSubject: string;
@@ -98,17 +99,18 @@ export default function LivePreview({
   selectedRecipientIds,
   handleSend,
 }: LivePreviewProps) {
+  const t = useT("massEmail");
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
 
   const copyToClipboard = async () => {
-    const text = `Betreff: ${previewSubject}\n\n${previewBody}`;
+    const text = `${t("livePreviewClipboardSubjectPrefix")} ${previewSubject}\n\n${previewBody}`;
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("In die Zwischenablage kopiert");
+      toast.success(t("toastClipboardCopied"));
     } catch {
-      toast.error("Kopieren fehlgeschlagen");
+      toast.error(t("toastClipboardFailed"));
     }
   };
 
@@ -118,7 +120,7 @@ export default function LivePreview({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Live-Vorschau</CardTitle>
+        <CardTitle>{t("livePreviewCardTitle")}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex border-b mb-6">
@@ -130,7 +132,7 @@ export default function LivePreview({
             }`}
           >
             <Eye className="inline mr-2 h-4 w-4" />
-            Vorschau
+            {t("livePreviewTabPreview")}
           </button>
           <button
             type="button"
@@ -140,12 +142,12 @@ export default function LivePreview({
             }`}
           >
             <Code className="inline mr-2 h-4 w-4" />
-            Quelltext
+            {t("livePreviewTabSource")}
           </button>
 
           <Button variant="outline" size="sm" onClick={copyToClipboard} className="ml-4">
             <Copy className="h-4 w-4 mr-2" />
-            Kopieren
+            {t("livePreviewCopy")}
           </Button>
         </div>
 
@@ -154,28 +156,29 @@ export default function LivePreview({
             <div className="max-w-2xl mx-auto space-y-8">
               <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
                 <div>
-                  <span className="font-medium">Von:</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
+                  <span className="font-medium">{t("livePreviewFromLabel")}</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
                 </div>
                 <div>
-                  <span className="font-medium">An:</span> {previewRecipient.name} &lt;{previewRecipient.email}&gt;
+                  <span className="font-medium">{t("livePreviewToLabel")}</span>{" "}
+                  {`${previewRecipient.name} <${previewRecipient.email}>`}
                 </div>
               </div>
 
               <div className="font-bold text-2xl leading-tight">
-                {previewSubject || "Kein Betreff"}
+                {previewSubject || t("livePreviewNoSubject")}
               </div>
 
               {/* Safe HTML rendering as React elements */}
               <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
-                {bodyElements.length > 0 ? bodyElements : "Kein Inhalt"}
+                {bodyElements.length > 0 ? bodyElements : t("livePreviewNoBody")}
               </div>
             </div>
           </div>
         ) : (
           <ScrollArea className="min-h-[560px] border rounded-3xl p-8 bg-muted">
-            <strong>Betreff:</strong> {previewSubject}
+            <strong>{t("livePreviewRawSubject")}</strong> {previewSubject}
             <br /><br />
-            <strong>Inhalt:</strong>
+            <strong>{t("livePreviewRawBody")}</strong>
             <pre className="mt-6 whitespace-pre-wrap text-sm font-mono">{previewBody}</pre>
           </ScrollArea>
         )}
@@ -190,7 +193,7 @@ export default function LivePreview({
             size="lg"
           >
             <Send className="mr-2 h-5 w-5" />
-            Senden ({selectedRecipientIds.length})
+            {t("livePreviewSendCount", { count: selectedRecipientIds.length })}
           </Button>
           <Button 
             variant="outline" 
@@ -199,21 +202,19 @@ export default function LivePreview({
             size="lg"
           >
             <MailCheck className="mr-2 h-5 w-5" />
-            Testsendung
+            {t("livePreviewTestSend")}
           </Button>
         </div>
 
         <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Test-E-Mail senden</DialogTitle>
-              <DialogDescription>
-                Geben Sie eine Test-E-Mail-Adresse ein.
-              </DialogDescription>
+              <DialogTitle>{t("testEmailDialogTitle")}</DialogTitle>
+              <DialogDescription>{t("testEmailDialogDescription")}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <Input
-                placeholder="test@example.com"
+                placeholder={t("testEmailPlaceholder")}
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
               />
@@ -226,10 +227,10 @@ export default function LivePreview({
                   }}
                   disabled={!testEmail}
                 >
-                  Senden
+                  {t("testEmailSend")}
                 </Button>
                 <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
-                  Abbrechen
+                  {t("testEmailCancel")}
                 </Button>
               </div>
             </div>
