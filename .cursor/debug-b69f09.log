@@ -30,3 +30,5 @@
 {"sessionId":"b69f09","hypothesisId":"H2","location":"OpenMapView.tsx:handleLoad","message":"handleLoad (moveend/zoomend debounced path)","data":{"zoom":4,"autoLoadPois":true},"timestamp":1775631295825}
 {"sessionId":"b69f09","hypothesisId":"H2","location":"OpenMapView.tsx:handleLoad","message":"handleLoad (moveend/zoomend debounced path)","data":{"zoom":4,"autoLoadPois":true},"timestamp":1775631333699}
 {"sessionId":"b69f09","hypothesisId":"H2","location":"OpenMapView.tsx:handleLoad","message":"handleLoad (moveend/zoomend debounced path)","data":{"zoom":4,"autoLoadPois":true},"timestamp":1775631338514}
+{"sessionId":"b69f09","hypothesisId":"H2","location":"OpenMapView.tsx:handleLoad","message":"handleLoad (moveend/zoomend debounced path)","data":{"zoom":4.607929540268351,"autoLoadPois":true},"timestamp":1775631355516}
+{"sessionId":"b69f09","hypothesisId":"H2","location":"OpenMapView.tsx:handleLoad","message":"handleLoad (moveend/zoomend debounced path)","data":{"zoom":4,"autoLoadPois":true},"timestamp":1775631356878}

@@ -27,6 +27,25 @@ export interface OsmPoi {
   wassertyp?: string | null;
 }
 
+/** Stable OSM identity for dedupe across fetches (matches Overpass element type/id). */
+export function osmPoiDedupeKey(poi: OsmPoi): string {
+  return `${String(poi.type)}/${String(poi.id)}`;
+}
+
+/** JSON-safe fetched viewport (persisted). Axis-aligned; south/west/north/east in WGS84. */
+export interface OsmPoiCoverageEntry {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+  timestamp: number;
+}
+
+export interface OsmPoiPersistedCacheV2 {
+  v: 2;
+  coverage: OsmPoiCoverageEntry[];
+}
+
 export interface CompanyMarkerPopupProps {
   company: MapCompany;
   onOpenDetail?: (companyId: string) => void;
@@ -40,6 +59,7 @@ export interface OsmPoiMarkerPopupProps {
   onCalculateWater?: (poi: OsmPoi) => void | Promise<void>;
 }
 
+/** @deprecated Legacy shape; OpenMap uses OsmPoiPersistedCacheV2 coverage-only persistence. */
 export interface OsmPoiCacheEntry {
   pois: OsmPoi[];
   timestamp: number;

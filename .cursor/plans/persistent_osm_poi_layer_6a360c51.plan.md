@@ -4,7 +4,7 @@ overview: Flicker-free OSM POIs via merge+dedupe, fetchEpoch stale guards, JSON-
 todos:
   - id: types-dedupe
     content: Add osmPoiDedupeKey(poi) + SerializedCoverageBlob types in types.ts; export for OpenMapView + water updater
-    status: in_progress
+    status: completed
   - id: helpers-persist
     content: OpenMapView — bbox/coverage/merge/prune helpers, fetchedCoverageRef, fetchEpochRef; localStorage v2 read/write + legacy discard
     status: pending

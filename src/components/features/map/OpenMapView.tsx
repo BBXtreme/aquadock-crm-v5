@@ -30,13 +30,125 @@ import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-util
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
 import OsmPoiMarkerPopup from "./OsmPoiMarkerPopup";
-import type { OsmPoi } from "./types";
+import {
+  osmPoiDedupeKey,
+  type OsmPoi,
+  type OsmPoiCoverageEntry,
+  type OsmPoiPersistedCacheV2,
+} from "./types";
 import { useMapPopupActions } from "./useMapPopupActions";
 
-interface CacheEntry {
-  pois: OsmPoi[];
-  timestamp: number;
-  bounds: L.LatLngBounds;
+const OPENMAP_POI_LS_KEY = "openmap-poi-cache";
+const OSM_POI_FETCH_TTL_MS = 10 * 60 * 1000;
+const MAX_OSM_FETCH_COVERAGE_ENTRIES = 40;
+const MAX_OSM_POIS_IN_MEMORY = 6000;
+const OSM_PRUNE_PAD_RATIO = 0.35;
+
+/** Runtime check for persisted coverage rows (localStorage v2). */
+function isOsmPoiCoverageEntry(x: unknown): x is OsmPoiCoverageEntry {
+  if (typeof x !== "object" || x === null) return false;
+  const o = x as Record<string, unknown>;
+  return (
+    typeof o.south === "number" &&
+    typeof o.west === "number" &&
+    typeof o.north === "number" &&
+    typeof o.east === "number" &&
+    typeof o.timestamp === "number"
+  );
+}
+
+/** Reads v2 `{ v: 2, coverage }` only; legacy blobs yield []. */
+function parseOpenmapPoiCoverageFromLs(raw: string | null): OsmPoiCoverageEntry[] {
+  if (raw === null || raw === "") return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== "object" || parsed === null) return [];
+    const o = parsed as Record<string, unknown>;
+    if (o.v !== 2) return [];
+    const cov = o.coverage;
+    if (!Array.isArray(cov)) return [];
+    return cov.filter(isOsmPoiCoverageEntry);
+  } catch {
+    return [];
+  }
+}
+
+function coverageToLeafletBounds(entry: OsmPoiCoverageEntry): L.LatLngBounds {
+  return L.latLngBounds(L.latLng(entry.south, entry.west), L.latLng(entry.north, entry.east));
+}
+
+function boundsToCoverageEntry(bounds: L.LatLngBounds, timestamp: number): OsmPoiCoverageEntry {
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  return { south: sw.lat, west: sw.lng, north: ne.lat, east: ne.lng, timestamp };
+}
+
+/** True if axis-aligned `inner` lies fully inside `outer` (Leaflet contains on SW+NE). */
+function innerFullyInsideOuter(outer: L.LatLngBounds, inner: L.LatLngBounds): boolean {
+  return outer.contains(inner.getSouthWest()) && outer.contains(inner.getNorthEast());
+}
+
+function viewportFullyCoveredByAny(
+  view: L.LatLngBounds,
+  coverage: OsmPoiCoverageEntry[],
+  now: number,
+  ttlMs: number,
+): boolean {
+  for (const e of coverage) {
+    if (now - e.timestamp >= ttlMs) continue;
+    const ob = coverageToLeafletBounds(e);
+    if (innerFullyInsideOuter(ob, view)) return true;
+  }
+  return false;
+}
+
+/** Merges lists; on key collision, incoming fields overlay existing (fresh Overpass wins, local enrichments kept for missing keys). */
+function mergeOsmPoisPreferIncoming(prev: OsmPoi[], incoming: OsmPoi[]): OsmPoi[] {
+  const map = new Map<string, OsmPoi>();
+  for (const p of prev) {
+    map.set(osmPoiDedupeKey(p), p);
+  }
+  for (const p of incoming) {
+    const k = osmPoiDedupeKey(p);
+    const old = map.get(k);
+    map.set(k, old !== undefined ? { ...old, ...p } : p);
+  }
+  return [...map.values()];
+}
+
+function padLatLngBounds(bounds: L.LatLngBounds, padRatio: number): L.LatLngBounds {
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const latSpan = ne.lat - sw.lat;
+  const lngSpan = ne.lng - sw.lng;
+  return L.latLngBounds(
+    L.latLng(sw.lat - latSpan * padRatio, sw.lng - lngSpan * padRatio),
+    L.latLng(ne.lat + latSpan * padRatio, ne.lng + lngSpan * padRatio),
+  );
+}
+
+/** Drops POIs outside a padded view (memory cap after heavy exploration). */
+function pruneOsmPoisFarFromView(pois: OsmPoi[], viewBounds: L.LatLngBounds, padRatio: number): OsmPoi[] {
+  const padded = padLatLngBounds(viewBounds, padRatio);
+  const out: OsmPoi[] = [];
+  for (const p of pois) {
+    const lat = p.lat ?? p.center?.lat;
+    const lon = p.lon ?? p.center?.lon;
+    if (typeof lat !== "number" || typeof lon !== "number" || Number.isNaN(lat) || Number.isNaN(lon)) {
+      continue;
+    }
+    if (padded.contains(L.latLng(lat, lon))) out.push(p);
+  }
+  return out;
+}
+
+function osmPoiPosition(poi: OsmPoi): [number, number] | null {
+  const lat = poi.lat ?? poi.center?.lat;
+  const lon = poi.lon ?? poi.center?.lon;
+  if (typeof lat !== "number" || typeof lon !== "number" || Number.isNaN(lat) || Number.isNaN(lon)) {
+    return null;
+  }
+  return [lat, lon];
 }
 
 /** Accepts DB/JSON lat-lon as number or numeric string; rejects NaN. */
@@ -295,53 +407,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   // Initial view: deep-link from URL, otherwise zoom to fit all CRM company markers once
   useEffect(() => {
-    initialViewEffectRunCountRef.current += 1;
-    const runN = initialViewEffectRunCountRef.current;
-    const hasMap = Boolean(mapRef.current);
-    const didBefore = didInitialCompanyFitRef.current;
-    const qs = searchParams.toString();
-
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
-      body: JSON.stringify({
-        sessionId: "b69f09",
-        hypothesisId: "H1-H4-H5",
-        location: "OpenMapView.tsx:initialViewEffect:entry",
-        message: "initial view effect run",
-        data: {
-          runN,
-          instanceId: openMapInstanceIdRef.current,
-          mapReady,
-          hasMapRef: hasMap,
-          didInitialBefore: didBefore,
-          companiesLen: companies.length,
-          qsLen: qs.length,
-          qs,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-    // #endregion
-
-    if (!mapReady || !mapRef.current) {
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
-        body: JSON.stringify({
-          sessionId: "b69f09",
-          hypothesisId: "H4",
-          location: "OpenMapView.tsx:initialViewEffect:earlyReturn",
-          message: "early return (map not ready or ref null)",
-          data: { runN, mapReady, hasMapRef: hasMap },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => undefined);
-      // #endregion
-      return;
-    }
+    if (!mapReady || !mapRef.current) return;
 
     const lat = searchParams.get("lat");
     const lon = searchParams.get("lon");
@@ -364,21 +430,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
       didInitialCompanyFitRef.current = true;
     }
 
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
-      body: JSON.stringify({
-        sessionId: "b69f09",
-        hypothesisId: "H1",
-        location: "OpenMapView.tsx:initialViewEffect:afterBranches",
-        message: "initial view effect completed branches",
-        data: { runN, didInitialAfter: didInitialCompanyFitRef.current },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-    // #endregion
-
     setHasCentered(true);
   }, [mapReady, searchParams, companies]);
 
@@ -387,20 +438,6 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     if (!mapRef.current) return;
 
     const zoom = mapRef.current.getZoom();
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "b69f09" },
-      body: JSON.stringify({
-        sessionId: "b69f09",
-        hypothesisId: "H2",
-        location: "OpenMapView.tsx:handleLoad",
-        message: "handleLoad (moveend/zoomend debounced path)",
-        data: { zoom, autoLoadPois },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-    // #endregion
     setCurrentZoom(zoom);
 
     if (!autoLoadPois || zoom < 13) return;
