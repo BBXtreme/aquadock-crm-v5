@@ -95,8 +95,9 @@ export function regionIdFromIana(iana: string): AppearanceTimeZoneRegionId {
 function getAllAppearanceTimeZoneIds(): string[] {
   if (typeof Intl !== "undefined" && typeof Intl.supportedValuesOf === "function") {
     try {
-      const list = Intl.supportedValuesOf("timeZone");
-      return [...list].filter((id) => isValidIanaTimeZone(id));
+      // Do not call isValidIanaTimeZone per id — that is ~400+ DateTimeFormat constructions and freezes the main thread.
+      // `Intl.supportedValuesOf("timeZone")` returns implementation-defined valid IANA names.
+      return [...Intl.supportedValuesOf("timeZone")];
     } catch {
       // fall through
     }
@@ -157,19 +158,4 @@ export function getAppearanceTimeZoneGroups(localeTag: string): AppearanceTimeZo
     result.push({ regionId, zones: sorted });
   }
   return result;
-}
-
-export function getDefaultAppearanceTimeZone(): string {
-  if (typeof Intl === "undefined" || typeof Intl.DateTimeFormat === "undefined") {
-    return "UTC";
-  }
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz && isValidIanaTimeZone(tz)) {
-      return tz;
-    }
-  } catch {
-    // fall through
-  }
-  return "UTC";
 }

@@ -13,6 +13,7 @@ import MarkerClusterGroup from "react-leaflet-markercluster";
 import { toast } from "sonner";
 
 import "leaflet/dist/leaflet.css";
+import "./leaflet-popup-theme.css";
 
 import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
 
@@ -24,6 +25,7 @@ import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
 import { useT } from "@/lib/i18n/use-translations";
 import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provider";
 import { loadMapSettings } from "@/lib/services/map-settings";
+import { cn } from "@/lib/utils";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
@@ -380,7 +382,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         center={[50.1109, 8.6821]}
         zoom={7}
         style={{ height: "100%", width: "100%" }}
-        className="z-0"
+        className={cn("z-0", isDarkMode && "aquadock-map--dark")}
         whenReady={() => {
           // react-leaflet can invoke whenReady during commit; defer so React 19 does not warn
           // about setState on a component that has not finished mounting.

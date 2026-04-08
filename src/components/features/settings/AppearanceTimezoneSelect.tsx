@@ -1,3 +1,6 @@
+// src/components/features/settings/AppearanceTimezoneSelect.tsx
+// This file contains the AppearanceTimezoneSelect component, which allows the user to select a timezone from a list of timezones.  
+
 "use client";
 
 import { ChevronDownIcon } from "lucide-react";
@@ -74,44 +77,7 @@ export function AppearanceTimezoneSelect({
   const t = useT("settings");
   const localeTag = useNumberLocaleTag();
 
-  const groups = useMemo(() => {
-    try {
-      const g = getAppearanceTimeZoneGroups(localeTag);
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "290de7" },
-        body: JSON.stringify({
-          sessionId: "290de7",
-          runId: "pre-fix",
-          hypothesisId: "H5",
-          location: "AppearanceTimezoneSelect.tsx:groups",
-          message: "getAppearanceTimeZoneGroups ok",
-          data: { localeTag, groupCount: g.length },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => undefined);
-      // #endregion
-      return g;
-    } catch (err) {
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "290de7" },
-        body: JSON.stringify({
-          sessionId: "290de7",
-          runId: "pre-fix",
-          hypothesisId: "H5",
-          location: "AppearanceTimezoneSelect.tsx:groups",
-          message: "getAppearanceTimeZoneGroups threw",
-          data: { localeTag, error: err instanceof Error ? err.message : String(err) },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => undefined);
-      // #endregion
-      throw err;
-    }
-  }, [localeTag]);
+  const groups = useMemo(() => getAppearanceTimeZoneGroups(localeTag), [localeTag]);
 
   const displayLabel = useMemo(
     () => formatTimeZoneMenuLabel(value, localeTag),

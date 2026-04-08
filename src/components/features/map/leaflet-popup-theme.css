@@ -1,0 +1,67 @@
+/**
+ * Leaflet popup theming — MUST stay unlayered and load after `leaflet/dist/leaflet.css`
+ * (import from OpenMapView). Dark colors are scoped; layout/padding applies in both themes.
+ */
+
+/* --- Layout: light + dark (replaces default content margins with a consistent gutter) --- */
+.leaflet-container .leaflet-popup-content-wrapper {
+	padding: 0;
+	box-sizing: border-box;
+	overflow-x: hidden;
+	border-radius: 0.75rem;
+}
+
+.leaflet-container .leaflet-popup-content {
+	margin: 0 !important;
+	box-sizing: border-box !important;
+	min-width: 0 !important;
+	width: auto !important;
+	max-width: 100% !important;
+	padding: 12px 40px 24px 16px !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+	top: 8px !important;
+	right: 8px !important;
+	width: 28px !important;
+	height: 28px !important;
+	font: 20px/28px system-ui, sans-serif !important;
+	background: transparent !important;
+}
+
+/* --- Dark: shell + tip + close color --- */
+html.dark .leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container.aquadock-map--dark .leaflet-popup-content-wrapper {
+	background-color: var(--card) !important;
+	background: var(--card) !important;
+	color: var(--card-foreground) !important;
+	box-shadow:
+		0 4px 6px -1px color-mix(in oklch, var(--foreground) 10%, transparent),
+		0 10px 24px -4px color-mix(in oklch, var(--foreground) 18%, transparent) !important;
+	border: 1px solid var(--border) !important;
+}
+
+html.dark .leaflet-container .leaflet-popup-tip,
+.leaflet-container.aquadock-map--dark .leaflet-popup-tip {
+	background-color: var(--card) !important;
+	background: var(--card) !important;
+	color: var(--card-foreground) !important;
+	box-shadow: none !important;
+}
+
+html.dark .leaflet-container .leaflet-popup-content,
+.leaflet-container.aquadock-map--dark .leaflet-popup-content {
+	color: var(--card-foreground) !important;
+}
+
+html.dark .leaflet-container a.leaflet-popup-close-button,
+.leaflet-container.aquadock-map--dark a.leaflet-popup-close-button {
+	color: var(--muted-foreground) !important;
+}
+
+html.dark .leaflet-container a.leaflet-popup-close-button:hover,
+html.dark .leaflet-container a.leaflet-popup-close-button:focus,
+.leaflet-container.aquadock-map--dark a.leaflet-popup-close-button:hover,
+.leaflet-container.aquadock-map--dark a.leaflet-popup-close-button:focus {
+	color: var(--foreground) !important;
+}

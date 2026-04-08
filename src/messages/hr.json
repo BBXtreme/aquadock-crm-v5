@@ -29,7 +29,7 @@
     },
     "appearance": {
       "title": "Izgled",
-      "descriptionRich": "Odaberite svijetli, tamni ili sustavski način (next-themes), jezik sučelja za <code></code> i shemu boja za primarne i naglasne boje (CSS varijable). Postavke se spremaju na račun i lokalno se preslikavaju. Ovdje spremljena tema zadana je pri sljedećem pokretanju aplikacije; tijekom sesije možete neovisno prebacivati svijetlo/tamno u zaglavlju (bez mijenjanja spremljene zadane vrijednosti).",
+      "description": "Prilagodite izgled i jezik CRM-a: svijetli ili tamni način, jezik sučelja, vremenska zona za datume i vrijeme te naglasne boje. Postavke vrijede u cijeloj aplikaciji.",
       "datePreview": "Danas ({date})",
       "themeLabel": "Tema",
       "themeLight": "Svijetla",
@@ -49,7 +49,6 @@
         "rose": "Ruža",
         "amber": "Jantar"
       },
-      "footerRich": "Potpuni prijevod sadržaja aplikacije može se dodati kasnije; odabir je <strong>već trajno spremljen</strong>.",
       "localeSavedRich": "Jezik <b>spremljen</b>.",
       "themeSaved": "Tema spremljena",
       "themeSaveErrorTitle": "Temu nije bilo moguće spremiti",

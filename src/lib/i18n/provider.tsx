@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type React from "react";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
-import { getDefaultAppearanceTimeZone } from "@/lib/constants/appearance-timezones";
+import { getDefaultAppearanceTimeZone } from "@/lib/constants/appearance-timezone-default";
 import { LS_APPEARANCE_LOCALE, LS_APPEARANCE_TIMEZONE } from "@/lib/constants/theme";
 import { DEFAULT_APPEARANCE, loadAppearanceSettings } from "@/lib/services/user-settings";
 import { parseAppearanceLocale, parseAppearanceTimeZone } from "@/lib/validations/appearance";
@@ -33,27 +33,14 @@ function appearanceFromLocalStorageOrDefault(): typeof DEFAULT_APPEARANCE {
   } else {
     rec = { ...rec, timeZone: getDefaultAppearanceTimeZone() };
   }
-  // #region agent log
-  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "290de7" },
-    body: JSON.stringify({
-      sessionId: "290de7",
-      runId: "pre-fix",
-      hypothesisId: "H3",
-      location: "provider.tsx:appearanceFromLocalStorageOrDefault",
-      message: "client LS merge",
-      data: { locale: rec.locale, timeZone: rec.timeZone, fromLsTz: Boolean(tz) },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => undefined);
-  // #endregion
   return rec;
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [syncAppearance, setSyncAppearance] = useState(() => DEFAULT_APPEARANCE);
+  /** Stable clock for next-intl — avoid `new Date()` each render (re-renders subtree). */
+  const [now] = useState(() => new Date());
 
   useLayoutEffect(() => {
     const fromStorage = appearanceFromLocalStorageOrDefault();
@@ -87,38 +74,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const locale = resolveAppLocale(appearanceRecord.locale);
   const messages = useMemo(() => getMessagesForLocale(locale), [locale]);
 
-  // #region agent log
-  if (typeof window !== "undefined") {
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "290de7" },
-      body: JSON.stringify({
-        sessionId: "290de7",
-        runId: "pre-fix",
-        hypothesisId: "H1",
-        location: "provider.tsx:I18nProvider",
-        message: "appearanceRecord before NextIntlClientProvider",
-        data: {
-          locale,
-          timeZone: appearanceRecord.timeZone,
-          hasTimeZone:
-            typeof appearanceRecord.timeZone === "string" && appearanceRecord.timeZone.length > 0,
-          recordKeys: Object.keys(appearanceRecord as Record<string, unknown>),
-          syncLocale: syncAppearance.locale,
-          syncTimeZone: syncAppearance.timeZone,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => undefined);
-  }
-  // #endregion
-
   return (
     <NextIntlClientProvider
       locale={locale}
       messages={messages}
       timeZone={appearanceRecord.timeZone}
-      now={new Date()}
+      now={now}
     >
       {children}
     </NextIntlClientProvider>

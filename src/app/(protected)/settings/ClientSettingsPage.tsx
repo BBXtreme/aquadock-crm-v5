@@ -573,9 +573,7 @@ function ClientSettingsPage() {
               {t("appearance.title")}
             </CardTitle>
             <CardDescription className="text-sm leading-relaxed">
-              {t.rich("appearance.descriptionRich", {
-                code: () => <span className="font-mono text-foreground">{"<html lang>"}</span>,
-              })}
+              {t("appearance.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -665,11 +663,6 @@ function ClientSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-muted-foreground text-sm">
-              {t.rich("appearance.footerRich", {
-                strong: (chunks) => <strong>{chunks}</strong>,
-              })}
-            </p>
           </CardContent>
         </Card>
 

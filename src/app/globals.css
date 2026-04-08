@@ -145,21 +145,6 @@ typography settings for the body and headings.
 			transparent
 		);
 	}
-
-	/* Leaflet defaults: white popup + #333 text — breaks dark mode with theme-colored content */
-	.dark .leaflet-popup-content-wrapper,
-	.dark .leaflet-popup-tip {
-		background: var(--card);
-		color: var(--card-foreground);
-		box-shadow: 0 3px 14px color-mix(in oklch, black 45%, transparent);
-	}
-	.dark .leaflet-container a.leaflet-popup-close-button {
-		color: var(--muted-foreground);
-	}
-	.dark .leaflet-container a.leaflet-popup-close-button:hover,
-	.dark .leaflet-container a.leaflet-popup-close-button:focus {
-		color: var(--foreground);
-	}
 }
 
 @media (prefers-reduced-motion: reduce) {

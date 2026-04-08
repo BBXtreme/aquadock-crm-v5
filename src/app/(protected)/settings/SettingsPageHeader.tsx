@@ -1,3 +1,5 @@
+// src/app/(protected)/settings/SettingsPageHeader.tsx
+// This file contains the SettingsPageHeader component, which displays the header for the settings page.
 "use client";
 
 import { useT } from "@/lib/i18n/use-translations";

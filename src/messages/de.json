@@ -29,7 +29,7 @@
     },
     "appearance": {
       "title": "Erscheinungsbild",
-      "descriptionRich": "Wähle Hell-, Dunkel- oder Systemmodus (next-themes), die Oberflächensprache für <code></code>, und ein Farbschema für Primär- und Akzentfarben (CSS-Variablen). Einstellungen werden im Konto gespeichert und lokal gespiegelt. Das hier gespeicherte Theme ist die Voreinstellung beim nächsten App-Start; in der laufenden Sitzung kannst du unabhängig davon in der Kopfzeile zwischen Hell und Dunkel wechseln (ohne die gespeicherte Voreinstellung zu ändern).",
+      "description": "Passen Sie Darstellung und Sprache der Anwendung an: Hell- oder Dunkelmodus, Oberflächensprache, Zeitzone für Datums- und Uhrzeitangaben sowie Akzentfarben. Die Einstellungen gelten für Ihre gesamte Nutzung des CRM.",
       "datePreview": "Heute ({date})",
       "themeLabel": "Theme",
       "themeLight": "Hell",
@@ -49,7 +49,6 @@
         "rose": "Rose",
         "amber": "Bernstein"
       },
-      "footerRich": "Vollständige Übersetzung der App-Inhalte kann später ergänzt werden; die Auswahl ist <strong>bereits persistent</strong>.",
       "localeSavedRich": "Sprache <b>gespeichert</b>.",
       "themeSaved": "Theme gespeichert",
       "themeSaveErrorTitle": "Theme konnte nicht gespeichert werden",

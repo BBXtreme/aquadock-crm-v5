@@ -29,7 +29,7 @@
     },
     "appearance": {
       "title": "Appearance",
-      "descriptionRich": "Choose light, dark, or system mode (next-themes), the UI language for <code></code>, and a color scheme for primary and accent colors (CSS variables). Settings are stored on your account and mirrored locally. The theme saved here is the default on the next app start; during the session you can still switch light/dark in the header without changing the saved default.",
+      "description": "Customize how the CRM looks and reads: light or dark mode, interface language, time zone for dates and times, and accent colors. These preferences apply throughout the application.",
       "datePreview": "Today ({date})",
       "themeLabel": "Theme",
       "themeLight": "Light",
@@ -49,7 +49,6 @@
         "rose": "Rose",
         "amber": "Amber"
       },
-      "footerRich": "Full translation of app content can be added later; your choice is <strong>already persistent</strong>.",
       "localeSavedRich": "Language saved <b>successfully</b>.",
       "themeSaved": "Theme saved",
       "themeSaveErrorTitle": "Could not save theme",
