@@ -7,7 +7,16 @@
 import { useQuery } from "@tanstack/react-query";
 import L from "leaflet";
 import { useSearchParams } from "next/navigation";
-import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type MutableRefObject,
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { toast } from "sonner";
@@ -31,10 +40,10 @@ import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-util
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
 import OsmPoiMarkerPopup from "./OsmPoiMarkerPopup";
 import {
-  osmPoiDedupeKey,
   type OsmPoi,
   type OsmPoiCoverageEntry,
   type OsmPoiPersistedCacheV2,
+  osmPoiDedupeKey,
 } from "./types";
 import { useMapPopupActions } from "./useMapPopupActions";
 
@@ -43,6 +52,10 @@ const OSM_POI_FETCH_TTL_MS = 10 * 60 * 1000;
 const MAX_OSM_FETCH_COVERAGE_ENTRIES = 40;
 const MAX_OSM_POIS_IN_MEMORY = 6000;
 const OSM_PRUNE_PAD_RATIO = 0.35;
+/** Grows each stored fetch footprint for coverage checks so tiny pans still count as “covered”. */
+const OSM_COVERAGE_FOOTPRINT_INFLATE = 0.12;
+const OSM_POI_ENTER_ANIM_MS = 520;
+const CACHED_POIS_HINT_MS = 1500;
 
 /** Runtime check for persisted coverage rows (localStorage v2). */
 function isOsmPoiCoverageEntry(x: unknown): x is OsmPoiCoverageEntry {
@@ -96,7 +109,7 @@ function viewportFullyCoveredByAny(
 ): boolean {
   for (const e of coverage) {
     if (now - e.timestamp >= ttlMs) continue;
-    const ob = coverageToLeafletBounds(e);
+    const ob = padLatLngBounds(coverageToLeafletBounds(e), OSM_COVERAGE_FOOTPRINT_INFLATE);
     if (innerFullyInsideOuter(ob, view)) return true;
   }
   return false;
@@ -149,6 +162,17 @@ function osmPoiPosition(poi: OsmPoi): [number, number] | null {
     return null;
   }
   return [lat, lon];
+}
+
+/** Keys for POIs that appear in `incoming` but not in `prev` (for one-shot enter animation). */
+function collectFreshOsmPoiKeys(prev: OsmPoi[], incoming: OsmPoi[]): Set<string> {
+  const prevKeys = new Set(prev.map(osmPoiDedupeKey));
+  const fresh = new Set<string>();
+  for (const p of incoming) {
+    const k = osmPoiDedupeKey(p);
+    if (!prevKeys.has(k)) fresh.add(k);
+  }
+  return fresh;
 }
 
 /** Accepts DB/JSON lat-lon as number or numeric string; rejects NaN. */
@@ -228,6 +252,93 @@ const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => 
   return null;
 };
 
+type OpenMapBasemapConfig = ReturnType<typeof resolveBasemap>;
+
+type OpenMapLeafletCoreProps = {
+  mapRef: MutableRefObject<L.Map | null>;
+  isDarkMode: boolean;
+  basemap: OpenMapBasemapConfig;
+  validCompanies: CompanyForOpenMap[];
+  osmMarkers: ReactNode;
+  onBoundsDebounced: () => void;
+  onShellReady: () => void;
+  onOpenCompanyDetail: (companyId: string) => void;
+};
+
+/**
+ * Isolated from loading / hint state so `setLoadingOsm` does not reconcile the whole Leaflet tree
+ * (avoids cluster layers briefly dropping markers during Overpass fetches).
+ */
+const OpenMapLeafletCore = memo(function OpenMapLeafletCore({
+  mapRef,
+  isDarkMode,
+  basemap,
+  validCompanies,
+  osmMarkers,
+  onBoundsDebounced,
+  onShellReady,
+  onOpenCompanyDetail,
+}: OpenMapLeafletCoreProps) {
+  return (
+    <MapContainer
+      center={[50.1109, 8.6821]}
+      zoom={7}
+      style={{ height: "100%", width: "100%" }}
+      className={cn("z-0", isDarkMode && "aquadock-map--dark")}
+      whenReady={() => {
+        queueMicrotask(() => {
+          onShellReady();
+        });
+      }}
+      preferCanvas={true}
+    >
+      <TileLayer key={basemap.tileLayerReactKey} attribution={basemap.attribution} url={basemap.url} />
+
+      <MapRefBinder mapRef={mapRef} />
+
+      {validCompanies.map((company) => {
+        const lat = toFiniteLatLon(company.lat);
+        const lon = toFiniteLatLon(company.lon);
+        if (lat === null || lon === null) return null;
+        return (
+          <Marker key={company.id} position={[lat, lon]} icon={getStatusIcon(company.status)}>
+            <Popup>
+              <CompanyMarkerPopup company={company} onOpenDetail={onOpenCompanyDetail} />
+            </Popup>
+          </Marker>
+        );
+      })}
+
+      <MapEventHandler onBoundsChange={onBoundsDebounced} />
+
+      <MarkerClusterGroup
+        chunkedLoading={false}
+        maxClusterRadius={50}
+        spiderfyOnMaxZoom={true}
+        showCoverageOnHover={false}
+        removeOutsideVisibleBounds={false}
+        animateAddingMarkers={true}
+        iconCreateFunction={(cluster: { getChildCount: () => number }) => {
+          const count = cluster.getChildCount();
+          return L.divIcon({
+            html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
+            className: "custom-cluster",
+            iconSize: [36, 36],
+          });
+        }}
+        polygonOptions={{
+          color: isDarkMode ? "#4b5563" : "#9ca3af",
+          weight: 2,
+          opacity: 0.5,
+          fillOpacity: 0.1,
+        }}
+      >
+        {osmMarkers}
+      </MarkerClusterGroup>
+    </MapContainer>
+  );
+});
+
 export default function OpenMapView({ initialCompanies }: { initialCompanies: CompanyForOpenMap[] }) {
   const t = useT("openmap");
   const mapRef = useRef<L.Map | null>(null);
@@ -235,10 +346,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [mapReady, setMapReady] = useState(false);
   const [loadingOsm, setLoadingOsm] = useState(false);
   const [osmPois, setOsmPois] = useState<OsmPoi[]>([]);
+  const osmPoisRef = useRef<OsmPoi[]>([]);
+  const [osmPoiEnterKeys, setOsmPoiEnterKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [cachedPoisHintVisible, setCachedPoisHintVisible] = useState(false);
+  const poiEnterClearTimeoutRef = useRef<number | null>(null);
+  const cachedHintTimeoutRef = useRef<number | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(7);
-  const osmCacheRef = useRef(new Map<string, CacheEntry>());
+  const fetchedCoverageRef = useRef<OsmPoiCoverageEntry[]>([]);
+  const fetchEpochRef = useRef(0);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
   const [autoLoadPois, setAutoLoadPois] = useState(true);
@@ -253,6 +370,44 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const { openCompanyDetail, importOsmPoi, viewInOsm, calculateWaterForPoi } = useMapPopupActions();
 
+  const openCompanyDetailRef = useRef(openCompanyDetail);
+  openCompanyDetailRef.current = openCompanyDetail;
+  const stableOpenCompanyDetail = useCallback((companyId: string) => {
+    openCompanyDetailRef.current(companyId);
+  }, []);
+
+  const handleMapShellReady = useCallback(() => {
+    setMapReady(true);
+  }, []);
+
+  useEffect(() => {
+    osmPoisRef.current = osmPois;
+  }, [osmPois]);
+
+  const armPoiEnterAnimation = useCallback((incoming: OsmPoi[], prevSnapshot: OsmPoi[]) => {
+    const fresh = collectFreshOsmPoiKeys(prevSnapshot, incoming);
+    if (fresh.size === 0) return;
+    if (poiEnterClearTimeoutRef.current !== null) {
+      clearTimeout(poiEnterClearTimeoutRef.current);
+    }
+    setOsmPoiEnterKeys(fresh);
+    poiEnterClearTimeoutRef.current = window.setTimeout(() => {
+      setOsmPoiEnterKeys(new Set());
+      poiEnterClearTimeoutRef.current = null;
+    }, OSM_POI_ENTER_ANIM_MS);
+  }, []);
+
+  const showCachedCoverageHint = useCallback(() => {
+    setCachedPoisHintVisible(true);
+    if (cachedHintTimeoutRef.current !== null) {
+      clearTimeout(cachedHintTimeoutRef.current);
+    }
+    cachedHintTimeoutRef.current = window.setTimeout(() => {
+      setCachedPoisHintVisible(false);
+      cachedHintTimeoutRef.current = null;
+    }, CACHED_POIS_HINT_MS);
+  }, []);
+
   const { data: mapPrefs } = useQuery({
     queryKey: ["map-provider-settings"],
     queryFn: loadMapSettings,
@@ -262,16 +417,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const mapProvider = mapPrefs?.map_provider ?? "osm";
   const googleApiKeyForTiles = mapPrefs?.google_maps_api_key ?? null;
 
-  // Load POI cache from localStorage
+  // Load persisted fetch coverage (v2 JSON only; legacy Map blobs ignored)
   useEffect(() => {
-    const saved = localStorage.getItem("openmap-poi-cache");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        osmCacheRef.current = new Map(Object.entries(parsed));
-      } catch (e) {
-        console.warn("Failed to load POI cache", e);
-      }
+    try {
+      fetchedCoverageRef.current = parseOpenmapPoiCoverageFromLs(localStorage.getItem(OPENMAP_POI_LS_KEY));
+    } catch (e) {
+      console.warn("Failed to load POI coverage cache", e);
+      fetchedCoverageRef.current = [];
     }
   }, []);
 
@@ -316,12 +468,14 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     return () => window.removeEventListener("company-imported", handler);
   }, [refreshCompanies]);
 
-  // Save cache on unmount
+  // Persist fetch coverage on unmount (POIs stay in memory only)
   useEffect(() => {
     return () => {
       if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      const cacheObj = Object.fromEntries(osmCacheRef.current);
-      localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+      if (poiEnterClearTimeoutRef.current !== null) clearTimeout(poiEnterClearTimeoutRef.current);
+      if (cachedHintTimeoutRef.current !== null) clearTimeout(cachedHintTimeoutRef.current);
+      const payload: OsmPoiPersistedCacheV2 = { v: 2, coverage: [...fetchedCoverageRef.current] };
+      localStorage.setItem(OPENMAP_POI_LS_KEY, JSON.stringify(payload));
     };
   }, []);
 
@@ -433,51 +587,64 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     setHasCentered(true);
   }, [mapReady, searchParams, companies]);
 
-  // Main POI load handler with debounce
+  // Main POI load: never clears `osmPois` until a successful merge in `.then`; prune only after merge if over cap.
   const handleLoad = useCallback(() => {
     if (!mapRef.current) return;
 
-    const zoom = mapRef.current.getZoom();
+    const map = mapRef.current;
+    const zoom = map.getZoom();
     setCurrentZoom(zoom);
 
     if (!autoLoadPois || zoom < 13) return;
 
-    const bounds = mapRef.current.getBounds();
-    const centerLat = Math.round(bounds.getCenter().lat * 2) / 2;
-    const centerLon = Math.round(bounds.getCenter().lng * 2) / 2;
-    const key = `${zoom}-${centerLat},${centerLon}`;
-
+    const bounds = map.getBounds();
     const now = Date.now();
-    const cacheEntry = osmCacheRef.current.get(key);
 
-    if (cacheEntry && now - cacheEntry.timestamp < 10 * 60 * 1000 && cacheEntry.bounds.contains(bounds)) {
-      setOsmPois(cacheEntry.pois);
+    if (viewportFullyCoveredByAny(bounds, fetchedCoverageRef.current, now, OSM_POI_FETCH_TTL_MS)) {
+      showCachedCoverageHint();
       return;
     }
 
+    setCachedPoisHintVisible(false);
+    const epoch = ++fetchEpochRef.current;
+    // UI-only: existing markers stay in React state and in the memoized map layer until merge completes.
     setLoadingOsm(true);
 
     fetchOsmPois(bounds)
       .then((result) => {
-        const pois: OsmPoi[] = (result.pois || []) as OsmPoi[];
-        osmCacheRef.current.set(key, { pois, timestamp: now, bounds });
+        if (fetchEpochRef.current !== epoch) return;
 
-        if (osmCacheRef.current.size > 15) {
-          const firstKey = osmCacheRef.current.keys().next().value;
-          if (firstKey) osmCacheRef.current.delete(firstKey);
+        const incoming = (result.pois ?? []) as OsmPoi[];
+        const prevSnapshot = osmPoisRef.current;
+
+        fetchedCoverageRef.current.push(boundsToCoverageEntry(bounds, now));
+        while (fetchedCoverageRef.current.length > MAX_OSM_FETCH_COVERAGE_ENTRIES) {
+          fetchedCoverageRef.current.shift();
         }
+
+        setOsmPois((prev) => {
+          const merged = mergeOsmPoisPreferIncoming(prev, incoming);
+          if (merged.length <= MAX_OSM_POIS_IN_MEMORY) {
+            return merged;
+          }
+          return pruneOsmPoisFarFromView(merged, bounds, OSM_PRUNE_PAD_RATIO);
+        });
+
+        armPoiEnterAnimation(incoming, prevSnapshot);
 
         if (saveTimeout.current) clearTimeout(saveTimeout.current);
         saveTimeout.current = setTimeout(() => {
-          const cacheObj = Object.fromEntries(osmCacheRef.current);
-          localStorage.setItem("openmap-poi-cache", JSON.stringify(cacheObj));
+          const payload: OsmPoiPersistedCacheV2 = { v: 2, coverage: [...fetchedCoverageRef.current] };
+          localStorage.setItem(OPENMAP_POI_LS_KEY, JSON.stringify(payload));
         }, 3000);
-
-        setOsmPois(pois);
       })
       .catch((err) => console.error("POI load error:", err))
-      .finally(() => setLoadingOsm(false));
-  }, [autoLoadPois]);
+      .finally(() => {
+        if (fetchEpochRef.current === epoch) {
+          setLoadingOsm(false);
+        }
+      });
+  }, [armPoiEnterAnimation, autoLoadPois, showCachedCoverageHint]);
 
   // Debounced map events
   const debounced = useCallback(() => {
@@ -526,39 +693,34 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   const osmMarkers = useMemo(
     () =>
-      osmPois
-        .filter((poi) => {
-          const lat = poi.lat || poi.center?.lat;
-          const lon = poi.lon || poi.center?.lon;
-          return typeof lat === "number" && typeof lon === "number" && !Number.isNaN(lat) && !Number.isNaN(lon);
-        })
-        .map((poi) => {
-          const lat = poi.lat || poi.center?.lat;
-          const lon = poi.lon || poi.center?.lon;
-          return (
-            <Marker
-              key={`osm-${poi.type}-${poi.id}`}
-              position={[lat as number, lon as number]}
-              icon={getOsmPoiIcon(isDarkMode)}
-            >
-              <Popup>
-                <OsmPoiMarkerPopup
-                  poi={poi}
-                  isDarkMode={isDarkMode}
-                  onImport={handleImportOsmPoi}
-                  onViewInOsm={viewInOsm}
-                  onCalculateWater={async (poi) => {
-                    await calculateWaterForPoi(poi);
-                    setOsmPois((prev) =>
-                      prev.map((p) => (p.id === poi.id && p.type === poi.type ? { ...p, ...poi } : p)),
-                    );
-                  }}
-                />
-              </Popup>
-            </Marker>
-          );
-        }),
-    [osmPois, isDarkMode, handleImportOsmPoi, viewInOsm, calculateWaterForPoi],
+      osmPois.flatMap((poi) => {
+        const pos = osmPoiPosition(poi);
+        if (pos === null) return [];
+        return [
+          <Marker
+            key={`osm-${osmPoiDedupeKey(poi)}`}
+            position={pos}
+            icon={getOsmPoiIcon(isDarkMode, osmPoiEnterKeys.has(osmPoiDedupeKey(poi)))}
+          >
+            <Popup>
+              <OsmPoiMarkerPopup
+                poi={poi}
+                isDarkMode={isDarkMode}
+                onImport={handleImportOsmPoi}
+                onViewInOsm={viewInOsm}
+                onCalculateWater={async (poiInner) => {
+                  await calculateWaterForPoi(poiInner);
+                  const key = osmPoiDedupeKey(poiInner);
+                  setOsmPois((prev) =>
+                    prev.map((p) => (osmPoiDedupeKey(p) === key ? { ...p, ...poiInner } : p)),
+                  );
+                }}
+              />
+            </Popup>
+          </Marker>,
+        ];
+      }),
+    [osmPois, osmPoiEnterKeys, isDarkMode, handleImportOsmPoi, viewInOsm, calculateWaterForPoi],
   );
 
   if (!mounted) {
@@ -567,65 +729,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
   return (
     <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
-      <MapContainer
-        center={[50.1109, 8.6821]}
-        zoom={7}
-        style={{ height: "100%", width: "100%" }}
-        className={cn("z-0", isDarkMode && "aquadock-map--dark")}
-        whenReady={() => {
-          // react-leaflet can invoke whenReady during commit; defer so React 19 does not warn
-          // about setState on a component that has not finished mounting.
-          queueMicrotask(() => {
-            setMapReady(true);
-          });
-        }}
-        preferCanvas={true}
-      >
-        <TileLayer key={basemap.tileLayerReactKey} attribution={basemap.attribution} url={basemap.url} />
-
-        {/* Company Markers */}
-        <MapRefBinder mapRef={mapRef} />
-
-        {validCompanies.map((company) => {
-          const lat = toFiniteLatLon(company.lat);
-          const lon = toFiniteLatLon(company.lon);
-          if (lat === null || lon === null) return null;
-          return (
-            <Marker key={company.id} position={[lat, lon]} icon={getStatusIcon(company.status)}>
-              <Popup>
-                <CompanyMarkerPopup company={company} onOpenDetail={openCompanyDetail} />
-              </Popup>
-            </Marker>
-          );
-        })}
-
-        <MapEventHandler onBoundsChange={debounced} />
-
-        <MarkerClusterGroup
-          chunkedLoading
-          maxClusterRadius={50}
-          spiderfyOnMaxZoom={true}
-          showCoverageOnHover={false}
-          removeOutsideVisibleBounds={false}
-          animateAddingMarkers={false}
-          iconCreateFunction={(cluster: { getChildCount: () => number }) => {
-            const count = cluster.getChildCount();
-            return L.divIcon({
-              html: `<div style="background-color:${isDarkMode ? "#374151" : "white"};color:${isDarkMode ? "white" : "#374151"};width:36px;height:36px;border-radius:50%;border:3px solid ${isDarkMode ? "#9ca3af" : "#d1d5db"};display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;">${count}</div>`,
-              className: "custom-cluster",
-              iconSize: [36, 36],
-            });
-          }}
-          polygonOptions={{
-            color: isDarkMode ? "#4b5563" : "#9ca3af",
-            weight: 2,
-            opacity: 0.5,
-            fillOpacity: 0.1,
-          }}
-        >
-          {osmMarkers}
-        </MarkerClusterGroup>
-      </MapContainer>
+      <OpenMapLeafletCore
+        mapRef={mapRef}
+        isDarkMode={isDarkMode}
+        basemap={basemap}
+        validCompanies={validCompanies}
+        osmMarkers={osmMarkers}
+        onBoundsDebounced={debounced}
+        onShellReady={handleMapShellReady}
+        onOpenCompanyDetail={stableOpenCompanyDetail}
+      />
 
       {basemap.showAppleBasemapNotice && (
         <div
@@ -638,18 +751,22 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
       {/* POI Count */}
       {currentZoom >= 13 && (
-        <div className="absolute top-4 left-4 z-[1000] bg-card/90 backdrop-blur border rounded-md px-3 py-1.5 text-sm text-muted-foreground flex items-center gap-2 shadow-sm">
+        <div className="absolute top-4 left-4 z-[1000] max-w-[min(92vw,20rem)] bg-card/90 backdrop-blur border rounded-md px-3 py-1.5 text-sm text-muted-foreground shadow-sm">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+            <span>{t("poiCount", { count: osmPois.length })}</span>
+          </div>
           {loadingOsm ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {t("loadingPois")}
-            </>
-          ) : (
-            <>
-              <MapPin className="h-4 w-4" />
-              {t("poiCount", { count: osmPois.length })}
-            </>
-          )}
+            <div className="mt-1 flex items-center gap-2 border-t border-border/60 pt-1 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+              <span>{t("loadingNewPois")}</span>
+            </div>
+          ) : null}
+          {cachedPoisHintVisible && !loadingOsm ? (
+            <p className="mt-1 border-t border-border/60 pt-1 text-xs font-normal leading-snug text-muted-foreground/85">
+              {t("cachedPoisHint")}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -671,16 +788,38 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           size="icon"
           disabled={currentZoom < 13}
           onClick={async () => {
-            osmCacheRef.current.clear();
-            localStorage.removeItem("openmap-poi-cache");
-            if (mapRef.current && mapRef.current.getZoom() >= 13) {
-              setLoadingOsm(true);
-              try {
-                const result = await fetchOsmPois(mapRef.current.getBounds());
-                setOsmPois((result.pois || []) as OsmPoi[]);
-              } catch (e) {
-                console.error(e);
-              } finally {
+            fetchedCoverageRef.current = [];
+            localStorage.removeItem(OPENMAP_POI_LS_KEY);
+            setOsmPois([]);
+            const map = mapRef.current;
+            if (!map || map.getZoom() < 13) return;
+
+            const epoch = ++fetchEpochRef.current;
+            setCachedPoisHintVisible(false);
+            setLoadingOsm(true);
+            try {
+              const bounds = map.getBounds();
+              const result = await fetchOsmPois(bounds);
+              if (fetchEpochRef.current !== epoch) return;
+
+              const now = Date.now();
+              const incoming = (result.pois ?? []) as OsmPoi[];
+              fetchedCoverageRef.current.push(boundsToCoverageEntry(bounds, now));
+              while (fetchedCoverageRef.current.length > MAX_OSM_FETCH_COVERAGE_ENTRIES) {
+                fetchedCoverageRef.current.shift();
+              }
+              setOsmPois(mergeOsmPoisPreferIncoming([], incoming));
+              armPoiEnterAnimation(incoming, []);
+
+              if (saveTimeout.current) clearTimeout(saveTimeout.current);
+              saveTimeout.current = setTimeout(() => {
+                const payload: OsmPoiPersistedCacheV2 = { v: 2, coverage: [...fetchedCoverageRef.current] };
+                localStorage.setItem(OPENMAP_POI_LS_KEY, JSON.stringify(payload));
+              }, 3000);
+            } catch (e) {
+              console.error(e);
+            } finally {
+              if (fetchEpochRef.current === epoch) {
                 setLoadingOsm(false);
               }
             }

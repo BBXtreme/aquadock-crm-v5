@@ -10,13 +10,13 @@ todos:
     status: pending
   - id: handleLoad-phase2
     content: Rewrite handleLoad — coverage skip (Phase 2), epoch guard, merge+prune, loading only on real fetch, debounced persist
-    status: pending
+    status: completed
   - id: clear-cluster
     content: Clear-cache resets coverage+POIs+storage; MarkerClusterGroup animateAddingMarkers true
-    status: pending
+    status: completed
   - id: verify
     content: pnpm typecheck && pnpm check:fix
-    status: pending
+    status: completed
 isProject: false
 ---
 

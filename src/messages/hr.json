@@ -322,6 +322,8 @@
     "errorBanner": "Greška pri učitavanju karte",
     "appleBasemapNotice": "Napomena: Apple karte trenutačno koriste istu OpenStreetMap/CARTO osnovnu kartu kao i prije.",
     "loadingPois": "Učitavanje POI…",
+    "loadingNewPois": "Učitavanje novih POI…",
+    "cachedPoisHint": "Koriste se pohranjeni POI — ovo područje je već učitano.",
     "poiCount": "{count} OSM POI",
     "titleFitAllCompanies": "Prikaži sve tvrtke",
     "titleClearCacheReload": "Isprazni predmemoriju i ponovno učitaj POI",

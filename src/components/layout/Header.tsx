@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -112,14 +113,7 @@ export default function Header({ user }: HeaderProps) {
   // the slotted button. Sign out via the browser Supabase client, then hard-navigate
   // so middleware and RSC see cleared cookies (same outcome as the server action).
   const handleHeaderSignOut = () => {
-    void (async () => {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        return;
-      }
-      window.location.assign("/login");
-    })();
+    void performBrowserSignOutToLogin();
   };
 
   const avatarAlt = safeDisplay(user.display_name ?? user.email?.split("@")[0] ?? "", "User");

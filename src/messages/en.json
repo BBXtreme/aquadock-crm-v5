@@ -322,6 +322,8 @@
     "errorBanner": "Error loading map",
     "appleBasemapNotice": "Note: Apple Maps currently use the same OpenStreetMap/CARTO basemap as before.",
     "loadingPois": "Loading POIs…",
+    "loadingNewPois": "Loading new POIs…",
+    "cachedPoisHint": "Using cached POIs — this area was already loaded.",
     "poiCount": "{count} OSM POIs",
     "titleFitAllCompanies": "Show all companies",
     "titleClearCacheReload": "Clear cache and reload POIs",

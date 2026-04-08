@@ -322,6 +322,8 @@
     "errorBanner": "Fehler beim Laden der Karte",
     "appleBasemapNotice": "Hinweis: Apple-Karten nutzen vorerst dieselbe OpenStreetMap/CARTO-Basiskarte wie zuvor.",
     "loadingPois": "POIs werden geladen…",
+    "loadingNewPois": "Neue POIs werden geladen…",
+    "cachedPoisHint": "Zwischengespeicherte POIs — dieses Gebiet ist bereits geladen.",
     "poiCount": "{count} OSM-POIs",
     "titleFitAllCompanies": "Alle Firmen anzeigen",
     "titleClearCacheReload": "Cache leeren und POIs neu laden",

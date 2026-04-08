@@ -34,14 +34,18 @@ export const getStatusIcon = (status?: string) => {
   });
 };
 
-export const getOsmPoiIcon = (isDarkMode = false) => {
+/**
+ * OSM POI marker: optional `withEnterAnimation` adds a one-shot CSS class for fade/scale (see leaflet-popup-theme.css).
+ */
+export const getOsmPoiIcon = (isDarkMode = false, withEnterAnimation = false) => {
   const bgColor = isDarkMode ? "#374151" : "white";
   const borderColor = isDarkMode ? "#9ca3af" : "#d1d5db";
   const textColor = isDarkMode ? "white" : "#374151";
+  const enterClass = withEnterAnimation ? " osm-poi-inner--enter" : "";
 
   return L.divIcon({
     className: "osm-poi",
-    html: `<div style="background-color:${bgColor};width:24px;height:24px;border-radius:50%;border:2px solid ${borderColor};box-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:12px;">?</div>`,
+    html: `<div class="osm-poi-inner${enterClass}" style="background-color:${bgColor};width:24px;height:24px;border-radius:50%;border:2px solid ${borderColor};box-shadow:0 2px 4px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:${textColor};font-weight:bold;font-size:12px;">?</div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
     popupAnchor: [0, -15],
