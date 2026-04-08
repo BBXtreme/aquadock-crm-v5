@@ -1,0 +1,205 @@
+{"sessionId":"2fbdf8","location":"protected/layout.tsx:after-requireUser","message":"Protected layout rendered","data":{"role":"admin"},"timestamp":1775682895276,"hypothesisId":"H4"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682896453,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682896454,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897712,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897706,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897716,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897716,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/dashboard","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682897770,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"I18nProvider.tsx:messages","message":"I18n messages sidebar subtree","data":{"locale":"de","hasLayoutSidebar":true,"sidebarKeyCount":17},"timestamp":1775682897771,"hypothesisId":"H2"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897773,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897774,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897774,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897774,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897816,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897816,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897817,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897817,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897821,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897821,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682897821,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682897822,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682898674,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682898674,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/dashboard"},"timestamp":1775682898675,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682898675,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"I18nProvider.tsx:messages","message":"I18n messages sidebar subtree","data":{"locale":"hr","hasLayoutSidebar":true,"sidebarKeyCount":17},"timestamp":1775682898693,"hypothesisId":"H2"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902411,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902412,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902412,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902412,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902418,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902419,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902419,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902419,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902601,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902602,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/reminders"},"timestamp":1775682902602,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682902603,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/reminders","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682902650,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903786,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903790,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903791,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903791,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903791,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903794,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903795,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903795,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903795,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903786,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903786,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903786,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903987,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903987,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/companies"},"timestamp":1775682903987,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682903988,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/companies","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682904029,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904661,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904661,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904666,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904666,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904666,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904666,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904817,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904817,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/contacts"},"timestamp":1775682904818,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682904818,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/contacts","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682904831,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905134,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905134,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905134,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905134,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905138,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905138,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905138,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905138,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905163,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905163,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905164,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905164,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905167,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905168,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905168,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905168,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905218,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905218,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905218,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905218,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905222,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905222,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905223,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905223,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905273,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905274,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/timeline"},"timestamp":1775682905274,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905274,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/timeline","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682905286,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/openmap"},"timestamp":1775682905806,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905806,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/openmap"},"timestamp":1775682905806,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682905806,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/openmap","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682905820,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906273,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906273,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906273,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906274,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906282,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906283,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906283,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906283,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906287,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906287,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906288,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906288,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906409,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906409,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906409,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906409,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906413,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906413,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/mass-email"},"timestamp":1775682906413,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906413,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/mass-email","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682906443,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682906928,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906928,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682906928,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906928,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682906931,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906932,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682906932,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682906932,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907030,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907030,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907030,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907030,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907034,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907034,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907034,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907034,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907041,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907041,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907043,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907043,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907051,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907051,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682907051,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682907052,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/brevo","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682907120,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682912190,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682912191,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/brevo"},"timestamp":1775682912192,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682912193,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915657,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915657,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915657,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915657,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915662,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915850,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915850,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915851,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915851,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915854,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915855,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915855,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915855,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915859,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915860,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915860,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915860,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915863,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915864,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915864,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915864,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915868,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915868,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915868,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915868,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915872,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915872,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915872,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915872,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915877,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915877,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682915878,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Nadzorna ploča"},"timestamp":1775682915878,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"AppLayout.tsx:shell","message":"AppLayout shell path","data":{"pathname":"/settings","isAuthPage":false,"willRenderSidebar":true},"timestamp":1775682915918,"hypothesisId":"H5"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682918498,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682918499,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682918500,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682918500,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"I18nProvider.tsx:messages","message":"I18n messages sidebar subtree","data":{"locale":"de","hasLayoutSidebar":true,"sidebarKeyCount":17},"timestamp":1775682918634,"hypothesisId":"H2"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682923729,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682923730,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682923730,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682923730,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"I18nProvider.tsx:messages","message":"I18n messages sidebar subtree","data":{"locale":"en","hasLayoutSidebar":true,"sidebarKeyCount":17},"timestamp":1775682923860,"hypothesisId":"H2"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682930245,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682930245,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:pre-useT","message":"Sidebar render before useT(layout.sidebar)","data":{"pathname":"/settings"},"timestamp":1775682930246,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"Sidebar.tsx:post-useT","message":"Sidebar render after useT","data":{"sampleLabel":"Dashboard"},"timestamp":1775682930246,"hypothesisId":"H1"}
+{"sessionId":"2fbdf8","location":"I18nProvider.tsx:messages","message":"I18n messages sidebar subtree","data":{"locale":"de","hasLayoutSidebar":true,"sidebarKeyCount":17},"timestamp":1775682930379,"hypothesisId":"H2"}

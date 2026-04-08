@@ -19,6 +19,7 @@ import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import packageJson from "../../../package.json";
 
@@ -88,23 +89,28 @@ interface SidebarProps {
 }
 
 const salesNavigation = [
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Reminders", href: "/reminders", icon: Bell },
-  { name: "Companies", href: "/companies", icon: Target },
-  { name: "Contacts", href: "/contacts", icon: Users },
-  { name: "Timeline", href: "/timeline", icon: History },
-  { name: "OpenMap", href: "/openmap", icon: MapPin },
+  { messageKey: "dashboard", href: "/dashboard", icon: BarChart3 },
+  { messageKey: "reminders", href: "/reminders", icon: Bell },
+  { messageKey: "companies", href: "/companies", icon: Target },
+  { messageKey: "contacts", href: "/contacts", icon: Users },
+  { messageKey: "timeline", href: "/timeline", icon: History },
+  { messageKey: "openmap", href: "/openmap", icon: MapPin },
 ] as const;
 
 const marketingNavigation = [
-  { name: "Mass Email", href: "/mass-email", icon: Mail },
-  { name: "Brevo Campaigns", href: "/brevo", icon: Mail },
+  { messageKey: "massEmail", href: "/mass-email", icon: Mail },
+  { messageKey: "brevoCampaigns", href: "/brevo", icon: Mail },
 ] as const;
 
+type SidebarNavMessageKey =
+  | (typeof salesNavigation)[number]["messageKey"]
+  | (typeof marketingNavigation)[number]["messageKey"];
+
 function renderNavItems(
-  items: readonly { name: string; href: string; icon: typeof BarChart3 }[],
+  items: readonly { messageKey: SidebarNavMessageKey; href: string; icon: typeof BarChart3 }[],
   pathname: string,
   isCollapsed: boolean,
+  label: (key: SidebarNavMessageKey) => string,
 ) {
   return items.map((item) => {
     const isActive = pathname === item.href;
@@ -118,10 +124,11 @@ function renderNavItems(
               isCollapsed && "px-2 justify-center",
               isActive && "bg-secondary text-secondary-foreground shadow-sm",
             )}
+            title={isCollapsed ? label(item.messageKey) : undefined}
           >
             <item.icon className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
             {!isCollapsed && (
-              <span className="flex-1 text-left truncate">{item.name}</span>
+              <span className="flex-1 text-left truncate">{label(item.messageKey)}</span>
             )}
           </Button>
         </Link>
@@ -133,6 +140,39 @@ function renderNavItems(
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
   const _router = useRouter();
+  // #region agent log
+  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
+    body: JSON.stringify({
+      sessionId: "2fbdf8",
+      location: "Sidebar.tsx:pre-useT",
+      message: "Sidebar render before useT(layout.sidebar)",
+      data: { pathname },
+      timestamp: Date.now(),
+      hypothesisId: "H1",
+    }),
+  }).catch(() => {
+    /* debug ingest optional */
+  });
+  // #endregion
+  const t = useT("layout.sidebar");
+  // #region agent log
+  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
+    body: JSON.stringify({
+      sessionId: "2fbdf8",
+      location: "Sidebar.tsx:post-useT",
+      message: "Sidebar render after useT",
+      data: { sampleLabel: t("dashboard") },
+      timestamp: Date.now(),
+      hypothesisId: "H1",
+    }),
+  }).catch(() => {
+    /* debug ingest optional */
+  });
+  // #endregion
 
   const _userRole = user.role;
 
@@ -144,22 +184,32 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       )}
     >
       <div className="flex h-14 shrink-0 items-center justify-center border-b border-border px-4">
-        <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggle}
+          className="h-8 w-8"
+          aria-label={isCollapsed ? t("toggleExpand") : t("toggleCollapse")}
+        >
           {isCollapsed ? <PanelRight className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
         </Button>
       </div>
 
       <nav className={cn("flex flex-1 flex-col gap-4 p-4 overflow-y-auto")} suppressHydrationWarning={true}>
         <SidebarGroup className="gap-1">
-          {!isCollapsed ? <SidebarGroupLabel>Sales</SidebarGroupLabel> : null}
+          {!isCollapsed ? <SidebarGroupLabel>{t("groupSales")}</SidebarGroupLabel> : null}
           <SidebarGroupContent>
-            <SidebarMenu>{renderNavItems(salesNavigation, pathname, isCollapsed)}</SidebarMenu>
+            <SidebarMenu>
+              {renderNavItems(salesNavigation, pathname, isCollapsed, t)}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup className="gap-1">
-          {!isCollapsed ? <SidebarGroupLabel>Marketing</SidebarGroupLabel> : null}
+          {!isCollapsed ? <SidebarGroupLabel>{t("groupMarketing")}</SidebarGroupLabel> : null}
           <SidebarGroupContent>
-            <SidebarMenu>{renderNavItems(marketingNavigation, pathname, isCollapsed)}</SidebarMenu>
+            <SidebarMenu>
+              {renderNavItems(marketingNavigation, pathname, isCollapsed, t)}
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </nav>
@@ -171,29 +221,29 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-start h-10 px-3">
-                <span className="flex-1 text-left">Quick Actions</span>
+                <span className="flex-1 text-left">{t("quickActions")}</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-2">
               <Link href="/companies?create=true">
                 <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  New Company
+                  {t("newCompany")}
                 </Button>
               </Link>
               <Link href="/contacts?create=true">
                 <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  New Contact
+                  {t("newContact")}
                 </Button>
               </Link>
               <Link href="/reminders?create=true">
                 <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  New Reminder
+                  {t("newReminder")}
                 </Button>
               </Link>
               <Link href="/timeline?create=true">
                 <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  New Timeline
+                  {t("newTimeline")}
                 </Button>
               </Link>
             </CollapsibleContent>

@@ -722,7 +722,26 @@
     "globalSearchTitle": "Global search",
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
     "globalSearchGotIt": "Got it",
-    "searchAriaLabel": "Search"
+    "searchAriaLabel": "Search",
+    "sidebar": {
+      "groupSales": "Sales",
+      "groupMarketing": "Marketing",
+      "dashboard": "Dashboard",
+      "reminders": "Reminders",
+      "companies": "Companies",
+      "contacts": "Contacts",
+      "timeline": "Timeline",
+      "openmap": "OpenMap",
+      "massEmail": "Mass email",
+      "brevoCampaigns": "Brevo campaigns",
+      "quickActions": "Quick actions",
+      "newCompany": "New company",
+      "newContact": "New contact",
+      "newReminder": "New reminder",
+      "newTimeline": "New timeline entry",
+      "toggleExpand": "Expand sidebar",
+      "toggleCollapse": "Collapse sidebar"
+    }
   },
   "profile": {
     "trashBinTitle": "Trash bin (admin)",
