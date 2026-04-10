@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -139,40 +139,7 @@ function renderNavItems(
 
 export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
-  const _router = useRouter();
-  // #region agent log
-  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
-    body: JSON.stringify({
-      sessionId: "2fbdf8",
-      location: "Sidebar.tsx:pre-useT",
-      message: "Sidebar render before useT(layout.sidebar)",
-      data: { pathname },
-      timestamp: Date.now(),
-      hypothesisId: "H1",
-    }),
-  }).catch(() => {
-    /* debug ingest optional */
-  });
-  // #endregion
   const t = useT("layout.sidebar");
-  // #region agent log
-  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
-    body: JSON.stringify({
-      sessionId: "2fbdf8",
-      location: "Sidebar.tsx:post-useT",
-      message: "Sidebar render after useT",
-      data: { sampleLabel: t("dashboard") },
-      timestamp: Date.now(),
-      hypothesisId: "H1",
-    }),
-  }).catch(() => {
-    /* debug ingest optional */
-  });
-  // #endregion
 
   const _userRole = user.role;
 

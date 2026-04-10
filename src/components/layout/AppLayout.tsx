@@ -37,25 +37,6 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
     return () => window.removeEventListener("resize", check);
   }, [isAuthPage]);
 
-  // #region agent log
-  useEffect(() => {
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
-      body: JSON.stringify({
-        sessionId: "2fbdf8",
-        location: "AppLayout.tsx:shell",
-        message: "AppLayout shell path",
-        data: { pathname, isAuthPage, willRenderSidebar: !isAuthPage },
-        timestamp: Date.now(),
-        hypothesisId: "H5",
-      }),
-    }).catch(() => {
-      /* debug ingest optional */
-    });
-  }, [pathname, isAuthPage]);
-  // #endregion
-
   if (isAuthPage) {
     return (
       <ErrorBoundary>

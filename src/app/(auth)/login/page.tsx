@@ -352,26 +352,6 @@ export default function LoginPage() {
     if (bootstrapRecovery) {
       recoveryPinnedRef.current = true;
     }
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "a64018",
-      },
-      body: JSON.stringify({
-        sessionId: "a64018",
-        runId: "post-fix",
-        hypothesisId: "G",
-        location: "login/page.tsx:useLayoutEffect",
-        message: "bootstrap recovery flag",
-        data: { bootstrapRecovery, hashLen: window.location.hash.length },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
     const recovery =
       isPasswordRecoveryFromUrl() ||
       recoveryPinnedRef.current ||
@@ -414,37 +394,7 @@ export default function LoginPage() {
       return;
     }
 
-    const hasCodeParam =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).has("code");
     const urlRecovery = isPasswordRecoveryFromUrl();
-
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "a64018",
-      },
-      body: JSON.stringify({
-        sessionId: "a64018",
-        runId: "post-fix",
-        hypothesisId: "A",
-        location: "login/page.tsx:effect:entry",
-        message: "login effect start",
-        data: {
-          urlRecovery,
-          hasCodeParam,
-          hasHash: typeof window !== "undefined" && window.location.hash.length > 0,
-          resetFlowRef: passwordResetFlowRef.current,
-          recoveryPinned: recoveryPinnedRef.current,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      void 0;
-    });
-    // #endregion
 
     if (urlRecovery) {
       passwordResetFlowRef.current = true;
@@ -455,26 +405,6 @@ export default function LoginPage() {
       if (hasRedirectedRef.current) return;
       hasRedirectedRef.current = true;
       const path = getRedirectPath();
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "a64018",
-        },
-        body: JSON.stringify({
-          sessionId: "a64018",
-          runId: "post-fix",
-          hypothesisId: "B",
-          location: "login/page.tsx:redirectIfAuthed",
-          message: "redirect to app",
-          data: { path },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        void 0;
-      });
-      // #endregion
       startTransition(() => {
         router.replace(path);
       });
@@ -494,32 +424,6 @@ export default function LoginPage() {
         passwordResetFlowRef.current = true;
         setView("update_password");
       }
-      const willRedirect = Boolean(user && !passwordResetFlowRef.current);
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "a64018",
-        },
-        body: JSON.stringify({
-          sessionId: "a64018",
-          runId: "post-fix",
-          hypothesisId: "D",
-          location: "login/page.tsx:runInitialCheck",
-          message: "after getUser",
-          data: {
-            hasUser: Boolean(user),
-            resetFlowRef: passwordResetFlowRef.current,
-            jwtRecovery,
-            willRedirect,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        void 0;
-      });
-      // #endregion
       if (
         user &&
         !passwordResetFlowRef.current &&
@@ -534,36 +438,6 @@ export default function LoginPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      const sessionToken = session?.access_token;
-      const jwtRecoveryLog =
-        typeof sessionToken === "string" &&
-        accessTokenIndicatesRecovery(sessionToken);
-      // #region agent log
-      fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Debug-Session-Id": "a64018",
-        },
-        body: JSON.stringify({
-          sessionId: "a64018",
-          runId: "post-fix",
-          hypothesisId: "C",
-          location: "login/page.tsx:onAuthStateChange",
-          message: "auth event",
-          data: {
-            event,
-            hasSession: Boolean(session),
-            resetFlowRef: passwordResetFlowRef.current,
-            jwtRecovery: jwtRecoveryLog,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {
-        void 0;
-      });
-      // #endregion
-
       if (event === "PASSWORD_RECOVERY") {
         passwordResetFlowRef.current = true;
         setView("update_password");
@@ -589,29 +463,6 @@ export default function LoginPage() {
         if (tok && accessTokenIndicatesRecovery(tok)) {
           passwordResetFlowRef.current = true;
           setView("update_password");
-          // #region agent log
-          fetch(
-            "http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "X-Debug-Session-Id": "a64018",
-              },
-              body: JSON.stringify({
-                sessionId: "a64018",
-                runId: "post-fix",
-                hypothesisId: "F",
-                location: "login/page.tsx:jwtRecoveryBranch",
-                message: "blocked redirect; recovery JWT",
-                data: { event },
-                timestamp: Date.now(),
-              }),
-            },
-          ).catch(() => {
-            void 0;
-          });
-          // #endregion
           return;
         }
         redirectIfAuthed();
