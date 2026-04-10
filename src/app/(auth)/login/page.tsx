@@ -10,7 +10,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Component,
@@ -50,6 +50,46 @@ import {
   type PasswordRecoverySetFormValues,
   passwordRecoverySetSchema,
 } from "@/lib/validations/profile";
+
+/** Supabase Auth UI theme tokens — use CSS variables so light/dark follow `html.dark` (ThemeSupa defaults hard-code `inputText: black`). */
+const loginAuthAppearanceVariables = {
+  colors: {
+    brand: "#24BACC",
+    brandAccent: "#1da0a8",
+    brandButtonText: "#ffffff",
+    defaultButtonBackground: "var(--card)",
+    defaultButtonBackgroundHover: "var(--muted)",
+    defaultButtonBorder: "var(--border)",
+    defaultButtonText: "var(--foreground)",
+    dividerBackground: "var(--border)",
+    inputBackground: "var(--card)",
+    inputBorder: "var(--border)",
+    inputBorderHover: "var(--ring)",
+    inputBorderFocus: "var(--ring)",
+    inputText: "var(--foreground)",
+    inputLabelText: "var(--foreground)",
+    inputPlaceholder: "var(--muted-foreground)",
+    messageText: "var(--foreground)",
+    messageBackground: "var(--muted)",
+    messageBorder: "var(--border)",
+    messageTextDanger: "var(--destructive)",
+    messageBackgroundDanger: "color-mix(in oklch, var(--destructive) 12%, transparent)",
+    messageBorderDanger: "var(--destructive)",
+    anchorTextColor: "var(--muted-foreground)",
+    anchorTextHoverColor: "var(--foreground)",
+  },
+  fontSizes: {
+    baseBodySize: "16px",
+    baseInputSize: "16px",
+    baseLabelSize: "16px",
+    baseButtonSize: "16px",
+  },
+  radii: {
+    borderRadiusButton: "var(--radius)",
+    buttonBorderRadius: "var(--radius)",
+    inputBorderRadius: "var(--radius)",
+  },
+} as const;
 
 /**
  * Single browser client for `/login`. React 18 Strict Mode (dev + some prod paths)
@@ -123,6 +163,60 @@ export function isPasswordRecoveryFromUrl(): boolean {
     new URLSearchParams(window.location.search).get("type") === "recovery"
   );
 }
+
+/** True when the URL may still carry tokens the browser client must exchange or parse. */
+function urlMayCarryRecoveryTokens(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  if (isPasswordRecoveryFromUrl()) {
+    return true;
+  }
+  const hash = window.location.hash.replace(/^#/, "");
+  if (hash) {
+    const hp = new URLSearchParams(hash);
+    if (hp.has("access_token") && hp.has("refresh_token")) {
+      return true;
+    }
+  }
+  const sp = new URLSearchParams(window.location.search);
+  return sp.has("code");
+}
+
+/**
+ * When implicit recovery tokens are still in the hash but auto-detect did not persist them,
+ * establish the session explicitly (production/Vercel).
+ */
+async function tryHydrateRecoverySessionFromHash(
+  supabase: SupabaseClient,
+): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const raw = window.location.hash.replace(/^#/, "");
+  if (!raw) {
+    return false;
+  }
+  const params = new URLSearchParams(raw);
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
+  if (!access_token || !refresh_token) {
+    return false;
+  }
+  const { error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+  if (error) {
+    return false;
+  }
+  const url = new URL(window.location.href);
+  url.hash = "";
+  window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+  return true;
+}
+
+const RECOVERY_SESSION_READY_TIMEOUT_MS = 10_000;
 
 function amrIndicatesRecovery(amr: unknown): boolean {
   let list: unknown = amr;
@@ -277,17 +371,19 @@ export function PasswordRecoveryUpdatePanel({
               <div className="relative">
                 <FormControl>
                   <Input
+                    key={showPassword ? "pw-visible" : "pw-hidden"}
                     {...field}
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
-                    className="h-11 pr-11 text-base"
+                    className="h-11 border-border bg-card pr-11 text-base text-foreground"
                   />
                 </FormControl>
                 <Button
+                  key={showPassword ? "pw-toggle-show" : "pw-toggle-hide"}
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -317,17 +413,21 @@ export function PasswordRecoveryUpdatePanel({
               <div className="relative">
                 <FormControl>
                   <Input
+                    key={showConfirmPassword ? "pwc-visible" : "pwc-hidden"}
                     {...field}
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
-                    className="h-11 pr-11 text-base"
+                    className="h-11 border-border bg-card pr-11 text-base text-foreground"
                   />
                 </FormControl>
                 <Button
+                  key={
+                    showConfirmPassword ? "pwc-toggle-show" : "pwc-toggle-hide"
+                  }
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -368,8 +468,13 @@ export default function LoginPage() {
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [recoverySaved, setRecoverySaved] = useState(false);
+  /** True only when the client has a recovery-capable session (never show update form before this). */
+  const [recoverySessionReady, setRecoverySessionReady] = useState(false);
+  /** Latched after timeout when recovery UI was shown but no session could be established. */
+  const [recoverySessionTimedOut, setRecoverySessionTimedOut] = useState(false);
   /** Recovery URL, bootstrap latch, recovery JWT, or password form — blocks authed redirect to dashboard. */
   const isRecoveryFlowRef = useRef(false);
+  const recoveryTimeoutToastShownRef = useRef(false);
   const router = useRouter();
 
   const getRedirectPath = useCallback((): string => {
@@ -408,8 +513,28 @@ export default function LoginPage() {
   useEffect(() => {
     if (view !== "update_password") {
       setRecoverySaved(false);
+      setRecoverySessionReady(false);
+      setRecoverySessionTimedOut(false);
+      recoveryTimeoutToastShownRef.current = false;
     }
   }, [view]);
+
+  useEffect(() => {
+    if (view !== "update_password" || recoverySaved || recoverySessionReady) {
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setRecoverySessionTimedOut(true);
+      if (!recoveryTimeoutToastShownRef.current) {
+        recoveryTimeoutToastShownRef.current = true;
+        toast.error("Link ungültig oder abgelaufen.", {
+          description:
+            "Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn erneut.",
+        });
+      }
+    }, RECOVERY_SESSION_READY_TIMEOUT_MS);
+    return () => window.clearTimeout(id);
+  }, [view, recoverySaved, recoverySessionReady]);
 
   useEffect(() => {
     if (!supabase) {
@@ -430,7 +555,33 @@ export default function LoginPage() {
       });
     };
 
+    const applyRecoverySessionIfPresent = async (): Promise<void> => {
+      await tryHydrateRecoverySessionFromHash(supabase);
+      if (urlMayCarryRecoveryTokens()) {
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() => resolve());
+        });
+        await supabase.auth.getSession();
+        await new Promise<void>((resolve) => {
+          window.setTimeout(() => resolve(), 0);
+        });
+        await supabase.auth.getSession();
+      }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const tok = session?.access_token;
+      if (typeof tok === "string" && accessTokenIndicatesRecovery(tok)) {
+        isRecoveryFlowRef.current = true;
+        setView("update_password");
+        setRecoverySessionTimedOut(false);
+        setRecoverySessionReady(true);
+      }
+    };
+
     const runInitialCheck = async () => {
+      await applyRecoverySessionIfPresent();
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -443,6 +594,8 @@ export default function LoginPage() {
       if (user && jwtRecovery) {
         isRecoveryFlowRef.current = true;
         setView("update_password");
+        setRecoverySessionTimedOut(false);
+        setRecoverySessionReady(true);
         return;
       }
       if (user && !isRecoveryFlowRef.current) {
@@ -450,14 +603,25 @@ export default function LoginPage() {
       }
     };
 
-    void runInitialCheck();
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         isRecoveryFlowRef.current = true;
         setView("update_password");
+        setRecoverySessionTimedOut(false);
+        setRecoverySessionReady(true);
+        return;
+      }
+
+      const tok = session?.access_token;
+      const jwtRec =
+        typeof tok === "string" && accessTokenIndicatesRecovery(tok);
+      if (session && jwtRec) {
+        isRecoveryFlowRef.current = true;
+        setView("update_password");
+        setRecoverySessionTimedOut(false);
+        setRecoverySessionReady(true);
         return;
       }
 
@@ -468,15 +632,11 @@ export default function LoginPage() {
           event === "INITIAL_SESSION" ||
           event === "TOKEN_REFRESHED")
       ) {
-        const tok = session.access_token;
-        if (tok && accessTokenIndicatesRecovery(tok)) {
-          isRecoveryFlowRef.current = true;
-          setView("update_password");
-          return;
-        }
         redirectIfAuthed();
       }
     });
+
+    void runInitialCheck();
 
     return () => subscription.unsubscribe();
   }, [router, getRedirectPath, supabase]);
@@ -492,13 +652,34 @@ export default function LoginPage() {
       >
         <CardHeader className="space-y-2 pb-2 text-center sm:pb-4">
           {view === "update_password" ? (
-            recoverySaved ? null : (
+            recoverySaved ? null : recoverySessionTimedOut &&
+              !recoverySessionReady ? (
+              <>
+                <CardTitle className="font-semibold text-3xl tracking-tight">
+                  Link ungültig oder abgelaufen
+                </CardTitle>
+                <CardDescription className="text-base text-muted-foreground">
+                  Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn
+                  aus der E-Mail erneut.
+                </CardDescription>
+              </>
+            ) : (
               <>
                 <CardTitle className="font-semibold text-3xl tracking-tight">
                   Neues Passwort festlegen
                 </CardTitle>
-                <CardDescription className="text-base text-muted-foreground">
-                  Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen.
+                <CardDescription className="flex items-center justify-center gap-2 text-base text-muted-foreground">
+                  {!recoverySessionReady ? (
+                    <Loader2
+                      className="size-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <span>
+                    {recoverySessionReady
+                      ? "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen."
+                      : "Sitzung wird vorbereitet…"}
+                  </span>
                 </CardDescription>
               </>
             )
@@ -512,7 +693,7 @@ export default function LoginPage() {
           className={
             view === "update_password"
               ? "space-y-4 px-4 pb-8 sm:px-8"
-              : "space-y-4"
+              : "space-y-4 px-4 pb-8 sm:px-6"
           }
         >
           {view !== "update_password" ? (
@@ -537,38 +718,57 @@ export default function LoginPage() {
           {supabase ? (
             <LoginAuthErrorBoundary>
               {view === "update_password" ? (
-                <PasswordRecoveryUpdatePanel
-                  supabase={supabase}
-                  recoverySaved={recoverySaved}
-                  onRecoverySuccess={() => {
-                    isRecoveryFlowRef.current = false;
-                    setRecoverySaved(true);
-                    startTransition(() => {
-                      router.replace("/login");
-                    });
-                  }}
-                />
+                recoverySessionTimedOut && !recoverySessionReady && !recoverySaved ? (
+                  <p className="text-center text-muted-foreground text-sm">
+                    Wenn das Problem weiterhin besteht, prüfen Sie, ob der Link vollständig
+                    geöffnet wurde, und wiederholen Sie den Vorgang mit einem neuen Link.
+                  </p>
+                ) : recoverySaved || recoverySessionReady ? (
+                  <PasswordRecoveryUpdatePanel
+                    supabase={supabase}
+                    recoverySaved={recoverySaved}
+                    onRecoverySuccess={() => {
+                      isRecoveryFlowRef.current = false;
+                      setRecoverySaved(true);
+                      startTransition(() => {
+                        router.replace("/login");
+                      });
+                    }}
+                  />
+                ) : (
+                  <p className="flex items-center justify-center gap-2 text-center text-muted-foreground text-sm">
+                    <Loader2
+                      className="size-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span>Bitte einen Moment gedulden…</span>
+                  </p>
+                )
               ) : (
-                <Auth
-                  supabaseClient={supabase}
-                  view={view}
-                  appearance={{
-                    theme: ThemeSupa,
-                    variables: {
-                      default: {
-                        colors: {
-                          brand: "#24BACC",
-                          brandAccent: "#1da0a8",
-                        },
+                <div
+                  className={
+                    "login-supabase-auth w-full [&_a]:!text-muted-foreground [&_a:hover]:!text-foreground " +
+                    "[&_input]:!border-border [&_input]:!bg-card [&_input]:!text-foreground " +
+                    "[&_input::placeholder]:!text-muted-foreground [&_label]:!text-foreground " +
+                    "[&_p]:!text-foreground"
+                  }
+                >
+                  <Auth
+                    supabaseClient={supabase}
+                    view={view}
+                    appearance={{
+                      theme: ThemeSupa,
+                      variables: {
+                        default: loginAuthAppearanceVariables,
                       },
-                    },
-                  }}
-                  providers={[]}
-                  redirectTo={authRedirectTo}
-                  onlyThirdPartyProviders={false}
-                  magicLink={true}
-                  showLinks={false}
-                />
+                    }}
+                    providers={[]}
+                    redirectTo={authRedirectTo}
+                    onlyThirdPartyProviders={false}
+                    magicLink={true}
+                    showLinks={false}
+                  />
+                </div>
               )}
             </LoginAuthErrorBoundary>
           ) : (

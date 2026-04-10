@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
+import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 
@@ -121,8 +122,14 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
       } else {
         toast.success(t("toastDeleted"));
       }
-    } catch {
-      toast.error(t("toastDeleteFailed"));
+    } catch (err) {
+      if (err instanceof Error && err.message === TIMELINE_DELETE_NO_ACTIVE_ROW) {
+        toast.error(t("toastDeleteAlreadyTrashedTitle"), {
+          description: t("toastDeleteAlreadyTrashedDescription"),
+        });
+      } else {
+        toast.error(t("toastDeleteFailed"));
+      }
     }
   };
 
