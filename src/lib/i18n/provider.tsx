@@ -74,30 +74,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const locale = resolveAppLocale(appearanceRecord.locale);
   const messages = useMemo(() => getMessagesForLocale(locale), [locale]);
 
-  // #region agent log
-  useEffect(() => {
-    const sb = messages.layout?.sidebar;
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "2fbdf8" },
-      body: JSON.stringify({
-        sessionId: "2fbdf8",
-        location: "I18nProvider.tsx:messages",
-        message: "I18n messages sidebar subtree",
-        data: {
-          locale,
-          hasLayoutSidebar: Boolean(sb),
-          sidebarKeyCount: sb && typeof sb === "object" ? Object.keys(sb).length : 0,
-        },
-        timestamp: Date.now(),
-        hypothesisId: "H2",
-      }),
-    }).catch(() => {
-      /* debug ingest optional */
-    });
-  }, [locale, messages]);
-  // #endregion
-
   return (
     <NextIntlClientProvider
       locale={locale}

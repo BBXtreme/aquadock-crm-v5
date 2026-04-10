@@ -181,6 +181,7 @@
       "toastRoleUpdateFailed": "Could not update role",
       "toastResetEmailSent": "Password reset email sent",
       "toastResetEmailFailed": "Could not send reset email",
+      "toastResetEmailRateLimited": "For security, reset emails can only be requested again after a short wait.",
       "toastDisplayNameUpdated": "Display name updated",
       "toastDisplayNameFailed": "Could not update display name",
       "toastUserCreated": "User created",

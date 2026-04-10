@@ -141,7 +141,7 @@ export function buildBrevoContactSyncColumns(
       ),
       cell: (info) => safeDisplay(info.getValue()),
     }),
-    columnHelper.accessor((row) => row.companies?.firmenname ?? "", {
+    columnHelper.accessor((row: BrevoContactSyncRow) => row.companies?.firmenname ?? "", {
       id: "firmenname",
       header: ({ column }) => (
         <Button
@@ -156,7 +156,7 @@ export function buildBrevoContactSyncColumns(
       ),
       cell: (info) => safeDisplay(info.getValue() || null),
     }),
-    columnHelper.accessor((row) => row.companies?.kundentyp ?? "", {
+    columnHelper.accessor((row: BrevoContactSyncRow) => row.companies?.kundentyp ?? "", {
       id: "companies.kundentyp",
       filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.kundentyp ?? ""),
       header: ({ column }) => (
@@ -172,7 +172,7 @@ export function buildBrevoContactSyncColumns(
       ),
       cell: (info) => labelFromOptions(info.getValue(), kundentypOptions, dash),
     }),
-    columnHelper.accessor((row) => row.companies?.status ?? "", {
+    columnHelper.accessor((row: BrevoContactSyncRow) => row.companies?.status ?? "", {
       id: "companies.status",
       filterFn: multiSelectCompanyFieldFilter((r) => r.companies?.status ?? ""),
       header: ({ column }) => (

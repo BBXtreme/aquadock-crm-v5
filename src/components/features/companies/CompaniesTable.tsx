@@ -165,7 +165,7 @@ export default function CompaniesTable({
       accessorKey: "contacts",
       header: "Contacts",
       cell: ({ row }) => {
-        const contacts = row.original.contacts || [];
+        const contacts: Contact[] = row.original.contacts ?? [];
         const primaryContact = contacts.find((c) => c.is_primary);
         const otherContacts = contacts.filter((c) => !c.is_primary);
 

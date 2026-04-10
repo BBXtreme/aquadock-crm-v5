@@ -44,6 +44,54 @@ export const profileAvatarSchema = z
 
 export type ProfileAvatarInput = z.infer<typeof profileAvatarSchema>;
 
+export const changePasswordSchema = z
+  .object({
+    current_password: z
+      .string()
+      .trim()
+      .min(1, "Aktuelles Passwort ist erforderlich."),
+    new_password: z
+      .string()
+      .trim()
+      .min(8, "Neues Passwort muss mindestens 8 Zeichen haben."),
+    confirm_password: z
+      .string()
+      .trim()
+      .min(1, "Passwortbestätigung ist erforderlich."),
+  })
+  .strict()
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Passwörter stimmen nicht überein.",
+    path: ["confirm_password"],
+  });
+
+export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+
+export const changeEmailSchema = z
+  .object({
+    new_email: z
+      .string()
+      .trim()
+      .min(1, "E-Mail-Adresse ist erforderlich.")
+      .email("Ungültige E-Mail-Adresse."),
+  })
+  .strict();
+
+export type ChangeEmailFormValues = z.infer<typeof changeEmailSchema>;
+
+/** Display name on the profile “Update Profile” form (ProfileForm). */
+export const profileDisplayNameSchema = z
+  .object({
+    display_name: z
+      .string()
+      .trim()
+      .min(1, "Anzeigename ist erforderlich.")
+      .max(50, "Maximal 50 Zeichen."),
+  })
+  .strict();
+
+export type ProfileDisplayNameForm = z.infer<typeof profileDisplayNameSchema>;
+
 const profileAvatarFileSchema = z
   .custom<File>((val): val is File => val instanceof File)
   .superRefine((file, ctx) => {

@@ -1,6 +1,4 @@
 // src/app/(protected)/layout.tsx
-import { appendFile } from "node:fs/promises";
-import { join } from "node:path";
 import type React from "react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -18,22 +16,6 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-
-  // #region agent log
-  void appendFile(
-    join(process.cwd(), ".cursor/debug-2fbdf8.log"),
-    `${JSON.stringify({
-      sessionId: "2fbdf8",
-      location: "protected/layout.tsx:after-requireUser",
-      message: "Protected layout rendered",
-      data: { role: user.role },
-      timestamp: Date.now(),
-      hypothesisId: "H4",
-    })}\n`,
-  ).catch(() => {
-    /* debug ingest optional */
-  });
-  // #endregion
 
   // I18nProvider must wrap AppLayout so shell (Header, Sidebar) sits under NextIntlClientProvider.
   // It remains under ReactQueryProvider from root ClientLayout (I18nProvider uses React Query).

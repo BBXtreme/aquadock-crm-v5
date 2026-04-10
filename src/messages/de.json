@@ -181,6 +181,7 @@
       "toastRoleUpdateFailed": "Rolle konnte nicht geändert werden",
       "toastResetEmailSent": "E-Mail zum Zurücksetzen gesendet",
       "toastResetEmailFailed": "Zurücksetzen-E-Mail konnte nicht gesendet werden",
+      "toastResetEmailRateLimited": "Aus Sicherheitsgründen kann die Zurücksetzen-E-Mail erst nach kurzer Wartezeit erneut angefordert werden.",
       "toastDisplayNameUpdated": "Anzeigename aktualisiert",
       "toastDisplayNameFailed": "Anzeigename konnte nicht gespeichert werden",
       "toastUserCreated": "Benutzer angelegt",
