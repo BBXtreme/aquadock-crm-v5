@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { resolveAuthRecoveryRedirectUrl } from "@/lib/utils/auth-recovery-redirect";
 
 // Server Action - Update Display Name (for current user)
 export async function updateDisplayName(formData: FormData) {
@@ -101,23 +102,66 @@ export async function changeUserRole(formData: FormData) {
   revalidatePath('/profile');
 }
 
-// Server Action - Trigger Password Reset (Admin only)
-export async function triggerPasswordReset(formData: FormData) {
+export type TriggerPasswordResetResult = {
+  /** Same URL passed to GoTrue (`redirectTo`); from env, request host, or Vercel. */
+  redirectTo: string;
+};
+
+/**
+ * Admin-only: sends Supabase recovery email with `redirectTo` from
+ * `resolveAuthRecoveryRedirectUrl()` (localhost http vs Vercel https).
+ */
+export async function triggerPasswordReset(
+  userId: string,
+): Promise<TriggerPasswordResetResult> {
   const supabase = await createServerSupabaseClient();
   const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
 
-  const userId = formData.get('userId') as string;
+  const { data: adminProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", currentUser.id)
+    .single();
 
-  const { data: authUser, error: fetchError } = await supabase.auth.admin.getUserById(userId);
-  if (fetchError || !authUser.user?.email) {
+  if (adminProfile?.role !== "admin") {
+    throw new Error("Only admins can trigger password resets");
+  }
+
+  const adminClient = createAdminClient();
+
+  const { data: authUser, error: fetchError } =
+    await adminClient.auth.admin.getUserById(userId);
+
+  if (fetchError !== null) {
     throw new Error("User or email not found");
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(authUser.user.email);
-  if (error) throw new Error("Failed to send password reset email");
+  if (authUser.user === undefined) {
+    throw new Error("User or email not found");
+  }
+
+  const email = authUser.user.email;
+  if (email === undefined || email === null || email === "") {
+    throw new Error("User or email not found");
+  }
+
+  const redirectTo = await resolveAuthRecoveryRedirectUrl();
+
+  const { error } = await adminClient.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
+
+  if (error) {
+    if (error.status === 429) {
+      throw new Error("RESET_EMAIL_RATE_LIMITED");
+    }
+    throw new Error("Failed to send password reset email");
+  }
 
   revalidatePath('/profile');
+
+  return { redirectTo };
 }
 
 // Server Action - Delete User (Admin only)
@@ -126,7 +170,17 @@ export async function deleteUser(formData: FormData) {
   const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
 
-  const userId = formData.get('userId') as string;
+  const { data: adminProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (adminProfile?.role !== "admin") {
+    throw new Error("Only admins can delete users");
+  }
+
+  const userId = formData.get("userId") as string;
 
   const serviceSupabase = createAdminClient();
 
@@ -138,8 +192,10 @@ export async function deleteUser(formData: FormData) {
 
   if (profileError) throw profileError;
 
-  // Delete from auth.users
-  const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+  // Delete from auth.users (service role — user-scoped client cannot call auth.admin)
+  const { error: authError } =
+    await serviceSupabase.auth.admin.deleteUser(userId);
+
   if (authError) throw authError;
 
   revalidatePath('/profile');
@@ -209,8 +265,11 @@ export async function createUser(formData: FormData) {
 
   console.log("Profile upserted successfully");
 
-  // Step 3: Send password reset email
-  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email);
+  // Step 3: Send password reset email (redirect must match Supabase allow list + env site URL)
+  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(
+    email,
+    { redirectTo: await resolveAuthRecoveryRedirectUrl() },
+  );
   if (resetError) {
     console.error("Failed to send reset email:", resetError);
     // Don't throw, user is created

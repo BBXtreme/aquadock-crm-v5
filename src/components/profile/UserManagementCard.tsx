@@ -58,12 +58,17 @@ function UserManagementCard({
   const handlePasswordReset = async (userId: string) => {
     setLoadingReset(userId);
     try {
-      const formData = new FormData();
-      formData.append('userId', userId);
-      await triggerPasswordReset(formData);
-      toast.success(t("userManagement.toastResetEmailSent"));
-    } catch (_error) {
-      toast.error(t("userManagement.toastResetEmailFailed"));
+      await triggerPasswordReset(userId);
+      toast.success("Reset link sent");
+    } catch (error) {
+      const rateLimited =
+        error instanceof Error &&
+        error.message === "RESET_EMAIL_RATE_LIMITED";
+      toast.error(
+        rateLimited
+          ? t("userManagement.toastResetEmailRateLimited")
+          : t("userManagement.toastResetEmailFailed"),
+      );
     } finally {
       setLoadingReset(null);
     }

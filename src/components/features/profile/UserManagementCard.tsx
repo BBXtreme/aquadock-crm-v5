@@ -74,19 +74,26 @@ function UserManagementCard({
   const handlePasswordReset = async (userId: string) => {
     setLoadingReset(userId);
     try {
-      const formData = new FormData();
-      formData.append('userId', userId);
-      await triggerPasswordReset(formData);
-      toast.success(t("userManagement.toastResetEmailSent"));
-    } catch (_error) {
-      toast.error(t("userManagement.toastResetEmailFailed"));
+      await triggerPasswordReset(userId);
+      toast.success("Reset link sent");
+      queryClient.invalidateQueries();
+      router.refresh();
+    } catch (error) {
+      const rateLimited =
+        error instanceof Error &&
+        error.message === "RESET_EMAIL_RATE_LIMITED";
+      toast.error(
+        rateLimited
+          ? t("userManagement.toastResetEmailRateLimited")
+          : t("userManagement.toastResetEmailFailed"),
+      );
     } finally {
       setLoadingReset(null);
     }
   };
 
   const handleEditDisplayName = async () => {
-    if (!editUserId) return;
+    if (editUserId === null) return;
     setLoadingEdit(editUserId);
     try {
       const formData = new FormData();
@@ -128,7 +135,7 @@ function UserManagementCard({
   };
 
   const handleConfirmDelete = async () => {
-    if (!deleteUserId) return;
+    if (deleteUserId === null) return;
     setLoadingDelete(deleteUserId);
     try {
       const formData = new FormData();
@@ -311,7 +318,7 @@ function UserManagementCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!editUserId} onOpenChange={() => setEditUserId(null)}>
+      <Dialog open={editUserId !== null} onOpenChange={() => setEditUserId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("userManagement.editDisplayNameTitle")}</DialogTitle>
@@ -341,7 +348,7 @@ function UserManagementCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
+      <Dialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("userManagement.deleteConfirmTitle")}</DialogTitle>

@@ -4,50 +4,79 @@
 
 import { User } from "lucide-react";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
-import ProfilForm from "@/components/features/profile/ProfileForm";
+import ProfileForm from "@/components/features/profile/ProfileForm";
+import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
 import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
 import { AvatarUpload } from "@/components/ui/avatar-upload";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { safeDisplay } from "@/lib/utils/data-format";
+import type { Profile } from "@/types/database.types";
 
 export default async function ProfilePage() {
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
 
-  // Fetch or create profile
-  let { data: profileData, error } = await supabase
+  let profileData: Profile | null = null;
+  const profileQuery = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (error || !profileData) {
-    const { data: newProfile, error: insertError } = await supabase
+  if (profileQuery.error === null && profileQuery.data !== null) {
+    profileData = profileQuery.data;
+  }
+
+  if (profileData === null) {
+    const metaName = user.display_name;
+    const insertDisplayName =
+      metaName === undefined || metaName === null || metaName === ""
+        ? null
+        : metaName;
+
+    const inserted = await supabase
       .from("profiles")
       .insert({
         id: user.id,
-        role: 'user',
-        display_name: user.display_name || null,
+        role: "user",
+        display_name: insertDisplayName,
       })
       .select()
       .single();
 
-    if (insertError) {
-      console.error("Error creating profile:", insertError);
+    if (inserted.error !== null || inserted.data === null) {
+      console.error("Error creating profile:", inserted.error);
       throw new Error("Failed to create profile");
     }
-
-    profileData = newProfile;
+    profileData = inserted.data;
   }
 
-  const displayName = safeDisplay(profileData.display_name || user.display_name);
-  const role = profileData.role || "user";
-  const email = user.email || "";
+  if (profileData === null) {
+    throw new Error("Failed to load profile");
+  }
+
+  const profileRow = profileData;
+
+  const displayName = safeDisplay(
+    profileRow.display_name ?? user.display_name ?? "",
+  );
+  const role =
+    profileRow.role === null || profileRow.role === undefined
+      ? "user"
+      : profileRow.role;
+  const email =
+    user.email === null || user.email === undefined ? "" : user.email;
 
   // Fetch all users for admin only
   let allUsers: {
@@ -59,37 +88,73 @@ export default async function ProfilePage() {
     updated_at: string | null;
     last_sign_in_at: string | null;
   }[] = [];
-  if (role === 'admin') {
+  if (role === "admin") {
     const adminSupabase = createAdminClient();
     const { data: authUsers } = await adminSupabase.auth.admin.listUsers();
-    const { data: profiles } = await adminSupabase.from('profiles').select('*');
-    const profilesArray = profiles || [];
-    allUsers = authUsers.users.map(u => {
-      const profile = profilesArray.find(p => p.id === u.id);
+    const { data: profiles } = await adminSupabase.from("profiles").select("*");
+    const profilesArray = profiles === null || profiles === undefined ? [] : profiles;
+    allUsers = authUsers.users.map((u) => {
+      const profile = profilesArray.find((p) => p.id === u.id);
+      const uEmail = u.email;
+      const emailStr =
+        uEmail === null || uEmail === undefined ? "" : uEmail;
+      const meta = u.user_metadata;
+      let metaDisplay: string | null = null;
+      if (
+        meta !== null &&
+        typeof meta === "object" &&
+        "display_name" in meta
+      ) {
+        const dn = meta.display_name;
+        if (typeof dn === "string" && dn !== "") {
+          metaDisplay = dn;
+        }
+      }
       return {
         id: u.id,
-        email: u.email || '',
-        display_name: profile?.display_name || u.user_metadata?.display_name || null,
-        role: profile?.role || 'user',
-        created_at: profile?.created_at || null,
-        updated_at: profile?.updated_at || null,
+        email: emailStr,
+        display_name:
+          profile?.display_name ?? metaDisplay,
+        role:
+          profile?.role === null || profile?.role === undefined
+            ? "user"
+            : profile.role,
+        created_at: profile?.created_at ?? null,
+        updated_at: profile?.updated_at ?? null,
         last_sign_in_at: profile?.last_sign_in_at ?? null,
       };
     });
   }
 
-  return (
-    <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          Profile
-        </h1>
-        <p className="text-lg text-muted-foreground">Welcome, {displayName}</p>
-      </div>
+  const emailLocalPart =
+    user.email === null || user.email === undefined
+      ? ""
+      : (() => {
+          const parts = user.email.split("@");
+          const first = parts[0];
+          return first === undefined ? "" : first;
+        })();
+
+return (
+  <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
+    <section aria-labelledby="profile-page-title" className="space-y-2">
+      <h1
+        id="profile-page-title"
+        className="bg-linear-to-r from-primary to-primary/70 bg-clip-text font-bold text-3xl text-transparent tracking-tight"
+      >
+        Profile
+      </h1>
+      <p className="text-lg text-muted-foreground">Welcome, {displayName}</p>
+    </section>
+
+    <section aria-labelledby="profile-overview-heading">
+      <h2 id="profile-overview-heading" className="sr-only">
+        Profile overview and settings
+      </h2>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Profile Information Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center text-xl">
               <User className="mr-3 h-6 w-6 text-primary" />
@@ -102,44 +167,101 @@ export default async function ProfilePage() {
                 <AvatarUpload
                   userId={user.id}
                   displayName={
-                    profileData.display_name ??
-                    safeDisplay(user.email?.split("@")[0] ?? "", "")
+                    profileRow.display_name === null ||
+                    profileRow.display_name === undefined
+                      ? safeDisplay(emailLocalPart, "")
+                      : profileRow.display_name
                   }
-                  initialAvatarUrl={profileData.avatar_url}
+                  initialAvatarUrl={profileRow.avatar_url}
                 />
               </div>
-              <div className="text-center space-y-1">
-                <p className="text-2xl font-semibold">{displayName || "No display name"}</p>
+              <div className="space-y-1 text-center">
+                <p className="font-semibold text-2xl">
+                  {displayName === "" ? "No display name" : displayName}
+                </p>
                 <p className="text-muted-foreground">{email}</p>
                 <Badge variant="secondary" className="capitalize">
                   {role}
                 </Badge>
               </div>
-              <div className="text-center space-y-1 pt-4 border-t border-border/50 w-full">
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Created:</span> {profileData.created_at ? new Date(profileData.created_at).toLocaleString() : 'N/A'}
+              <div className="w-full space-y-1 border-border/50 border-t pt-4 text-center">
+                <p className="text-muted-foreground text-xs">
+                  <span className="font-medium">Created:</span>{" "}
+                  {profileRow.created_at === null ||
+                  profileRow.created_at === undefined
+                    ? "N/A"
+                    : new Date(profileRow.created_at).toLocaleString()}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  <span className="font-medium">Last Updated:</span> {profileData.updated_at ? new Date(profileData.updated_at).toLocaleString() : 'N/A'}
+                <p className="text-muted-foreground text-xs">
+                  <span className="font-medium">Last Updated:</span>{" "}
+                  {profileRow.updated_at === null ||
+                  profileRow.updated_at === undefined
+                    ? "N/A"
+                    : new Date(profileRow.updated_at).toLocaleString()}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Update Profile Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-xl">Update Profile</CardTitle>
+        {/* Profil bearbeiten — airy shadcn-style settings card */}
+        <Card className="overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm transition-shadow duration-200 hover:shadow-md">
+          <CardHeader className="space-y-1.5 border-border/60 border-b px-5 pb-5 sm:px-6">
+            <CardTitle className="font-semibold text-lg tracking-tight sm:text-xl">
+              Profil bearbeiten
+            </CardTitle>
+            <CardDescription className="text-pretty text-sm leading-relaxed">
+              Anzeigename, Passwort und E-Mail-Adresse selbst anpassen.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ProfilForm profile={profileData} />
+
+          <CardContent className="space-y-6 px-5 py-8 sm:px-6">
+            <section
+              aria-labelledby="profile-display-heading"
+              className="rounded-xl border border-border/50 bg-muted/30 p-5 sm:p-6 dark:bg-muted/10"
+            >
+              <div className="mb-5 space-y-1">
+                <h3
+                  id="profile-display-heading"
+                  className="font-semibold text-base text-foreground tracking-tight"
+                >
+                  Profil &amp; Anzeigename
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  So erscheint Ihr Name in AquaDock CRM.
+                </p>
+              </div>
+              <ProfileForm profile={profileRow} />
+            </section>
+
+            <section
+              aria-labelledby="profile-security-heading"
+              className="rounded-xl border border-border/50 bg-muted/30 p-5 sm:p-6 dark:bg-muted/10"
+            >
+              <div className="mb-5 space-y-1">
+                <h3
+                  id="profile-security-heading"
+                  className="font-semibold text-base text-foreground tracking-tight"
+                >
+                  Sicherheit
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Passwort ändern oder eine neue Anmelde-E-Mail anfordern.
+                </p>
+              </div>
+              <ProfileSecuritySection currentEmail={email} />
+            </section>
           </CardContent>
         </Card>
       </div>
+    </section>
 
-      {/* Account Actions */}
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+    {/* Account Actions */}
+    <section aria-labelledby="profile-account-actions">
+      <h2 id="profile-account-actions" className="sr-only">
+        Account actions
+      </h2>
+      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
         <CardHeader className="pb-6">
           <CardTitle className="text-xl">Account Actions</CardTitle>
         </CardHeader>
@@ -147,11 +269,17 @@ export default async function ProfilePage() {
           <ProfileSignOutButton />
         </CardContent>
       </Card>
+    </section>
 
-      {/* User Management - ONLY visible to admins */}
-      {role === 'admin' && <UserManagementCard allUsers={allUsers} />}
-
-      {role === 'admin' ? <AdminTrashBinCard /> : null}
-    </div>
-  );
+    {role === "admin" ? (
+      <section aria-labelledby="profile-admin-heading" className="space-y-8">
+        <h2 id="profile-admin-heading" className="sr-only">
+          Administration
+        </h2>
+        <UserManagementCard allUsers={allUsers} />
+        <AdminTrashBinCard />
+      </section>
+    ) : null}
+  </div>
+);
 }

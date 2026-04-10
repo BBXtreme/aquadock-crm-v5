@@ -30,9 +30,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (request.nextUrl.pathname === "/login" && session) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+  // Do not redirect /login → /dashboard when a session exists. Password recovery
+  // lands on /login with a session before the user sets a new password; the login
+  // page handles PASSWORD_RECOVERY and redirects after update.
 
   return response;
 }

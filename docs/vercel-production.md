@@ -8,6 +8,8 @@ Short checklist for deploying this Next.js app on **Vercel**. For a fuller runbo
 
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`  
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+- [ ] `SITE_URL` — optional server-only canonical origin (`https://crm.aquadock.de`); if unset, password-reset `redirect_to` uses the **request host** on Vercel (so `crm.aquadock.de` works without duplicating the domain in env). Still set `SITE_URL` if you trigger resets outside a normal browser request or want a fixed origin.  
+- [ ] `NEXT_PUBLIC_SITE_URL` — same origin if you also need it on the client; otherwise optional when `SITE_URL` is set  
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — only if server code in your fork requires it; **never** `NEXT_PUBLIC_*`  
 
 Add Brevo or SMTP-related variables only if you use those features and they read from env.
@@ -28,7 +30,7 @@ Add Brevo or SMTP-related variables only if you use those features and they read
 
 ## Auth and routes
 
-- [ ] **Supabase Auth** configured (redirect URLs include your production domain and preview URLs if you use previews).  
+- [ ] **Supabase Auth** — **Site URL** = `https://crm.aquadock.de` (not localhost); **Redirect URLs** includes `https://crm.aquadock.de/login` (and previews if used).  
 - [ ] Unauthenticated users cannot access protected routes (`/dashboard`, `/companies`, `/contacts`, `/reminders`, `/timeline`, `/mass-email`, `/openmap`, `/settings`, `/profile`, `/brevo`, etc.).  
 
 ---

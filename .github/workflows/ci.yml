@@ -42,5 +42,30 @@ jobs:
       - name: Tests with coverage (CI)
         run: pnpm test:ci
 
+      - name: Coverage summary
+        if: success()
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const summaryPath = "coverage/coverage-summary.json";
+          if (!fs.existsSync(summaryPath)) {
+            console.error("Missing coverage summary");
+            process.exit(1);
+          }
+          const data = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+          const t = data.total;
+          console.log("--- Coverage totals ---");
+          console.log(
+            `statements ${t.statements.pct}% (min 70%) | branches ${t.branches.pct}% (min 50%) | lines ${t.lines.pct}% | functions ${t.functions.pct}%`,
+          );
+          NODE
+
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage/
+
       - name: Build
         run: pnpm build

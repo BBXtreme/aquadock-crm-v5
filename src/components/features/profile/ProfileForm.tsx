@@ -7,34 +7,41 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { updateDisplayName } from "@/lib/services/profile";
-import type { Database } from "@/types/database.types";
+import {
+  type ProfileDisplayNameForm,
+  profileDisplayNameSchema,
+} from "@/lib/validations/profile";
+import type { Profile } from "@/types/database.types";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
-
-const displayNameSchema = z.object({
-  display_name: z.string().min(1, "Display name is required").max(50, "Display name must be less than 50 characters"),
-});
-
-type DisplayNameForm = z.infer<typeof displayNameSchema>;
-
-export default function ProfilForm({ profile }: { profile: Profile }) {
+export default function ProfileForm({ profile }: { profile: Profile }) {
   const [isPending, setIsPending] = useState(false);
 
-  const form = useForm<DisplayNameForm>({
-    resolver: zodResolver(displayNameSchema),
+  const form = useForm<ProfileDisplayNameForm>({
+    resolver: zodResolver(profileDisplayNameSchema),
     defaultValues: {
-      display_name: profile?.display_name ?? "",
+      display_name:
+        profile.display_name === null || profile.display_name === undefined
+          ? ""
+          : profile.display_name,
     },
   });
 
-  const onSubmit = async (data: DisplayNameForm) => {
+  const onSubmit = async (data: ProfileDisplayNameForm) => {
     setIsPending(true);
     try {
       const formData = new FormData();
@@ -53,7 +60,7 @@ export default function ProfilForm({ profile }: { profile: Profile }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
-          control={form.control}
+          control={form.control as Control<ProfileDisplayNameForm>}
           name="display_name"
           render={({ field }) => (
             <FormItem>
@@ -70,9 +77,9 @@ export default function ProfilForm({ profile }: { profile: Profile }) {
           )}
         />
 
-        <Button 
-          type="submit" 
-          className="w-full h-11 bg-[#24BACC] text-white hover:bg-[#1da0a8] transition-colors" 
+        <Button
+          type="submit"
+          className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
           disabled={isPending}
         >
           {isPending ? "Updating..." : "Update Profile"}

@@ -506,8 +506,8 @@ export function BrevoMarketingContentSkeleton() {
               key={key}
               className="grid grid-cols-4 items-center gap-3 py-2.5 last:pb-0"
             >
-              <Skeleton className="h-4 w-full max-w-[10rem]" />
-              <Skeleton className="h-4 w-full max-w-[12rem]" />
+              <Skeleton className="h-4 w-full max-w-40" />
+              <Skeleton className="h-4 w-full max-w-48" />
               <Skeleton className="h-6 w-20 rounded-full" />
               <Skeleton className="h-4 w-24 justify-self-end" />
             </div>
@@ -674,7 +674,7 @@ export function ProfilePageSkeleton() {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <Skeleton className="h-32 w-32 rounded-full" />
-                <Skeleton className="absolute right-0 bottom-0 h-10 w-10 rounded-full shadow-none ring-1 ring-foreground/[0.02] dark:ring-foreground/[0.04]" />
+                <Skeleton className="absolute right-0 bottom-0 h-10 w-10 rounded-full shadow-none ring-1 ring-foreground/2 dark:ring-foreground/4" />
               </div>
               <div className="flex w-full flex-col items-center space-y-2">
                 <Skeleton className="h-7 w-48" />
@@ -683,7 +683,7 @@ export function ProfilePageSkeleton() {
               </div>
               <div className="w-full space-y-3 pt-2">
                 <div
-                  className="mx-auto h-px max-w-xs bg-gradient-to-r from-transparent via-foreground/[0.06] to-transparent dark:via-foreground/[0.1]"
+                  className="mx-auto h-px max-w-xs bg-linear-to-r from-transparent via-foreground/6 to-transparent dark:via-foreground/10"
                   aria-hidden
                 />
                 <div className="space-y-2">
@@ -699,16 +699,37 @@ export function ProfilePageSkeleton() {
           <CardHeader className="pb-6">
             <Skeleton className="h-7 w-40" />
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-28" />
+          <CardContent className="space-y-8">
+            <div className="space-y-5">
+              <Skeleton className="h-4 w-44" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
               <Skeleton className="h-10 w-full rounded-md" />
             </div>
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-36" />
-              <Skeleton className="h-10 w-full rounded-md" />
+            <div className="space-y-5 border-border/50 border-t pt-8">
+              <Skeleton className="h-5 w-32" />
+              <div className="flex flex-wrap gap-2 border-border/40 border-b pb-2">
+                <Skeleton className="h-8 w-28 rounded-md" />
+                <Skeleton className="h-8 w-28 rounded-md" />
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-44" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-md" />
+              </div>
             </div>
-            <Skeleton className="h-10 w-32 rounded-md" />
           </CardContent>
         </Card>
       </div>
@@ -766,7 +787,7 @@ export function DashboardContentSkeleton() {
             <Skeleton className="h-6 w-48 max-w-[70%]" />
           </div>
           <div className="flex min-h-[300px] h-[320px] flex-col items-center justify-center gap-6">
-            <Skeleton className="h-[13rem] w-[13rem] shrink-0 rounded-full" />
+            <Skeleton className="h-52 w-52 shrink-0 rounded-full" />
             <div className="flex w-full max-w-xs flex-wrap justify-center gap-3">
               <Skeleton className="h-3 w-20 rounded-full" />
               <Skeleton className="h-3 w-24 rounded-full" />
@@ -796,7 +817,7 @@ export function OpenMapViewSkeleton() {
       aria-label="Karte wird geladen"
     >
       <div
-        className="absolute inset-0 bg-gradient-to-br from-muted/50 via-background/30 to-muted/40"
+        className="absolute inset-0 bg-linear-to-br from-muted/50 via-background/30 to-muted/40"
         aria-hidden
       />
       <div
@@ -804,15 +825,15 @@ export function OpenMapViewSkeleton() {
         aria-hidden
       />
 
-      <div className="absolute top-4 left-4 z-[1000] rounded-md bg-card/88 px-3 py-2 shadow-none backdrop-blur-sm dark:bg-card/85 transition-all duration-300 ease-out">
+      <div className="absolute top-4 left-4 z-1000 rounded-md bg-card/88 px-3 py-2 shadow-none backdrop-blur-sm dark:bg-card/85 transition-all duration-300 ease-out">
         <Skeleton className="h-4 w-36" />
       </div>
 
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute top-4 right-4 z-1000 flex flex-col gap-2">
         {OPENMAP_CONTROL_KEYS.map((key) => (
           <Skeleton
             key={key}
-            className="h-9 w-9 shrink-0 rounded-md shadow-none ring-1 ring-inset ring-foreground/[0.015] dark:ring-foreground/[0.03]"
+            className="h-9 w-9 shrink-0 rounded-md shadow-none ring-1 ring-inset ring-foreground/1.5 dark:ring-foreground/3"
           />
         ))}
       </div>

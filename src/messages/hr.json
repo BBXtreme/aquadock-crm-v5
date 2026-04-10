@@ -181,6 +181,7 @@
       "toastRoleUpdateFailed": "Uloga nije mogla biti ažurirana",
       "toastResetEmailSent": "E-pošta za reset lozinke poslana",
       "toastResetEmailFailed": "E-pošta za reset nije mogla biti poslana",
+      "toastResetEmailRateLimited": "Iz sigurnosnih razloga reset e-poštu možete ponovno zatražiti tek nakon kratkog čekanja.",
       "toastDisplayNameUpdated": "Prikazano ime ažurirano",
       "toastDisplayNameFailed": "Prikazano ime nije moglo biti spremljeno",
       "toastUserCreated": "Korisnik stvoren",
