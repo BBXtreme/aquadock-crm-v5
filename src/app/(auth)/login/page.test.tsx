@@ -4,7 +4,14 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -124,6 +131,10 @@ function setupLoginPageWithCapturedAuthListener(): {
         .fn()
         .mockResolvedValue({ data: { session: null }, error: null }),
       getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      setSession: vi.fn().mockResolvedValue({
+        data: { session: null },
+        error: null,
+      }),
       updateUser: vi.fn().mockResolvedValue({
         data: { user: {} },
         error: null,
@@ -331,6 +342,11 @@ describe("LoginPage recovery redirect", () => {
     mockedToast.error.mockClear();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
   it("after successful password update, immediately replaces to /login", async () => {
     const user = userEvent.setup();
 
@@ -339,14 +355,25 @@ describe("LoginPage recovery redirect", () => {
       error: null,
     });
 
+    const recoveryAccessToken = buildRecoveryAccessToken();
+    const recoverySession = {
+      access_token: recoveryAccessToken,
+      refresh_token: "test-refresh",
+    };
+
     hoisted.createClientMock.mockReturnValue({
       auth: {
-        getSession: vi
-          .fn()
-          .mockResolvedValue({ data: { session: null }, error: null }),
-        getUser: vi
-          .fn()
-          .mockResolvedValue({ data: { user: null }, error: null }),
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: recoverySession },
+          error: null,
+        }),
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" }, error: null },
+        }),
+        setSession: vi.fn().mockResolvedValue({
+          data: { session: recoverySession },
+          error: null,
+        }),
         updateUser,
         onAuthStateChange: vi.fn(() => ({
           data: { subscription: { unsubscribe: vi.fn() } },
@@ -376,6 +403,60 @@ describe("LoginPage recovery redirect", () => {
       expect(hoisted.routerReplace).toHaveBeenCalledWith("/login");
     });
   });
+
+  it("shows timeout copy and toast when recovery latch never gets a session", async () => {
+    vi.useFakeTimers();
+    try {
+      hoisted.createClientMock.mockReturnValue({
+        auth: {
+          getSession: vi.fn().mockResolvedValue({
+            data: { session: null },
+            error: null,
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: null,
+          }),
+          setSession: vi.fn().mockResolvedValue({
+            data: { session: null },
+            error: null,
+          }),
+          updateUser: vi.fn(),
+          onAuthStateChange: vi.fn(() => ({
+            data: { subscription: { unsubscribe: vi.fn() } },
+          })),
+          signOut: vi.fn().mockResolvedValue({ error: null }),
+        },
+      });
+
+      sessionStorage.setItem(PW_RECOVERY_SESSION_STORAGE_KEY, "1");
+
+      renderWithQuery(<LoginPage />);
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(screen.getByText(/Sitzung wird vorbereitet/, { exact: false })).toBeInTheDocument();
+
+      await act(async () => {
+        vi.advanceTimersByTime(10_000);
+      });
+
+      expect(
+        screen.getByText(/Link ungültig oder abgelaufen/, { exact: false }),
+      ).toBeInTheDocument();
+
+      expect(mockedToast.error).toHaveBeenCalledWith(
+        "Link ungültig oder abgelaufen.",
+        expect.objectContaining({
+          description: expect.stringContaining("Bitte fordern"),
+        }),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("LoginPage onAuthStateChange", () => {
@@ -383,6 +464,11 @@ describe("LoginPage onAuthStateChange", () => {
     vi.clearAllMocks();
     hoisted.routerReplace.mockClear();
     sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
   });
 
   it("PASSWORD_RECOVERY switches to update_password and latches recovery (no dashboard redirect on later SIGNED_IN)", async () => {
