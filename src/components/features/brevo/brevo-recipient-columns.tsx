@@ -38,12 +38,12 @@ export const brevoRecipientColumns: TableOptions<BrevoContactWithCompany>["colum
     header: "Email",
     cell: (info) => info.getValue(),
   }),
-  columnHelper.accessor((row) => row.companies?.kundentyp ?? "", {
+  columnHelper.accessor((row: BrevoContactWithCompany) => row.companies?.kundentyp ?? "", {
     id: "companies.kundentyp",
     header: "Kundentyp",
     cell: (info) => info.getValue() || "",
   }),
-  columnHelper.accessor((row) => row.companies?.status ?? "", {
+  columnHelper.accessor((row: BrevoContactWithCompany) => row.companies?.status ?? "", {
     id: "companies.status",
     header: "Status",
     cell: (info) => info.getValue() || "",

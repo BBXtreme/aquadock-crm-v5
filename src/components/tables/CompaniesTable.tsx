@@ -133,7 +133,8 @@ export default function CompaniesTable({
       columnHelper.accessor("status", {
         header: t("tableColStatus"),
         cell: (info) => {
-          const value = info.getValue();
+          const raw = info.getValue();
+          const value = typeof raw === "string" ? raw : String(raw ?? "");
           return (
             <Badge
               className={cn(
@@ -152,7 +153,7 @@ export default function CompaniesTable({
         id: "hauptkontakt",
         header: t("tableColHauptkontakt"),
         cell: (info) => {
-          const contacts = info.row.original.contacts || [];
+          const contacts: Contact[] = info.row.original.contacts ?? [];
           const primary = contacts.find((c) => c.is_primary);
           if (!primary) return tCommon("dash");
           return (
@@ -170,7 +171,7 @@ export default function CompaniesTable({
         id: "kontaktanzahl",
         header: t("tableColKontaktanzahl"),
         cell: (info) => {
-          const contacts = info.row.original.contacts || [];
+          const contacts: Contact[] = info.row.original.contacts ?? [];
           const count = contacts.length;
           if (count === 0) return <Badge variant="outline">{t("tableContactsNone")}</Badge>;
           const hasPrimary = contacts.some((c) => c.is_primary);
@@ -202,7 +203,12 @@ export default function CompaniesTable({
       columnHelper.accessor("created_at", {
         id: "created_at",
         header: t("tableColCreated"),
-        cell: (info) => formatDateDistance(info.getValue()),
+        cell: (info) => {
+          const v = info.getValue();
+          const d =
+            v === null || v === undefined ? v : typeof v === "string" ? v : undefined;
+          return formatDateDistance(d);
+        },
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.display({
         id: "actions",

@@ -81,7 +81,7 @@ export const reminderColumns = (
     header: "Due Date",
     cell: (info) => {
       const value = info.getValue();
-      if (!value) return "No date";
+      if (value == null || value === "" || typeof value !== "string") return "No date";
       const isOverdue = isAfter(new Date(), new Date(value));
       return (
         <span className={isOverdue ? "text-rose-500" : ""}>
