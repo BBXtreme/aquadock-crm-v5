@@ -10,22 +10,18 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export type TrashDeleteMode = "soft" | "hard";
 
-async function assertCompanyWritable(
+/** Loads row metadata for trash audit; write access is enforced by RLS on update/delete. */
+async function loadCompanyRowMetaForTrash(
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
   companyId: string,
-  userId: string,
 ): Promise<{ firmenname: string }> {
   const { data, error } = await supabase
     .from("companies")
-    .select("id, firmenname, user_id, deleted_at")
+    .select("id, firmenname")
     .eq("id", companyId)
     .single();
 
-  if (error) throw handleSupabaseError(error, "assertCompanyWritable");
-  const owner = data.user_id;
-  if (owner !== null && owner !== userId) {
-    throw new Error("Keine Berechtigung für dieses Unternehmen");
-  }
+  if (error) throw handleSupabaseError(error, "loadCompanyRowMetaForTrash");
   return { firmenname: data.firmenname };
 }
 
@@ -60,7 +56,7 @@ export async function deleteCompanyWithTrash(id: string): Promise<TrashDeleteMod
   const supabase = await createServerSupabaseClient();
   const { trashBinEnabled } = await fetchTrashBinPreference(supabase, user.id);
 
-  const { firmenname } = await assertCompanyWritable(supabase, id, user.id);
+  const { firmenname } = await loadCompanyRowMetaForTrash(supabase, id);
 
   const { data: activeRow, error: activeErr } = await supabase
     .from("companies")
@@ -125,7 +121,6 @@ export async function deleteCompanyWithTrash(id: string): Promise<TrashDeleteMod
 export async function restoreCompanyWithTrash(id: string): Promise<void> {
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
-  await assertCompanyWritable(supabase, id, user.id);
 
   const { data: row, error: fetchErr } = await supabase
     .from("companies")
