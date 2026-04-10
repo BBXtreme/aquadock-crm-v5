@@ -773,7 +773,11 @@
     "confirmUpload": "Upload",
     "uploading": "Uploading…",
     "removeInProgress": "Removing…",
-    "removeAvatar": "Remove profile picture"
+    "removeAvatar": "Remove profile picture",
+    "displayNameLabel": "Display name",
+    "displayNamePlaceholder": "Enter your display name",
+    "updateProfileButton": "Update profile",
+    "updateProfilePending": "Updating…"
   },
   "common": {
     "dash": "—",

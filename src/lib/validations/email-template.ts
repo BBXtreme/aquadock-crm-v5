@@ -33,8 +33,4 @@ export const toEmailTemplateUpdate = (values: EmailTemplateFormValues): EmailTem
   ...values,
 });
 
-function _emptyStringToNull(val: unknown) {
-  return val === "" ? null : val;
-}
-
 export type EmailTemplateForm = z.infer<typeof emailTemplateSchema>;

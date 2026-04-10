@@ -1,5 +1,20 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getAuthRecoveryRedirectUrl, getPublicSiteUrl } from "./site-url";
+import { getAuthRecoveryRedirectUrl, getPublicSiteUrl, normalizeSiteUrlOrigin } from "./site-url";
+
+describe("normalizeSiteUrlOrigin", () => {
+  it("returns empty string for whitespace-only input", () => {
+    expect(normalizeSiteUrlOrigin("")).toBe("");
+    expect(normalizeSiteUrlOrigin("   ")).toBe("");
+  });
+
+  it("strips trailing slash and keeps explicit https URL", () => {
+    expect(normalizeSiteUrlOrigin("https://x.example/path/")).toBe("https://x.example/path");
+  });
+
+  it("prepends https for host-only value", () => {
+    expect(normalizeSiteUrlOrigin("crm.example.com")).toBe("https://crm.example.com");
+  });
+});
 
 const envKeys = ["NEXT_PUBLIC_SITE_URL", "VERCEL_URL"] as const;
 

@@ -22,8 +22,4 @@ export const toTimelineInsert = (values: TimelineFormValues): TimelineEntryInser
   contact_id: values.contact_id || null,
 });
 
-function _emptyStringToNull(val: unknown) {
-  return val === "" ? null : val;
-}
-
 export type TimelineForm = z.infer<typeof timelineSchema>;

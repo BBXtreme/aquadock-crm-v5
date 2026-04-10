@@ -773,7 +773,11 @@
     "confirmUpload": "Hochladen",
     "uploading": "Wird hochgeladen…",
     "removeInProgress": "Wird entfernt…",
-    "removeAvatar": "Profilbild entfernen"
+    "removeAvatar": "Profilbild entfernen",
+    "displayNameLabel": "Anzeigename",
+    "displayNamePlaceholder": "Ihren Anzeigenamen eingeben",
+    "updateProfileButton": "Profil aktualisieren",
+    "updateProfilePending": "Wird gespeichert…"
   },
   "common": {
     "dash": "—",

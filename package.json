@@ -1,6 +1,6 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.31",
+  "version": "0.5.32",
   "private": true,
   "scripts": {
     "supabase:types": "npx --yes supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
@@ -22,7 +22,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:ci": "vitest run --coverage --coverage.thresholds.statements=70 --coverage.thresholds.branches=50 --coverage.reporter=json-summary --reporter=verbose",
+    "test:ci": "vitest run --coverage --reporter=verbose",
     "version": "changeset version",
     "release": "changeset publish"
   },

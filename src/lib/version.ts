@@ -32,4 +32,4 @@ Versioning strategy:
 - Next major: 0.6.0 when auth + real-time subscriptions are added
 */
 
-export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.5.31";
+export const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "0.5.32";

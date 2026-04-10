@@ -201,6 +201,12 @@ return (
                 </p>
               </div>
             </div>
+            <section
+              className="border-border/50 border-t pt-6"
+              aria-label="Account actions"
+            >
+              <ProfileSignOutButton className="w-full justify-center" />
+            </section>
           </CardContent>
         </Card>
 
@@ -215,12 +221,12 @@ return (
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="space-y-6 px-5 py-8 sm:px-6">
+          <CardContent className="px-5 py-8 sm:px-6">
             <section
               aria-labelledby="profile-display-heading"
-              className="rounded-xl border border-border/50 bg-muted/30 p-5 sm:p-6 dark:bg-muted/10"
+              className="space-y-5 pb-14"
             >
-              <div className="mb-5 space-y-1">
+              <div className="space-y-1.5">
                 <h3
                   id="profile-display-heading"
                   className="font-semibold text-base text-foreground tracking-tight"
@@ -235,41 +241,14 @@ return (
             </section>
 
             <section
-              aria-labelledby="profile-security-heading"
-              className="rounded-xl border border-border/50 bg-muted/30 p-5 sm:p-6 dark:bg-muted/10"
+              className="border-border/50 border-t pt-14"
+              aria-label="Sicherheit"
             >
-              <div className="mb-5 space-y-1">
-                <h3
-                  id="profile-security-heading"
-                  className="font-semibold text-base text-foreground tracking-tight"
-                >
-                  Sicherheit
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Passwort ändern, solange Sie angemeldet sind, oder eine neue
-                  Anmelde-E-Mail anfordern.
-                </p>
-              </div>
               <ProfileSecuritySection currentEmail={email} />
             </section>
           </CardContent>
         </Card>
       </div>
-    </section>
-
-    {/* Account Actions */}
-    <section aria-labelledby="profile-account-actions">
-      <h2 id="profile-account-actions" className="sr-only">
-        Account actions
-      </h2>
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
-        <CardHeader className="pb-6">
-          <CardTitle className="text-xl">Account Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileSignOutButton />
-        </CardContent>
-      </Card>
     </section>
 
     {role === "admin" ? (

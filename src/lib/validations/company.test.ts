@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, test } from "vitest";
-import { companySchema, toCompanyInsert } from "@/lib/validations/company";
+import { companySchema, toCompanyInsert, toCompanyUpdate } from "@/lib/validations/company";
 import { contactSchema, toContactInsert } from "@/lib/validations/contact";
 import { reminderFormSchema, reminderSchema } from "@/lib/validations/reminder";
 import { timelineSchema, toTimelineInsert } from "@/lib/validations/timeline";
@@ -106,6 +106,93 @@ describe("companySchema", () => {
     expect(row.firmenname).toBe("Acme GmbH");
     expect(row.website).toBeNull();
     expect(row.email).toBeNull();
+  });
+
+  const KUNDENTYPEN = [
+    "restaurant",
+    "hotel",
+    "resort",
+    "camping",
+    "marina",
+    "segelschule",
+    "segelverein",
+    "bootsverleih",
+    "neukunde",
+    "bestandskunde",
+    "interessent",
+    "partner",
+    "sonstige",
+  ] as const;
+
+  const STATUSES = [
+    "lead",
+    "interessant",
+    "qualifiziert",
+    "akquise",
+    "angebot",
+    "gewonnen",
+    "verloren",
+    "kunde",
+    "partner",
+    "inaktiv",
+  ] as const;
+
+  it.each(KUNDENTYPEN)("accepts kundentyp %s", (kundentyp) => {
+    const parsed = companySchema.parse({ ...minimal, kundentyp });
+    expect(parsed.kundentyp).toBe(kundentyp);
+  });
+
+  it.each(STATUSES)("accepts status %s", (status) => {
+    const parsed = companySchema.parse({ ...minimal, status });
+    expect(parsed.status).toBe(status);
+  });
+
+  it("accepts boundary lat/lon and way/relation OSM ids", () => {
+    const parsed = companySchema.parse({
+      ...minimal,
+      lat: -90,
+      lon: 180,
+      osm: "way/1",
+    });
+    expect(parsed.lat).toBe(-90);
+    expect(parsed.lon).toBe(180);
+    expect(companySchema.parse({ ...minimal, osm: "relation/99" }).osm).toBe("relation/99");
+  });
+
+  it("maps optional empty strings and zero numerics via toCompanyInsert and toCompanyUpdate", () => {
+    const values = companySchema.parse({
+      ...minimal,
+      rechtsform: "",
+      firmentyp: "",
+      telefon: "",
+      strasse: "",
+      plz: "",
+      stadt: "",
+      bundesland: "",
+      land: "",
+      wassertyp: "",
+      osm: null,
+      notes: "",
+      wasserdistanz: 0,
+      value: 0,
+    });
+    const insert = toCompanyInsert(values);
+    const update = toCompanyUpdate(values);
+    for (const row of [insert, update]) {
+      expect(row.rechtsform).toBeNull();
+      expect(row.firmentyp).toBeNull();
+      expect(row.telefon).toBeNull();
+      expect(row.strasse).toBeNull();
+      expect(row.plz).toBeNull();
+      expect(row.stadt).toBeNull();
+      expect(row.bundesland).toBeNull();
+      expect(row.land).toBeNull();
+      expect(row.wassertyp).toBeNull();
+      expect(row.osm).toBeNull();
+      expect(row.notes).toBeNull();
+      expect(row.wasserdistanz).toBe(0);
+      expect(row.value).toBe(0);
+    }
   });
 });
 

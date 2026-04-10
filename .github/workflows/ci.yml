@@ -61,7 +61,7 @@ jobs:
           const t = data.total;
           console.log("--- Coverage totals ---");
           console.log(
-            `statements ${t.statements.pct}% (min 70%) | branches ${t.branches.pct}% (min 50%) | lines ${t.lines.pct}% | functions ${t.functions.pct}%`
+            `statements ${t.statements.pct}% (min 90%) | branches ${t.branches.pct}% (min 90%) | lines ${t.lines.pct}% (min 90%) | functions ${t.functions.pct}% (min 90%)`
           );
           NODE
 
