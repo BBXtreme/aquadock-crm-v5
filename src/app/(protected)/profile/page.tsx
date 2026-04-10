@@ -246,7 +246,8 @@ return (
                   Sicherheit
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Passwort ändern oder eine neue Anmelde-E-Mail anfordern.
+                  Passwort ändern, solange Sie angemeldet sind, oder eine neue
+                  Anmelde-E-Mail anfordern.
                 </p>
               </div>
               <ProfileSecuritySection currentEmail={email} />

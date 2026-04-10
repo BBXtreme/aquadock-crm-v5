@@ -13,6 +13,9 @@ import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
+  Component,
+  type ErrorInfo,
+  type ReactNode,
   startTransition,
   useCallback,
   useEffect,
@@ -44,17 +47,68 @@ import { Input } from "@/components/ui/input";
 import { PW_RECOVERY_SESSION_STORAGE_KEY } from "@/lib/constants/auth-recovery";
 import { createClient } from "@/lib/supabase/browser";
 import {
-  type ChangePasswordFormValues,
-  changePasswordSchema,
+  type PasswordRecoverySetFormValues,
+  passwordRecoverySetSchema,
 } from "@/lib/validations/profile";
 
-/** Satisfies `changePasswordSchema` on /login recovery; not used by `updateUser`. */
-const PASSWORD_RECOVERY_CURRENT_SENTINEL =
-  "__aquadock_pw_recovery_no_current__";
+/**
+ * Single browser client for `/login`. React 18 Strict Mode (dev + some prod paths)
+ * mounts twice; a second `createClient()` can run after the recovery hash was already
+ * consumed → no session → `updateUser` throws "Auth session missing!".
+ */
+let loginPageBrowserSupabase: SupabaseClient | null = null;
+
+function getLoginPageSupabaseClient(): SupabaseClient {
+  const isTestRuntime =
+    typeof process !== "undefined" &&
+    (process.env.VITEST === "true" || process.env.NODE_ENV === "test");
+  if (isTestRuntime) {
+    return createClient();
+  }
+  if (loginPageBrowserSupabase === null) {
+    loginPageBrowserSupabase = createClient();
+  }
+  return loginPageBrowserSupabase;
+}
 
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
-function isPasswordRecoveryFromUrl(): boolean {
+type LoginAuthErrorBoundaryProps = { children: ReactNode };
+
+type LoginAuthErrorBoundaryState = { didCatch: boolean };
+
+/** React error boundaries must be a class; function components cannot implement `getDerivedStateFromError`. */
+class LoginAuthErrorBoundary extends Component<
+  LoginAuthErrorBoundaryProps,
+  LoginAuthErrorBoundaryState
+> {
+  state: LoginAuthErrorBoundaryState = { didCatch: false };
+
+  static getDerivedStateFromError(): LoginAuthErrorBoundaryState {
+    return { didCatch: true };
+  }
+
+  componentDidCatch(error: unknown, _info: ErrorInfo) {
+    const message =
+      error instanceof Error ? error.message : "Unbekannter Fehler";
+    toast.error("Ein unerwarteter Fehler ist aufgetreten.", {
+      description: message,
+    });
+  }
+
+  render() {
+    if (this.state.didCatch) {
+      return (
+        <p className="text-center text-muted-foreground text-sm">
+          Bitte laden Sie die Seite neu.
+        </p>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export function isPasswordRecoveryFromUrl(): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -118,7 +172,7 @@ function accessTokenIndicatesRecovery(accessToken: string): boolean {
 }
 
 /** Set by root `beforeInteractive` script when hash had `type=recovery` (hash may be stripped before React runs). */
-function consumePasswordRecoveryBootstrapFlag(): boolean {
+export function consumePasswordRecoveryBootstrapFlag(): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -134,40 +188,45 @@ function consumePasswordRecoveryBootstrapFlag(): boolean {
   return false;
 }
 
-function PasswordRecoveryUpdatePanel({
+export function PasswordRecoveryUpdatePanel({
   supabase,
   recoverySaved,
-  onRecoverySaved,
-  onBackToLogin,
+  onRecoverySuccess,
 }: {
   supabase: SupabaseClient;
   recoverySaved: boolean;
-  onRecoverySaved: () => void;
-  onBackToLogin: () => void;
+  onRecoverySuccess: () => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const form = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
+  const toggleShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const toggleShowConfirmPassword = useCallback(() => {
+    setShowConfirmPassword((prev) => !prev);
+  }, []);
+
+  const form = useForm<PasswordRecoverySetFormValues>({
+    resolver: zodResolver(passwordRecoverySetSchema),
     defaultValues: {
-      current_password: PASSWORD_RECOVERY_CURRENT_SENTINEL,
-      new_password: "",
+      password: "",
       confirm_password: "",
     },
   });
 
   const updatePassword = useMutation({
-    mutationFn: async (values: ChangePasswordFormValues) => {
-      const { error } = await supabase.auth.updateUser({
-        password: values.new_password,
+    mutationFn: async (values: PasswordRecoverySetFormValues) => {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: values.password,
       });
-      if (error) {
-        throw error;
+      if (updateError) {
+        throw updateError;
       }
     },
     onSuccess: () => {
-      onRecoverySaved();
+      onRecoverySuccess();
     },
     onError: (err: unknown) => {
       const description =
@@ -199,15 +258,9 @@ function PasswordRecoveryUpdatePanel({
           <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
         </div>
         <p className="font-medium text-foreground text-lg tracking-tight">
-          Passwort wurde erfolgreich geändert
+          Passwort erfolgreich geändert. Sie werden zur Anmeldung
+          weitergeleitet...
         </p>
-        <Button
-          type="button"
-          className="min-w-[200px] bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
-          onClick={onBackToLogin}
-        >
-          Zur Anmeldung
-        </Button>
       </div>
     );
   }
@@ -216,19 +269,8 @@ function PasswordRecoveryUpdatePanel({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-6">
         <FormField
-          control={form.control as Control<ChangePasswordFormValues>}
-          name="current_password"
-          render={({ field }) => (
-            <FormItem className="hidden" aria-hidden>
-              <FormControl>
-                <Input {...field} type="hidden" tabIndex={-1} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control as Control<ChangePasswordFormValues>}
-          name="new_password"
+          control={form.control as Control<PasswordRecoverySetFormValues>}
+          name="password"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-base">Neues Passwort</FormLabel>
@@ -245,9 +287,11 @@ function PasswordRecoveryUpdatePanel({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    setShowPassword((v) => !v);
+                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleShowPassword();
                   }}
                   aria-label={
                     showPassword ? "Passwort verbergen" : "Passwort anzeigen"
@@ -265,7 +309,7 @@ function PasswordRecoveryUpdatePanel({
           )}
         />
         <FormField
-          control={form.control as Control<ChangePasswordFormValues>}
+          control={form.control as Control<PasswordRecoverySetFormValues>}
           name="confirm_password"
           render={({ field }) => (
             <FormItem>
@@ -283,9 +327,11 @@ function PasswordRecoveryUpdatePanel({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    setShowConfirmPassword((v) => !v);
+                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleShowConfirmPassword();
                   }}
                   aria-label={
                     showConfirmPassword
@@ -321,14 +367,10 @@ function PasswordRecoveryUpdatePanel({
 export default function LoginPage() {
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-  const [recoveryPasswordSaved, setRecoveryPasswordSaved] = useState(false);
+  const [recoverySaved, setRecoverySaved] = useState(false);
+  /** Recovery URL, bootstrap latch, recovery JWT, or password form — blocks authed redirect to dashboard. */
+  const isRecoveryFlowRef = useRef(false);
   const router = useRouter();
-  const hasRedirectedRef = useRef(false);
-  const passwordResetFlowRef = useRef(false);
-  /** After a successful recovery password save, block auto-redirect until “Back to login”. */
-  const suppressPostPasswordUpdateRedirectRef = useRef(false);
-  /** Stays true after we saw recovery once (Strict Mode remount may clear URL hash). */
-  const recoveryPinnedRef = useRef(false);
 
   const getRedirectPath = useCallback((): string => {
     if (typeof window === "undefined") return "/dashboard";
@@ -342,52 +384,32 @@ export default function LoginPage() {
     return "/dashboard";
   }, []);
 
-  const redirectTo =
+  const authRedirectTo =
     typeof window !== "undefined"
-      ? `${window.location.origin}${getRedirectPath()}`
-      : "/dashboard";
+      ? `${window.location.origin}/login`
+      : "http://localhost:3000/login";
 
+  // 1) Latch recovery from bootstrap + URL/hash (sync) before any Supabase client exists.
   useLayoutEffect(() => {
     const bootstrapRecovery = consumePasswordRecoveryBootstrapFlag();
-    if (bootstrapRecovery) {
-      recoveryPinnedRef.current = true;
-    }
-    const recovery =
-      isPasswordRecoveryFromUrl() ||
-      recoveryPinnedRef.current ||
-      bootstrapRecovery;
-    if (recovery) {
-      recoveryPinnedRef.current = true;
-      passwordResetFlowRef.current = true;
+    const urlRec = isPasswordRecoveryFromUrl();
+    isRecoveryFlowRef.current =
+      isRecoveryFlowRef.current || bootstrapRecovery || urlRec;
+    if (bootstrapRecovery || urlRec) {
       setView("update_password");
     }
-    setSupabase((prev) => prev ?? createClient());
+  }, []);
+
+  // 2) One shared browser client after latch (singleton avoids Strict Mode double-init).
+  useLayoutEffect(() => {
+    setSupabase(getLoginPageSupabaseClient());
   }, []);
 
   useEffect(() => {
     if (view !== "update_password") {
-      setRecoveryPasswordSaved(false);
-      suppressPostPasswordUpdateRedirectRef.current = false;
+      setRecoverySaved(false);
     }
   }, [view]);
-
-  const handleBackToLoginAfterRecovery = useCallback(() => {
-    if (supabase === null) {
-      return;
-    }
-    void (async () => {
-      suppressPostPasswordUpdateRedirectRef.current = false;
-      setRecoveryPasswordSaved(false);
-      passwordResetFlowRef.current = false;
-      recoveryPinnedRef.current = false;
-      await supabase.auth.signOut();
-      hasRedirectedRef.current = false;
-      setView("sign_in");
-      startTransition(() => {
-        router.replace("/login");
-      });
-    })();
-  }, [supabase, router]);
 
   useEffect(() => {
     if (!supabase) {
@@ -397,13 +419,11 @@ export default function LoginPage() {
     const urlRecovery = isPasswordRecoveryFromUrl();
 
     if (urlRecovery) {
-      passwordResetFlowRef.current = true;
+      isRecoveryFlowRef.current = true;
       setView("update_password");
     }
 
     const redirectIfAuthed = () => {
-      if (hasRedirectedRef.current) return;
-      hasRedirectedRef.current = true;
       const path = getRedirectPath();
       startTransition(() => {
         router.replace(path);
@@ -419,16 +439,13 @@ export default function LoginPage() {
       } = await supabase.auth.getSession();
       const token = session?.access_token;
       const jwtRecovery =
-        Boolean(token) && accessTokenIndicatesRecovery(token as string);
-      if (user && !passwordResetFlowRef.current && jwtRecovery) {
-        passwordResetFlowRef.current = true;
+        typeof token === "string" && accessTokenIndicatesRecovery(token);
+      if (user && jwtRecovery) {
+        isRecoveryFlowRef.current = true;
         setView("update_password");
+        return;
       }
-      if (
-        user &&
-        !passwordResetFlowRef.current &&
-        !suppressPostPasswordUpdateRedirectRef.current
-      ) {
+      if (user && !isRecoveryFlowRef.current) {
         redirectIfAuthed();
       }
     };
@@ -439,29 +456,21 @@ export default function LoginPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        passwordResetFlowRef.current = true;
+        isRecoveryFlowRef.current = true;
         setView("update_password");
-        return;
-      }
-
-      if (event === "USER_UPDATED" && passwordResetFlowRef.current) {
-        suppressPostPasswordUpdateRedirectRef.current = true;
-        passwordResetFlowRef.current = false;
-        setRecoveryPasswordSaved(true);
         return;
       }
 
       if (
         session &&
-        !passwordResetFlowRef.current &&
-        !suppressPostPasswordUpdateRedirectRef.current &&
+        !isRecoveryFlowRef.current &&
         (event === "SIGNED_IN" ||
           event === "INITIAL_SESSION" ||
           event === "TOKEN_REFRESHED")
       ) {
         const tok = session.access_token;
         if (tok && accessTokenIndicatesRecovery(tok)) {
-          passwordResetFlowRef.current = true;
+          isRecoveryFlowRef.current = true;
           setView("update_password");
           return;
         }
@@ -483,7 +492,7 @@ export default function LoginPage() {
       >
         <CardHeader className="space-y-2 pb-2 text-center sm:pb-4">
           {view === "update_password" ? (
-            recoveryPasswordSaved ? null : (
+            recoverySaved ? null : (
               <>
                 <CardTitle className="font-semibold text-3xl tracking-tight">
                   Neues Passwort festlegen
@@ -526,38 +535,42 @@ export default function LoginPage() {
           ) : null}
 
           {supabase ? (
-            view === "update_password" ? (
-              <PasswordRecoveryUpdatePanel
-                supabase={supabase}
-                recoverySaved={recoveryPasswordSaved}
-                onRecoverySaved={() => {
-                  suppressPostPasswordUpdateRedirectRef.current = true;
-                  setRecoveryPasswordSaved(true);
-                }}
-                onBackToLogin={handleBackToLoginAfterRecovery}
-              />
-            ) : (
-              <Auth
-                supabaseClient={supabase}
-                view={view}
-                appearance={{
-                  theme: ThemeSupa,
-                  variables: {
-                    default: {
-                      colors: {
-                        brand: "#24BACC",
-                        brandAccent: "#1da0a8",
+            <LoginAuthErrorBoundary>
+              {view === "update_password" ? (
+                <PasswordRecoveryUpdatePanel
+                  supabase={supabase}
+                  recoverySaved={recoverySaved}
+                  onRecoverySuccess={() => {
+                    isRecoveryFlowRef.current = false;
+                    setRecoverySaved(true);
+                    startTransition(() => {
+                      router.replace("/login");
+                    });
+                  }}
+                />
+              ) : (
+                <Auth
+                  supabaseClient={supabase}
+                  view={view}
+                  appearance={{
+                    theme: ThemeSupa,
+                    variables: {
+                      default: {
+                        colors: {
+                          brand: "#24BACC",
+                          brandAccent: "#1da0a8",
+                        },
                       },
                     },
-                  },
-                }}
-                providers={[]}
-                redirectTo={redirectTo}
-                onlyThirdPartyProviders={false}
-                magicLink={true}
-                showLinks={false}
-              />
-            )
+                  }}
+                  providers={[]}
+                  redirectTo={authRedirectTo}
+                  onlyThirdPartyProviders={false}
+                  magicLink={true}
+                  showLinks={false}
+                />
+              )}
+            </LoginAuthErrorBoundary>
           ) : (
             <p className="text-center text-muted-foreground text-sm">
               Wird geladen…

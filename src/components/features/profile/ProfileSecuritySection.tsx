@@ -1,14 +1,14 @@
 // src/components/features/profile/ProfileSecuritySection.tsx
-// Self-service password and email change inside the profile card (server actions + RHF + Zod).
+// Self-service password and email change (server actions + RHF + Zod + TanStack Mutation).
 
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
-import { useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -36,20 +36,36 @@ type ProfileSecuritySectionProps = {
   currentEmail: string;
 };
 
+/** Genug Zeit für `router.refresh()`, damit das Panel wie auf `/login` wirkt, dann zurück zum Formular. */
+const SUCCESS_PANEL_RESET_MS = 2800;
+
+function changeErrorDescription(err: unknown): string {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "message" in err &&
+    typeof (err as { message: unknown }).message === "string"
+  ) {
+    return (err as { message: string }).message;
+  }
+  return "Unbekannter Fehler";
+}
+
 function PasswordFieldWithToggle({
   field,
   show,
   onToggle,
   hideLabel,
   showLabel,
-  inputClassName,
 }: {
   field: ComponentProps<typeof Input>;
   show: boolean;
   onToggle: () => void;
   hideLabel: string;
   showLabel: string;
-  inputClassName?: string;
 }) {
   return (
     <div className="relative">
@@ -57,7 +73,7 @@ function PasswordFieldWithToggle({
         <Input
           {...field}
           type={show ? "text" : "password"}
-          className={inputClassName ?? "h-11 pr-11"}
+          className="h-11 pr-11 text-base"
         />
       </FormControl>
       <Button
@@ -79,17 +95,14 @@ export default function ProfileSecuritySection({
 }: ProfileSecuritySectionProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [passwordPending, setPasswordPending] = useState(false);
-  const [emailPending, setEmailPending] = useState(false);
   const [passwordSaved, setPasswordSaved] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [emailRequestSent, setEmailRequestSent] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const passwordForm = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
-      current_password: "",
       new_password: "",
       confirm_password: "",
     },
@@ -102,62 +115,85 @@ export default function ProfileSecuritySection({
     },
   });
 
-  const onPasswordSubmit = passwordForm.handleSubmit(async (data) => {
-    setPasswordPending(true);
-    try {
+  useEffect(() => {
+    if (!passwordSaved) {
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setPasswordSaved(false);
+    }, SUCCESS_PANEL_RESET_MS);
+    return () => window.clearTimeout(id);
+  }, [passwordSaved]);
+
+  useEffect(() => {
+    if (!emailRequestSent) {
+      return;
+    }
+    const id = window.setTimeout(() => {
+      setEmailRequestSent(false);
+    }, SUCCESS_PANEL_RESET_MS);
+    return () => window.clearTimeout(id);
+  }, [emailRequestSent]);
+
+  const passwordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordFormValues) => {
       const fd = new FormData();
-      fd.append("current_password", data.current_password);
       fd.append("new_password", data.new_password);
       fd.append("confirm_password", data.confirm_password);
       await updatePasswordAction(fd);
+    },
+    onSuccess: () => {
       setPasswordSaved(true);
-      setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
+      passwordForm.reset({
+        new_password: "",
+        confirm_password: "",
+      });
+      toast.success("Passwort wurde erfolgreich geändert.");
       queryClient.invalidateQueries();
-      router.refresh();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Passwort konnte nicht geändert werden.";
-      toast.error("Passwortänderung fehlgeschlagen", { description: message });
-    } finally {
-      setPasswordPending(false);
-    }
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    onError: (err: unknown) => {
+      toast.error("Änderung konnte nicht gespeichert werden.", {
+        description: changeErrorDescription(err),
+      });
+    },
   });
 
-  const dismissPasswordSuccess = () => {
-    setPasswordSaved(false);
-    passwordForm.reset({
-      current_password: "",
-      new_password: "",
-      confirm_password: "",
-    });
-  };
-
-  const onEmailSubmit = emailForm.handleSubmit(async (data) => {
-    setEmailPending(true);
-    try {
+  const emailMutation = useMutation({
+    mutationFn: async (data: ChangeEmailFormValues) => {
       const fd = new FormData();
       fd.append("new_email", data.new_email);
       await updateEmailAction(fd);
+    },
+    onSuccess: () => {
+      setEmailRequestSent(true);
+      emailForm.reset({ new_email: "" });
       toast.success("Bestätigung angefordert", {
         description:
           "Bitte prüfen Sie beide E-Mail-Postfächer und folgen Sie den Links in den Nachrichten.",
       });
-      emailForm.reset({ new_email: "" });
       queryClient.invalidateQueries();
-      router.refresh();
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "E-Mail konnte nicht geändert werden.";
-      toast.error("E-Mail-Änderung fehlgeschlagen", { description: message });
-    } finally {
-      setEmailPending(false);
-    }
+      startTransition(() => {
+        router.refresh();
+      });
+    },
+    onError: (err: unknown) => {
+      toast.error("Änderung konnte nicht gespeichert werden.", {
+        description: changeErrorDescription(err),
+      });
+    },
+  });
+
+  const onPasswordSubmit = passwordForm.handleSubmit((values) => {
+    passwordMutation.mutate(values);
+  });
+
+  const onEmailSubmit = emailForm.handleSubmit((values) => {
+    emailMutation.mutate(values);
   });
 
   return (
@@ -173,54 +209,21 @@ export default function ProfileSecuritySection({
         </TabsList>
         <TabsContent value="password" className="space-y-4 pt-4">
           {passwordSaved ? (
-            <div className="flex flex-col items-center gap-6 py-4 text-center">
+            <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                 aria-hidden
               >
-                <CheckCircle2 className="h-9 w-9 shrink-0" strokeWidth={1.75} />
+                <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
               </div>
-              <p className="max-w-sm font-medium text-foreground text-sm leading-relaxed">
-                Ihr Passwort wurde erfolgreich geändert. Sie können es ab sofort
-                für die Anmeldung verwenden.
+              <p className="font-medium text-foreground text-lg tracking-tight">
+                Passwort erfolgreich geändert. Profil wird
+                aktualisiert...
               </p>
-              <Button
-                type="button"
-                className="min-w-[200px] bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
-                onClick={dismissPasswordSuccess}
-              >
-                Fertig
-              </Button>
             </div>
           ) : (
             <Form {...passwordForm}>
-              <form onSubmit={onPasswordSubmit} className="space-y-4">
-                <FormField
-                  control={
-                    passwordForm.control as Control<ChangePasswordFormValues>
-                  }
-                  name="current_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Aktuelles Passwort
-                      </FormLabel>
-                      <PasswordFieldWithToggle
-                        field={{
-                          ...field,
-                          autoComplete: "current-password",
-                        }}
-                        show={showCurrentPassword}
-                        onToggle={() => {
-                          setShowCurrentPassword((v) => !v);
-                        }}
-                        hideLabel="Aktuelles Passwort verbergen"
-                        showLabel="Aktuelles Passwort anzeigen"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <form onSubmit={onPasswordSubmit} className="space-y-6">
                 <FormField
                   control={
                     passwordForm.control as Control<ChangePasswordFormValues>
@@ -228,9 +231,7 @@ export default function ProfileSecuritySection({
                   name="new_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Neues Passwort
-                      </FormLabel>
+                      <FormLabel className="text-base">Neues Passwort</FormLabel>
                       <PasswordFieldWithToggle
                         field={{
                           ...field,
@@ -254,8 +255,8 @@ export default function ProfileSecuritySection({
                   name="confirm_password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium">
-                        Neues Passwort bestätigen
+                      <FormLabel className="text-base">
+                        Passwort bestätigen
                       </FormLabel>
                       <PasswordFieldWithToggle
                         field={{
@@ -275,53 +276,76 @@ export default function ProfileSecuritySection({
                 />
                 <Button
                   type="submit"
-                  className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
-                  disabled={passwordPending}
+                  className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+                  disabled={passwordMutation.isPending}
                 >
-                  {passwordPending ? "Wird gespeichert…" : "Passwort speichern"}
+                  {passwordMutation.isPending
+                    ? "Wird gespeichert…"
+                    : "Neues Passwort speichern"}
                 </Button>
               </form>
             </Form>
           )}
         </TabsContent>
         <TabsContent value="email" className="space-y-4 pt-4">
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Zur Bestätigung wird eine E-Mail an{" "}
-            <span className="font-medium text-foreground">{currentEmail}</span>{" "}
-            und an Ihre neue Adresse gesendet.
-          </p>
-          <Form {...emailForm}>
-            <form onSubmit={onEmailSubmit} className="space-y-4">
-              <FormField
-                control={emailForm.control as Control<ChangeEmailFormValues>}
-                name="new_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">
-                      Neue E-Mail-Adresse
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        autoComplete="email"
-                        className="h-11"
-                        placeholder="name@beispiel.de"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
-                disabled={emailPending}
+          {emailRequestSent ? (
+            <div className="flex flex-col items-center gap-8 py-2 text-center">
+              <div
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                aria-hidden
               >
-                {emailPending ? "Wird gesendet…" : "E-Mail-Änderung anfordern"}
-              </Button>
-            </form>
-          </Form>
+                <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
+              </div>
+              <p className="font-medium text-foreground text-lg tracking-tight">
+                Bestätigungs-E-Mails sind unterwegs. Bitte prüfen Sie Ihre
+                Postfächer...
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Zur Bestätigung wird eine E-Mail an{" "}
+                <span className="font-medium text-foreground">
+                  {currentEmail}
+                </span>{" "}
+                und an Ihre neue Adresse gesendet.
+              </p>
+              <Form {...emailForm}>
+                <form onSubmit={onEmailSubmit} className="space-y-6">
+                  <FormField
+                    control={emailForm.control as Control<ChangeEmailFormValues>}
+                    name="new_email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">
+                          Neue E-Mail-Adresse
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            type="email"
+                            autoComplete="email"
+                            className="h-11 text-base"
+                            placeholder="name@beispiel.de"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+                    disabled={emailMutation.isPending}
+                  >
+                    {emailMutation.isPending
+                      ? "Wird gespeichert…"
+                      : "E-Mail-Änderung anfordern"}
+                  </Button>
+                </form>
+              </Form>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>

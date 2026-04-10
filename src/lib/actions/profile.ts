@@ -72,17 +72,16 @@ export async function updateProfileAvatar(input: unknown): Promise<UpdateProfile
   };
 }
 
+/**
+ * Passwort ändern für **eingeloggte** Nutzer (Profil): nur
+ * `auth.updateUser({ password })` mit der Server-Session — kein separater
+ * Re-Login-Schritt. Passwort-Reset per Link läuft auf `/login` im Browser
+ * (`PasswordRecoveryUpdatePanel`), nicht über diese Action.
+ */
 export async function updatePasswordAction(formData: FormData): Promise<void> {
-  const user = await requireUser();
-  const email = user.email;
-  if (email === null || email === "") {
-    throw new Error(
-      "Keine E-Mail-Adresse hinterlegt; Passwortänderung ist nicht möglich.",
-    );
-  }
+  await requireUser();
 
   const raw = {
-    current_password: formDataGetString(formData, "current_password"),
     new_password: formDataGetString(formData, "new_password"),
     confirm_password: formDataGetString(formData, "confirm_password"),
   };
@@ -97,15 +96,6 @@ export async function updatePasswordAction(formData: FormData): Promise<void> {
 
   const supabase = await createServerSupabaseClient();
 
-  const { error: verifyError } = await supabase.auth.signInWithPassword({
-    email,
-    password: parsed.data.current_password,
-  });
-
-  if (verifyError) {
-    throw handleSupabaseError(verifyError, "updatePasswordAction.verifyCurrent");
-  }
-
   const { error } = await supabase.auth.updateUser({
     password: parsed.data.new_password,
   });
@@ -115,6 +105,7 @@ export async function updatePasswordAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/profile");
+  revalidatePath("/profile", "layout");
 }
 
 export async function updateEmailAction(formData: FormData): Promise<void> {
@@ -153,4 +144,5 @@ export async function updateEmailAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/profile");
+  revalidatePath("/profile", "layout");
 }
