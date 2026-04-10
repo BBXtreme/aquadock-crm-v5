@@ -697,6 +697,8 @@
     "deleteConfirmDescription": "Delete this entry? This cannot be undone.",
     "deleteConfirmAction": "Delete",
     "toastDeleted": "Entry deleted",
+    "toastDeleteAlreadyTrashedTitle": "Cannot delete this entry",
+    "toastDeleteAlreadyTrashedDescription": "This entry has already been discarded (it is in the trash) and cannot be deleted again. To have it removed permanently, please contact an administrator, who can purge it from the admin trash bin in profile settings.",
     "toastDeleteFailed": "Delete failed",
     "toastUpdated": "Entry updated",
     "toastUpdateFailed": "Update failed",

@@ -39,7 +39,7 @@ import {
   bulkRestoreReminders,
   bulkRestoreTimelineEntries,
 } from "@/lib/actions/crm-trash";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { fetchTrashBinPreference, TRASH_BIN_DEFAULT_ENABLED } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -73,8 +73,20 @@ type TrashRowsPayload = {
 
 type TrashTab = "companies" | "contacts" | "reminders" | "timeline";
 
+function formatDateTimeLocale(iso: string | null | undefined, localeTag: string): string {
+  if (iso === null || iso === undefined || iso === "") {
+    return "—";
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return "—";
+  }
+  return d.toLocaleString(localeTag, { dateStyle: "medium", timeStyle: "short" });
+}
+
 export default function AdminTrashBinCard() {
   const t = useT("profile");
+  const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<TrashTab>("companies");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -240,7 +252,11 @@ export default function AdminTrashBinCard() {
         {
           accessorKey: "deleted_at",
           header: t("trashColDeleted"),
-          cell: (info) => safeDisplay(info.getValue() as string | null),
+          cell: (info) => (
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateTimeLocale(info.getValue() as string | null, localeTag)}
+            </span>
+          ),
         },
         {
           id: "deleted_by",
@@ -259,7 +275,7 @@ export default function AdminTrashBinCard() {
           },
         },
       ] satisfies ColumnDef<TrashedCompany>[],
-    [t, profileDisplayByUserId],
+    [t, profileDisplayByUserId, localeTag],
   );
 
   const contactColumns = useMemo(
@@ -290,7 +306,11 @@ export default function AdminTrashBinCard() {
         {
           accessorKey: "deleted_at",
           header: t("trashColDeleted"),
-          cell: (info) => safeDisplay(info.getValue() as string | null),
+          cell: (info) => (
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateTimeLocale(info.getValue() as string | null, localeTag)}
+            </span>
+          ),
         },
         {
           id: "deleted_by",
@@ -309,7 +329,7 @@ export default function AdminTrashBinCard() {
           },
         },
       ] satisfies ColumnDef<TrashedContact>[],
-    [t, profileDisplayByUserId],
+    [t, profileDisplayByUserId, localeTag],
   );
 
   const reminderColumns = useMemo(
@@ -336,7 +356,11 @@ export default function AdminTrashBinCard() {
         {
           accessorKey: "deleted_at",
           header: t("trashColDeleted"),
-          cell: (info) => safeDisplay(info.getValue() as string | null),
+          cell: (info) => (
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateTimeLocale(info.getValue() as string | null, localeTag)}
+            </span>
+          ),
         },
         {
           id: "deleted_by",
@@ -355,7 +379,7 @@ export default function AdminTrashBinCard() {
           },
         },
       ] satisfies ColumnDef<TrashedReminder>[],
-    [t, profileDisplayByUserId],
+    [t, profileDisplayByUserId, localeTag],
   );
 
   const timelineColumns = useMemo(
@@ -382,7 +406,11 @@ export default function AdminTrashBinCard() {
         {
           accessorKey: "deleted_at",
           header: t("trashColDeleted"),
-          cell: (info) => safeDisplay(info.getValue() as string | null),
+          cell: (info) => (
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateTimeLocale(info.getValue() as string | null, localeTag)}
+            </span>
+          ),
         },
         {
           id: "deleted_by",
@@ -401,7 +429,7 @@ export default function AdminTrashBinCard() {
           },
         },
       ] satisfies ColumnDef<TrashedTimeline>[],
-    [t, profileDisplayByUserId],
+    [t, profileDisplayByUserId, localeTag],
   );
 
   const tableCompanies = useReactTable({

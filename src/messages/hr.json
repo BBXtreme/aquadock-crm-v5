@@ -697,6 +697,8 @@
     "deleteConfirmDescription": "Obrisati ovaj zapis? Ovo se ne može poništiti.",
     "deleteConfirmAction": "Obriši",
     "toastDeleted": "Zapis obrisan",
+    "toastDeleteAlreadyTrashedTitle": "Brisanje nije moguće",
+    "toastDeleteAlreadyTrashedDescription": "Ovaj je zapis već označen za brisanje (u smeću) i ne može se ponovno ukloniti. Za trajno brisanje obratite se administratoru, koji ga može ukloniti iz administratorske korbe za smeće u postavkama profila.",
     "toastDeleteFailed": "Brisanje nije uspjelo",
     "toastUpdated": "Zapis ažuriran",
     "toastUpdateFailed": "Ažuriranje nije uspjelo",

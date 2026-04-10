@@ -2,6 +2,7 @@
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { requireUser } from "@/lib/auth/require-user";
+import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { logTrashAuditEvent } from "@/lib/server/delete-audit";
 import { fetchTrashBinPreference } from "@/lib/services/user-settings";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
@@ -614,7 +615,7 @@ export async function deleteTimelineEntryWithTrash(id: string): Promise<TrashDel
 
   if (activeErr) throw handleSupabaseError(activeErr, "deleteTimelineEntryWithTrash:active");
   if (!activeRow) {
-    throw new Error("Eintrag nicht gefunden oder bereits im Papierkorb");
+    throw new Error(TIMELINE_DELETE_NO_ACTIVE_ROW);
   }
 
   if (trashBinEnabled) {

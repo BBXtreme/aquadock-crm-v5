@@ -10,7 +10,7 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   Component,
@@ -371,6 +371,7 @@ export function PasswordRecoveryUpdatePanel({
               <div className="relative">
                 <FormControl>
                   <Input
+                    key={showPassword ? "pw-visible" : "pw-hidden"}
                     {...field}
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
@@ -378,6 +379,7 @@ export function PasswordRecoveryUpdatePanel({
                   />
                 </FormControl>
                 <Button
+                  key={showPassword ? "pw-toggle-show" : "pw-toggle-hide"}
                   type="button"
                   variant="ghost"
                   size="icon"
@@ -411,6 +413,7 @@ export function PasswordRecoveryUpdatePanel({
               <div className="relative">
                 <FormControl>
                   <Input
+                    key={showConfirmPassword ? "pwc-visible" : "pwc-hidden"}
                     {...field}
                     type={showConfirmPassword ? "text" : "password"}
                     autoComplete="new-password"
@@ -418,6 +421,9 @@ export function PasswordRecoveryUpdatePanel({
                   />
                 </FormControl>
                 <Button
+                  key={
+                    showConfirmPassword ? "pwc-toggle-show" : "pwc-toggle-hide"
+                  }
                   type="button"
                   variant="ghost"
                   size="icon"
@@ -662,10 +668,18 @@ export default function LoginPage() {
                 <CardTitle className="font-semibold text-3xl tracking-tight">
                   Neues Passwort festlegen
                 </CardTitle>
-                <CardDescription className="text-base text-muted-foreground">
-                  {recoverySessionReady
-                    ? "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen."
-                    : "Sitzung wird vorbereitet…"}
+                <CardDescription className="flex items-center justify-center gap-2 text-base text-muted-foreground">
+                  {!recoverySessionReady ? (
+                    <Loader2
+                      className="size-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <span>
+                    {recoverySessionReady
+                      ? "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen."
+                      : "Sitzung wird vorbereitet…"}
+                  </span>
                 </CardDescription>
               </>
             )
@@ -722,26 +736,39 @@ export default function LoginPage() {
                     }}
                   />
                 ) : (
-                  <p className="text-center text-muted-foreground text-sm">
-                    Bitte einen Moment gedulden…
+                  <p className="flex items-center justify-center gap-2 text-center text-muted-foreground text-sm">
+                    <Loader2
+                      className="size-4 shrink-0 animate-spin text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span>Bitte einen Moment gedulden…</span>
                   </p>
                 )
               ) : (
-                <Auth
-                  supabaseClient={supabase}
-                  view={view}
-                  appearance={{
-                    theme: ThemeSupa,
-                    variables: {
-                      default: loginAuthAppearanceVariables,
-                    },
-                  }}
-                  providers={[]}
-                  redirectTo={authRedirectTo}
-                  onlyThirdPartyProviders={false}
-                  magicLink={true}
-                  showLinks={false}
-                />
+                <div
+                  className={
+                    "login-supabase-auth w-full [&_a]:!text-muted-foreground [&_a:hover]:!text-foreground " +
+                    "[&_input]:!border-border [&_input]:!bg-card [&_input]:!text-foreground " +
+                    "[&_input::placeholder]:!text-muted-foreground [&_label]:!text-foreground " +
+                    "[&_p]:!text-foreground"
+                  }
+                >
+                  <Auth
+                    supabaseClient={supabase}
+                    view={view}
+                    appearance={{
+                      theme: ThemeSupa,
+                      variables: {
+                        default: loginAuthAppearanceVariables,
+                      },
+                    }}
+                    providers={[]}
+                    redirectTo={authRedirectTo}
+                    onlyThirdPartyProviders={false}
+                    magicLink={true}
+                    showLinks={false}
+                  />
+                </div>
               )}
             </LoginAuthErrorBoundary>
           ) : (

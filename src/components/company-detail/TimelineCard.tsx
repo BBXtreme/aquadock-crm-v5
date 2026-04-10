@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
+import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
@@ -134,8 +135,14 @@ export default function TimelineCard({ companyId }: Props) {
       }
     },
     onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Delete failed", { description: message });
+      if (err instanceof Error && err.message === TIMELINE_DELETE_NO_ACTIVE_ROW) {
+        toast.error(t("toastDeleteAlreadyTrashedTitle"), {
+          description: t("toastDeleteAlreadyTrashedDescription"),
+        });
+        return;
+      }
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastDeleteFailed"), { description: message });
     },
   });
 
