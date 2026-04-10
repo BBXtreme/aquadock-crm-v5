@@ -2,7 +2,7 @@
 // This file defines the Profile page of the application, which displays the user's profile information and allows them to update their display name and manage their account.
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
-import { User } from "lucide-react";
+import { Settings2, User } from "lucide-react";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
 import ProfileForm from "@/components/features/profile/ProfileForm";
 import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -210,26 +211,30 @@ return (
           </CardContent>
         </Card>
 
-        {/* Profil bearbeiten — airy shadcn-style settings card */}
-        <Card className="overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm transition-shadow duration-200 hover:shadow-md">
-          <CardHeader className="space-y-1.5 border-border/60 border-b px-5 pb-5 sm:px-6">
-            <CardTitle className="font-semibold text-lg tracking-tight sm:text-xl">
+        {/* Profil bearbeiten — settings card (aligned with profile overview card) */}
+        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
+          <CardHeader className="gap-2 border-border/60 border-b px-6 pb-5">
+            <CardTitle className="flex items-center font-heading text-xl">
+              <Settings2
+                className="mr-3 h-6 w-6 shrink-0 text-primary"
+                aria-hidden
+              />
               Profil bearbeiten
             </CardTitle>
-            <CardDescription className="text-pretty text-sm leading-relaxed">
+            <CardDescription className="max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
               Anzeigename, Passwort und E-Mail-Adresse selbst anpassen.
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-5 py-8 sm:px-6">
+          <CardContent className="px-6 pb-8 pt-6">
             <section
               aria-labelledby="profile-display-heading"
-              className="space-y-5 pb-14"
+              className="space-y-6"
             >
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <h3
                   id="profile-display-heading"
-                  className="font-semibold text-base text-foreground tracking-tight"
+                  className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
                 >
                   Profil &amp; Anzeigename
                 </h3>
@@ -240,10 +245,9 @@ return (
               <ProfileForm profile={profileRow} />
             </section>
 
-            <section
-              className="border-border/50 border-t pt-14"
-              aria-label="Sicherheit"
-            >
+            <Separator className="my-10" decorative />
+
+            <section className="pt-0" aria-label="Sicherheit">
               <ProfileSecuritySection currentEmail={email} />
             </section>
           </CardContent>
