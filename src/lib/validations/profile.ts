@@ -44,12 +44,13 @@ export const profileAvatarSchema = z
 
 export type ProfileAvatarInput = z.infer<typeof profileAvatarSchema>;
 
+/**
+ * Passwort ändern im Profil: nur neues Passwort + Bestätigung.
+ * Die aktive Session ersetzt die Eingabe des alten Passworts; Update nur via
+ * `supabase.auth.updateUser({ password })` (wie Recovery auf `/login`).
+ */
 export const changePasswordSchema = z
   .object({
-    current_password: z
-      .string()
-      .trim()
-      .min(1, "Aktuelles Passwort ist erforderlich."),
     new_password: z
       .string()
       .trim()

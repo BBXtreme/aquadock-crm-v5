@@ -53,15 +53,11 @@ import {
 
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
-/** Thrown after `updateUser` succeeds so `onError` can skip the generic save toast. */
-class SignInAfterPasswordUpdateError extends Error {
-  override readonly name = "SignInAfterPasswordUpdateError";
-}
-
 type LoginAuthErrorBoundaryProps = { children: ReactNode };
 
 type LoginAuthErrorBoundaryState = { didCatch: boolean };
 
+/** React error boundaries must be a class; function components cannot implement `getDerivedStateFromError`. */
 class LoginAuthErrorBoundary extends Component<
   LoginAuthErrorBoundaryProps,
   LoginAuthErrorBoundaryState
@@ -92,7 +88,7 @@ class LoginAuthErrorBoundary extends Component<
   }
 }
 
-function isPasswordRecoveryFromUrl(): boolean {
+export function isPasswordRecoveryFromUrl(): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -156,7 +152,7 @@ function accessTokenIndicatesRecovery(accessToken: string): boolean {
 }
 
 /** Set by root `beforeInteractive` script when hash had `type=recovery` (hash may be stripped before React runs). */
-function consumePasswordRecoveryBootstrapFlag(): boolean {
+export function consumePasswordRecoveryBootstrapFlag(): boolean {
   if (typeof window === "undefined") {
     return false;
   }
@@ -172,7 +168,7 @@ function consumePasswordRecoveryBootstrapFlag(): boolean {
   return false;
 }
 
-function PasswordRecoveryUpdatePanel({
+export function PasswordRecoveryUpdatePanel({
   supabase,
   recoverySaved,
   onRecoverySuccess,
@@ -194,42 +190,17 @@ function PasswordRecoveryUpdatePanel({
 
   const updatePassword = useMutation({
     mutationFn: async (values: PasswordRecoverySetFormValues) => {
-      const {
-        data: { user: beforeUser },
-      } = await supabase.auth.getUser();
-      const email = beforeUser?.email?.trim();
-      if (email === undefined || email === "") {
-        throw new Error("Keine E-Mail für die Anmeldung gefunden.");
-      }
-
       const { error: updateError } = await supabase.auth.updateUser({
         password: values.password,
       });
       if (updateError) {
         throw updateError;
       }
-
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: values.password,
-      });
-      if (signInError) {
-        toast.error(
-          "Passwort wurde geändert, die automatische Anmeldung ist fehlgeschlagen.",
-          {
-            description: signInError.message,
-          },
-        );
-        throw new SignInAfterPasswordUpdateError(signInError.message);
-      }
     },
     onSuccess: () => {
       onRecoverySuccess();
     },
     onError: (err: unknown) => {
-      if (err instanceof SignInAfterPasswordUpdateError) {
-        return;
-      }
       const description =
         err instanceof Error
           ? err.message
@@ -259,7 +230,8 @@ function PasswordRecoveryUpdatePanel({
           <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
         </div>
         <p className="font-medium text-foreground text-lg tracking-tight">
-          Passwort erfolgreich geändert. Weiterleitung...
+          Passwort erfolgreich geändert. Sie werden zur Anmeldung
+          weitergeleitet...
         </p>
       </div>
     );
@@ -364,10 +336,9 @@ export default function LoginPage() {
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [recoverySaved, setRecoverySaved] = useState(false);
-  const router = useRouter();
-  const hasRedirectedRef = useRef(false);
   /** Recovery URL, bootstrap latch, recovery JWT, or password form — blocks authed redirect to dashboard. */
-  const isInRecoveryFlowRef = useRef(false);
+  const isRecoveryFlowRef = useRef(false);
+  const router = useRouter();
 
   const getRedirectPath = useCallback((): string => {
     if (typeof window === "undefined") return "/dashboard";
@@ -388,15 +359,10 @@ export default function LoginPage() {
 
   useLayoutEffect(() => {
     const bootstrapRecovery = consumePasswordRecoveryBootstrapFlag();
-    if (bootstrapRecovery) {
-      isInRecoveryFlowRef.current = true;
-    }
-    const recovery =
-      isPasswordRecoveryFromUrl() ||
-      isInRecoveryFlowRef.current ||
-      bootstrapRecovery;
-    if (recovery) {
-      isInRecoveryFlowRef.current = true;
+    const urlRec = isPasswordRecoveryFromUrl();
+    isRecoveryFlowRef.current =
+      isRecoveryFlowRef.current || bootstrapRecovery || urlRec;
+    if (bootstrapRecovery || urlRec) {
       setView("update_password");
     }
     setSupabase((prev) => prev ?? createClient());
@@ -409,18 +375,6 @@ export default function LoginPage() {
   }, [view]);
 
   useEffect(() => {
-    if (!recoverySaved || view !== "update_password") {
-      return;
-    }
-    const id = window.setTimeout(() => {
-      startTransition(() => {
-        router.replace("/dashboard");
-      });
-    }, 1200);
-    return () => window.clearTimeout(id);
-  }, [recoverySaved, view, router]);
-
-  useEffect(() => {
     if (!supabase) {
       return;
     }
@@ -428,13 +382,11 @@ export default function LoginPage() {
     const urlRecovery = isPasswordRecoveryFromUrl();
 
     if (urlRecovery) {
-      isInRecoveryFlowRef.current = true;
+      isRecoveryFlowRef.current = true;
       setView("update_password");
     }
 
     const redirectIfAuthed = () => {
-      if (hasRedirectedRef.current) return;
-      hasRedirectedRef.current = true;
       const path = getRedirectPath();
       startTransition(() => {
         router.replace(path);
@@ -451,11 +403,12 @@ export default function LoginPage() {
       const token = session?.access_token;
       const jwtRecovery =
         typeof token === "string" && accessTokenIndicatesRecovery(token);
-      if (user && !isInRecoveryFlowRef.current && jwtRecovery) {
-        isInRecoveryFlowRef.current = true;
+      if (user && jwtRecovery) {
+        isRecoveryFlowRef.current = true;
         setView("update_password");
+        return;
       }
-      if (user && !isInRecoveryFlowRef.current) {
+      if (user && !isRecoveryFlowRef.current) {
         redirectIfAuthed();
       }
     };
@@ -466,21 +419,21 @@ export default function LoginPage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        isInRecoveryFlowRef.current = true;
+        isRecoveryFlowRef.current = true;
         setView("update_password");
         return;
       }
 
       if (
         session &&
-        !isInRecoveryFlowRef.current &&
+        !isRecoveryFlowRef.current &&
         (event === "SIGNED_IN" ||
           event === "INITIAL_SESSION" ||
           event === "TOKEN_REFRESHED")
       ) {
         const tok = session.access_token;
         if (tok && accessTokenIndicatesRecovery(tok)) {
-          isInRecoveryFlowRef.current = true;
+          isRecoveryFlowRef.current = true;
           setView("update_password");
           return;
         }
@@ -551,11 +504,10 @@ export default function LoginPage() {
                   supabase={supabase}
                   recoverySaved={recoverySaved}
                   onRecoverySuccess={() => {
-                    isInRecoveryFlowRef.current = false;
-                    hasRedirectedRef.current = true;
+                    isRecoveryFlowRef.current = false;
                     setRecoverySaved(true);
                     startTransition(() => {
-                      router.replace("/dashboard");
+                      router.replace("/login");
                     });
                   }}
                 />
