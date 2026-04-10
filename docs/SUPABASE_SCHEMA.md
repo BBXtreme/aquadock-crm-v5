@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-07  
+**Last audited**: 2026-04-10  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
@@ -71,7 +71,7 @@
 | notes       | text        | true     | —                 | Additional notes              | —             |
 | search_vector | tsvector   | true     | —                 | Full-text search vector       | —             |
 | company_id  | uuid        | true     | —                 | Foreign key to companies      | Indexed       |
-| is_primary  | boolean     | false    | false             | Primary contact flag          | —             |
+| is_primary  | boolean     | true     | false             | Primary contact flag          | Nullable in API types; default false |
 | user_id     | uuid        | true     | —                 | Owner (auth.uid())            | Indexed       |
 | created_by  | uuid        | true     | —                 | Created by user (profiles.id) | —             |
 | updated_by  | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
@@ -165,12 +165,13 @@
 
 | Column       | Type        | Nullable | Default | Business Meaning         | Notes / Index    |
 | ------------ | ----------- | -------- | ------- | ------------------------ | ---------------- |
-| id           | uuid        | false    | —       | References auth.users.id | PK, FK           |
-| role         | text        | false    | 'user'  | User role (user / admin) | CHECK constraint |
-| display_name | text        | true     | —       | Display name for UI      | —                |
-| avatar_url   | text        | true     | —       | Profile picture URL      | —                |
-| created_at   | timestamptz | false    | now()   | Creation timestamp       | —                |
-| updated_at   | timestamptz | false    | now()   | Last update timestamp    | —                |
+| id               | uuid        | false    | —       | References auth.users.id | PK, FK           |
+| role             | text        | false    | 'user'  | User role (user / admin) | CHECK constraint |
+| display_name     | text        | true     | —       | Display name for UI      | —                |
+| avatar_url       | text        | true     | —       | Profile picture URL      | —                |
+| last_sign_in_at  | timestamptz | true     | —       | Last auth sign-in (synced for admin UI) | —        |
+| created_at       | timestamptz | false    | now()   | Creation timestamp       | —                |
+| updated_at       | timestamptz | false    | now()   | Last update timestamp    | —                |
 
 **Constraints**: `role` must be 'user' or 'admin'
 **RLS**: Users can view/update own profile. Admins can view all profiles.
@@ -254,20 +255,19 @@ The application uses Zod schemas for client-side form validation, ensuring data 
 
 Key Zod schemas include:
 
-- `firmendatenSchema`: Validates company legal data (firmenname, rechtsform, kundentyp, etc.)
-- `adresseSchema`: Validates address fields (strasse, plz, stadt, bundesland, land)
-- `aquadockSchema`: Validates AquaDock-specific fields (firmentyp, status, value)
-- `contactSchema`: Validates contact information (vorname, nachname, email, telefon, etc.)
-- `reminderSchema`: Validates reminder fields (title, due_date, priority, status, description)
-- `timelineEntrySchema`: Validates timeline entry fields (type, title, description)
-- `displayNameSchema`: Validates user display name (profile form)
-- `profileAvatarSchema` / `parseProfileAvatarFile` (`@/lib/validations/profile.ts`): Validates `avatar_url` for server updates and file size/MIME before client upload
+- `companySchema` (`company.ts`): Full company row shape for forms, with `toCompanyInsert` / `toCompanyUpdate` for Supabase
+- `contactSchema` (`contact.ts`): Contact fields with `toContactInsert` / `toContactUpdate`
+- `reminderSchema` / `reminderFormSchema` (`reminder.ts`): Reminder fields (including form-only variants where applicable)
+- `timelineSchema` (`timeline.ts`): `title`, `activity_type`, optional `content`, `company_id`, `contact_id`, `user_name` — matches the `timeline` table
+- `emailTemplateSchema` (`email-template.ts`): Email template name, subject, body
+- `profileDisplayNameSchema`, `profileAvatarSchema`, `parseProfileAvatarFile` (`profile.ts`): Display name and avatar URL / upload validation
+- `notificationPreferencesSchema`, `trashBinPreferenceSchema` (`settings.ts`): User settings keys aligned with `user_settings`
 
-All schemas include trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
+All schemas use `.strict()`, trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
 
 ## 8. Auth & Authorization
 
-Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are `user` or `admin`, enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). Authorization does not rely on `user_metadata` for roles; `display_name` and `avatar_url` are read from `profiles` in `getCurrentUser()` for the shell (sidebar, header) and profile page.
+Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are `user` or `admin`, enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). Authorization does not rely on `user_metadata` for roles; `display_name` and `avatar_url` are read from `profiles` in `getCurrentUser()` for the shell (sidebar, header) and profile page. `last_sign_in_at` on `profiles` is shown in admin user management when populated by the app.
 
 ## 9. Supabase Storage – `avatars` bucket
 
@@ -314,3 +314,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-08 Added `deleted_at` on `reminders` and `timeline` (with indexes), `user_settings` key `trash_bin_enabled`, admin Profile Papierkorb UI, and app-level soft/hard delete + restore + timeline audit. Migration: `src/sql/soft-delete-trash.sql`.
 
 2026-04-09 Added nullable `deleted_by` → `auth.users(id)` on `companies`, `contacts`, `reminders`, `timeline`; composite indexes `(user_id, deleted_at, deleted_by)`; audit timeline titles include actor `display_name`; detail URLs for trashed company/contact redirect to list with toast. SQL: `src/sql/deleted-by-audit.sql`.
+
+2026-04-10 Doc sync: `profiles.last_sign_in_at`; `contacts.is_primary` nullability vs generated types; Zod section aligned with `companySchema`, `timelineSchema`, `profileDisplayNameSchema`, and related modules under `@/lib/validations/`.
