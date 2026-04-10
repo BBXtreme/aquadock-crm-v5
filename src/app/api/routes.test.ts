@@ -163,6 +163,26 @@ describe("POST /api/timeline", () => {
     expect(res.status).toBe(201);
   });
 
+  it("maps body fields for createAuthenticatedTimelineEntry (content, ids, default activity)", async () => {
+    mockCreateTimelineEntry.mockResolvedValue({ id: "t2" });
+    const res = await postTimeline(
+      jsonRequest({
+        title: "T",
+        content: 123,
+        company_id: "550e8400-e29b-41d4-a716-446655440000",
+        contact_id: 99,
+      }),
+    );
+    expect(res.status).toBe(201);
+    expect(mockCreateTimelineEntry).toHaveBeenCalledWith({
+      title: "T",
+      content: null,
+      activity_type: "note",
+      company_id: "550e8400-e29b-41d4-a716-446655440000",
+      contact_id: null,
+    });
+  });
+
   it("returns 401 when unauthorized", async () => {
     mockCreateTimelineEntry.mockRejectedValue(new Error("Unauthorized"));
     const res = await postTimeline(jsonRequest({ title: "x" }));
@@ -467,6 +487,26 @@ describe("POST /api/companies/[id]", () => {
     const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
     expect(res.status).toBe(500);
   });
+
+  it("returns 500 when request.json fails", async () => {
+    mockCreateServer.mockResolvedValue({
+      from: vi.fn(),
+    });
+    const req = {
+      json: () => Promise.reject(new SyntaxError("invalid json")),
+    } as unknown as Request;
+    const res = await postCompaniesId(req);
+    expect(res.status).toBe(500);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toContain("invalid");
+  });
+
+  it("returns 500 with generic message when thrown value is not an Error", async () => {
+    mockCreateServer.mockRejectedValue("boom");
+    const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("Interner Serverfehler");
+  });
 });
 
 describe("/api/contacts/[id]", () => {
@@ -597,6 +637,35 @@ describe("POST /api/send-test-email", () => {
     expect(res.status).toBe(200);
     expect(mockSendMail).toHaveBeenCalled();
   });
+
+  it("returns 400 when SMTP settings incomplete", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u" } }, error: null }),
+      },
+    });
+    mockGetUserSettings.mockResolvedValue([{ key: "smtp_host", value: "only-host.example.com" }]);
+    const res = await postSendTestEmail(jsonRequest({ recipient: "to@example.com" }));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 500 when sendMail throws", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u" } }, error: null }),
+      },
+    });
+    mockGetUserSettings.mockResolvedValue([
+      { key: "smtp_host", value: "smtp.example.com" },
+      { key: "smtp_port", value: "587" },
+      { key: "smtp_username", value: "user@example.com" },
+      { key: "smtp_password", value: "secret" },
+      { key: "smtp_sender_name", value: "CRM" },
+    ]);
+    mockSendMail.mockRejectedValue(new Error("SMTP send failed"));
+    const res = await postSendTestEmail(jsonRequest({ recipient: "to@example.com" }));
+    expect(res.status).toBe(500);
+  });
 });
 
 describe("POST /api/test-smtp", () => {
@@ -651,5 +720,24 @@ describe("POST /api/test-smtp", () => {
     );
     expect(res.status).toBe(200);
     expect(mockSendMail).toHaveBeenCalled();
+  });
+
+  it("returns 500 when sendMail throws", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u" } }, error: null }),
+      },
+    });
+    mockSendMail.mockRejectedValue(new Error("network error"));
+    const res = await postTestSmtp(
+      jsonRequest({
+        host: "smtp.example.com",
+        port: "587",
+        username: "u@example.com",
+        password: "p",
+        recipient: "r@r.co",
+      }),
+    );
+    expect(res.status).toBe(500);
   });
 });

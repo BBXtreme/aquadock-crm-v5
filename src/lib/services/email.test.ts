@@ -471,4 +471,41 @@ describe("email log / template CRUD", () => {
     } as unknown as SupabaseClient;
     await expect(deleteEmailTemplate("1", client)).resolves.toBeUndefined();
   });
+
+  it("propagates Supabase errors for read/update/delete paths", async () => {
+    const errClient = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: "missing" } }),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getEmailLogById("x", errClient)).rejects.toThrow();
+    await expect(getEmailTemplateById("x", errClient)).rejects.toThrow();
+
+    const delFail = {
+      from: vi.fn(() => ({
+        delete: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ error: { message: "no" } }),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(deleteEmailLog("1", delFail)).rejects.toThrow();
+    await expect(deleteEmailTemplate("1", delFail)).rejects.toThrow();
+
+    const updFail = {
+      from: vi.fn(() => ({
+        update: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: null, error: { message: "u" } }),
+            })),
+          })),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(updateEmailLog("1", {} as never, updFail)).rejects.toThrow();
+    await expect(updateEmailTemplate("1", {} as never, updFail)).rejects.toThrow();
+  });
 });

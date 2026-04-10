@@ -19,7 +19,7 @@ describe("createAuthenticatedTimelineEntry", () => {
     mockCreateTimelineEntry.mockReset();
   });
 
-  it("throws when unauthenticated", async () => {
+  it("throws when unauthenticated (auth error)", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: new Error("x") }),
@@ -29,6 +29,16 @@ describe("createAuthenticatedTimelineEntry", () => {
     await expect(
       createAuthenticatedTimelineEntry({ title: "x" }),
     ).rejects.toThrow("Unauthorized");
+  });
+
+  it("throws when user is null without auth error", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
+    });
+
+    await expect(createAuthenticatedTimelineEntry({ title: "x" })).rejects.toThrow("Unauthorized");
   });
 
   it("creates entry for authenticated user", async () => {
@@ -58,6 +68,30 @@ describe("createAuthenticatedTimelineEntry", () => {
         user_id: "u1",
         created_by: "u1",
         updated_by: "u1",
+      }),
+      expect.anything(),
+    );
+  });
+
+  it("defaults activity_type to note when empty string and maps optional fields", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u2" } }, error: null }),
+      },
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "e2" });
+
+    await createAuthenticatedTimelineEntry({
+      title: "Only title",
+      activity_type: "",
+    });
+
+    expect(mockCreateTimelineEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: null,
+        activity_type: "note",
+        company_id: null,
+        contact_id: null,
       }),
       expect.anything(),
     );

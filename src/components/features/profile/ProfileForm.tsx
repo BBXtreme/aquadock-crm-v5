@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n/use-translations";
 import { updateDisplayName } from "@/lib/services/profile";
 import {
   type ProfileDisplayNameForm,
@@ -29,6 +30,7 @@ import {
 import type { Profile } from "@/types/database.types";
 
 export default function ProfileForm({ profile }: { profile: Profile }) {
+  const t = useT("profile");
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<ProfileDisplayNameForm>({
@@ -64,11 +66,13 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
           name="display_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium">Display Name</FormLabel>
+              <FormLabel className="text-sm font-medium">
+                {t("displayNameLabel")}
+              </FormLabel>
               <FormControl>
                 <Input
                   {...field}
-                  placeholder="Enter your display name"
+                  placeholder={t("displayNamePlaceholder")}
                   className="h-11"
                 />
               </FormControl>
@@ -77,13 +81,15 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
           )}
         />
 
-        <Button
-          type="submit"
-          className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
-          disabled={isPending}
-        >
-          {isPending ? "Updating..." : "Update Profile"}
-        </Button>
+        <div className="pb-11">
+          <Button
+            type="submit"
+            className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
+            disabled={isPending}
+          >
+            {isPending ? t("updateProfilePending") : t("updateProfileButton")}
+          </Button>
+        </div>
       </form>
     </Form>
   );

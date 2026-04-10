@@ -377,6 +377,22 @@ describe("fetchOsmPois", () => {
     expect(result.totalFound).toBe(1);
   });
 
+  it("stops retrying current mirror on HTTP 504", async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: false,
+      status: 504,
+      statusText: "Gateway Timeout",
+    } as Response);
+
+    const bounds = L.latLngBounds(L.latLng(51, 6), L.latLng(52, 7));
+    const promise = fetchOsmPois(bounds, ["rowing"]);
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await promise;
+
+    expect(result.pois).toEqual([]);
+    expect(result.totalFound).toBe(0);
+  });
+
   it("falls through to a later Overpass mirror when the first returns 403", async () => {
     vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
       const url = String(input);

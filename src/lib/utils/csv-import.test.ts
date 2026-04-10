@@ -37,6 +37,16 @@ describe("parseCSVFile", () => {
             lat: "53,5",
             lon: "10,1",
             osm: "n123",
+            unknown_column: "ignored",
+          },
+          {
+            firmenname: "Incomplete Row",
+            ignored: "x",
+          },
+          {
+            firmenname: "Alpine Co",
+            kundentyp: "Hotel",
+            land: "at",
           },
         ],
       });
@@ -44,7 +54,7 @@ describe("parseCSVFile", () => {
 
     const file = new File([], "x.csv", { type: "text/csv" });
     const rows = await parseCSVFile(file);
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(2);
     const first = rows[0];
     if (first === undefined) {
       throw new Error("expected row");
@@ -53,6 +63,13 @@ describe("parseCSVFile", () => {
     expect(first.kundentyp).toBe("marina");
     expect(first.land).toBe("Deutschland");
     expect(first.wassertyp).toBe("See");
+    const second = rows[1];
+    if (second === undefined) {
+      throw new Error("expected second row");
+    }
+    expect(second.firmenname).toBe("Alpine Co");
+    expect(second.kundentyp).toBe("hotel");
+    expect(second.land).toBe("Österreich");
   });
 
   it("rejects on parse errors", async () => {

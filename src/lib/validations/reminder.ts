@@ -61,8 +61,4 @@ export const toReminderUpdate = (values: ReminderFormValues): ReminderUpdate => 
   assigned_to: values.assigned_to || null,
 });
 
-function _emptyStringToNull(val: unknown) {
-  return val === "" ? null : val;
-}
-
 export type ReminderForm = z.infer<typeof reminderFormSchema>;

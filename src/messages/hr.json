@@ -773,7 +773,11 @@
     "confirmUpload": "Učitaj",
     "uploading": "Učitavanje…",
     "removeInProgress": "Uklanjanje…",
-    "removeAvatar": "Ukloni profilnu sliku"
+    "removeAvatar": "Ukloni profilnu sliku",
+    "displayNameLabel": "Prikazano ime",
+    "displayNamePlaceholder": "Unesite prikazano ime",
+    "updateProfileButton": "Ažuriraj profil",
+    "updateProfilePending": "Spremanje…"
   },
   "common": {
     "dash": "—",
