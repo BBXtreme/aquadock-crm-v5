@@ -51,6 +51,26 @@ import {
   passwordRecoverySetSchema,
 } from "@/lib/validations/profile";
 
+/**
+ * Single browser client for `/login`. React 18 Strict Mode (dev + some prod paths)
+ * mounts twice; a second `createClient()` can run after the recovery hash was already
+ * consumed → no session → `updateUser` throws "Auth session missing!".
+ */
+let loginPageBrowserSupabase: SupabaseClient | null = null;
+
+function getLoginPageSupabaseClient(): SupabaseClient {
+  const isTestRuntime =
+    typeof process !== "undefined" &&
+    (process.env.VITEST === "true" || process.env.NODE_ENV === "test");
+  if (isTestRuntime) {
+    return createClient();
+  }
+  if (loginPageBrowserSupabase === null) {
+    loginPageBrowserSupabase = createClient();
+  }
+  return loginPageBrowserSupabase;
+}
+
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
 type LoginAuthErrorBoundaryProps = { children: ReactNode };
@@ -180,6 +200,14 @@ export function PasswordRecoveryUpdatePanel({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const toggleShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const toggleShowConfirmPassword = useCallback(() => {
+    setShowConfirmPassword((prev) => !prev);
+  }, []);
+
   const form = useForm<PasswordRecoverySetFormValues>({
     resolver: zodResolver(passwordRecoverySetSchema),
     defaultValues: {
@@ -259,9 +287,11 @@ export function PasswordRecoveryUpdatePanel({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    setShowPassword((v) => !v);
+                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleShowPassword();
                   }}
                   aria-label={
                     showPassword ? "Passwort verbergen" : "Passwort anzeigen"
@@ -297,9 +327,11 @@ export function PasswordRecoveryUpdatePanel({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={() => {
-                    setShowConfirmPassword((v) => !v);
+                  className="absolute top-0 right-0 z-10 h-11 w-11 text-muted-foreground hover:text-foreground"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleShowConfirmPassword();
                   }}
                   aria-label={
                     showConfirmPassword
@@ -357,6 +389,7 @@ export default function LoginPage() {
       ? `${window.location.origin}/login`
       : "http://localhost:3000/login";
 
+  // 1) Latch recovery from bootstrap + URL/hash (sync) before any Supabase client exists.
   useLayoutEffect(() => {
     const bootstrapRecovery = consumePasswordRecoveryBootstrapFlag();
     const urlRec = isPasswordRecoveryFromUrl();
@@ -365,7 +398,11 @@ export default function LoginPage() {
     if (bootstrapRecovery || urlRec) {
       setView("update_password");
     }
-    setSupabase((prev) => prev ?? createClient());
+  }, []);
+
+  // 2) One shared browser client after latch (singleton avoids Strict Mode double-init).
+  useLayoutEffect(() => {
+    setSupabase(getLoginPageSupabaseClient());
   }, []);
 
   useEffect(() => {
