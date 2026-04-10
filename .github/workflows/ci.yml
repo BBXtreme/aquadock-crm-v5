@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # ← ADD THIS ENV BLOCK
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,7 +61,7 @@ jobs:
           const t = data.total;
           console.log("--- Coverage totals ---");
           console.log(
-            `statements ${t.statements.pct}% (min 70%) | branches ${t.branches.pct}% (min 50%) | lines ${t.lines.pct}% | functions ${t.functions.pct}%`,
+            `statements ${t.statements.pct}% (min 70%) | branches ${t.branches.pct}% (min 50%) | lines ${t.lines.pct}% | functions ${t.functions.pct}%`
           );
           NODE
 
