@@ -67,6 +67,28 @@ export const changePasswordSchema = z
 
 export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
+/** Recovery link flow on `/login` — no current password; field is `password` for clarity. */
+export const passwordRecoverySetSchema = z
+  .object({
+    password: z
+      .string()
+      .trim()
+      .min(8, "Neues Passwort muss mindestens 8 Zeichen haben."),
+    confirm_password: z
+      .string()
+      .trim()
+      .min(1, "Passwortbestätigung ist erforderlich."),
+  })
+  .strict()
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwörter stimmen nicht überein.",
+    path: ["confirm_password"],
+  });
+
+export type PasswordRecoverySetFormValues = z.infer<
+  typeof passwordRecoverySetSchema
+>;
+
 export const changeEmailSchema = z
   .object({
     new_email: z

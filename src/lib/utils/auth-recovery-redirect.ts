@@ -25,7 +25,8 @@ export function originFromForwardedHeaders(
  *
  * Order: **`SITE_URL`** → **`NEXT_PUBLIC_SITE_URL`** → **request Host** (so
  * `https://crm.aquadock.de` works on Vercel without duplicating it in env) →
- * **`VERCEL_URL`** → localhost.
+ * **`VERCEL_URL`** → production canonical host (when `VERCEL_ENV=production`) →
+ * localhost.
  */
 export async function resolveAuthRecoveryRedirectUrl(): Promise<string> {
   const siteUrlServer = process.env.SITE_URL?.trim();
@@ -52,6 +53,10 @@ export async function resolveAuthRecoveryRedirectUrl(): Promise<string> {
   if (vercel) {
     const vo = vercel.includes("://") ? vercel : `https://${vercel}`;
     return `${vo.replace(/\/$/, "")}/login`;
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    return "https://aquadock-crm-glqn.vercel.app/login";
   }
 
   return "http://localhost:3000/login";

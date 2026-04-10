@@ -72,6 +72,11 @@ export async function updateProfileAvatar(input: unknown): Promise<UpdateProfile
   };
 }
 
+/**
+ * Passwort ändern für **eingeloggte** Nutzer (Profil). Prüft das aktuelle Passwort
+ * serverseitig. Passwort-Reset über E-Mail-Link läuft im Browser auf `/login`
+ * (`PasswordRecoveryUpdatePanel`), nicht über diese Action.
+ */
 export async function updatePasswordAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const email = user.email;
