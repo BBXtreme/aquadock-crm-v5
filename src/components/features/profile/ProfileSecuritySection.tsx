@@ -207,7 +207,7 @@ export default function ProfileSecuritySection({
             E-Mail ändern
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="password" className="space-y-4 pt-4">
+        <TabsContent value="password" className="space-y-6 pt-4">
           {passwordSaved ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
@@ -222,69 +222,89 @@ export default function ProfileSecuritySection({
               </p>
             </div>
           ) : (
-            <Form {...passwordForm}>
-              <form onSubmit={onPasswordSubmit} className="space-y-6">
-                <FormField
-                  control={
-                    passwordForm.control as Control<ChangePasswordFormValues>
-                  }
-                  name="new_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">Neues Passwort</FormLabel>
-                      <PasswordFieldWithToggle
-                        field={{
-                          ...field,
-                          autoComplete: "new-password",
-                        }}
-                        show={showNewPassword}
-                        onToggle={() => {
-                          setShowNewPassword((v) => !v);
-                        }}
-                        hideLabel="Neues Passwort verbergen"
-                        showLabel="Neues Passwort anzeigen"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={
-                    passwordForm.control as Control<ChangePasswordFormValues>
-                  }
-                  name="confirm_password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-base">
-                        Passwort bestätigen
-                      </FormLabel>
-                      <PasswordFieldWithToggle
-                        field={{
-                          ...field,
-                          autoComplete: "new-password",
-                        }}
-                        show={showConfirmPassword}
-                        onToggle={() => {
-                          setShowConfirmPassword((v) => !v);
-                        }}
-                        hideLabel="Passwortbestätigung verbergen"
-                        showLabel="Passwortbestätigung anzeigen"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
-                  disabled={passwordMutation.isPending}
+            <>
+              <div className="space-y-1">
+                <h3
+                  id="profile-password-panel-heading"
+                  className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
                 >
-                  {passwordMutation.isPending
-                    ? "Wird gespeichert…"
-                    : "Neues Passwort speichern"}
-                </Button>
-              </form>
-            </Form>
+                  Neues Passwort festlegen
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Geben Sie Ihr neues Passwort zweimal ein. Nach dem Speichern
+                  gilt es sofort; Ihre aktuelle Sitzung bleibt bestehen.
+                </p>
+              </div>
+              <Form {...passwordForm}>
+                <form
+                  onSubmit={onPasswordSubmit}
+                  className="space-y-6"
+                  aria-labelledby="profile-password-panel-heading"
+                >
+                  <FormField
+                    control={
+                      passwordForm.control as Control<ChangePasswordFormValues>
+                    }
+                    name="new_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">
+                          Neues Passwort
+                        </FormLabel>
+                        <PasswordFieldWithToggle
+                          field={{
+                            ...field,
+                            autoComplete: "new-password",
+                          }}
+                          show={showNewPassword}
+                          onToggle={() => {
+                            setShowNewPassword((v) => !v);
+                          }}
+                          hideLabel="Neues Passwort verbergen"
+                          showLabel="Neues Passwort anzeigen"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={
+                      passwordForm.control as Control<ChangePasswordFormValues>
+                    }
+                    name="confirm_password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">
+                          Passwort bestätigen
+                        </FormLabel>
+                        <PasswordFieldWithToggle
+                          field={{
+                            ...field,
+                            autoComplete: "new-password",
+                          }}
+                          show={showConfirmPassword}
+                          onToggle={() => {
+                            setShowConfirmPassword((v) => !v);
+                          }}
+                          hideLabel="Passwortbestätigung verbergen"
+                          showLabel="Passwortbestätigung anzeigen"
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+                    disabled={passwordMutation.isPending}
+                  >
+                    {passwordMutation.isPending
+                      ? "Wird gespeichert…"
+                      : "Neues Passwort speichern"}
+                  </Button>
+                </form>
+              </Form>
+            </>
           )}
         </TabsContent>
         <TabsContent value="email" className="space-y-4 pt-4">
