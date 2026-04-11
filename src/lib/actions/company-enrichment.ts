@@ -1,5 +1,6 @@
 "use server";
 
+import { GatewayError, GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import {
@@ -67,6 +68,56 @@ function mergeBulkCompanyEnrichmentModelMode(
   return enrichmentPreferenceToModelMode(preference);
 }
 
+/** xAI Grok (BYOK / grok-only) vs Vercel AI Gateway account credits (Claude etc.). */
+function mapProviderQuotaExhaustionCode(modelMode: EnrichmentModelMode, diagnosticText: string): string {
+  const lower = diagnosticText.toLowerCase();
+  const isXaiContext = modelMode === "grok_only" || /grok|xai|x\.ai/.test(lower);
+  if (isXaiContext) {
+    return "XAI_GROK_QUOTA_EXHAUSTED";
+  }
+  return "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED";
+}
+
+/** Maps gateway / model failures to stable action error codes for client toasts. */
+function mapCompanyEnrichmentPipelineError(err: unknown, modelMode: EnrichmentModelMode): string {
+  if (err instanceof Error && err.message === "AI_GATEWAY_MISSING") {
+    return "AI_GATEWAY_MISSING";
+  }
+  if (err instanceof Error && err.message === "ENRICHMENT_NO_OUTPUT") {
+    return "ENRICHMENT_NO_OUTPUT";
+  }
+
+  if (GatewayError.isInstance(err)) {
+    if (GatewayRateLimitError.isInstance(err)) {
+      return "AI_GATEWAY_RATE_LIMIT";
+    }
+    const combined = `${err.statusCode} ${err.message}`.toLowerCase();
+    const creditsLikely =
+      err.statusCode === 402 ||
+      /insufficient|credit|billing|quota|balance|payment required|spend limit|exceeded your|not enough/.test(combined);
+
+    if (creditsLikely) {
+      return mapProviderQuotaExhaustionCode(modelMode, combined);
+    }
+  }
+
+  const msg = err instanceof Error ? err.message : "";
+  const lower = msg.toLowerCase();
+  if (/402|payment required|insufficient funds|credit limit|billing/.test(lower)) {
+    return mapProviderQuotaExhaustionCode(modelMode, lower);
+  }
+
+  return "ENRICHMENT_FAILED";
+}
+
+function formatAiEnrichmentDailyRateLimitError(
+  usedToday: number,
+  dailyLimit: number,
+  requestedSlots: number,
+): string {
+  return `AI_ENRICHMENT_RATE_LIMIT:${usedToday}:${dailyLimit}:${requestedSlots}`;
+}
+
 async function runCompanyEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   companyId: string,
@@ -121,10 +172,7 @@ Anforderungen:
 
     return { ok: true, data: result, modelUsed };
   } catch (err) {
-    if (err instanceof Error && err.message === "AI_GATEWAY_MISSING") {
-      return { ok: false, error: "AI_GATEWAY_MISSING" };
-    }
-    return { ok: false, error: "ENRICHMENT_FAILED" };
+    return { ok: false, error: mapCompanyEnrichmentPipelineError(err, run.modelMode) };
   }
 }
 
@@ -147,8 +195,11 @@ export async function researchCompanyEnrichment(
       return { ok: false, error: "AI_ENRICHMENT_DISABLED" };
     }
 
-    if (!tryCommitEnrichmentSlots(user.id, 1, policy.dailyLimit)) {
-      return { ok: false, error: "AI_ENRICHMENT_RATE_LIMIT" };
+    if (!(await tryCommitEnrichmentSlots(supabase, user.id, 1, policy.dailyLimit))) {
+      return {
+        ok: false,
+        error: formatAiEnrichmentDailyRateLimitError(policy.usedToday, policy.dailyLimit, 1),
+      };
     }
 
     try {
@@ -159,11 +210,11 @@ export async function researchCompanyEnrichment(
         addressFocusPrioritize: policy.addressFocusPrioritize,
       });
       if (!result.ok) {
-        refundEnrichmentSlots(user.id, 1);
+        await refundEnrichmentSlots(supabase, user.id, 1);
       }
       return result;
     } catch {
-      refundEnrichmentSlots(user.id, 1);
+      await refundEnrichmentSlots(supabase, user.id, 1);
       return { ok: false, error: "ENRICHMENT_FAILED" };
     }
   } catch {
@@ -197,7 +248,8 @@ export async function bulkResearchCompanyEnrichment(
     const uniqueIds = [...new Set(parsed.data.companyIds)];
     const slots = uniqueIds.length;
 
-    if (!tryCommitEnrichmentSlots(user.id, slots, policy.dailyLimit)) {
+    if (!(await tryCommitEnrichmentSlots(supabase, user.id, slots, policy.dailyLimit))) {
+      // Keep exact code for list/CSV callers that compare === "AI_ENRICHMENT_RATE_LIMIT".
       return { ok: false, error: "AI_ENRICHMENT_RATE_LIMIT" };
     }
 
@@ -240,12 +292,12 @@ export async function bulkResearchCompanyEnrichment(
       }
 
       if (failureSlots > 0) {
-        refundEnrichmentSlots(user.id, failureSlots);
+        await refundEnrichmentSlots(supabase, user.id, failureSlots);
       }
 
       return { ok: true, results };
     } catch {
-      refundEnrichmentSlots(user.id, slots);
+      await refundEnrichmentSlots(supabase, user.id, slots);
       return { ok: false, error: "ENRICHMENT_FAILED" };
     }
   } catch {

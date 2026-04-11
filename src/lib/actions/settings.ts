@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { enrichmentUsageRemaining } from "@/lib/ai/enrichment-rate-limit";
 import {
   AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
   AI_ENRICHMENT_DAILY_LIMIT_KEY,
@@ -41,8 +40,6 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
     return { ok: false, error: "NOT_AUTHENTICATED" };
   }
   const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
-  const remaining = enrichmentUsageRemaining(user.id, policy.dailyLimit);
-  const usedToday = Math.max(0, policy.dailyLimit - remaining);
   return {
     ok: true,
     data: {
@@ -50,7 +47,7 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
       dailyLimit: policy.dailyLimit,
       modelPreference: policy.modelPreference,
       addressFocusPrioritize: policy.addressFocusPrioritize,
-      usedToday,
+      usedToday: policy.usedToday,
     },
   };
 }

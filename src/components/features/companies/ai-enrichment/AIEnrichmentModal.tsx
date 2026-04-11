@@ -2,12 +2,11 @@
 
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Info } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,16 +18,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
+import { getVercelAiCredits } from "@/lib/actions/vercel-ai-credits";
 import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
 import type { EnrichmentModelMode } from "@/lib/ai/company-enrichment-gateway";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { CompanyForm } from "@/lib/validations/company";
 import {
   type CompanyEnrichmentResult,
@@ -37,6 +35,138 @@ import {
   type SanitizedFieldSuggestion,
 } from "@/lib/validations/company-enrichment";
 import type { Company } from "@/types/database.types";
+
+const AI_ENRICHMENT_RATE_PREFIX = "AI_ENRICHMENT_RATE_LIMIT:";
+
+const VERCEL_AI_GATEWAY_USAGE_HREF = "https://vercel.com/docs/ai-gateway/capabilities/usage";
+
+function formatUsdCredits(amount: number, localeTag: string): string {
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+type AiEnrichmentUsageSnapshot = { usedToday: number; dailyLimit: number };
+
+function parseDailyAiEnrichmentRateLimitError(
+  message: string,
+): (AiEnrichmentUsageSnapshot & { requested: number }) | null {
+  if (!message.startsWith(AI_ENRICHMENT_RATE_PREFIX)) {
+    return null;
+  }
+  const parts = message.slice(AI_ENRICHMENT_RATE_PREFIX.length).split(":");
+  const usedToday = Number.parseInt(parts[0] ?? "", 10);
+  const dailyLimit = Number.parseInt(parts[1] ?? "", 10);
+  const requested = Number.parseInt(parts[2] ?? "", 10);
+  if (!Number.isFinite(usedToday) || !Number.isFinite(dailyLimit) || !Number.isFinite(requested)) {
+    return null;
+  }
+  return { usedToday, dailyLimit, requested };
+}
+
+function isGermanLocale(locale: string): boolean {
+  return locale === "de" || locale.startsWith("de-");
+}
+
+function isCroatianLocale(locale: string): boolean {
+  return locale === "hr" || locale.startsWith("hr-");
+}
+
+function resolveCompanyAiEnrichmentErrorMessage(
+  raw: string,
+  locale: string,
+  t: ReturnType<typeof useT>,
+  usageFallback: AiEnrichmentUsageSnapshot | null,
+): string {
+  const limitPayload = parseDailyAiEnrichmentRateLimitError(raw);
+  if (limitPayload) {
+    const { usedToday, dailyLimit, requested } = limitPayload;
+    const u = String(usedToday);
+    const l = String(dailyLimit);
+    const bulkHintDe = requested > 1 ? ` Sie haben ${String(requested)} Aufrufe auf einmal angefragt.` : "";
+    const bulkHintEn = requested > 1 ? ` You requested ${String(requested)} runs at once.` : "";
+    const bulkHintHr = requested > 1 ? ` Zatražili ste ${String(requested)} pokretanja odjednom.` : "";
+    if (isGermanLocale(locale)) {
+      return `Ihr tägliches KI-Limit ist erreicht (${u}/${l}).${bulkHintDe}`;
+    }
+    if (isCroatianLocale(locale)) {
+      return `Dostignut je dnevni AI limit (${u}/${l}).${bulkHintHr}`;
+    }
+    return `Your daily AI limit has been reached (${u}/${l}).${bulkHintEn}`;
+  }
+
+  if (raw === "AI_ENRICHMENT_RATE_LIMIT") {
+    if (usageFallback) {
+      return resolveCompanyAiEnrichmentErrorMessage(
+        `${AI_ENRICHMENT_RATE_PREFIX}${String(usageFallback.usedToday)}:${String(usageFallback.dailyLimit)}:1`,
+        locale,
+        t,
+        null,
+      );
+    }
+    return t("aiEnrich.errorRateLimit");
+  }
+
+  if (raw === "NOT_AUTHENTICATED") {
+    return t("aiEnrich.errorNotAuthenticated");
+  }
+  if (raw === "AI_GATEWAY_MISSING") {
+    return t("aiEnrich.errorNoGateway");
+  }
+  if (raw === "COMPANY_NOT_FOUND") {
+    return t("aiEnrich.errorCompany");
+  }
+  if (raw === "AI_ENRICHMENT_DISABLED") {
+    if (isGermanLocale(locale)) {
+      return `${t("aiEnrich.errorDisabled")} Aktivieren Sie die Funktion unter Einstellungen → KI-Anreicherung.`;
+    }
+    if (isCroatianLocale(locale)) {
+      return `${t("aiEnrich.errorDisabled")} Uključite značajku u Postavkama → AI obogaćivanje.`;
+    }
+    return `${t("aiEnrich.errorDisabled")} Enable it under Settings → AI enrichment.`;
+  }
+  if (raw === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED") {
+    if (isGermanLocale(locale)) {
+      return "Keine AI-Credits mehr auf Vercel AI Gateway verfügbar. Bitte prüfen Sie Ihr Guthaben.";
+    }
+    if (isCroatianLocale(locale)) {
+      return "Nema dostupnih AI kredita na Vercel AI Gatewayu. Provjerite stanje računa.";
+    }
+    return "No AI credits are available on Vercel AI Gateway. Please check your balance.";
+  }
+  if (raw === "XAI_GROK_QUOTA_EXHAUSTED") {
+    if (isGermanLocale(locale)) {
+      return "Ihr xAI Grok-Guthaben ist aufgebraucht. Bitte prüfen Sie Ihr xAI-Konto.";
+    }
+    if (isCroatianLocale(locale)) {
+      return "Potrošeno je xAI Grok stanje. Provjerite svoj xAI račun.";
+    }
+    return "Your xAI Grok quota is exhausted. Please check your xAI account.";
+  }
+  if (raw === "AI_GATEWAY_RATE_LIMIT") {
+    if (isGermanLocale(locale)) {
+      return "Das KI-Gateway meldet ein temporäres Ratenlimit. Bitte warten Sie kurz und versuchen Sie es erneut.";
+    }
+    if (isCroatianLocale(locale)) {
+      return "AI Gateway prijavljuje privremeno ograničenje brzine. Pričekajte trenutak i pokušajte ponovno.";
+    }
+    return "The AI gateway reported a temporary rate limit. Please wait a moment and try again.";
+  }
+  if (raw === "ENRICHMENT_NO_OUTPUT") {
+    if (isGermanLocale(locale)) {
+      return "Die KI hat kein verwertbares Ergebnis geliefert. Bitte erneut versuchen; bei wiederholten Fehlern Modell oder Eingabedaten prüfen.";
+    }
+    if (isCroatianLocale(locale)) {
+      return "Model nije vratio upotrebljiv rezultat. Pokušajte ponovno; ako se ponavlja, provjerite model ili ulazne podatke.";
+    }
+    return "The model returned no usable output. Please retry; if it keeps failing, check the model or input data.";
+  }
+
+  return t("aiEnrich.errorGeneric");
+}
 
 function enrichmentFieldTitle(t: ReturnType<typeof useT>, key: EnrichmentFieldKey): string {
   switch (key) {
@@ -149,11 +279,15 @@ type Props = {
 
 export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }: Props) {
   const t = useT("companies");
+  const locale = useLocale();
+  const numberLocaleTag = useNumberLocaleTag();
+  const queryClient = useQueryClient();
   const [progress, setProgress] = useState(0);
   const [selected, setSelected] = useState<Partial<Record<EnrichmentFieldKey, boolean>>>({});
   const [result, setResult] = useState<CompanyEnrichmentResult | null>(null);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
   const [modelMode, setModelMode] = useState<EnrichmentModelMode>("auto");
+  const [enrichmentInlineError, setEnrichmentInlineError] = useState<string | null>(null);
   const modelModeRef = useRef<EnrichmentModelMode>("auto");
   modelModeRef.current = modelMode;
   const runForOpenSessionRef = useRef(false);
@@ -171,6 +305,17 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     },
     enabled: open,
     staleTime: 15_000,
+    refetchInterval: open ? 20_000 : false,
+    refetchOnWindowFocus: open,
+  });
+
+  const creditsQuery = useQuery({
+    queryKey: ["vercel-ai-gateway-credits"],
+    queryFn: getVercelAiCredits,
+    enabled: open,
+    staleTime: 60_000,
+    refetchInterval: open ? 120_000 : false,
+    refetchOnWindowFocus: open,
   });
 
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
@@ -185,6 +330,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       return res;
     },
     onSuccess: (res) => {
+      setEnrichmentInlineError(null);
       setResult(res.data);
       setModelUsed(res.modelUsed);
       const next: Partial<Record<EnrichmentFieldKey, boolean>> = {};
@@ -194,22 +340,17 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         }
       }
       setSelected(next);
+      void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
     },
     onError: (err) => {
       const code = err instanceof Error ? err.message : "ENRICHMENT_FAILED";
-      if (code === "NOT_AUTHENTICATED") {
-        toast.error(t("aiEnrich.errorNotAuthenticated"));
-      } else if (code === "AI_GATEWAY_MISSING") {
-        toast.error(t("aiEnrich.errorNoGateway"));
-      } else if (code === "COMPANY_NOT_FOUND") {
-        toast.error(t("aiEnrich.errorCompany"));
-      } else if (code === "AI_ENRICHMENT_DISABLED") {
-        toast.error(t("aiEnrich.errorDisabled"));
-      } else if (code === "AI_ENRICHMENT_RATE_LIMIT") {
-        toast.error(t("aiEnrich.errorRateLimit"));
-      } else {
-        toast.error(t("aiEnrich.errorGeneric"));
-      }
+      const usageFallback =
+        usageQuery.data !== undefined && usageQuery.data !== null
+          ? { usedToday: usageQuery.data.usedToday, dailyLimit: usageQuery.data.dailyLimit }
+          : null;
+      const msg = resolveCompanyAiEnrichmentErrorMessage(code, locale, t, usageFallback);
+      setEnrichmentInlineError(msg);
+      toast.error(msg);
     },
   });
 
@@ -223,6 +364,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     prevOpenRef.current = open;
 
     if (!open) {
+      setEnrichmentInlineError(null);
       if (startTimeoutRef.current !== null) {
         window.clearTimeout(startTimeoutRef.current);
         startTimeoutRef.current = null;
@@ -278,6 +420,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     : [];
 
   const handleRetry = () => {
+    setEnrichmentInlineError(null);
     setResult(null);
     setModelUsed(null);
     setSelected({});
@@ -307,21 +450,19 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[min(92dvh,960px)] max-h-[96dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
-        <div className="shrink-0 space-y-4 border-border border-b px-6 pt-12 pb-5 sm:px-8 sm:pb-6">
-          <DialogHeader className="text-left">
-            <DialogTitle>{t("aiEnrich.modalTitle")}</DialogTitle>
-            <DialogDescription>{t("aiEnrich.modalDescription")}</DialogDescription>
+      <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
+        <div className="shrink-0 space-y-2.5 border-border border-b px-6 pt-14 pb-3 sm:space-y-3 sm:px-8 sm:pt-16 sm:pb-3.5">
+          <DialogHeader className="min-w-0 space-y-1.5 pr-16 text-left sm:pr-20">
+            <DialogTitle className="wrap-break-word text-balance text-base leading-tight sm:text-lg">
+              {t("aiEnrich.modalTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              {t("aiEnrich.modalDescription")}
+            </DialogDescription>
           </DialogHeader>
 
-          <Alert variant="default">
-            <Info className="h-4 w-4" />
-            <AlertTitle>{t("aiEnrich.alertTitle")}</AlertTitle>
-            <AlertDescription>{t("aiEnrich.disclaimer")}</AlertDescription>
-          </Alert>
-
           {usageQuery.data ? (
-            <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 sm:px-5">
+            <div className="rounded-lg border border-border bg-muted/20 px-4 py-2.5 sm:px-5 sm:py-3">
               <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                 {t("aiEnrich.usageHeading")}
               </p>
@@ -340,35 +481,63 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                 className="mt-2 h-1.5"
                 aria-label={t("aiEnrich.usageHeading")}
               />
+              {creditsQuery.isPending ? (
+                <Skeleton className="mt-2 h-4 w-56" aria-hidden />
+              ) : creditsQuery.data?.ok === true ? (
+                <p className="mt-2 text-muted-foreground text-sm tabular-nums leading-snug">
+                  {t("aiEnrich.vercelAiCreditsLine", {
+                    balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
+                    totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
+                  })}{" "}
+                  <a
+                    href={VERCEL_AI_GATEWAY_USAGE_HREF}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("aiEnrich.vercelAiGatewayDashboardLink")}
+                  </a>
+                </p>
+              ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.vercelAiCreditsNotConfigured")}</p>
+              ) : creditsQuery.data?.ok === false ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.vercelAiCreditsUnavailable")}</p>
+              ) : null}
               {usageQuery.data.addressFocusPrioritize ? (
                 <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.addressFocusActive")}</p>
+              ) : null}
+              {modelMode === "grok_only" || usageQuery.data.modelPreference === "grok" ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                  {t("aiEnrich.grokBillingNotice")}{" "}
+                  <a
+                    href="https://console.x.ai/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("aiEnrich.grokConsoleLinkLabel")}
+                  </a>
+                  .
+                </p>
               ) : null}
             </div>
           ) : null}
 
+          {enrichmentInlineError ? (
+            <p
+              role="alert"
+              className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
+            >
+              {enrichmentInlineError}
+            </p>
+          ) : null}
+
           {open && usageQuery.isLoading && !usageQuery.data ? (
-            <div className="space-y-2 rounded-lg border border-border bg-muted/10 px-4 py-3 sm:px-5">
+            <div className="space-y-2 rounded-lg border border-border bg-muted/10 px-4 py-2.5 sm:px-5 sm:py-3">
               <Skeleton key="ai-enrich-usage-skel-line" className="h-4 w-48" />
               <Skeleton key="ai-enrich-usage-skel-bar" className="h-1.5 w-full" />
             </div>
           ) : null}
-
-          <div className="flex flex-row items-start justify-between gap-4 rounded-lg border bg-muted/30 px-4 py-3 sm:items-center sm:px-5">
-            <div className="flex-1 space-y-1 pr-2">
-              <Label htmlFor="ai-enrich-grok-toggle" className="text-sm font-medium">
-                {t("aiEnrich.grokToggleLabel")}
-              </Label>
-              <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.grokToggleHint")}</p>
-            </div>
-            <Switch
-              id="ai-enrich-grok-toggle"
-              checked={modelMode === "grok_only"}
-              onCheckedChange={(checked) => setModelMode(checked ? "grok_only" : "auto")}
-              disabled={isPending}
-              aria-label={t("aiEnrich.grokToggleLabel")}
-              className="shrink-0"
-            />
-          </div>
 
           {isError ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -379,146 +548,141 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
           ) : null}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6">
-          {showSkeleton ? (
-            <div className="space-y-4">
-              <Progress value={progress} className="h-2" />
-              <p className="text-muted-foreground text-sm">{t("aiEnrich.loadingSteps")}</p>
-              <div className="space-y-3">
-                {[
-                  "enrich-skeleton-row-1",
-                  "enrich-skeleton-row-2",
-                  "enrich-skeleton-row-3",
-                  "enrich-skeleton-row-4",
-                  "enrich-skeleton-row-5",
-                  "enrich-skeleton-row-6",
-                ].map((skKey) => (
-                  <Skeleton key={skKey} className="h-9 w-full" />
-                ))}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-6 py-2.5 sm:px-8 sm:py-3">
+            {showSkeleton ? (
+              <div className="space-y-4">
+                <Progress value={progress} className="h-2" />
+                <p className="text-muted-foreground text-sm">{t("aiEnrich.loadingSteps")}</p>
+                <div className="space-y-3">
+                  {[
+                    "enrich-skeleton-row-1",
+                    "enrich-skeleton-row-2",
+                    "enrich-skeleton-row-3",
+                    "enrich-skeleton-row-4",
+                    "enrich-skeleton-row-5",
+                    "enrich-skeleton-row-6",
+                  ].map((skKey) => (
+                    <Skeleton key={skKey} className="h-9 w-full" />
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {result && !isPending ? (
-            <div className="flex flex-col gap-5">
-              {result.aiSummary ? (
-                <section className="rounded-lg border bg-muted/30 px-4 py-4 text-sm shadow-xs sm:px-5">
-                  <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    {t("aiEnrich.summaryLabel")}
-                  </h3>
-                  <p className="mt-2 whitespace-pre-wrap wrap-break-word text-foreground leading-relaxed">
-                    {formatAiEnrichmentSummaryForDisplay(result.aiSummary).split("\n").map((line, idx) => (
-                      <Fragment key={`ai-sum-${String(idx)}`}>
-                        {idx > 0 ? <br /> : null}
-                        {line}
-                      </Fragment>
-                    ))}
-                  </p>
-                </section>
-              ) : null}
-              {modelUsed ? (
-                <p className="text-muted-foreground text-xs">{t("aiEnrich.modelUsed", { model: modelUsed })}</p>
-              ) : null}
-              {rows.length === 0 ? (
-                <p className="text-muted-foreground text-sm">{t("aiEnrich.noSuggestions")}</p>
-              ) : (
-                <section aria-label={t("aiEnrich.tableField")}>
-                  <h3 className="text-foreground mb-2 text-sm font-medium">{t("aiEnrich.suggestionsSectionTitle")}</h3>
-                  <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-xs">
-                    <Table className="min-w-208">
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="sticky top-0 z-10 w-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableSelect")}
-                          </TableHead>
-                          <TableHead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableField")}
-                          </TableHead>
-                          <TableHead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableCurrent")}
-                          </TableHead>
-                          <TableHead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableSuggested")}
-                          </TableHead>
-                          <TableHead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableConfidence")}
-                          </TableHead>
-                          <TableHead className="sticky top-0 z-10 bg-muted/95 backdrop-blur-sm">
-                            {t("aiEnrich.tableSources")}
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rows.map((key) => {
-                          const s = result.suggestions[key];
-                          if (!s) return null;
-                          return (
-                            <TableRow key={key} className="align-top">
-                              <TableCell className="align-middle">
-                                <Checkbox
-                                  checked={selected[key] === true}
-                                  onCheckedChange={(checked) =>
-                                    setSelected((prev) => ({ ...prev, [key]: checked === true }))
-                                  }
-                                  aria-label={t("aiEnrich.tableSelect")}
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium">{enrichmentFieldTitle(t, key)}</TableCell>
-                              <TableCell className="max-w-[min(140px,28vw)] wrap-break-word text-muted-foreground text-sm">
-                                {readCurrent(company, key)}
-                              </TableCell>
-                              <TableCell className="max-w-[min(200px,32vw)] wrap-break-word text-sm">
-                                {formatSuggested(s)}
-                              </TableCell>
-                              <TableCell className="align-middle">
-                                <Badge variant={confidenceBadgeVariant(s.confidence)}>
-                                  {s.confidence === "high"
-                                    ? t("aiEnrich.confidenceHigh")
-                                    : s.confidence === "medium"
-                                      ? t("aiEnrich.confidenceMedium")
-                                      : t("aiEnrich.confidenceLow")}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="max-w-[min(240px,36vw)] text-xs">
-                                <ul className="space-y-1.5">
-                                  {s.sources.map((src) => (
-                                    <li key={src.url}>
-                                      <a
-                                        href={src.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary underline-offset-4 hover:underline wrap-break-word"
-                                      >
-                                        {src.title}
-                                      </a>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </section>
-              )}
-            </div>
-          ) : null}
+            {result && !isPending ? (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 sm:gap-4">
+                {result.aiSummary ? (
+                  <section className="shrink-0 rounded-lg border bg-muted/30 px-4 py-3 text-sm shadow-xs sm:px-5 sm:py-3.5">
+                    <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                      {t("aiEnrich.summaryLabel")}
+                    </h3>
+                    <p className="mt-2 whitespace-pre-wrap wrap-break-word text-foreground leading-relaxed">
+                      {formatAiEnrichmentSummaryForDisplay(result.aiSummary).split("\n").map((line, idx) => (
+                        <Fragment key={`ai-sum-${String(idx)}`}>
+                          {idx > 0 ? <br /> : null}
+                          {line}
+                        </Fragment>
+                      ))}
+                    </p>
+                  </section>
+                ) : null}
+                {modelUsed ? (
+                  <p className="text-muted-foreground shrink-0 text-xs">{t("aiEnrich.modelUsed", { model: modelUsed })}</p>
+                ) : null}
+                {rows.length === 0 ? (
+                  <p className="text-muted-foreground shrink-0 text-sm">{t("aiEnrich.noSuggestions")}</p>
+                ) : (
+                  <section
+                    aria-label={t("aiEnrich.tableField")}
+                    className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
+                  >
+                    <h3 className="text-foreground shrink-0 text-sm font-medium">{t("aiEnrich.suggestionsSectionTitle")}</h3>
+                    <div className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border border-border bg-card shadow-xs">
+                      <Table className="w-full table-fixed">
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead className="sticky top-0 z-10 w-[8%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSelect")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[18%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableField")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[18%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableCurrent")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[20%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSuggested")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[12%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableConfidence")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[24%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSources")}
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rows.map((key) => {
+                            const s = result.suggestions[key];
+                            if (!s) return null;
+                            return (
+                              <TableRow key={key} className="align-top">
+                                <TableCell className="min-w-0 wrap-break-word align-middle">
+                                  <Checkbox
+                                    checked={selected[key] === true}
+                                    onCheckedChange={(checked) =>
+                                      setSelected((prev) => ({ ...prev, [key]: checked === true }))
+                                    }
+                                    aria-label={t("aiEnrich.tableSelect")}
+                                  />
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word font-medium">
+                                  {enrichmentFieldTitle(t, key)}
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-muted-foreground text-sm">
+                                  {readCurrent(company, key)}
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-sm">{formatSuggested(s)}</TableCell>
+                                <TableCell className="min-w-0 wrap-break-word align-middle">
+                                  <Badge variant={confidenceBadgeVariant(s.confidence)}>
+                                    {s.confidence === "high"
+                                      ? t("aiEnrich.confidenceHigh")
+                                      : s.confidence === "medium"
+                                        ? t("aiEnrich.confidenceMedium")
+                                        : t("aiEnrich.confidenceLow")}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-xs">
+                                  <ul className="space-y-1.5">
+                                    {s.sources.map((src) => (
+                                      <li key={src.url} className="min-w-0">
+                                        <a
+                                          href={src.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-primary underline-offset-4 hover:underline wrap-break-word"
+                                        >
+                                          {src.title}
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                )}
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <DialogFooter className="mx-0 mb-0 mt-0 flex w-full shrink-0 flex-col gap-3 rounded-none border-border border-t bg-muted/40 px-6 py-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-4 sm:gap-y-3 sm:px-8">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full shrink-0 sm:w-auto"
-            onClick={handleRetry}
-            disabled={isPending}
-          >
-            {t("aiEnrich.retry")}
-          </Button>
-          <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-2">
+        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-3 rounded-none border-border border-t bg-muted/40 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4 sm:gap-y-2 sm:px-8 sm:py-4">
+          <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3">
             <Button
               type="button"
               variant="outline"

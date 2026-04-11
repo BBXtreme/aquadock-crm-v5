@@ -17,13 +17,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import {
   type AiEnrichmentSettingsSnapshot,
   getAiEnrichmentSettingsSnapshot,
   updateAiEnrichmentSettings,
 } from "@/lib/actions/settings";
-import { useT } from "@/lib/i18n/use-translations";
+import { getVercelAiCredits } from "@/lib/actions/vercel-ai-credits";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+
+const VERCEL_AI_GATEWAY_USAGE_HREF = "https://vercel.com/docs/ai-gateway/capabilities/usage";
+
+function formatUsdCredits(amount: number, localeTag: string): string {
+  return new Intl.NumberFormat(localeTag, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
 
 type Props = {
   initialSnapshot: AiEnrichmentSettingsSnapshot;
@@ -31,6 +44,7 @@ type Props = {
 
 export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   const t = useT("settings");
+  const numberLocaleTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(initialSnapshot.enabled);
   const [dailyLimit, setDailyLimit] = useState(String(initialSnapshot.dailyLimit));
@@ -49,7 +63,17 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
       return res.data;
     },
     initialData: initialSnapshot,
-    staleTime: 30_000,
+    staleTime: 15_000,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
+
+  const creditsQuery = useQuery({
+    queryKey: ["vercel-ai-gateway-credits"],
+    queryFn: getVercelAiCredits,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+    refetchOnWindowFocus: true,
   });
 
   const usedToday = snapshot?.usedToday ?? 0;
@@ -121,6 +145,42 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
             </p>
             <Progress value={usagePercent} className="mt-2 h-2" aria-label={t("aiEnrichment.usageHeading")} />
             <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.usageHint")}</p>
+            {creditsQuery.isPending ? (
+              <Skeleton className="mt-2 h-4 w-56" aria-hidden />
+            ) : creditsQuery.data?.ok === true ? (
+              <p className="text-muted-foreground mt-2 text-sm tabular-nums leading-snug">
+                {t("aiEnrichment.vercelAiCreditsLine", {
+                  balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
+                  totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
+                })}{" "}
+                <a
+                  href={VERCEL_AI_GATEWAY_USAGE_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {t("aiEnrichment.vercelAiGatewayDashboardLink")}
+                </a>
+              </p>
+            ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
+              <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsNotConfigured")}</p>
+            ) : creditsQuery.data?.ok === false ? (
+              <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
+            ) : null}
+            {modelPreference === "grok" ? (
+              <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                {t("aiEnrichment.grokBillingNotice")}{" "}
+                <a
+                  href="https://console.x.ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {t("aiEnrichment.grokConsoleLinkLabel")}
+                </a>
+                .
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

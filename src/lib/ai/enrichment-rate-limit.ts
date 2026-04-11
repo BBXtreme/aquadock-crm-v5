@@ -1,55 +1,151 @@
-// In-process daily enrichment usage counter (per Node instance). Serverless: best-effort only.
+// Per-user daily enrichment usage in `user_settings` (EAV), UTC day boundary.
 
-type DayBucket = { dayKey: string; used: number };
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  AI_ENRICHMENT_LAST_RESET_DATE_KEY,
+  AI_ENRICHMENT_USED_TODAY_KEY,
+} from "@/lib/constants/ai-enrichment-user-settings";
+import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { Database } from "@/types/database.types";
+import type { Json } from "@/types/supabase";
 
-const usageByUser = new Map<string, DayBucket>();
-
-function utcDayKey(): string {
+export function enrichmentUtcDayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function ensureBucket(userId: string): DayBucket {
-  const dayKey = utcDayKey();
-  const existing = usageByUser.get(userId);
-  if (!existing || existing.dayKey !== dayKey) {
-    const next: DayBucket = { dayKey, used: 0 };
-    usageByUser.set(userId, next);
-    return next;
+/** Effective runs counted for `todayUtc` (rollover when last reset date differs). */
+export function effectiveEnrichmentUsedToday(
+  storedUsed: number,
+  lastResetDate: string,
+  todayUtc: string,
+): number {
+  const t = todayUtc.trim();
+  const l = lastResetDate.trim();
+  if (l !== t) {
+    return 0;
   }
-  return existing;
+  if (!Number.isFinite(storedUsed) || storedUsed < 0) {
+    return 0;
+  }
+  return Math.min(Math.floor(storedUsed), 1_000_000);
 }
 
-export function enrichmentUsageRemaining(userId: string, dailyLimit: number): number {
-  if (dailyLimit <= 0) return 0;
-  const bucket = ensureBucket(userId);
-  return Math.max(0, dailyLimit - bucket.used);
+function jsonToNonNegativeInt(value: Json | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === "string") {
+    const n = Number.parseInt(value, 10);
+    if (Number.isFinite(n) && n >= 0) {
+      return n;
+    }
+  }
+  return 0;
 }
 
-export function canReserveEnrichmentSlots(userId: string, slots: number, dailyLimit: number): boolean {
-  if (slots <= 0) return true;
-  if (dailyLimit <= 0) return false;
-  const bucket = ensureBucket(userId);
-  return bucket.used + slots <= dailyLimit;
+function jsonToDayString(value: Json | undefined): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return "";
 }
 
-export function commitEnrichmentSlots(userId: string, slots: number): void {
-  if (slots <= 0) return;
-  const bucket = ensureBucket(userId);
-  bucket.used += slots;
+async function readUsageRows(
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<{ storedUsed: number; lastReset: string }> {
+  const { data, error } = await client
+    .from("user_settings")
+    .select("key, value")
+    .eq("user_id", userId)
+    .in("key", [AI_ENRICHMENT_USED_TODAY_KEY, AI_ENRICHMENT_LAST_RESET_DATE_KEY]);
+
+  if (error) {
+    throw handleSupabaseError(error, "readEnrichmentUsage");
+  }
+
+  let storedUsed = 0;
+  let lastReset = "";
+  for (const row of data ?? []) {
+    if (row.key === AI_ENRICHMENT_USED_TODAY_KEY) {
+      storedUsed = jsonToNonNegativeInt(row.value);
+    }
+    if (row.key === AI_ENRICHMENT_LAST_RESET_DATE_KEY) {
+      lastReset = jsonToDayString(row.value);
+    }
+  }
+  return { storedUsed, lastReset };
 }
 
-/** Atomically reserves slots if the daily cap allows it (avoids parallel over-commit on one instance). */
-export function tryCommitEnrichmentSlots(userId: string, slots: number, dailyLimit: number): boolean {
-  if (slots <= 0) return true;
-  if (dailyLimit <= 0) return false;
-  const bucket = ensureBucket(userId);
-  if (bucket.used + slots > dailyLimit) return false;
-  bucket.used += slots;
-  return true;
+export async function enrichmentUsageRemaining(
+  client: SupabaseClient<Database>,
+  userId: string,
+  dailyLimit: number,
+): Promise<number> {
+  if (dailyLimit <= 0) {
+    return 0;
+  }
+  const today = enrichmentUtcDayKey();
+  const { storedUsed, lastReset } = await readUsageRows(client, userId);
+  const usedToday = effectiveEnrichmentUsedToday(storedUsed, lastReset, today);
+  return Math.max(0, dailyLimit - usedToday);
 }
 
-export function refundEnrichmentSlots(userId: string, slots: number): void {
-  if (slots <= 0) return;
-  const bucket = ensureBucket(userId);
-  bucket.used = Math.max(0, bucket.used - slots);
+/** Reserves slots if the daily cap allows; persists to `user_settings` (RLS-scoped). */
+export async function tryCommitEnrichmentSlots(
+  client: SupabaseClient<Database>,
+  userId: string,
+  slots: number,
+  dailyLimit: number,
+): Promise<boolean> {
+  if (slots <= 0) {
+    return true;
+  }
+  if (dailyLimit <= 0) {
+    return false;
+  }
+  try {
+    const today = enrichmentUtcDayKey();
+    const { storedUsed, lastReset } = await readUsageRows(client, userId);
+    const effectiveUsed = effectiveEnrichmentUsedToday(storedUsed, lastReset, today);
+    if (effectiveUsed + slots > dailyLimit) {
+      return false;
+    }
+    const newUsed = effectiveUsed + slots;
+    const rows = [
+      { user_id: userId, key: AI_ENRICHMENT_USED_TODAY_KEY, value: newUsed },
+      { user_id: userId, key: AI_ENRICHMENT_LAST_RESET_DATE_KEY, value: today },
+    ];
+    for (const row of rows) {
+      const { error } = await client.from("user_settings").upsert(row, { onConflict: "user_id,key" });
+      if (error) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function refundEnrichmentSlots(
+  client: SupabaseClient<Database>,
+  userId: string,
+  slots: number,
+): Promise<void> {
+  if (slots <= 0) {
+    return;
+  }
+  const today = enrichmentUtcDayKey();
+  const { storedUsed, lastReset } = await readUsageRows(client, userId);
+  if (lastReset.trim() !== today) {
+    return;
+  }
+  const newUsed = Math.max(0, storedUsed - slots);
+  const { error } = await client
+    .from("user_settings")
+    .upsert({ user_id: userId, key: AI_ENRICHMENT_USED_TODAY_KEY, value: newUsed }, { onConflict: "user_id,key" });
+  if (error) {
+    throw handleSupabaseError(error, "refundEnrichmentSlots");
+  }
 }

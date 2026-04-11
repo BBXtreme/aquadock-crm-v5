@@ -1,12 +1,15 @@
 // Reads optional AI enrichment flags from `user_settings` (EAV).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { effectiveEnrichmentUsedToday, enrichmentUtcDayKey } from "@/lib/ai/enrichment-rate-limit";
 import {
   AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
   AI_ENRICHMENT_DAILY_LIMIT_KEY,
   AI_ENRICHMENT_DEFAULT_DAILY_LIMIT,
   AI_ENRICHMENT_ENABLED_KEY,
+  AI_ENRICHMENT_LAST_RESET_DATE_KEY,
   AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+  AI_ENRICHMENT_USED_TODAY_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import type { Database } from "@/types/database.types";
@@ -30,6 +33,24 @@ function jsonToPositiveInt(value: Json | undefined, fallback: number): number {
   return fallback;
 }
 
+function jsonToNonNegativeInt(value: Json | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === "string") {
+    const n = Number.parseInt(value, 10);
+    if (Number.isFinite(n) && n >= 0) return n;
+  }
+  return 0;
+}
+
+function jsonToDayString(value: Json | undefined): string {
+  if (typeof value === "string") {
+    return value.trim();
+  }
+  return "";
+}
+
 const MODEL_PREFERENCES = ["auto", "claude", "grok"] as const;
 
 export type AiEnrichmentModelPreference = (typeof MODEL_PREFERENCES)[number];
@@ -49,6 +70,8 @@ export type AiEnrichmentPolicy = {
   dailyLimit: number;
   modelPreference: AiEnrichmentModelPreference;
   addressFocusPrioritize: boolean;
+  /** Successful runs counted for the current UTC day (rollover when last reset date ≠ today). */
+  usedToday: number;
 };
 
 function parseDefaultDailyLimitFromEnv(): number {
@@ -75,6 +98,8 @@ export async function fetchAiEnrichmentPolicy(
       AI_ENRICHMENT_DAILY_LIMIT_KEY,
       AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
       AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
+      AI_ENRICHMENT_USED_TODAY_KEY,
+      AI_ENRICHMENT_LAST_RESET_DATE_KEY,
     ]);
 
   if (error) throw handleSupabaseError(error, "fetchAiEnrichmentPolicy");
@@ -83,6 +108,8 @@ export async function fetchAiEnrichmentPolicy(
   let dailyLimit = parseDefaultDailyLimitFromEnv();
   let modelPreference: AiEnrichmentModelPreference = "auto";
   let addressFocusPrioritize = false;
+  let storedUsed = 0;
+  let lastReset = "";
 
   for (const row of data ?? []) {
     if (row.key === AI_ENRICHMENT_ENABLED_KEY) {
@@ -97,7 +124,16 @@ export async function fetchAiEnrichmentPolicy(
     if (row.key === AI_ENRICHMENT_ADDRESS_FOCUS_KEY) {
       addressFocusPrioritize = jsonToBoolean(row.value, false);
     }
+    if (row.key === AI_ENRICHMENT_USED_TODAY_KEY) {
+      storedUsed = jsonToNonNegativeInt(row.value);
+    }
+    if (row.key === AI_ENRICHMENT_LAST_RESET_DATE_KEY) {
+      lastReset = jsonToDayString(row.value);
+    }
   }
 
-  return { enabled, dailyLimit, modelPreference, addressFocusPrioritize };
+  const today = enrichmentUtcDayKey();
+  const usedToday = effectiveEnrichmentUsedToday(storedUsed, lastReset, today);
+
+  return { enabled, dailyLimit, modelPreference, addressFocusPrioritize, usedToday };
 }
