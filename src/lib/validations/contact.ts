@@ -13,12 +13,32 @@ export const contactSchema = z.object({
     .max(100, "Nachname darf maximal 100 Zeichen lang sein"),
   anrede: z.enum(["Herr", "Frau", "Dr.", "Prof."], { required_error: "Anrede ist erforderlich" }).optional(),
   position: z.string().trim().max(100, "Position darf maximal 100 Zeichen lang sein").optional(),
-  email: z.string().trim().email("Ungültige E-Mail-Adresse").max(320, "E-Mail darf maximal 320 Zeichen lang sein").optional().transform(emptyStringToNull),
+  email: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) return val;
+      if (typeof val === "string" && val.trim() === "") return null;
+      return val;
+    },
+    z
+      .string()
+      .trim()
+      .email("Ungültige E-Mail-Adresse")
+      .max(320, "E-Mail darf maximal 320 Zeichen lang sein")
+      .nullable()
+      .optional(),
+  ),
   telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").optional(),
   mobil: z.string().trim().max(50, "Mobil darf maximal 50 Zeichen lang sein").optional(),
   durchwahl: z.string().trim().max(10, "Durchwahl darf maximal 10 Zeichen lang sein").optional(),
   notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").optional(),
-  company_id: z.string().uuid("Ungültige Unternehmens-ID").optional().transform(emptyStringToNull),
+  company_id: z.preprocess(
+    (val) => {
+      if (val === undefined || val === null) return val;
+      if (typeof val === "string" && val.trim() === "") return null;
+      return val;
+    },
+    z.string().uuid("Ungültige Unternehmens-ID").nullable().optional(),
+  ),
   is_primary: z.boolean().default(false).optional(),
 }).strict();
 
@@ -58,9 +78,5 @@ export const toContactUpdate = (values: ContactFormValues): ContactUpdate => ({
   company_id: values.company_id || null,
   is_primary: values.is_primary ?? undefined,
 });
-
-function emptyStringToNull(val: string | null | undefined): string | null | undefined {
-  return val === "" ? null : val;
-}
 
 export type ContactForm = z.infer<typeof contactSchema>;

@@ -13,8 +13,6 @@ export async function POST(request: Request) {
     const supabase = await createServerSupabaseClient();
     const body = await request.json();
 
-    console.log("[API POST /companies] Received body:", body);
-
     const { data, error } = await supabase.from("companies").insert(body).select().single();
 
     if (error) {
@@ -39,8 +37,6 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
-
-    console.log("[API POST /companies] SUCCESS - New ID:", data.id);
 
     return NextResponse.json({
       success: true,

@@ -131,13 +131,46 @@ afterEach(() => {
   cleanup();
 });
 
+/** Recharts `ResponsiveContainer` needs a resize callback; a no-op observe leaves 0×0 and spams stderr. */
 class TestResizeObserver {
-  observe(): void {
-    /* Recharts / ResponsiveContainer */
+  private readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
   }
+
+  observe(element: Element): void {
+    const contentRect: DOMRectReadOnly = {
+      width: 640,
+      height: 320,
+      top: 0,
+      left: 0,
+      bottom: 320,
+      right: 640,
+      x: 0,
+      y: 0,
+      toJSON() {
+        return {};
+      },
+    };
+    this.callback(
+      [
+        {
+          target: element,
+          contentRect,
+          borderBoxSize: [],
+          contentBoxSize: [],
+          devicePixelContentBoxSize: [],
+        } as ResizeObserverEntry,
+      ],
+      this as unknown as ResizeObserver,
+    );
+  }
+
   unobserve(): void {
     /* Recharts / ResponsiveContainer */
   }
+
   disconnect(): void {
     /* Recharts / ResponsiveContainer */
   }

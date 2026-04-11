@@ -95,6 +95,11 @@ describe("companySchema", () => {
     expect(() => companySchema.parse({ ...minimal, lat: 91 })).toThrow();
   });
 
+  it("rejects lon out of range", () => {
+    expect(() => companySchema.parse({ ...minimal, lon: 181 })).toThrow();
+    expect(() => companySchema.parse({ ...minimal, lon: -181 })).toThrow();
+  });
+
   it("produces a Supabase-ready insert via toCompanyInsert", () => {
     const values = companySchema.parse({
       ...minimal,
@@ -193,6 +198,18 @@ describe("companySchema", () => {
       expect(row.wasserdistanz).toBe(0);
       expect(row.value).toBe(0);
     }
+  });
+
+  it("preserves lat and lon numeric zero in insert and update mappers", () => {
+    const values = companySchema.parse({
+      ...minimal,
+      lat: 0,
+      lon: 0,
+    });
+    expect(toCompanyInsert(values).lat).toBe(0);
+    expect(toCompanyInsert(values).lon).toBe(0);
+    expect(toCompanyUpdate(values).lat).toBe(0);
+    expect(toCompanyUpdate(values).lon).toBe(0);
   });
 });
 

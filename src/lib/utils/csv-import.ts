@@ -51,7 +51,7 @@ export type ParsedCompanyRow = {
 };
 
 // Helper to parse German-style floats (comma as decimal, handle scientific notation)
-function parseGermanFloat(value: string): number | undefined {
+export function parseGermanFloat(value: string): number | undefined {
   if (!value || typeof value !== "string") return undefined;
 
   // Remove thousands separators (dots) and replace comma with dot
@@ -61,7 +61,7 @@ function parseGermanFloat(value: string): number | undefined {
 }
 
 // Helper to strip emojis from a string
-function stripEmojis(text: string): string {
+export function stripEmojis(text: string): string {
   if (!text) return "";
   // Regex to match emojis (basic implementation, covers most cases)
   return text

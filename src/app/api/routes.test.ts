@@ -5,6 +5,14 @@
 import type { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.mocked(console.error).mockRestore();
+});
+
 const mockCreateServer = vi.hoisted(() => vi.fn());
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockCreateTimelineEntry = vi.hoisted(() => vi.fn());
@@ -183,6 +191,35 @@ describe("POST /api/timeline", () => {
     });
   });
 
+  it("maps string content, activity_type, and string contact_id", async () => {
+    mockCreateTimelineEntry.mockResolvedValue({ id: "t3" });
+    const company = "550e8400-e29b-41d4-a716-446655440000";
+    const contact = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
+    const res = await postTimeline(
+      jsonRequest({
+        title: "T",
+        content: "hello note",
+        activity_type: "email",
+        company_id: company,
+        contact_id: contact,
+      }),
+    );
+    expect(res.status).toBe(201);
+    expect(mockCreateTimelineEntry).toHaveBeenCalledWith({
+      title: "T",
+      content: "hello note",
+      activity_type: "email",
+      company_id: company,
+      contact_id: contact,
+    });
+  });
+
+  it("returns 500 when thrown value is not an Error", async () => {
+    mockCreateTimelineEntry.mockRejectedValue("database string failure");
+    const res = await postTimeline(jsonRequest({ title: "x" }));
+    expect(res.status).toBe(500);
+  });
+
   it("returns 401 when unauthorized", async () => {
     mockCreateTimelineEntry.mockRejectedValue(new Error("Unauthorized"));
     const res = await postTimeline(jsonRequest({ title: "x" }));
@@ -230,6 +267,21 @@ describe("/api/timeline/[id]", () => {
     expect(res.status).toBe(401);
   });
 
+  it("PUT returns 401 when getUser returns an auth error", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "u1" } },
+          error: { message: "JWT expired" },
+        }),
+      },
+    });
+    const res = await putTimelineId(jsonRequest({ title: "x" }), {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    expect(res.status).toBe(401);
+  });
+
   it("DELETE removes entry", async () => {
     mockCreateServer.mockResolvedValue(authedServer());
     mockDeleteTimeline.mockResolvedValue(undefined);
@@ -255,6 +307,21 @@ describe("/api/timeline/[id]", () => {
       params: Promise.resolve({ id: "t1" }),
     });
     expect(res.status).toBe(500);
+  });
+
+  it("DELETE returns 401 when getUser returns an auth error", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "u1" } },
+          error: { message: "Session invalid" },
+        }),
+      },
+    });
+    const res = await deleteTimelineId({} as NextRequest, {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    expect(res.status).toBe(401);
   });
 });
 
@@ -340,6 +407,34 @@ describe("POST /api/companies", () => {
     expect(res.status).toBe(401);
   });
 
+  it("inserts in production when user is authenticated without auth error", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const single = vi.fn().mockResolvedValue({
+      data: { id: "prod-1", firmenname: "Y" },
+      error: null,
+    });
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single,
+          })),
+        })),
+      })),
+    });
+    const res = await postCompanies(jsonRequest({ firmenname: "Y", kundentyp: "hotel" }));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.success).toBe(true);
+    expect(body.id).toBe("prod-1");
+  });
+
   it("returns 400 when Supabase insert returns error", async () => {
     const single = vi.fn().mockResolvedValue({
       data: null,
@@ -397,6 +492,13 @@ describe("POST /api/companies", () => {
     });
     const res = await postCompanies(bad);
     expect(res.status).toBe(500);
+  });
+
+  it("returns 500 with generic German message when client factory rejects non-Error", async () => {
+    mockCreateServer.mockRejectedValue("offline");
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("Interner Serverfehler");
   });
 });
 
@@ -590,6 +692,13 @@ describe("/api/contacts/[id]", () => {
     const res = await deleteContact({} as Request, { params: Promise.resolve({ id: "c1" }) });
     expect(res.status).toBe(500);
   });
+
+  it("DELETE returns 500 with generic message when thrown value is not an Error", async () => {
+    mockDeleteContact.mockRejectedValue("constraint failed");
+    const res = await deleteContact({} as Request, { params: Promise.resolve({ id: "c1" }) });
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("Delete failed");
+  });
 });
 
 describe("POST /api/send-test-email", () => {
@@ -722,6 +831,33 @@ describe("POST /api/test-smtp", () => {
     expect(mockSendMail).toHaveBeenCalled();
   });
 
+  it("includes TLS Ja and default display name in html when secure without fromName", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u" } }, error: null }),
+      },
+    });
+    const res = await postTestSmtp(
+      jsonRequest({
+        host: "smtp.example.com",
+        port: "587",
+        username: "u@example.com",
+        password: "p",
+        recipient: "r@r.co",
+        secure: true,
+      }),
+    );
+    expect(res.status).toBe(200);
+    const firstCall = mockSendMail.mock.calls[0];
+    if (firstCall === undefined || firstCall[0] === undefined) {
+      throw new Error("expected sendMail to have been called");
+    }
+    const opts = firstCall[0] as { html?: string; from?: string };
+    expect(opts.html).toContain("Ja");
+    expect(opts.html).toContain("AquaDock CRM");
+    expect(opts.from).toContain("AquaDock CRM");
+  });
+
   it("returns 500 when sendMail throws", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {
@@ -739,5 +875,25 @@ describe("POST /api/test-smtp", () => {
       }),
     );
     expect(res.status).toBe(500);
+  });
+
+  it("returns 500 with generic German message when sendMail rejects non-Error", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u" } }, error: null }),
+      },
+    });
+    mockSendMail.mockRejectedValue("ECONNRESET");
+    const res = await postTestSmtp(
+      jsonRequest({
+        host: "smtp.example.com",
+        port: "587",
+        username: "u@example.com",
+        password: "p",
+        recipient: "r@r.co",
+      }),
+    );
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe("Unbekannter Fehler");
   });
 });

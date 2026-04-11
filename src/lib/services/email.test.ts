@@ -4,7 +4,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createEmailLog,
   createEmailTemplate,
@@ -29,6 +29,18 @@ vi.mock("node:dns", () => ({
     resolveMx: (...args: unknown[]) => mockResolveMx(...args),
   },
 }));
+
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  vi.spyOn(console, "group").mockImplementation(() => undefined);
+  vi.spyOn(console, "groupEnd").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.mocked(console.error).mockRestore();
+  vi.mocked(console.group).mockRestore();
+  vi.mocked(console.groupEnd).mockRestore();
+});
 
 describe("fillPlaceholders", () => {
   const fullRecipient = {
@@ -111,6 +123,12 @@ describe("isValidEmail", () => {
     expect(isValidEmail("x@.invalid.com")).toBe(false);
     expect(isValidEmail("x@invalid.")).toBe(false);
   });
+
+  it("rejects non-string values at runtime", () => {
+    expect(isValidEmail(null as unknown as string)).toBe(false);
+    expect(isValidEmail(undefined as unknown as string)).toBe(false);
+    expect(isValidEmail(0 as unknown as string)).toBe(false);
+  });
 });
 
 describe("hasMXRecords", () => {
@@ -135,6 +153,12 @@ describe("hasMXRecords", () => {
     mockResolveMx.mockResolvedValue([]);
 
     await expect(hasMXRecords("noop.test")).resolves.toBe(false);
+  });
+
+  it("returns false when resolveMx resolves to a falsy value", async () => {
+    mockResolveMx.mockResolvedValue(null as unknown as never);
+
+    await expect(hasMXRecords("null-mx.test")).resolves.toBe(false);
   });
 });
 
@@ -225,6 +249,30 @@ describe("getMassEmailRecipients", () => {
     expect(first.name).toBe("Unbekannt");
   });
 
+  it("builds contact display name from vorname only when anrede and nachname are null", async () => {
+    const contactsBuilder = createContactsQueryMock([
+      {
+        id: "c3",
+        vorname: "Solo",
+        nachname: null,
+        anrede: null,
+        email: "solo@example.com",
+        companies: { id: "co3", firmenname: "Co" },
+      },
+    ]);
+
+    const client = {
+      from: vi.fn(() => contactsBuilder),
+    } as unknown as SupabaseClient;
+
+    const recipients = await getMassEmailRecipients(client, { mode: "contacts" });
+    const first = recipients[0];
+    if (first === undefined) {
+      throw new Error("expected one recipient");
+    }
+    expect(first.name).toBe("Solo");
+  });
+
   it("sanitizes commas in contact search before building or()", async () => {
     const contactsBuilder = createContactsQueryMock([]);
 
@@ -237,6 +285,41 @@ describe("getMassEmailRecipients", () => {
     expect(contactsBuilder.or).toHaveBeenCalledWith(
       "vorname.ilike.%a b c%,nachname.ilike.%a b c%,email.ilike.%a b c%",
     );
+  });
+
+  it("uses default limit 500 for contacts when limit omitted", async () => {
+    const contactsBuilder = createContactsQueryMock([]);
+    const client = {
+      from: vi.fn(() => contactsBuilder),
+    } as unknown as SupabaseClient;
+
+    await getMassEmailRecipients(client, { mode: "contacts" });
+    expect(contactsBuilder.limit).toHaveBeenCalledWith(500);
+  });
+
+  it("passes custom limit for contacts mode", async () => {
+    const contactsBuilder = createContactsQueryMock([]);
+    const client = {
+      from: vi.fn(() => contactsBuilder),
+    } as unknown as SupabaseClient;
+
+    await getMassEmailRecipients(client, { mode: "contacts", limit: 42 });
+    expect(contactsBuilder.limit).toHaveBeenCalledWith(42);
+  });
+
+  it("passes custom limit for companies mode", async () => {
+    const companiesBuilder = createCompaniesQueryMock([]);
+    const client = {
+      from: vi.fn((table: string) => {
+        if (table === "companies") {
+          return companiesBuilder;
+        }
+        throw new Error(`unexpected ${table}`);
+      }),
+    } as unknown as SupabaseClient;
+
+    await getMassEmailRecipients(client, { mode: "companies", limit: 7 });
+    expect(companiesBuilder.limit).toHaveBeenCalledWith(7);
   });
 
   it("maps companies mode to firmenname as name and email", async () => {
@@ -338,9 +421,41 @@ describe("getMassEmailRecipients", () => {
     expect(companiesBuilder.eq).toHaveBeenCalled();
     expect(companiesBuilder.ilike).toHaveBeenCalled();
   });
+
+  it("returns empty companies list when Supabase returns null data without error", async () => {
+    const companiesBuilder = {
+      select: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      neq: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      ilike: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    const client = {
+      from: vi.fn((table: string) => {
+        if (table === "companies") {
+          return companiesBuilder;
+        }
+        throw new Error(`unexpected table ${table}`);
+      }),
+    } as unknown as SupabaseClient;
+
+    await expect(getMassEmailRecipients(client, { mode: "companies" })).resolves.toEqual([]);
+  });
 });
 
 describe("email log / template CRUD", () => {
+  it("getEmailLogs returns empty array when data is null without error", async () => {
+    const builder = {
+      select: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const client = { from: vi.fn(() => builder) } as unknown as SupabaseClient;
+    await expect(getEmailLogs(client)).resolves.toEqual([]);
+  });
+
   it("getEmailLogs returns rows", async () => {
     const rows = [{ id: "1" }];
     const builder = {
@@ -358,6 +473,39 @@ describe("email log / template CRUD", () => {
     await expect(getEmailLogs(client)).rejects.toThrow();
   });
 
+  it("createEmailLog throws when insert returns error", async () => {
+    const single = vi.fn().mockResolvedValue({ data: null, error: { message: "insert failed" } });
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({ single })),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(createEmailLog({ subject: "s" } as never, client)).rejects.toThrow();
+  });
+
+  it("getEmailTemplates throws on error", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockResolvedValue({ data: null, error: { message: "e" } }),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getEmailTemplates(client)).rejects.toThrow();
+  });
+
+  it("createEmailTemplate throws when insert returns error", async () => {
+    const single = vi.fn().mockResolvedValue({ data: null, error: { message: "bad" } });
+    const client = {
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({ single })),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(createEmailTemplate({ name: "n" } as never, client)).rejects.toThrow();
+  });
+
   it("getEmailLogById returns row", async () => {
     const row = { id: "a" };
     const client = {
@@ -369,6 +517,18 @@ describe("email log / template CRUD", () => {
       })),
     } as unknown as SupabaseClient;
     await expect(getEmailLogById("a", client)).resolves.toEqual(row);
+  });
+
+  it("getEmailLogById returns null when row is missing and error is absent", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getEmailLogById("missing", client)).resolves.toBeNull();
   });
 
   it("createEmailLog returns inserted row", async () => {
@@ -420,6 +580,15 @@ describe("email log / template CRUD", () => {
     await expect(getEmailTemplates(client)).resolves.toEqual(rows);
   });
 
+  it("getEmailTemplates returns empty array when data is null without error", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getEmailTemplates(client)).resolves.toEqual([]);
+  });
+
   it("getEmailTemplateById returns row", async () => {
     const row = { id: "t1" };
     const client = {
@@ -431,6 +600,18 @@ describe("email log / template CRUD", () => {
       })),
     } as unknown as SupabaseClient;
     await expect(getEmailTemplateById("t1", client)).resolves.toEqual(row);
+  });
+
+  it("getEmailTemplateById returns null when row is missing and error is absent", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getEmailTemplateById("missing", client)).resolves.toBeNull();
   });
 
   it("createEmailTemplate returns inserted", async () => {

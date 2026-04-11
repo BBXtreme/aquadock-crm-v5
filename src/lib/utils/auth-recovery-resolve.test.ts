@@ -60,6 +60,15 @@ describe("resolveAuthRecoveryRedirectUrl", () => {
     await expect(resolveAuthRecoveryRedirectUrl()).resolves.toBe("https://my-app.vercel.app/login");
   });
 
+  it("keeps protocol when VERCEL_URL already includes one", async () => {
+    mockHeaders.mockResolvedValue({
+      get: () => null,
+    });
+    process.env.VERCEL_URL = "https://edge-preview.vercel.app";
+    const { resolveAuthRecoveryRedirectUrl } = await import("./auth-recovery-redirect");
+    await expect(resolveAuthRecoveryRedirectUrl()).resolves.toBe("https://edge-preview.vercel.app/login");
+  });
+
   it("uses production fallback when VERCEL_ENV production", async () => {
     mockHeaders.mockResolvedValue({ get: () => null });
     process.env.VERCEL_ENV = "production";

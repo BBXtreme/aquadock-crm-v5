@@ -68,6 +68,35 @@ describe("reminderFormSchema", () => {
   it("rejects invalid company uuid", () => {
     expect(() => reminderFormSchema.parse({ ...validBase, company_id: "nope" })).toThrow();
   });
+
+  it("rejects invalid due_date string before future refine", () => {
+    expect(() => reminderFormSchema.parse({ ...validBase, due_date: "not-a-date" })).toThrow(/Ungültiges Datum/);
+  });
+
+  it("rejects due date in the past", () => {
+    expect(() => reminderFormSchema.parse({ ...validBase, due_date: "2020-01-01" })).toThrow(/Zukunft/);
+  });
+
+  it("rejects invalid assigned_to uuid when provided", () => {
+    expect(() =>
+      reminderFormSchema.parse({
+        ...validBase,
+        assigned_to: "not-a-uuid",
+      }),
+    ).toThrow(/Benutzer-ID/);
+  });
+
+  it("accepts null description and omits optional priority and status", () => {
+    const out = reminderFormSchema.parse({
+      title: validBase.title,
+      due_date: validBase.due_date,
+      company_id: validBase.company_id,
+      description: null,
+    });
+    expect(out.description).toBeNull();
+    expect(out.priority).toBeUndefined();
+    expect(out.status).toBeUndefined();
+  });
 });
 
 describe("toReminderInsert / toReminderUpdate", () => {
@@ -89,5 +118,16 @@ describe("toReminderInsert / toReminderUpdate", () => {
     });
     expect(toReminderInsert(v).due_date).toContain("2026");
     expect(toReminderUpdate(v).description).toBe("d");
+  });
+
+  it("maps omitted description and assigned_to to null on update", () => {
+    const v = reminderSchema.parse({
+      title: "Task",
+      company_id: companyId,
+      due_date: "2026-08-01T00:00:00.000Z",
+    });
+    const row = toReminderUpdate(v);
+    expect(row.description).toBeNull();
+    expect(row.assigned_to).toBeNull();
   });
 });

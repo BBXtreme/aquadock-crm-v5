@@ -28,8 +28,6 @@ export async function POST(request: Request) {
     // Ensure user_id is set for RLS (or null in development)
     body.user_id = user?.id || null;
 
-    console.log("[API POST /companies] Received body:", body);
-
     const { data, error } = await supabase.from("companies").insert(body).select().single();
 
     if (error) {
@@ -54,8 +52,6 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
-
-    console.log("[API POST /companies] SUCCESS - New ID:", data.id);
 
     return NextResponse.json({
       success: true,

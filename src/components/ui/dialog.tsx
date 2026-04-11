@@ -5,6 +5,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import type * as React from "react";
+import { Children, isValidElement } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/use-translations";
@@ -36,46 +37,6 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
       )}
       {...props}
     />
-  );
-}
-
-function DialogContent({
-  className,
-  children,
-  showCloseButton = true,
-  description,
-  overlayClassName,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean;
-  description?: string;
-  /** Merged into DialogOverlay (e.g. higher z-index when stacking multiple dialogs). */
-  overlayClassName?: string;
-}) {
-  const t = useT("common");
-  return (
-    <DialogPortal>
-      <DialogOverlay className={overlayClassName} />
-      <DialogPrimitive.Content
-        data-slot="dialog-content"
-        className={cn(
-          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-background p-4 text-sm outline-none ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in sm:max-w-sm",
-          className,
-        )}
-        {...props}
-      >
-        {description && <DialogDescription>{description}</DialogDescription>}
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button variant="ghost" className="absolute top-2 right-2" size="icon-sm">
-              <XIcon />
-              <span className="sr-only">{t("close")}</span>
-            </Button>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPortal>
   );
 }
 
@@ -131,6 +92,68 @@ function DialogDescription({ className, ...props }: React.ComponentProps<typeof 
       )}
       {...props}
     />
+  );
+}
+
+function dialogTreeContainsDescription(nodes: React.ReactNode): boolean {
+  let found = false;
+  Children.forEach(nodes, (child) => {
+    if (found) return;
+    if (!isValidElement(child)) return;
+    if (child.type === DialogDescription) {
+      found = true;
+      return;
+    }
+    const nested = (child.props as { children?: React.ReactNode }).children;
+    if (nested !== undefined && nested !== null) {
+      found = dialogTreeContainsDescription(nested);
+    }
+  });
+  return found;
+}
+
+function DialogContent({
+  className,
+  children,
+  showCloseButton = true,
+  description,
+  overlayClassName,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  showCloseButton?: boolean;
+  description?: string;
+  /** Merged into DialogOverlay (e.g. higher z-index when stacking multiple dialogs). */
+  overlayClassName?: string;
+}) {
+  const t = useT("common");
+  const hasExplicitAriaDescribedBy = "aria-describedby" in props;
+  const suppressRadixDescriptionWarning =
+    !description && !hasExplicitAriaDescribedBy && !dialogTreeContainsDescription(children);
+
+  return (
+    <DialogPortal>
+      <DialogOverlay className={overlayClassName} />
+      <DialogPrimitive.Content
+        data-slot="dialog-content"
+        className={cn(
+          "data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-background p-4 text-sm outline-none ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in sm:max-w-sm",
+          className,
+        )}
+        {...props}
+        {...(suppressRadixDescriptionWarning ? { "aria-describedby": undefined } : {})}
+      >
+        {description ? <DialogDescription>{description}</DialogDescription> : null}
+        {children}
+        {showCloseButton && (
+          <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            <Button variant="ghost" className="absolute top-2 right-2" size="icon-sm">
+              <XIcon />
+              <span className="sr-only">{t("close")}</span>
+            </Button>
+          </DialogPrimitive.Close>
+        )}
+      </DialogPrimitive.Content>
+    </DialogPortal>
   );
 }
 

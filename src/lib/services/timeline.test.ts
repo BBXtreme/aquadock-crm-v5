@@ -52,6 +52,19 @@ describe("timeline service", () => {
     await expect(getTimelineEntries("u1", client)).resolves.toEqual(rows);
   });
 
+  it("getTimelineEntries returns empty array when data is null without error", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        is: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    } as unknown as SupabaseClient;
+
+    await expect(getTimelineEntries("u1", client)).resolves.toEqual([]);
+  });
+
   it("propagates insert error", async () => {
     const single = vi.fn().mockResolvedValue({ data: null, error: { message: "e" } });
     const client = {

@@ -417,6 +417,102 @@ describe("fetchOsmPois", () => {
     const attemptedUrls = vi.mocked(globalThis.fetch).mock.calls.map((c) => String(c[0]));
     expect(attemptedUrls.some((u) => u.includes("private.coffee"))).toBe(true);
   });
+
+  it("resolves empty when the last mirror throws and initial retryCount is already high", async () => {
+    const last = OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1];
+    if (last === undefined) {
+      throw new Error("expected OVERPASS_ENDPOINTS to be non-empty");
+    }
+
+    vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith(last)) {
+        return Promise.reject(new Error("network down"));
+      }
+      return { ok: false, status: 403 } as Response;
+    });
+
+    const bounds = L.latLngBounds(L.latLng(49, 4), L.latLng(50, 5));
+    const promise = fetchOsmPois(bounds, ["camping"], 2);
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await promise;
+
+    expect(result.pois).toEqual([]);
+    expect(result.totalFound).toBe(0);
+  });
+
+  it("resolves empty from catch when last mirror rejects a non-Error with high retryCount", async () => {
+    const last = OVERPASS_ENDPOINTS[OVERPASS_ENDPOINTS.length - 1];
+    if (last === undefined) {
+      throw new Error("expected OVERPASS_ENDPOINTS to be non-empty");
+    }
+
+    vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.startsWith(last)) {
+        throw "last-mirror-string-rejection";
+      }
+      return { ok: false, status: 403 } as Response;
+    });
+
+    const bounds = L.latLngBounds(L.latLng(49.1, 4.1), L.latLng(50.1, 5.1));
+    const promise = fetchOsmPois(bounds, ["camping"], 2);
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await promise;
+
+    expect(result.pois).toEqual([]);
+    expect(result.totalFound).toBe(0);
+  });
+
+  it("skips to the next mirror when fetch aborts on a non-final endpoint", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("overpass-api.de")) {
+        const err = new Error("aborted");
+        err.name = "AbortError";
+        throw err;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          elements: [{ type: "node", id: 88, lat: 48.2, lon: 11.5, tags: { amenity: "restaurant" } }],
+        }),
+      } as Response;
+    });
+
+    const bounds = L.latLngBounds(L.latLng(48.1, 11.4), L.latLng(48.3, 11.6));
+    const promise = fetchOsmPois(bounds, ["restaurant"]);
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await promise;
+
+    expect(result.pois).toHaveLength(1);
+    expect(result.pois[0]?.id).toBe(88);
+  });
+
+  it("continues to a subsequent mirror when fetch rejects with a non-Error value", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("overpass-api.de")) {
+        throw "network-string-rejection";
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          elements: [{ type: "node", id: 501, lat: 52.1, lon: 8.2, tags: { tourism: "hotel" } }],
+        }),
+      } as Response;
+    });
+
+    const bounds = L.latLngBounds(L.latLng(52.0, 8.1), L.latLng(52.2, 8.3));
+    const promise = fetchOsmPois(bounds, ["hotel"]);
+    await vi.advanceTimersByTimeAsync(400);
+    const result = await promise;
+
+    expect(result.pois).toHaveLength(1);
+    expect(result.pois[0]?.id).toBe(501);
+  });
 });
 
 describe("calculateWaterDistance", () => {
@@ -619,6 +715,171 @@ describe("calculateWaterDistance", () => {
     } as Response);
 
     const out = await calculateWaterDistance(46.95, 7.45);
+    expect(out.distance).toBeNull();
+    expect(out.wassertyp).toBeNull();
+  });
+
+  it("continues to the next mirror after a non-429 HTTP error from primary POST", async () => {
+    let primaryPosts = 0;
+    vi.mocked(globalThis.fetch).mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = typeof init?.body === "string" ? init.body : "";
+      if (body.includes("is_in(")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ elements: [] }),
+        } as Response;
+      }
+      if (!body.includes("nwr(around")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ elements: [] }),
+        } as Response;
+      }
+      primaryPosts += 1;
+      if (primaryPosts === 1) {
+        return { ok: false, status: 502, statusText: "Bad Gateway" } as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          elements: [
+            {
+              type: "way",
+              id: 801,
+              tags: { waterway: "river" },
+              geometry: [{ lat: 51.12, lon: 6.95 }],
+            },
+          ],
+        }),
+      } as Response;
+    });
+
+    const out = await calculateWaterDistance(51.0, 7.0);
+    expect(primaryPosts).toBeGreaterThanOrEqual(2);
+    expect(out.wassertyp).toBe("Fluss");
+    expect(out.distance).not.toBeNull();
+  });
+
+  it("waits after HTTP 429 before trying the next primary mirror", async () => {
+    vi.useFakeTimers();
+    try {
+      let primaryPosts = 0;
+      vi.mocked(globalThis.fetch).mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const body = typeof init?.body === "string" ? init.body : "";
+        if (body.includes("is_in(")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ elements: [] }),
+          } as Response;
+        }
+        if (!body.includes("nwr(around")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ elements: [] }),
+          } as Response;
+        }
+        primaryPosts += 1;
+        if (primaryPosts === 1) {
+          return { ok: false, status: 429, statusText: "Too Many" } as Response;
+        }
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            elements: [
+              {
+                type: "way",
+                id: 802,
+                tags: { natural: "water", water: "lake" },
+                geometry: [{ lat: 49.01, lon: 10.51 }],
+              },
+            ],
+          }),
+        } as Response;
+      });
+
+      const p = calculateWaterDistance(49.0, 10.5);
+      await vi.advanceTimersByTimeAsync(850);
+      const out = await p;
+      expect(primaryPosts).toBeGreaterThanOrEqual(2);
+      expect(out.distance).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops primary mirror loop on AbortError and still runs is_in fallback", async () => {
+    let primaryPosts = 0;
+    vi.mocked(globalThis.fetch).mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = typeof init?.body === "string" ? init.body : "";
+      if (body.includes("is_in(")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ elements: [] }),
+        } as Response;
+      }
+      if (!body.includes("nwr(around")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ elements: [] }),
+        } as Response;
+      }
+      primaryPosts += 1;
+      const err = new Error("aborted");
+      err.name = "AbortError";
+      throw err;
+    });
+
+    const out = await calculateWaterDistance(50.2, 10.8);
+    expect(primaryPosts).toBe(1);
+    expect(out.distance).toBeNull();
+    expect(out.wassertyp).toBeNull();
+  });
+
+  it("ignores expired water cache entries and refetches Overpass", async () => {
+    const lat = 47.5;
+    const lon = 8.3;
+    const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+    const stale = {
+      [key]: {
+        distance: 99,
+        wassertyp: "See",
+        timestamp: Date.now() - 25 * 60 * 60 * 1000,
+      },
+    };
+    localStorage.setItem("aquadock_water_cache_v2", JSON.stringify(stale));
+
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ elements: [] }),
+    } as Response);
+
+    await calculateWaterDistance(lat, lon);
+    expect(globalThis.fetch).toHaveBeenCalled();
+  });
+
+  it("returns null when is_in fallback fetch rejects", async () => {
+    vi.mocked(globalThis.fetch).mockImplementation(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = typeof init?.body === "string" ? init.body : "";
+      if (body.includes("is_in(")) {
+        return Promise.reject(new Error("fallback transport"));
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ elements: [] }),
+      } as Response;
+    });
+
+    const out = await calculateWaterDistance(54.2, 12.5);
     expect(out.distance).toBeNull();
     expect(out.wassertyp).toBeNull();
   });

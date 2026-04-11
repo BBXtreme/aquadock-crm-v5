@@ -352,13 +352,21 @@ describe("contactSchema contract (strict, enums, company_id, empty strings)", ()
     expect(toContactInsert(parsed).email).toBeNull();
   });
 
-  it("rejects company_id as empty string before emptyStringToNull runs", () => {
+  it("maps company_id empty string to null before uuid validation", () => {
     const result = contactSchema.safeParse({ ...minimal, company_id: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.company_id).toBeNull();
+      expect(toContactInsert(result.data).company_id).toBeNull();
+    }
   });
 
-  it("rejects email as empty string before emptyStringToNull runs", () => {
+  it("maps email empty string to null before email validation", () => {
     const result = contactSchema.safeParse({ ...minimal, email: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBeNull();
+      expect(toContactInsert(result.data).email).toBeNull();
+    }
   });
 });
