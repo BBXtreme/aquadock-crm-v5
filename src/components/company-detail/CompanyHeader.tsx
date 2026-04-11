@@ -1,8 +1,8 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Sparkles, Trash, Waves } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -20,14 +20,25 @@ interface Props {
   router: { push: (href: string) => void };
   onAddTimeline: () => void;
   onEdit: () => void;
+  onAiEnrich?: () => void;
 }
 
-export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
+export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit, onAiEnrich }: Props) {
   const t = useT("companies");
   const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
   const countryFlag = getCountryFlag(company.land);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [shortcutLabel, setShortcutLabel] = useState("Ctrl+E");
+
+  useEffect(() => {
+    if (typeof navigator === "undefined") {
+      return;
+    }
+    if (/Mac|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setShortcutLabel("⌘E");
+    }
+  }, []);
 
   return (
     <>
@@ -50,6 +61,23 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
           <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
           </Button>
+          {onAiEnrich ? (
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={onAiEnrich}
+              title={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              <span className="inline-flex items-center gap-2">
+                {t("aiEnrich.button")}
+                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:inline-flex">
+                  {shortcutLabel}
+                </kbd>
+              </span>
+            </Button>
+          ) : null}
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" type="button">
