@@ -84,8 +84,9 @@ export function useMapPopupActions() {
   const t = useT("openmap");
   const localeTag = useNumberLocaleTag();
 
-  const openCompanyDetail = (id: string) => {
-    router.push(`/companies/${id}`);
+  const openCompanyDetail = (cid: string, options?: { aiEnrich?: boolean }) => {
+    const suffix = options?.aiEnrich ? "?aiEnrich=1" : "";
+    router.push(`/companies/${cid}${suffix}`);
   };
 
   const viewInOsm = (url: string) => {
@@ -172,7 +173,7 @@ export function useMapPopupActions() {
         description: t("importSuccessDescription"),
         action: {
           label: t("popupOpenCompany"),
-          onClick: () => openCompanyDetail(newCompanyId),
+          onClick: () => openCompanyDetail(newCompanyId, { aiEnrich: true }),
         },
       });
 

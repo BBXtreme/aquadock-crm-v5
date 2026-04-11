@@ -79,6 +79,14 @@ vi.mock("@/lib/actions/companies", () => ({
   deleteCompany: vi.fn(),
 }));
 
+vi.mock("@/lib/actions/company-enrichment", () => ({
+  researchCompanyEnrichment: vi.fn(async () => ({
+    ok: true,
+    data: { aiSummary: null, suggestions: {} },
+    modelUsed: "anthropic/claude-sonnet-4.6",
+  })),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
