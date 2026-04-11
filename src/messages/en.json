@@ -277,7 +277,52 @@
     "tableImportCsv": "CSV",
     "tableContactsNone": "None",
     "tableContactsPrimary": "(primary)",
-    "headerAddTimeline": "Add timeline"
+    "headerAddTimeline": "Add timeline",
+    "detailKpiTotalContacts": "Total contacts",
+    "detailKpiPrimaryContacts": "Primary contacts",
+    "detailKpiOpenReminders": "Open reminders",
+    "detailKpiOverdueReminders": "Overdue reminders",
+    "detailSectionFirmendaten": "Company details",
+    "detailSectionAdresse": "Address",
+    "detailSectionAquadock": "AquaDock data",
+    "detailSectionCrm": "CRM information",
+    "detailLabelFirmenname": "Company name",
+    "detailLabelRechtsform": "Legal form",
+    "detailLabelKundentyp": "Customer type",
+    "detailLabelFirmentyp": "Company type",
+    "detailLabelWebsite": "Website",
+    "detailLabelTelefon": "Phone",
+    "detailLabelEmail": "Email",
+    "detailLabelStrasse": "Street",
+    "detailLabelPlzStadt": "Postal code / city",
+    "detailLabelBundesland": "State / region",
+    "detailLabelLand": "Country",
+    "detailLabelWasserdistanz": "Water distance",
+    "detailLabelWassertyp": "Water type",
+    "detailLabelLatitude": "Latitude",
+    "detailLabelLongitude": "Longitude",
+    "detailLabelOsmId": "OSM ID",
+    "detailOpenMapButton": "Show in OpenMap",
+    "detailMeters": "{meters} m",
+    "detailCrmLabelStatus": "Status",
+    "detailCrmLabelValue": "Value",
+    "detailCrmLabelNotes": "Notes",
+    "detailCrmStatusPlaceholder": "Select status",
+    "detailCrmSaveButton": "Save CRM data",
+    "detailCrmToastSaved": "CRM data saved",
+    "detailCrmToastSaveFailed": "Could not save CRM data",
+    "detailCrmStatus": {
+      "lead": "Lead",
+      "interessant": "Interesting",
+      "qualifiziert": "Qualified",
+      "akquise": "Acquisition",
+      "angebot": "Proposal",
+      "gewonnen": "Won",
+      "verloren": "Lost",
+      "kunde": "Customer",
+      "partner": "Partner",
+      "inaktiv": "Inactive"
+    }
   },
   "contacts": {
     "breadcrumb": "Home → Contacts",
@@ -366,7 +411,11 @@
     "toastPrimaryContactSaved": "Primary contact updated",
     "toastPrimaryContactFailed": "Could not update primary contact",
     "toastCompanyLinkUpdated": "Company updated",
-    "toastContactSaveFailed": "Could not update contact"
+    "toastContactSaveFailed": "Could not update contact",
+    "detailLinkedTitle": "Linked contacts ({count})",
+    "detailAddContact": "Add contact",
+    "detailEmptyLinkedCompany": "No contacts linked to this company.",
+    "detailSavedToast": "Contact saved"
   },
   "reminders": {
     "breadcrumb": "Home → Reminders",
@@ -406,7 +455,15 @@
     "statusOpen": "Open",
     "statusClosed": "Closed",
     "detailBackLink": "Back to reminders",
-    "toastTrashedReminder": "This reminder was moved to the trash."
+    "toastTrashedReminder": "This reminder was moved to the trash.",
+    "detailEmptyCompany": "No reminders for this company.",
+    "detailColTitle": "Title",
+    "detailColDueDate": "Due date",
+    "detailColPriority": "Priority",
+    "detailColStatus": "Status",
+    "detailColActions": "Actions",
+    "detailMetaLine": "Created: {created} · Updated: {updated}",
+    "toastSaved": "Reminder saved"
   },
   "openmap": {
     "loadErrorTitle": "Could not load map",
@@ -719,7 +776,10 @@
     "formContactNone": "No contact",
     "formSubmit": "Submit",
     "formSubmitting": "Submitting…",
-    "formCancel": "Cancel"
+    "formCancel": "Cancel",
+    "detailCardTitle": "Timeline ({count})",
+    "detailNewEntry": "New timeline entry",
+    "detailEmptyCompany": "No timeline entries for this company."
   },
   "layout": {
     "globalSearchTitle": "Global search",
@@ -785,7 +845,8 @@
     "close": "Close",
     "save": "Save",
     "metaCreated": "Created:",
-    "metaUpdated": "Updated:"
+    "metaUpdated": "Updated:",
+    "undo": "Undo"
   },
   "csvImport": {
     "dialogTitle": "Import companies from CSV",

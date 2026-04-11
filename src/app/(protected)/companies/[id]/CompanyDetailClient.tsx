@@ -8,7 +8,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState, useTransition } from "react";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
@@ -36,7 +36,14 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
   const tTimeline = useT("timeline");
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [, startTransition] = useTransition();
   const id = company.id;
+
+  const refreshCompanyDetail = useCallback(() => {
+    startTransition(() => {
+      router.refresh();
+    });
+  }, [router]);
 
   // Add state for dialogs
   const [editCompanyDialogOpen, setEditCompanyDialogOpen] = useState(false);
@@ -89,8 +96,8 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         />
         <CompanyKpiCards company={company} />    
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          <CompanyDetailsCard company={company} />
-          <AquaDockCard company={company} />
+          <CompanyDetailsCard company={company} onCompanyUpdated={refreshCompanyDetail} />
+          <AquaDockCard company={company} onCompanyUpdated={refreshCompanyDetail} />
           <CrmCard company={company} />
         </div>
         <LinkedContactsCard companyId={id} />
@@ -109,6 +116,7 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
             onSuccess={() => {
               setEditCompanyDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["company", id] });
+              refreshCompanyDetail();
             }}
           />
         </DialogContent>

@@ -277,7 +277,52 @@
     "tableImportCsv": "CSV",
     "tableContactsNone": "Nema",
     "tableContactsPrimary": "(primarni)",
-    "headerAddTimeline": "Dodaj na vremensku crtu"
+    "headerAddTimeline": "Dodaj na vremensku crtu",
+    "detailKpiTotalContacts": "Kontakata ukupno",
+    "detailKpiPrimaryContacts": "Primarni kontakti",
+    "detailKpiOpenReminders": "Otvoreni podsjetnici",
+    "detailKpiOverdueReminders": "Dospjeli podsjetnici",
+    "detailSectionFirmendaten": "Podaci tvrtke",
+    "detailSectionAdresse": "Adresa",
+    "detailSectionAquadock": "AquaDock podaci",
+    "detailSectionCrm": "CRM informacije",
+    "detailLabelFirmenname": "Naziv tvrtke",
+    "detailLabelRechtsform": "Pravni oblik",
+    "detailLabelKundentyp": "Vrsta kupca",
+    "detailLabelFirmentyp": "Vrsta tvrtke",
+    "detailLabelWebsite": "Web stranica",
+    "detailLabelTelefon": "Telefon",
+    "detailLabelEmail": "E-pošta",
+    "detailLabelStrasse": "Ulica",
+    "detailLabelPlzStadt": "Poštanski broj / grad",
+    "detailLabelBundesland": "Savezna zemlja / regija",
+    "detailLabelLand": "Zemlja",
+    "detailLabelWasserdistanz": "Udaljenost od vode",
+    "detailLabelWassertyp": "Vrsta vode",
+    "detailLabelLatitude": "Geografska širina",
+    "detailLabelLongitude": "Geografska dužina",
+    "detailLabelOsmId": "OSM ID",
+    "detailOpenMapButton": "Prikaži u OpenMapu",
+    "detailMeters": "{meters} m",
+    "detailCrmLabelStatus": "Status",
+    "detailCrmLabelValue": "Vrijednost",
+    "detailCrmLabelNotes": "Bilješke",
+    "detailCrmStatusPlaceholder": "Odaberite status",
+    "detailCrmSaveButton": "Spremi CRM podatke",
+    "detailCrmToastSaved": "CRM podaci spremljeni",
+    "detailCrmToastSaveFailed": "CRM podatke nije bilo moguće spremiti",
+    "detailCrmStatus": {
+      "lead": "Lead",
+      "interessant": "Zanimljivo",
+      "qualifiziert": "Kvalificirano",
+      "akquise": "Akvizicija",
+      "angebot": "Ponuda",
+      "gewonnen": "Dobiveno",
+      "verloren": "Izgubljeno",
+      "kunde": "Kupac",
+      "partner": "Partner",
+      "inaktiv": "Neaktivno"
+    }
   },
   "contacts": {
     "breadcrumb": "Početna → Kontakti",
@@ -366,7 +411,11 @@
     "toastPrimaryContactSaved": "Primarni kontakt ažuriran",
     "toastPrimaryContactFailed": "Primarni kontakt nije mogao biti ažuriran",
     "toastCompanyLinkUpdated": "Tvrtka ažurirana",
-    "toastContactSaveFailed": "Kontakt nije mogao biti spremljen"
+    "toastContactSaveFailed": "Kontakt nije mogao biti spremljen",
+    "detailLinkedTitle": "Povezani kontakti ({count})",
+    "detailAddContact": "Dodaj kontakt",
+    "detailEmptyLinkedCompany": "Nema kontakata povezanih s ovom tvrtkom.",
+    "detailSavedToast": "Kontakt spremljen"
   },
   "reminders": {
     "breadcrumb": "Početna → Podsjetnici",
@@ -406,7 +455,15 @@
     "statusOpen": "Otvoreno",
     "statusClosed": "Zatvoreno",
     "detailBackLink": "Natrag na podsjetnike",
-    "toastTrashedReminder": "Ovaj je podsjetnik premješten u smeće."
+    "toastTrashedReminder": "Ovaj je podsjetnik premješten u smeće.",
+    "detailEmptyCompany": "Nema podsjetnika za ovu tvrtku.",
+    "detailColTitle": "Naslov",
+    "detailColDueDate": "Rok",
+    "detailColPriority": "Prioritet",
+    "detailColStatus": "Status",
+    "detailColActions": "Radnje",
+    "detailMetaLine": "Stvoreno: {created} · Ažurirano: {updated}",
+    "toastSaved": "Podsjetnik spremljen"
   },
   "openmap": {
     "loadErrorTitle": "Kartu nije bilo moguće učitati",
@@ -719,7 +776,10 @@
     "formContactNone": "Bez kontakta",
     "formSubmit": "Pošalji",
     "formSubmitting": "Slanje…",
-    "formCancel": "Odustani"
+    "formCancel": "Odustani",
+    "detailCardTitle": "Vremenska crta ({count})",
+    "detailNewEntry": "Novi zapis na vremenskoj crti",
+    "detailEmptyCompany": "Nema zapisa na vremenskoj crti za ovu tvrtku."
   },
   "layout": {
     "globalSearchTitle": "Globalna pretraga",
@@ -785,7 +845,8 @@
     "close": "Zatvori",
     "save": "Spremi",
     "metaCreated": "Stvoreno:",
-    "metaUpdated": "Ažurirano:"
+    "metaUpdated": "Ažurirano:",
+    "undo": "Poništi"
   },
   "csvImport": {
     "dialogTitle": "Uvoz tvrtki iz CSV-a",

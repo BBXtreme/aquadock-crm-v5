@@ -14,10 +14,12 @@ import type { Company } from "@/types/database.types";
 
 interface Props {
   company: Company;
+  onCompanyUpdated?: () => void;
 }
 
-export default function CompanyDetailsCard({ company }: Props) {
+export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
+  const tCommon = useT("common");
   const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
   const [adresseEditOpen, setAdresseEditOpen] = useState(false);
 
@@ -57,7 +59,7 @@ export default function CompanyDetailsCard({ company }: Props) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" /> Firmendaten
+              <Building className="w-5 h-5" /> {t("detailSectionFirmendaten")}
             </CardTitle>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setFirmendatenEditOpen(true)}>
@@ -69,15 +71,15 @@ export default function CompanyDetailsCard({ company }: Props) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Firmenname</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelFirmenname")}</div>
               <p className="text-sm text-foreground">{safeDisplay(company.firmenname)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Rechtsform</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelRechtsform")}</div>
               <p className="text-sm text-foreground">{safeDisplay(company.rechtsform)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Kundentyp</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelKundentyp")}</div>
               <p className="text-sm text-foreground">
                 {company.kundentyp
                   ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1)
@@ -85,26 +87,26 @@ export default function CompanyDetailsCard({ company }: Props) {
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Firmentyp</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelFirmentyp")}</div>
               <p className="text-sm text-foreground">{safeDisplay(company.firmentyp)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Website</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelWebsite")}</div>
               <p className="text-sm text-foreground">{formatWebsite(company.website)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Telefon</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelTelefon")}</div>
               <p className="text-sm text-foreground">{formatTelefon(company.telefon)}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Email</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelEmail")}</div>
               <p className="text-sm text-foreground">{formatEmail(company.email)}</p>
             </div>
           </div>
           <hr className="my-4" />
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" /> Adresse
+              <Building className="w-5 h-5" /> {t("detailSectionAdresse")}
             </CardTitle>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
@@ -114,25 +116,25 @@ export default function CompanyDetailsCard({ company }: Props) {
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Straße</div>
-              <p className="text-sm text-foreground">{company.strasse || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelStrasse")}</div>
+              <p className="text-sm text-foreground">{company.strasse || tCommon("dash")}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">PLZ / Stadt</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelPlzStadt")}</div>
               <p className="text-sm text-foreground">
                 {company.plz ? `${company.plz} ` : ""}
-                {company.stadt || "—"}
+                {company.stadt || tCommon("dash")}
               </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Bundesland</div>
-              <p className="text-sm text-foreground">{company.bundesland || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelBundesland")}</div>
+              <p className="text-sm text-foreground">{company.bundesland || tCommon("dash")}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Land</div>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLand")}</div>
               <p className="text-sm text-foreground flex items-center gap-2">
                 {countryFlag && <span className="text-xl">{countryFlag}</span>}
-                {company.land || "—"}
+                {company.land || tCommon("dash")}
               </p>
             </div>
           </div>
@@ -143,7 +145,13 @@ export default function CompanyDetailsCard({ company }: Props) {
           <DialogHeader>
             <DialogTitle>{t("dialogEditFirmendatenTitle")}</DialogTitle>
           </DialogHeader>
-          <FirmendatenEditForm company={company} onSuccess={() => setFirmendatenEditOpen(false)} />
+          <FirmendatenEditForm
+            company={company}
+            onSuccess={() => {
+              onCompanyUpdated?.();
+              setFirmendatenEditOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
       <Dialog open={adresseEditOpen} onOpenChange={setAdresseEditOpen}>
@@ -151,7 +159,13 @@ export default function CompanyDetailsCard({ company }: Props) {
           <DialogHeader>
             <DialogTitle>{t("dialogEditAddressTitle")}</DialogTitle>
           </DialogHeader>
-          <AdresseEditForm company={company} onSuccess={() => setAdresseEditOpen(false)} />
+          <AdresseEditForm
+            company={company}
+            onSuccess={() => {
+              onCompanyUpdated?.();
+              setAdresseEditOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </>

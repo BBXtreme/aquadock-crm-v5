@@ -4,6 +4,7 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -160,6 +161,7 @@ export async function updateCompany(
   const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) throw handleSupabaseError(error, "updateCompany");
+  revalidatePath(`/companies/${id}`, "page");
   return data as Company;
 }
 

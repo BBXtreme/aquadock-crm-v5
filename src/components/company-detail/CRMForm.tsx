@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/types/database.types";
 
@@ -37,18 +38,18 @@ const crmSchema = z.object({
 
 type CRMFormValues = z.infer<typeof crmSchema>;
 
-const statusOptions = [
-  { value: "lead", label: "Lead" },
-  { value: "interessant", label: "Interessant" },
-  { value: "qualifiziert", label: "Qualifiziert" },
-  { value: "akquise", label: "Akquise" },
-  { value: "angebot", label: "Angebot" },
-  { value: "gewonnen", label: "Gewonnen" },
-  { value: "verloren", label: "Verloren" },
-  { value: "kunde", label: "Kunde" },
-  { value: "partner", label: "Partner" },
-  { value: "inaktiv", label: "Inaktiv" },
-];
+const CRM_STATUS_VALUES = [
+  "lead",
+  "interessant",
+  "qualifiziert",
+  "akquise",
+  "angebot",
+  "gewonnen",
+  "verloren",
+  "kunde",
+  "partner",
+  "inaktiv",
+] as const satisfies ReadonlyArray<NonNullable<CRMFormValues["status"]>>;
 
 interface Props {
   company: Company;
@@ -56,12 +57,12 @@ interface Props {
 }
 
 export default function CRMForm({ company, onSuccess }: Props) {
+  const t = useT("companies");
   const queryClient = useQueryClient();
 
   const form = useForm<CRMFormValues>({
     resolver: zodResolver(crmSchema),
     defaultValues: {
-      // Proper type-safe default (no `any`)
       status: company.status as CRMFormValues["status"],
       value: company.value ?? null,
       notes: company.notes || "",
@@ -74,10 +75,11 @@ export default function CRMForm({ company, onSuccess }: Props) {
       const { error } = await supabase.from("companies").update(data).eq("id", company.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["company", company.id] });
-      toast.success("CRM Informationen updated");
+      toast.success(t("detailCrmToastSaved"));
       onSuccess();
     } catch (err) {
-      toast.error("Failed to update", { description: (err as Error).message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("detailCrmToastSaveFailed"), { description: message });
     }
   });
 
@@ -89,17 +91,17 @@ export default function CRMForm({ company, onSuccess }: Props) {
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>{t("detailCrmLabelStatus")}</FormLabel>
               <Select onValueChange={field.onChange} value={field.value || ""}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t("detailCrmStatusPlaceholder")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {statusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {CRM_STATUS_VALUES.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {t(`detailCrmStatus.${value}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -113,7 +115,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
           name="value"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Value</FormLabel>
+              <FormLabel>{t("detailCrmLabelValue")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -131,7 +133,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes</FormLabel>
+              <FormLabel>{t("detailCrmLabelNotes")}</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>
@@ -139,7 +141,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
             </FormItem>
           )}
         />
-        <Button type="submit">Save CRM Data</Button>
+        <Button type="submit">{t("detailCrmSaveButton")}</Button>
       </form>
     </Form>
   );
