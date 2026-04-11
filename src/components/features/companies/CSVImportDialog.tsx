@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { importCompaniesFromCSV } from "@/lib/actions/companies";
-import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { useT } from "@/lib/i18n/use-translations";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 import { parsedCompanyRowsSchema } from "@/lib/validations/csv-import";
@@ -38,7 +37,6 @@ interface CSVImportDialogProps {
 
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
   const t = useT("csvImport");
-  const tCompanies = useT("companies");
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedCompanyRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -46,14 +44,12 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   const [isImporting, setIsImporting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [aiEnrichNewCompanies, setAiEnrichNewCompanies] = useState(false);
   const guideOpenRef = useRef(guideOpen);
   guideOpenRef.current = guideOpen;
 
   useEffect(() => {
     if (!open) {
       setGuideOpen(false);
-      setAiEnrichNewCompanies(false);
       return;
     }
     setPreviewOpen(false);
@@ -140,35 +136,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         return;
       }
       onSuccess?.({ imported: result.imported, errors: [] });
-
-      if (aiEnrichNewCompanies && result.companyIds.length > 0) {
-        const loadingId = toast.loading(
-          tCompanies("aiEnrich.bulkProgressImport", { total: result.companyIds.length }),
-        );
-        const bulk = await bulkResearchCompanyEnrichment({
-          companyIds: result.companyIds,
-          modelMode: "auto",
-        });
-        toast.dismiss(loadingId);
-        if (!bulk.ok) {
-          if (bulk.error === "NOT_AUTHENTICATED") {
-            toast.error(tCompanies("aiEnrich.errorNotAuthenticated"));
-          } else if (bulk.error === "AI_ENRICHMENT_DISABLED") {
-            toast.error(tCompanies("aiEnrich.errorDisabled"));
-          } else if (bulk.error === "AI_ENRICHMENT_RATE_LIMIT") {
-            toast.error(tCompanies("aiEnrich.errorRateLimit"));
-          } else if (bulk.error === "INVALID_INPUT") {
-            toast.error(tCompanies("aiEnrich.errorGeneric"));
-          } else {
-            toast.error(tCompanies("aiEnrich.errorGeneric"));
-          }
-        } else {
-          const ok = bulk.results.filter((r) => r.ok).length;
-          const fail = bulk.results.length - ok;
-          toast.success(tCompanies("aiEnrich.bulkDoneImport", { ok, total: bulk.results.length, fail }));
-        }
-      }
-
       setPreviewOpen(false);
       setParsedRows([]);
       setFile(null);
@@ -273,8 +240,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         rows={parsedRows}
         fileName={file?.name ?? ""}
         isImporting={isImporting}
-        aiEnrichNewCompanies={aiEnrichNewCompanies}
-        onAiEnrichNewCompaniesChange={setAiEnrichNewCompanies}
         onImportNow={handleImport}
         onBackToEdit={handleBackToEdit}
         onCancel={handlePreviewCancel}

@@ -9,13 +9,7 @@ import { resolveCompanyDetail } from "@/lib/actions/companies";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import CompanyDetailClient from "./CompanyDetailClient";
 
-export default async function CompanyDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams?: Promise<{ aiEnrich?: string }>;
-}) {
+export default async function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const supabase = await createServerSupabaseClient();
@@ -29,8 +23,5 @@ export default async function CompanyDetailPage({
     redirect("/companies?trashedCompany=1");
   }
 
-  const sp = searchParams ? await searchParams : {};
-  const initialAiEnrichOpen = sp?.aiEnrich === "1";
-
-  return <CompanyDetailClient company={resolved.company} initialAiEnrichOpen={initialAiEnrichOpen} />;
+  return <CompanyDetailClient company={resolved.company} />;
 }

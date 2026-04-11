@@ -5,11 +5,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { AIEnrichButton } from "@/components/features/companies/ai-enrichment/AIEnrichButton";
-import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -23,22 +21,7 @@ import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
-type CompanyEditFormProps = {
-  company: Company | null;
-  onSuccess?: () => void;
-  aiPrefill?: { version: number; patch: Partial<CompanyForm> } | null;
-  onAiPrefillConsumed?: () => void;
-  /** When set (company detail), AI research opens the parent modal instead of nesting a second dialog. */
-  onRequestAiEnrich?: () => void;
-};
-
-export default function CompanyEditForm({
-  company,
-  onSuccess,
-  aiPrefill,
-  onAiPrefillConsumed,
-  onRequestAiEnrich,
-}: CompanyEditFormProps) {
+export default function CompanyEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
 
   const form = useForm<CompanyForm>({
@@ -111,19 +94,6 @@ export default function CompanyEditForm({
     },
   });
 
-  const [localAiModalOpen, setLocalAiModalOpen] = useState(false);
-  const aiEnrichViaParent = onRequestAiEnrich !== undefined;
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: One-shot merge when parent bumps `aiPrefill.version` only.
-  useEffect(() => {
-    if (!company || !aiPrefill) {
-      return;
-    }
-    const merged: CompanyForm = { ...form.getValues(), ...aiPrefill.patch };
-    form.reset(merged);
-    onAiPrefillConsumed?.();
-  }, [aiPrefill?.version, company?.id]);
-
   // Early return AFTER all hooks
   if (!company) return null;
 
@@ -132,31 +102,8 @@ export default function CompanyEditForm({
   });
 
   return (
-    <>
-      {!aiEnrichViaParent ? (
-        <AIEnrichmentModal
-          company={company}
-          open={localAiModalOpen}
-          onOpenChange={setLocalAiModalOpen}
-          onApplyPatch={(patch) => {
-            const merged: CompanyForm = { ...form.getValues(), ...patch };
-            form.reset(merged);
-          }}
-        />
-      ) : null}
-      <Form {...form}>
+    <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="flex justify-end">
-          <AIEnrichButton
-            onClick={() => {
-              if (aiEnrichViaParent) {
-                onRequestAiEnrich();
-              } else {
-                setLocalAiModalOpen(true);
-              }
-            }}
-          />
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control as Control<CompanyForm>}
@@ -511,6 +458,5 @@ export default function CompanyEditForm({
         </div>
       </form>
     </Form>
-    </>
   );
 }
