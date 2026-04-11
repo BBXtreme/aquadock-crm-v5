@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
+import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
+import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
 import type { EnrichmentModelMode } from "@/lib/ai/company-enrichment-gateway";
 import { useT } from "@/lib/i18n/use-translations";
 import type { CompanyForm } from "@/lib/validations/company";
@@ -158,11 +160,24 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const startTimeoutRef = useRef<number | null>(null);
   const prevOpenRef = useRef(false);
 
+  const usageQuery = useQuery({
+    queryKey: ["ai-enrichment-settings-snapshot"],
+    queryFn: async () => {
+      const res = await getAiEnrichmentSettingsSnapshot();
+      if (!res.ok) {
+        return null;
+      }
+      return res.data;
+    },
+    enabled: open,
+    staleTime: 15_000,
+  });
+
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
     mutationFn: async () => {
       const mode = modelModeRef.current;
       const res = await researchCompanyEnrichment(company.id, {
-        modelMode: mode === "grok_only" ? "grok_only" : undefined,
+        modelMode: mode,
       });
       if (!res.ok) {
         throw new Error(res.error);
@@ -305,6 +320,39 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
             <AlertDescription>{t("aiEnrich.disclaimer")}</AlertDescription>
           </Alert>
 
+          {usageQuery.data ? (
+            <div className="rounded-lg border border-border bg-muted/20 px-4 py-3 sm:px-5">
+              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                {t("aiEnrich.usageHeading")}
+              </p>
+              <p className="mt-1 text-sm tabular-nums text-foreground">
+                {t("aiEnrich.usageLine", {
+                  used: usageQuery.data.usedToday,
+                  limit: usageQuery.data.dailyLimit,
+                })}
+              </p>
+              <Progress
+                value={
+                  usageQuery.data.dailyLimit > 0
+                    ? Math.min(100, Math.round((usageQuery.data.usedToday / usageQuery.data.dailyLimit) * 100))
+                    : 0
+                }
+                className="mt-2 h-1.5"
+                aria-label={t("aiEnrich.usageHeading")}
+              />
+              {usageQuery.data.addressFocusPrioritize ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.addressFocusActive")}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {open && usageQuery.isLoading && !usageQuery.data ? (
+            <div className="space-y-2 rounded-lg border border-border bg-muted/10 px-4 py-3 sm:px-5">
+              <Skeleton key="ai-enrich-usage-skel-line" className="h-4 w-48" />
+              <Skeleton key="ai-enrich-usage-skel-bar" className="h-1.5 w-full" />
+            </div>
+          ) : null}
+
           <div className="flex flex-row items-start justify-between gap-4 rounded-lg border bg-muted/30 px-4 py-3 sm:items-center sm:px-5">
             <div className="flex-1 space-y-1 pr-2">
               <Label htmlFor="ai-enrich-grok-toggle" className="text-sm font-medium">
@@ -359,7 +407,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                     {t("aiEnrich.summaryLabel")}
                   </h3>
                   <p className="mt-2 whitespace-pre-wrap wrap-break-word text-foreground leading-relaxed">
-                    {result.aiSummary.split("\n").map((line, idx) => (
+                    {formatAiEnrichmentSummaryForDisplay(result.aiSummary).split("\n").map((line, idx) => (
                       <Fragment key={`ai-sum-${String(idx)}`}>
                         {idx > 0 ? <br /> : null}
                         {line}

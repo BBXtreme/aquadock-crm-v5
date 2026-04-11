@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
+  bulkResearchContactEnrichmentInputSchema,
   contactEnrichmentAiSchema,
   sanitizeContactEnrichmentOutput,
 } from "@/lib/validations/contact-enrichment";
+
+describe("bulkResearchContactEnrichmentInputSchema", () => {
+  it("accepts up to 50 contact ids", () => {
+    const ids = Array.from({ length: 50 }, () => "00000000-0000-4000-8000-000000000002");
+    const parsed = bulkResearchContactEnrichmentInputSchema.parse({
+      contactIds: ids,
+      modelMode: "auto",
+    });
+    expect(parsed.contactIds).toHaveLength(50);
+    expect(parsed.modelMode).toBe("auto");
+  });
+
+  it("rejects empty id list", () => {
+    const r = bulkResearchContactEnrichmentInputSchema.safeParse({ contactIds: [] });
+    expect(r.success).toBe(false);
+  });
+});
 
 describe("contactEnrichmentAiSchema", () => {
   it("parses minimal valid AI payload", () => {

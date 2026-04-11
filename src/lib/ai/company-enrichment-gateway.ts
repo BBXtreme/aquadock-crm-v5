@@ -64,7 +64,24 @@ function buildEnrichmentResearchDigest(researchResult: {
 export const COMPANY_ENRICHMENT_PRIMARY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
 export const COMPANY_ENRICHMENT_FALLBACK_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
 
-export type EnrichmentModelMode = "auto" | "grok_only";
+/**
+ * Optional override via `AI_ENRICHMENT_GROK_MODEL` (Gateway model id, e.g. `xai/grok-4.1-fast-non-reasoning`)
+ * for Grok-only mode and Claude→Grok fallback. BYOK for xAI remains `AI_ENRICHMENT_XAI_API_KEY`.
+ */
+export function resolveEnrichmentGrokGatewayModelId(): GatewayModelId {
+  const raw = process.env.AI_ENRICHMENT_GROK_MODEL?.trim();
+  if (!raw) {
+    return COMPANY_ENRICHMENT_FALLBACK_MODEL;
+  }
+  return raw as GatewayModelId;
+}
+
+export type EnrichmentModelMode = "auto" | "grok_only" | "claude_only";
+
+/** German instructions appended when address/water proximity focus is enabled (company enrichment). */
+export function buildCompanyEnrichmentAddressFocusInstructions(): string {
+  return `Adress- und Lage-Fokus: Priorisiere verlässliche, quellenbasierte Angaben zu Straße, PLZ, Ort, Bundesland und Land. Prüfe Wasserdistanz und Wassertyp nur bei belastbaren öffentlichen Hinweisen (Karten, Hafeninfos, Presse). Erfinde keine Koordinaten oder Postadressen.`;
+}
 
 type GatewayInstance = NonNullable<ReturnType<typeof createGateway>>;
 
@@ -112,11 +129,20 @@ export async function runCompanyEnrichmentGeneration(params: {
   system: string;
   userPrompt: string;
   modelMode?: EnrichmentModelMode;
+  addressFocusPrioritize?: boolean;
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
   if (!gateway) {
     throw new Error("AI_GATEWAY_MISSING");
   }
+
+  const addressFocus = params.addressFocusPrioritize === true;
+  const system = addressFocus
+    ? `${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions()}`
+    : params.system;
+  const userPrompt = addressFocus
+    ? `${params.userPrompt}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
+    : params.userPrompt;
 
   const tools = {
     perplexity_search: createCompanyEnrichmentPerplexityTool(gateway),
@@ -131,6 +157,8 @@ export async function runCompanyEnrichmentGeneration(params: {
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
 
+  const grokModelId = resolveEnrichmentGrokGatewayModelId();
+
   const runWithModel = async (modelId: GatewayModelId) => {
     // Phase 1: provider-executed Perplexity tool — AI SDK only parses `output` when the last
     // step finishReason is "stop"; tool-only final steps throw AI_NoOutputGeneratedError.
@@ -139,8 +167,8 @@ export async function runCompanyEnrichmentGeneration(params: {
       tools,
       toolChoice: "auto",
       stopWhen: stepCountIs(12),
-      system: params.system,
-      prompt: params.userPrompt,
+      system,
+      prompt: userPrompt,
       ...(providerOptions ? { providerOptions } : {}),
     });
 
@@ -153,7 +181,7 @@ ${digest}`;
 
     const { output: raw } = await generateText({
       model: gateway(modelId),
-      system: params.system,
+      system,
       prompt: structurePrompt,
       output,
       stopWhen: stepCountIs(4),
@@ -166,8 +194,13 @@ ${digest}`;
   };
 
   if (mode === "grok_only") {
-    const result = await runWithModel(COMPANY_ENRICHMENT_FALLBACK_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_FALLBACK_MODEL };
+    const result = await runWithModel(grokModelId);
+    return { result, modelUsed: grokModelId };
+  }
+
+  if (mode === "claude_only") {
+    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
+    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
   }
 
   try {
@@ -177,8 +210,8 @@ ${digest}`;
     if (!shouldRetryWithFallback(first)) {
       throw first;
     }
-    const result = await runWithModel(COMPANY_ENRICHMENT_FALLBACK_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_FALLBACK_MODEL };
+    const result = await runWithModel(grokModelId);
+    return { result, modelUsed: grokModelId };
   }
 }
 
@@ -204,6 +237,7 @@ export async function runContactEnrichmentGeneration(params: {
 
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
+  const grokModelId = resolveEnrichmentGrokGatewayModelId();
 
   const runWithModel = async (modelId: GatewayModelId) => {
     const researchResult = await generateText({
@@ -238,8 +272,13 @@ ${digest}`;
   };
 
   if (mode === "grok_only") {
-    const result = await runWithModel(COMPANY_ENRICHMENT_FALLBACK_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_FALLBACK_MODEL };
+    const result = await runWithModel(grokModelId);
+    return { result, modelUsed: grokModelId };
+  }
+
+  if (mode === "claude_only") {
+    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
+    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
   }
 
   try {
@@ -249,7 +288,7 @@ ${digest}`;
     if (!shouldRetryWithFallback(first)) {
       throw first;
     }
-    const result = await runWithModel(COMPANY_ENRICHMENT_FALLBACK_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_FALLBACK_MODEL };
+    const result = await runWithModel(grokModelId);
+    return { result, modelUsed: grokModelId };
   }
 }

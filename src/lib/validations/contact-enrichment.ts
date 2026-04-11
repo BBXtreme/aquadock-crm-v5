@@ -102,6 +102,15 @@ function validateContactSuggestionValue(
   return { ok: true, value: data as ContactEnrichmentValue };
 }
 
+export const bulkResearchContactEnrichmentInputSchema = z
+  .object({
+    contactIds: z.array(z.string().uuid()).min(1).max(50),
+    modelMode: z.enum(["auto", "grok_only"]).optional(),
+  })
+  .strict();
+
+export type BulkResearchContactEnrichmentInput = z.infer<typeof bulkResearchContactEnrichmentInputSchema>;
+
 export function sanitizeContactEnrichmentOutput(parsed: ContactEnrichmentAiOutput): ContactEnrichmentResult {
   const suggestions: ContactEnrichmentResult["suggestions"] = {};
   const rawSuggestions = parsed.suggestions;

@@ -160,6 +160,15 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
  * Drops any suggestion that does not pass the corresponding `companySchema` field validator
  * (strict subset of company row constraints).
  */
+export const bulkResearchCompanyEnrichmentInputSchema = z
+  .object({
+    companyIds: z.array(z.string().uuid()).min(1).max(50),
+    modelMode: z.enum(["auto", "grok_only"]).optional(),
+  })
+  .strict();
+
+export type BulkResearchCompanyEnrichmentInput = z.infer<typeof bulkResearchCompanyEnrichmentInputSchema>;
+
 export function sanitizeEnrichmentOutput(parsed: CompanyEnrichmentAiOutput): CompanyEnrichmentResult {
   const suggestions: CompanyEnrichmentResult["suggestions"] = {};
   const rawSuggestions = parsed.suggestions;

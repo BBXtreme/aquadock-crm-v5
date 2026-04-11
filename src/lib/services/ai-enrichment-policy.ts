@@ -2,9 +2,11 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
   AI_ENRICHMENT_DAILY_LIMIT_KEY,
   AI_ENRICHMENT_DEFAULT_DAILY_LIMIT,
   AI_ENRICHMENT_ENABLED_KEY,
+  AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import type { Database } from "@/types/database.types";
@@ -28,9 +30,25 @@ function jsonToPositiveInt(value: Json | undefined, fallback: number): number {
   return fallback;
 }
 
+const MODEL_PREFERENCES = ["auto", "claude", "grok"] as const;
+
+export type AiEnrichmentModelPreference = (typeof MODEL_PREFERENCES)[number];
+
+function jsonToModelPreference(value: Json | undefined, fallback: AiEnrichmentModelPreference): AiEnrichmentModelPreference {
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (t === "auto" || t === "claude" || t === "grok") {
+      return t;
+    }
+  }
+  return fallback;
+}
+
 export type AiEnrichmentPolicy = {
   enabled: boolean;
   dailyLimit: number;
+  modelPreference: AiEnrichmentModelPreference;
+  addressFocusPrioritize: boolean;
 };
 
 function parseDefaultDailyLimitFromEnv(): number {
@@ -52,12 +70,19 @@ export async function fetchAiEnrichmentPolicy(
     .from("user_settings")
     .select("key, value")
     .eq("user_id", userId)
-    .in("key", [AI_ENRICHMENT_ENABLED_KEY, AI_ENRICHMENT_DAILY_LIMIT_KEY]);
+    .in("key", [
+      AI_ENRICHMENT_ENABLED_KEY,
+      AI_ENRICHMENT_DAILY_LIMIT_KEY,
+      AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+      AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
+    ]);
 
   if (error) throw handleSupabaseError(error, "fetchAiEnrichmentPolicy");
 
   let enabled = true;
   let dailyLimit = parseDefaultDailyLimitFromEnv();
+  let modelPreference: AiEnrichmentModelPreference = "auto";
+  let addressFocusPrioritize = false;
 
   for (const row of data ?? []) {
     if (row.key === AI_ENRICHMENT_ENABLED_KEY) {
@@ -66,7 +91,13 @@ export async function fetchAiEnrichmentPolicy(
     if (row.key === AI_ENRICHMENT_DAILY_LIMIT_KEY) {
       dailyLimit = jsonToPositiveInt(row.value, dailyLimit);
     }
+    if (row.key === AI_ENRICHMENT_MODEL_PREFERENCE_KEY) {
+      modelPreference = jsonToModelPreference(row.value, modelPreference);
+    }
+    if (row.key === AI_ENRICHMENT_ADDRESS_FOCUS_KEY) {
+      addressFocusPrioritize = jsonToBoolean(row.value, false);
+    }
   }
 
-  return { enabled, dailyLimit };
+  return { enabled, dailyLimit, modelPreference, addressFocusPrioritize };
 }

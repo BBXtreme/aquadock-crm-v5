@@ -1,16 +1,22 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { z } from "zod";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import {
   type EnrichmentModelMode,
   runCompanyEnrichmentGeneration,
 } from "@/lib/ai/company-enrichment-gateway";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
-import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
+import {
+  type AiEnrichmentModelPreference,
+  fetchAiEnrichmentPolicy,
+} from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { CompanyEnrichmentResult } from "@/lib/validations/company-enrichment";
+import {
+  type BulkResearchCompanyEnrichmentInput,
+  bulkResearchCompanyEnrichmentInputSchema,
+  type CompanyEnrichmentResult,
+} from "@/lib/validations/company-enrichment";
 import type { Database } from "@/types/database.types";
 
 export type ResearchCompanyEnrichmentResponse =
@@ -31,17 +37,40 @@ Erfinde keine URLs, Telefonnummern oder Impressumsdaten.
 Wenn du unsicher bist, setze den betreffenden Wert auf null und erkläre kurz in rationale (optional).
 Antworte strukturiert gemäß dem vorgegebenen JSON-Schema (deutsche Inhalte).`;
 
-const bulkResearchCompanyEnrichmentInputSchema = z
-  .object({
-    companyIds: z.array(z.string().uuid()).min(1).max(50),
-    modelMode: z.enum(["auto", "grok_only"]).optional(),
-  })
-  .strict();
+function enrichmentPreferenceToModelMode(preference: AiEnrichmentModelPreference): EnrichmentModelMode {
+  if (preference === "grok") {
+    return "grok_only";
+  }
+  if (preference === "claude") {
+    return "claude_only";
+  }
+  return "auto";
+}
+
+function mergeModalCompanyEnrichmentModelMode(
+  preference: AiEnrichmentModelPreference,
+  modal: EnrichmentModelMode,
+): EnrichmentModelMode {
+  if (modal === "grok_only") {
+    return "grok_only";
+  }
+  return enrichmentPreferenceToModelMode(preference);
+}
+
+function mergeBulkCompanyEnrichmentModelMode(
+  preference: AiEnrichmentModelPreference,
+  bulk: EnrichmentModelMode | undefined,
+): EnrichmentModelMode {
+  if (bulk === "grok_only") {
+    return "grok_only";
+  }
+  return enrichmentPreferenceToModelMode(preference);
+}
 
 async function runCompanyEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   companyId: string,
-  modelMode: EnrichmentModelMode | undefined,
+  run: { modelMode: EnrichmentModelMode; addressFocusPrioritize: boolean },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
     const resolved = await resolveCompanyDetail(companyId, supabase);
@@ -86,7 +115,8 @@ Anforderungen:
     const { result, modelUsed } = await runCompanyEnrichmentGeneration({
       system: SYSTEM_PROMPT,
       userPrompt,
-      modelMode,
+      modelMode: run.modelMode,
+      addressFocusPrioritize: run.addressFocusPrioritize,
     });
 
     return { ok: true, data: result, modelUsed };
@@ -122,7 +152,12 @@ export async function researchCompanyEnrichment(
     }
 
     try {
-      const result = await runCompanyEnrichmentForActiveRow(supabase, companyId, options?.modelMode);
+      const modalMode = options?.modelMode ?? "auto";
+      const effectiveModelMode = mergeModalCompanyEnrichmentModelMode(policy.modelPreference, modalMode);
+      const result = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
+        modelMode: effectiveModelMode,
+        addressFocusPrioritize: policy.addressFocusPrioritize,
+      });
       if (!result.ok) {
         refundEnrichmentSlots(user.id, 1);
       }
@@ -137,7 +172,7 @@ export async function researchCompanyEnrichment(
 }
 
 export async function bulkResearchCompanyEnrichment(
-  input: z.infer<typeof bulkResearchCompanyEnrichmentInputSchema>,
+  input: BulkResearchCompanyEnrichmentInput,
 ): Promise<BulkResearchCompanyEnrichmentResponse> {
   const parsed = bulkResearchCompanyEnrichmentInputSchema.safeParse(input);
   if (!parsed.success) {
@@ -167,10 +202,16 @@ export async function bulkResearchCompanyEnrichment(
     }
 
     try {
-      const modelMode = parsed.data.modelMode;
+      const effectiveModelMode = mergeBulkCompanyEnrichmentModelMode(
+        policy.modelPreference,
+        parsed.data.modelMode,
+      );
       const settled = await Promise.allSettled(
         uniqueIds.map(async (companyId) => {
-          const r = await runCompanyEnrichmentForActiveRow(supabase, companyId, modelMode);
+          const r = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
+            modelMode: effectiveModelMode,
+            addressFocusPrioritize: policy.addressFocusPrioritize,
+          });
           return { companyId, r } as const;
         }),
       );

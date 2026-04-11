@@ -3,7 +3,10 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
+import { buildCompanyEnrichmentAddressFocusInstructions } from "@/lib/ai/company-enrichment-gateway";
 import {
+  bulkResearchCompanyEnrichmentInputSchema,
   companyEnrichmentAiSchema,
   sanitizeEnrichmentOutput,
 } from "@/lib/validations/company-enrichment";
@@ -37,6 +40,43 @@ describe("companyEnrichmentAiSchema", () => {
     });
     expect(parsed.aiSummary).toBeNull();
     expect(parsed.suggestions.email?.value).toBeNull();
+  });
+});
+
+describe("bulkResearchCompanyEnrichmentInputSchema", () => {
+  it("accepts up to 50 unique company ids", () => {
+    const ids = Array.from({ length: 50 }, () => "00000000-0000-4000-8000-000000000001");
+    const parsed = bulkResearchCompanyEnrichmentInputSchema.parse({
+      companyIds: ids,
+      modelMode: "grok_only",
+    });
+    expect(parsed.companyIds).toHaveLength(50);
+    expect(parsed.modelMode).toBe("grok_only");
+  });
+
+  it("rejects more than 50 ids", () => {
+    const ids = Array.from({ length: 51 }, () => "00000000-0000-4000-8000-000000000001");
+    const r = bulkResearchCompanyEnrichmentInputSchema.safeParse({ companyIds: ids });
+    expect(r.success).toBe(false);
+  });
+});
+
+describe("buildCompanyEnrichmentAddressFocusInstructions", () => {
+  it("returns a non-empty German instruction block", () => {
+    const text = buildCompanyEnrichmentAddressFocusInstructions();
+    expect(text.length).toBeGreaterThan(40);
+    expect(text).toContain("Adress");
+  });
+});
+
+describe("formatAiEnrichmentSummaryForDisplay", () => {
+  it("strips C0 controls except newline and tab", () => {
+    const out = formatAiEnrichmentSummaryForDisplay("Line one\u0007\nLine two");
+    expect(out).toBe("Line one\nLine two");
+  });
+
+  it("flattens common markdown emphasis markers", () => {
+    expect(formatAiEnrichmentSummaryForDisplay("**Bold** and *italic*")).toBe("Bold and italic");
   });
 });
 

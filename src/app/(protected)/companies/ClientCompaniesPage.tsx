@@ -338,6 +338,8 @@ function ClientCompaniesPage() {
           toast.error(t("aiEnrich.errorDisabled"));
         } else if (res.error === "AI_ENRICHMENT_RATE_LIMIT") {
           toast.error(t("aiEnrich.errorRateLimit"));
+        } else if (res.error === "AI_GATEWAY_MISSING") {
+          toast.error(t("aiEnrich.errorNoGateway"));
         } else {
           toast.error(t("aiEnrich.errorGeneric"));
         }

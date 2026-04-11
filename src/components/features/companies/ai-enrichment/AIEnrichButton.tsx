@@ -36,6 +36,7 @@ export function AIEnrichButton({ onClick, disabled, pending, className }: Props)
       onClick={onClick}
       disabled={disabled || pending}
       aria-busy={pending ? true : undefined}
+      aria-keyshortcuts="Meta+E Control+E"
       title={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
     >
       <Sparkles className="mr-2 h-4 w-4" />

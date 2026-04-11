@@ -157,6 +157,8 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
             toast.error(tCompanies("aiEnrich.errorDisabled"));
           } else if (bulk.error === "AI_ENRICHMENT_RATE_LIMIT") {
             toast.error(tCompanies("aiEnrich.errorRateLimit"));
+          } else if (bulk.error === "AI_GATEWAY_MISSING") {
+            toast.error(tCompanies("aiEnrich.errorNoGateway"));
           } else if (bulk.error === "INVALID_INPUT") {
             toast.error(tCompanies("aiEnrich.errorGeneric"));
           } else {
