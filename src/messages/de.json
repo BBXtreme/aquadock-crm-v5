@@ -277,7 +277,52 @@
     "tableImportCsv": "CSV",
     "tableContactsNone": "Keine",
     "tableContactsPrimary": "(Primär)",
-    "headerAddTimeline": "Timeline-Eintrag"
+    "headerAddTimeline": "Timeline-Eintrag",
+    "detailKpiTotalContacts": "Kontakte gesamt",
+    "detailKpiPrimaryContacts": "Hauptkontakte",
+    "detailKpiOpenReminders": "Offene Erinnerungen",
+    "detailKpiOverdueReminders": "Überfällige Erinnerungen",
+    "detailSectionFirmendaten": "Firmendaten",
+    "detailSectionAdresse": "Adresse",
+    "detailSectionAquadock": "AquaDock-Daten",
+    "detailSectionCrm": "CRM-Informationen",
+    "detailLabelFirmenname": "Firmenname",
+    "detailLabelRechtsform": "Rechtsform",
+    "detailLabelKundentyp": "Kundentyp",
+    "detailLabelFirmentyp": "Firmentyp",
+    "detailLabelWebsite": "Website",
+    "detailLabelTelefon": "Telefon",
+    "detailLabelEmail": "E-Mail",
+    "detailLabelStrasse": "Straße",
+    "detailLabelPlzStadt": "PLZ / Stadt",
+    "detailLabelBundesland": "Bundesland",
+    "detailLabelLand": "Land",
+    "detailLabelWasserdistanz": "Wasserdistanz",
+    "detailLabelWassertyp": "Wassertyp",
+    "detailLabelLatitude": "Breitengrad",
+    "detailLabelLongitude": "Längengrad",
+    "detailLabelOsmId": "OSM-ID",
+    "detailOpenMapButton": "In OpenMap anzeigen",
+    "detailMeters": "{meters} m",
+    "detailCrmLabelStatus": "Status",
+    "detailCrmLabelValue": "Wert",
+    "detailCrmLabelNotes": "Notizen",
+    "detailCrmStatusPlaceholder": "Status wählen",
+    "detailCrmSaveButton": "CRM-Daten speichern",
+    "detailCrmToastSaved": "CRM-Daten gespeichert",
+    "detailCrmToastSaveFailed": "CRM-Daten konnten nicht gespeichert werden",
+    "detailCrmStatus": {
+      "lead": "Lead",
+      "interessant": "Interessant",
+      "qualifiziert": "Qualifiziert",
+      "akquise": "Akquise",
+      "angebot": "Angebot",
+      "gewonnen": "Gewonnen",
+      "verloren": "Verloren",
+      "kunde": "Kunde",
+      "partner": "Partner",
+      "inaktiv": "Inaktiv"
+    }
   },
   "contacts": {
     "breadcrumb": "Home → Kontakte",
@@ -366,7 +411,11 @@
     "toastPrimaryContactSaved": "Hauptkontakt aktualisiert",
     "toastPrimaryContactFailed": "Hauptkontakt konnte nicht geändert werden",
     "toastCompanyLinkUpdated": "Unternehmen aktualisiert",
-    "toastContactSaveFailed": "Kontakt konnte nicht gespeichert werden"
+    "toastContactSaveFailed": "Kontakt konnte nicht gespeichert werden",
+    "detailLinkedTitle": "Verknüpfte Kontakte ({count})",
+    "detailAddContact": "Kontakt hinzufügen",
+    "detailEmptyLinkedCompany": "Keine Kontakte mit dieser Firma verknüpft.",
+    "detailSavedToast": "Kontakt gespeichert"
   },
   "reminders": {
     "breadcrumb": "Home → Erinnerungen",
@@ -406,7 +455,15 @@
     "statusOpen": "Offen",
     "statusClosed": "Geschlossen",
     "detailBackLink": "Zurück zu Erinnerungen",
-    "toastTrashedReminder": "Diese Erinnerung wurde in den Papierkorb verschoben."
+    "toastTrashedReminder": "Diese Erinnerung wurde in den Papierkorb verschoben.",
+    "detailEmptyCompany": "Keine Erinnerungen für dieses Unternehmen.",
+    "detailColTitle": "Titel",
+    "detailColDueDate": "Fällig am",
+    "detailColPriority": "Priorität",
+    "detailColStatus": "Status",
+    "detailColActions": "Aktionen",
+    "detailMetaLine": "Erstellt: {created} · Geändert: {updated}",
+    "toastSaved": "Erinnerung gespeichert"
   },
   "openmap": {
     "loadErrorTitle": "Karte konnte nicht geladen werden",
@@ -719,7 +776,10 @@
     "formContactNone": "Kein Kontakt",
     "formSubmit": "Speichern",
     "formSubmitting": "Wird gesendet…",
-    "formCancel": "Abbrechen"
+    "formCancel": "Abbrechen",
+    "detailCardTitle": "Historie ({count})",
+    "detailNewEntry": "Neuer Timeline-Eintrag",
+    "detailEmptyCompany": "Keine Timeline-Einträge für dieses Unternehmen."
   },
   "layout": {
     "globalSearchTitle": "Globale Suche",
@@ -785,7 +845,8 @@
     "close": "Schließen",
     "save": "Speichern",
     "metaCreated": "Erstellt:",
-    "metaUpdated": "Aktualisiert:"
+    "metaUpdated": "Aktualisiert:",
+    "undo": "Rückgängig"
   },
   "csvImport": {
     "dialogTitle": "Unternehmen aus CSV importieren",

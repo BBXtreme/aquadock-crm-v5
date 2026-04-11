@@ -1,6 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createReminder, getReminderById, getReminders, updateReminder } from "./reminders";
+
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  vi.spyOn(console, "group").mockImplementation(() => undefined);
+  vi.spyOn(console, "groupEnd").mockImplementation(() => undefined);
+});
+
+afterEach(() => {
+  vi.mocked(console.error).mockRestore();
+  vi.mocked(console.group).mockRestore();
+  vi.mocked(console.groupEnd).mockRestore();
+});
 
 describe("reminders actions", () => {
   it("getReminders returns data", async () => {
@@ -12,6 +24,16 @@ describe("reminders actions", () => {
       })),
     } as unknown as SupabaseClient;
     await expect(getReminders(client)).resolves.toEqual(rows);
+  });
+
+  it("getReminders returns empty array when data is null without error", async () => {
+    const client = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        is: vi.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    } as unknown as SupabaseClient;
+    await expect(getReminders(client)).resolves.toEqual([]);
   });
 
   it("getReminders throws on error", async () => {

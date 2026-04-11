@@ -12,22 +12,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
-import { formatDateDE, getPriorityLabel, getReminderStatusLabel, safeDisplay } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils";
 import type { Reminder } from "@/types/database.types";
 
 interface Props {
   companyId: string;
 }
 
+function priorityKey(p: string | null | undefined): "priorityHoch" | "priorityNormal" | "priorityNiedrig" {
+  const v = p?.toLowerCase();
+  if (v === "hoch") {
+    return "priorityHoch";
+  }
+  if (v === "niedrig") {
+    return "priorityNiedrig";
+  }
+  return "priorityNormal";
+}
+
+function reminderStatusKey(s: string | null | undefined): "filterOpen" | "filterClosed" {
+  return s?.toLowerCase() === "closed" ? "filterClosed" : "filterOpen";
+}
+
 export default function RemindersCard({ companyId }: Props) {
   const t = useT("reminders");
+  const tCommon = useT("common");
+  const localeTag = useNumberLocaleTag();
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  console.log("RemindersCard companyId:", companyId);
+  const formatDetailDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) {
+      return tCommon("dash");
+    }
+    return new Date(dateStr).toLocaleDateString(localeTag, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
 
   const { data: user } = useSuspenseQuery({
     queryKey: ["user"],
@@ -68,11 +94,6 @@ export default function RemindersCard({ companyId }: Props) {
       const { data, error } = await query.order("due_date", { ascending: true });
       if (error) throw error;
 
-      console.log("🔍 RemindersCard - RAW data from Supabase for company", companyId);
-      console.table(data);
-      if (data && data.length > 0) {
-        console.log("📋 First reminder full object:", data[0]);
-      }
       return data;
     },
     staleTime: 0,
@@ -91,7 +112,7 @@ export default function RemindersCard({ companyId }: Props) {
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
-            label: "Rückgängig",
+            label: tCommon("undo"),
             onClick: () => {
               void restoreReminderWithTrash(id).then(() => {
                 queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
@@ -106,7 +127,7 @@ export default function RemindersCard({ companyId }: Props) {
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Delete failed", { description: message });
+      toast.error(t("toastDeleteFailed"), { description: message });
     },
   });
 
@@ -123,29 +144,29 @@ export default function RemindersCard({ companyId }: Props) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5" />
-              Reminders ({reminders.length})
+              {t("cardTitle", { count: reminders.length })}
             </CardTitle>
             <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Reminder
+              {t("newReminder")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {reminders.length === 0 ? (
-              <p className="text-muted-foreground">No reminders for this company.</p>
+              <p className="text-muted-foreground">{t("detailEmptyCompany")}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left">Title</th>
-                      <th className="text-left">Due Date</th>
-                      <th className="text-left">Priority</th>
-                      <th className="text-left">Status</th>
-                      <th className="text-left">Assigned To</th>
-                      <th className="text-right w-24">Actions</th>
+                      <th className="text-left">{t("detailColTitle")}</th>
+                      <th className="text-left">{t("detailColDueDate")}</th>
+                      <th className="text-left">{t("detailColPriority")}</th>
+                      <th className="text-left">{t("detailColStatus")}</th>
+                      <th className="text-left">{t("assignedTo")}</th>
+                      <th className="text-right w-24">{t("detailColActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -162,11 +183,14 @@ export default function RemindersCard({ companyId }: Props) {
                             </button>
                             {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
                             <div className="text-xs text-muted-foreground">
-                              Created on: {formatDateDE(reminder.created_at)} | Updated on: {formatDateDE(reminder.updated_at)}
+                              {t("detailMetaLine", {
+                                created: formatDetailDate(reminder.created_at),
+                                updated: formatDetailDate(reminder.updated_at),
+                              })}
                             </div>
                           </div>
                         </td>
-                        <td>{formatDateDE(reminder.due_date)}</td>
+                        <td>{formatDetailDate(reminder.due_date)}</td>
                         <td>
                           <Badge
                             className={
@@ -177,15 +201,15 @@ export default function RemindersCard({ companyId }: Props) {
                                   : "bg-muted text-foreground"
                             }
                           >
-                            {getPriorityLabel(reminder.priority)}
+                            {t(priorityKey(reminder.priority))}
                           </Badge>
                         </td>
                         <td>
                           <Badge variant={reminder.status === "open" ? "default" : "secondary"}>
-                            {getReminderStatusLabel(reminder.status)}
+                            {t(reminderStatusKey(reminder.status))}
                           </Badge>
                         </td>
-                        <td>{profiles.find(p => p.id === reminder.assigned_to)?.display_name || "Unassigned"}</td>
+                        <td>{profiles.find(p => p.id === reminder.assigned_to)?.display_name || t("unassigned")}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button
@@ -230,7 +254,7 @@ export default function RemindersCard({ companyId }: Props) {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
-              toast.success("Reminder saved");
+              toast.success(t("toastSaved"));
               setEditReminder(null);
             }}
           />
@@ -248,7 +272,7 @@ export default function RemindersCard({ companyId }: Props) {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
-              toast.success("Reminder saved");
+              toast.success(t("toastSaved"));
               setAddDialogOpen(false);
             }}
           />

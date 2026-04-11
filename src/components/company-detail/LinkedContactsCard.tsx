@@ -20,11 +20,10 @@ interface Props {
 
 export default function LinkedContactsCard({ companyId }: Props) {
   const t = useT("contacts");
+  const tCommon = useT("common");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
-
-  console.log("LinkedContactsCard companyId:", companyId);
 
   const { data: contacts = [] } = useSuspenseQuery({
     queryKey: ["contacts", companyId],
@@ -39,11 +38,6 @@ export default function LinkedContactsCard({ companyId }: Props) {
 
       if (error) throw error;
 
-      console.log("🔍 LinkedContactsCard - RAW data from Supabase for company", companyId);
-      console.table(data);
-      if (data && data.length > 0) {
-        console.log("📋 First contact full object:", data[0]);
-      }
       return data;
     },
     staleTime: 0,
@@ -64,28 +58,28 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <User className="w-5 h-5" />
-              Linked Contacts ({contacts.length})
+              {t("detailLinkedTitle", { count: contacts.length })}
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" /> Add Contact
+              <Plus className="h-4 w-4 mr-2" /> {t("detailAddContact")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {contacts.length === 0 ? (
-              <p className="text-muted-foreground">No contacts linked to this company.</p>
+              <p className="text-muted-foreground">{t("detailEmptyLinkedCompany")}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left">Name</th>
-                      <th className="text-left">Email</th>
-                      <th className="text-left">Phone</th>
-                      <th className="text-left">Mobil</th>
-                      <th className="text-left">Primary</th>
-                      <th className="text-right w-24">Actions</th>
+                      <th className="text-left">{t("tableColName")}</th>
+                      <th className="text-left">{t("tableColEmail")}</th>
+                      <th className="text-left">{t("tableColPhone")}</th>
+                      <th className="text-left">{t("tableColMobile")}</th>
+                      <th className="text-left">{t("tableColPrimary")}</th>
+                      <th className="text-right w-24">{t("tableColActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -93,7 +87,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                       const displayName =
                         [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
                           .filter(Boolean)
-                          .join(" ") || "—";
+                          .join(" ") || tCommon("dash");
 
                       return (
                         <tr key={contact.id}>
@@ -115,12 +109,12 @@ export default function LinkedContactsCard({ companyId }: Props) {
                                 {contact.email}
                               </a>
                             ) : (
-                              "—"
+                              tCommon("dash")
                             )}
                           </td>
-                          <td>{contact.telefon || "—"}</td>
-                          <td>{contact.mobil || "—"}</td>
-                          <td>{contact.is_primary && <Badge variant="secondary">Primary</Badge>}</td>
+                          <td>{contact.telefon || tCommon("dash")}</td>
+                          <td>{contact.mobil || tCommon("dash")}</td>
+                          <td>{contact.is_primary && <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge>}</td>
                           <td className="text-right">
                             <div className="flex justify-end gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
@@ -157,7 +151,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             contact={editContact}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-              toast.success("Contact saved");
+              toast.success(t("detailSavedToast"));
               setEditContact(null);
             }}
           />
@@ -173,7 +167,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             contact={null}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-              toast.success("Contact saved");
+              toast.success(t("detailSavedToast"));
               setAddDialogOpen(false);
             }}
             preselectedCompanyId={companyId}

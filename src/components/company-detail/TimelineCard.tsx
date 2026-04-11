@@ -13,7 +13,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
@@ -23,6 +23,25 @@ interface Props {
 
 export default function TimelineCard({ companyId }: Props) {
   const t = useT("timeline");
+  const tCommon = useT("common");
+  const localeTag = useNumberLocaleTag();
+
+  const activityLabel = (activityType: string) => {
+    switch (activityType) {
+      case "note":
+        return t("activityNote");
+      case "call":
+        return t("activityCall");
+      case "email":
+        return t("activityEmail");
+      case "meeting":
+        return t("activityMeeting");
+      case "reminder":
+        return t("activityReminder");
+      default:
+        return t("activityOther");
+    }
+  };
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,7 +139,7 @@ export default function TimelineCard({ companyId }: Props) {
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
-            label: "Rückgängig",
+            label: tCommon("undo"),
             onClick: () => {
               void restoreTimelineEntryWithTrash(id).then(() => {
                 queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
@@ -156,12 +175,12 @@ export default function TimelineCard({ companyId }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
       queryClient.refetchQueries({ queryKey: ["timeline", companyId] });
-      toast.success("Timeline entry updated");
+      toast.success(t("toastUpdated"));
       setEditEntry(null);
     },
     onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Update failed", { description: message });
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastUpdateFailed"), { description: message });
     },
   });
 
@@ -174,13 +193,13 @@ export default function TimelineCard({ companyId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
-      toast.success("Timeline entry added");
+      toast.success(t("toastCreated"));
       setAddDialogOpen(false);
     },
     onError: (err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message = err instanceof Error ? err.message : t("unknownError");
       console.error("Error creating timeline entry:", err);
-      toast.error("Create failed", { description: message });
+      toast.error(t("toastCreateFailed"), { description: message });
     },
   });
 
@@ -218,30 +237,30 @@ export default function TimelineCard({ companyId }: Props) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Timeline ({timeline.length})
+              {t("detailCardTitle", { count: timeline.length })}
             </CardTitle>
             <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              New Timeline
+              {t("detailNewEntry")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <Suspense fallback={<LoadingState count={5} />}>
             {timeline.length === 0 ? (
-              <p className="text-muted-foreground">No timeline entries for this company.</p>
+              <p className="text-muted-foreground">{t("detailEmptyCompany")}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className="text-left">Date</th>
-                      <th className="text-left">Aktivität</th>
-                      <th className="text-left">Titel</th>
-                      <th className="text-left">Company</th>
-                      <th className="text-left">Contact</th>
-                      <th className="text-left">User</th>
-                      <th className="text-right">Actions</th>
+                      <th className="text-left">{t("colDateTime")}</th>
+                      <th className="text-left">{t("colActivity")}</th>
+                      <th className="text-left">{t("formTitleLabel")}</th>
+                      <th className="text-left">{t("colCompany")}</th>
+                      <th className="text-left">{t("colContact")}</th>
+                      <th className="text-left">{t("colUser")}</th>
+                      <th className="text-right">{t("colActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -249,22 +268,22 @@ export default function TimelineCard({ companyId }: Props) {
                       <tr key={entry.id}>
                         <td>
                           {entry.created_at
-                            ? new Date(entry.created_at).toLocaleString("de-DE", {
+                            ? new Date(entry.created_at).toLocaleString(localeTag, {
                                 dateStyle: "medium",
                                 timeStyle: "short",
                               })
-                            : "—"}
+                            : tCommon("dash")}
                         </td>
                         <td>
                           <Badge variant={getVariant(entry.activity_type)} className="flex items-center gap-1">
                             {getIcon(entry.activity_type)}
-                            {entry.activity_type}
+                            {activityLabel(entry.activity_type)}
                           </Badge>
                         </td>
                         <td>{entry.title}</td>
-                        <td>{entry.companies?.firmenname || "—"}</td>
-                        <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : "—"}</td>
-                        <td>{profiles.find(p => p.id === entry.created_by)?.display_name || "Unassigned"}</td>
+                        <td>{entry.companies?.firmenname || tCommon("dash")}</td>
+                        <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : tCommon("dash")}</td>
+                        <td>{profiles.find(p => p.id === entry.created_by)?.display_name || tCommon("dash")}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

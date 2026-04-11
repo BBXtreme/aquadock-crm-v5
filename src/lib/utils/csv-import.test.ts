@@ -1,12 +1,45 @@
 import Papa from "papaparse";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { type ParsedCompanyRow, parseCSVFile, transformToCompanyInsert } from "./csv-import";
+import {
+  type ParsedCompanyRow,
+  parseCSVFile,
+  parseGermanFloat,
+  stripEmojis,
+  transformToCompanyInsert,
+} from "./csv-import";
 
 vi.mock("papaparse", () => ({
   default: {
     parse: vi.fn(),
   },
 }));
+
+describe("parseGermanFloat", () => {
+  it("returns undefined for empty string, non-string, or unparseable input", () => {
+    expect(parseGermanFloat("")).toBeUndefined();
+    expect(parseGermanFloat(null as unknown as string)).toBeUndefined();
+    expect(parseGermanFloat(undefined as unknown as string)).toBeUndefined();
+    expect(parseGermanFloat(0 as unknown as string)).toBeUndefined();
+    expect(parseGermanFloat("not-a-number")).toBeUndefined();
+  });
+
+  it("parses German thousands and decimal comma", () => {
+    expect(parseGermanFloat("1.234,5")).toBe(1234.5);
+    expect(parseGermanFloat("0,25")).toBe(0.25);
+    expect(parseGermanFloat("42")).toBe(42);
+  });
+});
+
+describe("stripEmojis", () => {
+  it("returns empty string when input is empty", () => {
+    expect(stripEmojis("")).toBe("");
+  });
+
+  it("removes common emoji blocks and trims", () => {
+    expect(stripEmojis("🌊 See")).toBe("See");
+    expect(stripEmojis("Marina ⛵")).toBe("Marina");
+  });
+});
 
 describe("parseCSVFile", () => {
   beforeEach(() => {
@@ -93,6 +126,130 @@ describe("parseCSVFile", () => {
     const file = new File([], "x.csv", { type: "text/csv" });
     await expect(parseCSVFile(file)).rejects.toThrow(/CSV parsing failed/);
   });
+
+  it("passes transformHeader that lowercases and trims column names", async () => {
+    let transformHeader: ((h: string) => string) | undefined;
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        transformHeader?: (h: string) => string;
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      transformHeader = opts.transformHeader;
+      opts.complete({
+        errors: [],
+        data: [{ firmenname: "Co", kundentyp: "marina" }],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    await parseCSVFile(file);
+    if (transformHeader === undefined) {
+      throw new Error("expected transformHeader");
+    }
+    expect(transformHeader("  FirmenNAME  ")).toBe("firmenname");
+  });
+
+  it("aggregates multiple Papa error messages", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [{ message: "first" }, { message: "second" }],
+        data: [],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    await expect(parseCSVFile(file)).rejects.toThrow(/CSV parsing errors: first, second/);
+  });
+
+  it("normalizes CH land code and keeps unmapped country text", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          { firmenname: "Lake AG", kundentyp: "Marina", land: "ch" },
+          { firmenname: "France Co", kundentyp: "Hotel", land: "Frankreich" },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(2);
+    const first = rows[0];
+    const second = rows[1];
+    if (first === undefined || second === undefined) {
+      throw new Error("expected two rows");
+    }
+    expect(first.land).toBe("Schweiz");
+    expect(second.land).toBe("Frankreich");
+  });
+
+  it("drops invalid German-style numbers for distance and coordinates", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          {
+            firmenname: "Bad nums GmbH",
+            kundentyp: "Sonstige",
+            wasser_distanz: "not-a-number",
+            lat: "x",
+            lon: "",
+          },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    if (row === undefined) {
+      throw new Error("expected row");
+    }
+    expect(row.wasser_distanz).toBeUndefined();
+    expect(row.lat).toBeUndefined();
+    expect(row.lon).toBeUndefined();
+  });
+
+  it("skips empty cells and unknown columns", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          {
+            firmenname: "  Trim GmbH  ",
+            kundentyp: "  MARINA ",
+            website: "   ",
+            unknown_column: "ignored",
+          },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    if (row === undefined) {
+      throw new Error("expected row");
+    }
+    expect(row.firmenname).toBe("Trim GmbH");
+    expect(row.kundentyp).toBe("marina");
+    expect(row.website).toBeUndefined();
+  });
 });
 
 describe("transformToCompanyInsert", () => {
@@ -111,5 +268,16 @@ describe("transformToCompanyInsert", () => {
     expect(insert.lon).toBe(2);
     expect(insert.osm).toBe("n1");
     expect(insert.status).toBe("lead");
+  });
+
+  it("maps missing geo fields to null", () => {
+    const row: ParsedCompanyRow = {
+      firmenname: "Y",
+      kundentyp: "lead",
+    };
+    const insert = transformToCompanyInsert(row);
+    expect(insert.lat).toBeNull();
+    expect(insert.lon).toBeNull();
+    expect(insert.osm).toBeNull();
   });
 });

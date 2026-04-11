@@ -7,22 +7,25 @@ import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface Props {
   company: Company;
+  onCompanyUpdated?: () => void;
 }
 
-export default function AquaDockCard({ company }: Props) {
+export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
+  const tCommon = useT("common");
+  const localeTag = useNumberLocaleTag();
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const formatOsmLink = () => {
-    if (!company.osm) return "—";
+    if (!company.osm) return tCommon("dash");
 
     const zoom = 16;
     const lat = company.lat ?? 50.0;
@@ -49,7 +52,7 @@ export default function AquaDockCard({ company }: Props) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Waves className="w-5 h-5" />
-              AquaDock Daten
+              {t("detailSectionAquadock")}
             </CardTitle>
             <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
               <Edit className="h-4 w-4" />
@@ -59,27 +62,34 @@ export default function AquaDockCard({ company }: Props) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Wasserdistanz</div>
-              <p className="text-sm text-foreground">{company.wasserdistanz ? `${company.wasserdistanz} m` : "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelWasserdistanz")}</div>
+              <p className="text-sm text-foreground">
+                {company.wasserdistanz != null
+                  ? t("detailMeters", { meters: company.wasserdistanz })
+                  : tCommon("dash")}
+              </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Wassertyp</div>
-              <p className="text-sm text-foreground">{company.wassertyp || "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelWassertyp")}</div>
+              <p className="text-sm text-foreground">{company.wassertyp || tCommon("dash")}</p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Latitude</div>
-              <p className="text-sm text-foreground">{company.lat ?? "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLatitude")}</div>
+              <p className="text-sm text-foreground">
+                {company.lat != null ? company.lat.toLocaleString(localeTag) : tCommon("dash")}
+              </p>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Longitude</div>
-              <p className="text-sm text-foreground">{company.lon ?? "—"}</p>
+              <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLongitude")}</div>
+              <p className="text-sm text-foreground">
+                {company.lon != null ? company.lon.toLocaleString(localeTag) : tCommon("dash")}
+              </p>
             </div>
             <div className="lg:col-span-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <div className="text-sm font-medium text-muted-foreground">OSM ID</div>
+                  <div className="text-sm font-medium text-muted-foreground">{t("detailLabelOsmId")}</div>
                   <p className="text-sm text-foreground">{formatOsmLink()}</p>
-                </div>
                 </div>
                 <Button
                   type="button"
@@ -94,9 +104,9 @@ export default function AquaDockCard({ company }: Props) {
                   }}
                 >
                   <MapPin className="h-4 w-4 mr-2" />
-                  Show in OpenMap
+                  {t("detailOpenMapButton")}
                 </Button>
-              
+              </div>
             </div>
           </div>
         </CardContent>
@@ -108,7 +118,13 @@ export default function AquaDockCard({ company }: Props) {
           <DialogHeader>
             <DialogTitle>{t("dialogEditAquadockTitle")}</DialogTitle>
           </DialogHeader>
-          <AquaDockEditForm company={company} onSuccess={() => setEditDialogOpen(false)} />
+          <AquaDockEditForm
+            company={company}
+            onSuccess={() => {
+              onCompanyUpdated?.();
+              setEditDialogOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </>

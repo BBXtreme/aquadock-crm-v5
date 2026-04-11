@@ -26,6 +26,16 @@ describe("resolveProfileAvatarMime", () => {
     const f = new File([], "a.bin", { type: "" });
     expect(resolveProfileAvatarMime(f)).toBe("image/jpeg");
   });
+
+  it("infers webp and gif from filename when type is empty", () => {
+    expect(resolveProfileAvatarMime(new File([], "p.webp", { type: "" }))).toBe("image/webp");
+    expect(resolveProfileAvatarMime(new File([], "a.GIF", { type: "" }))).toBe("image/gif");
+  });
+
+  it("infers mime from filename when type is present but not an allowed image type", () => {
+    const f = new File([], "logo.png", { type: "application/octet-stream" });
+    expect(resolveProfileAvatarMime(f)).toBe("image/png");
+  });
 });
 
 describe("allowedAvatarMimeTypes", () => {
@@ -122,5 +132,11 @@ describe("parseProfileAvatarFile", () => {
   it("rejects bad mime", () => {
     const f = new File([new Uint8Array(5)], "x.txt", { type: "text/plain" });
     expect(() => parseProfileAvatarFile(f)).toThrow();
+  });
+
+  it("accepts small png when browser omits file.type but extension is png", () => {
+    const buf = new Uint8Array(10);
+    const f = new File([buf], "avatar.png", { type: "" });
+    expect(() => parseProfileAvatarFile(f)).not.toThrow();
   });
 });

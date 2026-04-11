@@ -52,6 +52,7 @@ describe("appearanceTimeZoneSchema", () => {
 describe("parse helpers", () => {
   it("parseAppearanceTheme returns null for bad input", () => {
     expect(parseAppearanceTheme(null)).toBeNull();
+    expect(parseAppearanceTheme(undefined)).toBeNull();
     expect(parseAppearanceTheme(1)).toBeNull();
     expect(parseAppearanceTheme("nope")).toBeNull();
   });
@@ -64,6 +65,19 @@ describe("parse helpers", () => {
     expect(parseAppearanceLocale("fr")).toBe("de");
   });
 
+  it("parseAppearanceLocale returns null for null, undefined, non-string, and unknown codes", () => {
+    expect(parseAppearanceLocale(null)).toBeNull();
+    expect(parseAppearanceLocale(undefined)).toBeNull();
+    expect(parseAppearanceLocale({})).toBeNull();
+    expect(parseAppearanceLocale("  fr  ")).toBe("de");
+    expect(parseAppearanceLocale("xx")).toBeNull();
+  });
+
+  it("parseAppearanceLocale accepts trimmed supported codes", () => {
+    expect(parseAppearanceLocale("  de  ")).toBe("de");
+    expect(parseAppearanceLocale("en")).toBe("en");
+  });
+
   it("parseAppearanceColorScheme", () => {
     const id = appearanceColorSchemeSchema.options[0];
     if (id === undefined) {
@@ -73,8 +87,22 @@ describe("parse helpers", () => {
     expect(parseAppearanceColorScheme("___")).toBeNull();
   });
 
+  it("parseAppearanceColorScheme returns null for null, undefined, and non-string", () => {
+    expect(parseAppearanceColorScheme(null)).toBeNull();
+    expect(parseAppearanceColorScheme(undefined)).toBeNull();
+    expect(parseAppearanceColorScheme(99)).toBeNull();
+  });
+
   it("parseAppearanceTimeZone", () => {
     expect(parseAppearanceTimeZone("Europe/Berlin")).toBe("Europe/Berlin");
     expect(parseAppearanceTimeZone("bad")).toBeNull();
+  });
+
+  it("parseAppearanceTimeZone returns null for null, undefined, non-string, empty, and invalid IANA", () => {
+    expect(parseAppearanceTimeZone(null)).toBeNull();
+    expect(parseAppearanceTimeZone(undefined)).toBeNull();
+    expect(parseAppearanceTimeZone(true)).toBeNull();
+    expect(parseAppearanceTimeZone("   ")).toBeNull();
+    expect(parseAppearanceTimeZone("Not/AZone")).toBeNull();
   });
 });

@@ -48,6 +48,16 @@ describe("handleSupabaseError", () => {
     expect(err.message).toContain("PGRST116");
   });
 
+  it("uses top-level message when nested error has no extractable strings", () => {
+    const err = handleSupabaseError({ error: { note: "ignored" }, message: "top-level" }, "ctx");
+    expect(err.message).toContain("top-level");
+  });
+
+  it("falls back to unknown when nested error is empty and top has no known fields", () => {
+    const err = handleSupabaseError({ error: {} }, "ctx");
+    expect(err.message).toBe("Database error: An unknown database error occurred");
+  });
+
   it("collects top-level message and hint", () => {
     const err = handleSupabaseError(
       { message: "m", hint: "h", details: "d", code: "c" },
@@ -59,6 +69,17 @@ describe("handleSupabaseError", () => {
   it("falls back to unknown message for empty object", () => {
     const err = handleSupabaseError({}, "ctx");
     expect(err.message).toBe("Database error: An unknown database error occurred");
+    expect(errorSpy.mock.calls.some((c) => c.some((a) => typeof a === "string" && a.includes("empty object")))).toBe(
+      true,
+    );
+  });
+
+  it("logs when error is null or undefined", () => {
+    handleSupabaseError(null, "ctx-null");
+    expect(errorSpy.mock.calls.some((c) => c.some((a) => a === "Error is null or undefined"))).toBe(true);
+
+    handleSupabaseError(undefined, "ctx-undef");
+    expect(errorSpy.mock.calls.some((c) => c.some((a) => a === "Error is null or undefined"))).toBe(true);
   });
 
   it("shows toast in jsdom (browser branch)", () => {
