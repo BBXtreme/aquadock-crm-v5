@@ -39,7 +39,6 @@
       "validationError": "Nevažeća postavka korpe"
     },
     "aiEnrichment": {
-      "sectionTitle": "AI i automatizacija",
       "cardTitle": "AI obogaćivanje",
       "cardDescription": "Upravljajte web-istraživanjem za podatke tvrtki: uključivanje, dnevni limit, željeni jezični model i naglasak na adresama te udaljenosti od vode.",
       "usageHeading": "Potrošnja danas",
@@ -660,7 +659,9 @@
     "importSuccessTitle": "\"{name}\" uspješno stvorena",
     "importSuccessDescription": "Tvrtka je sada dostupna na popisu.",
     "importFailedTitle": "Uvoz \"{name}\" nije uspio",
-    "importNotes": "Uvezeno iz OSM-a {date}"
+    "importNotes": "Uvezeno iz OSM-a {date}",
+    "osmImportTimelineTitle": "Uvoz iz OpenStreetMapa",
+    "osmImportTimelineContent": "Uvezeno iz OpenStreetMapa. Ime, adresa i koordinate preuzeti.\n\nOSM: {osmUrl}"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

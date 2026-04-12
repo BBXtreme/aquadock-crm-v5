@@ -10,6 +10,7 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
+import { AIEnrichmentSettingsCard } from "@/components/features/settings/AIEnrichmentSettingsCard";
 import { AppearanceTimezoneSelect } from "@/components/features/settings/AppearanceTimezoneSelect";
 import {
   applyAppearanceColorTokens,
@@ -23,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
+import type { AiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { saveTrashBinPreferenceAction } from "@/lib/actions/trash-settings";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
@@ -105,7 +107,11 @@ out center;
   return query.trim();
 };
 
-function ClientSettingsPage() {
+type ClientSettingsPageProps = {
+  initialAiEnrichmentSnapshot: AiEnrichmentSettingsSnapshot;
+};
+
+function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageProps) {
   const [selectMounted, setSelectMounted] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
@@ -834,6 +840,8 @@ function ClientSettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <AIEnrichmentSettingsCard initialSnapshot={initialAiEnrichmentSnapshot} />
 
         {/* Map provider (OpenMap basemap) */}
         <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">

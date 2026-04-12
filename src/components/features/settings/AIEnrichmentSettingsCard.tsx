@@ -193,22 +193,15 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   });
 
   return (
-    <section className="space-y-4" aria-labelledby="settings-ai-automation-heading">
-      <h2
-        id="settings-ai-automation-heading"
-        className="text-lg font-semibold tracking-tight text-foreground"
-      >
-        {t("aiEnrichment.sectionTitle")}
-      </h2>
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
-            {t("aiEnrichment.cardTitle")}
-          </CardTitle>
-          <CardDescription className="text-sm leading-relaxed">{t("aiEnrichment.cardDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6" aria-busy={isFetching || saveMutation.isPending}>
+    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Sparkles className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          {t("aiEnrichment.cardTitle")}
+        </CardTitle>
+        <CardDescription className="text-sm leading-relaxed">{t("aiEnrichment.cardDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6" aria-busy={isFetching || saveMutation.isPending}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-1">
               <Label htmlFor="ai-enrich-enabled" className="text-sm font-medium">
@@ -373,8 +366,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

@@ -6,6 +6,7 @@ import type { GatewayModelId } from "@ai-sdk/gateway";
 import { GatewayError } from "@ai-sdk/gateway";
 import { createGateway, generateText, Output, stepCountIs } from "ai";
 
+import { buildCompanyEnrichmentClosedEnumPromptBlock } from "@/lib/ai/company-enrichment-closed-enums";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -262,12 +263,13 @@ export async function runCompanyEnrichmentGeneration(params: {
     "\n\nZusatz (website, email): Nur aus belastbaren Primärquellen (Impressum, offizielle Firmen-Domain, verifizierbare Brancheneinträge). " +
     "website: kanonische URL exakt wie in der Quelle (https nur wenn dort genannt); keine erfundenen Hosts. " +
     "email: nur bei eindeutig korrekter Schreibweise (user@domain); sonst null.";
+  const closedEnumHint = buildCompanyEnrichmentClosedEnumPromptBlock();
 
   const userPrompt = addressFocus
     ? runtime.promptTight
-      ? `${params.userPrompt}${companyContactHint}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
-      : `${params.userPrompt}${companyContactHint}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
-    : `${params.userPrompt}${companyContactHint}`;
+      ? `${params.userPrompt}${companyContactHint}${closedEnumHint}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
+      : `${params.userPrompt}${companyContactHint}${closedEnumHint}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
+    : `${params.userPrompt}${companyContactHint}${closedEnumHint}`;
 
   const tools = {
     perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),

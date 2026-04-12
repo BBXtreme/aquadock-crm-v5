@@ -39,7 +39,6 @@
       "validationError": "Invalid trash bin setting"
     },
     "aiEnrichment": {
-      "sectionTitle": "AI & automation",
       "cardTitle": "AI enrichment",
       "cardDescription": "Control web research for company data: enablement, daily cap, preferred language model, and emphasis on addresses and water proximity.",
       "usageHeading": "Usage today",
@@ -660,7 +659,9 @@
     "importSuccessTitle": "\"{name}\" created successfully",
     "importSuccessDescription": "The company is now available in the list.",
     "importFailedTitle": "Failed to import \"{name}\"",
-    "importNotes": "Imported from OSM on {date}"
+    "importNotes": "Imported from OSM on {date}",
+    "osmImportTimelineTitle": "OpenStreetMap import",
+    "osmImportTimelineContent": "Imported from OpenStreetMap. Name, address, and coordinates were taken over.\n\nOSM: {osmUrl}"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

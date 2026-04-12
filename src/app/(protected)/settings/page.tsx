@@ -3,7 +3,6 @@
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
 import { Suspense } from "react";
-import { AIEnrichmentSettingsCard } from "@/components/features/settings/AIEnrichmentSettingsCard";
 import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
@@ -30,10 +29,8 @@ export default async function SettingsPage() {
       <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
         <SettingsPageHeader displayName={user.display_name} />
 
-        <AIEnrichmentSettingsCard initialSnapshot={initialAiEnrichmentSnapshot} />
-
         <Suspense fallback={<SettingsPageSkeleton />}>
-          <ClientSettingsPage />
+          <ClientSettingsPage initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot} />
         </Suspense>
       </div>
     </div>

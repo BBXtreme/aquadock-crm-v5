@@ -3,7 +3,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -176,21 +176,6 @@ function resolveCompanyAiEnrichmentErrorMessage(
   return t("aiEnrich.errorGeneric");
 }
 
-function modalShowsGrokBilling(
-  snapshot:
-    | { primaryGatewayModelId: string; lowCostMode?: boolean }
-    | null
-    | undefined,
-): boolean {
-  if (!snapshot) {
-    return false;
-  }
-  if (snapshot.lowCostMode === true) {
-    return true;
-  }
-  return snapshot.primaryGatewayModelId.startsWith("xai/");
-}
-
 /** Vercel AI Gateway credits when primary is not xAI-only, or low-cost (Gemini path) is on. */
 function shouldShowVercelAiCreditsInModal(
   snapshot: { primaryGatewayModelId: string; lowCostMode?: boolean } | null | undefined,
@@ -306,6 +291,12 @@ function mergeSuggestionValueIntoPatch(
   }
 }
 
+type EnrichmentMutationPayload = {
+  runGeneration: number;
+  data: CompanyEnrichmentResult;
+  modelUsed: string;
+};
+
 type Props = {
   company: Company;
   open: boolean;
@@ -329,6 +320,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     MODEL_OVERRIDE_DEFAULT,
   );
   const modelOverrideRef = useRef<EnrichmentGatewayModelId | null>(null);
+  const activeRunGenerationRef = useRef(0);
   const runForOpenSessionRef = useRef(false);
   const startTimeoutRef = useRef<number | null>(null);
   const prevOpenRef = useRef(false);
@@ -359,24 +351,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       ? usageQuery.data.primaryGatewayModelId
       : null;
 
-  const xaiBillingContextForBadges = snapshotPrimary?.startsWith("xai/") === true;
-
-  /** Effective routing preview: low-cost → Gemini until `modelUsed` reflects the run; else saved primary or last model. */
+  /** Low-cost settings route this primary until a run reports `modelUsed`. */
   const LOW_COST_PRIMARY_DISPLAY: EnrichmentGatewayModelId = "google/gemini-3-flash";
-  const effectiveModelIdForBadge: EnrichmentGatewayModelId | null =
-    usageQuery.data?.lowCostMode === true && !(modelUsed && isEnrichmentGatewayModelId(modelUsed))
-      ? LOW_COST_PRIMARY_DISPLAY
-      : modelUsed && isEnrichmentGatewayModelId(modelUsed)
-        ? modelUsed
-        : snapshotPrimary;
-
-  const sessionActiveModelLabel = effectiveModelIdForBadge
-    ? getEnrichmentGatewayModelMeta(effectiveModelIdForBadge)?.label ?? effectiveModelIdForBadge
-    : modelUsed ?? usageQuery.data?.primaryGatewayModelId ?? "—";
-
-  const sessionActiveModelBadge = effectiveModelIdForBadge
-    ? getCompanyResearchBadge(effectiveModelIdForBadge, { xaiBillingContext: xaiBillingContextForBadges })
-    : null;
 
   const creditsQuery = useQuery({
     queryKey: ["vercel-ai-gateway-credits"],
@@ -388,7 +364,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   });
 
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (runGeneration: number): Promise<EnrichmentMutationPayload> => {
       const primary = modelOverrideRef.current;
       const res = await researchCompanyEnrichment(company.id, {
         modelMode: "auto",
@@ -397,23 +373,29 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       if (!res.ok) {
         throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
       }
-      return res;
+      return { runGeneration, data: res.data, modelUsed: res.modelUsed };
     },
-    onSuccess: (res) => {
+    onSuccess: (payload) => {
+      if (payload.runGeneration !== activeRunGenerationRef.current) {
+        return;
+      }
       setEnrichmentInlineError(null);
       setEnrichmentFailureDetail(null);
-      setResult(res.data);
-      setModelUsed(res.modelUsed);
+      setResult(payload.data);
+      setModelUsed(payload.modelUsed);
       const next: Partial<Record<EnrichmentFieldKey, boolean>> = {};
       for (const key of ENRICHMENT_FIELD_KEYS) {
-        if (res.data.suggestions[key]) {
+        if (payload.data.suggestions[key]) {
           next[key] = false;
         }
       }
       setSelected(next);
       void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
     },
-    onError: (err) => {
+    onError: (err, runGeneration) => {
+      if (runGeneration !== activeRunGenerationRef.current) {
+        return;
+      }
       const code =
         err instanceof ResearchCompanyEnrichmentClientError
           ? err.message
@@ -433,16 +415,28 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     },
   });
 
-  const mutateRef = useRef(mutate);
-  const resetRef = useRef(reset);
-  mutateRef.current = mutate;
-  resetRef.current = reset;
+  const startEnrichmentRun = useCallback(() => {
+    activeRunGenerationRef.current += 1;
+    const gen = activeRunGenerationRef.current;
+    setProgress(0);
+    setResult(null);
+    setModelUsed(null);
+    setSelected({});
+    setEnrichmentInlineError(null);
+    setEnrichmentFailureDetail(null);
+    reset();
+    mutate(gen);
+  }, [mutate, reset]);
+
+  const startEnrichmentRunRef = useRef(startEnrichmentRun);
+  startEnrichmentRunRef.current = startEnrichmentRun;
 
   useEffect(() => {
     const wasOpen = prevOpenRef.current;
     prevOpenRef.current = open;
 
     if (!open) {
+      activeRunGenerationRef.current = 0;
       setEnrichmentInlineError(null);
       setEnrichmentFailureDetail(null);
       if (startTimeoutRef.current !== null) {
@@ -457,7 +451,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         setSelected({});
         setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
       }
-      resetRef.current();
+      reset();
       return;
     }
     if (runForOpenSessionRef.current) {
@@ -470,7 +464,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       }
       startTimeoutRef.current = null;
       runForOpenSessionRef.current = true;
-      mutateRef.current();
+      startEnrichmentRunRef.current();
     }, 0);
     return () => {
       cancelled = true;
@@ -479,7 +473,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         startTimeoutRef.current = null;
       }
     };
-  }, [open]);
+  }, [open, reset]);
 
   useEffect(() => {
     if (!isPending) {
@@ -521,13 +515,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   }, [result, isPending, modelUsed, usageQuery.data?.lowCostMode, t]);
 
   const handleRetry = () => {
-    setEnrichmentInlineError(null);
-    setEnrichmentFailureDetail(null);
-    setResult(null);
-    setModelUsed(null);
-    setSelected({});
-    reset();
-    mutate();
+    startEnrichmentRun();
   };
 
   const handleApply = () => {
@@ -550,176 +538,132 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   const showSkeleton = open && (isPending || (!result && !isError));
 
+  /** Select shows saved primary (or low-cost / last-run model) when no explicit override is chosen. */
+  const effectiveSelectModelValue = useMemo((): EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT => {
+    if (modelOverridePick !== MODEL_OVERRIDE_DEFAULT) {
+      return modelOverridePick;
+    }
+    if (usageQuery.data === undefined || usageQuery.data === null) {
+      return MODEL_OVERRIDE_DEFAULT;
+    }
+    if (usageQuery.data.lowCostMode === true && !(modelUsed && isEnrichmentGatewayModelId(modelUsed))) {
+      return LOW_COST_PRIMARY_DISPLAY;
+    }
+    if (modelUsed && isEnrichmentGatewayModelId(modelUsed)) {
+      return modelUsed;
+    }
+    if (snapshotPrimary !== null) {
+      return snapshotPrimary;
+    }
+    return MODEL_OVERRIDE_DEFAULT;
+  }, [modelOverridePick, usageQuery.data, modelUsed, snapshotPrimary]);
+
+  const xaiBillingForSelectItems =
+    typeof usageQuery.data?.primaryGatewayModelId === "string" &&
+    usageQuery.data.primaryGatewayModelId.startsWith("xai/");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
-        <div className="shrink-0 space-y-2.5 border-border border-b px-6 pt-14 pb-3 sm:space-y-3 sm:px-8 sm:pt-16 sm:pb-3.5">
-          <DialogHeader className="min-w-0 space-y-1.5 pr-16 text-left sm:pr-20">
-            <DialogTitle className="wrap-break-word text-balance text-base leading-tight sm:text-lg">
+        <div className="max-h-[min(20dvh,240px)] min-h-0 shrink-0 overflow-y-auto border-border border-b px-5 pt-12 pb-2 sm:px-7 sm:pt-14 sm:pb-2">
+          <DialogHeader className="min-w-0 space-y-0.5 pr-14 text-left sm:pr-16">
+            <DialogTitle className="wrap-break-word text-balance text-sm leading-tight sm:text-base">
               {t("aiEnrich.modalTitle")}
             </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed">
+            <DialogDescription className="text-muted-foreground line-clamp-2 text-xs leading-snug">
               {t("aiEnrich.modalDescription")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-2 border-border border-t border-dashed pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-            <div className="min-w-0 flex-1 space-y-1">
-              <Label htmlFor="ai-enrich-model-override" className="text-muted-foreground text-xs font-medium">
+          <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)] sm:items-end sm:gap-3">
+            <div className="min-w-0 space-y-0.5">
+              <Label
+                htmlFor="ai-enrich-model-override"
+                className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase"
+              >
                 {t("aiEnrich.modelOverrideLabel")}
               </Label>
-              <p className="text-muted-foreground text-[11px] leading-snug">{t("aiEnrich.modelOverrideHelp")}</p>
+              <p className="text-muted-foreground line-clamp-1 text-[10px] leading-tight">{t("aiEnrich.modelOverrideHelp")}</p>
               <Select
-                value={modelOverridePick}
+                value={effectiveSelectModelValue}
                 onValueChange={(v) => {
-                  if (v === MODEL_OVERRIDE_DEFAULT) {
-                    setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+                  if (v !== MODEL_OVERRIDE_DEFAULT && !isEnrichmentGatewayModelId(v)) {
                     return;
                   }
-                  if (isEnrichmentGatewayModelId(v)) {
+                  if (v === MODEL_OVERRIDE_DEFAULT && modelOverridePick === MODEL_OVERRIDE_DEFAULT) {
+                    return;
+                  }
+                  if (
+                    modelOverridePick === MODEL_OVERRIDE_DEFAULT &&
+                    v !== MODEL_OVERRIDE_DEFAULT &&
+                    isEnrichmentGatewayModelId(v) &&
+                    v === effectiveSelectModelValue
+                  ) {
+                    return;
+                  }
+                  if (v === modelOverridePick && modelOverridePick !== MODEL_OVERRIDE_DEFAULT) {
+                    return;
+                  }
+                  const nextRef: EnrichmentGatewayModelId | null =
+                    v === MODEL_OVERRIDE_DEFAULT ? null : (v as EnrichmentGatewayModelId);
+                  modelOverrideRef.current = nextRef;
+                  if (v === MODEL_OVERRIDE_DEFAULT) {
+                    setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+                  } else {
                     setModelOverridePick(v);
                   }
+                  startEnrichmentRun();
                 }}
-                disabled={isPending}
               >
-                <SelectTrigger id="ai-enrich-model-override" className="h-9 w-full max-w-md sm:w-72">
+                <SelectTrigger
+                  id="ai-enrich-model-override"
+                  className="h-8 w-full max-w-md sm:max-w-none"
+                  title={t("aiEnrich.modelOverrideHelp")}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   <SelectItem value={MODEL_OVERRIDE_DEFAULT}>{t("aiEnrich.sessionModelDefault")}</SelectItem>
                   {listEnrichmentGatewayModelsOrdered().map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      <ModalOverrideModelSelectItemContent
-                        modelId={m.id}
-                        xaiBillingContext={
-                          typeof usageQuery.data?.primaryGatewayModelId === "string" &&
-                          usageQuery.data.primaryGatewayModelId.startsWith("xai/")
-                        }
-                      />
+                      <ModalOverrideModelSelectItemContent modelId={m.id} xaiBillingContext={xaiBillingForSelectItems} />
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {usageQuery.data ? (
-            <div className="rounded-lg border border-border bg-muted/20 px-4 py-2.5 sm:px-5 sm:py-3">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                {t("aiEnrich.usageHeading")}
-              </p>
-              <p className="mt-1 text-sm tabular-nums text-foreground">
-                {t("aiEnrich.usageLine", {
-                  used: usageQuery.data.usedToday,
-                  limit: usageQuery.data.dailyLimit,
-                })}
-              </p>
-              <Progress
-                value={
-                  usageQuery.data.dailyLimit > 0
-                    ? Math.min(100, Math.round((usageQuery.data.usedToday / usageQuery.data.dailyLimit) * 100))
-                    : 0
-                }
-                className="mt-2 h-1.5"
-                aria-label={t("aiEnrich.usageHeading")}
-              />
-              {showVercelAiCredits ? (
-                creditsQuery.isPending ? (
-                  <Skeleton className="mt-2 h-4 w-56" aria-hidden />
-                ) : creditsQuery.data?.ok === true ? (
-                  <p className="mt-2 text-muted-foreground text-sm tabular-nums leading-snug">
-                    {t("aiEnrich.vercelAiCreditsLine", {
-                      balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
-                      totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
-                    })}{" "}
-                    <a
-                      href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline-offset-4 hover:underline"
-                    >
-                      {t("aiEnrich.vercelAiGatewayDashboardLink")}
-                    </a>
+            {usageQuery.data ? (
+              <div className="min-w-0 space-y-1 rounded-md border border-border bg-muted/15 px-2 py-1.5">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-muted-foreground shrink-0 text-[9px] font-semibold tracking-wide uppercase">
+                    {t("aiEnrich.usageHeading")}
                   </p>
-                ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
-                  <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                    {t("aiEnrich.vercelAiCreditsNotConfigured")}
+                  <p className="text-right text-foreground text-[11px] leading-tight tabular-nums">
+                    {t("aiEnrich.usageLine", {
+                      used: usageQuery.data.usedToday,
+                      limit: usageQuery.data.dailyLimit,
+                    })}
                   </p>
-                ) : creditsQuery.data?.ok === false ? (
-                  <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.vercelAiCreditsUnavailable")}</p>
-                ) : null
-              ) : null}
-              {usageQuery.data.addressFocusPrioritize ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.addressFocusActive")}</p>
-              ) : null}
-              {modalShowsGrokBilling(usageQuery.data) ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                  {t("aiEnrich.grokBillingNotice")}{" "}
-                  <a
-                    href="https://console.x.ai/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("aiEnrich.grokConsoleLinkLabel")}
-                  </a>
-                  .
-                </p>
-              ) : null}
-              <div className="mt-3 flex flex-col gap-3 border-border border-t border-dashed pt-3">
-                <div className="min-w-0 space-y-1">
-                  <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                    {t("aiEnrich.sessionModelHeading")}
-                  </p>
-                  <p className="flex flex-wrap items-center gap-2 text-foreground text-sm tabular-nums">
-                    <span className="min-w-0">{sessionActiveModelLabel}</span>
-                    {sessionActiveModelBadge ? (
-                      <Badge variant={sessionActiveModelBadge.variant} className={sessionActiveModelBadge.className}>
-                        {sessionActiveModelBadge.text}
-                      </Badge>
-                    ) : null}
-                  </p>
-                  <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.sessionModelHint")}</p>
-                  {usageQuery.data?.lowCostMode === true ? (
-                    <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.lowCostModeActiveNotice")}</p>
-                  ) : null}
                 </div>
-              </div>
-            </div>
-          ) : null}
-
-          {enrichmentInlineError ? (
-            <div
-              role="alert"
-              className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
-            >
-              <p className="font-medium text-destructive">{enrichmentInlineError}</p>
-              {enrichmentFailureDetail ? (
-                <div className="space-y-1.5 border-destructive/20 border-t border-dashed pt-2 text-muted-foreground">
-                  <p className="font-mono text-[11px] leading-snug wrap-break-word">
-                    <span className="text-foreground/80">{t("aiEnrich.diagnosticCodeLabel")}:</span>{" "}
-                    {enrichmentFailureDetail.stableCode}
-                    {enrichmentFailureDetail.httpStatus !== undefined ? (
-                      <span>
-                        {" "}
-                        · {t("aiEnrich.diagnosticHttp", { status: String(enrichmentFailureDetail.httpStatus) })}
-                      </span>
-                    ) : null}
-                    {enrichmentFailureDetail.generationId ? (
-                      <span>
-                        {" "}
-                        · {t("aiEnrich.diagnosticGen", { id: enrichmentFailureDetail.generationId })}
-                      </span>
-                    ) : null}
-                  </p>
-                  {enrichmentFailureDetail.gatewayMessage.length > 0 ? (
-                    <p className="max-h-24 overflow-y-auto font-mono text-[11px] leading-snug wrap-break-word opacity-90">
-                      {enrichmentFailureDetail.gatewayMessage}
-                    </p>
-                  ) : null}
-                  {enrichmentFailureDetail.stableCode === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED" ? (
-                    <p className="text-[11px] leading-snug">
-                      {t("aiEnrich.errorVercelCreditsActionHint")}{" "}
+                <Progress
+                  value={
+                    usageQuery.data.dailyLimit > 0
+                      ? Math.min(100, Math.round((usageQuery.data.usedToday / usageQuery.data.dailyLimit) * 100))
+                      : 0
+                  }
+                  className="h-1"
+                  aria-label={t("aiEnrich.usageHeading")}
+                />
+                {showVercelAiCredits ? (
+                  creditsQuery.isPending ? (
+                    <Skeleton className="h-3 w-40" aria-hidden />
+                  ) : creditsQuery.data?.ok === true ? (
+                    <p className="text-muted-foreground text-[10px] leading-tight tabular-nums">
+                      {t("aiEnrich.vercelAiCreditsLine", {
+                        balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
+                        totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
+                      })}{" "}
                       <a
                         href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
                         target="_blank"
@@ -729,40 +673,96 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                         {t("aiEnrich.vercelAiGatewayDashboardLink")}
                       </a>
                     </p>
-                  ) : null}
-                  {enrichmentFailureDetail.tokenUsageHint ? (
-                    <p className="font-mono text-[11px] leading-snug wrap-break-word opacity-90">
-                      {t("aiEnrich.diagnosticTokenUsage", { hint: enrichmentFailureDetail.tokenUsageHint })}
+                  ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
+                    <p className="text-muted-foreground text-[10px] leading-tight">
+                      {t("aiEnrich.vercelAiCreditsNotConfigured")}
                     </p>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {open && usageQuery.isLoading && !usageQuery.data ? (
-            <div className="space-y-2 rounded-lg border border-border bg-muted/10 px-4 py-2.5 sm:px-5 sm:py-3">
-              <Skeleton key="ai-enrich-usage-skel-line" className="h-4 w-48" />
-              <Skeleton key="ai-enrich-usage-skel-bar" className="h-1.5 w-full" />
-            </div>
-          ) : null}
-
-          {isError ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
-                {t("aiEnrich.retry")}
-              </Button>
-            </div>
-          ) : null}
+                  ) : creditsQuery.data?.ok === false ? (
+                    <p className="text-muted-foreground text-[10px] leading-tight">
+                      {t("aiEnrich.vercelAiCreditsUnavailable")}
+                    </p>
+                  ) : null
+                ) : null}
+              </div>
+            ) : open && usageQuery.isLoading && !usageQuery.data ? (
+              <div className="min-w-0 space-y-1 rounded-md border border-border bg-muted/10 px-2 py-1.5">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-1 w-full" />
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-6 py-2.5 sm:px-8 sm:py-3">
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-2 sm:px-7 sm:py-2.5">
+            {isError || enrichmentInlineError ? (
+              <div className="mb-2 shrink-0 space-y-2">
+                <div
+                  role="alert"
+                  className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
+                >
+                  {enrichmentInlineError ? (
+                    <p className="font-medium text-destructive">{enrichmentInlineError}</p>
+                  ) : (
+                    <p className="font-medium text-destructive">{t("aiEnrich.errorGeneric")}</p>
+                  )}
+                  {enrichmentFailureDetail ? (
+                    <div className="space-y-1.5 border-destructive/20 border-t border-dashed pt-2 text-muted-foreground">
+                      <p className="font-mono text-[11px] leading-snug wrap-break-word">
+                        <span className="text-foreground/80">{t("aiEnrich.diagnosticCodeLabel")}:</span>{" "}
+                        {enrichmentFailureDetail.stableCode}
+                        {enrichmentFailureDetail.httpStatus !== undefined ? (
+                          <span>
+                            {" "}
+                            · {t("aiEnrich.diagnosticHttp", { status: String(enrichmentFailureDetail.httpStatus) })}
+                          </span>
+                        ) : null}
+                        {enrichmentFailureDetail.generationId ? (
+                          <span>
+                            {" "}
+                            · {t("aiEnrich.diagnosticGen", { id: enrichmentFailureDetail.generationId })}
+                          </span>
+                        ) : null}
+                      </p>
+                      {enrichmentFailureDetail.gatewayMessage.length > 0 ? (
+                        <p className="max-h-24 overflow-y-auto font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                          {enrichmentFailureDetail.gatewayMessage}
+                        </p>
+                      ) : null}
+                      {enrichmentFailureDetail.stableCode === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED" ? (
+                        <p className="text-[11px] leading-snug">
+                          {t("aiEnrich.errorVercelCreditsActionHint")}{" "}
+                          <a
+                            href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline-offset-4 hover:underline"
+                          >
+                            {t("aiEnrich.vercelAiGatewayDashboardLink")}
+                          </a>
+                        </p>
+                      ) : null}
+                      {enrichmentFailureDetail.tokenUsageHint ? (
+                        <p className="font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                          {t("aiEnrich.diagnosticTokenUsage", { hint: enrichmentFailureDetail.tokenUsageHint })}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
+                    {t("aiEnrich.retry")}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
             {showSkeleton ? (
-              <div className="space-y-4">
+              <div className="shrink-0 space-y-3">
                 <Progress value={progress} className="h-2" />
                 <p className="text-muted-foreground text-sm">{t("aiEnrich.loadingSteps")}</p>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {[
                     "enrich-skeleton-row-1",
                     "enrich-skeleton-row-2",
@@ -778,13 +778,13 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
             ) : null}
 
             {result && !isPending ? (
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 sm:gap-4">
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 sm:gap-3">
                 {result.aiSummary ? (
-                  <section className="shrink-0 rounded-lg border bg-muted/30 px-4 py-3 text-sm shadow-xs sm:px-5 sm:py-3.5">
-                    <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                  <section className="shrink-0 rounded-lg border bg-muted/30 px-3 py-2 text-sm shadow-xs sm:px-4 sm:py-2.5">
+                    <h3 className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
                       {t("aiEnrich.summaryLabel")}
                     </h3>
-                    <p className="mt-2 whitespace-pre-wrap wrap-break-word text-foreground leading-relaxed">
+                    <p className="mt-1.5 whitespace-pre-wrap wrap-break-word text-foreground text-xs leading-relaxed">
                       {formatAiEnrichmentSummaryForDisplay(result.aiSummary).split("\n").map((line, idx) => (
                         <Fragment key={`ai-sum-${String(idx)}`}>
                           {idx > 0 ? <br /> : null}
@@ -795,8 +795,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                   </section>
                 ) : null}
                 {modelUsed ? (
-                  <div className="shrink-0 space-y-1">
-                    <p className="text-muted-foreground text-xs">
+                  <div className="shrink-0 space-y-0.5">
+                    <p className="text-muted-foreground text-[11px]">
                       {t("aiEnrich.modelUsed", {
                         model: isEnrichmentGatewayModelId(modelUsed)
                           ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
@@ -804,7 +804,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                       })}
                     </p>
                     {modelCostHint ? (
-                      <p className="text-muted-foreground text-[11px] leading-snug">{modelCostHint}</p>
+                      <p className="text-muted-foreground text-[10px] leading-snug">{modelCostHint}</p>
                     ) : null}
                   </div>
                 ) : null}
@@ -813,7 +813,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                 ) : (
                   <section
                     aria-label={t("aiEnrich.tableField")}
-                    className="flex min-h-0 min-w-0 flex-1 flex-col gap-2"
+                    className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5"
                   >
                     <h3 className="text-foreground shrink-0 text-sm font-medium">{t("aiEnrich.suggestionsSectionTitle")}</h3>
                     <div className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border border-border bg-card shadow-xs">
@@ -900,8 +900,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
           </div>
         </div>
 
-        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-3 rounded-none border-border border-t bg-muted/40 px-6 py-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4 sm:gap-y-2 sm:px-8 sm:py-4">
-          <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3">
+        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-2 rounded-none border-border border-t bg-muted/40 px-5 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-3 sm:gap-y-2 sm:px-7 sm:py-3">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-2">
             <Button
               type="button"
               variant="outline"

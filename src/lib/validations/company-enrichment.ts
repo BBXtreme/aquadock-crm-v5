@@ -1,6 +1,11 @@
 // Zod schemas for AI company enrichment — strict subset checks against companySchema.shape.*.
 
 import { z } from "zod";
+import {
+  normalizeFirmentypForEnrichment,
+  normalizeKundentypForEnrichment,
+  normalizeWassertypForEnrichment,
+} from "@/lib/ai/company-enrichment-closed-enums";
 import { type CompanyForm, companySchema } from "@/lib/validations/company";
 
 function emptyStringToNull(val: string | null | undefined): string | null | undefined {
@@ -50,14 +55,33 @@ const wasserdistanzSuggestionSchema = z
   })
   .strict();
 
-const kundentypSuggestionSchema = z
-  .object({
-    value: companySchema.shape.kundentyp.nullable().optional(),
-    confidence: confidenceLevelSchema,
-    sources: z.array(sourceSchema).max(5),
-    rationale: rationaleSchema,
-  })
-  .strict();
+/** Closed CRM select fields: model output is coerced to an allowed string or null before sanitize. */
+function closedCrmEnumSuggestionSchema(normalize: (raw: string) => string | null) {
+  return z
+    .object({
+      value: z
+        .union([z.string(), z.null()])
+        .optional()
+        .transform((v): string | null => {
+          if (v === undefined || v === null) {
+            return null;
+          }
+          const s = v.trim();
+          if (s === "") {
+            return null;
+          }
+          return normalize(s);
+        }),
+      confidence: confidenceLevelSchema,
+      sources: z.array(sourceSchema).max(5),
+      rationale: rationaleSchema,
+    })
+    .strict();
+}
+
+const wassertypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeWassertypForEnrichment(s));
+const kundentypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeKundentypForEnrichment(s));
+const firmentypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeFirmentypForEnrichment(s));
 
 export const companyEnrichmentAiSchema = z
   .object({
@@ -80,8 +104,8 @@ export const companyEnrichmentAiSchema = z
         land: stringSuggestion(50).nullable().optional(),
         notes: stringSuggestion(2000).nullable().optional(),
         wasserdistanz: wasserdistanzSuggestionSchema.nullable().optional(),
-        wassertyp: stringSuggestion(50).nullable().optional(),
-        firmentyp: stringSuggestion(20).nullable().optional(),
+        wassertyp: wassertypSuggestionSchema.nullable().optional(),
+        firmentyp: firmentypSuggestionSchema.nullable().optional(),
         kundentyp: kundentypSuggestionSchema.nullable().optional(),
       })
       .strict(),
@@ -125,6 +149,20 @@ function normalizeWebsite(raw: string): string {
   return raw.trim();
 }
 
+function normalizeEnrichmentClosedEnum(
+  key: "wassertyp" | "kundentyp" | "firmentyp",
+  raw: string,
+): string | null {
+  switch (key) {
+    case "wassertyp":
+      return normalizeWassertypForEnrichment(raw);
+    case "kundentyp":
+      return normalizeKundentypForEnrichment(raw);
+    case "firmentyp":
+      return normalizeFirmentypForEnrichment(raw);
+  }
+}
+
 function validateSuggestionValue<K extends EnrichmentFieldKey>(
   key: K,
   raw: string | number | null,
@@ -135,6 +173,19 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
 
   if (key === "wasserdistanz") {
     const parsed = companySchema.shape.wasserdistanz.safeParse(raw);
+    if (!parsed.success) return { ok: false };
+    return { ok: true, value: parsed.data as CompanyForm[K] };
+  }
+
+  if (key === "wassertyp" || key === "kundentyp" || key === "firmentyp") {
+    if (typeof raw !== "string") {
+      return { ok: false };
+    }
+    const normalized = normalizeEnrichmentClosedEnum(key, raw);
+    if (normalized === null) {
+      return { ok: false };
+    }
+    const parsed = companySchema.shape[key].safeParse(normalized);
     if (!parsed.success) return { ok: false };
     return { ok: true, value: parsed.data as CompanyForm[K] };
   }
@@ -157,6 +208,8 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
 /**
  * Drops any suggestion that does not pass the corresponding `companySchema` field validator
  * (strict subset of company row constraints).
+ * Closed CRM selects (`wassertyp`, `kundentyp`, `firmentyp`): AI schema fields use shared closed-enum transforms
+ * (`company-enrichment-closed-enums`); {@link validateSuggestionValue} re-checks against `companySchema`.
  */
 export const bulkResearchCompanyEnrichmentInputSchema = z
   .object({

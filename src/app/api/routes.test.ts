@@ -5,6 +5,8 @@
 import type { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { COMPANY_IMPORT_SOURCE_HEADER, COMPANY_IMPORT_SOURCE_OSM_POI } from "@/lib/constants/company-import-source";
+
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
@@ -16,6 +18,7 @@ afterEach(() => {
 const mockCreateServer = vi.hoisted(() => vi.fn());
 const mockGetCurrentUser = vi.hoisted(() => vi.fn());
 const mockCreateTimelineEntry = vi.hoisted(() => vi.fn());
+const mockServiceCreateTimelineEntry = vi.hoisted(() => vi.fn());
 const mockUpdateTimelineEntry = vi.hoisted(() => vi.fn());
 const mockDeleteTimeline = vi.hoisted(() => vi.fn());
 const mockDeleteContact = vi.hoisted(() => vi.fn());
@@ -39,6 +42,7 @@ vi.mock("@/lib/server/timeline-insert", () => ({
 
 vi.mock("@/lib/services/timeline", () => ({
   updateTimelineEntry: (...args: unknown[]) => mockUpdateTimelineEntry(...args),
+  createTimelineEntry: (...args: unknown[]) => mockServiceCreateTimelineEntry(...args),
 }));
 
 vi.mock("@/lib/actions/crm-trash", () => ({
@@ -365,6 +369,7 @@ describe("/api/reminders", () => {
 describe("POST /api/companies", () => {
   beforeEach(() => {
     mockCreateServer.mockReset();
+    mockServiceCreateTimelineEntry.mockReset();
     vi.stubEnv("NODE_ENV", "development");
   });
 
@@ -433,6 +438,87 @@ describe("POST /api/companies", () => {
     const body = await res.json();
     expect(body.success).toBe(true);
     expect(body.id).toBe("prod-1");
+    expect(mockServiceCreateTimelineEntry).not.toHaveBeenCalled();
+  });
+
+  it("creates OSM import timeline when import header and authenticated user are present", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    mockServiceCreateTimelineEntry.mockResolvedValue({ id: "tl-1", title: "OpenStreetMap import" });
+    const single = vi.fn().mockResolvedValue({
+      data: { id: "c-osm", firmenname: "Marina", osm: "node/123" },
+      error: null,
+    });
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single,
+          })),
+        })),
+      })),
+    });
+    const req = new Request("http://localhost/api/companies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        [COMPANY_IMPORT_SOURCE_HEADER]: COMPANY_IMPORT_SOURCE_OSM_POI,
+        "accept-language": "en-US,en;q=0.9",
+      },
+      body: JSON.stringify({ firmenname: "Marina", kundentyp: "marina", osm: "node/123" }),
+    }) as unknown as NextRequest;
+    const res = await postCompanies(req);
+    expect(res.status).toBe(200);
+    expect(mockServiceCreateTimelineEntry).toHaveBeenCalledTimes(1);
+    expect(mockServiceCreateTimelineEntry.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        company_id: "c-osm",
+        activity_type: "other",
+        user_id: "user-1",
+        content: expect.stringContaining("https://www.openstreetmap.org/node/123"),
+      }),
+    );
+  });
+
+  it("returns 200 when OSM timeline insert fails after company insert", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    mockServiceCreateTimelineEntry.mockRejectedValue(new Error("timeline rls"));
+    const single = vi.fn().mockResolvedValue({
+      data: { id: "c-osm2", firmenname: "Dock", osm: "way/9" },
+      error: null,
+    });
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: "user-1" } },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single,
+          })),
+        })),
+      })),
+    });
+    const req = new Request("http://localhost/api/companies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        [COMPANY_IMPORT_SOURCE_HEADER]: COMPANY_IMPORT_SOURCE_OSM_POI,
+      },
+      body: JSON.stringify({ firmenname: "Dock", kundentyp: "marina", osm: "way/9" }),
+    }) as unknown as NextRequest;
+    const res = await postCompanies(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.id).toBe("c-osm2");
   });
 
   it("returns 400 when Supabase insert returns error", async () => {

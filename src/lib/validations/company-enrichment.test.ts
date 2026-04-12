@@ -4,7 +4,6 @@
 
 import { describe, expect, it } from "vitest";
 import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
-import { buildCompanyEnrichmentAddressFocusInstructions } from "@/lib/ai/company-enrichment-gateway";
 import {
   bulkResearchCompanyEnrichmentInputSchema,
   companyEnrichmentAiSchema,
@@ -61,14 +60,6 @@ describe("bulkResearchCompanyEnrichmentInputSchema", () => {
   });
 });
 
-describe("buildCompanyEnrichmentAddressFocusInstructions", () => {
-  it("returns a non-empty German instruction block", () => {
-    const text = buildCompanyEnrichmentAddressFocusInstructions();
-    expect(text.length).toBeGreaterThan(40);
-    expect(text).toContain("Adress");
-  });
-});
-
 describe("formatAiEnrichmentSummaryForDisplay", () => {
   it("strips C0 controls except newline and tab", () => {
     const out = formatAiEnrichmentSummaryForDisplay("Line one\u0007\nLine two");
@@ -81,18 +72,18 @@ describe("formatAiEnrichmentSummaryForDisplay", () => {
 });
 
 describe("sanitizeEnrichmentOutput", () => {
-  it("drops invalid website URLs", () => {
+  it("drops email that fails companySchema refine", () => {
     const parsed = companyEnrichmentAiSchema.parse({
       suggestions: {
-        website: {
-          value: "not a url",
+        email: {
+          value: "not-an-email",
           confidence: "medium",
           sources: [{ title: "S", url: "https://b.de" }],
         },
       },
     });
     const out = sanitizeEnrichmentOutput(parsed);
-    expect(out.suggestions.website).toBeUndefined();
+    expect(out.suggestions.email).toBeUndefined();
   });
 
   it("accepts bare domain after normalization", () => {
@@ -106,6 +97,81 @@ describe("sanitizeEnrichmentOutput", () => {
       },
     });
     const out = sanitizeEnrichmentOutput(parsed);
-    expect(out.suggestions.website?.value).toBe("https://www.example.com");
+    expect(out.suggestions.website?.value).toBe("www.example.com");
+  });
+
+  it("normalizes wassertyp free-text to allowed CRM enum", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        wassertyp: {
+          value: "lake",
+          confidence: "medium",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.wassertyp?.value).toBe("See");
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.wassertyp?.value).toBe("See");
+  });
+
+  it("drops wassertyp when value cannot be mapped to enum", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        wassertyp: {
+          value: "Brackwasser-XYZ-unbekannt",
+          confidence: "low",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.wassertyp?.value).toBeNull();
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.wassertyp).toBeUndefined();
+  });
+
+  it("normalizes kundentyp label text to allowed CRM enum", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        kundentyp: {
+          value: "  Hotel  ",
+          confidence: "medium",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.kundentyp?.value).toBe("hotel");
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.kundentyp?.value).toBe("hotel");
+  });
+
+  it("normalizes firmentyp synonym to allowed CRM enum", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        firmentyp: {
+          value: "chain",
+          confidence: "high",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.firmentyp?.value).toBe("kette");
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.firmentyp?.value).toBe("kette");
+  });
+
+  it("drops firmentyp when value cannot be mapped", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        firmentyp: {
+          value: "GmbH",
+          confidence: "low",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.firmentyp?.value).toBeNull();
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.firmentyp).toBeUndefined();
   });
 });

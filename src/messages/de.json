@@ -39,7 +39,6 @@
       "validationError": "Ungültige Papierkorb-Einstellung"
     },
     "aiEnrichment": {
-      "sectionTitle": "KI & Automatisierung",
       "cardTitle": "KI-Anreicherung",
       "cardDescription": "Steuern Sie Web-Recherche für Unternehmensdaten: Aktivierung, Tageslimit, bevorzugtes Sprachmodell und Fokus auf Adressen sowie Wassernähe.",
       "usageHeading": "Nutzung heute",
@@ -660,7 +659,9 @@
     "importSuccessTitle": "\"{name}\" erfolgreich angelegt",
     "importSuccessDescription": "Firma ist jetzt in der Liste verfügbar.",
     "importFailedTitle": "Import von \"{name}\" fehlgeschlagen",
-    "importNotes": "Importiert aus OSM am {date}"
+    "importNotes": "Importiert aus OSM am {date}",
+    "osmImportTimelineTitle": "OpenStreetMap-Import",
+    "osmImportTimelineContent": "Aus OpenStreetMap importiert. Name, Adresse und Koordinaten übernommen.\n\nOSM: {osmUrl}"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

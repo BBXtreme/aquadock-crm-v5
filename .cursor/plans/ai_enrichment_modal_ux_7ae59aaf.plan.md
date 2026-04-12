@@ -4,13 +4,13 @@ overview: Tighten [AIEnrichmentModal.tsx](src/components/features/companies/ai-e
 todos:
   - id: layout-compact
     content: "Restructure DialogContent: capped overflow-y header, tighter spacing, optional move error block to main column; flex-1 body with min-h-0 for table dominance"
-    status: pending
+    status: completed
   - id: run-generation
     content: Add runGenerationRef + mutation variables; startEnrichmentRun for open/retry/model change; sync modelOverrideRef in onValueChange; stale onSuccess/onError guard
-    status: pending
+    status: completed
   - id: quality-gate
     content: pnpm typecheck && pnpm check:fix; paste full AIEnrichmentModal.tsx in final reply
-    status: pending
+    status: completed
 isProject: false
 ---
 
@@ -80,3 +80,10 @@ Ensure zero diagnostics; fix any hook dependency warnings Biome reports (e.g. if
 ## Execution deliverable
 
 When implementing (post-approval), output the **full** updated [`AIEnrichmentModal.tsx`](src/components/features/companies/ai-enrichment/AIEnrichmentModal.tsx) as requested, and close with: **All changes pass pnpm typecheck && pnpm check:fix. Ready for review.**
+
+## Confirmed implementation checklist (April 2026)
+
+1. **Header:** `max-h-[min(20dvh,240px)]`, `overflow-y-auto`, reduced padding; title + `DialogDescription` with `text-xs` / `line-clamp-2`; compact model row + condensed usage card (progress `h-1`, merged session model + badge + low-cost / Grok / address lines); no error UI in header.
+2. **Main:** `flex-1 min-h-0 basis-0`; errors + diagnostics + retry at top of main scroll; results column uses `flex-1 min-h-0` with table wrapper `overflow-auto` for dominant table scrolling.
+3. **Runs:** `activeRunGenerationRef` incremented in `startEnrichmentRun`; `mutate(gen)`; `mutationFn(gen)` returns `{ runGeneration, data, modelUsed }`; `onSuccess` / `onError` no-op when `runGeneration !== activeRunGenerationRef.current`; `Select` not disabled while pending; `onValueChange` syncs `modelOverrideRef` then `startEnrichmentRun()` (no-op if value unchanged); open effect + `handleRetry` call `startEnrichmentRunRef`.
+4. **Quality:** `pnpm typecheck && pnpm check:fix` clean; only file touched: `AIEnrichmentModal.tsx`.

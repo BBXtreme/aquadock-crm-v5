@@ -21,6 +21,12 @@ export const firmentypOptions = [
   { value: "einzeln", label: "Einzelbetrieb" },
 ];
 
+/** Canonical `companies.kundentyp` values (aligned with {@link kundentypOptions}). */
+export const KUNDENTYP_ALLOWED_VALUES = kundentypOptions.map((o) => o.value) as [string, ...string[]];
+
+/** Canonical `companies.firmentyp` values (aligned with {@link firmentypOptions}). */
+export const FIRMENTYP_ALLOWED_VALUES = firmentypOptions.map((o) => o.value) as [string, ...string[]];
+
 export const statusOptions = [
   { value: "lead", label: "Lead" },
   { value: "interessant", label: "Interessant" },

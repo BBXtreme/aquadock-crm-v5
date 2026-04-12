@@ -3,6 +3,7 @@
 import type { GatewayModelId } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
+import { buildCompanyEnrichmentClosedEnumPromptBlock } from "@/lib/ai/company-enrichment-closed-enums";
 import {
   type EnrichmentModelMode,
   runCompanyEnrichmentGeneration,
@@ -161,7 +162,9 @@ Anforderungen:
 - Gib pro befülltem Feld confidence (low|medium|high) und mindestens eine Quelle mit echter URL aus den Suchergebnissen.
 - kundentyp nur vorschlagen, wenn die Recherche eindeutig eine bessere CRM-Kategorie nahelegt; sonst null.
 - wasserdistanz nur, wenn seriöse öffentliche Hinweise existieren; sonst null.
-- aiSummary: max. 3 Sätze mit Quellenbezug oder null.`;
+- aiSummary: max. 3 Sätze mit Quellenbezug oder null.
+
+${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
 
     const { result, modelUsed } = await runCompanyEnrichmentGeneration({
       system: SYSTEM_PROMPT,
