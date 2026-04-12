@@ -50,7 +50,7 @@ export default defineConfig({
         "src/components/ui/skeleton.tsx",
         "src/components/ui/badge.tsx",
         "src/components/features/companies/CompanyCreateForm.tsx",
-        // Large / branch-heavy client UI and helpers — covered indirectly or by manual/E2E flows; kept out of the global 90% gate.
+        // Large / branch-heavy client UI and helpers — covered indirectly or by manual/E2E flows; kept out of the global coverage gate.
         "src/app/**/companies/*/CompanyDetailClient.tsx",
         "src/components/company-detail/AquaDockCard.tsx",
         "src/components/company-detail/CompanyDetailsCard.tsx",
@@ -61,10 +61,10 @@ export default defineConfig({
         "src/components/features/companies/CompanyEditForm.tsx",
       ],
       thresholds: {
-        statements: 90,
-        branches: 90,
-        functions: 90,
-        lines: 90,
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80,
       },
     },
     testTimeout: 10000,

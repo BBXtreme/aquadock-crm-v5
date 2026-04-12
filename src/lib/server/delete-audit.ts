@@ -28,7 +28,7 @@ function entityLabel(entity: TrashAuditEntity): string {
   if (entity === "company") return "Unternehmen";
   if (entity === "contact") return "Kontakt";
   if (entity === "reminder") return "Erinnerung";
-  return "Timeline-Eintrag";
+  return "Aktivität";
 }
 
 async function resolveActorDisplayName(
@@ -68,7 +68,7 @@ function buildAuditTitle(
     if (entity === "reminder") {
       return `Erinnerung in Papierkorb verschoben von ${actorDisplay}`;
     }
-    return `Timeline-Eintrag in Papierkorb verschoben von ${actorDisplay}`;
+    return `Aktivität in Papierkorb verschoben von ${actorDisplay}`;
   }
 
   return `${entityLabel(entity)}: ${operationLabel(operation)} (von ${actorDisplay})`;

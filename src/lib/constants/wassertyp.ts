@@ -14,7 +14,71 @@ export const wassertypOptions = [
   { value: "Kanal", label: "Kanal" },
   { value: "Teich", label: "Teich" },
   { value: "Stausee", label: "Stausee" },
+] as const;
+
+/** Canonical CRM strings for `companies.wassertyp` (aligned with {@link wassertypOptions}). */
+export const WASSERTYP_ALLOWED_VALUES = wassertypOptions.map((o) => o.value) as [
+  string,
+  ...string[],
 ];
+
+export type WassertypAllowedValue = (typeof WASSERTYP_ALLOWED_VALUES)[number];
+
+const WASSERTYP_ENRICHMENT_GLOSS: Readonly<Record<string, WassertypAllowedValue>> = {
+  sea: "Küste / Meer",
+  coast: "Küste / Meer",
+  coastal: "Küste / Meer",
+  ocean: "Küste / Meer",
+  river: "Fluss",
+  lake: "See",
+  harbor: "Hafen",
+  harbour: "Hafen",
+  marina: "Hafen",
+  dock: "Hafen",
+  canal: "Kanal",
+  stream: "Bach",
+  pond: "Teich",
+  reservoir: "Stausee",
+  swimming: "Badesee",
+};
+
+/**
+ * Maps AI or import free-text to exactly one {@link WASSERTYP_ALLOWED_VALUES} entry, or null.
+ * Used by enrichment Zod + sanitize; keep in sync with CRM selects.
+ */
+export function normalizeWassertypForEnrichment(raw: string | null | undefined): WassertypAllowedValue | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+  const t = raw.trim();
+  if (t === "") {
+    return null;
+  }
+  for (const v of WASSERTYP_ALLOWED_VALUES) {
+    if (v === t) {
+      return v;
+    }
+  }
+  const lower = t.toLowerCase();
+  for (const v of WASSERTYP_ALLOWED_VALUES) {
+    if (v.toLowerCase() === lower) {
+      return v;
+    }
+  }
+  const collapsed = lower.replace(/\s+/g, " ").trim();
+  for (const v of WASSERTYP_ALLOWED_VALUES) {
+    const vl = v.toLowerCase();
+    if (collapsed === vl || collapsed.includes(vl) || vl.includes(collapsed)) {
+      return v;
+    }
+  }
+  const firstToken = collapsed.split(/[/\s]+/)[0] ?? "";
+  const glossHit = WASSERTYP_ENRICHMENT_GLOSS[firstToken] ?? WASSERTYP_ENRICHMENT_GLOSS[collapsed];
+  if (glossHit !== undefined) {
+    return glossHit;
+  }
+  return null;
+}
 
 /* ============================================= */
 /*  WASSERTYP OSM MAPPING (refined März 2026)   */

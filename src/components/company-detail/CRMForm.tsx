@@ -3,6 +3,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -68,6 +69,14 @@ export default function CRMForm({ company, onSuccess }: Props) {
       notes: company.notes || "",
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      status: company.status as CRMFormValues["status"],
+      value: company.value ?? null,
+      notes: company.notes || "",
+    });
+  }, [company.status, company.value, company.notes, form]);
 
   const onSubmit = form.handleSubmit(async (data) => {
     try {

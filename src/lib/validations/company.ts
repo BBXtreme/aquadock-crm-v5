@@ -27,9 +27,26 @@ export const companySchema = z.object({
     "sonstige"
   ], { required_error: "Kundentyp ist erforderlich" }),
   firmentyp: z.string().trim().max(20, "Firmentyp darf maximal 20 Zeichen lang sein").nullable().optional(),
-  website: z.string().trim().url("Ungültige URL").max(500, "Website darf maximal 500 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
+  website: z
+    .string()
+    .trim()
+    .max(500, "Website darf maximal 500 Zeichen lang sein")
+    .nullable()
+    .optional()
+    .transform(emptyStringToNull)
+    .refine((v) => isValidCompanyWebsiteField(v), "Ungültige URL"),
   telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").nullable().optional(),
-  email: z.string().trim().email("Ungültige E-Mail-Adresse").max(320, "E-Mail darf maximal 320 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
+  email: z
+    .string()
+    .trim()
+    .max(320, "E-Mail darf maximal 320 Zeichen lang sein")
+    .nullable()
+    .optional()
+    .transform(emptyStringToNull)
+    .refine(
+      (v) => v === null || v === undefined || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+      "Ungültige E-Mail-Adresse",
+    ),
   strasse: z.string().trim().max(200, "Straße darf maximal 200 Zeichen lang sein").nullable().optional(),
   plz: z.string().trim().max(10, "PLZ darf maximal 10 Zeichen lang sein").nullable().optional(),
   stadt: z.string().trim().max(100, "Stadt darf maximal 100 Zeichen lang sein").nullable().optional(),
@@ -53,7 +70,7 @@ export const companySchema = z.object({
     "inaktiv"
   ], { required_error: "Status ist erforderlich" }),
   value: z.number().nullable().optional(),
-  notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional(),
+  notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
 }).strict();
 
 export type CompanyFormValues = z.infer<typeof companySchema>;
@@ -106,6 +123,30 @@ export const toCompanyUpdate = (values: CompanyFormValues): CompanyUpdate => ({
 
 function emptyStringToNull(val: string | null | undefined): string | null | undefined {
   return val === "" ? null : val;
+}
+
+/** `https?://…` or bare hostname with a dot (e.g. `www.example.com`), aligned with enrichment `normalizeWebsite`. */
+function isValidCompanyWebsiteField(v: string | null | undefined): boolean {
+  if (v === null || v === undefined) {
+    return true;
+  }
+  if (/[\s<>]/.test(v)) {
+    return false;
+  }
+  try {
+    const u = new URL(v);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    if (!v.includes(".")) {
+      return false;
+    }
+    try {
+      const u = new URL(`https://${v}`);
+      return u.hostname.includes(".") && u.hostname.length >= 3;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export type CompanyForm = z.infer<typeof companySchema>;

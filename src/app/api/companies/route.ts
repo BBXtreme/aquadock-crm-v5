@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 
+import { createOsmImportTimelineForCompany, isOsmPoiCompanyImport } from "@/lib/server/osm-import-timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -51,6 +52,21 @@ export async function POST(request: Request) {
         },
         { status: 500 },
       );
+    }
+
+    if (user && isOsmPoiCompanyImport(request)) {
+      const companyOsm = typeof data.osm === "string" ? data.osm : null;
+      try {
+        await createOsmImportTimelineForCompany({
+          supabase,
+          userId: user.id,
+          companyId: data.id,
+          companyOsm,
+          request,
+        });
+      } catch (timelineErr: unknown) {
+        console.error("[API POST /companies] OSM import timeline insert failed:", timelineErr);
+      }
     }
 
     return NextResponse.json({

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { toast } from "sonner";
+import { COMPANY_IMPORT_SOURCE_HEADER, COMPANY_IMPORT_SOURCE_OSM_POI } from "@/lib/constants/company-import-source";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/map-kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
@@ -59,7 +60,10 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string | null, displ
 
   const res = await fetch("/api/companies", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      [COMPANY_IMPORT_SOURCE_HEADER]: COMPANY_IMPORT_SOURCE_OSM_POI,
+    },
     body: JSON.stringify(formData),
   });
 
@@ -84,8 +88,9 @@ export function useMapPopupActions() {
   const t = useT("openmap");
   const localeTag = useNumberLocaleTag();
 
-  const openCompanyDetail = (id: string) => {
-    router.push(`/companies/${id}`);
+  const openCompanyDetail = (cid: string, options?: { aiEnrich?: boolean }) => {
+    const suffix = options?.aiEnrich ? "?aiEnrich=1" : "";
+    router.push(`/companies/${cid}${suffix}`);
   };
 
   const viewInOsm = (url: string) => {
@@ -172,7 +177,7 @@ export function useMapPopupActions() {
         description: t("importSuccessDescription"),
         action: {
           label: t("popupOpenCompany"),
-          onClick: () => openCompanyDetail(newCompanyId),
+          onClick: () => openCompanyDetail(newCompanyId, { aiEnrich: true }),
         },
       });
 

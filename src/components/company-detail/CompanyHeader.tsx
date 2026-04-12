@@ -1,8 +1,8 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { ArrowLeft, Edit, Plus, Trash, Waves } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Sparkles, Trash, Waves } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -20,14 +20,25 @@ interface Props {
   router: { push: (href: string) => void };
   onAddTimeline: () => void;
   onEdit: () => void;
+  onAiEnrich?: () => void;
 }
 
-export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit }: Props) {
+export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit, onAiEnrich }: Props) {
   const t = useT("companies");
   const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
   const countryFlag = getCountryFlag(company.land);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [shortcutLabel, setShortcutLabel] = useState("Ctrl+E");
+
+  useEffect(() => {
+    if (typeof navigator === "undefined") {
+      return;
+    }
+    if (/Mac|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      setShortcutLabel("⌘E");
+    }
+  }, []);
 
   return (
     <>
@@ -45,11 +56,24 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
-            <Plus className="h-4 w-4 mr-2" /> {t("headerAddTimeline")}
+            <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+            {t("headerAddTimeline")}
           </Button>
           <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
           </Button>
+          {onAiEnrich ? (
+            <Button
+              variant="outline"
+              size="icon-sm"
+              type="button"
+              onClick={onAiEnrich}
+              aria-label={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
+              title={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
+            >
+              <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+            </Button>
+          ) : null}
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" type="button">

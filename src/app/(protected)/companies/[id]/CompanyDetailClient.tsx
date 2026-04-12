@@ -1,7 +1,4 @@
 // src/app/(protected)/companies/[id]/CompanyDetailClient.tsx
-// This file defines the CompanyDetailClient component, which is responsible for rendering the detailed view of a single company.
-// It receives the company data as props and renders various cards and sections related to the company's information, linked contacts, reminders, and timeline events.
-// The component also handles any necessary client-side interactions and state management for the company detail view.  
 // Client wrapper for Company Detail page, handling interactive parts and sub-queries.
 
 "use client";
@@ -17,21 +14,24 @@ import CrmCard from "@/components/company-detail/CrmCard";
 import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
 import RemindersCard from "@/components/company-detail/RemindersCard";
 import TimelineCard from "@/components/company-detail/TimelineCard";
+import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import type { CompanyForm } from "@/lib/validations/company";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 interface CompanyDetailClientProps {
   company: Company;
+  initialAiEnrichOpen?: boolean;
 }
 
-export default function CompanyDetailClient({ company }: CompanyDetailClientProps) {
+export default function CompanyDetailClient({ company, initialAiEnrichOpen = false }: CompanyDetailClientProps) {
   const tCompanies = useT("companies");
   const tTimeline = useT("timeline");
   const router = useRouter();
@@ -45,11 +45,36 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     });
   }, [router]);
 
-  // Add state for dialogs
   const [editCompanyDialogOpen, setEditCompanyDialogOpen] = useState(false);
   const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(initialAiEnrichOpen);
+  const [aiPrefill, setAiPrefill] = useState<{ version: number; patch: Partial<CompanyForm> } | null>(null);
 
-  // Fetch companies and contacts for timeline form (similar to TimelineCard)
+  useEffect(() => {
+    if (!initialAiEnrichOpen) return;
+    router.replace(`/companies/${id}`, { scroll: false });
+  }, [initialAiEnrichOpen, id, router]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "e") {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+      const tag = target.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable) {
+        return;
+      }
+      event.preventDefault();
+      setAiModalOpen(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
@@ -76,13 +101,17 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
     },
   });
 
-  // Optional: Keep sub-queries if needed, but remove refetch hacks
   useEffect(() => {
     if (company?.id) {
       queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
       queryClient.invalidateQueries({ queryKey: ["reminders", company.id] });
     }
   }, [company?.id, queryClient]);
+
+  const handleAiApplyPatch = (patch: Partial<CompanyForm>) => {
+    setAiPrefill({ version: Date.now(), patch });
+    setEditCompanyDialogOpen(true);
+  };
 
   return (
     <Suspense fallback={<LoadingState count={8} />}>
@@ -93,8 +122,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           router={router}
           onAddTimeline={() => setAddTimelineDialogOpen(true)}
           onEdit={() => setEditCompanyDialogOpen(true)}
+          onAiEnrich={() => setAiModalOpen(true)}
         />
-        <CompanyKpiCards company={company} />    
+        <CompanyKpiCards company={company} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           <CompanyDetailsCard company={company} onCompanyUpdated={refreshCompanyDetail} />
           <AquaDockCard company={company} onCompanyUpdated={refreshCompanyDetail} />
@@ -105,7 +135,13 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         <TimelineCard companyId={id} />
       </div>
 
-      {/* Add Edit Company Dialog */}
+      <AIEnrichmentModal
+        company={company}
+        open={aiModalOpen}
+        onOpenChange={setAiModalOpen}
+        onApplyPatch={handleAiApplyPatch}
+      />
+
       <Dialog open={editCompanyDialogOpen} onOpenChange={setEditCompanyDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -113,6 +149,9 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           </DialogHeader>
           <CompanyEditForm
             company={company}
+            aiPrefill={aiPrefill}
+            onAiPrefillConsumed={() => setAiPrefill(null)}
+            onRequestAiEnrich={() => setAiModalOpen(true)}
             onSuccess={() => {
               setEditCompanyDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["company", id] });
@@ -122,7 +161,6 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
         </DialogContent>
       </Dialog>
 
-      {/* Add Timeline Dialog */}
       <Dialog open={addTimelineDialogOpen} onOpenChange={setAddTimelineDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -131,7 +169,6 @@ export default function CompanyDetailClient({ company }: CompanyDetailClientProp
           <TimelineEntryForm
             onSubmit={async (values) => {
               const supabase = createClient();
-              // Assume TimelineEntryForm or insert logic handles user_id; add if needed
               await supabase.from("timeline").insert({ ...values, company_id: id });
               queryClient.invalidateQueries({ queryKey: ["timeline", id] });
               setAddTimelineDialogOpen(false);

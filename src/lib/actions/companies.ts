@@ -110,6 +110,7 @@ export async function resolveCompanyDetail(
     .select(`
       id, firmenname, status, kundentyp, firmentyp, rechtsform, value,
       strasse, plz, stadt, bundesland, land, telefon, email, website,
+      notes,
       lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at,
       deleted_at
     `)
@@ -198,7 +199,7 @@ export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
    ────────────────────────────────────────────────────────────── */
 export async function importCompaniesFromCSV(
   rows: ParsedCompanyRow[]
-): Promise<{ imported: number; errors: string[]; importBatch: string }> {
+): Promise<{ imported: number; errors: string[]; importBatch: string; companyIds: string[] }> {
   const supabase = await createServerSupabaseClient();
   const importBatch = new Date().toISOString();
 
@@ -235,16 +236,20 @@ export async function importCompaniesFromCSV(
 
     if (error) throw handleSupabaseError(error, "importCompaniesFromCSV");
 
+    const companyIds = (data ?? []).map((row) => row.id);
+
     return {
       imported: data?.length || 0,
       errors: [],
       importBatch,
+      companyIds,
     };
   } catch (error) {
     return {
       imported: 0,
       errors: [error instanceof Error ? error.message : "Unbekannter Importfehler"],
       importBatch,
+      companyIds: [],
     };
   }
 }

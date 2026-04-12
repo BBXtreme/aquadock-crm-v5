@@ -16,7 +16,9 @@ import {
   csvImportFullscreenOverlayClassName,
 } from "@/components/features/companies/CSVFieldGuide";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useT } from "@/lib/i18n/use-translations";
@@ -67,6 +69,8 @@ export interface CSVPreviewViewProps {
   rows: ParsedCompanyRow[];
   fileName: string;
   isImporting: boolean;
+  aiEnrichNewCompanies: boolean;
+  onAiEnrichNewCompaniesChange: (value: boolean) => void;
   onImportNow: () => void;
   onBackToEdit: () => void;
   onCancel: () => void;
@@ -77,6 +81,8 @@ export function CSVPreviewView({
   rows,
   fileName,
   isImporting,
+  aiEnrichNewCompanies,
+  onAiEnrichNewCompaniesChange,
   onImportNow,
   onBackToEdit,
   onCancel,
@@ -191,7 +197,21 @@ export function CSVPreviewView({
           </Tabs>
 
           <div className="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/30 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-muted-foreground text-xs sm:text-sm">{t("previewFooter", { count: rows.length })}</p>
+            <div className="flex flex-col gap-2">
+              <p className="text-muted-foreground text-xs sm:text-sm">{t("previewFooter", { count: rows.length })}</p>
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="csv-ai-enrich-new"
+                  checked={aiEnrichNewCompanies}
+                  onCheckedChange={(checked) => onAiEnrichNewCompaniesChange(checked === true)}
+                  disabled={isImporting}
+                  aria-label={t("previewAiEnrichLabel")}
+                />
+                <Label htmlFor="csv-ai-enrich-new" className="cursor-pointer text-muted-foreground text-xs leading-snug sm:text-sm">
+                  {t("previewAiEnrichLabel")}
+                </Label>
+              </div>
+            </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isImporting}>
                 {t("previewCancel")}

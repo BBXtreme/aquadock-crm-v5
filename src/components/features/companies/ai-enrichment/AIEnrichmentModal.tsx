@@ -1,0 +1,1059 @@
+// AI enrichment modal — review-only suggestions (model-only default; optional full web search).
+
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
+import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
+import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
+import type { CompanyEnrichmentWebSearchMode } from "@/lib/ai/company-enrichment-gateway";
+import type { EnrichmentGatewayFailureDiagnostic } from "@/lib/ai/enrichment-gateway-failure-types";
+import {
+  getCompanyResearchBadge,
+  getEnrichmentGatewayModelMeta,
+  listEnrichmentGatewayModelsOrdered,
+} from "@/lib/constants/ai-models";
+import { VERCEL_AI_GATEWAY_DASHBOARD_HREF } from "@/lib/constants/vercel-ai-gateway";
+import { useT } from "@/lib/i18n/use-translations";
+import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
+import { cn } from "@/lib/utils";
+import type { CompanyForm } from "@/lib/validations/company";
+import {
+  type CompanyEnrichmentResult,
+  ENRICHMENT_FIELD_KEYS,
+  type EnrichmentFieldKey,
+  type SanitizedFieldSuggestion,
+} from "@/lib/validations/company-enrichment";
+import type { Company } from "@/types/database.types";
+
+const AI_ENRICHMENT_RATE_PREFIX = "AI_ENRICHMENT_RATE_LIMIT:";
+const MODEL_OVERRIDE_DEFAULT = "__model_default__" as const;
+
+class ResearchCompanyEnrichmentClientError extends Error {
+  readonly diagnostic?: EnrichmentGatewayFailureDiagnostic;
+
+  constructor(code: string, diagnostic?: EnrichmentGatewayFailureDiagnostic) {
+    super(code);
+    this.name = "ResearchCompanyEnrichmentClientError";
+    this.diagnostic = diagnostic;
+  }
+}
+
+type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
+
+function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
+  return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
+}
+
+function isEnrichmentUserAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
+const ENRICHMENT_ABORTED_CODE = "ENRICHMENT_ABORTED" as const;
+
+function isSilentAiEnrichmentCancel(err: unknown): boolean {
+  if (isEnrichmentUserAbortError(err)) {
+    return true;
+  }
+  return err instanceof ResearchCompanyEnrichmentClientError && err.message === ENRICHMENT_ABORTED_CODE;
+}
+
+/** Rejects with AbortError when `signal` aborts; does not cancel the underlying promise. */
+function attachAbortable<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (signal === undefined) {
+    return promise;
+  }
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("Aborted", "AbortError"));
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort);
+    promise.then(
+      (value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error: unknown) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
+const DE_TWO_DECIMALS = new Intl.NumberFormat("de-DE", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Thin space (U+2009) + bullet + thin space — matches CRM list style at small sizes */
+const USAGE_PILL_COST_SEPARATOR = "\u2009•\u2009";
+
+function formatApproxEurEstimate(amount: number): string {
+  return `~${DE_TWO_DECIMALS.format(amount)} €`;
+}
+
+/**
+ * Heuristic tier for gateway cost pill (model-only structuring vs full web search).
+ */
+function isExpensiveGatewayResearchModel(gatewayModelId: string): boolean {
+  const lower = gatewayModelId.toLowerCase();
+  if (/claude-sonnet|claude-opus/.test(lower)) {
+    return true;
+  }
+  if (lower === "openai/gpt-5.4") {
+    return true;
+  }
+  if (/gemini-2\.5-pro|gemini-3-pro/.test(lower)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @param modelIdForCost Effective gateway id for the pill: model-only uses override when set else
+ *   settings primary; full web search uses org primary from settings.
+ */
+function resolveEnrichmentRunCostEstimateLabel(
+  webMode: CompanyEnrichmentWebSearchMode,
+  modelIdForCost: EnrichmentGatewayModelId | null,
+): string {
+  if (webMode === "model-only") {
+    if (modelIdForCost === null) {
+      return formatApproxEurEstimate(0.02);
+    }
+    return isExpensiveGatewayResearchModel(modelIdForCost)
+      ? formatApproxEurEstimate(0.06)
+      : formatApproxEurEstimate(0.02);
+  }
+  if (modelIdForCost === null) {
+    return formatApproxEurEstimate(0.06);
+  }
+  if (isExpensiveGatewayResearchModel(modelIdForCost)) {
+    return formatApproxEurEstimate(0.25);
+  }
+  return formatApproxEurEstimate(0.06);
+}
+
+function ModalOverrideModelSelectItemContent({
+  modelId,
+  xaiBillingContext,
+}: {
+  modelId: EnrichmentGatewayModelId;
+  xaiBillingContext: boolean;
+}) {
+  const meta = getEnrichmentGatewayModelMeta(modelId);
+  const badge = getCompanyResearchBadge(modelId, { xaiBillingContext });
+  return (
+    <span className="flex max-w-[min(100vw-4rem,28rem)] flex-wrap items-center gap-2">
+      <span className="min-w-0 truncate font-medium">{meta?.label ?? modelId}</span>
+      {badge ? (
+        <Badge variant={badge.variant} className={badge.className}>
+          {badge.text}
+        </Badge>
+      ) : null}
+    </span>
+  );
+}
+
+type AiEnrichmentUsageSnapshot = { usedToday: number; dailyLimit: number };
+
+function parseDailyAiEnrichmentRateLimitError(
+  message: string,
+): (AiEnrichmentUsageSnapshot & { requested: number }) | null {
+  if (!message.startsWith(AI_ENRICHMENT_RATE_PREFIX)) {
+    return null;
+  }
+  const parts = message.slice(AI_ENRICHMENT_RATE_PREFIX.length).split(":");
+  const usedToday = Number.parseInt(parts[0] ?? "", 10);
+  const dailyLimit = Number.parseInt(parts[1] ?? "", 10);
+  const requested = Number.parseInt(parts[2] ?? "", 10);
+  if (!Number.isFinite(usedToday) || !Number.isFinite(dailyLimit) || !Number.isFinite(requested)) {
+    return null;
+  }
+  return { usedToday, dailyLimit, requested };
+}
+
+function resolveCompanyAiEnrichmentErrorMessage(
+  raw: string,
+  t: ReturnType<typeof useT>,
+  usageFallback: AiEnrichmentUsageSnapshot | null,
+): string {
+  const limitPayload = parseDailyAiEnrichmentRateLimitError(raw);
+  if (limitPayload) {
+    const { usedToday, dailyLimit, requested } = limitPayload;
+    const hint =
+      requested > 1 ? t("aiEnrich.errorDailyLimitBulkHint", { count: requested }) : "";
+    return t("aiEnrich.errorDailyLimitDetail", {
+      used: usedToday,
+      limit: dailyLimit,
+      hint,
+    });
+  }
+
+  if (raw === "AI_ENRICHMENT_RATE_LIMIT") {
+    if (usageFallback) {
+      return resolveCompanyAiEnrichmentErrorMessage(
+        `${AI_ENRICHMENT_RATE_PREFIX}${String(usageFallback.usedToday)}:${String(usageFallback.dailyLimit)}:1`,
+        t,
+        null,
+      );
+    }
+    return t("aiEnrich.errorRateLimit");
+  }
+
+  if (raw === "NOT_AUTHENTICATED") {
+    return t("aiEnrich.errorNotAuthenticated");
+  }
+  if (raw === "AI_GATEWAY_MISSING") {
+    return t("aiEnrich.errorNoGateway");
+  }
+  if (raw === "COMPANY_NOT_FOUND") {
+    return t("aiEnrich.errorCompany");
+  }
+  if (raw === "AI_ENRICHMENT_DISABLED") {
+    return `${t("aiEnrich.errorDisabled")}${t("aiEnrich.errorDisabledSettingsHint")}`;
+  }
+  if (raw === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED") {
+    return t("aiEnrich.errorVercelGatewayCredits");
+  }
+  if (raw === "XAI_GROK_QUOTA_EXHAUSTED") {
+    return t("aiEnrich.errorXaiGrokQuota");
+  }
+  if (raw === "AI_GATEWAY_RATE_LIMIT") {
+    return t("aiEnrich.errorGatewayRateLimit");
+  }
+  if (raw === "AI_GATEWAY_UNAVAILABLE") {
+    return t("aiEnrich.errorGatewayNetwork");
+  }
+  if (raw === "ENRICHMENT_NO_OUTPUT") {
+    return t("aiEnrich.errorEnrichmentNoOutput");
+  }
+
+  return t("aiEnrich.errorGeneric");
+}
+
+function enrichmentFieldTitle(t: ReturnType<typeof useT>, key: EnrichmentFieldKey): string {
+  switch (key) {
+    case "website":
+      return t("detailLabelWebsite");
+    case "email":
+      return t("detailLabelEmail");
+    case "telefon":
+      return t("detailLabelTelefon");
+    case "strasse":
+      return t("detailLabelStrasse");
+    case "plz":
+      return t("detailLabelPlzStadt");
+    case "stadt":
+      return t("detailLabelPlzStadt");
+    case "bundesland":
+      return t("detailLabelBundesland");
+    case "land":
+      return t("detailLabelLand");
+    case "notes":
+      return t("detailCrmLabelNotes");
+    case "wasserdistanz":
+      return t("detailLabelWasserdistanz");
+    case "wassertyp":
+      return t("detailLabelWassertyp");
+    case "firmentyp":
+      return t("detailLabelFirmentyp");
+    case "kundentyp":
+      return t("detailLabelKundentyp");
+    default:
+      return key;
+  }
+}
+
+function confidenceBadgeVariant(level: SanitizedFieldSuggestion["confidence"]) {
+  if (level === "high") return "default" as const;
+  if (level === "medium") return "secondary" as const;
+  return "outline" as const;
+}
+
+function readCurrent(company: Company, key: EnrichmentFieldKey): string {
+  const v = company[key];
+  if (v === null || v === undefined) return "—";
+  return String(v);
+}
+
+function formatSuggested(s: SanitizedFieldSuggestion): string {
+  if (s.value === null || s.value === undefined) return "—";
+  return String(s.value);
+}
+
+function mergeSuggestionValueIntoPatch(
+  patch: Partial<CompanyForm>,
+  key: EnrichmentFieldKey,
+  value: SanitizedFieldSuggestion["value"],
+) {
+  switch (key) {
+    case "website":
+      patch.website = value as CompanyForm["website"];
+      break;
+    case "email":
+      patch.email = value as CompanyForm["email"];
+      break;
+    case "telefon":
+      patch.telefon = value as CompanyForm["telefon"];
+      break;
+    case "strasse":
+      patch.strasse = value as CompanyForm["strasse"];
+      break;
+    case "plz":
+      patch.plz = value as CompanyForm["plz"];
+      break;
+    case "stadt":
+      patch.stadt = value as CompanyForm["stadt"];
+      break;
+    case "bundesland":
+      patch.bundesland = value as CompanyForm["bundesland"];
+      break;
+    case "land":
+      patch.land = value as CompanyForm["land"];
+      break;
+    case "notes":
+      patch.notes = value as CompanyForm["notes"];
+      break;
+    case "wasserdistanz":
+      patch.wasserdistanz = value as CompanyForm["wasserdistanz"];
+      break;
+    case "wassertyp":
+      patch.wassertyp = value as CompanyForm["wassertyp"];
+      break;
+    case "firmentyp":
+      patch.firmentyp = value as CompanyForm["firmentyp"];
+      break;
+    case "kundentyp":
+      patch.kundentyp = value as CompanyForm["kundentyp"];
+      break;
+    default: {
+      const _exhaustive: never = key;
+      return _exhaustive;
+    }
+  }
+}
+
+type EnrichmentMutationPayload = {
+  runGeneration: number;
+  data: CompanyEnrichmentResult;
+  modelUsed: string;
+};
+
+type Props = {
+  company: Company;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApplyPatch: (patch: Partial<CompanyForm>) => void;
+};
+
+export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }: Props) {
+  const t = useT("companies");
+  const queryClient = useQueryClient();
+  const [progress, setProgress] = useState(0);
+  const [selected, setSelected] = useState<Partial<Record<EnrichmentFieldKey, boolean>>>({});
+  const [result, setResult] = useState<CompanyEnrichmentResult | null>(null);
+  const [modelUsed, setModelUsed] = useState<string | null>(null);
+  const [enrichmentInlineError, setEnrichmentInlineError] = useState<string | null>(null);
+  const [enrichmentFailureDetail, setEnrichmentFailureDetail] = useState<EnrichmentGatewayFailureDiagnostic | null>(
+    null,
+  );
+  const [modelOverridePick, setModelOverridePick] = useState<EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT>(
+    MODEL_OVERRIDE_DEFAULT,
+  );
+  const [enrichmentWebMode, setEnrichmentWebMode] = useState<CompanyEnrichmentWebSearchMode>("model-only");
+  const modelOverrideRef = useRef<EnrichmentGatewayModelId | null>(null);
+  const enrichmentWebModeRef = useRef<CompanyEnrichmentWebSearchMode>("model-only");
+  const activeRunGenerationRef = useRef(0);
+  const enrichmentAbortControllerRef = useRef<AbortController | null>(null);
+  const isPendingRef = useRef(false);
+  const runForOpenSessionRef = useRef(false);
+  const startTimeoutRef = useRef<number | null>(null);
+  const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    modelOverrideRef.current = modelOverridePick === MODEL_OVERRIDE_DEFAULT ? null : modelOverridePick;
+  }, [modelOverridePick]);
+
+  useEffect(() => {
+    enrichmentWebModeRef.current = enrichmentWebMode;
+  }, [enrichmentWebMode]);
+
+  const usageQuery = useQuery({
+    queryKey: ["ai-enrichment-settings-snapshot"],
+    queryFn: async () => {
+      const res = await getAiEnrichmentSettingsSnapshot();
+      if (!res.ok) {
+        return null;
+      }
+      return res.data;
+    },
+    enabled: open,
+    staleTime: 15_000,
+    refetchInterval: open ? 20_000 : false,
+    refetchOnWindowFocus: open,
+  });
+
+  const snapshotPrimary: EnrichmentGatewayModelId | null =
+    usageQuery.data && isEnrichmentGatewayModelId(usageQuery.data.primaryGatewayModelId)
+      ? usageQuery.data.primaryGatewayModelId
+      : null;
+
+  const { mutate, reset, isPending, isSuccess, isError } = useMutation({
+    mutationFn: async (runGeneration: number): Promise<EnrichmentMutationPayload> => {
+      const signal = enrichmentAbortControllerRef.current?.signal;
+      const primary = modelOverrideRef.current;
+      const mode = enrichmentWebModeRef.current;
+      const res = await attachAbortable(
+        researchCompanyEnrichment(company.id, {
+          webSearchMode: mode,
+          gatewayModelOverride: mode === "model-only" && primary !== null ? { primary } : undefined,
+        }),
+        signal,
+      );
+      if (!res.ok) {
+        if (res.error === ENRICHMENT_ABORTED_CODE) {
+          throw new ResearchCompanyEnrichmentClientError(ENRICHMENT_ABORTED_CODE);
+        }
+        throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
+      }
+      return { runGeneration, data: res.data, modelUsed: res.modelUsed };
+    },
+    onSuccess: (payload) => {
+      if (payload.runGeneration !== activeRunGenerationRef.current) {
+        return;
+      }
+      setEnrichmentInlineError(null);
+      setEnrichmentFailureDetail(null);
+      setResult(payload.data);
+      setModelUsed(payload.modelUsed);
+      const next: Partial<Record<EnrichmentFieldKey, boolean>> = {};
+      for (const key of ENRICHMENT_FIELD_KEYS) {
+        if (payload.data.suggestions[key]) {
+          next[key] = false;
+        }
+      }
+      setSelected(next);
+      void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
+    },
+    onError: (err, runGeneration) => {
+      if (isSilentAiEnrichmentCancel(err)) {
+        setEnrichmentInlineError(null);
+        setEnrichmentFailureDetail(null);
+        return;
+      }
+      if (runGeneration !== activeRunGenerationRef.current) {
+        return;
+      }
+      const code =
+        err instanceof ResearchCompanyEnrichmentClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "ENRICHMENT_FAILED";
+      const diagnostic =
+        err instanceof ResearchCompanyEnrichmentClientError ? err.diagnostic : undefined;
+      setEnrichmentFailureDetail(diagnostic ?? null);
+      const usageFallback =
+        usageQuery.data !== undefined && usageQuery.data !== null
+          ? { usedToday: usageQuery.data.usedToday, dailyLimit: usageQuery.data.dailyLimit }
+          : null;
+      const msg = resolveCompanyAiEnrichmentErrorMessage(code, t, usageFallback);
+      setEnrichmentInlineError(msg);
+      toast.error(msg);
+    },
+  });
+
+  isPendingRef.current = isPending;
+
+  const requestClose = useCallback(() => {
+    if (!isPendingRef.current) {
+      onOpenChange(false);
+      return;
+    }
+    activeRunGenerationRef.current = 0;
+    enrichmentAbortControllerRef.current?.abort();
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const startEnrichmentRun = useCallback(() => {
+    enrichmentAbortControllerRef.current?.abort();
+    const ac = new AbortController();
+    enrichmentAbortControllerRef.current = ac;
+    activeRunGenerationRef.current += 1;
+    const gen = activeRunGenerationRef.current;
+    setProgress(0);
+    setResult(null);
+    setModelUsed(null);
+    setSelected({});
+    setEnrichmentInlineError(null);
+    setEnrichmentFailureDetail(null);
+    reset();
+    mutate(gen);
+  }, [mutate, reset]);
+
+  const startEnrichmentRunRef = useRef(startEnrichmentRun);
+  startEnrichmentRunRef.current = startEnrichmentRun;
+
+  useEffect(() => {
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = open;
+
+    if (!open) {
+      enrichmentAbortControllerRef.current?.abort();
+      enrichmentAbortControllerRef.current = null;
+      activeRunGenerationRef.current = 0;
+      setEnrichmentInlineError(null);
+      setEnrichmentFailureDetail(null);
+      if (startTimeoutRef.current !== null) {
+        window.clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
+      runForOpenSessionRef.current = false;
+      if (wasOpen) {
+        setProgress(0);
+        setResult(null);
+        setModelUsed(null);
+        setSelected({});
+        setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+        setEnrichmentWebMode("model-only");
+        enrichmentWebModeRef.current = "model-only";
+      }
+      reset();
+      return;
+    }
+    if (runForOpenSessionRef.current) {
+      return undefined;
+    }
+    let cancelled = false;
+    startTimeoutRef.current = window.setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
+      startTimeoutRef.current = null;
+      runForOpenSessionRef.current = true;
+      startEnrichmentRunRef.current();
+    }, 0);
+    return () => {
+      cancelled = true;
+      if (startTimeoutRef.current !== null) {
+        window.clearTimeout(startTimeoutRef.current);
+        startTimeoutRef.current = null;
+      }
+    };
+  }, [open, reset]);
+
+  useEffect(() => {
+    if (!isPending) {
+      if (isSuccess) {
+        setProgress(100);
+      }
+      return undefined;
+    }
+    setProgress(14);
+    const id = window.setInterval(() => {
+      setProgress((p) => (p < 90 ? p + 5 : p));
+    }, 320);
+    return () => window.clearInterval(id);
+  }, [isPending, isSuccess]);
+
+  const rows: EnrichmentFieldKey[] = result
+    ? ENRICHMENT_FIELD_KEYS.filter((k) => result.suggestions[k] !== undefined)
+    : [];
+
+  const modelCostHint = useMemo(() => {
+    if (!result || isPending || !modelUsed) {
+      return null;
+    }
+    const lower = modelUsed.toLowerCase();
+    if (
+      /grok-4\.1-fast|grok-4-fast|gemini-3-flash|gemini-2\.5-flash|claude-haiku|gpt-5\.4-mini|gpt-5-mini|nano/.test(
+        lower,
+      )
+    ) {
+      return t("aiEnrich.costHintLower");
+    }
+    if (/claude-sonnet|claude-opus/.test(lower) || lower === "openai/gpt-5.4") {
+      return t("aiEnrich.costHintHigher");
+    }
+    return null;
+  }, [result, isPending, modelUsed, t]);
+
+  const handleRetry = () => {
+    startEnrichmentRun();
+  };
+
+  const handleApply = () => {
+    if (!result) return;
+    const patch: Partial<CompanyForm> = {};
+    for (const key of rows) {
+      if (selected[key] !== true) continue;
+      const s = result.suggestions[key];
+      if (!s) continue;
+      mergeSuggestionValueIntoPatch(patch, key, s.value);
+    }
+    if (Object.keys(patch).length === 0) {
+      toast.message(t("aiEnrich.applyNone"));
+      return;
+    }
+    onApplyPatch(patch);
+    toast.success(t("aiEnrich.applyToast"));
+    requestClose();
+  };
+
+  const showSkeleton = open && (isPending || (!result && !isError));
+
+  /** Select shows saved primary or last-run model when no explicit override is chosen. */
+  const effectiveSelectModelValue = useMemo((): EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT => {
+    if (modelOverridePick !== MODEL_OVERRIDE_DEFAULT) {
+      return modelOverridePick;
+    }
+    if (usageQuery.data === undefined || usageQuery.data === null) {
+      return MODEL_OVERRIDE_DEFAULT;
+    }
+    if (modelUsed && isEnrichmentGatewayModelId(modelUsed)) {
+      return modelUsed;
+    }
+    if (snapshotPrimary !== null) {
+      return snapshotPrimary;
+    }
+    return MODEL_OVERRIDE_DEFAULT;
+  }, [modelOverridePick, usageQuery.data, modelUsed, snapshotPrimary]);
+
+  const xaiBillingForSelectItems =
+    typeof usageQuery.data?.primaryGatewayModelId === "string" &&
+    usageQuery.data.primaryGatewayModelId.startsWith("xai/");
+
+  const usagePillCostEstimateLabel = useMemo(() => {
+    const modelForPill: EnrichmentGatewayModelId | null =
+      enrichmentWebMode === "model-only"
+        ? modelOverridePick !== MODEL_OVERRIDE_DEFAULT
+          ? modelOverridePick
+          : snapshotPrimary
+        : snapshotPrimary;
+    return resolveEnrichmentRunCostEstimateLabel(enrichmentWebMode, modelForPill);
+  }, [enrichmentWebMode, modelOverridePick, snapshotPrimary]);
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : requestClose())}>
+      <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
+        <div className="max-h-[min(220px,28dvh)] min-h-0 shrink-0 overflow-y-auto border-border/80 border-b px-6 pt-8 pb-4 sm:max-h-[min(200px,24dvh)] sm:px-8 sm:pt-8 sm:pb-5">
+          <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4 pr-12 sm:pr-14">
+            <DialogHeader className="min-w-0 flex-1 space-y-1 text-left">
+              <DialogTitle className="wrap-break-word text-balance text-sm font-semibold leading-tight tracking-tight text-foreground sm:text-base">
+                {t("aiEnrich.modalTitle")}
+              </DialogTitle>
+              <DialogDescription className="sr-only">{t("aiEnrich.modalDescription")}</DialogDescription>
+            </DialogHeader>
+            {usageQuery.data ? (
+              <Badge
+                variant="outline"
+                className="shrink-0 border-border/50 bg-muted/10 px-3 py-1 text-xs font-medium text-muted-foreground tabular-nums leading-none shadow-none"
+                aria-label={`${t("aiEnrich.usageHeading")}, geschätzte Kosten ${usagePillCostEstimateLabel}`}
+              >
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <span>
+                    {t("aiEnrich.usagePill", {
+                      used: usageQuery.data.usedToday,
+                      limit: usageQuery.data.dailyLimit,
+                    })}
+                  </span>
+                  <span className="text-muted-foreground/50" aria-hidden>
+                    {USAGE_PILL_COST_SEPARATOR}
+                  </span>
+                  <span className="text-muted-foreground/70 text-xs font-normal tabular-nums">
+                    {usagePillCostEstimateLabel}
+                  </span>
+                </span>
+              </Badge>
+            ) : open && usageQuery.isLoading ? (
+              <Skeleton className="h-6 w-16 shrink-0 rounded-full" aria-hidden />
+            ) : null}
+          </div>
+
+          <div className="mt-4 flex min-w-0 flex-col gap-3 sm:mt-4 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <Switch
+                id="ai-enrich-web-search"
+                className="data-[state=unchecked]:border data-[state=unchecked]:border-zinc-400/55 data-[state=unchecked]:bg-zinc-300/95 data-[state=unchecked]:shadow-inner data-[state=checked]:shadow-sm dark:data-[state=unchecked]:border-transparent dark:data-[state=unchecked]:bg-zinc-700 dark:data-[state=unchecked]:shadow-none [&>span]:shadow-sm [&>span]:ring-1 [&>span]:ring-zinc-300/70 dark:[&>span]:ring-zinc-700/60"
+                checked={enrichmentWebMode === "full"}
+                onCheckedChange={(checked) => {
+                  const next: CompanyEnrichmentWebSearchMode = checked ? "full" : "model-only";
+                  if (enrichmentWebMode === next) {
+                    return;
+                  }
+                  enrichmentWebModeRef.current = next;
+                  setEnrichmentWebMode(next);
+                  if (checked) {
+                    modelOverrideRef.current = null;
+                    setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+                  }
+                  startEnrichmentRun();
+                }}
+                aria-label={t("aiEnrich.webSearchCurrentLabel")}
+              />
+              <Label
+                htmlFor="ai-enrich-web-search"
+                className="cursor-pointer text-foreground text-xs font-medium leading-normal sm:text-sm"
+              >
+                {t("aiEnrich.webSearchCurrentLabel")}
+              </Label>
+            </div>
+            {enrichmentWebMode === "model-only" ? (
+              <div className="min-w-0 flex-1 sm:max-w-md sm:pl-0.5">
+                <Select
+                  value={effectiveSelectModelValue}
+                  onValueChange={(v) => {
+                    if (v !== MODEL_OVERRIDE_DEFAULT && !isEnrichmentGatewayModelId(v)) {
+                      return;
+                    }
+                    if (v === MODEL_OVERRIDE_DEFAULT && modelOverridePick === MODEL_OVERRIDE_DEFAULT) {
+                      return;
+                    }
+                    if (
+                      modelOverridePick === MODEL_OVERRIDE_DEFAULT &&
+                      v !== MODEL_OVERRIDE_DEFAULT &&
+                      isEnrichmentGatewayModelId(v) &&
+                      v === effectiveSelectModelValue
+                    ) {
+                      return;
+                    }
+                    if (v === modelOverridePick && modelOverridePick !== MODEL_OVERRIDE_DEFAULT) {
+                      return;
+                    }
+                    const nextRef: EnrichmentGatewayModelId | null =
+                      v === MODEL_OVERRIDE_DEFAULT ? null : (v as EnrichmentGatewayModelId);
+                    modelOverrideRef.current = nextRef;
+                    if (v === MODEL_OVERRIDE_DEFAULT) {
+                      setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+                    } else {
+                      setModelOverridePick(v);
+                    }
+                    startEnrichmentRun();
+                  }}
+                >
+                  <SelectTrigger
+                    id="ai-enrich-model-override"
+                    className="h-9 w-full text-sm sm:h-9"
+                    aria-label={t("aiEnrich.modelOverrideLabel")}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value={MODEL_OVERRIDE_DEFAULT}>{t("aiEnrich.sessionModelDefault")}</SelectItem>
+                    {listEnrichmentGatewayModelsOrdered().map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <ModalOverrideModelSelectItemContent modelId={m.id} xaiBillingContext={xaiBillingForSelectItems} />
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+          </div>
+
+          <p
+            className={cn(
+              "mt-3 text-pretty text-xs leading-normal sm:mt-3.5 sm:text-sm sm:leading-normal",
+              enrichmentWebMode === "full"
+                ? "text-muted-foreground/90"
+                : modelUsed
+                  ? "text-muted-foreground/90"
+                  : "text-amber-900/85 dark:text-amber-300/90",
+            )}
+          >
+            {enrichmentWebMode === "full"
+              ? t("aiEnrich.webSearchActive")
+              : modelUsed
+                ? t("aiEnrich.modelUsed", {
+                    model: isEnrichmentGatewayModelId(modelUsed)
+                      ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
+                      : modelUsed,
+                  })
+                : t("aiEnrich.modelOnlyStatusLine")}
+          </p>
+        </div>
+
+        <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-6 py-3 sm:px-8 sm:py-4">
+            {isError || enrichmentInlineError ? (
+              <div className="mb-2 shrink-0 space-y-3">
+                <Alert
+                  variant="destructive"
+                  className="rounded-xl border-destructive/30 px-4 py-3 wrap-break-word sm:py-3.5"
+                >
+                  <AlertCircle className="h-4 w-4" aria-hidden />
+                  {enrichmentInlineError ? (
+                    <AlertTitle>{enrichmentInlineError}</AlertTitle>
+                  ) : (
+                    <AlertTitle>{t("aiEnrich.errorGeneric")}</AlertTitle>
+                  )}
+                  {enrichmentFailureDetail ? (
+                    <AlertDescription className="space-y-1.5 border-border/40 border-t border-dashed pt-3 text-muted-foreground">
+                      <p className="font-mono text-[11px] leading-snug wrap-break-word">
+                        <span className="text-foreground/80">{t("aiEnrich.diagnosticCodeLabel")}:</span>{" "}
+                        {enrichmentFailureDetail.stableCode}
+                        {enrichmentFailureDetail.httpStatus !== undefined ? (
+                          <span>
+                            {" "}
+                            · {t("aiEnrich.diagnosticHttp", { status: String(enrichmentFailureDetail.httpStatus) })}
+                          </span>
+                        ) : null}
+                        {enrichmentFailureDetail.generationId ? (
+                          <span>
+                            {" "}
+                            · {t("aiEnrich.diagnosticGen", { id: enrichmentFailureDetail.generationId })}
+                          </span>
+                        ) : null}
+                      </p>
+                      {enrichmentFailureDetail.gatewayMessage.length > 0 ? (
+                        <p className="max-h-24 overflow-y-auto font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                          {enrichmentFailureDetail.gatewayMessage}
+                        </p>
+                      ) : null}
+                      {enrichmentFailureDetail.stableCode === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED" ? (
+                        <p className="text-[11px] leading-snug">
+                          {t("aiEnrich.errorVercelCreditsActionHint")}{" "}
+                          <a
+                            href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline-offset-4 hover:underline"
+                          >
+                            {t("aiEnrich.vercelAiGatewayDashboardLink")}
+                          </a>
+                        </p>
+                      ) : null}
+                      {enrichmentFailureDetail.tokenUsageHint ? (
+                        <p className="font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                          {t("aiEnrich.diagnosticTokenUsage", { hint: enrichmentFailureDetail.tokenUsageHint })}
+                        </p>
+                      ) : null}
+                    </AlertDescription>
+                  ) : null}
+                </Alert>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
+                    {t("aiEnrich.retry")}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+
+            {showSkeleton ? (
+              <div className="shrink-0 space-y-3">
+                <Progress value={progress} className="h-2" />
+                <p className="text-muted-foreground text-sm">{t("aiEnrich.loadingSteps")}</p>
+                <div className="space-y-2">
+                  {[
+                    "enrich-skeleton-row-1",
+                    "enrich-skeleton-row-2",
+                    "enrich-skeleton-row-3",
+                    "enrich-skeleton-row-4",
+                    "enrich-skeleton-row-5",
+                    "enrich-skeleton-row-6",
+                  ].map((skKey) => (
+                    <Skeleton key={skKey} className="h-9 w-full" />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {result && !isPending ? (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 sm:gap-3">
+                {result.aiSummary ? (
+                  <section className="shrink-0 rounded-lg border bg-muted/30 px-3 py-2 text-sm shadow-xs sm:px-4 sm:py-2.5">
+                    <h3 className="text-muted-foreground/90 text-xs font-semibold tracking-wide uppercase">
+                      {t("aiEnrich.summaryLabel")}
+                    </h3>
+                    <p className="mt-1.5 whitespace-pre-wrap wrap-break-word text-foreground text-xs leading-relaxed">
+                      {formatAiEnrichmentSummaryForDisplay(result.aiSummary).split("\n").map((line, idx) => (
+                        <Fragment key={`ai-sum-${String(idx)}`}>
+                          {idx > 0 ? <br /> : null}
+                          {line}
+                        </Fragment>
+                      ))}
+                    </p>
+                  </section>
+                ) : null}
+                {modelUsed ? (
+                  <div className="shrink-0 space-y-0.5">
+                    <p className="text-muted-foreground text-[11px]">
+                      {t("aiEnrich.modelUsed", {
+                        model: isEnrichmentGatewayModelId(modelUsed)
+                          ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
+                          : modelUsed,
+                      })}
+                    </p>
+                    <p className="text-muted-foreground/90 text-xs leading-snug">
+                      {enrichmentWebMode === "full"
+                        ? t("aiEnrich.modelUsedResearchFootnoteFull")
+                        : t("aiEnrich.modelUsedResearchFootnoteModelOnly")}
+                    </p>
+                    {modelCostHint ? (
+                      <p className="text-muted-foreground/90 text-xs leading-snug">{modelCostHint}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+                {rows.length === 0 ? (
+                  <p className="text-muted-foreground shrink-0 text-sm">{t("aiEnrich.noSuggestions")}</p>
+                ) : (
+                  <section
+                    aria-label={t("aiEnrich.tableField")}
+                    className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5"
+                  >
+                    <h3 className="text-foreground shrink-0 text-sm font-medium">{t("aiEnrich.suggestionsSectionTitle")}</h3>
+                    <div className="min-h-0 min-w-0 flex-1 overflow-auto rounded-lg border border-border bg-card shadow-xs">
+                      <Table className="w-full table-fixed">
+                        <TableHeader>
+                          <TableRow className="hover:bg-transparent">
+                            <TableHead className="sticky top-0 z-10 w-[8%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSelect")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[18%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableField")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[18%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableCurrent")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[20%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSuggested")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[12%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableConfidence")}
+                            </TableHead>
+                            <TableHead className="sticky top-0 z-10 w-[24%] min-w-0 bg-muted/95 backdrop-blur-sm">
+                              {t("aiEnrich.tableSources")}
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rows.map((key) => {
+                            const s = result.suggestions[key];
+                            if (!s) return null;
+                            return (
+                              <TableRow key={key} className="align-top">
+                                <TableCell className="min-w-0 wrap-break-word align-middle">
+                                  <Checkbox
+                                    checked={selected[key] === true}
+                                    onCheckedChange={(checked) =>
+                                      setSelected((prev) => ({ ...prev, [key]: checked === true }))
+                                    }
+                                    aria-label={t("aiEnrich.tableSelect")}
+                                  />
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word font-medium">
+                                  {enrichmentFieldTitle(t, key)}
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-muted-foreground text-sm">
+                                  {readCurrent(company, key)}
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-sm">{formatSuggested(s)}</TableCell>
+                                <TableCell className="min-w-0 wrap-break-word align-middle">
+                                  <Badge variant={confidenceBadgeVariant(s.confidence)}>
+                                    {s.confidence === "high"
+                                      ? t("aiEnrich.confidenceHigh")
+                                      : s.confidence === "medium"
+                                        ? t("aiEnrich.confidenceMedium")
+                                        : t("aiEnrich.confidenceLow")}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="min-w-0 wrap-break-word text-xs">
+                                  <ul className="space-y-1.5">
+                                    {s.sources.map((src) => (
+                                      <li key={src.url} className="min-w-0">
+                                        <a
+                                          href={src.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-primary underline-offset-4 hover:underline wrap-break-word"
+                                        >
+                                          {src.title}
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-2 rounded-none border-border border-t bg-muted/40 px-6 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-3 sm:gap-y-2 sm:px-8 sm:py-3">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full min-w-0 shrink-0 whitespace-normal sm:w-auto sm:min-w-32"
+              onClick={requestClose}
+            >
+              {t("aiEnrich.close")}
+            </Button>
+            <Button
+              type="button"
+              className="w-full min-w-0 shrink-0 whitespace-normal sm:w-auto sm:min-w-40"
+              onClick={handleApply}
+              disabled={isPending || !result}
+            >
+              {t("aiEnrich.apply")}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
