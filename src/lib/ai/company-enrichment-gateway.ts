@@ -227,8 +227,10 @@ async function runCompanyEnrichmentModelOnlyGeneration(params: {
   userPrompt: string;
   structuringPrimary: GatewayModelId;
   structuringSecondary: GatewayModelId;
+  signal?: AbortSignal;
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const providerOptions = getEnrichmentGatewayProviderOptions();
+  const abortOpts = params.signal !== undefined ? { abortSignal: params.signal } : {};
   const output = Output.object({
     name: "CompanyEnrichment",
     description: "Nur Modellwissen (ohne Web): strukturierte Vorschläge für CRM-Felder.",
@@ -244,6 +246,7 @@ async function runCompanyEnrichmentModelOnlyGeneration(params: {
         prompt: params.userPrompt,
         output,
         stopWhen: stepCountIs(4),
+        ...abortOpts,
         ...(providerOptions ? { providerOptions } : {}),
       });
       if (!structureOut.output) {
@@ -275,6 +278,7 @@ export async function runCompanyEnrichmentGeneration(params: {
   webSearchMode?: CompanyEnrichmentWebSearchMode;
   /** Optional per-run override of structuring primary/secondary (validated by caller); `full` path only. */
   gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
+  signal?: AbortSignal;
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
   if (!gateway) {
@@ -297,10 +301,12 @@ export async function runCompanyEnrichmentGeneration(params: {
       userPrompt: params.userPrompt,
       structuringPrimary,
       structuringSecondary,
+      signal: params.signal,
     });
   }
 
   const effectivePromptTight = runtime.promptTight;
+  const abortOpts = params.signal !== undefined ? { abortSignal: params.signal } : {};
   const effectiveDigestMaxChars = runtime.digestMaxChars;
   const langFilter: AppearanceLocale[] = [runtime.crmSearchLocale];
   const perplexityProfile: PerplexitySearchProfile = {
@@ -356,6 +362,7 @@ export async function runCompanyEnrichmentGeneration(params: {
           stopWhen: stepCountIs(12),
           system,
           prompt: userPrompt,
+          ...abortOpts,
           ...(providerOptions ? { providerOptions } : {}),
         });
       } finally {
@@ -375,6 +382,7 @@ export async function runCompanyEnrichmentGeneration(params: {
           prompt: structurePrompt,
           output,
           stopWhen: stepCountIs(4),
+          ...abortOpts,
           ...(providerOptions ? { providerOptions } : {}),
         });
         return structureOut.output;

@@ -73,6 +73,59 @@ function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayMo
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
 }
 
+function isEnrichmentUserAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
+const ENRICHMENT_ABORTED_CODE = "ENRICHMENT_ABORTED" as const;
+
+function isSilentAiEnrichmentCancel(err: unknown): boolean {
+  if (isEnrichmentUserAbortError(err)) {
+    return true;
+  }
+  return err instanceof ResearchCompanyEnrichmentClientError && err.message === ENRICHMENT_ABORTED_CODE;
+}
+
+/** Rejects with AbortError when `signal` aborts; does not cancel the underlying promise. */
+function attachAbortable<T>(promise: Promise<T>, signal: AbortSignal | undefined): Promise<T> {
+  if (signal === undefined) {
+    return promise;
+  }
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("Aborted", "AbortError"));
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const onAbort = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal.addEventListener("abort", onAbort);
+    promise.then(
+      (value) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        resolve(value);
+      },
+      (error: unknown) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 const DE_TWO_DECIMALS = new Intl.NumberFormat("de-DE", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -358,6 +411,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const modelOverrideRef = useRef<EnrichmentGatewayModelId | null>(null);
   const enrichmentWebModeRef = useRef<CompanyEnrichmentWebSearchMode>("model-only");
   const activeRunGenerationRef = useRef(0);
+  const enrichmentAbortControllerRef = useRef<AbortController | null>(null);
+  const isPendingRef = useRef(false);
   const runForOpenSessionRef = useRef(false);
   const startTimeoutRef = useRef<number | null>(null);
   const prevOpenRef = useRef(false);
@@ -392,13 +447,20 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
     mutationFn: async (runGeneration: number): Promise<EnrichmentMutationPayload> => {
+      const signal = enrichmentAbortControllerRef.current?.signal;
       const primary = modelOverrideRef.current;
       const mode = enrichmentWebModeRef.current;
-      const res = await researchCompanyEnrichment(company.id, {
-        webSearchMode: mode,
-        gatewayModelOverride: mode === "model-only" && primary !== null ? { primary } : undefined,
-      });
+      const res = await attachAbortable(
+        researchCompanyEnrichment(company.id, {
+          webSearchMode: mode,
+          gatewayModelOverride: mode === "model-only" && primary !== null ? { primary } : undefined,
+        }),
+        signal,
+      );
       if (!res.ok) {
+        if (res.error === ENRICHMENT_ABORTED_CODE) {
+          throw new ResearchCompanyEnrichmentClientError(ENRICHMENT_ABORTED_CODE);
+        }
         throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
       }
       return { runGeneration, data: res.data, modelUsed: res.modelUsed };
@@ -421,6 +483,11 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
     },
     onError: (err, runGeneration) => {
+      if (isSilentAiEnrichmentCancel(err)) {
+        setEnrichmentInlineError(null);
+        setEnrichmentFailureDetail(null);
+        return;
+      }
       if (runGeneration !== activeRunGenerationRef.current) {
         return;
       }
@@ -443,7 +510,22 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     },
   });
 
+  isPendingRef.current = isPending;
+
+  const requestClose = useCallback(() => {
+    if (!isPendingRef.current) {
+      onOpenChange(false);
+      return;
+    }
+    activeRunGenerationRef.current = 0;
+    enrichmentAbortControllerRef.current?.abort();
+    onOpenChange(false);
+  }, [onOpenChange]);
+
   const startEnrichmentRun = useCallback(() => {
+    enrichmentAbortControllerRef.current?.abort();
+    const ac = new AbortController();
+    enrichmentAbortControllerRef.current = ac;
     activeRunGenerationRef.current += 1;
     const gen = activeRunGenerationRef.current;
     setProgress(0);
@@ -464,6 +546,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     prevOpenRef.current = open;
 
     if (!open) {
+      enrichmentAbortControllerRef.current?.abort();
+      enrichmentAbortControllerRef.current = null;
       activeRunGenerationRef.current = 0;
       setEnrichmentInlineError(null);
       setEnrichmentFailureDetail(null);
@@ -560,7 +644,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     }
     onApplyPatch(patch);
     toast.success(t("aiEnrich.applyToast"));
-    onOpenChange(false);
+    requestClose();
   };
 
   const showSkeleton = open && (isPending || (!result && !isError));
@@ -597,7 +681,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   }, [enrichmentWebMode, modelOverridePick, snapshotPrimary]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => (next ? onOpenChange(true) : requestClose())}>
       <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
         <div className="max-h-[min(220px,28dvh)] min-h-0 shrink-0 overflow-y-auto border-border/80 border-b px-6 pt-8 pb-4 sm:max-h-[min(200px,24dvh)] sm:px-8 sm:pt-8 sm:pb-5">
           <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4 pr-12 sm:pr-14">
@@ -955,7 +1039,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               type="button"
               variant="outline"
               className="w-full min-w-0 shrink-0 whitespace-normal sm:w-auto sm:min-w-32"
-              onClick={() => onOpenChange(false)}
+              onClick={requestClose}
             >
               {t("aiEnrich.close")}
             </Button>

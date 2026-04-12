@@ -95,6 +95,13 @@ function normalizeGatewayModelOverride(
   return { primary, secondary };
 }
 
+function isEnrichmentAbortLike(err: unknown): boolean {
+  if (err instanceof DOMException && err.name === "AbortError") {
+    return true;
+  }
+  return err instanceof Error && err.name === "AbortError";
+}
+
 async function runCompanyEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   companyId: string,
@@ -105,6 +112,7 @@ async function runCompanyEnrichmentForActiveRow(
     crmSearchLocale: AppearanceLocale;
     perplexityFastMaxResults: number;
     perplexityFastRecency: "month" | "year";
+    signal?: AbortSignal;
   },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
@@ -178,10 +186,14 @@ ${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
       addressFocusPrioritize: run.addressFocusPrioritize && run.webSearchMode === "full",
       webSearchMode: run.webSearchMode,
       gatewayModelOverride: run.gatewayModelOverride,
+      signal: run.signal,
     });
 
     return { ok: true, data: result, modelUsed };
   } catch (err) {
+    if (isEnrichmentAbortLike(err)) {
+      return { ok: false, error: "ENRICHMENT_ABORTED" };
+    }
     const error = mapAiEnrichmentGatewayPipelineError(err);
     return {
       ok: false,
@@ -241,8 +253,11 @@ export async function researchCompanyEnrichment(
         await refundEnrichmentSlots(supabase, user.id, 1);
       }
       return result;
-    } catch {
+    } catch (err) {
       await refundEnrichmentSlots(supabase, user.id, 1);
+      if (isEnrichmentAbortLike(err)) {
+        return { ok: false, error: "ENRICHMENT_ABORTED" };
+      }
       return { ok: false, error: "ENRICHMENT_FAILED" };
     }
   } catch {
