@@ -1,11 +1,4 @@
-/* src/app/globals.css
-This file defines global styles for the application, including color variables, typography, and base styles.
-It uses CSS custom properties to define a color palette that can be easily switched between light and dark modes.
-The @theme inline block maps these custom properties to Tailwind CSS theme variables, allowing us to use them 
-throughout our components with Tailwind's utility classes.
-The base layer applies some default styles to all elements, such as border and outline colors, as well as 
-typography settings for the body and headings.
-*/
+/* src/app/globals.css */
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -45,40 +38,43 @@ typography settings for the body and headings.
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-success: var(--success);   /* proper mapping for bg-success */
 }
 
-/* Your custom colors (light mode) */
+/* Standard modern shadcn + Tailwind v4 neutral theme (2026) */
 :root {
-	--background: oklch(1 0 0);
+	--background: oklch(0.985 0.005 240);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
 	--card-foreground: oklch(0.145 0 0);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.68 0.15 200);
+	--primary: oklch(0.68 0.15 200);        /* your existing calm accent */
 	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.75 0.18 310);
-	--secondary-foreground: oklch(1 0 0);
-	--muted: oklch(0.97 0 0);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.145 0 0);
+	--muted: oklch(0.96 0.01 240);          /* visible muted for tracks */
 	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.85 0.12 280);
+	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.145 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: oklch(0.708 0 0);
-	--sidebar: oklch(0.985 0 0);
+	--border: oklch(0.90 0.01 240);         /* soft but visible borders */
+	--input: oklch(0.95 0.01 240);          /* good contrast for inputs/switches */
+	--ring: oklch(0.68 0.15 200);
+	--sidebar: oklch(0.985 0.005 240);
 	--sidebar-foreground: oklch(0.145 0 0);
 	--sidebar-primary: oklch(0.68 0.15 200);
 	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.97 0 0);
+	--sidebar-accent: oklch(0.96 0.01 240);
 	--sidebar-accent-foreground: oklch(0.145 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: oklch(0.708 0 0);
+	--sidebar-border: oklch(0.90 0.01 240);
+	--sidebar-ring: oklch(0.68 0.15 200);
 	--radius: 0.625rem;
+
+	/* Pastel green for Switch ON state */
+	--success: oklch(0.78 0.15 152);
 }
 
-/* Dark mode */
 .dark {
 	--background: oklch(0.145 0 0);
 	--foreground: oklch(0.985 0 0);
@@ -88,33 +84,33 @@ typography settings for the body and headings.
 	--popover-foreground: oklch(0.985 0 0);
 	--primary: oklch(0.68 0.15 200);
 	--primary-foreground: oklch(1 0 0);
-	--secondary: oklch(0.75 0.18 310);
-	--secondary-foreground: oklch(1 0 0);
-	--muted: oklch(0.269 0 0);
+	--secondary: oklch(0.269 0 0);
+	--secondary-foreground: oklch(0.985 0 0);
+	--muted: oklch(0.22 0 0);
 	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.85 0.12 280);
+	--accent: oklch(0.269 0 0);
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 0.1);
-	--input: oklch(1 0 0 / 0.15);
-	--ring: oklch(0.556 0 0);
+	--border: oklch(1 0 0 / 0.12);
+	--input: oklch(1 0 0 / 0.18);
+	--ring: oklch(0.68 0.15 200);
 	--sidebar: oklch(0.205 0 0);
 	--sidebar-foreground: oklch(0.985 0 0);
 	--sidebar-primary: oklch(0.68 0.15 200);
 	--sidebar-primary-foreground: oklch(1 0 0);
 	--sidebar-accent: oklch(0.269 0 0);
 	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 0.1);
-	--sidebar-ring: oklch(0.556 0 0);
+	--sidebar-border: oklch(1 0 0 / 0.12);
+	--sidebar-ring: oklch(0.68 0.15 200);
+
+	/* Slightly richer pastel green in dark mode */
+	--success: oklch(0.72 0.15 152);
 }
 
+/* Keep your existing skeleton and base styles unchanged */
 @keyframes skeleton-shimmer {
-	0% {
-		transform: translateX(-100%);
-	}
-	100% {
-		transform: translateX(100%);
-	}
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(100%); }
 }
 
 @layer components {
@@ -158,29 +154,24 @@ typography settings for the body and headings.
 	* {
 	  @apply border-border outline-ring/50;
 	}
-  
-	/* Critical fix for Tailwind v4: prevent "currentColor" black borders */
+
 	*, ::after, ::before, ::backdrop, ::file-selector-button {
 	  border-color: var(--border);
 	}
-  
-	.dark *, .dark ::after, .dark ::before, .dark ::backdrop, .dark ::file-selector-button {
-	  border-color: var(--border);
-	}
-  
+
 	body {
 	  @apply bg-background text-foreground antialiased leading-7 font-sans;
 	}
-  
+
 	html {
 	  @apply font-sans;
 	}
-  
+
 	h1, h2, h3, h4, h5, h6 {
 	  @apply font-semibold tracking-tight;
 	}
-  
+
 	p {
 	  @apply leading-6;
 	}
-  }
+}
