@@ -3,6 +3,10 @@
 export const AI_ENRICHMENT_ENABLED_KEY = "ai_enrichment_enabled" as const;
 export const AI_ENRICHMENT_DAILY_LIMIT_KEY = "ai_enrichment_daily_limit" as const;
 export const AI_ENRICHMENT_MODEL_PREFERENCE_KEY = "ai_enrichment_model_preference" as const;
+/** Vercel AI Gateway model id for the first attempt (auto / primary-only). */
+export const AI_ENRICHMENT_PRIMARY_MODEL_KEY = "ai_enrichment_primary_model" as const;
+/** Vercel AI Gateway model id for fallback after retriable failures (auto). */
+export const AI_ENRICHMENT_SECONDARY_MODEL_KEY = "ai_enrichment_secondary_model" as const;
 export const AI_ENRICHMENT_ADDRESS_FOCUS_KEY = "ai_enrichment_address_focus" as const;
 /** Count of successful enrichment runs for the UTC day in `AI_ENRICHMENT_LAST_RESET_DATE_KEY`. */
 export const AI_ENRICHMENT_USED_TODAY_KEY = "ai_enrichment_used_today" as const;

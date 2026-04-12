@@ -21,6 +21,8 @@ export default async function SettingsPage() {
     modelPreference: policy.modelPreference,
     addressFocusPrioritize: policy.addressFocusPrioritize,
     usedToday: policy.usedToday,
+    primaryGatewayModelId: policy.primaryGatewayModelId,
+    secondaryGatewayModelId: policy.secondaryGatewayModelId,
   };
 
   return (

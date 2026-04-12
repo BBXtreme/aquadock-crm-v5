@@ -1,5 +1,6 @@
 // Reads optional AI enrichment flags from `user_settings` (EAV).
 
+import type { GatewayModelId } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { effectiveEnrichmentUsedToday, enrichmentUtcDayKey } from "@/lib/ai/enrichment-rate-limit";
 import {
@@ -9,11 +10,34 @@ import {
   AI_ENRICHMENT_ENABLED_KEY,
   AI_ENRICHMENT_LAST_RESET_DATE_KEY,
   AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+  AI_ENRICHMENT_PRIMARY_MODEL_KEY,
+  AI_ENRICHMENT_SECONDARY_MODEL_KEY,
   AI_ENRICHMENT_USED_TODAY_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import type { Database } from "@/types/database.types";
 import type { Json } from "@/types/supabase";
+
+const DEFAULT_PRIMARY_GATEWAY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
+const DEFAULT_SECONDARY_GATEWAY_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+
+/** Vercel AI Gateway ids selectable in CRM settings (validated EAV). */
+export const ENRICHMENT_GATEWAY_MODEL_ID_CHOICES = [
+  "anthropic/claude-sonnet-4.6",
+  "anthropic/claude-opus-4.6",
+  "anthropic/claude-haiku-4.5",
+  "openai/gpt-5.4",
+  "openai/gpt-5.4-mini",
+  "openai/gpt-5-mini",
+  "google/gemini-2.5-flash",
+  "google/gemini-2.5-pro",
+  "google/gemini-3-flash",
+  "xai/grok-4.1-fast-non-reasoning",
+  "xai/grok-4.1-fast-reasoning",
+  "xai/grok-4-fast-non-reasoning",
+] as const;
+
+const ALLOWED_GATEWAY_MODEL_SET = new Set<string>(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
 
 function jsonToBoolean(value: Json | undefined, fallback: boolean): boolean {
   if (typeof value === "boolean") return value;
@@ -51,16 +75,27 @@ function jsonToDayString(value: Json | undefined): string {
   return "";
 }
 
-const MODEL_PREFERENCES = ["auto", "claude", "grok"] as const;
+const MODEL_PREFERENCES = ["auto", "claude", "grok", "single"] as const;
 
 export type AiEnrichmentModelPreference = (typeof MODEL_PREFERENCES)[number];
 
 function jsonToModelPreference(value: Json | undefined, fallback: AiEnrichmentModelPreference): AiEnrichmentModelPreference {
   if (typeof value === "string") {
     const t = value.trim();
-    if (t === "auto" || t === "claude" || t === "grok") {
+    if (t === "auto" || t === "claude" || t === "grok" || t === "single") {
       return t;
     }
+  }
+  return fallback;
+}
+
+function jsonToGatewayModelId(value: Json | undefined, fallback: GatewayModelId): GatewayModelId {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const t = value.trim();
+  if (ALLOWED_GATEWAY_MODEL_SET.has(t)) {
+    return t as GatewayModelId;
   }
   return fallback;
 }
@@ -72,6 +107,8 @@ export type AiEnrichmentPolicy = {
   addressFocusPrioritize: boolean;
   /** Successful runs counted for the current UTC day (rollover when last reset date ≠ today). */
   usedToday: number;
+  primaryGatewayModelId: GatewayModelId;
+  secondaryGatewayModelId: GatewayModelId;
 };
 
 function parseDefaultDailyLimitFromEnv(): number {
@@ -97,6 +134,8 @@ export async function fetchAiEnrichmentPolicy(
       AI_ENRICHMENT_ENABLED_KEY,
       AI_ENRICHMENT_DAILY_LIMIT_KEY,
       AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+      AI_ENRICHMENT_PRIMARY_MODEL_KEY,
+      AI_ENRICHMENT_SECONDARY_MODEL_KEY,
       AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
       AI_ENRICHMENT_USED_TODAY_KEY,
       AI_ENRICHMENT_LAST_RESET_DATE_KEY,
@@ -107,6 +146,8 @@ export async function fetchAiEnrichmentPolicy(
   let enabled = true;
   let dailyLimit = parseDefaultDailyLimitFromEnv();
   let modelPreference: AiEnrichmentModelPreference = "auto";
+  let primaryGatewayModelId: GatewayModelId = DEFAULT_PRIMARY_GATEWAY_MODEL;
+  let secondaryGatewayModelId: GatewayModelId = DEFAULT_SECONDARY_GATEWAY_MODEL;
   let addressFocusPrioritize = false;
   let storedUsed = 0;
   let lastReset = "";
@@ -120,6 +161,12 @@ export async function fetchAiEnrichmentPolicy(
     }
     if (row.key === AI_ENRICHMENT_MODEL_PREFERENCE_KEY) {
       modelPreference = jsonToModelPreference(row.value, modelPreference);
+    }
+    if (row.key === AI_ENRICHMENT_PRIMARY_MODEL_KEY) {
+      primaryGatewayModelId = jsonToGatewayModelId(row.value, primaryGatewayModelId);
+    }
+    if (row.key === AI_ENRICHMENT_SECONDARY_MODEL_KEY) {
+      secondaryGatewayModelId = jsonToGatewayModelId(row.value, secondaryGatewayModelId);
     }
     if (row.key === AI_ENRICHMENT_ADDRESS_FOCUS_KEY) {
       addressFocusPrioritize = jsonToBoolean(row.value, false);
@@ -135,5 +182,15 @@ export async function fetchAiEnrichmentPolicy(
   const today = enrichmentUtcDayKey();
   const usedToday = effectiveEnrichmentUsedToday(storedUsed, lastReset, today);
 
-  return { enabled, dailyLimit, modelPreference, addressFocusPrioritize, usedToday };
+  return {
+    enabled,
+    dailyLimit,
+    modelPreference,
+    addressFocusPrioritize,
+    usedToday,
+    primaryGatewayModelId,
+    secondaryGatewayModelId,
+  };
 }
+
+export { DEFAULT_PRIMARY_GATEWAY_MODEL, DEFAULT_SECONDARY_GATEWAY_MODEL };

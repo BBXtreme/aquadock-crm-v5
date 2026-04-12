@@ -1,5 +1,6 @@
 "use server";
 
+import type { GatewayModelId } from "@ai-sdk/gateway";
 import { GatewayError, GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
@@ -10,6 +11,7 @@ import {
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
 import {
   type AiEnrichmentModelPreference,
+  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
   fetchAiEnrichmentPolicy,
 } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -42,7 +44,7 @@ function enrichmentPreferenceToModelMode(preference: AiEnrichmentModelPreference
   if (preference === "grok") {
     return "grok_only";
   }
-  if (preference === "claude") {
+  if (preference === "claude" || preference === "single") {
     return "claude_only";
   }
   return "auto";
@@ -91,6 +93,10 @@ function mapCompanyEnrichmentPipelineError(err: unknown, modelMode: EnrichmentMo
     if (GatewayRateLimitError.isInstance(err)) {
       return "AI_GATEWAY_RATE_LIMIT";
     }
+    const statusCode = err.statusCode;
+    if (statusCode === 502 || statusCode === 503 || statusCode === 504) {
+      return "AI_GATEWAY_UNAVAILABLE";
+    }
     const combined = `${err.statusCode} ${err.message}`.toLowerCase();
     const creditsLikely =
       err.statusCode === 402 ||
@@ -107,6 +113,12 @@ function mapCompanyEnrichmentPipelineError(err: unknown, modelMode: EnrichmentMo
     return mapProviderQuotaExhaustionCode(modelMode, lower);
   }
 
+  if (
+    /econnreset|etimedout|enotfound|network|fetch failed|socket hang up|eai_again|econnrefused/.test(lower)
+  ) {
+    return "AI_GATEWAY_UNAVAILABLE";
+  }
+
   return "ENRICHMENT_FAILED";
 }
 
@@ -118,10 +130,41 @@ function formatAiEnrichmentDailyRateLimitError(
   return `AI_ENRICHMENT_RATE_LIMIT:${usedToday}:${dailyLimit}:${requestedSlots}`;
 }
 
+const ALLOWED_ENRICHMENT_GATEWAY_MODELS = new Set<string>(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
+
+export type ResearchCompanyEnrichmentGatewayOverride = {
+  primary?: string;
+  secondary?: string;
+};
+
+function normalizeGatewayModelOverride(
+  raw: ResearchCompanyEnrichmentGatewayOverride | undefined,
+): { primary?: GatewayModelId; secondary?: GatewayModelId } | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  const primary =
+    typeof raw.primary === "string" && ALLOWED_ENRICHMENT_GATEWAY_MODELS.has(raw.primary)
+      ? (raw.primary as GatewayModelId)
+      : undefined;
+  const secondary =
+    typeof raw.secondary === "string" && ALLOWED_ENRICHMENT_GATEWAY_MODELS.has(raw.secondary)
+      ? (raw.secondary as GatewayModelId)
+      : undefined;
+  if (primary === undefined && secondary === undefined) {
+    return undefined;
+  }
+  return { primary, secondary };
+}
+
 async function runCompanyEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   companyId: string,
-  run: { modelMode: EnrichmentModelMode; addressFocusPrioritize: boolean },
+  run: {
+    modelMode: EnrichmentModelMode;
+    addressFocusPrioritize: boolean;
+    gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
+  },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
     const resolved = await resolveCompanyDetail(companyId, supabase);
@@ -168,6 +211,7 @@ Anforderungen:
       userPrompt,
       modelMode: run.modelMode,
       addressFocusPrioritize: run.addressFocusPrioritize,
+      gatewayModelOverride: run.gatewayModelOverride,
     });
 
     return { ok: true, data: result, modelUsed };
@@ -178,7 +222,7 @@ Anforderungen:
 
 export async function researchCompanyEnrichment(
   companyId: string,
-  options?: { modelMode?: EnrichmentModelMode },
+  options?: { modelMode?: EnrichmentModelMode; gatewayModelOverride?: ResearchCompanyEnrichmentGatewayOverride },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -205,9 +249,11 @@ export async function researchCompanyEnrichment(
     try {
       const modalMode = options?.modelMode ?? "auto";
       const effectiveModelMode = mergeModalCompanyEnrichmentModelMode(policy.modelPreference, modalMode);
+      const gatewayModelOverride = normalizeGatewayModelOverride(options?.gatewayModelOverride);
       const result = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
         modelMode: effectiveModelMode,
         addressFocusPrioritize: policy.addressFocusPrioritize,
+        gatewayModelOverride,
       });
       if (!result.ok) {
         await refundEnrichmentSlots(supabase, user.id, 1);

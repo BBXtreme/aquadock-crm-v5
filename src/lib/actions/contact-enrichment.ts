@@ -1,6 +1,6 @@
 "use server";
 
-import { GatewayError, GatewayRateLimitError } from "@ai-sdk/gateway";
+import { GatewayError, type GatewayModelId, GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveContactDetail } from "@/lib/actions/contacts";
 import {
@@ -10,6 +10,7 @@ import {
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
 import {
   type AiEnrichmentModelPreference,
+  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
   fetchAiEnrichmentPolicy,
 } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -42,7 +43,7 @@ function enrichmentPreferenceToModelMode(preference: AiEnrichmentModelPreference
   if (preference === "grok") {
     return "grok_only";
   }
-  if (preference === "claude") {
+  if (preference === "claude" || preference === "single") {
     return "claude_only";
   }
   return "auto";
@@ -89,6 +90,10 @@ function mapContactEnrichmentPipelineError(err: unknown, modelMode: EnrichmentMo
     if (GatewayRateLimitError.isInstance(err)) {
       return "AI_GATEWAY_RATE_LIMIT";
     }
+    const statusCode = err.statusCode;
+    if (statusCode === 502 || statusCode === 503 || statusCode === 504) {
+      return "AI_GATEWAY_UNAVAILABLE";
+    }
     const combined = `${err.statusCode} ${err.message}`.toLowerCase();
     const creditsLikely =
       err.statusCode === 402 ||
@@ -105,6 +110,12 @@ function mapContactEnrichmentPipelineError(err: unknown, modelMode: EnrichmentMo
     return mapProviderQuotaExhaustionCode(modelMode, lower);
   }
 
+  if (
+    /econnreset|etimedout|enotfound|network|fetch failed|socket hang up|eai_again|econnrefused/.test(lower)
+  ) {
+    return "AI_GATEWAY_UNAVAILABLE";
+  }
+
   return "ENRICHMENT_FAILED";
 }
 
@@ -116,10 +127,38 @@ function formatAiEnrichmentDailyRateLimitError(
   return `AI_ENRICHMENT_RATE_LIMIT:${usedToday}:${dailyLimit}:${requestedSlots}`;
 }
 
+const ALLOWED_ENRICHMENT_GATEWAY_MODELS = new Set<string>(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
+
+export type ResearchContactEnrichmentGatewayOverride = {
+  primary?: string;
+  secondary?: string;
+};
+
+function normalizeContactGatewayModelOverride(
+  raw: ResearchContactEnrichmentGatewayOverride | undefined,
+): { primary?: GatewayModelId; secondary?: GatewayModelId } | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  const primary =
+    typeof raw.primary === "string" && ALLOWED_ENRICHMENT_GATEWAY_MODELS.has(raw.primary)
+      ? (raw.primary as GatewayModelId)
+      : undefined;
+  const secondary =
+    typeof raw.secondary === "string" && ALLOWED_ENRICHMENT_GATEWAY_MODELS.has(raw.secondary)
+      ? (raw.secondary as GatewayModelId)
+      : undefined;
+  if (primary === undefined && secondary === undefined) {
+    return undefined;
+  }
+  return { primary, secondary };
+}
+
 async function runContactEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   contactId: string,
   modelMode: EnrichmentModelMode,
+  gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId },
 ): Promise<ResearchContactEnrichmentResponse> {
   try {
     const resolved = await resolveContactDetail(contactId, supabase);
@@ -169,6 +208,7 @@ Anforderungen:
       system: SYSTEM_PROMPT,
       userPrompt,
       modelMode,
+      gatewayModelOverride,
     });
 
     return { ok: true, data: result, modelUsed };
@@ -179,7 +219,7 @@ Anforderungen:
 
 export async function researchContactEnrichment(
   contactId: string,
-  options?: { modelMode?: EnrichmentModelMode },
+  options?: { modelMode?: EnrichmentModelMode; gatewayModelOverride?: ResearchContactEnrichmentGatewayOverride },
 ): Promise<ResearchContactEnrichmentResponse> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -206,7 +246,8 @@ export async function researchContactEnrichment(
     try {
       const modalMode = options?.modelMode ?? "auto";
       const effective = mergeModalContactEnrichmentModelMode(policy.modelPreference, modalMode);
-      const result = await runContactEnrichmentForActiveRow(supabase, contactId, effective);
+      const gatewayModelOverride = normalizeContactGatewayModelOverride(options?.gatewayModelOverride);
+      const result = await runContactEnrichmentForActiveRow(supabase, contactId, effective, gatewayModelOverride);
       if (!result.ok) {
         await refundEnrichmentSlots(supabase, user.id, 1);
       }

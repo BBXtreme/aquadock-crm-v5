@@ -6,28 +6,41 @@ import {
   AI_ENRICHMENT_DAILY_LIMIT_KEY,
   AI_ENRICHMENT_ENABLED_KEY,
   AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+  AI_ENRICHMENT_PRIMARY_MODEL_KEY,
+  AI_ENRICHMENT_SECONDARY_MODEL_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
-import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
+import {
+  type AiEnrichmentPolicy,
+  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
+  fetchAiEnrichmentPolicy,
+} from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const gatewayModelIdSchema = z.enum(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
 
 const aiEnrichmentSettingsUpdateSchema = z
   .object({
     enabled: z.boolean(),
     dailyLimit: z.number().int().min(1).max(500),
-    modelPreference: z.enum(["auto", "claude", "grok"]),
+    modelPreference: z.enum(["auto", "claude", "grok", "single"]),
+    primaryGatewayModelId: gatewayModelIdSchema,
+    secondaryGatewayModelId: gatewayModelIdSchema,
     addressFocusPrioritize: z.boolean(),
   })
   .strict();
 
 export type AiEnrichmentSettingsUpdate = z.infer<typeof aiEnrichmentSettingsUpdateSchema>;
 
-export type AiEnrichmentSettingsSnapshot = {
-  enabled: boolean;
-  dailyLimit: number;
-  modelPreference: "auto" | "claude" | "grok";
-  addressFocusPrioritize: boolean;
-  usedToday: number;
-};
+export type AiEnrichmentSettingsSnapshot = Pick<
+  AiEnrichmentPolicy,
+  | "enabled"
+  | "dailyLimit"
+  | "modelPreference"
+  | "addressFocusPrioritize"
+  | "usedToday"
+  | "primaryGatewayModelId"
+  | "secondaryGatewayModelId"
+>;
 
 export async function getAiEnrichmentSettingsSnapshot(): Promise<
   { ok: true; data: AiEnrichmentSettingsSnapshot } | { ok: false; error: "NOT_AUTHENTICATED" }
@@ -48,6 +61,8 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
       modelPreference: policy.modelPreference,
       addressFocusPrioritize: policy.addressFocusPrioritize,
       usedToday: policy.usedToday,
+      primaryGatewayModelId: policy.primaryGatewayModelId,
+      secondaryGatewayModelId: policy.secondaryGatewayModelId,
     },
   };
 }
@@ -73,6 +88,8 @@ export async function updateAiEnrichmentSettings(
     { user_id: user.id, key: AI_ENRICHMENT_ENABLED_KEY, value: parsed.data.enabled },
     { user_id: user.id, key: AI_ENRICHMENT_DAILY_LIMIT_KEY, value: parsed.data.dailyLimit },
     { user_id: user.id, key: AI_ENRICHMENT_MODEL_PREFERENCE_KEY, value: parsed.data.modelPreference },
+    { user_id: user.id, key: AI_ENRICHMENT_PRIMARY_MODEL_KEY, value: parsed.data.primaryGatewayModelId },
+    { user_id: user.id, key: AI_ENRICHMENT_SECONDARY_MODEL_KEY, value: parsed.data.secondaryGatewayModelId },
     { user_id: user.id, key: AI_ENRICHMENT_ADDRESS_FOCUS_KEY, value: parsed.data.addressFocusPrioritize },
   ];
 

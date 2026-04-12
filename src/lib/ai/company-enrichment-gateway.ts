@@ -5,6 +5,8 @@ import type { GatewayModelId } from "@ai-sdk/gateway";
 import { GatewayError } from "@ai-sdk/gateway";
 import { createGateway, generateText, Output, stepCountIs } from "ai";
 
+import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type CompanyEnrichmentAiOutput,
   type CompanyEnrichmentResult,
@@ -91,6 +93,44 @@ function getGateway(): GatewayInstance | null {
   return createGateway({ apiKey });
 }
 
+async function loadEnrichmentGatewayModelsForCurrentUser(): Promise<{
+  primary: GatewayModelId;
+  secondary: GatewayModelId;
+}> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return {
+        primary: COMPANY_ENRICHMENT_PRIMARY_MODEL,
+        secondary: resolveEnrichmentGrokGatewayModelId(),
+      };
+    }
+    const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
+    return {
+      primary: policy.primaryGatewayModelId,
+      secondary: policy.secondaryGatewayModelId,
+    };
+  } catch {
+    return {
+      primary: COMPANY_ENRICHMENT_PRIMARY_MODEL,
+      secondary: resolveEnrichmentGrokGatewayModelId(),
+    };
+  }
+}
+
+function pickGrokOnlyModel(primary: GatewayModelId, secondary: GatewayModelId): GatewayModelId {
+  if (primary.startsWith("xai/")) {
+    return primary;
+  }
+  if (secondary.startsWith("xai/")) {
+    return secondary;
+  }
+  return resolveEnrichmentGrokGatewayModelId();
+}
+
 /**
  * Optional provider options forwarded to the AI Gateway (BYOK for xAI / SuperGrok).
  * Shape matches AI Gateway `gateway` provider options (`byok` map).
@@ -130,6 +170,8 @@ export async function runCompanyEnrichmentGeneration(params: {
   userPrompt: string;
   modelMode?: EnrichmentModelMode;
   addressFocusPrioritize?: boolean;
+  /** Optional per-request override of policy primary/secondary (validated by caller). */
+  gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
   if (!gateway) {
@@ -157,7 +199,9 @@ export async function runCompanyEnrichmentGeneration(params: {
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
 
-  const grokModelId = resolveEnrichmentGrokGatewayModelId();
+  const loaded = await loadEnrichmentGatewayModelsForCurrentUser();
+  const primary = params.gatewayModelOverride?.primary ?? loaded.primary;
+  const secondary = params.gatewayModelOverride?.secondary ?? loaded.secondary;
 
   const runWithModel = async (modelId: GatewayModelId) => {
     // Phase 1: provider-executed Perplexity tool — AI SDK only parses `output` when the last
@@ -194,24 +238,25 @@ ${digest}`;
   };
 
   if (mode === "grok_only") {
-    const result = await runWithModel(grokModelId);
-    return { result, modelUsed: grokModelId };
+    const grokId = pickGrokOnlyModel(primary, secondary);
+    const result = await runWithModel(grokId);
+    return { result, modelUsed: grokId };
   }
 
   if (mode === "claude_only") {
-    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
+    const result = await runWithModel(primary);
+    return { result, modelUsed: primary };
   }
 
   try {
-    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
+    const result = await runWithModel(primary);
+    return { result, modelUsed: primary };
   } catch (first) {
-    if (!shouldRetryWithFallback(first)) {
+    if (!shouldRetryWithFallback(first) || secondary === primary) {
       throw first;
     }
-    const result = await runWithModel(grokModelId);
-    return { result, modelUsed: grokModelId };
+    const result = await runWithModel(secondary);
+    return { result, modelUsed: secondary };
   }
 }
 
@@ -219,6 +264,7 @@ export async function runContactEnrichmentGeneration(params: {
   system: string;
   userPrompt: string;
   modelMode?: EnrichmentModelMode;
+  gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
 }): Promise<{ result: ContactEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
   if (!gateway) {
@@ -237,7 +283,10 @@ export async function runContactEnrichmentGeneration(params: {
 
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
-  const grokModelId = resolveEnrichmentGrokGatewayModelId();
+
+  const loaded = await loadEnrichmentGatewayModelsForCurrentUser();
+  const primary = params.gatewayModelOverride?.primary ?? loaded.primary;
+  const secondary = params.gatewayModelOverride?.secondary ?? loaded.secondary;
 
   const runWithModel = async (modelId: GatewayModelId) => {
     const researchResult = await generateText({
@@ -272,23 +321,24 @@ ${digest}`;
   };
 
   if (mode === "grok_only") {
-    const result = await runWithModel(grokModelId);
-    return { result, modelUsed: grokModelId };
+    const grokId = pickGrokOnlyModel(primary, secondary);
+    const result = await runWithModel(grokId);
+    return { result, modelUsed: grokId };
   }
 
   if (mode === "claude_only") {
-    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
+    const result = await runWithModel(primary);
+    return { result, modelUsed: primary };
   }
 
   try {
-    const result = await runWithModel(COMPANY_ENRICHMENT_PRIMARY_MODEL);
-    return { result, modelUsed: COMPANY_ENRICHMENT_PRIMARY_MODEL };
+    const result = await runWithModel(primary);
+    return { result, modelUsed: primary };
   } catch (first) {
-    if (!shouldRetryWithFallback(first)) {
+    if (!shouldRetryWithFallback(first) || secondary === primary) {
       throw first;
     }
-    const result = await runWithModel(grokModelId);
-    return { result, modelUsed: grokModelId };
+    const result = await runWithModel(secondary);
+    return { result, modelUsed: secondary };
   }
 }
