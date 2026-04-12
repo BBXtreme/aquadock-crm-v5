@@ -17,28 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { getVercelAiCredits } from "@/lib/actions/vercel-ai-credits";
 import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
-import type { EnrichmentModelMode } from "@/lib/ai/company-enrichment-gateway";
-import {
-  GROK_ONLY_SESSION_BADGE,
-  getCompanyResearchBadge,
-  getEnrichmentGatewayModelMeta,
-  listEnrichmentGatewayModelsOrdered,
-} from "@/lib/constants/ai-models";
+import type { EnrichmentGatewayFailureDiagnostic } from "@/lib/ai/enrichment-gateway-failure-types";
+import { getCompanyResearchBadge, getEnrichmentGatewayModelMeta } from "@/lib/constants/ai-models";
 import { VERCEL_AI_GATEWAY_DASHBOARD_HREF } from "@/lib/constants/vercel-ai-gateway";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
@@ -52,34 +39,21 @@ import {
 import type { Company } from "@/types/database.types";
 
 const AI_ENRICHMENT_RATE_PREFIX = "AI_ENRICHMENT_RATE_LIMIT:";
-const SESSION_MODEL_DEFAULT = "__session_default__" as const;
+
+class ResearchCompanyEnrichmentClientError extends Error {
+  readonly diagnostic?: EnrichmentGatewayFailureDiagnostic;
+
+  constructor(code: string, diagnostic?: EnrichmentGatewayFailureDiagnostic) {
+    super(code);
+    this.name = "ResearchCompanyEnrichmentClientError";
+    this.diagnostic = diagnostic;
+  }
+}
 
 type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
-type SessionModelPick = EnrichmentGatewayModelId | typeof SESSION_MODEL_DEFAULT;
 
 function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
-}
-
-function ModalEnrichmentModelSelectItemContent({
-  modelId,
-  xaiBillingContext,
-}: {
-  modelId: EnrichmentGatewayModelId;
-  xaiBillingContext: boolean;
-}) {
-  const meta = getEnrichmentGatewayModelMeta(modelId);
-  const badge = getCompanyResearchBadge(modelId, { xaiBillingContext });
-  return (
-    <span className="flex max-w-[min(100vw-4rem,28rem)] flex-wrap items-center gap-2">
-      <span className="min-w-0 truncate font-medium">{meta?.label ?? modelId}</span>
-      {badge ? (
-        <Badge variant={badge.variant} className={badge.className}>
-          {badge.text}
-        </Badge>
-      ) : null}
-    </span>
-  );
 }
 
 function formatUsdCredits(amount: number, localeTag: string): string {
@@ -92,6 +66,25 @@ function formatUsdCredits(amount: number, localeTag: string): string {
 }
 
 type AiEnrichmentUsageSnapshot = { usedToday: number; dailyLimit: number };
+
+/** Heuristic relative cost / token tier for the gateway model (no live usage without gateway changes). */
+function enrichmentApproxRelativeCostHint(modelId: string, lowCostMode: boolean | undefined): string | null {
+  const lower = modelId.toLowerCase();
+  if (
+    /grok-4\.1-fast|grok-4-fast|gemini-3-flash|gemini-2\.5-flash|claude-haiku|gpt-5\.4-mini|gpt-5-mini|nano/.test(
+      lower,
+    )
+  ) {
+    return "Approximate cost: lower (fast / efficient model).";
+  }
+  if (/claude-sonnet|claude-opus/.test(lower) || lower === "openai/gpt-5.4") {
+    return "Approximate cost: higher (large flagship model).";
+  }
+  if (lowCostMode === true) {
+    return "Low-cost mode: fewer web snippets and compact prompts are active in settings.";
+  }
+  return null;
+}
 
 function parseDailyAiEnrichmentRateLimitError(
   message: string,
@@ -168,59 +161,32 @@ function resolveCompanyAiEnrichmentErrorMessage(
   return t("aiEnrich.errorGeneric");
 }
 
-function snapshotShowsGrokBilling(
+function modalShowsGrokBilling(
   snapshot:
-    | {
-        modelPreference: string;
-        primaryGatewayModelId: string;
-        secondaryGatewayModelId: string;
-      }
+    | { primaryGatewayModelId: string; lowCostMode?: boolean }
     | null
     | undefined,
-  modelMode: EnrichmentModelMode,
 ): boolean {
-  if (modelMode === "grok_only") {
-    return true;
-  }
   if (!snapshot) {
     return false;
   }
-  if (snapshot.modelPreference === "grok") {
+  if (snapshot.lowCostMode === true) {
     return true;
   }
-  if (snapshot.modelPreference === "single" && snapshot.primaryGatewayModelId.startsWith("xai/")) {
-    return true;
-  }
-  return (
-    snapshot.primaryGatewayModelId.startsWith("xai/") ||
-    snapshot.secondaryGatewayModelId.startsWith("xai/")
-  );
+  return snapshot.primaryGatewayModelId.startsWith("xai/");
 }
 
-/** Vercel AI Gateway *account* credits apply to non–xAI-primary routes (not Grok-only / BYOK-first). */
+/** Vercel AI Gateway credits when primary is not xAI-only, or low-cost (Gemini path) is on. */
 function shouldShowVercelAiCreditsInModal(
-  modelMode: EnrichmentModelMode,
-  snapshot:
-    | { modelPreference: string; primaryGatewayModelId: string }
-    | null
-    | undefined,
+  snapshot: { primaryGatewayModelId: string; lowCostMode?: boolean } | null | undefined,
 ): boolean {
-  if (modelMode === "grok_only") {
-    return false;
-  }
   if (!snapshot) {
     return false;
   }
-  if (snapshot.modelPreference === "grok") {
-    return false;
+  if (snapshot.lowCostMode === true) {
+    return true;
   }
-  if (snapshot.modelPreference === "single" && snapshot.primaryGatewayModelId.startsWith("xai/")) {
-    return false;
-  }
-  if (snapshot.primaryGatewayModelId.startsWith("xai/")) {
-    return false;
-  }
-  return true;
+  return !snapshot.primaryGatewayModelId.startsWith("xai/");
 }
 
 function enrichmentFieldTitle(t: ReturnType<typeof useT>, key: EnrichmentFieldKey): string {
@@ -340,11 +306,10 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const [selected, setSelected] = useState<Partial<Record<EnrichmentFieldKey, boolean>>>({});
   const [result, setResult] = useState<CompanyEnrichmentResult | null>(null);
   const [modelUsed, setModelUsed] = useState<string | null>(null);
-  const [modelMode, setModelMode] = useState<EnrichmentModelMode>("auto");
-  const [sessionPrimaryPick, setSessionPrimaryPick] = useState<SessionModelPick>(SESSION_MODEL_DEFAULT);
   const [enrichmentInlineError, setEnrichmentInlineError] = useState<string | null>(null);
-  const modelModeRef = useRef<EnrichmentModelMode>("auto");
-  modelModeRef.current = modelMode;
+  const [enrichmentFailureDetail, setEnrichmentFailureDetail] = useState<EnrichmentGatewayFailureDiagnostic | null>(
+    null,
+  );
   const runForOpenSessionRef = useRef(false);
   const startTimeoutRef = useRef<number | null>(null);
   const prevOpenRef = useRef(false);
@@ -364,34 +329,31 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     refetchOnWindowFocus: open,
   });
 
-  const showVercelAiCredits = shouldShowVercelAiCreditsInModal(modelMode, usageQuery.data);
+  const showVercelAiCredits = shouldShowVercelAiCreditsInModal(usageQuery.data);
 
-  const xaiBillingContextForBadges = snapshotShowsGrokBilling(usageQuery.data, modelMode);
+  const snapshotPrimary: EnrichmentGatewayModelId | null =
+    usageQuery.data && isEnrichmentGatewayModelId(usageQuery.data.primaryGatewayModelId)
+      ? usageQuery.data.primaryGatewayModelId
+      : null;
 
-  const resolvedSessionGatewayId: EnrichmentGatewayModelId | null =
-    modelMode === "grok_only"
-      ? null
+  const xaiBillingContextForBadges = snapshotPrimary?.startsWith("xai/") === true;
+
+  /** Effective routing preview: low-cost → Gemini until `modelUsed` reflects the run; else saved primary or last model. */
+  const LOW_COST_PRIMARY_DISPLAY: EnrichmentGatewayModelId = "google/gemini-3-flash";
+  const effectiveModelIdForBadge: EnrichmentGatewayModelId | null =
+    usageQuery.data?.lowCostMode === true && !(modelUsed && isEnrichmentGatewayModelId(modelUsed))
+      ? LOW_COST_PRIMARY_DISPLAY
       : modelUsed && isEnrichmentGatewayModelId(modelUsed)
         ? modelUsed
-        : sessionPrimaryPick !== SESSION_MODEL_DEFAULT
-          ? sessionPrimaryPick
-          : usageQuery.data && isEnrichmentGatewayModelId(usageQuery.data.primaryGatewayModelId)
-            ? usageQuery.data.primaryGatewayModelId
-            : null;
+        : snapshotPrimary;
 
-  const sessionActiveModelLabel =
-    modelMode === "grok_only"
-      ? t("aiEnrich.sessionRunModeGrokOnly")
-      : resolvedSessionGatewayId
-        ? getEnrichmentGatewayModelMeta(resolvedSessionGatewayId)?.label ?? resolvedSessionGatewayId
-        : modelUsed ?? usageQuery.data?.primaryGatewayModelId ?? "—";
+  const sessionActiveModelLabel = effectiveModelIdForBadge
+    ? getEnrichmentGatewayModelMeta(effectiveModelIdForBadge)?.label ?? effectiveModelIdForBadge
+    : modelUsed ?? usageQuery.data?.primaryGatewayModelId ?? "—";
 
-  const sessionActiveModelBadge =
-    modelMode === "grok_only"
-      ? GROK_ONLY_SESSION_BADGE
-      : resolvedSessionGatewayId
-        ? getCompanyResearchBadge(resolvedSessionGatewayId, { xaiBillingContext: xaiBillingContextForBadges })
-        : null;
+  const sessionActiveModelBadge = effectiveModelIdForBadge
+    ? getCompanyResearchBadge(effectiveModelIdForBadge, { xaiBillingContext: xaiBillingContextForBadges })
+    : null;
 
   const creditsQuery = useQuery({
     queryKey: ["vercel-ai-gateway-credits"],
@@ -404,21 +366,15 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
     mutationFn: async () => {
-      const mode = modelModeRef.current;
-      const res = await researchCompanyEnrichment(company.id, {
-        modelMode: mode,
-        gatewayModelOverride:
-          mode !== "grok_only" && sessionPrimaryPick !== SESSION_MODEL_DEFAULT
-            ? { primary: sessionPrimaryPick }
-            : undefined,
-      });
+      const res = await researchCompanyEnrichment(company.id, { modelMode: "auto" });
       if (!res.ok) {
-        throw new Error(res.error);
+        throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
       }
       return res;
     },
     onSuccess: (res) => {
       setEnrichmentInlineError(null);
+      setEnrichmentFailureDetail(null);
       setResult(res.data);
       setModelUsed(res.modelUsed);
       const next: Partial<Record<EnrichmentFieldKey, boolean>> = {};
@@ -431,7 +387,15 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
     },
     onError: (err) => {
-      const code = err instanceof Error ? err.message : "ENRICHMENT_FAILED";
+      const code =
+        err instanceof ResearchCompanyEnrichmentClientError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "ENRICHMENT_FAILED";
+      const diagnostic =
+        err instanceof ResearchCompanyEnrichmentClientError ? err.diagnostic : undefined;
+      setEnrichmentFailureDetail(diagnostic ?? null);
       const usageFallback =
         usageQuery.data !== undefined && usageQuery.data !== null
           ? { usedToday: usageQuery.data.usedToday, dailyLimit: usageQuery.data.dailyLimit }
@@ -453,6 +417,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
     if (!open) {
       setEnrichmentInlineError(null);
+      setEnrichmentFailureDetail(null);
       if (startTimeoutRef.current !== null) {
         window.clearTimeout(startTimeoutRef.current);
         startTimeoutRef.current = null;
@@ -462,8 +427,6 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         setProgress(0);
         setResult(null);
         setModelUsed(null);
-        setModelMode("auto");
-        setSessionPrimaryPick(SESSION_MODEL_DEFAULT);
         setSelected({});
       }
       resetRef.current();
@@ -508,8 +471,14 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     ? ENRICHMENT_FIELD_KEYS.filter((k) => result.suggestions[k] !== undefined)
     : [];
 
+  const modelCostHint =
+    result && !isPending && modelUsed
+      ? enrichmentApproxRelativeCostHint(modelUsed, usageQuery.data?.lowCostMode)
+      : null;
+
   const handleRetry = () => {
     setEnrichmentInlineError(null);
+    setEnrichmentFailureDetail(null);
     setResult(null);
     setModelUsed(null);
     setSelected({});
@@ -599,7 +568,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               {usageQuery.data.addressFocusPrioritize ? (
                 <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrich.addressFocusActive")}</p>
               ) : null}
-              {snapshotShowsGrokBilling(usageQuery.data, modelMode) ? (
+              {modalShowsGrokBilling(usageQuery.data) ? (
                 <p className="text-muted-foreground mt-2 text-xs leading-snug">
                   {t("aiEnrich.grokBillingNotice")}{" "}
                   <a
@@ -614,67 +583,6 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                 </p>
               ) : null}
               <div className="mt-3 flex flex-col gap-3 border-border border-t border-dashed pt-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex min-w-0 flex-col gap-1.5">
-                    <Label className="text-muted-foreground text-xs" htmlFor="ai-enrich-session-run-mode">
-                      {t("aiEnrich.sessionRunModeLabel")}
-                    </Label>
-                    <Select
-                      value={modelMode}
-                      onValueChange={(v) => {
-                        if (v === "auto" || v === "grok_only") {
-                          setModelMode(v);
-                          if (v === "grok_only") {
-                            setSessionPrimaryPick(SESSION_MODEL_DEFAULT);
-                          }
-                        }
-                      }}
-                      disabled={isPending}
-                    >
-                      <SelectTrigger id="ai-enrich-session-run-mode" className="h-9 w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="auto">{t("aiEnrich.sessionRunModePolicy")}</SelectItem>
-                        <SelectItem value="grok_only">{t("aiEnrich.sessionRunModeGrokOnly")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex min-w-0 flex-col gap-1.5">
-                    <Label className="text-muted-foreground text-xs" htmlFor="ai-enrich-session-model">
-                      {t("aiEnrich.sessionModelPickerLabel")}
-                    </Label>
-                    <Select
-                      value={modelMode === "grok_only" ? SESSION_MODEL_DEFAULT : sessionPrimaryPick}
-                      onValueChange={(v) => {
-                        if (v === SESSION_MODEL_DEFAULT) {
-                          setSessionPrimaryPick(SESSION_MODEL_DEFAULT);
-                          return;
-                        }
-                        if (isEnrichmentGatewayModelId(v)) {
-                          setSessionPrimaryPick(v);
-                          setModelMode("auto");
-                        }
-                      }}
-                      disabled={isPending || modelMode === "grok_only"}
-                    >
-                      <SelectTrigger id="ai-enrich-session-model" className="h-9 w-full">
-                        <SelectValue placeholder={t("aiEnrich.sessionModelDefault")} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-72">
-                        <SelectItem value={SESSION_MODEL_DEFAULT}>{t("aiEnrich.sessionModelDefault")}</SelectItem>
-                        {listEnrichmentGatewayModelsOrdered().map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <ModalEnrichmentModelSelectItemContent
-                              modelId={m.id}
-                              xaiBillingContext={xaiBillingContextForBadges}
-                            />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
                 <div className="min-w-0 space-y-1">
                   <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                     {t("aiEnrich.sessionModelHeading")}
@@ -688,18 +596,66 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                     ) : null}
                   </p>
                   <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.sessionModelHint")}</p>
+                  {usageQuery.data?.lowCostMode === true ? (
+                    <p className="text-muted-foreground text-xs leading-snug">
+                      Low-cost mode is on (Settings): Gemini 3 Flash + Grok 4.1 Fast routing, 3 search hits, shorter
+                      prompts.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
           ) : null}
 
           {enrichmentInlineError ? (
-            <p
+            <div
               role="alert"
-              className="rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
+              className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
             >
-              {enrichmentInlineError}
-            </p>
+              <p className="font-medium text-destructive">{enrichmentInlineError}</p>
+              {enrichmentFailureDetail ? (
+                <div className="space-y-1.5 border-destructive/20 border-t border-dashed pt-2 text-muted-foreground">
+                  <p className="font-mono text-[11px] leading-snug wrap-break-word">
+                    <span className="text-foreground/80">Code:</span> {enrichmentFailureDetail.stableCode}
+                    {enrichmentFailureDetail.httpStatus !== undefined ? (
+                      <span>
+                        {" "}
+                        · HTTP {String(enrichmentFailureDetail.httpStatus)}
+                      </span>
+                    ) : null}
+                    {enrichmentFailureDetail.generationId ? (
+                      <span>
+                        {" "}
+                        · gen {enrichmentFailureDetail.generationId}
+                      </span>
+                    ) : null}
+                  </p>
+                  {enrichmentFailureDetail.gatewayMessage.length > 0 ? (
+                    <p className="max-h-24 overflow-y-auto font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                      {enrichmentFailureDetail.gatewayMessage}
+                    </p>
+                  ) : null}
+                  {enrichmentFailureDetail.stableCode === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED" ? (
+                    <p className="text-[11px] leading-snug">
+                      Add Vercel AI Gateway credits or top up in the dashboard.{" "}
+                      <a
+                        href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        {t("aiEnrich.vercelAiGatewayDashboardLink")}
+                      </a>
+                    </p>
+                  ) : null}
+                  {enrichmentFailureDetail.tokenUsageHint ? (
+                    <p className="font-mono text-[11px] leading-snug wrap-break-word opacity-90">
+                      Token usage (from gateway): {enrichmentFailureDetail.tokenUsageHint}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
           {open && usageQuery.isLoading && !usageQuery.data ? (
@@ -757,13 +713,18 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                   </section>
                 ) : null}
                 {modelUsed ? (
-                  <p className="text-muted-foreground shrink-0 text-xs">
-                    {t("aiEnrich.modelUsed", {
-                      model: isEnrichmentGatewayModelId(modelUsed)
-                        ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
-                        : modelUsed,
-                    })}
-                  </p>
+                  <div className="shrink-0 space-y-1">
+                    <p className="text-muted-foreground text-xs">
+                      {t("aiEnrich.modelUsed", {
+                        model: isEnrichmentGatewayModelId(modelUsed)
+                          ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
+                          : modelUsed,
+                      })}
+                    </p>
+                    {modelCostHint ? (
+                      <p className="text-muted-foreground text-[11px] leading-snug">{modelCostHint}</p>
+                    ) : null}
+                  </div>
                 ) : null}
                 {rows.length === 0 ? (
                   <p className="text-muted-foreground shrink-0 text-sm">{t("aiEnrich.noSuggestions")}</p>

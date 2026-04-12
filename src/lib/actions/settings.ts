@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants/ai-enrichment-user-settings";
 import {
   type AiEnrichmentPolicy,
+  DEFAULT_SECONDARY_GATEWAY_MODEL,
   ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
   fetchAiEnrichmentPolicy,
 } from "@/lib/services/ai-enrichment-policy";
@@ -18,14 +19,17 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const gatewayModelIdSchema = z.enum(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
 
+/** `user_settings.key` — kept here to avoid editing shared constants package. */
+const AI_ENRICHMENT_LOW_COST_KEY = "ai_enrichment_low_cost" as const;
+
+/** Single user-selected gateway model; server persists auto + default secondary for Server Action merge compatibility. */
 const aiEnrichmentSettingsUpdateSchema = z
   .object({
     enabled: z.boolean(),
     dailyLimit: z.number().int().min(1).max(500),
-    modelPreference: z.enum(["auto", "claude", "grok", "single"]),
     primaryGatewayModelId: gatewayModelIdSchema,
-    secondaryGatewayModelId: gatewayModelIdSchema,
     addressFocusPrioritize: z.boolean(),
+    lowCostMode: z.boolean(),
   })
   .strict();
 
@@ -40,7 +44,23 @@ export type AiEnrichmentSettingsSnapshot = Pick<
   | "usedToday"
   | "primaryGatewayModelId"
   | "secondaryGatewayModelId"
->;
+> & {
+  /** When absent (e.g. SSR snapshot from older callers), treat as false. */
+  lowCostMode?: boolean;
+};
+
+function jsonToBooleanSetting(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  return fallback;
+}
 
 export async function getAiEnrichmentSettingsSnapshot(): Promise<
   { ok: true; data: AiEnrichmentSettingsSnapshot } | { ok: false; error: "NOT_AUTHENTICATED" }
@@ -53,6 +73,13 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
     return { ok: false, error: "NOT_AUTHENTICATED" };
   }
   const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
+  const { data: lowCostRow } = await supabase
+    .from("user_settings")
+    .select("value")
+    .eq("user_id", user.id)
+    .eq("key", AI_ENRICHMENT_LOW_COST_KEY)
+    .maybeSingle();
+  const lowCostMode = jsonToBooleanSetting(lowCostRow?.value, false);
   return {
     ok: true,
     data: {
@@ -63,6 +90,7 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
       usedToday: policy.usedToday,
       primaryGatewayModelId: policy.primaryGatewayModelId,
       secondaryGatewayModelId: policy.secondaryGatewayModelId,
+      lowCostMode,
     },
   };
 }
@@ -87,10 +115,11 @@ export async function updateAiEnrichmentSettings(
   const rows = [
     { user_id: user.id, key: AI_ENRICHMENT_ENABLED_KEY, value: parsed.data.enabled },
     { user_id: user.id, key: AI_ENRICHMENT_DAILY_LIMIT_KEY, value: parsed.data.dailyLimit },
-    { user_id: user.id, key: AI_ENRICHMENT_MODEL_PREFERENCE_KEY, value: parsed.data.modelPreference },
+    { user_id: user.id, key: AI_ENRICHMENT_MODEL_PREFERENCE_KEY, value: "auto" as const },
     { user_id: user.id, key: AI_ENRICHMENT_PRIMARY_MODEL_KEY, value: parsed.data.primaryGatewayModelId },
-    { user_id: user.id, key: AI_ENRICHMENT_SECONDARY_MODEL_KEY, value: parsed.data.secondaryGatewayModelId },
+    { user_id: user.id, key: AI_ENRICHMENT_SECONDARY_MODEL_KEY, value: DEFAULT_SECONDARY_GATEWAY_MODEL },
     { user_id: user.id, key: AI_ENRICHMENT_ADDRESS_FOCUS_KEY, value: parsed.data.addressFocusPrioritize },
+    { user_id: user.id, key: AI_ENRICHMENT_LOW_COST_KEY, value: parsed.data.lowCostMode },
   ];
 
   for (const row of rows) {

@@ -1,13 +1,13 @@
 "use server";
 
 import type { GatewayModelId } from "@ai-sdk/gateway";
-import { GatewayError, GatewayRateLimitError } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import {
   type EnrichmentModelMode,
   runCompanyEnrichmentGeneration,
 } from "@/lib/ai/company-enrichment-gateway";
+import { buildAiEnrichmentFailureDiagnostic, mapAiEnrichmentGatewayPipelineError } from "@/lib/ai/enrichment-gateway-pipeline";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
 import {
   type AiEnrichmentModelPreference,
@@ -22,13 +22,22 @@ import {
 } from "@/lib/validations/company-enrichment";
 import type { Database } from "@/types/database.types";
 
+/** JSON shape for `diagnostic` on failed runs — matches `EnrichmentGatewayFailureDiagnostic` in enrichment-gateway-failure-types. */
+type CompanyEnrichmentFailureDiagnosticPayload = {
+  stableCode: string;
+  httpStatus?: number;
+  gatewayMessage: string;
+  generationId?: string;
+  tokenUsageHint?: string;
+};
+
 export type ResearchCompanyEnrichmentResponse =
   | { ok: true; data: CompanyEnrichmentResult; modelUsed: string }
-  | { ok: false; error: string };
+  | { ok: false; error: string; diagnostic?: CompanyEnrichmentFailureDiagnosticPayload };
 
 export type BulkCompanyEnrichmentItemResult =
   | { companyId: string; ok: true; data: CompanyEnrichmentResult; modelUsed: string }
-  | { companyId: string; ok: false; error: string };
+  | { companyId: string; ok: false; error: string; diagnostic?: CompanyEnrichmentFailureDiagnosticPayload };
 
 export type BulkResearchCompanyEnrichmentResponse =
   | { ok: true; results: BulkCompanyEnrichmentItemResult[] }
@@ -68,58 +77,6 @@ function mergeBulkCompanyEnrichmentModelMode(
     return "grok_only";
   }
   return enrichmentPreferenceToModelMode(preference);
-}
-
-/** xAI Grok (BYOK / grok-only) vs Vercel AI Gateway account credits (Claude etc.). */
-function mapProviderQuotaExhaustionCode(modelMode: EnrichmentModelMode, diagnosticText: string): string {
-  const lower = diagnosticText.toLowerCase();
-  const isXaiContext = modelMode === "grok_only" || /grok|xai|x\.ai/.test(lower);
-  if (isXaiContext) {
-    return "XAI_GROK_QUOTA_EXHAUSTED";
-  }
-  return "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED";
-}
-
-/** Maps gateway / model failures to stable action error codes for client toasts. */
-function mapCompanyEnrichmentPipelineError(err: unknown, modelMode: EnrichmentModelMode): string {
-  if (err instanceof Error && err.message === "AI_GATEWAY_MISSING") {
-    return "AI_GATEWAY_MISSING";
-  }
-  if (err instanceof Error && err.message === "ENRICHMENT_NO_OUTPUT") {
-    return "ENRICHMENT_NO_OUTPUT";
-  }
-
-  if (GatewayError.isInstance(err)) {
-    if (GatewayRateLimitError.isInstance(err)) {
-      return "AI_GATEWAY_RATE_LIMIT";
-    }
-    const statusCode = err.statusCode;
-    if (statusCode === 502 || statusCode === 503 || statusCode === 504) {
-      return "AI_GATEWAY_UNAVAILABLE";
-    }
-    const combined = `${err.statusCode} ${err.message}`.toLowerCase();
-    const creditsLikely =
-      err.statusCode === 402 ||
-      /insufficient|credit|billing|quota|balance|payment required|spend limit|exceeded your|not enough/.test(combined);
-
-    if (creditsLikely) {
-      return mapProviderQuotaExhaustionCode(modelMode, combined);
-    }
-  }
-
-  const msg = err instanceof Error ? err.message : "";
-  const lower = msg.toLowerCase();
-  if (/402|payment required|insufficient funds|credit limit|billing/.test(lower)) {
-    return mapProviderQuotaExhaustionCode(modelMode, lower);
-  }
-
-  if (
-    /econnreset|etimedout|enotfound|network|fetch failed|socket hang up|eai_again|econnrefused/.test(lower)
-  ) {
-    return "AI_GATEWAY_UNAVAILABLE";
-  }
-
-  return "ENRICHMENT_FAILED";
 }
 
 function formatAiEnrichmentDailyRateLimitError(
@@ -216,7 +173,12 @@ Anforderungen:
 
     return { ok: true, data: result, modelUsed };
   } catch (err) {
-    return { ok: false, error: mapCompanyEnrichmentPipelineError(err, run.modelMode) };
+    const error = mapAiEnrichmentGatewayPipelineError(err);
+    return {
+      ok: false,
+      error,
+      diagnostic: buildAiEnrichmentFailureDiagnostic(err, error),
+    };
   }
 }
 
@@ -333,7 +295,12 @@ export async function bulkResearchCompanyEnrichment(
           results.push({ companyId, ok: true, data: r.data, modelUsed: r.modelUsed });
         } else {
           failureSlots += 1;
-          results.push({ companyId, ok: false, error: r.error });
+          results.push({
+            companyId,
+            ok: false,
+            error: r.error,
+            ...(r.diagnostic !== undefined ? { diagnostic: r.diagnostic } : {}),
+          });
         }
       }
 

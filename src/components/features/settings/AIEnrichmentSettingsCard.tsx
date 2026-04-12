@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -33,15 +33,9 @@ import {
 } from "@/lib/constants/ai-models";
 import { VERCEL_AI_GATEWAY_DASHBOARD_HREF } from "@/lib/constants/vercel-ai-gateway";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
-import {
-  type AiEnrichmentModelPreference,
-  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
-} from "@/lib/services/ai-enrichment-policy";
-
-const RESERVE_NONE = "__reserve_none__" as const;
+import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
 
 type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
-type ReserveChoice = EnrichmentGatewayModelId | typeof RESERVE_NONE;
 
 function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
@@ -52,23 +46,6 @@ function toEnrichmentGatewayModelChoice(value: string): EnrichmentGatewayModelId
     return value;
   }
   return ENRICHMENT_GATEWAY_MODEL_ID_CHOICES[0];
-}
-
-function inferXaiBillingContextForBadges(
-  modelPreference: AiEnrichmentModelPreference,
-  primary: string,
-  secondary: string,
-): boolean {
-  if (modelPreference === "grok") {
-    return true;
-  }
-  if (modelPreference === "single" && primary.startsWith("xai/")) {
-    return true;
-  }
-  if (primary.startsWith("xai/") || secondary.startsWith("xai/")) {
-    return true;
-  }
-  return false;
 }
 
 function EnrichmentModelSelectItemContent({
@@ -101,30 +78,16 @@ function formatUsdCredits(amount: number, localeTag: string): string {
   }).format(amount);
 }
 
-function shouldShowVercelAiCreditsInSettings(
-  modelPreference: AiEnrichmentModelPreference,
-  primaryGatewayModelId: string,
-): boolean {
-  if (modelPreference === "grok") {
-    return false;
+/** Vercel AI Gateway credits apply when the primary path can use non–xAI-first routing, or low-cost (Gemini) is on. */
+function shouldShowVercelAiCreditsInSettings(primaryGatewayModelId: string, lowCostMode: boolean): boolean {
+  if (lowCostMode) {
+    return true;
   }
-  if (modelPreference === "single" && primaryGatewayModelId.startsWith("xai/")) {
-    return false;
-  }
-  if (primaryGatewayModelId.startsWith("xai/")) {
-    return false;
-  }
-  return true;
+  return !primaryGatewayModelId.startsWith("xai/");
 }
 
-function initialReserveChoice(snapshot: AiEnrichmentSettingsSnapshot): ReserveChoice {
-  if (snapshot.modelPreference !== "auto") {
-    return RESERVE_NONE;
-  }
-  if (snapshot.primaryGatewayModelId === snapshot.secondaryGatewayModelId) {
-    return RESERVE_NONE;
-  }
-  return toEnrichmentGatewayModelChoice(snapshot.secondaryGatewayModelId);
+function shouldShowGrokBillingNotice(primaryGatewayModelId: string, lowCostMode: boolean): boolean {
+  return primaryGatewayModelId.startsWith("xai/") || lowCostMode;
 }
 
 type Props = {
@@ -137,19 +100,14 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   const queryClient = useQueryClient();
   const [enabled, setEnabled] = useState(initialSnapshot.enabled);
   const [dailyLimit, setDailyLimit] = useState(String(initialSnapshot.dailyLimit));
-  const [modelPreference, setModelPreference] = useState<AiEnrichmentModelPreference>(
-    initialSnapshot.modelPreference,
-  );
   const [addressFocusPrioritize, setAddressFocusPrioritize] = useState(
     initialSnapshot.addressFocusPrioritize,
   );
   const [primaryGatewayModelId, setPrimaryGatewayModelId] = useState<EnrichmentGatewayModelId>(() =>
     toEnrichmentGatewayModelChoice(initialSnapshot.primaryGatewayModelId),
   );
-  const [secondaryGatewayModelId, setSecondaryGatewayModelId] = useState<EnrichmentGatewayModelId>(() =>
-    toEnrichmentGatewayModelChoice(initialSnapshot.secondaryGatewayModelId),
-  );
-  const [reserveChoice, setReserveChoice] = useState<ReserveChoice>(() => initialReserveChoice(initialSnapshot));
+  const [lowCostMode, setLowCostMode] = useState(initialSnapshot.lowCostMode === true);
+  const lowCostHydratedFromQuery = useRef(initialSnapshot.lowCostMode !== undefined);
 
   const { data: snapshot, isFetching } = useQuery({
     queryKey: ["ai-enrichment-settings-snapshot"],
@@ -166,7 +124,17 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
     refetchOnWindowFocus: true,
   });
 
-  const showVercelAiCredits = shouldShowVercelAiCreditsInSettings(modelPreference, primaryGatewayModelId);
+  useEffect(() => {
+    if (lowCostHydratedFromQuery.current) {
+      return;
+    }
+    if (snapshot?.lowCostMode !== undefined) {
+      setLowCostMode(snapshot.lowCostMode === true);
+      lowCostHydratedFromQuery.current = true;
+    }
+  }, [snapshot?.lowCostMode]);
+
+  const showVercelAiCredits = shouldShowVercelAiCreditsInSettings(primaryGatewayModelId, lowCostMode);
 
   const creditsQuery = useQuery({
     queryKey: ["vercel-ai-gateway-credits"],
@@ -181,39 +149,17 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   const limit = snapshot?.dailyLimit ?? 1;
   const usagePercent = limit > 0 ? Math.min(100, Math.round((usedToday / limit) * 100)) : 0;
 
-  const researchModeHelpKey =
-    modelPreference === "auto"
-      ? "researchModeHelpAuto"
-      : modelPreference === "claude"
-        ? "researchModeHelpPrimaryOnly"
-        : modelPreference === "single"
-          ? "researchModeHelpSpecific"
-          : "researchModeHelpGrok";
-
-  const xaiBillingContextForBadges = inferXaiBillingContextForBadges(
-    modelPreference,
-    primaryGatewayModelId,
-    secondaryGatewayModelId,
-  );
+  const xaiBillingContextForBadges = primaryGatewayModelId.startsWith("xai/");
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       const n = Number.parseInt(dailyLimit.trim(), 10);
-      const secondaryToPersist =
-        modelPreference === "auto"
-          ? reserveChoice === RESERVE_NONE
-            ? primaryGatewayModelId
-            : reserveChoice
-          : modelPreference === "grok"
-            ? secondaryGatewayModelId
-            : primaryGatewayModelId;
       const res = await updateAiEnrichmentSettings({
         enabled,
         dailyLimit: n,
-        modelPreference,
-        addressFocusPrioritize,
         primaryGatewayModelId,
-        secondaryGatewayModelId: secondaryToPersist,
+        addressFocusPrioritize,
+        lowCostMode,
       });
       return res;
     },
@@ -233,13 +179,9 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         queryClient.setQueryData(["ai-enrichment-settings-snapshot"], refreshed.data);
         setEnabled(refreshed.data.enabled);
         setDailyLimit(String(refreshed.data.dailyLimit));
-        setModelPreference(refreshed.data.modelPreference);
         setAddressFocusPrioritize(refreshed.data.addressFocusPrioritize);
         setPrimaryGatewayModelId(toEnrichmentGatewayModelChoice(refreshed.data.primaryGatewayModelId));
-        setSecondaryGatewayModelId(
-          toEnrichmentGatewayModelChoice(refreshed.data.secondaryGatewayModelId),
-        );
-        setReserveChoice(initialReserveChoice(refreshed.data));
+        setLowCostMode(refreshed.data.lowCostMode === true);
       } else {
         void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
       }
@@ -267,60 +209,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
           <CardDescription className="text-sm leading-relaxed">{t("aiEnrichment.cardDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6" aria-busy={isFetching || saveMutation.isPending}>
-          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              {t("aiEnrichment.usageHeading")}
-            </p>
-            <p className="mt-1 text-sm tabular-nums text-foreground">
-              {t("aiEnrichment.usageLine", { used: usedToday, limit })}
-            </p>
-            <Progress value={usagePercent} className="mt-2 h-2" aria-label={t("aiEnrichment.usageHeading")} />
-            <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.usageHint")}</p>
-            {showVercelAiCredits ? (
-              creditsQuery.isPending ? (
-                <Skeleton className="mt-2 h-4 w-56" aria-hidden />
-              ) : creditsQuery.data?.ok === true ? (
-                <p className="text-muted-foreground mt-2 text-sm tabular-nums leading-snug">
-                  {t("aiEnrichment.vercelAiCreditsLine", {
-                    balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
-                    totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
-                  })}{" "}
-                  <a
-                    href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("aiEnrichment.vercelAiGatewayDashboardLink")}
-                  </a>
-                </p>
-              ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                  {t("aiEnrichment.vercelAiCreditsNotConfigured")}
-                </p>
-              ) : creditsQuery.data?.ok === false ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
-              ) : null
-            ) : null}
-            {modelPreference === "grok" ||
-            (modelPreference === "single" && primaryGatewayModelId.startsWith("xai/")) ||
-            primaryGatewayModelId.startsWith("xai/") ||
-            secondaryGatewayModelId.startsWith("xai/") ? (
-              <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                {t("aiEnrichment.grokBillingNotice")}{" "}
-                <a
-                  href="https://console.x.ai/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  {t("aiEnrichment.grokConsoleLinkLabel")}
-                </a>
-                .
-              </p>
-            ) : null}
-          </div>
-
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-1">
               <Label htmlFor="ai-enrich-enabled" className="text-sm font-medium">
@@ -356,243 +244,87 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
             />
           </div>
 
+          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
+            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              {t("aiEnrichment.usageHeading")}
+            </p>
+            <p className="mt-1 text-sm tabular-nums text-foreground">
+              {t("aiEnrichment.usageLine", { used: usedToday, limit })}
+            </p>
+            <Progress value={usagePercent} className="mt-2 h-2" aria-label={t("aiEnrichment.usageHeading")} />
+            <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.usageHint")}</p>
+            {showVercelAiCredits ? (
+              creditsQuery.isPending ? (
+                <Skeleton className="mt-2 h-4 w-56" aria-hidden />
+              ) : creditsQuery.data?.ok === true ? (
+                <p className="text-muted-foreground mt-2 text-sm tabular-nums leading-snug">
+                  {t("aiEnrichment.vercelAiCreditsLine", {
+                    balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
+                    totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
+                  })}{" "}
+                  <a
+                    href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("aiEnrichment.vercelAiGatewayDashboardLink")}
+                  </a>
+                </p>
+              ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                  {t("aiEnrichment.vercelAiCreditsNotConfigured")}
+                </p>
+              ) : creditsQuery.data?.ok === false ? (
+                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
+              ) : null
+            ) : null}
+            {shouldShowGrokBillingNotice(primaryGatewayModelId, lowCostMode) ? (
+              <p className="text-muted-foreground mt-2 text-xs leading-snug">
+                {t("aiEnrichment.grokBillingNotice")}{" "}
+                <a
+                  href="https://console.x.ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {t("aiEnrichment.grokConsoleLinkLabel")}
+                </a>
+                .
+              </p>
+            ) : null}
+          </div>
+
           <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4 sm:p-5">
             <div className="space-y-2">
-              <Label htmlFor="ai-enrich-research-mode" className="text-sm font-medium">
-                {t("aiEnrichment.researchModeLabel")}
+              <Label htmlFor="ai-enrich-gateway-model" className="text-sm font-medium">
+                {t("aiEnrichment.gatewaySpecificLabel")}
               </Label>
+              <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewaySpecificHelp")}</p>
               <Select
-                value={modelPreference}
+                value={primaryGatewayModelId}
                 onValueChange={(v) => {
-                  if (v === "auto" || v === "claude" || v === "grok" || v === "single") {
-                    setModelPreference(v);
-                    if (v === "auto") {
-                      setReserveChoice((prev) =>
-                        prev === RESERVE_NONE ? RESERVE_NONE : prev,
-                      );
-                    } else {
-                      setReserveChoice(RESERVE_NONE);
-                    }
+                  if (isEnrichmentGatewayModelId(v)) {
+                    setPrimaryGatewayModelId(v);
                   }
                 }}
                 disabled={saveMutation.isPending}
               >
-                <SelectTrigger id="ai-enrich-research-mode" className="max-w-xl w-full">
+                <SelectTrigger id="ai-enrich-gateway-model" className="max-w-xl w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">{t("aiEnrichment.researchModeOptionAuto")}</SelectItem>
-                  <SelectItem value="claude">{t("aiEnrichment.researchModeOptionPrimaryOnly")}</SelectItem>
-                  <SelectItem value="single">{t("aiEnrichment.researchModeOptionSpecific")}</SelectItem>
-                  <SelectItem value="grok">{t("aiEnrichment.researchModeOptionGrok")}</SelectItem>
+                <SelectContent className="max-h-72">
+                  {listEnrichmentGatewayModelsOrdered().map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <EnrichmentModelSelectItemContent
+                        modelId={m.id}
+                        xaiBillingContext={xaiBillingContextForBadges}
+                      />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <p className="text-muted-foreground text-xs leading-relaxed">{t(`aiEnrichment.${researchModeHelpKey}`)}</p>
             </div>
-
-            {modelPreference === "auto" ? (
-              <div className="grid gap-4 border-border border-t pt-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="ai-enrich-gateway-primary" className="text-sm font-medium">
-                    {t("aiEnrichment.gatewayPrimaryLabel")}
-                  </Label>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewayPrimaryHelp")}</p>
-                  <Select
-                    value={primaryGatewayModelId}
-                    onValueChange={(v) => {
-                      if (isEnrichmentGatewayModelId(v)) {
-                        setPrimaryGatewayModelId(v);
-                        if (reserveChoice !== RESERVE_NONE && reserveChoice === v) {
-                          setReserveChoice(RESERVE_NONE);
-                        }
-                      }
-                    }}
-                    disabled={saveMutation.isPending}
-                  >
-                    <SelectTrigger id="ai-enrich-gateway-primary" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {listEnrichmentGatewayModelsOrdered().map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          <EnrichmentModelSelectItemContent
-                            modelId={m.id}
-                            xaiBillingContext={xaiBillingContextForBadges}
-                          />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ai-enrich-gateway-reserve" className="text-sm font-medium">
-                    {t("aiEnrichment.gatewayReserveLabel")}
-                  </Label>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewayReserveHelp")}</p>
-                  <Select
-                    value={reserveChoice}
-                    onValueChange={(v) => {
-                      if (v === RESERVE_NONE) {
-                        setReserveChoice(RESERVE_NONE);
-                        return;
-                      }
-                      if (isEnrichmentGatewayModelId(v)) {
-                        setReserveChoice(v);
-                      }
-                    }}
-                    disabled={saveMutation.isPending}
-                  >
-                    <SelectTrigger id="ai-enrich-gateway-reserve" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={RESERVE_NONE}>{t("aiEnrichment.gatewayReserveNone")}</SelectItem>
-                      {listEnrichmentGatewayModelsOrdered()
-                        .filter((m) => m.id !== primaryGatewayModelId)
-                        .map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <EnrichmentModelSelectItemContent
-                              modelId={m.id}
-                              xaiBillingContext={xaiBillingContextForBadges}
-                            />
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : null}
-
-            {modelPreference === "claude" ? (
-              <div className="space-y-2 border-border border-t pt-4">
-                <Label htmlFor="ai-enrich-primary-only" className="text-sm font-medium">
-                  {t("aiEnrichment.gatewayPrimaryLabel")}
-                </Label>
-                <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewayPrimaryHelp")}</p>
-                <Select
-                  value={primaryGatewayModelId}
-                  onValueChange={(v) => {
-                    if (isEnrichmentGatewayModelId(v)) {
-                      setPrimaryGatewayModelId(v);
-                    }
-                  }}
-                  disabled={saveMutation.isPending}
-                >
-                  <SelectTrigger id="ai-enrich-primary-only" className="max-w-xl w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {listEnrichmentGatewayModelsOrdered().map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        <EnrichmentModelSelectItemContent
-                          modelId={m.id}
-                          xaiBillingContext={xaiBillingContextForBadges}
-                        />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-
-            {modelPreference === "single" ? (
-              <div className="space-y-2 border-border border-t pt-4">
-                <Label htmlFor="ai-enrich-specific-model" className="text-sm font-medium">
-                  {t("aiEnrichment.gatewaySpecificLabel")}
-                </Label>
-                <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewaySpecificHelp")}</p>
-                <Select
-                  value={primaryGatewayModelId}
-                  onValueChange={(v) => {
-                    if (isEnrichmentGatewayModelId(v)) {
-                      setPrimaryGatewayModelId(v);
-                    }
-                  }}
-                  disabled={saveMutation.isPending}
-                >
-                  <SelectTrigger id="ai-enrich-specific-model" className="max-w-xl w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {listEnrichmentGatewayModelsOrdered().map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        <EnrichmentModelSelectItemContent
-                          modelId={m.id}
-                          xaiBillingContext={xaiBillingContextForBadges}
-                        />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-
-            {modelPreference === "grok" ? (
-              <div className="grid gap-4 border-border border-t pt-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="ai-enrich-grok-primary" className="text-sm font-medium">
-                    {t("aiEnrichment.gatewayPrimaryLabel")}
-                  </Label>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewayPrimaryHelp")}</p>
-                  <Select
-                    value={primaryGatewayModelId}
-                    onValueChange={(v) => {
-                      if (isEnrichmentGatewayModelId(v)) {
-                        setPrimaryGatewayModelId(v);
-                      }
-                    }}
-                    disabled={saveMutation.isPending}
-                  >
-                    <SelectTrigger id="ai-enrich-grok-primary" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {listEnrichmentGatewayModelsOrdered()
-                        .filter((m) => m.id.startsWith("xai/"))
-                        .map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <EnrichmentModelSelectItemContent
-                              modelId={m.id}
-                              xaiBillingContext={xaiBillingContextForBadges}
-                            />
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ai-enrich-grok-secondary" className="text-sm font-medium">
-                    {t("aiEnrichment.gatewayReserveLabel")}
-                  </Label>
-                  <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.researchModeHelpGrok")}</p>
-                  <Select
-                    value={secondaryGatewayModelId}
-                    onValueChange={(v) => {
-                      if (isEnrichmentGatewayModelId(v)) {
-                        setSecondaryGatewayModelId(v);
-                      }
-                    }}
-                    disabled={saveMutation.isPending}
-                  >
-                    <SelectTrigger id="ai-enrich-grok-secondary" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {listEnrichmentGatewayModelsOrdered()
-                        .filter((m) => m.id.startsWith("xai/"))
-                        .map((m) => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <EnrichmentModelSelectItemContent
-                              modelId={m.id}
-                              xaiBillingContext={xaiBillingContextForBadges}
-                            />
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -609,6 +341,26 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               disabled={saveMutation.isPending}
               onCheckedChange={setAddressFocusPrioritize}
               aria-label={t("aiEnrichment.addressFocusLabel")}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1 space-y-1">
+              <Label htmlFor="ai-enrich-low-cost" className="text-sm font-medium">
+                Low-cost mode
+              </Label>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Prefers Gemini 3 Flash with Grok 4.1 Fast backup, 3 Perplexity snippets (vs 5), and shorter prompts.
+                Overrides your selected model for each run until disabled. Public CRM fields stay source-backed.
+              </p>
+            </div>
+            <Switch
+              id="ai-enrich-low-cost"
+              className="shrink-0"
+              checked={lowCostMode}
+              disabled={saveMutation.isPending}
+              onCheckedChange={setLowCostMode}
+              aria-label="Low-cost mode for AI enrichment"
             />
           </div>
 

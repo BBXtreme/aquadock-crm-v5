@@ -1,4 +1,5 @@
-// Server-side Vercel AI Gateway wiring for company enrichment (Claude Sonnet 4.6 primary, Grok 4.1 fallback).
+// Server-side Vercel AI Gateway wiring for company + contact enrichment (user-selected primary, fixed Grok fallback).
+// Low-cost mode: Gemini 3 Flash + Grok 4.1 Fast, fewer Perplexity results, tighter prompts.
 // Optional xAI BYOK: set AI_ENRICHMENT_XAI_API_KEY so Grok calls bill your xAI subscription via AI Gateway.
 
 import type { GatewayModelId } from "@ai-sdk/gateway";
@@ -21,6 +22,15 @@ import {
 } from "@/lib/validations/contact-enrichment";
 
 const ENRICHMENT_DIGEST_MAX_CHARS = 100_000;
+const ENRICHMENT_DIGEST_MAX_CHARS_TIGHT = 72_000;
+
+/** `user_settings.key` — must match `settings.ts` upsert for low-cost mode. */
+const AI_ENRICHMENT_LOW_COST_USER_KEY = "ai_enrichment_low_cost" as const;
+
+const LOW_COST_PRIMARY_MODEL: GatewayModelId = "google/gemini-3-flash";
+const LOW_COST_SECONDARY_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+const PERPLEXITY_MAX_RESULTS_DEFAULT = 5;
+const PERPLEXITY_MAX_RESULTS_LOW_COST = 3;
 
 type ResearchStepLike = {
   text?: string;
@@ -28,10 +38,13 @@ type ResearchStepLike = {
 };
 
 /** Collapses Perplexity + model text from phase 1 for the structuring prompt. */
-function buildEnrichmentResearchDigest(researchResult: {
-  text: string;
-  steps: readonly ResearchStepLike[];
-}): string {
+function buildEnrichmentResearchDigest(
+  researchResult: {
+    text: string;
+    steps: readonly ResearchStepLike[];
+  },
+  digestMaxChars?: number,
+): string {
   const chunks: string[] = [];
   const push = (value: string) => {
     const t = value.trim();
@@ -57,10 +70,24 @@ function buildEnrichmentResearchDigest(researchResult: {
   if (body.length === 0) {
     return "(Keine Recherche-Textergebnisse. Setze unsichere Felder auf null.)";
   }
-  if (body.length <= ENRICHMENT_DIGEST_MAX_CHARS) {
+  const cap = digestMaxChars ?? ENRICHMENT_DIGEST_MAX_CHARS;
+  if (body.length <= cap) {
     return body;
   }
-  return `${body.slice(0, ENRICHMENT_DIGEST_MAX_CHARS)}\n\n[… Digest gekürzt …]`;
+  return `${body.slice(0, cap)}\n\n[… Digest gekürzt …]`;
+}
+
+function buildEnrichmentStructurePrompt(digest: string, promptTight: boolean): string {
+  if (promptTight) {
+    return `Recherche abgeschlossen. Nutze nur das Folgende, keine Tools mehr. JSON gemäß Schema (DE); URLs nur aus Quellen.
+
+=== RECHERCHE ===
+${digest}`;
+  }
+  return `Die Web-Recherche (perplexity_search) ist abgeschlossen. Nutze NUR die folgenden Roh-Ergebnisse. Erzeuge KEINE weiteren Tool-Aufrufe. Erzeuge jetzt das strukturierte JSON-Objekt gemäß dem vorgegebenen Schema (deutsche Texte; gültige URLs in Quellen nur aus den Ergebnissen).
+
+=== RECHERCHE ===
+${digest}`;
 }
 
 export const COMPANY_ENRICHMENT_PRIMARY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
@@ -81,7 +108,10 @@ export function resolveEnrichmentGrokGatewayModelId(): GatewayModelId {
 export type EnrichmentModelMode = "auto" | "grok_only" | "claude_only";
 
 /** German instructions appended when address/water proximity focus is enabled (company enrichment). */
-export function buildCompanyEnrichmentAddressFocusInstructions(): string {
+export function buildCompanyEnrichmentAddressFocusInstructions(options?: { compact?: boolean }): string {
+  if (options?.compact === true) {
+    return `Adress-/Lage-Fokus: Nur Straße, PLZ, Ort, Land, Wasserdistanz/-typ aus belastbaren Web-Quellen; keine Koordinaten erfinden.`;
+  }
   return `Adress- und Lage-Fokus: Priorisiere verlässliche, quellenbasierte Angaben zu Straße, PLZ, Ort, Bundesland und Land. Prüfe Wasserdistanz und Wassertyp nur bei belastbaren öffentlichen Hinweisen (Karten, Hafeninfos, Presse). Erfinde keine Koordinaten oder Postadressen.`;
 }
 
@@ -93,9 +123,25 @@ function getGateway(): GatewayInstance | null {
   return createGateway({ apiKey });
 }
 
-async function loadEnrichmentGatewayModelsForCurrentUser(): Promise<{
+function jsonToBooleanUserSetting(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  return fallback;
+}
+
+async function loadEnrichmentRuntimeConfig(): Promise<{
   primary: GatewayModelId;
   secondary: GatewayModelId;
+  perplexityMaxResults: number;
+  promptTight: boolean;
+  digestMaxChars: number;
 }> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -106,17 +152,42 @@ async function loadEnrichmentGatewayModelsForCurrentUser(): Promise<{
       return {
         primary: COMPANY_ENRICHMENT_PRIMARY_MODEL,
         secondary: resolveEnrichmentGrokGatewayModelId(),
+        perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
+        promptTight: false,
+        digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
       };
     }
     const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
+    const { data: lowCostRow } = await supabase
+      .from("user_settings")
+      .select("value")
+      .eq("user_id", user.id)
+      .eq("key", AI_ENRICHMENT_LOW_COST_USER_KEY)
+      .maybeSingle();
+    const lowCost = jsonToBooleanUserSetting(lowCostRow?.value, false);
+    if (lowCost) {
+      return {
+        primary: LOW_COST_PRIMARY_MODEL,
+        secondary: LOW_COST_SECONDARY_MODEL,
+        perplexityMaxResults: PERPLEXITY_MAX_RESULTS_LOW_COST,
+        promptTight: true,
+        digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS_TIGHT,
+      };
+    }
     return {
       primary: policy.primaryGatewayModelId,
-      secondary: policy.secondaryGatewayModelId,
+      secondary: resolveEnrichmentGrokGatewayModelId(),
+      perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
+      promptTight: false,
+      digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
     };
   } catch {
     return {
       primary: COMPANY_ENRICHMENT_PRIMARY_MODEL,
       secondary: resolveEnrichmentGrokGatewayModelId(),
+      perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
+      promptTight: false,
+      digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
     };
   }
 }
@@ -149,9 +220,10 @@ export function getEnrichmentGatewayProviderOptions():
   };
 }
 
-export function createCompanyEnrichmentPerplexityTool(gateway: GatewayInstance) {
+export function createCompanyEnrichmentPerplexityTool(gateway: GatewayInstance, maxResults: number) {
+  const capped = Math.max(1, Math.min(8, Math.floor(maxResults)));
   return gateway.tools.perplexitySearch({
-    maxResults: 5,
+    maxResults: capped,
     searchLanguageFilter: ["de"],
     searchRecencyFilter: "month",
   });
@@ -178,16 +250,22 @@ export async function runCompanyEnrichmentGeneration(params: {
     throw new Error("AI_GATEWAY_MISSING");
   }
 
+  const runtime = await loadEnrichmentRuntimeConfig();
   const addressFocus = params.addressFocusPrioritize === true;
+  const systemPrefix = runtime.promptTight
+    ? "Öffentliche Fakten nur aus Recherche-Ergebnissen; Antwort knapp halten bei gleicher JSON-Qualität und Schema-Treue.\n\n"
+    : "";
   const system = addressFocus
-    ? `${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions()}`
-    : params.system;
+    ? `${systemPrefix}${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions({ compact: runtime.promptTight })}`
+    : `${systemPrefix}${params.system}`;
   const userPrompt = addressFocus
-    ? `${params.userPrompt}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
+    ? runtime.promptTight
+      ? `${params.userPrompt}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
+      : `${params.userPrompt}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
     : params.userPrompt;
 
   const tools = {
-    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway),
+    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),
   };
 
   const output = Output.object({
@@ -199,9 +277,8 @@ export async function runCompanyEnrichmentGeneration(params: {
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
 
-  const loaded = await loadEnrichmentGatewayModelsForCurrentUser();
-  const primary = params.gatewayModelOverride?.primary ?? loaded.primary;
-  const secondary = params.gatewayModelOverride?.secondary ?? loaded.secondary;
+  const primary = params.gatewayModelOverride?.primary ?? runtime.primary;
+  const secondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
 
   const runWithModel = async (modelId: GatewayModelId) => {
     // Phase 1: provider-executed Perplexity tool — AI SDK only parses `output` when the last
@@ -216,12 +293,8 @@ export async function runCompanyEnrichmentGeneration(params: {
       ...(providerOptions ? { providerOptions } : {}),
     });
 
-    const digest = buildEnrichmentResearchDigest(researchResult);
-
-    const structurePrompt = `Die Web-Recherche (perplexity_search) ist abgeschlossen. Nutze NUR die folgenden Roh-Ergebnisse. Erzeuge KEINE weiteren Tool-Aufrufe. Erzeuge jetzt das strukturierte JSON-Objekt gemäß dem vorgegebenen Schema (deutsche Texte; gültige URLs in Quellen nur aus den Ergebnissen).
-
-=== RECHERCHE ===
-${digest}`;
+    const digest = buildEnrichmentResearchDigest(researchResult, runtime.digestMaxChars);
+    const structurePrompt = buildEnrichmentStructurePrompt(digest, runtime.promptTight);
 
     const { output: raw } = await generateText({
       model: gateway(modelId),
@@ -271,8 +344,13 @@ export async function runContactEnrichmentGeneration(params: {
     throw new Error("AI_GATEWAY_MISSING");
   }
 
+  const runtime = await loadEnrichmentRuntimeConfig();
+  const systemEffective = runtime.promptTight
+    ? `Öffentliche Fakten nur aus Recherche; knapp halten, Schema exakt.\n\n${params.system}`
+    : params.system;
+
   const tools = {
-    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway),
+    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),
   };
 
   const output = Output.object({
@@ -284,9 +362,8 @@ export async function runContactEnrichmentGeneration(params: {
   const providerOptions = getEnrichmentGatewayProviderOptions();
   const mode = params.modelMode ?? "auto";
 
-  const loaded = await loadEnrichmentGatewayModelsForCurrentUser();
-  const primary = params.gatewayModelOverride?.primary ?? loaded.primary;
-  const secondary = params.gatewayModelOverride?.secondary ?? loaded.secondary;
+  const primary = params.gatewayModelOverride?.primary ?? runtime.primary;
+  const secondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
 
   const runWithModel = async (modelId: GatewayModelId) => {
     const researchResult = await generateText({
@@ -294,21 +371,17 @@ export async function runContactEnrichmentGeneration(params: {
       tools,
       toolChoice: "auto",
       stopWhen: stepCountIs(12),
-      system: params.system,
+      system: systemEffective,
       prompt: params.userPrompt,
       ...(providerOptions ? { providerOptions } : {}),
     });
 
-    const digest = buildEnrichmentResearchDigest(researchResult);
-
-    const structurePrompt = `Die Web-Recherche (perplexity_search) ist abgeschlossen. Nutze NUR die folgenden Roh-Ergebnisse. Erzeuge KEINE weiteren Tool-Aufrufe. Erzeuge jetzt das strukturierte JSON-Objekt gemäß dem vorgegebenen Schema (deutsche Texte; gültige URLs in Quellen nur aus den Ergebnissen).
-
-=== RECHERCHE ===
-${digest}`;
+    const digest = buildEnrichmentResearchDigest(researchResult, runtime.digestMaxChars);
+    const structurePrompt = buildEnrichmentStructurePrompt(digest, runtime.promptTight);
 
     const { output: raw } = await generateText({
       model: gateway(modelId),
-      system: params.system,
+      system: systemEffective,
       prompt: structurePrompt,
       output,
       stopWhen: stepCountIs(4),
