@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Building,
-  DollarSign,
-  Sparkles,
-  Trash,
-  Trophy,
-  Users,
-  X,
-} from "lucide-react";
+import { Building, DollarSign, Trash, Trophy, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +29,6 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
-import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
@@ -87,7 +78,6 @@ function ClientCompaniesPage() {
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [bulkAiEnrichPending, setBulkAiEnrichPending] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
@@ -316,44 +306,6 @@ function ClientCompaniesPage() {
       }
     },
   });
-
-  const handleBulkAiEnrich = async () => {
-    const selectedIds = Object.keys(rowSelection);
-    if (selectedIds.length === 0) {
-      return;
-    }
-
-    setBulkAiEnrichPending(true);
-    const loadingId = toast.loading(t("aiEnrich.bulkProgressList", { total: selectedIds.length }));
-    try {
-      const res = await bulkResearchCompanyEnrichment({
-        companyIds: selectedIds,
-      });
-      toast.dismiss(loadingId);
-      if (!res.ok) {
-        if (res.error === "NOT_AUTHENTICATED") {
-          toast.error(t("aiEnrich.errorNotAuthenticated"));
-        } else if (res.error === "AI_ENRICHMENT_DISABLED") {
-          toast.error(t("aiEnrich.errorDisabled"));
-        } else if (res.error === "AI_ENRICHMENT_RATE_LIMIT") {
-          toast.error(t("aiEnrich.errorRateLimit"));
-        } else if (res.error === "AI_GATEWAY_MISSING") {
-          toast.error(t("aiEnrich.errorNoGateway"));
-        } else {
-          toast.error(t("aiEnrich.errorGeneric"));
-        }
-        return;
-      }
-      const ok = res.results.filter((r) => r.ok).length;
-      const fail = res.results.length - ok;
-      toast.success(t("aiEnrich.bulkDoneList", { ok, total: res.results.length, fail }));
-    } catch {
-      toast.dismiss(loadingId);
-      toast.error(t("aiEnrich.errorGeneric"));
-    } finally {
-      setBulkAiEnrichPending(false);
-    }
-  };
 
   const handleBulkDelete = async () => {
     const selectedIds = Object.keys(rowSelection);
@@ -608,25 +560,23 @@ function ClientCompaniesPage() {
               </AccordionItem>
             </Accordion>
 
-            {/* Bulk AI + delete */}
-            {Object.keys(rowSelection).length > 0 && (
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon-sm"
-                  disabled={bulkAiEnrichPending}
-                  aria-busy={bulkAiEnrichPending ? true : undefined}
-                  aria-label={
-                    bulkAiEnrichPending ? t("aiEnrich.bulkListRunning") : t("aiEnrich.bulkListButton")
-                  }
-                  title={t("aiEnrich.bulkListTitle")}
-                  onClick={() => {
-                    void handleBulkAiEnrich();
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-                </Button>
+            <CompaniesTable
+              companies={companies}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              onEdit={(company) => setEditingCompany(company)}
+              onDelete={(companyOrId) => {
+                const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                deleteMutation.mutate(id);
+              }}
+              pageCount={pageCount}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              onSortingChange={setSorting}
+              onImportCSV={() => setCsvDialogOpen(true)}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+              selectionActions={
                 <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>
@@ -646,25 +596,7 @@ function ClientCompaniesPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </div>
-            )}
-
-            <CompaniesTable
-              companies={companies}
-              globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
-              onEdit={(company) => setEditingCompany(company)}
-              onDelete={(companyOrId) => {
-                const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
-                deleteMutation.mutate(id);
-              }}
-              pageCount={pageCount}
-              onPaginationChange={setPagination}
-              sorting={sorting}
-              onSortingChange={setSorting}
-              onImportCSV={() => setCsvDialogOpen(true)}
-              rowSelection={rowSelection}
-              onRowSelectionChange={setRowSelection}
+              }
             />
           </CardContent>
         </Card>

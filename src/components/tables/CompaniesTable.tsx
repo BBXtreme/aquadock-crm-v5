@@ -14,7 +14,7 @@ import {
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
-import { useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -59,6 +59,8 @@ interface CompaniesTableProps {
   onImportCSV?: () => void;
   rowSelection: Record<string, boolean>;
   onRowSelectionChange: (updater: Updater<Record<string, boolean>>) => void;
+  /** Shown inline after the “N selected” label when at least one row is selected */
+  selectionActions?: ReactNode;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -76,6 +78,7 @@ export default function CompaniesTable({
   onImportCSV,
   rowSelection,
   onRowSelectionChange,
+  selectionActions,
 }: CompaniesTableProps) {
   const t = useT("companies");
   const tCommon = useT("common");
@@ -360,9 +363,12 @@ export default function CompaniesTable({
             className="max-w-sm"
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {t("tableSelectedCount", { count: table.getFilteredSelectedRowModel().rows.length })}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {t("tableSelectedCount", { count: table.getFilteredSelectedRowModel().rows.length })}
+              </span>
+              {selectionActions}
+            </div>
           )}
         </div>
         <div className="flex space-x-2">
