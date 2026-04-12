@@ -214,7 +214,6 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
 export const bulkResearchCompanyEnrichmentInputSchema = z
   .object({
     companyIds: z.array(z.string().uuid()).min(1).max(50),
-    modelMode: z.enum(["auto", "grok_only"]).optional(),
   })
   .strict();
 

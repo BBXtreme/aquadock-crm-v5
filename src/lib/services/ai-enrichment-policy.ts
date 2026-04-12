@@ -102,9 +102,11 @@ function jsonToGatewayModelId(value: Json | undefined, fallback: GatewayModelId)
 
 /**
  * Per-user AI enrichment flags from `user_settings` (EAV).
- * `primaryGatewayModelId` is the user-chosen gateway model; `modelPreference` and `secondaryGatewayModelId`
- * remain for Server Action merge compatibility. Company/contact enrichment gateway runtime uses
- * `primaryGatewayModelId` plus `resolveEnrichmentGrokGatewayModelId()` for fallback (not the stored secondary).
+ * `primaryGatewayModelId` is the user-chosen **structuring** model (phase 2: JSON from research digest).
+ * Web search (phase 1 / Perplexity) uses a fixed fast model in the gateway, not this id.
+ * Cost/speed for company enrichment is driven by the modal Fast vs Full web search toggle in the gateway, not a separate settings flag.
+ * `modelPreference` and `secondaryGatewayModelId` remain in EAV for compatibility; runtime fallback for
+ * structuring uses `resolveEnrichmentGrokGatewayModelId()` from the gateway (not always the stored secondary).
  */
 export type AiEnrichmentPolicy = {
   enabled: boolean;

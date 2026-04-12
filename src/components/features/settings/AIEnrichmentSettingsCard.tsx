@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -78,16 +78,13 @@ function formatUsdCredits(amount: number, localeTag: string): string {
   }).format(amount);
 }
 
-/** Vercel AI Gateway credits apply when the primary path can use non–xAI-first routing, or low-cost (Gemini) is on. */
-function shouldShowVercelAiCreditsInSettings(primaryGatewayModelId: string, lowCostMode: boolean): boolean {
-  if (lowCostMode) {
-    return true;
-  }
+/** Vercel AI Gateway credits apply when the primary structuring path can use non–xAI-first routing. */
+function shouldShowVercelAiCreditsInSettings(primaryGatewayModelId: string): boolean {
   return !primaryGatewayModelId.startsWith("xai/");
 }
 
-function shouldShowGrokBillingNotice(primaryGatewayModelId: string, lowCostMode: boolean): boolean {
-  return primaryGatewayModelId.startsWith("xai/") || lowCostMode;
+function shouldShowGrokBillingNotice(primaryGatewayModelId: string): boolean {
+  return primaryGatewayModelId.startsWith("xai/");
 }
 
 type Props = {
@@ -106,8 +103,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   const [primaryGatewayModelId, setPrimaryGatewayModelId] = useState<EnrichmentGatewayModelId>(() =>
     toEnrichmentGatewayModelChoice(initialSnapshot.primaryGatewayModelId),
   );
-  const [lowCostMode, setLowCostMode] = useState(initialSnapshot.lowCostMode === true);
-  const lowCostHydratedFromQuery = useRef(initialSnapshot.lowCostMode !== undefined);
 
   const { data: snapshot, isFetching } = useQuery({
     queryKey: ["ai-enrichment-settings-snapshot"],
@@ -124,17 +119,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
     refetchOnWindowFocus: true,
   });
 
-  useEffect(() => {
-    if (lowCostHydratedFromQuery.current) {
-      return;
-    }
-    if (snapshot?.lowCostMode !== undefined) {
-      setLowCostMode(snapshot.lowCostMode === true);
-      lowCostHydratedFromQuery.current = true;
-    }
-  }, [snapshot?.lowCostMode]);
-
-  const showVercelAiCredits = shouldShowVercelAiCreditsInSettings(primaryGatewayModelId, lowCostMode);
+  const showVercelAiCredits = shouldShowVercelAiCreditsInSettings(primaryGatewayModelId);
 
   const creditsQuery = useQuery({
     queryKey: ["vercel-ai-gateway-credits"],
@@ -159,7 +144,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         dailyLimit: n,
         primaryGatewayModelId,
         addressFocusPrioritize,
-        lowCostMode,
       });
       return res;
     },
@@ -181,7 +165,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         setDailyLimit(String(refreshed.data.dailyLimit));
         setAddressFocusPrioritize(refreshed.data.addressFocusPrioritize);
         setPrimaryGatewayModelId(toEnrichmentGatewayModelChoice(refreshed.data.primaryGatewayModelId));
-        setLowCostMode(refreshed.data.lowCostMode === true);
       } else {
         void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
       }
@@ -272,7 +255,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
                 <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
               ) : null
             ) : null}
-            {shouldShowGrokBillingNotice(primaryGatewayModelId, lowCostMode) ? (
+            {shouldShowGrokBillingNotice(primaryGatewayModelId) ? (
               <p className="text-muted-foreground mt-2 text-xs leading-snug">
                 {t("aiEnrichment.grokBillingNotice")}{" "}
                 <a
@@ -334,23 +317,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               disabled={saveMutation.isPending}
               onCheckedChange={setAddressFocusPrioritize}
               aria-label={t("aiEnrichment.addressFocusLabel")}
-            />
-          </div>
-
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1 space-y-1">
-              <Label htmlFor="ai-enrich-low-cost" className="text-sm font-medium">
-                {t("aiEnrichment.lowCostModeLabel")}
-              </Label>
-              <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.lowCostModeHelp")}</p>
-            </div>
-            <Switch
-              id="ai-enrich-low-cost"
-              className="shrink-0"
-              checked={lowCostMode}
-              disabled={saveMutation.isPending}
-              onCheckedChange={setLowCostMode}
-              aria-label={t("aiEnrichment.lowCostModeAria")}
             />
           </div>
 

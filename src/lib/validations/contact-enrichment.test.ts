@@ -10,10 +10,8 @@ describe("bulkResearchContactEnrichmentInputSchema", () => {
     const ids = Array.from({ length: 50 }, () => "00000000-0000-4000-8000-000000000002");
     const parsed = bulkResearchContactEnrichmentInputSchema.parse({
       contactIds: ids,
-      modelMode: "auto",
     });
     expect(parsed.contactIds).toHaveLength(50);
-    expect(parsed.modelMode).toBe("auto");
   });
 
   it("rejects empty id list", () => {

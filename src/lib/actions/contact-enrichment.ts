@@ -3,17 +3,10 @@
 import type { GatewayModelId } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveContactDetail } from "@/lib/actions/contacts";
-import {
-  type EnrichmentModelMode,
-  runContactEnrichmentGeneration,
-} from "@/lib/ai/company-enrichment-gateway";
+import { runContactEnrichmentGeneration } from "@/lib/ai/company-enrichment-gateway";
 import { buildAiEnrichmentFailureDiagnostic, mapAiEnrichmentGatewayPipelineError } from "@/lib/ai/enrichment-gateway-pipeline";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
-import {
-  type AiEnrichmentModelPreference,
-  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
-  fetchAiEnrichmentPolicy,
-} from "@/lib/services/ai-enrichment-policy";
+import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES, fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type BulkResearchContactEnrichmentInput,
@@ -48,36 +41,6 @@ Nutze ausschließlich öffentlich zugängliche Fakten aus den Suchergebnissen.
 Erfinde keine URLs oder persönlichen Daten.
 Wenn du unsicher bist, setze den betreffenden Wert auf null und erkläre kurz in rationale (optional).
 Antworte strukturiert gemäß dem vorgegebenen JSON-Schema (deutsche Inhalte).`;
-
-function enrichmentPreferenceToModelMode(preference: AiEnrichmentModelPreference): EnrichmentModelMode {
-  if (preference === "grok") {
-    return "grok_only";
-  }
-  if (preference === "claude" || preference === "single") {
-    return "claude_only";
-  }
-  return "auto";
-}
-
-function mergeModalContactEnrichmentModelMode(
-  preference: AiEnrichmentModelPreference,
-  modal: EnrichmentModelMode,
-): EnrichmentModelMode {
-  if (modal === "grok_only") {
-    return "grok_only";
-  }
-  return enrichmentPreferenceToModelMode(preference);
-}
-
-function mergeBulkContactEnrichmentModelMode(
-  preference: AiEnrichmentModelPreference,
-  bulk: EnrichmentModelMode | undefined,
-): EnrichmentModelMode {
-  if (bulk === "grok_only") {
-    return "grok_only";
-  }
-  return enrichmentPreferenceToModelMode(preference);
-}
 
 function formatAiEnrichmentDailyRateLimitError(
   usedToday: number,
@@ -117,7 +80,6 @@ function normalizeContactGatewayModelOverride(
 async function runContactEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   contactId: string,
-  modelMode: EnrichmentModelMode,
   gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId },
 ): Promise<ResearchContactEnrichmentResponse> {
   try {
@@ -167,7 +129,6 @@ Anforderungen:
     const { result, modelUsed } = await runContactEnrichmentGeneration({
       system: SYSTEM_PROMPT,
       userPrompt,
-      modelMode,
       gatewayModelOverride,
     });
 
@@ -184,7 +145,7 @@ Anforderungen:
 
 export async function researchContactEnrichment(
   contactId: string,
-  options?: { modelMode?: EnrichmentModelMode; gatewayModelOverride?: ResearchContactEnrichmentGatewayOverride },
+  options?: { gatewayModelOverride?: ResearchContactEnrichmentGatewayOverride },
 ): Promise<ResearchContactEnrichmentResponse> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -209,10 +170,8 @@ export async function researchContactEnrichment(
     }
 
     try {
-      const modalMode = options?.modelMode ?? "auto";
-      const effective = mergeModalContactEnrichmentModelMode(policy.modelPreference, modalMode);
       const gatewayModelOverride = normalizeContactGatewayModelOverride(options?.gatewayModelOverride);
-      const result = await runContactEnrichmentForActiveRow(supabase, contactId, effective, gatewayModelOverride);
+      const result = await runContactEnrichmentForActiveRow(supabase, contactId, gatewayModelOverride);
       if (!result.ok) {
         await refundEnrichmentSlots(supabase, user.id, 1);
       }
@@ -257,13 +216,9 @@ export async function bulkResearchContactEnrichment(
     }
 
     try {
-      const effectiveModelMode = mergeBulkContactEnrichmentModelMode(
-        policy.modelPreference,
-        parsed.data.modelMode,
-      );
       const settled = await Promise.allSettled(
         uniqueIds.map(async (contactId) => {
-          const r = await runContactEnrichmentForActiveRow(supabase, contactId, effectiveModelMode);
+          const r = await runContactEnrichmentForActiveRow(supabase, contactId);
           return { contactId, r } as const;
         }),
       );

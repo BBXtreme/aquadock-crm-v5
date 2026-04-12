@@ -27,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
@@ -176,15 +177,12 @@ function resolveCompanyAiEnrichmentErrorMessage(
   return t("aiEnrich.errorGeneric");
 }
 
-/** Vercel AI Gateway credits when primary is not xAI-only, or low-cost (Gemini path) is on. */
+/** Vercel AI Gateway credits when primary structuring path is not xAI-only. */
 function shouldShowVercelAiCreditsInModal(
-  snapshot: { primaryGatewayModelId: string; lowCostMode?: boolean } | null | undefined,
+  snapshot: { primaryGatewayModelId: string } | null | undefined,
 ): boolean {
   if (!snapshot) {
     return false;
-  }
-  if (snapshot.lowCostMode === true) {
-    return true;
   }
   return !snapshot.primaryGatewayModelId.startsWith("xai/");
 }
@@ -319,7 +317,9 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const [modelOverridePick, setModelOverridePick] = useState<EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT>(
     MODEL_OVERRIDE_DEFAULT,
   );
+  const [useFullWebSearch, setUseFullWebSearch] = useState(false);
   const modelOverrideRef = useRef<EnrichmentGatewayModelId | null>(null);
+  const useFullWebSearchRef = useRef(false);
   const activeRunGenerationRef = useRef(0);
   const runForOpenSessionRef = useRef(false);
   const startTimeoutRef = useRef<number | null>(null);
@@ -328,6 +328,10 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   useEffect(() => {
     modelOverrideRef.current = modelOverridePick === MODEL_OVERRIDE_DEFAULT ? null : modelOverridePick;
   }, [modelOverridePick]);
+
+  useEffect(() => {
+    useFullWebSearchRef.current = useFullWebSearch;
+  }, [useFullWebSearch]);
 
   const usageQuery = useQuery({
     queryKey: ["ai-enrichment-settings-snapshot"],
@@ -352,8 +356,6 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       : null;
 
   /** Low-cost settings route this primary until a run reports `modelUsed`. */
-  const LOW_COST_PRIMARY_DISPLAY: EnrichmentGatewayModelId = "google/gemini-3-flash";
-
   const creditsQuery = useQuery({
     queryKey: ["vercel-ai-gateway-credits"],
     queryFn: getVercelAiCredits,
@@ -367,8 +369,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     mutationFn: async (runGeneration: number): Promise<EnrichmentMutationPayload> => {
       const primary = modelOverrideRef.current;
       const res = await researchCompanyEnrichment(company.id, {
-        modelMode: "auto",
         gatewayModelOverride: primary !== null ? { primary } : undefined,
+        webSearchMode: useFullWebSearchRef.current ? "full" : "fast",
       });
       if (!res.ok) {
         throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
@@ -450,6 +452,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         setModelUsed(null);
         setSelected({});
         setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+        setUseFullWebSearch(false);
+        useFullWebSearchRef.current = false;
       }
       reset();
       return;
@@ -508,11 +512,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     if (/claude-sonnet|claude-opus/.test(lower) || lower === "openai/gpt-5.4") {
       return t("aiEnrich.costHintHigher");
     }
-    if (usageQuery.data?.lowCostMode === true) {
-      return t("aiEnrich.costHintLowCostSettings");
-    }
     return null;
-  }, [result, isPending, modelUsed, usageQuery.data?.lowCostMode, t]);
+  }, [result, isPending, modelUsed, t]);
 
   const handleRetry = () => {
     startEnrichmentRun();
@@ -538,16 +539,13 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   const showSkeleton = open && (isPending || (!result && !isError));
 
-  /** Select shows saved primary (or low-cost / last-run model) when no explicit override is chosen. */
+  /** Select shows saved primary or last-run model when no explicit override is chosen. */
   const effectiveSelectModelValue = useMemo((): EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT => {
     if (modelOverridePick !== MODEL_OVERRIDE_DEFAULT) {
       return modelOverridePick;
     }
     if (usageQuery.data === undefined || usageQuery.data === null) {
       return MODEL_OVERRIDE_DEFAULT;
-    }
-    if (usageQuery.data.lowCostMode === true && !(modelUsed && isEnrichmentGatewayModelId(modelUsed))) {
-      return LOW_COST_PRIMARY_DISPLAY;
     }
     if (modelUsed && isEnrichmentGatewayModelId(modelUsed)) {
       return modelUsed;
@@ -565,26 +563,54 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
-        <div className="max-h-[min(20dvh,240px)] min-h-0 shrink-0 overflow-y-auto border-border border-b px-5 pt-12 pb-2 sm:px-7 sm:pt-14 sm:pb-2">
-          <DialogHeader className="min-w-0 space-y-0.5 pr-14 text-left sm:pr-16">
-            <DialogTitle className="wrap-break-word text-balance text-sm leading-tight sm:text-base">
+        <div className="max-h-[min(14dvh,188px)] min-h-0 shrink-0 overflow-y-auto border-border border-b px-5 pt-10 pb-1.5 sm:px-7 sm:pt-11 sm:pb-2">
+          <DialogHeader className="min-w-0 space-y-0 pr-14 text-left sm:space-y-0.5 sm:pr-16">
+            <DialogTitle className="wrap-break-word text-balance text-xs font-semibold leading-tight tracking-tight sm:text-sm">
               {t("aiEnrich.modalTitle")}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground line-clamp-2 text-xs leading-snug">
+            <DialogDescription className="sr-only text-muted-foreground sm:not-sr-only sm:line-clamp-1 sm:text-[11px] sm:leading-snug">
               {t("aiEnrich.modalDescription")}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-2 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,18rem)] sm:items-end sm:gap-3">
-            <div className="min-w-0 space-y-0.5">
+          <div className="mt-1.5 flex min-w-0 items-start justify-between gap-2 sm:mt-2">
+            <div className="min-w-0 pr-2">
+              <Label htmlFor="ai-enrich-current-web" className="text-foreground text-[9px] font-semibold leading-tight">
+                {t("aiEnrich.webSearchCurrentLabel")}
+              </Label>
+              <p className="text-muted-foreground mt-0.5 line-clamp-2 text-[8px] leading-snug">
+                {t("aiEnrich.webSearchCurrentHint")}
+              </p>
+            </div>
+            <Switch
+              id="ai-enrich-current-web"
+              checked={useFullWebSearch}
+              onCheckedChange={(next) => {
+                useFullWebSearchRef.current = next;
+                setUseFullWebSearch(next);
+                startEnrichmentRun();
+              }}
+              className="mt-0.5 h-5 w-9 shrink-0 [&>span]:h-4 [&>span]:w-4 [&>span]:data-[state=checked]:translate-x-4"
+              aria-label={t("aiEnrich.webSearchCurrentLabel")}
+            />
+          </div>
+
+          <div className="mt-1.5 grid min-w-0 gap-2.5 sm:mt-2 sm:grid-cols-2 sm:items-stretch sm:gap-0 sm:divide-x sm:divide-border/70">
+            <div className="min-w-0 space-y-0.5 sm:pr-4">
               <Label
                 htmlFor="ai-enrich-model-override"
-                className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase"
+                className="block cursor-default text-foreground text-[10px] font-semibold leading-tight sm:text-[11px]"
               >
-                {t("aiEnrich.modelOverrideLabel")}
+                <span className="block tracking-tight">{t("aiEnrich.modelOverrideLabel")}</span>
+                <span className="mt-0.5 block text-[8px] font-medium text-muted-foreground tracking-tight">
+                  {t("aiEnrich.modelOverrideSubline")}
+                </span>
               </Label>
-              <p className="text-muted-foreground line-clamp-1 text-[10px] leading-tight">{t("aiEnrich.modelOverrideHelp")}</p>
+              <p className="text-muted-foreground line-clamp-2 text-[9px] leading-tight">
+                {useFullWebSearch ? t("aiEnrich.modelOverrideHelp") : t("aiEnrich.modelOverrideHelpFast")}
+              </p>
               <Select
+                disabled={!useFullWebSearch}
                 value={effectiveSelectModelValue}
                 onValueChange={(v) => {
                   if (v !== MODEL_OVERRIDE_DEFAULT && !isEnrichmentGatewayModelId(v)) {
@@ -617,8 +643,8 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               >
                 <SelectTrigger
                   id="ai-enrich-model-override"
-                  className="h-8 w-full max-w-md sm:max-w-none"
-                  title={t("aiEnrich.modelOverrideHelp")}
+                  className="h-7 w-full max-w-md text-xs sm:max-w-none"
+                  title={useFullWebSearch ? t("aiEnrich.modelOverrideHelp") : t("aiEnrich.modelOverrideHelpFast")}
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -634,12 +660,12 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
             </div>
 
             {usageQuery.data ? (
-              <div className="min-w-0 space-y-1 rounded-md border border-border bg-muted/15 px-2 py-1.5">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-muted-foreground shrink-0 text-[9px] font-semibold tracking-wide uppercase">
+              <div className="min-w-0 space-y-0.5 rounded-md border border-transparent bg-muted/20 px-2 py-1 sm:ml-4 sm:border-border/80 sm:bg-muted/15 sm:py-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-muted-foreground shrink-0 text-[8px] font-semibold tracking-wider uppercase">
                     {t("aiEnrich.usageHeading")}
                   </p>
-                  <p className="text-right text-foreground text-[11px] leading-tight tabular-nums">
+                  <p className="text-right text-foreground text-[10px] leading-tight tabular-nums">
                     {t("aiEnrich.usageLine", {
                       used: usageQuery.data.usedToday,
                       limit: usageQuery.data.dailyLimit,
@@ -652,14 +678,14 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                       ? Math.min(100, Math.round((usageQuery.data.usedToday / usageQuery.data.dailyLimit) * 100))
                       : 0
                   }
-                  className="h-1"
+                  className="h-0.5 sm:h-1"
                   aria-label={t("aiEnrich.usageHeading")}
                 />
                 {showVercelAiCredits ? (
                   creditsQuery.isPending ? (
-                    <Skeleton className="h-3 w-40" aria-hidden />
+                    <Skeleton className="h-2.5 w-36" aria-hidden />
                   ) : creditsQuery.data?.ok === true ? (
-                    <p className="text-muted-foreground text-[10px] leading-tight tabular-nums">
+                    <p className="text-muted-foreground text-[9px] leading-tight tabular-nums">
                       {t("aiEnrich.vercelAiCreditsLine", {
                         balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
                         totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
@@ -674,20 +700,20 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                       </a>
                     </p>
                   ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
-                    <p className="text-muted-foreground text-[10px] leading-tight">
+                    <p className="text-muted-foreground text-[9px] leading-tight">
                       {t("aiEnrich.vercelAiCreditsNotConfigured")}
                     </p>
                   ) : creditsQuery.data?.ok === false ? (
-                    <p className="text-muted-foreground text-[10px] leading-tight">
+                    <p className="text-muted-foreground text-[9px] leading-tight">
                       {t("aiEnrich.vercelAiCreditsUnavailable")}
                     </p>
                   ) : null
                 ) : null}
               </div>
             ) : open && usageQuery.isLoading && !usageQuery.data ? (
-              <div className="min-w-0 space-y-1 rounded-md border border-border bg-muted/10 px-2 py-1.5">
-                <Skeleton className="h-3 w-32" />
-                <Skeleton className="h-1 w-full" />
+              <div className="min-w-0 space-y-0.5 rounded-md border border-border bg-muted/10 px-2 py-1">
+                <Skeleton className="h-2.5 w-28" />
+                <Skeleton className="h-0.5 w-full sm:h-1" />
               </div>
             ) : null}
           </div>
@@ -803,6 +829,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                           : modelUsed,
                       })}
                     </p>
+                    <p className="text-muted-foreground text-[10px] leading-snug">{t("aiEnrich.modelUsedResearchFootnote")}</p>
                     {modelCostHint ? (
                       <p className="text-muted-foreground text-[10px] leading-snug">{modelCostHint}</p>
                     ) : null}

@@ -328,7 +328,6 @@ function ClientCompaniesPage() {
     try {
       const res = await bulkResearchCompanyEnrichment({
         companyIds: selectedIds,
-        modelMode: "auto",
       });
       toast.dismiss(loadingId);
       if (!res.ok) {

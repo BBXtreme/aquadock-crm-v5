@@ -47,10 +47,8 @@ describe("bulkResearchCompanyEnrichmentInputSchema", () => {
     const ids = Array.from({ length: 50 }, () => "00000000-0000-4000-8000-000000000001");
     const parsed = bulkResearchCompanyEnrichmentInputSchema.parse({
       companyIds: ids,
-      modelMode: "grok_only",
     });
     expect(parsed.companyIds).toHaveLength(50);
-    expect(parsed.modelMode).toBe("grok_only");
   });
 
   it("rejects more than 50 ids", () => {

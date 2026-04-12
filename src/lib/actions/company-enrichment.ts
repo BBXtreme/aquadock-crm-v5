@@ -5,16 +5,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import { buildCompanyEnrichmentClosedEnumPromptBlock } from "@/lib/ai/company-enrichment-closed-enums";
 import {
-  type EnrichmentModelMode,
+  type CompanyEnrichmentWebSearchMode,
   runCompanyEnrichmentGeneration,
 } from "@/lib/ai/company-enrichment-gateway";
 import { buildAiEnrichmentFailureDiagnostic, mapAiEnrichmentGatewayPipelineError } from "@/lib/ai/enrichment-gateway-pipeline";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
-import {
-  type AiEnrichmentModelPreference,
-  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
-  fetchAiEnrichmentPolicy,
-} from "@/lib/services/ai-enrichment-policy";
+import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES, fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type BulkResearchCompanyEnrichmentInput,
@@ -50,36 +46,6 @@ Erfinde keine URLs, Telefonnummern oder Impressumsdaten.
 Wenn du unsicher bist, setze den betreffenden Wert auf null und erkläre kurz in rationale (optional).
 Antworte strukturiert gemäß dem vorgegebenen JSON-Schema (deutsche Inhalte).`;
 
-function enrichmentPreferenceToModelMode(preference: AiEnrichmentModelPreference): EnrichmentModelMode {
-  if (preference === "grok") {
-    return "grok_only";
-  }
-  if (preference === "claude" || preference === "single") {
-    return "claude_only";
-  }
-  return "auto";
-}
-
-function mergeModalCompanyEnrichmentModelMode(
-  preference: AiEnrichmentModelPreference,
-  modal: EnrichmentModelMode,
-): EnrichmentModelMode {
-  if (modal === "grok_only") {
-    return "grok_only";
-  }
-  return enrichmentPreferenceToModelMode(preference);
-}
-
-function mergeBulkCompanyEnrichmentModelMode(
-  preference: AiEnrichmentModelPreference,
-  bulk: EnrichmentModelMode | undefined,
-): EnrichmentModelMode {
-  if (bulk === "grok_only") {
-    return "grok_only";
-  }
-  return enrichmentPreferenceToModelMode(preference);
-}
-
 function formatAiEnrichmentDailyRateLimitError(
   usedToday: number,
   dailyLimit: number,
@@ -90,10 +56,18 @@ function formatAiEnrichmentDailyRateLimitError(
 
 const ALLOWED_ENRICHMENT_GATEWAY_MODELS = new Set<string>(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
 
+/** Per-run override of structuring models (JSON phase); research phase uses a fixed fast model in the gateway. */
 export type ResearchCompanyEnrichmentGatewayOverride = {
   primary?: string;
   secondary?: string;
 };
+
+function normalizeWebSearchMode(raw: unknown): CompanyEnrichmentWebSearchMode {
+  if (raw === "fast") {
+    return "fast";
+  }
+  return "full";
+}
 
 function normalizeGatewayModelOverride(
   raw: ResearchCompanyEnrichmentGatewayOverride | undefined,
@@ -119,9 +93,9 @@ async function runCompanyEnrichmentForActiveRow(
   supabase: SupabaseClient<Database>,
   companyId: string,
   run: {
-    modelMode: EnrichmentModelMode;
     addressFocusPrioritize: boolean;
     gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
+    webSearchMode: CompanyEnrichmentWebSearchMode;
   },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
@@ -152,7 +126,22 @@ async function runCompanyEnrichmentForActiveRow(
       lon: c.lon,
     };
 
-    const userPrompt = `Recherchiere öffentliche Informationen zu diesem Unternehmen und fülle nur fehlende oder offensichtlich unvollständige Felder sinnvoll vor.
+    const userPromptFast = `Recherchiere öffentliche Informationen zu diesem Unternehmen und fülle nur fehlende oder offensichtlich unvollständige Felder sinnvoll vor.
+
+Kontext (CRM, JSON):
+${JSON.stringify(context, null, 2)}
+
+Anforderungen (Schnelllauf, ältere Webdaten zulässig):
+- Nutze perplexity_search mit maximal zwei Treffern; Recency bis etwa ein Jahr; DE-Schwerpunkt.
+- Quellen können älter sein — bevorzuge belastbare Fakten; unsichere Felder null.
+- Gib pro befülltem Feld confidence (low|medium|high) und mindestens eine Quelle mit echter URL aus den Suchergebnissen.
+- kundentyp nur vorschlagen, wenn die Recherche eindeutig eine bessere CRM-Kategorie nahelegt; sonst null.
+- wasserdistanz nur, wenn seriöse öffentliche Hinweise existieren; sonst null.
+- aiSummary: max. 3 Sätze mit Quellenbezug oder null.
+
+${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
+
+    const userPromptFull = `Recherchiere öffentliche Informationen zu diesem Unternehmen und fülle nur fehlende oder offensichtlich unvollständige Felder sinnvoll vor.
 
 Kontext (CRM, JSON):
 ${JSON.stringify(context, null, 2)}
@@ -166,11 +155,13 @@ Anforderungen:
 
 ${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
 
+    const userPrompt = run.webSearchMode === "fast" ? userPromptFast : userPromptFull;
+
     const { result, modelUsed } = await runCompanyEnrichmentGeneration({
       system: SYSTEM_PROMPT,
       userPrompt,
-      modelMode: run.modelMode,
       addressFocusPrioritize: run.addressFocusPrioritize,
+      webSearchMode: run.webSearchMode,
       gatewayModelOverride: run.gatewayModelOverride,
     });
 
@@ -187,7 +178,10 @@ ${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
 
 export async function researchCompanyEnrichment(
   companyId: string,
-  options?: { modelMode?: EnrichmentModelMode; gatewayModelOverride?: ResearchCompanyEnrichmentGatewayOverride },
+  options?: {
+    gatewayModelOverride?: ResearchCompanyEnrichmentGatewayOverride;
+    webSearchMode?: CompanyEnrichmentWebSearchMode;
+  },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
     const supabase = await createServerSupabaseClient();
@@ -212,13 +206,12 @@ export async function researchCompanyEnrichment(
     }
 
     try {
-      const modalMode = options?.modelMode ?? "auto";
-      const effectiveModelMode = mergeModalCompanyEnrichmentModelMode(policy.modelPreference, modalMode);
       const gatewayModelOverride = normalizeGatewayModelOverride(options?.gatewayModelOverride);
+      const webSearchMode = normalizeWebSearchMode(options?.webSearchMode);
       const result = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
-        modelMode: effectiveModelMode,
         addressFocusPrioritize: policy.addressFocusPrioritize,
         gatewayModelOverride,
+        webSearchMode,
       });
       if (!result.ok) {
         await refundEnrichmentSlots(supabase, user.id, 1);
@@ -265,15 +258,11 @@ export async function bulkResearchCompanyEnrichment(
     }
 
     try {
-      const effectiveModelMode = mergeBulkCompanyEnrichmentModelMode(
-        policy.modelPreference,
-        parsed.data.modelMode,
-      );
       const settled = await Promise.allSettled(
         uniqueIds.map(async (companyId) => {
           const r = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
-            modelMode: effectiveModelMode,
             addressFocusPrioritize: policy.addressFocusPrioritize,
+            webSearchMode: "full",
           });
           return { companyId, r } as const;
         }),

@@ -1,5 +1,8 @@
-// Server-side Vercel AI Gateway wiring for company + contact enrichment (user-selected primary, fixed Grok fallback).
-// Low-cost mode: Gemini 3 Flash + Grok 4.1 Fast, fewer Perplexity results, tighter prompts.
+// Server-side Vercel AI Gateway wiring for company + contact enrichment.
+// Phase 1 (Perplexity web search via tools) always uses a fast fixed research model (see ENRICHMENT_RESEARCH_GATEWAY_MODEL).
+// Phase 2 (JSON structuring) uses the user’s structuring model from settings + optional modal override.
+// Company modal Fast web search uses minimal Perplexity + cheap structuring (Grok 4.1 Fast, then Gemini 3 Flash).
+// Company modal passes `webSearchMode: "fast" | "full"`; omitting it defaults to Full (bulk / compatibility).
 // Optional xAI BYOK: set AI_ENRICHMENT_XAI_API_KEY so Grok calls bill your xAI subscription via AI Gateway.
 
 import type { GatewayModelId } from "@ai-sdk/gateway";
@@ -25,13 +28,22 @@ import {
 const ENRICHMENT_DIGEST_MAX_CHARS = 100_000;
 const ENRICHMENT_DIGEST_MAX_CHARS_TIGHT = 72_000;
 
-/** `user_settings.key` — must match `settings.ts` upsert for low-cost mode. */
-const AI_ENRICHMENT_LOW_COST_USER_KEY = "ai_enrichment_low_cost" as const;
+/** Company modal Fast web search: Grok first, Gemini fallback. */
+const FAST_WEB_SEARCH_STRUCTURING_PRIMARY: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+const FAST_WEB_SEARCH_STRUCTURING_SECONDARY: GatewayModelId = "google/gemini-3-flash";
 
-const LOW_COST_PRIMARY_MODEL: GatewayModelId = "google/gemini-3-flash";
-const LOW_COST_SECONDARY_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+/** Fixed Gateway model for enrichment phase 1 (tool calls incl. Perplexity). Structuring uses `runtime.primary` / override. */
+const ENRICHMENT_RESEARCH_GATEWAY_MODEL: GatewayModelId = "google/gemini-3-flash";
+
 const PERPLEXITY_MAX_RESULTS_DEFAULT = 5;
-const PERPLEXITY_MAX_RESULTS_LOW_COST = 3;
+
+/** Company enrichment only; bulk + contact always use Full-equivalent Perplexity settings in code paths. */
+export type CompanyEnrichmentWebSearchMode = "fast" | "full";
+
+type PerplexitySearchProfile = {
+  maxResults: number;
+  searchRecencyFilter: "month" | "year";
+};
 
 type ResearchStepLike = {
   text?: string;
@@ -96,7 +108,7 @@ export const COMPANY_ENRICHMENT_FALLBACK_MODEL: GatewayModelId = "xai/grok-4.1-f
 
 /**
  * Optional override via `AI_ENRICHMENT_GROK_MODEL` (Gateway model id, e.g. `xai/grok-4.1-fast-non-reasoning`)
- * for Grok-only mode and Claude→Grok fallback. BYOK for xAI remains `AI_ENRICHMENT_XAI_API_KEY`.
+ * for the enrichment **secondary** (fallback) model. BYOK for xAI remains `AI_ENRICHMENT_XAI_API_KEY`.
  */
 export function resolveEnrichmentGrokGatewayModelId(): GatewayModelId {
   const raw = process.env.AI_ENRICHMENT_GROK_MODEL?.trim();
@@ -105,8 +117,6 @@ export function resolveEnrichmentGrokGatewayModelId(): GatewayModelId {
   }
   return raw as GatewayModelId;
 }
-
-export type EnrichmentModelMode = "auto" | "grok_only" | "claude_only";
 
 /** German instructions appended when address/water proximity focus is enabled (company enrichment). */
 export function buildCompanyEnrichmentAddressFocusInstructions(options?: { compact?: boolean }): string {
@@ -124,19 +134,7 @@ function getGateway(): GatewayInstance | null {
   return createGateway({ apiKey });
 }
 
-function jsonToBooleanUserSetting(value: unknown, fallback: boolean): boolean {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  if (value === "true") {
-    return true;
-  }
-  if (value === "false") {
-    return false;
-  }
-  return fallback;
-}
-
+/** Structuring models + Perplexity limits. `primary` / `secondary` apply only to phase 2 (JSON); phase 1 uses `ENRICHMENT_RESEARCH_GATEWAY_MODEL`. */
 async function loadEnrichmentRuntimeConfig(): Promise<{
   primary: GatewayModelId;
   secondary: GatewayModelId;
@@ -159,22 +157,6 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
       };
     }
     const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
-    const { data: lowCostRow } = await supabase
-      .from("user_settings")
-      .select("value")
-      .eq("user_id", user.id)
-      .eq("key", AI_ENRICHMENT_LOW_COST_USER_KEY)
-      .maybeSingle();
-    const lowCost = jsonToBooleanUserSetting(lowCostRow?.value, false);
-    if (lowCost) {
-      return {
-        primary: LOW_COST_PRIMARY_MODEL,
-        secondary: LOW_COST_SECONDARY_MODEL,
-        perplexityMaxResults: PERPLEXITY_MAX_RESULTS_LOW_COST,
-        promptTight: true,
-        digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS_TIGHT,
-      };
-    }
     return {
       primary: policy.primaryGatewayModelId,
       secondary: resolveEnrichmentGrokGatewayModelId(),
@@ -191,16 +173,6 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
       digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
     };
   }
-}
-
-function pickGrokOnlyModel(primary: GatewayModelId, secondary: GatewayModelId): GatewayModelId {
-  if (primary.startsWith("xai/")) {
-    return primary;
-  }
-  if (secondary.startsWith("xai/")) {
-    return secondary;
-  }
-  return resolveEnrichmentGrokGatewayModelId();
 }
 
 /**
@@ -221,12 +193,12 @@ export function getEnrichmentGatewayProviderOptions():
   };
 }
 
-export function createCompanyEnrichmentPerplexityTool(gateway: GatewayInstance, maxResults: number) {
-  const capped = Math.max(1, Math.min(8, Math.floor(maxResults)));
+export function createCompanyEnrichmentPerplexityTool(gateway: GatewayInstance, profile: PerplexitySearchProfile) {
+  const capped = Math.max(1, Math.min(8, Math.floor(profile.maxResults)));
   return gateway.tools.perplexitySearch({
     maxResults: capped,
     searchLanguageFilter: ["de"],
-    searchRecencyFilter: "month",
+    searchRecencyFilter: profile.searchRecencyFilter,
   });
 }
 
@@ -241,9 +213,10 @@ function shouldRetryWithFallback(error: unknown): boolean {
 export async function runCompanyEnrichmentGeneration(params: {
   system: string;
   userPrompt: string;
-  modelMode?: EnrichmentModelMode;
   addressFocusPrioritize?: boolean;
-  /** Optional per-request override of policy primary/secondary (validated by caller). */
+  /** Company modal: pass `"fast"` or `"full"`. Omit = `"full"` (bulk / legacy). */
+  webSearchMode?: CompanyEnrichmentWebSearchMode;
+  /** Optional per-run override of structuring primary/secondary (validated by caller). Ignored when `webSearchMode === "fast"`. */
   gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
@@ -252,12 +225,20 @@ export async function runCompanyEnrichmentGeneration(params: {
   }
 
   const runtime = await loadEnrichmentRuntimeConfig();
+  const webSearchMode: CompanyEnrichmentWebSearchMode = params.webSearchMode ?? "full";
+  const isFast = webSearchMode === "fast";
+  const effectivePromptTight = runtime.promptTight || isFast;
+  const effectiveDigestMaxChars = isFast ? ENRICHMENT_DIGEST_MAX_CHARS_TIGHT : runtime.digestMaxChars;
+  const perplexityProfile: PerplexitySearchProfile = isFast
+    ? { maxResults: 2, searchRecencyFilter: "year" }
+    : { maxResults: runtime.perplexityMaxResults, searchRecencyFilter: "month" };
+
   const addressFocus = params.addressFocusPrioritize === true;
-  const systemPrefix = runtime.promptTight
+  const systemPrefix = effectivePromptTight
     ? "Öffentliche Fakten nur aus Recherche-Ergebnissen; Antwort knapp halten bei gleicher JSON-Qualität und Schema-Treue.\n\n"
     : "";
   const system = addressFocus
-    ? `${systemPrefix}${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions({ compact: runtime.promptTight })}`
+    ? `${systemPrefix}${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions({ compact: effectivePromptTight })}`
     : `${systemPrefix}${params.system}`;
   const companyContactHint =
     "\n\nZusatz (website, email): Nur aus belastbaren Primärquellen (Impressum, offizielle Firmen-Domain, verifizierbare Brancheneinträge). " +
@@ -266,13 +247,13 @@ export async function runCompanyEnrichmentGeneration(params: {
   const closedEnumHint = buildCompanyEnrichmentClosedEnumPromptBlock();
 
   const userPrompt = addressFocus
-    ? runtime.promptTight
+    ? effectivePromptTight
       ? `${params.userPrompt}${companyContactHint}${closedEnumHint}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
       : `${params.userPrompt}${companyContactHint}${closedEnumHint}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
     : `${params.userPrompt}${companyContactHint}${closedEnumHint}`;
 
   const tools = {
-    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),
+    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, perplexityProfile),
   };
 
   const output = Output.object({
@@ -282,68 +263,74 @@ export async function runCompanyEnrichmentGeneration(params: {
   });
 
   const providerOptions = getEnrichmentGatewayProviderOptions();
-  const mode = params.modelMode ?? "auto";
 
-  const primary = params.gatewayModelOverride?.primary ?? runtime.primary;
-  const secondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
+  const structuringPrimary = isFast
+    ? FAST_WEB_SEARCH_STRUCTURING_PRIMARY
+    : (params.gatewayModelOverride?.primary ?? runtime.primary);
+  const structuringSecondary = isFast
+    ? FAST_WEB_SEARCH_STRUCTURING_SECONDARY
+    : (params.gatewayModelOverride?.secondary ?? runtime.secondary);
 
-  const runWithModel = async (modelId: GatewayModelId) => {
+  const runWithStructuringModel = async (structureModelId: GatewayModelId) => {
     // Phase 1: provider-executed Perplexity tool — AI SDK only parses `output` when the last
     // step finishReason is "stop"; tool-only final steps throw AI_NoOutputGeneratedError.
-    const researchResult = await generateText({
-      model: gateway(modelId),
-      tools,
-      toolChoice: "auto",
-      stopWhen: stepCountIs(12),
-      system,
-      prompt: userPrompt,
-      ...(providerOptions ? { providerOptions } : {}),
-    });
+    const researchResult = await (async () => {
+      console.time("Perplexity Phase");
+      try {
+        return await generateText({
+          model: gateway(ENRICHMENT_RESEARCH_GATEWAY_MODEL),
+          tools,
+          toolChoice: "auto",
+          stopWhen: stepCountIs(12),
+          system,
+          prompt: userPrompt,
+          ...(providerOptions ? { providerOptions } : {}),
+        });
+      } finally {
+        console.timeEnd("Perplexity Phase");
+      }
+    })();
 
-    const digest = buildEnrichmentResearchDigest(researchResult, runtime.digestMaxChars);
-    const structurePrompt = buildEnrichmentStructurePrompt(digest, runtime.promptTight);
+    const digest = buildEnrichmentResearchDigest(researchResult, effectiveDigestMaxChars);
+    const structurePrompt = buildEnrichmentStructurePrompt(digest, effectivePromptTight);
 
-    const { output: raw } = await generateText({
-      model: gateway(modelId),
-      system,
-      prompt: structurePrompt,
-      output,
-      stopWhen: stepCountIs(4),
-      ...(providerOptions ? { providerOptions } : {}),
-    });
+    const raw = await (async () => {
+      console.time("Structuring Phase");
+      try {
+        const structureOut = await generateText({
+          model: gateway(structureModelId),
+          system,
+          prompt: structurePrompt,
+          output,
+          stopWhen: stepCountIs(4),
+          ...(providerOptions ? { providerOptions } : {}),
+        });
+        return structureOut.output;
+      } finally {
+        console.timeEnd("Structuring Phase");
+      }
+    })();
     if (!raw) {
       throw new Error("ENRICHMENT_NO_OUTPUT");
     }
     return sanitizeEnrichmentOutput(raw as CompanyEnrichmentAiOutput);
   };
 
-  if (mode === "grok_only") {
-    const grokId = pickGrokOnlyModel(primary, secondary);
-    const result = await runWithModel(grokId);
-    return { result, modelUsed: grokId };
-  }
-
-  if (mode === "claude_only") {
-    const result = await runWithModel(primary);
-    return { result, modelUsed: primary };
-  }
-
   try {
-    const result = await runWithModel(primary);
-    return { result, modelUsed: primary };
+    const result = await runWithStructuringModel(structuringPrimary);
+    return { result, modelUsed: structuringPrimary };
   } catch (first) {
-    if (!shouldRetryWithFallback(first) || secondary === primary) {
+    if (!shouldRetryWithFallback(first) || structuringSecondary === structuringPrimary) {
       throw first;
     }
-    const result = await runWithModel(secondary);
-    return { result, modelUsed: secondary };
+    const result = await runWithStructuringModel(structuringSecondary);
+    return { result, modelUsed: structuringSecondary };
   }
 }
 
 export async function runContactEnrichmentGeneration(params: {
   system: string;
   userPrompt: string;
-  modelMode?: EnrichmentModelMode;
   gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
 }): Promise<{ result: ContactEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
@@ -357,7 +344,10 @@ export async function runContactEnrichmentGeneration(params: {
     : params.system;
 
   const tools = {
-    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),
+    perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, {
+      maxResults: runtime.perplexityMaxResults,
+      searchRecencyFilter: "month",
+    }),
   };
 
   const output = Output.object({
@@ -367,58 +357,62 @@ export async function runContactEnrichmentGeneration(params: {
   });
 
   const providerOptions = getEnrichmentGatewayProviderOptions();
-  const mode = params.modelMode ?? "auto";
 
-  const primary = params.gatewayModelOverride?.primary ?? runtime.primary;
-  const secondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
+  const structuringPrimary = params.gatewayModelOverride?.primary ?? runtime.primary;
+  const structuringSecondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
 
-  const runWithModel = async (modelId: GatewayModelId) => {
-    const researchResult = await generateText({
-      model: gateway(modelId),
-      tools,
-      toolChoice: "auto",
-      stopWhen: stepCountIs(12),
-      system: systemEffective,
-      prompt: params.userPrompt,
-      ...(providerOptions ? { providerOptions } : {}),
-    });
+  const runWithStructuringModel = async (structureModelId: GatewayModelId) => {
+    // Latency: console.time pairs = Perplexity research vs JSON structuring (same labels pattern as company).
+    const researchResult = await (async () => {
+      console.time("Perplexity Phase");
+      try {
+        return await generateText({
+          model: gateway(ENRICHMENT_RESEARCH_GATEWAY_MODEL),
+          tools,
+          toolChoice: "auto",
+          stopWhen: stepCountIs(12),
+          system: systemEffective,
+          prompt: params.userPrompt,
+          ...(providerOptions ? { providerOptions } : {}),
+        });
+      } finally {
+        console.timeEnd("Perplexity Phase");
+      }
+    })();
 
     const digest = buildEnrichmentResearchDigest(researchResult, runtime.digestMaxChars);
     const structurePrompt = buildEnrichmentStructurePrompt(digest, runtime.promptTight);
 
-    const { output: raw } = await generateText({
-      model: gateway(modelId),
-      system: systemEffective,
-      prompt: structurePrompt,
-      output,
-      stopWhen: stepCountIs(4),
-      ...(providerOptions ? { providerOptions } : {}),
-    });
+    const raw = await (async () => {
+      console.time("Structuring Phase");
+      try {
+        const structureOut = await generateText({
+          model: gateway(structureModelId),
+          system: systemEffective,
+          prompt: structurePrompt,
+          output,
+          stopWhen: stepCountIs(4),
+          ...(providerOptions ? { providerOptions } : {}),
+        });
+        return structureOut.output;
+      } finally {
+        console.timeEnd("Structuring Phase");
+      }
+    })();
     if (!raw) {
       throw new Error("ENRICHMENT_NO_OUTPUT");
     }
     return sanitizeContactEnrichmentOutput(raw as ContactEnrichmentAiOutput);
   };
 
-  if (mode === "grok_only") {
-    const grokId = pickGrokOnlyModel(primary, secondary);
-    const result = await runWithModel(grokId);
-    return { result, modelUsed: grokId };
-  }
-
-  if (mode === "claude_only") {
-    const result = await runWithModel(primary);
-    return { result, modelUsed: primary };
-  }
-
   try {
-    const result = await runWithModel(primary);
-    return { result, modelUsed: primary };
+    const result = await runWithStructuringModel(structuringPrimary);
+    return { result, modelUsed: structuringPrimary };
   } catch (first) {
-    if (!shouldRetryWithFallback(first) || secondary === primary) {
+    if (!shouldRetryWithFallback(first) || structuringSecondary === structuringPrimary) {
       throw first;
     }
-    const result = await runWithModel(secondary);
-    return { result, modelUsed: secondary };
+    const result = await runWithStructuringModel(structuringSecondary);
+    return { result, modelUsed: structuringSecondary };
   }
 }

@@ -105,7 +105,6 @@ function validateContactSuggestionValue(
 export const bulkResearchContactEnrichmentInputSchema = z
   .object({
     contactIds: z.array(z.string().uuid()).min(1).max(50),
-    modelMode: z.enum(["auto", "grok_only"]).optional(),
   })
   .strict();
 

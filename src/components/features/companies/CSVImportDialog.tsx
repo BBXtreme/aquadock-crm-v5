@@ -147,7 +147,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         );
         const bulk = await bulkResearchCompanyEnrichment({
           companyIds: result.companyIds,
-          modelMode: "auto",
         });
         toast.dismiss(loadingId);
         if (!bulk.ok) {
