@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Building,
-  DollarSign,
-  Sparkles,
-  Trash,
-  Trophy,
-  Users,
-  X,
-} from "lucide-react";
+import { Building, DollarSign, Trash, Trophy, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -608,25 +600,23 @@ function ClientCompaniesPage() {
               </AccordionItem>
             </Accordion>
 
-            {/* Bulk AI + delete */}
-            {Object.keys(rowSelection).length > 0 && (
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="icon-sm"
-                  disabled={bulkAiEnrichPending}
-                  aria-busy={bulkAiEnrichPending ? true : undefined}
-                  aria-label={
-                    bulkAiEnrichPending ? t("aiEnrich.bulkListRunning") : t("aiEnrich.bulkListButton")
-                  }
-                  title={t("aiEnrich.bulkListTitle")}
-                  onClick={() => {
-                    void handleBulkAiEnrich();
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-                </Button>
+            <CompaniesTable
+              companies={companies}
+              globalFilter={globalFilter}
+              onGlobalFilterChange={setGlobalFilter}
+              onEdit={(company) => setEditingCompany(company)}
+              onDelete={(companyOrId) => {
+                const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
+                deleteMutation.mutate(id);
+              }}
+              pageCount={pageCount}
+              onPaginationChange={setPagination}
+              sorting={sorting}
+              onSortingChange={setSorting}
+              onImportCSV={() => setCsvDialogOpen(true)}
+              rowSelection={rowSelection}
+              onRowSelectionChange={setRowSelection}
+              selectionActions={
                 <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>
@@ -646,25 +636,7 @@ function ClientCompaniesPage() {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-              </div>
-            )}
-
-            <CompaniesTable
-              companies={companies}
-              globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
-              onEdit={(company) => setEditingCompany(company)}
-              onDelete={(companyOrId) => {
-                const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
-                deleteMutation.mutate(id);
-              }}
-              pageCount={pageCount}
-              onPaginationChange={setPagination}
-              sorting={sorting}
-              onSortingChange={setSorting}
-              onImportCSV={() => setCsvDialogOpen(true)}
-              rowSelection={rowSelection}
-              onRowSelectionChange={setRowSelection}
+              }
             />
           </CardContent>
         </Card>

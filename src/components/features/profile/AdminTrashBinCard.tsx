@@ -503,10 +503,6 @@ export default function AdminTrashBinCard() {
           </div>
         ) : null}
 
-        {!isLoading && !trashEnabled ? (
-          <p className="text-muted-foreground text-sm">{t("trashBinDisabled")}</p>
-        ) : null}
-
         {!isLoading && trashEnabled ? (
           <Tabs
             value={tab}
