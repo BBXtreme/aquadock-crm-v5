@@ -118,11 +118,18 @@ describe("enrichment-rate-limit", () => {
     const fromMock = vi.mocked(client.from);
     const last = fromMock.mock.results.at(-1)?.value as { upsert: ReturnType<typeof vi.fn> };
     expect(last.upsert).toHaveBeenCalledTimes(2);
-    expect(last.upsert.mock.calls[0][0]).toMatchObject({
+    const upsertCalls = last.upsert.mock.calls;
+    expect(upsertCalls).toHaveLength(2);
+    const firstPayload = upsertCalls[0]?.[0];
+    const secondPayload = upsertCalls[1]?.[0];
+    if (firstPayload === undefined || secondPayload === undefined) {
+      throw new Error("expected two upsert payloads");
+    }
+    expect(firstPayload).toMatchObject({
       key: AI_ENRICHMENT_USED_TODAY_KEY,
       value: 2,
     });
-    expect(last.upsert.mock.calls[1][0]).toMatchObject({
+    expect(secondPayload).toMatchObject({
       key: AI_ENRICHMENT_LAST_RESET_DATE_KEY,
       value: today,
     });
