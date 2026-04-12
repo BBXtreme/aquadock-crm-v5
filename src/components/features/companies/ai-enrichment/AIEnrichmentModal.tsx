@@ -3,9 +3,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -533,10 +535,10 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
-        <div className="max-h-[min(140px,24dvh)] min-h-0 shrink-0 overflow-y-auto border-border border-b px-5 pt-9 pb-2 sm:max-h-[min(128px,20dvh)] sm:px-7 sm:pt-10">
-          <div className="flex min-w-0 items-start justify-between gap-2 pr-12 sm:pr-14">
-            <DialogHeader className="min-w-0 flex-1 space-y-0 text-left">
-              <DialogTitle className="wrap-break-word text-balance text-xs font-semibold leading-tight tracking-tight sm:text-sm">
+        <div className="max-h-[min(220px,28dvh)] min-h-0 shrink-0 overflow-y-auto border-border/80 border-b px-6 pt-8 pb-4 sm:max-h-[min(200px,24dvh)] sm:px-8 sm:pt-8 sm:pb-5">
+          <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4 pr-12 sm:pr-14">
+            <DialogHeader className="min-w-0 flex-1 space-y-1 text-left">
+              <DialogTitle className="wrap-break-word text-balance text-sm font-semibold leading-tight tracking-tight text-foreground sm:text-base">
                 {t("aiEnrich.modalTitle")}
               </DialogTitle>
               <DialogDescription className="sr-only">{t("aiEnrich.modalDescription")}</DialogDescription>
@@ -544,7 +546,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
             {usageQuery.data ? (
               <Badge
                 variant="outline"
-                className="shrink-0 border-border/60 bg-muted/25 px-2 py-0 text-[10px] text-muted-foreground/90 tabular-nums leading-none"
+                className="shrink-0 border-border/50 bg-muted/10 px-3 py-1 text-xs font-medium text-muted-foreground tabular-nums leading-none shadow-none"
                 aria-label={t("aiEnrich.usageHeading")}
               >
                 {t("aiEnrich.usagePill", {
@@ -553,14 +555,15 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                 })}
               </Badge>
             ) : open && usageQuery.isLoading ? (
-              <Skeleton className="h-5 w-14 shrink-0 rounded-full" aria-hidden />
+              <Skeleton className="h-6 w-16 shrink-0 rounded-full" aria-hidden />
             ) : null}
           </div>
 
-          <div className="mt-1.5 flex min-w-0 flex-col gap-1.5 sm:mt-2 sm:flex-row sm:items-center sm:gap-3">
-            <div className="flex min-w-0 items-center gap-2">
+          <div className="mt-4 flex min-w-0 flex-col gap-3 sm:mt-4 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex min-w-0 items-center gap-2.5">
               <Switch
                 id="ai-enrich-web-search"
+                className="data-[state=unchecked]:border data-[state=unchecked]:border-zinc-400/55 data-[state=unchecked]:bg-zinc-300/95 data-[state=unchecked]:shadow-inner data-[state=checked]:shadow-sm dark:data-[state=unchecked]:border-transparent dark:data-[state=unchecked]:bg-zinc-700 dark:data-[state=unchecked]:shadow-none [&>span]:shadow-sm [&>span]:ring-1 [&>span]:ring-zinc-300/70 dark:[&>span]:ring-zinc-700/60"
                 checked={enrichmentWebMode === "full"}
                 onCheckedChange={(checked) => {
                   const next: CompanyEnrichmentWebSearchMode = checked ? "full" : "model-only";
@@ -579,13 +582,13 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               />
               <Label
                 htmlFor="ai-enrich-web-search"
-                className="cursor-pointer text-foreground text-[11px] font-medium leading-none sm:text-xs"
+                className="cursor-pointer text-foreground text-xs font-medium leading-normal sm:text-sm"
               >
                 {t("aiEnrich.webSearchCurrentLabel")}
               </Label>
             </div>
             {enrichmentWebMode === "model-only" ? (
-              <div className="min-w-0 flex-1 sm:max-w-md">
+              <div className="min-w-0 flex-1 sm:max-w-md sm:pl-0.5">
                 <Select
                   value={effectiveSelectModelValue}
                   onValueChange={(v) => {
@@ -619,7 +622,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                 >
                   <SelectTrigger
                     id="ai-enrich-model-override"
-                    className="h-7 w-full text-xs"
+                    className="h-9 w-full text-sm sm:h-9"
                     aria-label={t("aiEnrich.modelOverrideLabel")}
                   >
                     <SelectValue />
@@ -639,31 +642,42 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
           <p
             className={cn(
-              "mt-1 text-[9px] leading-snug sm:text-[10px]",
-              enrichmentWebMode === "model-only"
-                ? "text-amber-800/95 dark:text-amber-400/95"
-                : "text-muted-foreground",
+              "mt-3 text-pretty text-xs leading-normal sm:mt-3.5 sm:text-sm sm:leading-normal",
+              enrichmentWebMode === "full"
+                ? "text-muted-foreground/90"
+                : modelUsed
+                  ? "text-muted-foreground/90"
+                  : "text-amber-900/85 dark:text-amber-300/90",
             )}
           >
-            {enrichmentWebMode === "full" ? t("aiEnrich.webSearchActive") : t("aiEnrich.modelOnlyStatusLine")}
+            {enrichmentWebMode === "full"
+              ? t("aiEnrich.webSearchActive")
+              : modelUsed
+                ? t("aiEnrich.modelUsed", {
+                    model: isEnrichmentGatewayModelId(modelUsed)
+                      ? getEnrichmentGatewayModelMeta(modelUsed)?.label ?? modelUsed
+                      : modelUsed,
+                  })
+                : t("aiEnrich.modelOnlyStatusLine")}
           </p>
         </div>
 
         <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-5 py-2 sm:px-7 sm:py-2.5">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-6 py-3 sm:px-8 sm:py-4">
             {isError || enrichmentInlineError ? (
-              <div className="mb-2 shrink-0 space-y-2">
-                <div
-                  role="alert"
-                  className="space-y-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-destructive text-sm leading-snug"
+              <div className="mb-2 shrink-0 space-y-3">
+                <Alert
+                  variant="destructive"
+                  className="rounded-xl border-destructive/30 px-4 py-3 wrap-break-word sm:py-3.5"
                 >
+                  <AlertCircle className="h-4 w-4" aria-hidden />
                   {enrichmentInlineError ? (
-                    <p className="font-medium text-destructive">{enrichmentInlineError}</p>
+                    <AlertTitle>{enrichmentInlineError}</AlertTitle>
                   ) : (
-                    <p className="font-medium text-destructive">{t("aiEnrich.errorGeneric")}</p>
+                    <AlertTitle>{t("aiEnrich.errorGeneric")}</AlertTitle>
                   )}
                   {enrichmentFailureDetail ? (
-                    <div className="space-y-1.5 border-destructive/20 border-t border-dashed pt-2 text-muted-foreground">
+                    <AlertDescription className="space-y-1.5 border-border/40 border-t border-dashed pt-3 text-muted-foreground">
                       <p className="font-mono text-[11px] leading-snug wrap-break-word">
                         <span className="text-foreground/80">{t("aiEnrich.diagnosticCodeLabel")}:</span>{" "}
                         {enrichmentFailureDetail.stableCode}
@@ -703,9 +717,9 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                           {t("aiEnrich.diagnosticTokenUsage", { hint: enrichmentFailureDetail.tokenUsageHint })}
                         </p>
                       ) : null}
-                    </div>
+                    </AlertDescription>
                   ) : null}
-                </div>
+                </Alert>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={handleRetry}>
                     {t("aiEnrich.retry")}
@@ -737,7 +751,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 sm:gap-3">
                 {result.aiSummary ? (
                   <section className="shrink-0 rounded-lg border bg-muted/30 px-3 py-2 text-sm shadow-xs sm:px-4 sm:py-2.5">
-                    <h3 className="text-muted-foreground text-[10px] font-semibold tracking-wide uppercase">
+                    <h3 className="text-muted-foreground/90 text-xs font-semibold tracking-wide uppercase">
                       {t("aiEnrich.summaryLabel")}
                     </h3>
                     <p className="mt-1.5 whitespace-pre-wrap wrap-break-word text-foreground text-xs leading-relaxed">
@@ -759,13 +773,13 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                           : modelUsed,
                       })}
                     </p>
-                    <p className="text-muted-foreground text-[10px] leading-snug">
+                    <p className="text-muted-foreground/90 text-xs leading-snug">
                       {enrichmentWebMode === "full"
                         ? t("aiEnrich.modelUsedResearchFootnoteFull")
                         : t("aiEnrich.modelUsedResearchFootnoteModelOnly")}
                     </p>
                     {modelCostHint ? (
-                      <p className="text-muted-foreground text-[10px] leading-snug">{modelCostHint}</p>
+                      <p className="text-muted-foreground/90 text-xs leading-snug">{modelCostHint}</p>
                     ) : null}
                   </div>
                 ) : null}
@@ -861,7 +875,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
           </div>
         </div>
 
-        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-2 rounded-none border-border border-t bg-muted/40 px-5 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-3 sm:gap-y-2 sm:px-7 sm:py-3">
+        <DialogFooter className="mx-0 mt-0 mb-0 flex w-full shrink-0 flex-col gap-2 rounded-none border-border border-t bg-muted/40 px-6 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-3 sm:gap-y-2 sm:px-8 sm:py-3">
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-end sm:gap-2">
             <Button
               type="button"

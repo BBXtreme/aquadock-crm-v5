@@ -288,6 +288,7 @@ export async function runCompanyEnrichmentGeneration(params: {
   if (isModelOnly) {
     // Address-focus policy applies only to Full web search; model-only stays conservative (no extra system hints).
     const systemModelOnly = params.system;
+    // Structuring: modal override.primary, else caller/runtime primary (settings), then Grok (env) as retry fallback.
     const structuringPrimary = params.gatewayModelOverride?.primary ?? runtime.primary;
     const structuringSecondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
     return runCompanyEnrichmentModelOnlyGeneration({

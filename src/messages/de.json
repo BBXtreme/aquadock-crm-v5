@@ -68,7 +68,7 @@
       "gatewayReserveHelp": "Optional. „Keine“ schaltet den automatischen Wechsel aus. Sonst ein anderes Modell als das Hauptmodell wählen.",
       "gatewayReserveNone": "Keine",
       "structuringModelSectionTitle": "Strukturierungsmodell",
-      "structuringModelHelp": "Wird für JSON-Strukturierung (Phase 2) verwendet. Web-Suche nutzt ein festes schnelles Modell.",
+      "structuringModelHelp": "Verantwortlich für die finale Qualität der Vorschläge – in allen Modi.",
       "recommendedXaiSubscription": "Optimal mit xAI-Abo",
       "webSearchConfigSectionTitle": "Web-Suche Konfiguration",
       "webSearchConfigHelp": "Gilt, wenn im Unternehmens-Dialog „Aktuelle Web-Suche“ eingeschaltet ist. Suchsprache = CRM-Sprache.",

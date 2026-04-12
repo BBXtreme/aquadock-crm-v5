@@ -4,7 +4,7 @@ overview: Ultra-compact modal header (~140px), ghost usage pill, single Switch (
 todos:
   - id: modal-header-layout
     content: Refactor AIEnrichmentModal header per spec; remove tri-mode + Vercel credits from header
-    status: completed
+    status: cancelled
   - id: gateway-full-perplexity
     content: Gateway full path use runtime perplexityFastMaxResults + perplexityFastRecency + crmSearchLocale
     status: completed
@@ -13,10 +13,10 @@ todos:
     status: completed
   - id: i18n-minimal
     content: de/en/hr shorten modal copy; add usagePill + webSearchActive + modelOnlyStatusLine
-    status: completed
+    status: cancelled
   - id: quality-gate
     content: pnpm typecheck && pnpm check:fix
-    status: completed
+    status: cancelled
 isProject: false
 ---
 

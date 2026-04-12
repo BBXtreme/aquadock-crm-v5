@@ -221,8 +221,14 @@ export async function researchCompanyEnrichment(
     }
 
     try {
-      const gatewayModelOverride = normalizeGatewayModelOverride(options?.gatewayModelOverride);
+      const gatewayModelOverrideNorm = normalizeGatewayModelOverride(options?.gatewayModelOverride);
       const webSearchMode = normalizeWebSearchMode(options?.webSearchMode);
+      // Model-Only without modal override: pin structuring primary to this request's policy (same row as limit check),
+      // so structuring never relies on a second policy load inside the gateway.
+      const gatewayModelOverride =
+        webSearchMode === "model-only" && gatewayModelOverrideNorm === undefined
+          ? { primary: policy.primaryGatewayModelId }
+          : gatewayModelOverrideNorm;
       const result = await runCompanyEnrichmentForActiveRow(supabase, companyId, {
         addressFocusPrioritize: policy.addressFocusPrioritize,
         gatewayModelOverride,
