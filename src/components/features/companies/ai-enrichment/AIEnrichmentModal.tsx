@@ -73,6 +73,60 @@ function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayMo
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
 }
 
+const DE_TWO_DECIMALS = new Intl.NumberFormat("de-DE", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/** Thin space (U+2009) + bullet + thin space — matches CRM list style at small sizes */
+const USAGE_PILL_COST_SEPARATOR = "\u2009•\u2009";
+
+function formatApproxEurEstimate(amount: number): string {
+  return `~${DE_TWO_DECIMALS.format(amount)} €`;
+}
+
+/**
+ * Heuristic tier for gateway cost pill (model-only structuring vs full web search).
+ */
+function isExpensiveGatewayResearchModel(gatewayModelId: string): boolean {
+  const lower = gatewayModelId.toLowerCase();
+  if (/claude-sonnet|claude-opus/.test(lower)) {
+    return true;
+  }
+  if (lower === "openai/gpt-5.4") {
+    return true;
+  }
+  if (/gemini-2\.5-pro|gemini-3-pro/.test(lower)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * @param modelIdForCost Effective gateway id for the pill: model-only uses override when set else
+ *   settings primary; full web search uses org primary from settings.
+ */
+function resolveEnrichmentRunCostEstimateLabel(
+  webMode: CompanyEnrichmentWebSearchMode,
+  modelIdForCost: EnrichmentGatewayModelId | null,
+): string {
+  if (webMode === "model-only") {
+    if (modelIdForCost === null) {
+      return formatApproxEurEstimate(0.02);
+    }
+    return isExpensiveGatewayResearchModel(modelIdForCost)
+      ? formatApproxEurEstimate(0.06)
+      : formatApproxEurEstimate(0.02);
+  }
+  if (modelIdForCost === null) {
+    return formatApproxEurEstimate(0.06);
+  }
+  if (isExpensiveGatewayResearchModel(modelIdForCost)) {
+    return formatApproxEurEstimate(0.25);
+  }
+  return formatApproxEurEstimate(0.06);
+}
+
 function ModalOverrideModelSelectItemContent({
   modelId,
   xaiBillingContext,
@@ -532,6 +586,16 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     typeof usageQuery.data?.primaryGatewayModelId === "string" &&
     usageQuery.data.primaryGatewayModelId.startsWith("xai/");
 
+  const usagePillCostEstimateLabel = useMemo(() => {
+    const modelForPill: EnrichmentGatewayModelId | null =
+      enrichmentWebMode === "model-only"
+        ? modelOverridePick !== MODEL_OVERRIDE_DEFAULT
+          ? modelOverridePick
+          : snapshotPrimary
+        : snapshotPrimary;
+    return resolveEnrichmentRunCostEstimateLabel(enrichmentWebMode, modelForPill);
+  }, [enrichmentWebMode, modelOverridePick, snapshotPrimary]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(90dvh,1000px)] max-h-[95dvh] min-h-0 w-[calc(100vw-1rem)] max-w-[min(1400px,calc(100vw-1rem))] flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100vw-2rem)] sm:max-w-[min(1400px,calc(100vw-2rem))] sm:rounded-xl">
@@ -547,12 +611,22 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               <Badge
                 variant="outline"
                 className="shrink-0 border-border/50 bg-muted/10 px-3 py-1 text-xs font-medium text-muted-foreground tabular-nums leading-none shadow-none"
-                aria-label={t("aiEnrich.usageHeading")}
+                aria-label={`${t("aiEnrich.usageHeading")}, geschätzte Kosten ${usagePillCostEstimateLabel}`}
               >
-                {t("aiEnrich.usagePill", {
-                  used: usageQuery.data.usedToday,
-                  limit: usageQuery.data.dailyLimit,
-                })}
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                  <span>
+                    {t("aiEnrich.usagePill", {
+                      used: usageQuery.data.usedToday,
+                      limit: usageQuery.data.dailyLimit,
+                    })}
+                  </span>
+                  <span className="text-muted-foreground/50" aria-hidden>
+                    {USAGE_PILL_COST_SEPARATOR}
+                  </span>
+                  <span className="text-muted-foreground/70 text-xs font-normal tabular-nums">
+                    {usagePillCostEstimateLabel}
+                  </span>
+                </span>
               </Badge>
             ) : open && usageQuery.isLoading ? (
               <Skeleton className="h-6 w-16 shrink-0 rounded-full" aria-hidden />
