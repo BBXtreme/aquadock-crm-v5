@@ -4,19 +4,19 @@ overview: Internationalize remaining English UI copy in the settings card and co
 todos:
   - id: messages-keys
     content: Add settings.aiEnrichment.lowCost* and companies.aiEnrich.* diagnostic/cost/lowCost keys to en.json, de.json, hr.json
-    status: pending
+    status: cancelled
   - id: settings-card-i18n
     content: "AIEnrichmentSettingsCard: replace hardcoded Low-cost strings with useT(settings)"
-    status: pending
+    status: cancelled
   - id: modal-i18n
     content: "AIEnrichmentModal: i18n cost hints, low-cost notice, error diagnostic chrome; refactor hint helper to use t"
-    status: pending
+    status: cancelled
   - id: policy-comments
     content: "ai-enrichment-policy.ts: minimal JSDoc on policy shape vs gateway routing"
-    status: pending
+    status: cancelled
   - id: quality-gate
     content: pnpm typecheck && pnpm check:fix
-    status: pending
+    status: completed
 isProject: false
 ---
 

@@ -120,11 +120,9 @@ export type CompanyEnrichmentResult = {
   suggestions: Partial<Record<EnrichmentFieldKey, SanitizedFieldSuggestion>>;
 };
 
+/** Trim only — do not prepend https://; CRM form accepts hostnames without forced scheme. */
 function normalizeWebsite(raw: string): string {
-  const t = raw.trim();
-  if (t.length === 0) return "";
-  if (/^https?:\/\//i.test(t)) return t;
-  return `https://${t}`;
+  return raw.trim();
 }
 
 function validateSuggestionValue<K extends EnrichmentFieldKey>(

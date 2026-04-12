@@ -413,6 +413,8 @@
       "sessionModelDefault": "Standard (aus Einstellungen)",
       "sessionModelPickerLabel": "Modell für diesen Lauf ändern",
       "sessionModelHint": "Ändert keine gespeicherten Einstellungen — nur diese Anreicherung.",
+      "modelOverrideLabel": "Modell ändern",
+      "modelOverrideHelp": "Gateway-Modell nur für diesen Lauf überschreiben (gespeicherte Einstellungen bleiben).",
       "gatewayModelClaudeSonnet": "Anthropic Claude Sonnet 4.6",
       "gatewayModelClaudeOpus46": "Anthropic Claude Opus 4.6",
       "gatewayModelClaudeHaiku45": "Anthropic Claude Haiku 4.5",

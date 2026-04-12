@@ -413,6 +413,8 @@
       "sessionModelDefault": "Zadano (iz postavki)",
       "sessionModelPickerLabel": "Promijeni model za ovo pokretanje",
       "sessionModelHint": "Ne mijenja spremljene postavke — samo ovo obogaćivanje.",
+      "modelOverrideLabel": "Promijeni model",
+      "modelOverrideHelp": "Za ovo pokretanje nadjačava gateway model (spremljene postavke ostaju).",
       "gatewayModelClaudeSonnet": "Anthropic Claude Sonnet 4.6",
       "gatewayModelClaudeOpus46": "Anthropic Claude Opus 4.6",
       "gatewayModelClaudeHaiku45": "Anthropic Claude Haiku 4.5",

@@ -110,6 +110,7 @@ export async function resolveCompanyDetail(
     .select(`
       id, firmenname, status, kundentyp, firmentyp, rechtsform, value,
       strasse, plz, stadt, bundesland, land, telefon, email, website,
+      notes,
       lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at,
       deleted_at
     `)

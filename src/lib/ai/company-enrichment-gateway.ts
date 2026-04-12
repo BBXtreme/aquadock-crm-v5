@@ -258,11 +258,16 @@ export async function runCompanyEnrichmentGeneration(params: {
   const system = addressFocus
     ? `${systemPrefix}${params.system}\n\n${buildCompanyEnrichmentAddressFocusInstructions({ compact: runtime.promptTight })}`
     : `${systemPrefix}${params.system}`;
+  const companyContactHint =
+    "\n\nZusatz (website, email): Nur aus belastbaren Primärquellen (Impressum, offizielle Firmen-Domain, verifizierbare Brancheneinträge). " +
+    "website: kanonische URL exakt wie in der Quelle (https nur wenn dort genannt); keine erfundenen Hosts. " +
+    "email: nur bei eindeutig korrekter Schreibweise (user@domain); sonst null.";
+
   const userPrompt = addressFocus
     ? runtime.promptTight
-      ? `${params.userPrompt}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
-      : `${params.userPrompt}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
-    : params.userPrompt;
+      ? `${params.userPrompt}${companyContactHint}\n\nZusatz: Adress-/Gewässerfelder nur aus Quellen; sonst null.`
+      : `${params.userPrompt}${companyContactHint}\n\nZusatz: Bitte Adress- und Gewässernähe-Felder (strasse, plz, stadt, bundesland, land, wasserdistanz, wassertyp) besonders sorgfältig prüfen und nur bei belastbaren Quellen befüllen.`
+    : `${params.userPrompt}${companyContactHint}`;
 
   const tools = {
     perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, runtime.perplexityMaxResults),

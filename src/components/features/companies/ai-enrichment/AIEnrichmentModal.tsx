@@ -17,7 +17,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
@@ -25,7 +33,11 @@ import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { getVercelAiCredits } from "@/lib/actions/vercel-ai-credits";
 import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
 import type { EnrichmentGatewayFailureDiagnostic } from "@/lib/ai/enrichment-gateway-failure-types";
-import { getCompanyResearchBadge, getEnrichmentGatewayModelMeta } from "@/lib/constants/ai-models";
+import {
+  getCompanyResearchBadge,
+  getEnrichmentGatewayModelMeta,
+  listEnrichmentGatewayModelsOrdered,
+} from "@/lib/constants/ai-models";
 import { VERCEL_AI_GATEWAY_DASHBOARD_HREF } from "@/lib/constants/vercel-ai-gateway";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
@@ -39,6 +51,7 @@ import {
 import type { Company } from "@/types/database.types";
 
 const AI_ENRICHMENT_RATE_PREFIX = "AI_ENRICHMENT_RATE_LIMIT:";
+const MODEL_OVERRIDE_DEFAULT = "__model_default__" as const;
 
 class ResearchCompanyEnrichmentClientError extends Error {
   readonly diagnostic?: EnrichmentGatewayFailureDiagnostic;
@@ -54,6 +67,27 @@ type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[num
 
 function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
+}
+
+function ModalOverrideModelSelectItemContent({
+  modelId,
+  xaiBillingContext,
+}: {
+  modelId: EnrichmentGatewayModelId;
+  xaiBillingContext: boolean;
+}) {
+  const meta = getEnrichmentGatewayModelMeta(modelId);
+  const badge = getCompanyResearchBadge(modelId, { xaiBillingContext });
+  return (
+    <span className="flex max-w-[min(100vw-4rem,28rem)] flex-wrap items-center gap-2">
+      <span className="min-w-0 truncate font-medium">{meta?.label ?? modelId}</span>
+      {badge ? (
+        <Badge variant={badge.variant} className={badge.className}>
+          {badge.text}
+        </Badge>
+      ) : null}
+    </span>
+  );
 }
 
 function formatUsdCredits(amount: number, localeTag: string): string {
@@ -291,9 +325,17 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const [enrichmentFailureDetail, setEnrichmentFailureDetail] = useState<EnrichmentGatewayFailureDiagnostic | null>(
     null,
   );
+  const [modelOverridePick, setModelOverridePick] = useState<EnrichmentGatewayModelId | typeof MODEL_OVERRIDE_DEFAULT>(
+    MODEL_OVERRIDE_DEFAULT,
+  );
+  const modelOverrideRef = useRef<EnrichmentGatewayModelId | null>(null);
   const runForOpenSessionRef = useRef(false);
   const startTimeoutRef = useRef<number | null>(null);
   const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    modelOverrideRef.current = modelOverridePick === MODEL_OVERRIDE_DEFAULT ? null : modelOverridePick;
+  }, [modelOverridePick]);
 
   const usageQuery = useQuery({
     queryKey: ["ai-enrichment-settings-snapshot"],
@@ -347,7 +389,11 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
 
   const { mutate, reset, isPending, isSuccess, isError } = useMutation({
     mutationFn: async () => {
-      const res = await researchCompanyEnrichment(company.id, { modelMode: "auto" });
+      const primary = modelOverrideRef.current;
+      const res = await researchCompanyEnrichment(company.id, {
+        modelMode: "auto",
+        gatewayModelOverride: primary !== null ? { primary } : undefined,
+      });
       if (!res.ok) {
         throw new ResearchCompanyEnrichmentClientError(res.error, res.diagnostic);
       }
@@ -409,6 +455,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
         setResult(null);
         setModelUsed(null);
         setSelected({});
+        setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
       }
       resetRef.current();
       return;
@@ -515,6 +562,46 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               {t("aiEnrich.modalDescription")}
             </DialogDescription>
           </DialogHeader>
+
+          <div className="flex flex-col gap-2 border-border border-t border-dashed pt-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+            <div className="min-w-0 flex-1 space-y-1">
+              <Label htmlFor="ai-enrich-model-override" className="text-muted-foreground text-xs font-medium">
+                {t("aiEnrich.modelOverrideLabel")}
+              </Label>
+              <p className="text-muted-foreground text-[11px] leading-snug">{t("aiEnrich.modelOverrideHelp")}</p>
+              <Select
+                value={modelOverridePick}
+                onValueChange={(v) => {
+                  if (v === MODEL_OVERRIDE_DEFAULT) {
+                    setModelOverridePick(MODEL_OVERRIDE_DEFAULT);
+                    return;
+                  }
+                  if (isEnrichmentGatewayModelId(v)) {
+                    setModelOverridePick(v);
+                  }
+                }}
+                disabled={isPending}
+              >
+                <SelectTrigger id="ai-enrich-model-override" className="h-9 w-full max-w-md sm:w-72">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value={MODEL_OVERRIDE_DEFAULT}>{t("aiEnrich.sessionModelDefault")}</SelectItem>
+                  {listEnrichmentGatewayModelsOrdered().map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      <ModalOverrideModelSelectItemContent
+                        modelId={m.id}
+                        xaiBillingContext={
+                          typeof usageQuery.data?.primaryGatewayModelId === "string" &&
+                          usageQuery.data.primaryGatewayModelId.startsWith("xai/")
+                        }
+                      />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           {usageQuery.data ? (
             <div className="rounded-lg border border-border bg-muted/20 px-4 py-2.5 sm:px-5 sm:py-3">

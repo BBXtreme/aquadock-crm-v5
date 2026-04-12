@@ -265,7 +265,7 @@ export default function CompanyEditForm({
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" {...field} value={field.value ?? ""} />
+                  <Input type="text" inputMode="email" autoComplete="email" {...field} value={field.value ?? ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
