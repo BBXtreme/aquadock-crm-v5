@@ -12,7 +12,8 @@ This document explains how the application is structured so developers (and tech
 2. **Pages** are mostly **React Server Components**: they load data on the server using a Supabase client that sees the user’s session.  
 3. **Interactive pieces** (forms, maps, tables with client sorting) are **Client Components** (`"use client"`) and stay as small as possible.  
 4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete).  
-5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.
+5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.  
+6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireUser()` in `src/app/(protected)/layout.tsx`.
 
 ---
 
@@ -22,7 +23,8 @@ This document explains how the application is structured so developers (and tech
 | --- | --- |
 | Rendering | Next.js App Router; Server Components by default |
 | Interactivity | `"use client"` only where needed |
-| Data access | Server: `createServerSupabaseClient()`; browser: `createClient()` from `@/lib/supabase/browser` for allowed cases (e.g. avatar upload) |
+| Data access | Server: `createServerSupabaseClient()` from `@/lib/supabase/server`; browser: `createClient()` from `@/lib/supabase/browser` for allowed cases (e.g. avatar upload) |
+| Auth gates | `requireUser()` and `requireAdmin()` in `@/lib/auth/require-user` and `@/lib/auth/require-admin`; profile-aware shell uses `getCurrentUser()` (`@/lib/auth/get-current-user.ts`, request-cached) |
 | Types | Generated `Database` types from Supabase + Zod-inferred form types |
 | Validation | `src/lib/validations/` — `.strict()`, `.trim()`, enums from constants, UUIDs, `emptyStringToNull` for nullable columns |
 | Business logic | `src/lib/services/` — reusable operations; Server Actions stay thin |
@@ -58,7 +60,7 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 
 - **`(auth)`** — Public routes (e.g. login); no full app chrome.  
 - **`(protected)`** — Authenticated CRM: sidebar, header, and pages under routes like `/dashboard`, `/companies`, `/openmap`.  
-- Protected entry points should call `requireUser()` (or equivalent) early so unauthorized users never see data.
+- The **`(protected)/layout.tsx`** layout calls `requireUser()` once per segment tree so nested pages do not pay duplicate auth work; admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
 
 ---
 
@@ -76,7 +78,9 @@ Run:
 pnpm typecheck && pnpm check:fix
 ```
 
-Add tests when behavior is non-trivial (`pnpm test:run`). CI on `main` / PRs runs typecheck, Biome, tests with coverage, and a production build (see `.github/workflows/ci.yml`).
+Add tests when behavior is non-trivial (`pnpm test:run`). If you change translation keys under `src/messages/`, run `pnpm messages:validate` so `de`, `en`, and `hr` stay aligned.
+
+CI on `main` / PRs runs typecheck, Biome, tests with coverage, and a production build (see `.github/workflows/ci.yml`; **Node 22**, **pnpm 10**).
 
 ---
 

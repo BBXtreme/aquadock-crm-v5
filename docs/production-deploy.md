@@ -8,15 +8,26 @@
 
 ## 1. Vercel — environment variables
 
+A committed template with placeholders lives at **`.env.example`** in the repository root (`cp .env.example .env.local` for local development).
+
 | Variable | Required | Who sees it | Meaning |
 | --- | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Browser + server | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Browser + server | Public anon key (RLS still applies) |
 | `SUPABASE_SERVICE_ROLE_KEY` | If your deployment uses it | **Server only** | Bypasses RLS; never commit or expose to the client |
+| `SITE_URL` / `NEXT_PUBLIC_SITE_URL` | Recommended for stable auth redirects | Server / client | Canonical origin; see [`vercel-production.md`](vercel-production.md) |
 
-Add any other keys your fork uses (e.g. Brevo API keys if configured in your environment).
+**Optional — AI company/contact enrichment (Vercel AI Gateway):**
 
-**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (e.g. **22.x** — see `.github/workflows/ci.yml`). Framework preset: **Next.js**; output directory **`.next`**.
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `AI_GATEWAY_API_KEY` | For enrichment + gateway credit checks | Server only; from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) |
+| `AI_ENRICHMENT_XAI_API_KEY` | No | xAI BYOK so Grok usage can bill through your xAI account via the gateway |
+| `AI_ENRICHMENT_GROK_MODEL` | No | Override Gateway model id for the enrichment **fallback** structuring model (see `src/lib/ai/company-enrichment-gateway.ts`) |
+
+Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` (see [`BREVO_SDK.md`](BREVO_SDK.md)).
+
+**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (**22.x** — see `.github/workflows/ci.yml`). **Package manager:** CI pins **pnpm 10** via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
 
 ---
 
@@ -83,7 +94,8 @@ Add any other keys your fork uses (e.g. Brevo API keys if configured in your env
 ## 7. Maintenance
 
 - Dependency updates: security patches regularly; run `pnpm build` and tests after upgrades.  
-- Regenerate types after DB changes: `pnpm supabase:types`.
+- Regenerate types after DB changes: `pnpm supabase:types`.  
+- After changing `src/messages/*.json`, run `pnpm messages:validate` before merge (keeps `de` / `en` / `hr` keys aligned).
 
 ---
 

@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-10  
+**Last audited**: 2026-04-12  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
@@ -30,7 +30,7 @@
 | rechtsform | text        | true     | —                 | Legal form (GmbH, UG, etc.)               | —             |
 | kundentyp  | text        | false    | 'sonstige'        | restaurant, hotel, marina, camping, …     | Indexed       |
 | firmentyp  | text        | true     | —                 | kette, einzeln                            | —             |
-| status     | text        | false    | 'lead'            | lead, interessant, qualifiziert, gewonnen, verloren, … | Indexed       |
+| status     | text        | false    | 'lead'            | Pipeline + lifecycle (see §3); aligns with `statusOptions` in `src/lib/constants/company-options.ts` | Indexed       |
 | value      | bigint      | true     | 0                 | Estimated deal value (€)                  | —             |
 | strasse    | text        | true     | —                 | Street address                            | —             |
 | plz        | text        | true     | —                 | Postal code                               | —             |
@@ -112,8 +112,8 @@
 | contact_id | uuid        | true     | —                 | Foreign key to contacts  | —             |
 | user_id    | uuid        | true     | —                 | Owner (auth.uid())       | Indexed       |
 | user_name  | text        | true     | —                 | User name                | —             |
-| created_by | uuid        | true     | —                 | Created by user (profiles.id) | —             |
-| updated_by | uuid        | true     | —                 | Updated by user (profiles.id) | —             |
+| created_by | uuid        | true     | —                 | Created by user (`profiles.id`) | —             |
+| updated_by | uuid        | true     | —                 | Last editor (`profiles.id`); no `updated_at` column on this table | —             |
 | deleted_at | timestamptz | true     | —                 | Soft-delete (Papierkorb) | Indexed       |
 | deleted_by | uuid        | true     | —                 | User who soft-deleted    | FK → auth.users |
 | created_at | timestamptz | true     | now()             | —                        | —             |
@@ -181,30 +181,27 @@ Holds the **public** Storage URL of the user’s avatar, or `null` if none. The 
 
 ## 3. Important Enums & Constraints
 
-- `companies.status`: `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren'`
+- `companies.status` (Zod + UI): `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren' | 'kunde' | 'partner' | 'inaktiv'` — canonical labels in `src/lib/constants/company-options.ts` (`statusOptions`).
 - `reminders.priority`: `'hoch' | 'normal' | 'niedrig'`
 - `reminders.status`: `'open' | 'closed'`
 
 ## 4. Row Level Security (RLS) – Summary
 
-All tables use the same pattern:
+Policies are **per table** in migrations; the following is **illustrative** only (do not paste as SQL):
 
-```sql
--- Read / Update / Delete
+```text
+-- Typical ideas: row belongs to auth.uid(), or belongs to a company owned by auth.uid()
+-- Admin or service-role access is expressed with your project’s JWT / custom claims — inspect live policies in Supabase.
 (auth.uid() = user_id)
-OR
-(company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
-OR
-(auth.role() IN ('admin', 'service_role'))
-
--- Insert: WITH CHECK (auth.uid() = user_id)
+OR (company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
+-- + admin / service paths as defined in SQL migrations
 ```
 
-Admin and `service_role` bypass for maintenance and migrations where applicable.
+The **service role** key bypasses RLS when used from trusted server code; it must never ship to the browser.
 
 **Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, and `timeline` support optional soft deletion. On soft delete the app sets `deleted_by` to the acting `auth.users` id; on restore both `deleted_at` and `deleted_by` are cleared. Hard deletes remove rows and do not use `deleted_by`. Active reads use `.is("deleted_at", null)`; trashed rows are listed only in admin tooling. RLS was **not** extended for these columns in this iteration—rely on server actions and query filters.
 
-**Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`AdminTrashBinCard`, `safeDisplay`).
+**Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`src/components/features/profile/AdminTrashBinCard.tsx`, `safeDisplay`).
 
 **Detail routes**: `src/lib/actions/resolve-detail.ts` exposes `resolveReminderDetail` and `resolveTimelineDetail` (same pattern as `resolveCompanyDetail` / `resolveContactDetail`: fetch by id, `missing` if no row, `trashed` if `deleted_at` is set, else `active` with the typed row). Used by `/reminders/[id]` and `/timeline/[id]` server pages.
 
@@ -316,3 +313,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-09 Added nullable `deleted_by` → `auth.users(id)` on `companies`, `contacts`, `reminders`, `timeline`; composite indexes `(user_id, deleted_at, deleted_by)`; audit timeline titles include actor `display_name`; detail URLs for trashed company/contact redirect to list with toast. SQL: `src/sql/deleted-by-audit.sql`.
 
 2026-04-10 Doc sync: `profiles.last_sign_in_at`; `contacts.is_primary` nullability vs generated types; Zod section aligned with `companySchema`, `timelineSchema`, `profileDisplayNameSchema`, and related modules under `@/lib/validations/`.
+
+2026-04-12 Doc sync: full `companies.status` set (`kunde`, `partner`, `inaktiv`); timeline `updated_by` clarified (no `updated_at` on `timeline`); RLS summary no longer uses non-standard `auth.role()` pseudocode; Admin Papierkorb component path made explicit; audit stamp refreshed.

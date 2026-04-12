@@ -14,9 +14,17 @@
 | Server integration | [`src/lib/services/brevo.ts`](../src/lib/services/brevo.ts) — `BrevoClient`, error mapping (401 key type, 429 rate limit), campaign/contact helpers |
 | UI | Under `src/app/(protected)/brevo/` and `src/components/features/brevo/` |
 
+**Environment variables (server):**
+
+| Variable | Purpose |
+| --- | --- |
+| `BREVO_API_KEY` | REST API key for `BrevoClient` (`xkeysib-…` style) |
+| `BREVO_SENDER_NAME` | Optional default transactional sender display name |
+| `BREVO_SENDER_EMAIL` | Optional default transactional sender address (must be allowed in Brevo) |
+
 **API keys:** Brevo distinguishes **REST API keys** (often prefix `xkeysib-`) from **SMTP relay keys** (`xsmtpsib-`). REST operations against `api.brevo.com` need the correct key type; the service layer surfaces a German hint on `401` when the key is wrong (see `BREVO_401_REST_KEY_HINT` in `brevo.ts`).
 
-**Legacy package:** The repo also lists the `brevo` npm package for compatibility with older call sites; prefer `@getbrevo/brevo` for new code.
+**Transitive / unused `brevo` entry:** `package.json` may still list the older `brevo` package name; there are **no** imports from that package under `src/`. All Brevo usage goes through `@getbrevo/brevo` — treat the legacy name as a dependency cleanup candidate, not an API to use.
 
 ---
 

@@ -2,6 +2,8 @@
 
 Short checklist for deploying this Next.js app on **Vercel**. For a fuller runbook (Supabase security, backups, domains), use [`production-deploy.md`](production-deploy.md).
 
+Variable names mirror **`.env.example`** at the repo root (safe to commit; copy to `.env.local` locally).
+
 ---
 
 ## Environment variables
@@ -12,7 +14,13 @@ Short checklist for deploying this Next.js app on **Vercel**. For a fuller runbo
 - [ ] `NEXT_PUBLIC_SITE_URL` — same origin if you also need it on the client; otherwise optional when `SITE_URL` is set  
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — only if server code in your fork requires it; **never** `NEXT_PUBLIC_*`  
 
-Add Brevo or SMTP-related variables only if you use those features and they read from env.
+**Optional — AI enrichment**
+
+- [ ] `AI_GATEWAY_API_KEY` — enables company/contact AI enrichment and gateway credit UI (`src/lib/ai/company-enrichment-gateway.ts`, `src/lib/actions/vercel-ai-credits.ts`)  
+- [ ] `AI_ENRICHMENT_XAI_API_KEY` — optional xAI BYOK for Grok via the gateway  
+- [ ] `AI_ENRICHMENT_GROK_MODEL` — optional override for the fallback Gateway model id  
+
+Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` — see [`BREVO_SDK.md`](BREVO_SDK.md)) or rely on per-user SMTP settings in the app database only if you use those features.
 
 ---
 
@@ -24,7 +32,8 @@ Add Brevo or SMTP-related variables only if you use those features and they read
 | Install command | `pnpm install` (enable pnpm in project settings) |
 | Build command | `pnpm build` |
 | Output | `.next` (default) |
-| Node.js | **22.x** recommended (aligned with CI in `.github/workflows/ci.yml`) |
+| Node.js | **22.x** (aligned with CI in `.github/workflows/ci.yml`) |
+| pnpm | **10.x** (CI uses `pnpm/action-setup` with `version: 10`) |
 
 ---
 
@@ -54,6 +63,7 @@ Add Brevo or SMTP-related variables only if you use those features and they read
 - [ ] Create/edit company and contact  
 - [ ] Map loads for accounts with coordinates  
 - [ ] Email features you rely on (templates / mass / Brevo)  
+- [ ] AI enrichment flows, if enabled (`AI_GATEWAY_API_KEY`)  
 - [ ] Dark mode and mobile layout  
 
 ---

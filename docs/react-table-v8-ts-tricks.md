@@ -25,6 +25,7 @@ Define the array with `satisfies ColumnDef<YourRowType>[]`. TypeScript checks th
 
 ```typescript
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+// `Company` comes from `@/types/database.types` (aliases rows from generated `src/types/supabase.ts`).
 import type { Company } from "@/types/database.types";
 import { safeDisplay } from "@/lib/utils/data-format";
 

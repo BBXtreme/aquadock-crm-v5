@@ -2,13 +2,13 @@
 
 **What it is:** A web-based CRM for marinas, hotels, restaurants, and water-sports businesses. Teams sign in, manage companies and contacts, plan reminders, send email campaigns, and view records on an interactive map. Data lives in **Supabase** (PostgreSQL) with **Row Level Security** so each user only sees their own records (admins have broader access where the schema allows).
 
-**How it is built:** **Next.js 16** (App Router), **React 19**, **Supabase**, **Tailwind CSS v4**, **shadcn/ui**, **pnpm**.
+**How it is built:** **Next.js 16** (App Router), **React 19**, **Supabase**, **Tailwind CSS v4**, **shadcn/ui**, **next-intl** (locales: German, English, Croatian), **pnpm**.
 
 ---
 
 ## Features
 
-- **Companies & contacts** — Full lifecycle, search, CSV import, German-oriented fields (address, customer type, status).
+- **Companies & contacts** — Full lifecycle, search, CSV import, German-oriented fields (address, customer type, status); optional **AI enrichment** when [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) is configured (server-only keys — see deployment docs).
 - **OpenMap** — Map of CRM companies plus optional **OpenStreetMap** POIs; import POIs as leads (zoom ≥ 13).
 - **Reminders & timeline** — Tasks per company and activity history; soft-delete / trash workflows where implemented.
 - **Email** — Templates, logging, mass email; optional **Brevo** integration for campaigns/sync (see `docs/BREVO_SDK.md`).
@@ -29,6 +29,7 @@
 | Map | Leaflet, react-leaflet | Overpass API for OSM POIs (browser `fetch`) |
 | Backend | Supabase | PostgreSQL, Auth, RLS, Storage |
 | Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
+| i18n | next-intl | Message catalogs in `src/messages/` (`de`, `en`, `hr`) |
 | Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
 | Tests | Vitest, Testing Library | `pnpm test:run`; CI runs `pnpm test:ci` |
 
@@ -50,6 +51,8 @@ pnpm install
 cp .env.example .env.local
 ```
 
+Edit **`.env.local`** (gitignored) with your real values. The example file lists every variable the app may read; only Supabase URL + anon key are required for a minimal local run. Deeper checklists: [`docs/production-deploy.md`](docs/production-deploy.md), [`docs/vercel-production.md`](docs/vercel-production.md).
+
 Set at least:
 
 - `NEXT_PUBLIC_SUPABASE_URL` — Project URL from Supabase.
@@ -57,7 +60,9 @@ Set at least:
 
 Optional / server-only:
 
-- `SUPABASE_SERVICE_ROLE_KEY` — **Never** expose to the client. Some admin or batch operations may need it; follow existing Server Actions and service code.
+- `SUPABASE_SERVICE_ROLE_KEY` — **Never** expose to the client. Use only in trusted server code where RLS bypass is intentional.
+- `SITE_URL` / `NEXT_PUBLIC_SITE_URL` — Canonical site origin for password recovery and similar flows; see [`docs/vercel-production.md`](docs/vercel-production.md).
+- **AI enrichment (optional):** `AI_GATEWAY_API_KEY`; optional `AI_ENRICHMENT_XAI_API_KEY` (xAI BYOK via gateway) and `AI_ENRICHMENT_GROK_MODEL` (fallback model id override). Documented in the deployment guides.
 
 ### 3. Storage (profile photos)
 
@@ -107,6 +112,7 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 | `pnpm test` | Vitest (watch) |
 | `pnpm test:run` | Vitest once |
 | `pnpm test:ci` | Coverage + verbose reporter (matches CI) |
+| `pnpm messages:validate` | Ensures `de` / `en` / `hr` message keys stay in sync (run after editing `src/messages/*.json`) |
 | `pnpm supabase:types` | Regenerate `src/types/supabase.ts` (edit `--project-id` in `package.json` if you fork the DB) |
 
 ---
@@ -118,6 +124,8 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 - `src/lib/services/` — Business logic and Supabase access patterns shared by actions.
 - `src/lib/validations/` — Zod schemas (single source of truth for forms).
 - `src/lib/supabase/` — Browser and server Supabase clients.
+- `src/lib/auth/` — `requireUser()`, `requireAdmin()`, and related session helpers.
+- `src/messages/` — next-intl JSON catalogs (`de.json`, `en.json`, `hr.json`).
 - `src/components/` — UI primitives (`ui/`), layout, feature modules (`features/`).
 
 A more detailed tree lived in older README versions; explore `src/app/(protected)/` for feature routes (`dashboard`, `companies`, `contacts`, `openmap`, `settings`, etc.).
@@ -138,14 +146,14 @@ Step-by-step checklists: [`docs/production-deploy.md`](docs/production-deploy.md
 pnpm supabase:types
 ```
 
-Writes generated types to `src/types/supabase.ts`. App code imports through `src/types/database.types.ts` where applicable.
+Writes generated types to `src/types/supabase.ts`. App code should import row aliases (`Company`, `Contact`, …) and the `Database` type from [`src/types/database.types.ts`](src/types/database.types.ts), which re-exports the generated schema.
 
 ---
 
 ## Contributing
 
 - Prefer branches such as `feature/…`, `fix/…`, `chore/…`.
-- Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior).
+- Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior). After editing translations, also run `pnpm messages:validate`.
 - After schema changes: `pnpm supabase:types` and commit updated types if the project shares one Supabase project.
 
 ---
