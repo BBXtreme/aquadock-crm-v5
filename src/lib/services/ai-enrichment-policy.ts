@@ -100,6 +100,12 @@ function jsonToGatewayModelId(value: Json | undefined, fallback: GatewayModelId)
   return fallback;
 }
 
+/**
+ * Per-user AI enrichment flags from `user_settings` (EAV).
+ * `primaryGatewayModelId` is the user-chosen gateway model; `modelPreference` and `secondaryGatewayModelId`
+ * remain for Server Action merge compatibility. Company/contact enrichment gateway runtime uses
+ * `primaryGatewayModelId` plus `resolveEnrichmentGrokGatewayModelId()` for fallback (not the stored secondary).
+ */
 export type AiEnrichmentPolicy = {
   enabled: boolean;
   dailyLimit: number;
@@ -121,6 +127,7 @@ function parseDefaultDailyLimitFromEnv(): number {
 
 /**
  * Loads per-user enrichment policy. Missing rows → enabled with default daily limit.
+ * Values reflect persisted EAV; gateway routing may still normalize fallback models at runtime.
  */
 export async function fetchAiEnrichmentPolicy(
   client: SupabaseClient<Database>,

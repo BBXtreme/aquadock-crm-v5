@@ -3,7 +3,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -66,25 +66,6 @@ function formatUsdCredits(amount: number, localeTag: string): string {
 }
 
 type AiEnrichmentUsageSnapshot = { usedToday: number; dailyLimit: number };
-
-/** Heuristic relative cost / token tier for the gateway model (no live usage without gateway changes). */
-function enrichmentApproxRelativeCostHint(modelId: string, lowCostMode: boolean | undefined): string | null {
-  const lower = modelId.toLowerCase();
-  if (
-    /grok-4\.1-fast|grok-4-fast|gemini-3-flash|gemini-2\.5-flash|claude-haiku|gpt-5\.4-mini|gpt-5-mini|nano/.test(
-      lower,
-    )
-  ) {
-    return "Approximate cost: lower (fast / efficient model).";
-  }
-  if (/claude-sonnet|claude-opus/.test(lower) || lower === "openai/gpt-5.4") {
-    return "Approximate cost: higher (large flagship model).";
-  }
-  if (lowCostMode === true) {
-    return "Low-cost mode: fewer web snippets and compact prompts are active in settings.";
-  }
-  return null;
-}
 
 function parseDailyAiEnrichmentRateLimitError(
   message: string,
@@ -471,10 +452,26 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
     ? ENRICHMENT_FIELD_KEYS.filter((k) => result.suggestions[k] !== undefined)
     : [];
 
-  const modelCostHint =
-    result && !isPending && modelUsed
-      ? enrichmentApproxRelativeCostHint(modelUsed, usageQuery.data?.lowCostMode)
-      : null;
+  const modelCostHint = useMemo(() => {
+    if (!result || isPending || !modelUsed) {
+      return null;
+    }
+    const lower = modelUsed.toLowerCase();
+    if (
+      /grok-4\.1-fast|grok-4-fast|gemini-3-flash|gemini-2\.5-flash|claude-haiku|gpt-5\.4-mini|gpt-5-mini|nano/.test(
+        lower,
+      )
+    ) {
+      return t("aiEnrich.costHintLower");
+    }
+    if (/claude-sonnet|claude-opus/.test(lower) || lower === "openai/gpt-5.4") {
+      return t("aiEnrich.costHintHigher");
+    }
+    if (usageQuery.data?.lowCostMode === true) {
+      return t("aiEnrich.costHintLowCostSettings");
+    }
+    return null;
+  }, [result, isPending, modelUsed, usageQuery.data?.lowCostMode, t]);
 
   const handleRetry = () => {
     setEnrichmentInlineError(null);
@@ -597,10 +594,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                   </p>
                   <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.sessionModelHint")}</p>
                   {usageQuery.data?.lowCostMode === true ? (
-                    <p className="text-muted-foreground text-xs leading-snug">
-                      Low-cost mode is on (Settings): Gemini 3 Flash + Grok 4.1 Fast routing, 3 search hits, shorter
-                      prompts.
-                    </p>
+                    <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrich.lowCostModeActiveNotice")}</p>
                   ) : null}
                 </div>
               </div>
@@ -616,17 +610,18 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
               {enrichmentFailureDetail ? (
                 <div className="space-y-1.5 border-destructive/20 border-t border-dashed pt-2 text-muted-foreground">
                   <p className="font-mono text-[11px] leading-snug wrap-break-word">
-                    <span className="text-foreground/80">Code:</span> {enrichmentFailureDetail.stableCode}
+                    <span className="text-foreground/80">{t("aiEnrich.diagnosticCodeLabel")}:</span>{" "}
+                    {enrichmentFailureDetail.stableCode}
                     {enrichmentFailureDetail.httpStatus !== undefined ? (
                       <span>
                         {" "}
-                        · HTTP {String(enrichmentFailureDetail.httpStatus)}
+                        · {t("aiEnrich.diagnosticHttp", { status: String(enrichmentFailureDetail.httpStatus) })}
                       </span>
                     ) : null}
                     {enrichmentFailureDetail.generationId ? (
                       <span>
                         {" "}
-                        · gen {enrichmentFailureDetail.generationId}
+                        · {t("aiEnrich.diagnosticGen", { id: enrichmentFailureDetail.generationId })}
                       </span>
                     ) : null}
                   </p>
@@ -637,7 +632,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                   ) : null}
                   {enrichmentFailureDetail.stableCode === "VERCEL_AI_GATEWAY_CREDITS_EXHAUSTED" ? (
                     <p className="text-[11px] leading-snug">
-                      Add Vercel AI Gateway credits or top up in the dashboard.{" "}
+                      {t("aiEnrich.errorVercelCreditsActionHint")}{" "}
                       <a
                         href={VERCEL_AI_GATEWAY_DASHBOARD_HREF}
                         target="_blank"
@@ -650,7 +645,7 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
                   ) : null}
                   {enrichmentFailureDetail.tokenUsageHint ? (
                     <p className="font-mono text-[11px] leading-snug wrap-break-word opacity-90">
-                      Token usage (from gateway): {enrichmentFailureDetail.tokenUsageHint}
+                      {t("aiEnrich.diagnosticTokenUsage", { hint: enrichmentFailureDetail.tokenUsageHint })}
                     </p>
                   ) : null}
                 </div>

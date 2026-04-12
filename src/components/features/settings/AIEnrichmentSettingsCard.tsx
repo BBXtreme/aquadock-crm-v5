@@ -347,12 +347,9 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-1">
               <Label htmlFor="ai-enrich-low-cost" className="text-sm font-medium">
-                Low-cost mode
+                {t("aiEnrichment.lowCostModeLabel")}
               </Label>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Prefers Gemini 3 Flash with Grok 4.1 Fast backup, 3 Perplexity snippets (vs 5), and shorter prompts.
-                Overrides your selected model for each run until disabled. Public CRM fields stay source-backed.
-              </p>
+              <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.lowCostModeHelp")}</p>
             </div>
             <Switch
               id="ai-enrich-low-cost"
@@ -360,7 +357,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               checked={lowCostMode}
               disabled={saveMutation.isPending}
               onCheckedChange={setLowCostMode}
-              aria-label="Low-cost mode for AI enrichment"
+              aria-label={t("aiEnrichment.lowCostModeAria")}
             />
           </div>
 
