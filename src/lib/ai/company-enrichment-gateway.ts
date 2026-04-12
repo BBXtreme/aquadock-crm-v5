@@ -1,8 +1,7 @@
 // Server-side Vercel AI Gateway wiring for company + contact enrichment.
 // Phase 1 (Perplexity web search via tools) always uses a fast fixed research model (see ENRICHMENT_RESEARCH_GATEWAY_MODEL).
 // Phase 2 (JSON structuring) uses the user’s structuring model from settings + optional modal override.
-// Company modal Fast web search uses minimal Perplexity + cheap structuring (Grok 4.1 Fast, then Gemini 3 Flash).
-// Company modal passes `webSearchMode: "fast" | "full"`; omitting it defaults to Full (bulk / compatibility).
+// Company modal passes `webSearchMode: "full" | "model-only"`; default `full` when omitted (bulk). Modal defaults to `model-only`.
 // Optional xAI BYOK: set AI_ENRICHMENT_XAI_API_KEY so Grok calls bill your xAI subscription via AI Gateway.
 
 import type { GatewayModelId } from "@ai-sdk/gateway";
@@ -12,6 +11,7 @@ import { createGateway, generateText, Output, stepCountIs } from "ai";
 import { buildCompanyEnrichmentClosedEnumPromptBlock } from "@/lib/ai/company-enrichment-closed-enums";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { AppearanceLocale } from "@/lib/validations/appearance";
 import {
   type CompanyEnrichmentAiOutput,
   type CompanyEnrichmentResult,
@@ -26,23 +26,19 @@ import {
 } from "@/lib/validations/contact-enrichment";
 
 const ENRICHMENT_DIGEST_MAX_CHARS = 100_000;
-const ENRICHMENT_DIGEST_MAX_CHARS_TIGHT = 72_000;
-
-/** Company modal Fast web search: Grok first, Gemini fallback. */
-const FAST_WEB_SEARCH_STRUCTURING_PRIMARY: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
-const FAST_WEB_SEARCH_STRUCTURING_SECONDARY: GatewayModelId = "google/gemini-3-flash";
 
 /** Fixed Gateway model for enrichment phase 1 (tool calls incl. Perplexity). Structuring uses `runtime.primary` / override. */
 const ENRICHMENT_RESEARCH_GATEWAY_MODEL: GatewayModelId = "google/gemini-3-flash";
 
 const PERPLEXITY_MAX_RESULTS_DEFAULT = 5;
 
-/** Company enrichment only; bulk + contact always use Full-equivalent Perplexity settings in code paths. */
-export type CompanyEnrichmentWebSearchMode = "fast" | "full";
+/** Company enrichment: web + structuring vs model-only structuring. Bulk uses `full`. */
+export type CompanyEnrichmentWebSearchMode = "full" | "model-only";
 
 type PerplexitySearchProfile = {
   maxResults: number;
   searchRecencyFilter: "month" | "year";
+  searchLanguageFilter: AppearanceLocale[];
 };
 
 type ResearchStepLike = {
@@ -141,7 +137,13 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
   perplexityMaxResults: number;
   promptTight: boolean;
   digestMaxChars: number;
+  crmSearchLocale: AppearanceLocale;
+  perplexityFastMaxResults: number;
+  perplexityFastRecency: "month" | "year";
 }> {
+  const fallbackLocale: AppearanceLocale = "de";
+  const fallbackFastMax = 2;
+  const fallbackFastRecency: "month" | "year" = "year";
   try {
     const supabase = await createServerSupabaseClient();
     const {
@@ -154,6 +156,9 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
         perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
         promptTight: false,
         digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
+        crmSearchLocale: fallbackLocale,
+        perplexityFastMaxResults: fallbackFastMax,
+        perplexityFastRecency: fallbackFastRecency,
       };
     }
     const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
@@ -163,6 +168,9 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
       perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
       promptTight: false,
       digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
+      crmSearchLocale: policy.crmSearchLocale,
+      perplexityFastMaxResults: policy.perplexityFastMaxResults,
+      perplexityFastRecency: policy.perplexityFastRecency,
     };
   } catch {
     return {
@@ -171,6 +179,9 @@ async function loadEnrichmentRuntimeConfig(): Promise<{
       perplexityMaxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
       promptTight: false,
       digestMaxChars: ENRICHMENT_DIGEST_MAX_CHARS,
+      crmSearchLocale: fallbackLocale,
+      perplexityFastMaxResults: fallbackFastMax,
+      perplexityFastRecency: fallbackFastRecency,
     };
   }
 }
@@ -197,7 +208,7 @@ export function createCompanyEnrichmentPerplexityTool(gateway: GatewayInstance, 
   const capped = Math.max(1, Math.min(8, Math.floor(profile.maxResults)));
   return gateway.tools.perplexitySearch({
     maxResults: capped,
-    searchLanguageFilter: ["de"],
+    searchLanguageFilter: [...profile.searchLanguageFilter],
     searchRecencyFilter: profile.searchRecencyFilter,
   });
 }
@@ -210,13 +221,59 @@ function shouldRetryWithFallback(error: unknown): boolean {
   return false;
 }
 
+async function runCompanyEnrichmentModelOnlyGeneration(params: {
+  gateway: GatewayInstance;
+  system: string;
+  userPrompt: string;
+  structuringPrimary: GatewayModelId;
+  structuringSecondary: GatewayModelId;
+}): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
+  const providerOptions = getEnrichmentGatewayProviderOptions();
+  const output = Output.object({
+    name: "CompanyEnrichment",
+    description: "Nur Modellwissen (ohne Web): strukturierte Vorschläge für CRM-Felder.",
+    schema: companyEnrichmentAiSchema,
+  });
+
+  const runOnce = async (structureModelId: GatewayModelId) => {
+    console.time("Model-Only Phase");
+    try {
+      const structureOut = await generateText({
+        model: params.gateway(structureModelId),
+        system: params.system,
+        prompt: params.userPrompt,
+        output,
+        stopWhen: stepCountIs(4),
+        ...(providerOptions ? { providerOptions } : {}),
+      });
+      if (!structureOut.output) {
+        throw new Error("ENRICHMENT_NO_OUTPUT");
+      }
+      return sanitizeEnrichmentOutput(structureOut.output as CompanyEnrichmentAiOutput);
+    } finally {
+      console.timeEnd("Model-Only Phase");
+    }
+  };
+
+  try {
+    const result = await runOnce(params.structuringPrimary);
+    return { result, modelUsed: params.structuringPrimary };
+  } catch (first) {
+    if (!shouldRetryWithFallback(first) || params.structuringSecondary === params.structuringPrimary) {
+      throw first;
+    }
+    const result = await runOnce(params.structuringSecondary);
+    return { result, modelUsed: params.structuringSecondary };
+  }
+}
+
 export async function runCompanyEnrichmentGeneration(params: {
   system: string;
   userPrompt: string;
   addressFocusPrioritize?: boolean;
-  /** Company modal: pass `"fast"` or `"full"`. Omit = `"full"` (bulk / legacy). */
+  /** Omit = `"full"` (bulk). Modal: `"model-only"` default or `"full"` for Perplexity + policy structuring. */
   webSearchMode?: CompanyEnrichmentWebSearchMode;
-  /** Optional per-run override of structuring primary/secondary (validated by caller). Ignored when `webSearchMode === "fast"`. */
+  /** Optional per-run override of structuring primary/secondary (validated by caller); `full` path only. */
   gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
 }): Promise<{ result: CompanyEnrichmentResult; modelUsed: GatewayModelId }> {
   const gateway = getGateway();
@@ -226,12 +283,30 @@ export async function runCompanyEnrichmentGeneration(params: {
 
   const runtime = await loadEnrichmentRuntimeConfig();
   const webSearchMode: CompanyEnrichmentWebSearchMode = params.webSearchMode ?? "full";
-  const isFast = webSearchMode === "fast";
-  const effectivePromptTight = runtime.promptTight || isFast;
-  const effectiveDigestMaxChars = isFast ? ENRICHMENT_DIGEST_MAX_CHARS_TIGHT : runtime.digestMaxChars;
-  const perplexityProfile: PerplexitySearchProfile = isFast
-    ? { maxResults: 2, searchRecencyFilter: "year" }
-    : { maxResults: runtime.perplexityMaxResults, searchRecencyFilter: "month" };
+  const isModelOnly = webSearchMode === "model-only";
+
+  if (isModelOnly) {
+    // Address-focus policy applies only to Full web search; model-only stays conservative (no extra system hints).
+    const systemModelOnly = params.system;
+    const structuringPrimary = params.gatewayModelOverride?.primary ?? runtime.primary;
+    const structuringSecondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
+    return runCompanyEnrichmentModelOnlyGeneration({
+      gateway,
+      system: systemModelOnly,
+      userPrompt: params.userPrompt,
+      structuringPrimary,
+      structuringSecondary,
+    });
+  }
+
+  const effectivePromptTight = runtime.promptTight;
+  const effectiveDigestMaxChars = runtime.digestMaxChars;
+  const langFilter: AppearanceLocale[] = [runtime.crmSearchLocale];
+  const perplexityProfile: PerplexitySearchProfile = {
+    maxResults: runtime.perplexityFastMaxResults,
+    searchRecencyFilter: runtime.perplexityFastRecency,
+    searchLanguageFilter: langFilter,
+  };
 
   const addressFocus = params.addressFocusPrioritize === true;
   const systemPrefix = effectivePromptTight
@@ -264,12 +339,8 @@ export async function runCompanyEnrichmentGeneration(params: {
 
   const providerOptions = getEnrichmentGatewayProviderOptions();
 
-  const structuringPrimary = isFast
-    ? FAST_WEB_SEARCH_STRUCTURING_PRIMARY
-    : (params.gatewayModelOverride?.primary ?? runtime.primary);
-  const structuringSecondary = isFast
-    ? FAST_WEB_SEARCH_STRUCTURING_SECONDARY
-    : (params.gatewayModelOverride?.secondary ?? runtime.secondary);
+  const structuringPrimary = params.gatewayModelOverride?.primary ?? runtime.primary;
+  const structuringSecondary = params.gatewayModelOverride?.secondary ?? runtime.secondary;
 
   const runWithStructuringModel = async (structureModelId: GatewayModelId) => {
     // Phase 1: provider-executed Perplexity tool — AI SDK only parses `output` when the last
@@ -345,8 +416,9 @@ export async function runContactEnrichmentGeneration(params: {
 
   const tools = {
     perplexity_search: createCompanyEnrichmentPerplexityTool(gateway, {
-      maxResults: runtime.perplexityMaxResults,
+      maxResults: PERPLEXITY_MAX_RESULTS_DEFAULT,
       searchRecencyFilter: "month",
+      searchLanguageFilter: [runtime.crmSearchLocale],
     }),
   };
 

@@ -22,6 +22,9 @@ export default async function SettingsPage() {
     usedToday: policy.usedToday,
     primaryGatewayModelId: policy.primaryGatewayModelId,
     secondaryGatewayModelId: policy.secondaryGatewayModelId,
+    crmSearchLocale: policy.crmSearchLocale,
+    perplexityFastMaxResults: policy.perplexityFastMaxResults,
+    perplexityFastRecency: policy.perplexityFastRecency,
   };
 
   return (

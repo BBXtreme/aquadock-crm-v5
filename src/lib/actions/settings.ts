@@ -6,6 +6,8 @@ import {
   AI_ENRICHMENT_DAILY_LIMIT_KEY,
   AI_ENRICHMENT_ENABLED_KEY,
   AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+  AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY,
+  AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY,
   AI_ENRICHMENT_PRIMARY_MODEL_KEY,
   AI_ENRICHMENT_SECONDARY_MODEL_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
@@ -20,12 +22,16 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 const gatewayModelIdSchema = z.enum(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
 
 /** Single user-selected gateway model; server persists auto + default secondary for Server Action merge compatibility. */
+const perplexityFastRecencySchema = z.enum(["month", "year"]);
+
 const aiEnrichmentSettingsUpdateSchema = z
   .object({
     enabled: z.boolean(),
     dailyLimit: z.number().int().min(1).max(500),
     primaryGatewayModelId: gatewayModelIdSchema,
     addressFocusPrioritize: z.boolean(),
+    perplexityFastMaxResults: z.number().int().min(1).max(8),
+    perplexityFastRecency: perplexityFastRecencySchema,
   })
   .strict();
 
@@ -40,6 +46,9 @@ export type AiEnrichmentSettingsSnapshot = Pick<
   | "usedToday"
   | "primaryGatewayModelId"
   | "secondaryGatewayModelId"
+  | "crmSearchLocale"
+  | "perplexityFastMaxResults"
+  | "perplexityFastRecency"
 >;
 
 export async function getAiEnrichmentSettingsSnapshot(): Promise<
@@ -63,6 +72,9 @@ export async function getAiEnrichmentSettingsSnapshot(): Promise<
       usedToday: policy.usedToday,
       primaryGatewayModelId: policy.primaryGatewayModelId,
       secondaryGatewayModelId: policy.secondaryGatewayModelId,
+      crmSearchLocale: policy.crmSearchLocale,
+      perplexityFastMaxResults: policy.perplexityFastMaxResults,
+      perplexityFastRecency: policy.perplexityFastRecency,
     },
   };
 }
@@ -91,6 +103,8 @@ export async function updateAiEnrichmentSettings(
     { user_id: user.id, key: AI_ENRICHMENT_PRIMARY_MODEL_KEY, value: parsed.data.primaryGatewayModelId },
     { user_id: user.id, key: AI_ENRICHMENT_SECONDARY_MODEL_KEY, value: DEFAULT_SECONDARY_GATEWAY_MODEL },
     { user_id: user.id, key: AI_ENRICHMENT_ADDRESS_FOCUS_KEY, value: parsed.data.addressFocusPrioritize },
+    { user_id: user.id, key: AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY, value: parsed.data.perplexityFastMaxResults },
+    { user_id: user.id, key: AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY, value: parsed.data.perplexityFastRecency },
   ];
 
   for (const row of rows) {

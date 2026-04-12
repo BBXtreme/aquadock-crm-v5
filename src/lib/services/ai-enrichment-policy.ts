@@ -10,13 +10,20 @@ import {
   AI_ENRICHMENT_ENABLED_KEY,
   AI_ENRICHMENT_LAST_RESET_DATE_KEY,
   AI_ENRICHMENT_MODEL_PREFERENCE_KEY,
+  AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY,
+  AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY,
   AI_ENRICHMENT_PRIMARY_MODEL_KEY,
   AI_ENRICHMENT_SECONDARY_MODEL_KEY,
   AI_ENRICHMENT_USED_TODAY_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
+import type { AppearanceLocale } from "@/lib/validations/appearance";
+import { parseAppearanceLocale } from "@/lib/validations/appearance";
 import type { Database } from "@/types/database.types";
 import type { Json } from "@/types/supabase";
+
+/** Same as `appearance_locale` in `user_settings` (CRM UI language). */
+const APPEARANCE_LOCALE_USER_SETTINGS_KEY = "appearance_locale" as const;
 
 const DEFAULT_PRIMARY_GATEWAY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
 const DEFAULT_SECONDARY_GATEWAY_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
@@ -100,6 +107,27 @@ function jsonToGatewayModelId(value: Json | undefined, fallback: GatewayModelId)
   return fallback;
 }
 
+const DEFAULT_PERPLEXITY_FAST_MAX_RESULTS = 2;
+const DEFAULT_PERPLEXITY_FAST_RECENCY = "year" as const;
+
+function jsonToPerplexityFastMaxResults(value: Json | undefined): number {
+  const raw = jsonToPositiveInt(value, DEFAULT_PERPLEXITY_FAST_MAX_RESULTS);
+  return Math.max(1, Math.min(8, raw));
+}
+
+function jsonToPerplexityFastRecency(value: Json | undefined): "month" | "year" {
+  if (value === "month" || value === "year") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (t === "month" || t === "year") {
+      return t;
+    }
+  }
+  return DEFAULT_PERPLEXITY_FAST_RECENCY;
+}
+
 /**
  * Per-user AI enrichment flags from `user_settings` (EAV).
  * `primaryGatewayModelId` is the user-chosen **structuring** model (phase 2: JSON from research digest).
@@ -117,6 +145,12 @@ export type AiEnrichmentPolicy = {
   usedToday: number;
   primaryGatewayModelId: GatewayModelId;
   secondaryGatewayModelId: GatewayModelId;
+  /** CRM UI locale for Perplexity `searchLanguageFilter` (de / en / hr). */
+  crmSearchLocale: AppearanceLocale;
+  /** Fast-mode Perplexity `maxResults` (1–8); Full mode ignores and uses 5. */
+  perplexityFastMaxResults: number;
+  /** Fast-mode Perplexity recency; Full mode uses `month`. */
+  perplexityFastRecency: "month" | "year";
 };
 
 function parseDefaultDailyLimitFromEnv(): number {
@@ -148,6 +182,9 @@ export async function fetchAiEnrichmentPolicy(
       AI_ENRICHMENT_ADDRESS_FOCUS_KEY,
       AI_ENRICHMENT_USED_TODAY_KEY,
       AI_ENRICHMENT_LAST_RESET_DATE_KEY,
+      AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY,
+      AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY,
+      APPEARANCE_LOCALE_USER_SETTINGS_KEY,
     ]);
 
   if (error) throw handleSupabaseError(error, "fetchAiEnrichmentPolicy");
@@ -160,6 +197,9 @@ export async function fetchAiEnrichmentPolicy(
   let addressFocusPrioritize = false;
   let storedUsed = 0;
   let lastReset = "";
+  let crmSearchLocale: AppearanceLocale = "de";
+  let perplexityFastMaxResults = DEFAULT_PERPLEXITY_FAST_MAX_RESULTS;
+  let perplexityFastRecency: "month" | "year" = DEFAULT_PERPLEXITY_FAST_RECENCY;
 
   for (const row of data ?? []) {
     if (row.key === AI_ENRICHMENT_ENABLED_KEY) {
@@ -186,6 +226,18 @@ export async function fetchAiEnrichmentPolicy(
     if (row.key === AI_ENRICHMENT_LAST_RESET_DATE_KEY) {
       lastReset = jsonToDayString(row.value);
     }
+    if (row.key === AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY) {
+      perplexityFastMaxResults = jsonToPerplexityFastMaxResults(row.value);
+    }
+    if (row.key === AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY) {
+      perplexityFastRecency = jsonToPerplexityFastRecency(row.value);
+    }
+    if (row.key === APPEARANCE_LOCALE_USER_SETTINGS_KEY) {
+      const parsed = parseAppearanceLocale(row.value);
+      if (parsed !== null) {
+        crmSearchLocale = parsed;
+      }
+    }
   }
 
   const today = enrichmentUtcDayKey();
@@ -199,6 +251,9 @@ export async function fetchAiEnrichmentPolicy(
     usedToday,
     primaryGatewayModelId,
     secondaryGatewayModelId,
+    crmSearchLocale,
+    perplexityFastMaxResults,
+    perplexityFastRecency,
   };
 }
 

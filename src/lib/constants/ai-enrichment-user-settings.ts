@@ -8,6 +8,10 @@ export const AI_ENRICHMENT_PRIMARY_MODEL_KEY = "ai_enrichment_primary_model" as 
 /** Vercel AI Gateway model id for fallback after retriable failures (auto). */
 export const AI_ENRICHMENT_SECONDARY_MODEL_KEY = "ai_enrichment_secondary_model" as const;
 export const AI_ENRICHMENT_ADDRESS_FOCUS_KEY = "ai_enrichment_address_focus" as const;
+/** Fast web search (company modal): Perplexity `maxResults` (1–8). */
+export const AI_ENRICHMENT_PERPLEXITY_FAST_MAX_RESULTS_KEY = "ai_enrichment_perplexity_fast_max_results" as const;
+/** Fast web search: Perplexity `searchRecencyFilter` (`month` | `year`). */
+export const AI_ENRICHMENT_PERPLEXITY_FAST_RECENCY_KEY = "ai_enrichment_perplexity_fast_recency" as const;
 /** Count of successful enrichment runs for the UTC day in `AI_ENRICHMENT_LAST_RESET_DATE_KEY`. */
 export const AI_ENRICHMENT_USED_TODAY_KEY = "ai_enrichment_used_today" as const;
 /** UTC calendar date `YYYY-MM-DD` matching `used_today`; when it differs from today, usage is treated as 0. */

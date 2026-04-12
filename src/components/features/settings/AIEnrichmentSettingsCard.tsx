@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -37,6 +36,8 @@ import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichmen
 
 type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
 
+const GROK_41_FAST_NON_REASONING: EnrichmentGatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+
 function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
   return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
 }
@@ -51,9 +52,11 @@ function toEnrichmentGatewayModelChoice(value: string): EnrichmentGatewayModelId
 function EnrichmentModelSelectItemContent({
   modelId,
   xaiBillingContext,
+  recommendedBadgeText,
 }: {
   modelId: EnrichmentGatewayModelId;
   xaiBillingContext: boolean;
+  recommendedBadgeText: string | null;
 }) {
   const meta = getEnrichmentGatewayModelMeta(modelId);
   const badge = getCompanyResearchBadge(modelId, { xaiBillingContext });
@@ -63,6 +66,11 @@ function EnrichmentModelSelectItemContent({
       {badge ? (
         <Badge variant={badge.variant} className={badge.className}>
           {badge.text}
+        </Badge>
+      ) : null}
+      {recommendedBadgeText !== null && recommendedBadgeText.length > 0 ? (
+        <Badge variant="secondary" className="shrink-0 font-normal">
+          {recommendedBadgeText}
         </Badge>
       ) : null}
     </span>
@@ -78,7 +86,6 @@ function formatUsdCredits(amount: number, localeTag: string): string {
   }).format(amount);
 }
 
-/** Vercel AI Gateway credits apply when the primary structuring path can use non–xAI-first routing. */
 function shouldShowVercelAiCreditsInSettings(primaryGatewayModelId: string): boolean {
   return !primaryGatewayModelId.startsWith("xai/");
 }
@@ -102,6 +109,12 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   );
   const [primaryGatewayModelId, setPrimaryGatewayModelId] = useState<EnrichmentGatewayModelId>(() =>
     toEnrichmentGatewayModelChoice(initialSnapshot.primaryGatewayModelId),
+  );
+  const [perplexityFastMaxResults, setPerplexityFastMaxResults] = useState(
+    () => initialSnapshot.perplexityFastMaxResults,
+  );
+  const [perplexityFastRecency, setPerplexityFastRecency] = useState<"month" | "year">(
+    () => initialSnapshot.perplexityFastRecency,
   );
 
   const { data: snapshot, isFetching } = useQuery({
@@ -132,7 +145,6 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
 
   const usedToday = snapshot?.usedToday ?? 0;
   const limit = snapshot?.dailyLimit ?? 1;
-  const usagePercent = limit > 0 ? Math.min(100, Math.round((usedToday / limit) * 100)) : 0;
 
   const xaiBillingContextForBadges = primaryGatewayModelId.startsWith("xai/");
 
@@ -144,6 +156,8 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         dailyLimit: n,
         primaryGatewayModelId,
         addressFocusPrioritize,
+        perplexityFastMaxResults,
+        perplexityFastRecency,
       });
       return res;
     },
@@ -165,6 +179,8 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         setDailyLimit(String(refreshed.data.dailyLimit));
         setAddressFocusPrioritize(refreshed.data.addressFocusPrioritize);
         setPrimaryGatewayModelId(toEnrichmentGatewayModelChoice(refreshed.data.primaryGatewayModelId));
+        setPerplexityFastMaxResults(refreshed.data.perplexityFastMaxResults);
+        setPerplexityFastRecency(refreshed.data.perplexityFastRecency);
       } else {
         void queryClient.invalidateQueries({ queryKey: ["ai-enrichment-settings-snapshot"] });
       }
@@ -175,33 +191,42 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
     },
   });
 
+  const sectionClass =
+    "space-y-3 rounded-lg border border-border bg-muted/15 px-4 py-4 sm:px-5 sm:py-4";
+
   return (
     <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <Sparkles className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
           {t("aiEnrichment.cardTitle")}
         </CardTitle>
-        <CardDescription className="text-sm leading-relaxed">{t("aiEnrichment.cardDescription")}</CardDescription>
+        <CardDescription className="text-muted-foreground text-sm leading-snug">
+          {t("aiEnrichment.cardDescription")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6" aria-busy={isFetching || saveMutation.isPending}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1 space-y-1">
-              <Label htmlFor="ai-enrich-enabled" className="text-sm font-medium">
-                {t("aiEnrichment.toggleEnabled")}
-              </Label>
-              <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.toggleEnabledHelp")}</p>
-            </div>
-            <Switch
-              id="ai-enrich-enabled"
-              className="shrink-0"
-              checked={enabled}
-              disabled={saveMutation.isPending}
-              onCheckedChange={setEnabled}
-              aria-label={t("aiEnrichment.toggleEnabled")}
-            />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-1">
+            <Label htmlFor="ai-enrich-enabled" className="text-sm font-medium">
+              {t("aiEnrichment.toggleEnabled")}
+            </Label>
+            <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.toggleEnabledHelp")}</p>
           </div>
+          <Switch
+            id="ai-enrich-enabled"
+            className="shrink-0"
+            checked={enabled}
+            disabled={saveMutation.isPending}
+            onCheckedChange={setEnabled}
+            aria-label={t("aiEnrichment.toggleEnabled")}
+          />
+        </div>
 
+        <section className={sectionClass} aria-labelledby="ai-enrich-limit-usage-heading">
+          <h3 id="ai-enrich-limit-usage-heading" className="text-foreground text-sm font-semibold">
+            {t("aiEnrichment.limitUsageSectionTitle")}
+          </h3>
           <div className="space-y-2">
             <Label htmlFor="ai-enrich-daily-limit" className="text-sm font-medium">
               {t("aiEnrichment.dailyLimitLabel")}
@@ -219,21 +244,15 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               onChange={(e) => setDailyLimit(e.target.value)}
             />
           </div>
-
-          <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 sm:px-5">
-            <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-              {t("aiEnrichment.usageHeading")}
-            </p>
-            <p className="mt-1 text-sm tabular-nums text-foreground">
+          <div className="border-border/60 space-y-2 border-t pt-3">
+            <p className="text-muted-foreground text-sm tabular-nums">
               {t("aiEnrichment.usageLine", { used: usedToday, limit })}
             </p>
-            <Progress value={usagePercent} className="mt-2 h-2" aria-label={t("aiEnrichment.usageHeading")} />
-            <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.usageHint")}</p>
             {showVercelAiCredits ? (
               creditsQuery.isPending ? (
-                <Skeleton className="mt-2 h-4 w-56" aria-hidden />
+                <Skeleton className="h-4 w-56" aria-hidden />
               ) : creditsQuery.data?.ok === true ? (
-                <p className="text-muted-foreground mt-2 text-sm tabular-nums leading-snug">
+                <p className="text-muted-foreground text-xs leading-snug tabular-nums">
                   {t("aiEnrichment.vercelAiCreditsLine", {
                     balance: formatUsdCredits(creditsQuery.data.balance, numberLocaleTag),
                     totalUsed: formatUsdCredits(creditsQuery.data.totalUsed, numberLocaleTag),
@@ -248,15 +267,13 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
                   </a>
                 </p>
               ) : creditsQuery.data?.ok === false && creditsQuery.data.error === "NOT_CONFIGURED" ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">
-                  {t("aiEnrichment.vercelAiCreditsNotConfigured")}
-                </p>
+                <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsNotConfigured")}</p>
               ) : creditsQuery.data?.ok === false ? (
-                <p className="text-muted-foreground mt-2 text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
+                <p className="text-muted-foreground text-xs leading-snug">{t("aiEnrichment.vercelAiCreditsUnavailable")}</p>
               ) : null
             ) : null}
             {shouldShowGrokBillingNotice(primaryGatewayModelId) ? (
-              <p className="text-muted-foreground mt-2 text-xs leading-snug">
+              <p className="text-muted-foreground text-xs leading-snug">
                 {t("aiEnrichment.grokBillingNotice")}{" "}
                 <a
                   href="https://console.x.ai/"
@@ -270,40 +287,98 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               </p>
             ) : null}
           </div>
+        </section>
 
-          <div className="space-y-3 rounded-xl border border-border bg-muted/20 p-4 sm:p-5">
+        <section className={sectionClass} aria-labelledby="ai-enrich-structuring-heading">
+          <h3 id="ai-enrich-structuring-heading" className="text-foreground text-sm font-semibold">
+            {t("aiEnrichment.structuringModelSectionTitle")}
+          </h3>
+          <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.structuringModelHelp")}</p>
+          <Select
+            value={primaryGatewayModelId}
+            onValueChange={(v) => {
+              if (isEnrichmentGatewayModelId(v)) {
+                setPrimaryGatewayModelId(v);
+              }
+            }}
+            disabled={saveMutation.isPending}
+          >
+            <SelectTrigger id="ai-enrich-gateway-model" className="w-full max-w-xl">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {listEnrichmentGatewayModelsOrdered().map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  <EnrichmentModelSelectItemContent
+                    modelId={m.id}
+                    xaiBillingContext={xaiBillingContextForBadges}
+                    recommendedBadgeText={
+                      m.id === GROK_41_FAST_NON_REASONING ? t("aiEnrichment.recommendedXaiSubscription") : null
+                    }
+                  />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </section>
+
+        <section className={sectionClass} aria-labelledby="ai-enrich-web-config-heading">
+          <h3 id="ai-enrich-web-config-heading" className="text-foreground text-sm font-semibold">
+            {t("aiEnrichment.webSearchConfigSectionTitle")}
+          </h3>
+          <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.webSearchConfigHelp")}</p>
+          <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
             <div className="space-y-2">
-              <Label htmlFor="ai-enrich-gateway-model" className="text-sm font-medium">
-                {t("aiEnrichment.gatewaySpecificLabel")}
+              <Label htmlFor="ai-enrich-perplexity-max" className="text-sm font-medium">
+                {t("aiEnrichment.perplexityWebMaxResultsLabel")}
               </Label>
-              <p className="text-muted-foreground text-xs leading-relaxed">{t("aiEnrichment.gatewaySpecificHelp")}</p>
               <Select
-                value={primaryGatewayModelId}
+                value={String(perplexityFastMaxResults)}
                 onValueChange={(v) => {
-                  if (isEnrichmentGatewayModelId(v)) {
-                    setPrimaryGatewayModelId(v);
+                  const parsed = Number.parseInt(v, 10);
+                  if (Number.isFinite(parsed) && parsed >= 1 && parsed <= 8) {
+                    setPerplexityFastMaxResults(parsed);
                   }
                 }}
                 disabled={saveMutation.isPending}
               >
-                <SelectTrigger id="ai-enrich-gateway-model" className="max-w-xl w-full">
+                <SelectTrigger id="ai-enrich-perplexity-max" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {listEnrichmentGatewayModelsOrdered().map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      <EnrichmentModelSelectItemContent
-                        modelId={m.id}
-                        xaiBillingContext={xaiBillingContextForBadges}
-                      />
+                <SelectContent>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {String(n)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="ai-enrich-perplexity-recency" className="text-sm font-medium">
+                {t("aiEnrichment.perplexityWebRecencyLabel")}
+              </Label>
+              <Select
+                value={perplexityFastRecency}
+                onValueChange={(v) => {
+                  if (v === "month" || v === "year") {
+                    setPerplexityFastRecency(v);
+                  }
+                }}
+                disabled={saveMutation.isPending}
+              >
+                <SelectTrigger id="ai-enrich-perplexity-recency" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">{t("aiEnrichment.perplexityFastRecencyMonth")}</SelectItem>
+                  <SelectItem value="year">{t("aiEnrichment.perplexityFastRecencyYear")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="border-border/60 mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-1">
               <Label htmlFor="ai-enrich-address-focus" className="text-sm font-medium">
                 {t("aiEnrichment.addressFocusLabel")}
@@ -319,19 +394,20 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               aria-label={t("aiEnrichment.addressFocusLabel")}
             />
           </div>
+        </section>
 
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-                  {t("common.saving")}
-                </>
-              ) : (
-                t("common.save")
-              )}
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button type="button" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                {t("common.saving")}
+              </>
+            ) : (
+              t("common.save")
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
