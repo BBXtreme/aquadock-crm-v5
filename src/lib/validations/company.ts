@@ -27,7 +27,14 @@ export const companySchema = z.object({
     "sonstige"
   ], { required_error: "Kundentyp ist erforderlich" }),
   firmentyp: z.string().trim().max(20, "Firmentyp darf maximal 20 Zeichen lang sein").nullable().optional(),
-  website: z.string().trim().max(500, "Website darf maximal 500 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
+  website: z
+    .string()
+    .trim()
+    .max(500, "Website darf maximal 500 Zeichen lang sein")
+    .nullable()
+    .optional()
+    .transform(emptyStringToNull)
+    .refine((v) => isValidCompanyWebsiteField(v), "Ungültige URL"),
   telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").nullable().optional(),
   email: z
     .string()
@@ -116,6 +123,30 @@ export const toCompanyUpdate = (values: CompanyFormValues): CompanyUpdate => ({
 
 function emptyStringToNull(val: string | null | undefined): string | null | undefined {
   return val === "" ? null : val;
+}
+
+/** `https?://…` or bare hostname with a dot (e.g. `www.example.com`), aligned with enrichment `normalizeWebsite`. */
+function isValidCompanyWebsiteField(v: string | null | undefined): boolean {
+  if (v === null || v === undefined) {
+    return true;
+  }
+  if (/[\s<>]/.test(v)) {
+    return false;
+  }
+  try {
+    const u = new URL(v);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    if (!v.includes(".")) {
+      return false;
+    }
+    try {
+      const u = new URL(`https://${v}`);
+      return u.hostname.includes(".") && u.hostname.length >= 3;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export type CompanyForm = z.infer<typeof companySchema>;

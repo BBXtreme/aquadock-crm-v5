@@ -312,7 +312,7 @@ export function TimelinePageSkeleton({ rowCount = 6 }: { rowCount?: number }) {
   const feedKeys = ROW_KEYS.slice(0, rowCount);
   const tableKeys = timelineTableRowKeys.slice(0, rowCount + 2);
   return (
-    <PageSkeletonRoot label="Timeline wird geladen">
+    <PageSkeletonRoot label="Historie wird geladen">
       <SkeletonPageHeader actionClassName="w-52 sm:w-56" breadcrumbWidth="w-36" titleWidth="w-44" />
       <Card className={skeletonCardChrome}>
         <CardContent className="space-y-4 p-6">

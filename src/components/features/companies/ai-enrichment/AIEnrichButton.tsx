@@ -27,25 +27,23 @@ export function AIEnrichButton({ onClick, disabled, pending, className }: Props)
     }
   }, []);
 
+  const title = t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel });
+  const ariaLabel = pending ? t("aiEnrich.researching") : title;
+
   return (
     <Button
       type="button"
       variant="outline"
-      size="sm"
+      size="icon-sm"
       className={cn(className)}
       onClick={onClick}
       disabled={disabled || pending}
       aria-busy={pending ? true : undefined}
       aria-keyshortcuts="Meta+E Control+E"
-      title={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
+      aria-label={ariaLabel}
+      title={title}
     >
-      <Sparkles className="mr-2 h-4 w-4" />
-      <span className="inline-flex items-center gap-2">
-        {pending ? t("aiEnrich.researching") : t("aiEnrich.button")}
-        <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:inline-flex">
-          {shortcutLabel}
-        </kbd>
-      </span>
+      <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
     </Button>
   );
 }

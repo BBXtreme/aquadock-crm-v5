@@ -56,7 +56,8 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
-            <Plus className="h-4 w-4 mr-2" /> {t("headerAddTimeline")}
+            <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+            {t("headerAddTimeline")}
           </Button>
           <Button variant="outline" size="sm" type="button" onClick={onEdit}>
             <Edit className="w-4 h-4" />
@@ -64,18 +65,13 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
           {onAiEnrich ? (
             <Button
               variant="outline"
-              size="sm"
+              size="icon-sm"
               type="button"
               onClick={onAiEnrich}
+              aria-label={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
               title={t("aiEnrich.buttonTitleWithShortcut", { shortcut: shortcutLabel })}
             >
-              <Sparkles className="mr-2 h-4 w-4" />
-              <span className="inline-flex items-center gap-2">
-                {t("aiEnrich.button")}
-                <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:inline-flex">
-                  {shortcutLabel}
-                </kbd>
-              </span>
+              <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
             </Button>
           ) : null}
           <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -614,15 +614,18 @@ function ClientCompaniesPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="sm"
+                  size="icon-sm"
                   disabled={bulkAiEnrichPending}
+                  aria-busy={bulkAiEnrichPending ? true : undefined}
+                  aria-label={
+                    bulkAiEnrichPending ? t("aiEnrich.bulkListRunning") : t("aiEnrich.bulkListButton")
+                  }
                   title={t("aiEnrich.bulkListTitle")}
                   onClick={() => {
                     void handleBulkAiEnrich();
                   }}
                 >
-                  <Sparkles className="mr-2 h-4 w-4" aria-hidden />
-                  {bulkAiEnrichPending ? t("aiEnrich.bulkListRunning") : t("aiEnrich.bulkListButton")}
+                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
                 </Button>
                 <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                   <AlertDialogTrigger asChild>

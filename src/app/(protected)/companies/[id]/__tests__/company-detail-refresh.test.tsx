@@ -74,6 +74,10 @@ vi.mock("@/components/company-detail/TimelineCard", () => ({
   default: () => null,
 }));
 
+vi.mock("@/components/features/companies/ai-enrichment/AIEnrichmentModal", () => ({
+  AIEnrichmentModal: () => null,
+}));
+
 vi.mock("@/lib/actions/companies", () => ({
   updateCompany: vi.fn(),
   deleteCompany: vi.fn(),
@@ -268,7 +272,7 @@ describe("CompanyDetailClient refresh after inline edits", () => {
 
     await screen.findByRole("heading", { name: "Fixture GmbH" });
 
-    const toolbar = screen.getByRole("button", { name: /Timeline-Eintrag/i }).parentElement;
+    const toolbar = screen.getByRole("button", { name: /Aktivität/i }).parentElement;
     if (!toolbar) {
       throw new Error("Expected header toolbar");
     }
