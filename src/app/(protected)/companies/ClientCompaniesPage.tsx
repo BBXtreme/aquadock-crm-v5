@@ -29,6 +29,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteCompany, updateCompany } from "@/lib/actions/companies";
+import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
@@ -78,6 +79,7 @@ function ClientCompaniesPage() {
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkAiEnrichPending, setBulkAiEnrichPending] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
@@ -306,6 +308,44 @@ function ClientCompaniesPage() {
       }
     },
   });
+
+  const handleBulkAiEnrich = async () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    setBulkAiEnrichPending(true);
+    const loadingId = toast.loading(t("aiEnrich.bulkProgressList", { total: selectedIds.length }));
+    try {
+      const res = await bulkResearchCompanyEnrichment({
+        companyIds: selectedIds,
+      });
+      toast.dismiss(loadingId);
+      if (!res.ok) {
+        if (res.error === "NOT_AUTHENTICATED") {
+          toast.error(t("aiEnrich.errorNotAuthenticated"));
+        } else if (res.error === "AI_ENRICHMENT_DISABLED") {
+          toast.error(t("aiEnrich.errorDisabled"));
+        } else if (res.error === "AI_ENRICHMENT_RATE_LIMIT") {
+          toast.error(t("aiEnrich.errorRateLimit"));
+        } else if (res.error === "AI_GATEWAY_MISSING") {
+          toast.error(t("aiEnrich.errorNoGateway"));
+        } else {
+          toast.error(t("aiEnrich.errorGeneric"));
+        }
+        return;
+      }
+      const ok = res.results.filter((r) => r.ok).length;
+      const fail = res.results.length - ok;
+      toast.success(t("aiEnrich.bulkDoneList", { ok, total: res.results.length, fail }));
+    } catch {
+      toast.dismiss(loadingId);
+      toast.error(t("aiEnrich.errorGeneric"));
+    } finally {
+      setBulkAiEnrichPending(false);
+    }
+  };
 
   const handleBulkDelete = async () => {
     const selectedIds = Object.keys(rowSelection);
