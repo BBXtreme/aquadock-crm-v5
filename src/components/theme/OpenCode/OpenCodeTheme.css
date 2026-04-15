@@ -1,0 +1,450 @@
+/*
+ * OpenCode Theme for Typora
+ * Synced with OpenCode TUI default palette (v1.2.27)
+ * Dark theme
+ */
+
+:root {
+  /* OpenCode TUI dark palette */
+  --oc-primary: #fab283;       /* warm orange */
+  --oc-secondary: #5c9cf5;    /* blue */
+  --oc-accent: #9d7cd8;       /* purple */
+  --oc-red: #e06c75;
+  --oc-orange: #f5a742;
+  --oc-green: #7fd88f;
+  --oc-cyan: #56b6c2;
+  --oc-yellow: #e5c07b;
+  --oc-text: #eeeeee;         /* darkStep12 */
+  --oc-text-muted: #808080;   /* darkStep11 */
+  --oc-bg1: #0a0a0a;          /* darkStep1 */
+  --oc-bg2: #141414;          /* darkStep2 */
+  --oc-bg3: #1e1e1e;          /* darkStep3 */
+  --oc-bg4: #282828;          /* darkStep4 */
+  --oc-border: #484848;       /* darkStep7 */
+  --oc-border-active: #606060; /* darkStep8 */
+}
+
+html {
+  font-size: 17px;
+}
+
+html, body {
+  margin: auto;
+  background: var(--oc-bg1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--oc-text);
+  line-height: 1.6;
+}
+
+#write {
+  max-width: 900px;
+  margin: 0 auto;
+  margin-bottom: 2em;
+  padding-top: 40px;
+}
+
+@media only screen and (min-width: 1400px) {
+  #write {
+    max-width: 1000px;
+  }
+}
+
+@media print {
+  html {
+    font-size: 13px;
+  }
+  body {
+    background: white;
+    color: #1a1a1a;
+  }
+}
+
+/* Typography
+-------------------------------------------------------- */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--oc-accent);  /* markdownHeading = purple */
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+#write > h1:first-child,
+h1 {
+  margin-top: 1.6em;
+  font-size: 2em;
+}
+
+h2 {
+  margin-top: 1.8em;
+  font-size: 1.5em;
+}
+
+h3 {
+  margin-top: 1.5em;
+  font-size: 1.25em;
+}
+
+h4 {
+  font-size: 1.1em;
+}
+
+h1 {
+  border-bottom: 1px solid var(--oc-border);
+  padding-bottom: 8px;
+}
+
+p, .mathjax-block {
+  margin-top: 0;
+}
+
+strong, b {
+  color: var(--oc-orange);  /* markdownStrong = orange */
+  font-weight: 600;
+}
+
+em {
+  color: var(--oc-yellow);  /* markdownEmph = yellow */
+}
+
+del {
+  color: var(--oc-text-muted);
+}
+
+/* Links */
+a {
+  color: var(--oc-primary);  /* markdownLink = primary/warm orange */
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ffc09f;           /* darkStep10 */
+  text-decoration: underline;
+}
+
+/* Lists */
+ul {
+  list-style: disc;
+  padding-left: 1.5em;
+}
+
+ol {
+  padding-left: 1.5em;
+}
+
+li::marker {
+  color: var(--oc-secondary);  /* blue */
+}
+
+/* Blockquote */
+blockquote {
+  margin-left: 0;
+  padding: 12px 16px;
+  border-left: 4px solid var(--oc-accent);
+  background-color: var(--oc-bg2);
+  border-radius: 0 8px 8px 0;
+  color: var(--oc-text);
+}
+
+/* Code */
+code, pre {
+  font-family: "JetBrains Mono", "PingFang SC", monospace;
+  font-size: 0.9em;
+}
+
+code {
+  background: var(--oc-bg3);
+  color: var(--oc-text);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md-fences {
+  background: var(--oc-bg2);
+  border: 1px solid var(--oc-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 1.5em;
+  color: var(--oc-text);
+}
+
+.md-fences .code-tooltip {
+  bottom: -2em !important;
+}
+
+/* Syntax highlighting — OpenCode TUI palette */
+.cm-s-inner .cm-keyword { color: var(--oc-accent); }      /* purple */
+.cm-s-inner .cm-atom { color: var(--oc-orange); }
+.cm-s-inner .cm-number { color: var(--oc-orange); }
+.cm-s-inner .cm-def { color: var(--oc-primary); }         /* warm orange */
+.cm-s-inner .cm-variable { color: var(--oc-text); }
+.cm-s-inner .cm-variable-2 { color: var(--oc-cyan); }
+.cm-s-inner .cm-variable-3 { color: var(--oc-cyan); }
+.cm-s-inner .cm-type { color: var(--oc-yellow); }
+.cm-s-inner .cm-property { color: var(--oc-cyan); }
+.cm-s-inner .cm-operator { color: var(--oc-cyan); }
+.cm-s-inner .cm-comment { color: var(--oc-text-muted); font-style: italic; }
+.cm-s-inner .cm-string { color: var(--oc-green); }
+.cm-s-inner .cm-string-2 { color: var(--oc-green); }
+.cm-s-inner .cm-meta { color: var(--oc-accent); }
+.cm-s-inner .cm-qualifier { color: var(--oc-accent); }
+.cm-s-inner .cm-builtin { color: var(--oc-primary); }
+.cm-s-inner .cm-bracket { color: var(--oc-text); }
+.cm-s-inner .cm-tag { color: var(--oc-red); }
+.cm-s-inner .cm-attribute { color: var(--oc-cyan); }
+.cm-s-inner .cm-hr { color: var(--oc-text-muted); }
+.cm-s-inner .cm-link { color: var(--oc-primary); }
+.cm-s-inner .cm-header { color: var(--oc-accent); }
+
+/* Typora source mode cursor */
+.CodeMirror.cm-s-inner div.CodeMirror-cursor {
+  border-left: 2px solid var(--oc-primary);
+}
+
+/* Tables */
+table {
+  margin-bottom: 1.5rem;
+  border-collapse: collapse;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+table th,
+table td {
+  padding: 10px 16px;
+  line-height: 1.5;
+  vertical-align: top;
+  border: 1px solid var(--oc-border);
+}
+
+table th {
+  font-weight: 600;
+  color: var(--oc-accent);          /* markdownHeading = purple */
+  background-color: var(--oc-bg3); /* darkStep3 */
+}
+
+table td {
+  background-color: var(--oc-bg1);
+}
+
+table td:first-child {
+  color: var(--oc-primary);        /* warm orange for first column */
+  font-weight: 500;
+}
+
+table tbody tr:nth-child(even) td {
+  background-color: var(--oc-bg1);
+}
+
+table tbody tr:nth-child(odd) td {
+  background-color: var(--oc-bg2);
+}
+
+table tbody tr:hover td {
+  background-color: var(--oc-bg3);
+}
+
+table thead:first-child tr:first-child th,
+table thead:first-child tr:first-child td {
+  border-top: 0;
+}
+
+.ty-table-edit {
+  background: var(--oc-bg3);
+  padding-top: 4px;
+}
+
+/* Task list */
+.task-list {
+  padding: 0;
+}
+
+.md-task-list-item {
+  padding-left: 1.6rem;
+}
+
+.md-task-list-item > input:before {
+  content: '\221A';
+  display: inline-block;
+  width: 1.33rem;
+  height: 1.6rem;
+  vertical-align: middle;
+  text-align: center;
+  color: var(--oc-border);
+  background-color: var(--oc-bg1);
+}
+
+.md-task-list-item > input:checked:before,
+.md-task-list-item > input[checked]:before {
+  color: var(--oc-primary);
+}
+
+.md-task-list-item > input {
+  margin-left: -1.3em;
+  margin-top: calc(1rem - 12px);
+}
+
+/* Tags */
+.md-tag {
+  color: var(--oc-cyan);
+  font: inherit;
+}
+
+/* Horizontal rule */
+hr {
+  border: none;
+  border-top: 1px solid var(--oc-border);
+  margin: 24px 0;
+}
+
+/* YAML front matter */
+#write pre.md-meta-block {
+  min-height: 35px;
+  padding: 0.5em 1em;
+  white-space: pre;
+  background: var(--oc-bg2);
+  border: 1px solid var(--oc-border);
+  border-radius: 8px;
+  color: var(--oc-text-muted);
+  margin-bottom: 2em;
+  padding-top: 12px;
+  padding-bottom: 10px;
+  line-height: 1.8em;
+  font-size: 0.85em;
+}
+
+/* Image error */
+.md-img-error.md-image > .md-meta {
+  vertical-align: bottom;
+}
+
+/* Focus styles */
+#write > h5.md-focus:before {
+  top: 2px;
+}
+
+/* TOC */
+.md-toc {
+  margin-top: 40px;
+}
+
+.md-toc-content {
+  padding-bottom: 20px;
+}
+
+/* Outline / Sidebar */
+.outline-expander:before {
+  color: inherit;
+  font-size: 14px;
+  top: auto;
+  content: "\f0da";
+  font-family: FontAwesome;
+}
+
+.outline-expander:hover:before,
+.outline-item-open > .outline-item > .outline-expander:before {
+  content: "\f0d7";
+}
+
+/* Source code mode */
+#typora-source {
+  font-family: "JetBrains Mono", "PingFang SC", monospace;
+  color: var(--oc-text-muted);
+}
+
+/* Sidebar shadow */
+.html-for-mac #typora-sidebar {
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  background: var(--oc-bg2);
+}
+
+/* File list */
+.typora-node .file-list-item-parent-loc,
+.typora-node .file-list-item-time,
+.typora-node .file-list-item-summary {
+  font-family: "PingFang SC", -apple-system, sans-serif;
+  color: var(--oc-text-muted);
+}
+
+/* MathJax */
+.md-mathjax-midline {
+  background: var(--oc-bg2);
+}
+
+/* Dropdown */
+.dropdown-menu .divider {
+  border-color: var(--oc-border);
+}
+
+/* Selection */
+::selection {
+  background-color: rgba(92, 156, 245, 0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--oc-bg1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--oc-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--oc-border-active);
+}
+
+/* Typora UI elements */
+.file-list-item.active {
+  background: var(--oc-bg3) !important;
+}
+
+#typora-sidebar {
+  color: var(--oc-text);
+}
+
+.sidebar-tab.active {
+  color: var(--oc-primary);
+  border-bottom-color: var(--oc-primary);
+}
+
+header, .context-menu, .megamenu-content, footer {
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.megamenu-opened header {
+  background: var(--oc-bg2);
+}
+
+.megamenu-menu-panel {
+  background: var(--oc-bg2);
+}
+
+content {
+  background: var(--oc-bg1);
+}
+
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) * {
+  color: var(--oc-text-muted) !important;
+}
+
+.on-focus-mode .md-end-block:not(.md-focus) img,
+.on-focus-mode .md-task-list-item:not(.md-focus-container) > input {
+  opacity: 0.5;
+}
+
+.md-heading:hover .md-heading-fold-button {
+  color: var(--oc-primary);
+}
