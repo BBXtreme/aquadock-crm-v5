@@ -14,7 +14,7 @@ import { AIEnrichmentSettingsCard } from "@/components/features/settings/AIEnric
 import { AppearanceTimezoneSelect } from "@/components/features/settings/AppearanceTimezoneSelect";
 import {
   applyAppearanceColorTokens,
-} from "@/components/theme/ThemeProvider";
+} from "@/components/theme/tailwind/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

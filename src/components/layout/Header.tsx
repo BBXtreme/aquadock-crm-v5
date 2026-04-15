@@ -32,6 +32,7 @@ import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 
 const PLACEHOLDER_AVATAR_SRC = "/placeholder-avatar.png";
@@ -127,13 +128,14 @@ export default function Header({ user }: HeaderProps) {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${
-        isScrolled ? "shadow-md" : "shadow-sm"
-      }`}
+      className={cn(
+        "sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background/80 px-5 backdrop-blur-md transition-shadow",
+        isScrolled ? "shadow-sm" : "shadow-none",
+      )}
     >
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
+          <div className="flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
             <Image
               src={mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
               alt="AquaDock CRM"
@@ -159,7 +161,10 @@ export default function Header({ user }: HeaderProps) {
           <Link href="/reminders?status=overdue">
             <Button variant="ghost" className="relative">
               <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white">
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs"
+              >
                 {overdueRemindersCount}
               </Badge>
             </Button>
