@@ -21,7 +21,7 @@ export default async function TemplatesPage() {
                 <Skeleton key="templates-header-2" className="h-10 w-40 rounded-xl" />
               </div>
 
-              <div className={cn(skeletonCardChrome, "overflow-hidden rounded-2xl")}>
+              <div className={cn(skeletonCardChrome, "overflow-hidden rounded-(--radius)")}>
                 <div className="border-b border-border/8 px-8 py-5 dark:border-border/14">
                   <div className="grid grid-cols-12 gap-4">
                     <Skeleton className="col-span-5 h-5" />

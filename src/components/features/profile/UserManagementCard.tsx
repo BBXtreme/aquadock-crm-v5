@@ -154,7 +154,7 @@ function UserManagementCard({
 
   return (
     <>
-      <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="shadow-sm">
         <CardHeader className="flex justify-between items-center pb-6">
           <CardTitle className="flex items-center text-xl">
             <Users className="mr-3 h-6 w-6 text-primary" />

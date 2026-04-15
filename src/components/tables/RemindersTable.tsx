@@ -58,7 +58,7 @@ export const reminderColumns = (
   columnHelper.accessor("title", {
     header: "Title",
     cell: (info) => (
-      <button type="button" className="text-blue-600 hover:underline" onClick={() => handleEdit(info.row.original)}>
+      <button type="button" className="text-primary hover:underline" onClick={() => handleEdit(info.row.original)}>
         {String(info.getValue() ?? "")}
       </button>
     ),
@@ -71,7 +71,7 @@ export const reminderColumns = (
       const company = reminder.companies;
       if (!company) return "Unknown";
       return (
-        <Link href={`/companies/${reminder.company_id}`} className="text-blue-600 hover:underline">
+        <Link href={`/companies/${reminder.company_id}`} className="text-primary hover:underline">
           {company.firmenname}
         </Link>
       );
@@ -84,7 +84,7 @@ export const reminderColumns = (
       if (value == null || value === "" || typeof value !== "string") return "No date";
       const isOverdue = isAfter(new Date(), new Date(value));
       return (
-        <span className={isOverdue ? "text-rose-500" : ""}>
+        <span className={isOverdue ? "text-destructive" : ""}>
           {formatDistanceToNow(new Date(value), {
             addSuffix: true,
           })}
@@ -98,10 +98,10 @@ export const reminderColumns = (
       <Badge
         className={
           info.getValue() === "hoch"
-            ? "bg-orange-500 text-white"
+            ? "bg-warning text-warning-foreground"
             : info.getValue() === "normal"
-              ? "bg-blue-500 text-white"
-              : "bg-gray-500 text-white"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground"
         }
       >
         {String(info.getValue() ?? "")}

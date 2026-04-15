@@ -125,7 +125,7 @@ export default function ContactsTable({
                   {vorname} {nachname}
                 </div>
               </Link>
-              {position && <div className="text-xs text-gray-500">{position}</div>}
+              {position && <div className="text-xs text-muted-foreground">{position}</div>}
             </div>
           );
         },

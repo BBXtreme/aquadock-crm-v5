@@ -1184,5 +1184,38 @@
         "dataType": "Tekst"
       }
     }
+  },
+  "login": {
+    "heroTitle": "Pokrenite svoje poslovanje na obali",
+    "heroDescription": "Pametni CRM za marine, hotele, kampove i vodene sportove — jednostavan pregled, optimizirano upravljanje, uvidi u stvarnom vremenu.",
+    "benefit1": "24/7 pregled svih poslovnih aktivnosti",
+    "benefit2": "Optimizirano upravljanje gostima i iznajmljivanjem",
+    "benefit3": "Uvidi u stvarnom vremenu koji povećavaju prihode",
+    "trustStatement": "Koriste ga marine i ugostiteljski operateri diljem Europe",
+    "mobileTagline": "Pametno poslovanje za tvrtke uz more",
+    "signInTitle": "Prijava",
+    "signInDescription": "Unesite svoje podatke za pristup AquaDock CRM-u",
+    "recoveryLinkExpiredTitle": "Poveznica je nevažeća ili istekla",
+    "recoveryLinkExpiredDescription": "Zatražite novu poveznicu za resetiranje i otvorite je iz e-pošte.",
+    "recoverySetTitle": "Postavite novu lozinku",
+    "recoverySetDescription": "Odaberite sigurnu lozinku koju ne koristite nigdje drugdje.",
+    "recoverySessionPreparing": "Priprema sesije…",
+    "recoveryPersistentError": "Ako se problem nastavi, provjerite je li poveznica u potpunosti otvorena i pokušajte ponovno s novom poveznicom.",
+    "recoveryPleaseWait": "Pričekajte trenutak…",
+    "loading": "Učitavanje…",
+    "recoveryNewPasswordLabel": "Nova lozinka",
+    "recoveryConfirmPasswordLabel": "Potvrda lozinke",
+    "recoverySaveButton": "Spremi novu lozinku",
+    "recoverySaving": "Spremanje…",
+    "recoverySuccess": "Lozinka je uspješno promijenjena. Preusmjeravamo vas na prijavu...",
+    "hidePassword": "Sakrij lozinku",
+    "showPassword": "Prikaži lozinku",
+    "hideConfirmPassword": "Sakrij potvrdu lozinke",
+    "showConfirmPassword": "Prikaži potvrdu lozinke",
+    "recoveryTimeoutToastTitle": "Poveznica je nevažeća ili istekla.",
+    "recoveryTimeoutToastDescription": "Zatražite novu poveznicu za resetiranje i pokušajte ponovno.",
+    "recoveryErrorToast": "Lozinka se nije mogla spremiti.",
+    "errorBoundaryToast": "Došlo je do neočekivane pogreške.",
+    "errorBoundaryReload": "Molimo ponovno učitajte stranicu."
   }
 }

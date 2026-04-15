@@ -75,7 +75,7 @@ export default function CompanyKpiCards({ company }: Props) {
           <CardTitle className="text-sm">{t("detailKpiOverdueReminders")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">{overdueReminders}</div>
+          <div className="text-2xl font-bold text-destructive">{overdueReminders}</div>
         </CardContent>
       </Card>
     </div>

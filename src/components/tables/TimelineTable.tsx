@@ -277,7 +277,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         },
         cell: (info) =>
           info.row.original.companies ? (
-            <Link href={`/companies/${info.row.original.company_id}`} className="text-blue-600 hover:underline">
+            <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
               {info.row.original.companies.firmenname}
             </Link>
           ) : (
@@ -295,7 +295,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         },
         cell: (info) =>
           info.row.original.contacts ? (
-            <Link href={`/contacts/${info.row.original.contact_id}`} className="text-blue-600 hover:underline">
+            <Link href={`/contacts/${info.row.original.contact_id}`} className="text-primary hover:underline">
               {info.row.original.contacts.vorname} {info.row.original.contacts.nachname}
             </Link>
           ) : (
@@ -353,7 +353,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
 
   if (internalError && !data) {
     return (
-      <div className="text-red-500 p-4">
+      <div className="text-destructive p-4">
         {t("loadError", { message: internalError.message })}
       </div>
     );

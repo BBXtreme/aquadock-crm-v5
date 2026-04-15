@@ -20,12 +20,24 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
 import { StatCard } from "@/components/ui/StatCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 
-const BRAND_COLORS = ["#24BACC", "#1da0a8", "#0f7f85", "#065f63", "#10b981"] as const;
+const BRAND_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+] as const;
 
 type FunnelStageKey = "leads" | "qualified" | "proposal" | "negotiation" | "closedWon";
 
@@ -137,7 +149,7 @@ export default function DashboardClient() {
       {/* Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sales Funnel */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+        <div className="bg-card rounded-(--radius) border border-border p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" /> {t("funnelTitle")}
@@ -154,7 +166,7 @@ export default function DashboardClient() {
                   width={110}
                   tickLine={false}
                   axisLine={false}
-                  tick={{ fill: "#888", fontSize: 13 }}
+                  tick={{ fill: "var(--muted-foreground)", fontSize: 13 }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -174,7 +186,7 @@ export default function DashboardClient() {
         </div>
 
         {/* Status Distribution */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+        <div className="bg-card rounded-(--radius) border border-border p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" /> {t("statusTitle")}
@@ -205,15 +217,19 @@ export default function DashboardClient() {
 
       {/* Period Selector */}
       <div className="flex justify-end">
-        <select
+        <Select
           value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value as "7d" | "30d" | "90d")}
-          className="px-4 py-2.5 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+          onValueChange={(v) => setSelectedPeriod(v as "7d" | "30d" | "90d")}
         >
-          <option value="7d">{t("period7d")}</option>
-          <option value="30d">{t("period30d")}</option>
-          <option value="90d">{t("period90d")}</option>
-        </select>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d">{t("period7d")}</SelectItem>
+            <SelectItem value="30d">{t("period30d")}</SelectItem>
+            <SelectItem value="90d">{t("period90d")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

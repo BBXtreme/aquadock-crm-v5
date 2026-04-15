@@ -1184,5 +1184,38 @@
         "dataType": "Text"
       }
     }
+  },
+  "login": {
+    "heroTitle": "Steer Your Waterfront Operations Forward",
+    "heroDescription": "The smart CRM for marinas, hotels, campsites, and watersports operators — effortless visibility, streamlined management, real-time insights.",
+    "benefit1": "24/7 visibility across all operations",
+    "benefit2": "Streamlined guest & rental management",
+    "benefit3": "Real-time insights that drive revenue",
+    "trustStatement": "Trusted by marinas & hospitality operators across Europe",
+    "mobileTagline": "Smart operations for waterfront businesses",
+    "signInTitle": "Sign in",
+    "signInDescription": "Enter your credentials to access AquaDock CRM",
+    "recoveryLinkExpiredTitle": "Link invalid or expired",
+    "recoveryLinkExpiredDescription": "Please request a new reset link and open it from the email again.",
+    "recoverySetTitle": "Set a new password",
+    "recoverySetDescription": "Choose a secure password that you don't use anywhere else.",
+    "recoverySessionPreparing": "Preparing session…",
+    "recoveryPersistentError": "If the problem persists, check that the link was opened completely and try again with a new link.",
+    "recoveryPleaseWait": "Please wait a moment…",
+    "loading": "Loading…",
+    "recoveryNewPasswordLabel": "New password",
+    "recoveryConfirmPasswordLabel": "Confirm password",
+    "recoverySaveButton": "Save new password",
+    "recoverySaving": "Saving…",
+    "recoverySuccess": "Password changed successfully. You are being redirected to sign in...",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "hideConfirmPassword": "Hide password confirmation",
+    "showConfirmPassword": "Show password confirmation",
+    "recoveryTimeoutToastTitle": "Link invalid or expired.",
+    "recoveryTimeoutToastDescription": "Please request a new reset link and open it again.",
+    "recoveryErrorToast": "Password could not be saved.",
+    "errorBoundaryToast": "An unexpected error occurred.",
+    "errorBoundaryReload": "Please reload the page."
   }
 }

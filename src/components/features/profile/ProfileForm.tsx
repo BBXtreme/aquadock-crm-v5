@@ -84,7 +84,7 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
         <div className="pb-11">
           <Button
             type="submit"
-            className="h-11 w-full bg-[#24BACC] text-white transition-colors hover:bg-[#1da0a8]"
+            className="h-11 w-full"
             disabled={isPending}
           >
             {isPending ? t("updateProfilePending") : t("updateProfileButton")}

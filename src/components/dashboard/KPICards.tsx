@@ -20,10 +20,10 @@ export default function KPICards({ kpis }: KPICardsProps) {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {kpis.map((kpi, _index) => {
         const isPositive = kpi.changePercent >= 0;
-        const arrowColor = isPositive ? "text-[#24BACC]" : "text-rose-500";
+        const arrowColor = isPositive ? "text-primary" : "text-destructive";
 
         return (
-          <Card key={kpi.title} className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+          <Card key={kpi.title} className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="font-medium text-sm">{kpi.title}</CardTitle>
             </CardHeader>

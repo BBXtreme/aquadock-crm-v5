@@ -13,7 +13,7 @@ todos:
     status: pending
   - id: login-redesign
     content: Redesign the login page into the first premium landing/auth experience.
-    status: pending
+    status: completed
 isProject: false
 ---
 

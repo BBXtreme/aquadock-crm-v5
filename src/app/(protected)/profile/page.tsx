@@ -155,7 +155,7 @@ return (
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {/* Profile Information Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
+        <Card className="shadow-sm">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center text-xl">
               <User className="mr-3 h-6 w-6 text-primary" />
@@ -212,7 +212,7 @@ return (
         </Card>
 
         {/* Profil bearbeiten — settings card (aligned with profile overview card) */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg transition-shadow hover:shadow-xl">
+        <Card className="shadow-sm">
           <CardHeader className="gap-2 border-border/60 border-b px-6 pb-5">
             <CardTitle className="flex items-center font-heading text-xl">
               <Settings2

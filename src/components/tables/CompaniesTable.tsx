@@ -124,14 +124,14 @@ export default function CompaniesTable({
         id: "firmenname",
         header: t("tableColFirmenname"),
         cell: (info) => (
-          <Link href={`/companies/${info.row.original.id}`} className="text-blue-600 hover:underline">
+          <Link href={`/companies/${info.row.original.id}`} className="text-primary hover:underline">
             {safeDisplay(info.getValue())}
           </Link>
         ),
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("kundentyp", {
         header: t("tableColKundentyp"),
-        cell: (info) => <Badge className="bg-[#24BACC] text-white">{safeDisplay(info.getValue())}</Badge>,
+        cell: (info) => <Badge className="bg-primary text-primary-foreground">{safeDisplay(info.getValue())}</Badge>,
       }) as ColumnDef<CompanyWithContacts>,
       columnHelper.accessor("status", {
         header: t("tableColStatus"),
@@ -198,7 +198,7 @@ export default function CompaniesTable({
           return (
             <div className="flex flex-col">
               <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
-              {land && <span className="text-xs text-gray-500">{land}</span>}
+              {land && <span className="text-xs text-muted-foreground">{land}</span>}
             </div>
           );
         },

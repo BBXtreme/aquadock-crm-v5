@@ -129,7 +129,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
         >
           {getStatusLabel(company.status)}
         </Badge>
-        {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
+        {company.kundentyp && <Badge className="bg-primary text-primary-foreground">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>}
         {company.wassertyp && (
           <Badge variant="outline">

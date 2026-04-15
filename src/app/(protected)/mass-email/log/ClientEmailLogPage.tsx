@@ -121,7 +121,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                           : log.subject}
                     </div>
                     {log.status === "error" && log.error_msg ? (
-                      <div className="text-xs text-red-500 mt-1 truncate">{log.error_msg}</div>
+                      <div className="text-xs text-destructive mt-1 truncate">{log.error_msg}</div>
                     ) : null}
                   </TableCell>
                   <TableCell>
