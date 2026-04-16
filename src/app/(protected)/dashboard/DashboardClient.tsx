@@ -8,7 +8,8 @@
 
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Building, DollarSign, TrendingUp, Trophy, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useTheme } from "next-themes";
+import { useLayoutEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -31,17 +32,48 @@ import {
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 
-const BRAND_COLORS = [
-  "var(--chart-1)",
-  "var(--chart-2)",
-  "var(--chart-3)",
-  "var(--chart-4)",
-  "var(--chart-5)",
+/** Light :root chart tokens from globals.css — SSR / first paint before computed styles run. */
+const CHART_FILLS_FALLBACK = [
+  "oklch(0.645 0.16 197)",
+  "oklch(0.55 0.13 225)",
+  "oklch(0.72 0.12 195)",
+  "oklch(0.65 0.10 160)",
+  "oklch(0.58 0.08 265)",
 ] as const;
 
 type FunnelStageKey = "leads" | "qualified" | "proposal" | "negotiation" | "closedWon";
 
-type FunnelRowRaw = { stageKey: FunnelStageKey; value: number; fill: string };
+type FunnelRowRaw = { stageKey: FunnelStageKey; value: number };
+
+function readChartFillsFromDocument(): readonly [string, string, string, string, string] {
+  if (typeof document === "undefined") {
+    return CHART_FILLS_FALLBACK;
+  }
+  const style = getComputedStyle(document.documentElement);
+  const read = (name: string) => {
+    const value = style.getPropertyValue(name).trim();
+    return value.length > 0 ? value : "oklch(0.5 0 0)";
+  };
+  return [
+    read("--chart-1"),
+    read("--chart-2"),
+    read("--chart-3"),
+    read("--chart-4"),
+    read("--chart-5"),
+  ] as const;
+}
+
+function useChartFillsForSvg(): readonly [string, string, string, string, string] {
+  const { resolvedTheme } = useTheme();
+  const [fills, setFills] = useState<readonly [string, string, string, string, string]>(CHART_FILLS_FALLBACK);
+
+  useLayoutEffect(() => {
+    void resolvedTheme;
+    setFills(readChartFillsFromDocument());
+  }, [resolvedTheme]);
+
+  return fills;
+}
 
 /** Recharts 3 defaults to -1×-1 until resize; avoids console noise and layout flash. */
 const CHART_INITIAL = { width: 640, height: 320 } as const;
@@ -49,6 +81,7 @@ const CHART_INITIAL = { width: 640, height: 320 } as const;
 export default function DashboardClient() {
   const t = useT("dashboard");
   const localeTag = useNumberLocaleTag();
+  const chartFills = useChartFillsForSvg();
   const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
 
   const stats = useSuspenseQuery({
@@ -83,11 +116,11 @@ export default function DashboardClient() {
       const won = companies?.filter((c) => c.status === "gewonnen").length || 0;
 
       const funnelDataRaw: FunnelRowRaw[] = [
-        { stageKey: "leads", value: leads || 42, fill: BRAND_COLORS[0] },
-        { stageKey: "qualified", value: Math.round(leads * 0.65) || 27, fill: BRAND_COLORS[1] },
-        { stageKey: "proposal", value: Math.round(leads * 0.45) || 19, fill: BRAND_COLORS[2] },
-        { stageKey: "negotiation", value: Math.round(leads * 0.3) || 13, fill: BRAND_COLORS[3] },
-        { stageKey: "closedWon", value: won || 9, fill: BRAND_COLORS[4] },
+        { stageKey: "leads", value: leads || 42 },
+        { stageKey: "qualified", value: Math.round(leads * 0.65) || 27 },
+        { stageKey: "proposal", value: Math.round(leads * 0.45) || 19 },
+        { stageKey: "negotiation", value: Math.round(leads * 0.3) || 13 },
+        { stageKey: "closedWon", value: won || 9 },
       ];
 
       return {
@@ -107,11 +140,12 @@ export default function DashboardClient() {
 
   const funnelData = useMemo(
     () =>
-      data.funnelDataRaw.map((row) => ({
+      data.funnelDataRaw.map((row, index) => ({
         ...row,
         stage: t(`funnel.${row.stageKey}`),
+        fill: chartFills[index % chartFills.length],
       })),
-    [data.funnelDataRaw, t],
+    [chartFills, data.funnelDataRaw, t],
   );
 
   const kpiChange = t("kpiChangeThisPeriod", { count: data.companiesInPeriod });
