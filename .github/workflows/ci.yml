@@ -1,21 +1,7 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    # ← ADD THIS ENV BLOCK
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -24,10 +10,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Setup pnpm + Node.js
         uses: pnpm/action-setup@v4
         with:
           version: 10
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
