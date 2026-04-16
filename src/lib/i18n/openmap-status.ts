@@ -2,6 +2,7 @@
 
 export type OpenmapStatusMsgKey =
   | "status_lead"
+  | "status_interessant"
   | "status_qualifiziert"
   | "status_akquise"
   | "status_angebot"
@@ -15,6 +16,8 @@ export function getOpenmapStatusMsgKey(statusLower: string): OpenmapStatusMsgKey
   switch (statusLower) {
     case "lead":
       return "status_lead";
+    case "interessant":
+      return "status_interessant";
     case "qualifiziert":
       return "status_qualifiziert";
     case "akquise":
