@@ -274,12 +274,12 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                 {/* Validation Result */}
                 {validationResult && (
                   <div className="mt-3 p-3 rounded-lg border text-sm">
-                    <p className={validationResult.valid ? "text-green-600" : "text-red-600"}>
+                    <p className={validationResult.valid ? "text-success" : "text-destructive"}>
                       {validationResult.message}
                     </p>
                     {validationResult.valid && validationResult.lat && validationResult.lon && (
                       <div className="mt-2 flex items-center gap-3">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           Lat: {validationResult.lat.toFixed(5)} • Lon: {validationResult.lon.toFixed(5)}
                         </span>
                         <Button type="button" size="sm" variant="secondary" onClick={applyLatLonFromValidation}>
@@ -292,7 +292,7 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
 
                 {/* Preview Link */}
                 {previewUrl && (
-                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <p className="text-xs text-primary mt-1 flex items-center gap-1">
                     <span>🗺 Vorschau:</span>
                     <a
                       href={previewUrl}
@@ -305,7 +305,7 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                   </p>
                 )}
 
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Format: <span className="font-mono">node/12345</span> • <span className="font-mono">way/12345</span> •{" "}
                   <span className="font-mono">relation/12345</span>
                 </p>

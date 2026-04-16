@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { AppearanceHydration } from "@/components/theme/ThemeProvider";
+import { AppearanceHydration } from "@/components/theme/tailwind/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ReactQueryProvider } from "@/lib/query/provider";
@@ -13,7 +13,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     <TooltipProvider>
       <ReactQueryProvider>
         <AppearanceHydration />
-        <Toaster richColors position="top-right" />
+        <Toaster richColors closeButton position="top-right" gap={8} offset={16} />
         {children}
       </ReactQueryProvider>
     </TooltipProvider>

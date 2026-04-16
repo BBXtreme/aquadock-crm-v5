@@ -6,7 +6,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import SmtpSettings from "@/components/email/SmtpSettings";
@@ -14,7 +13,7 @@ import { AIEnrichmentSettingsCard } from "@/components/features/settings/AIEnric
 import { AppearanceTimezoneSelect } from "@/components/features/settings/AppearanceTimezoneSelect";
 import {
   applyAppearanceColorTokens,
-} from "@/components/theme/ThemeProvider";
+} from "@/components/theme/tailwind/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,7 +43,6 @@ import {
   loadAppearanceSettings,
   saveAppearanceColorScheme,
   saveAppearanceLocale,
-  saveAppearanceTheme,
   saveAppearanceTimeZone,
   TRASH_BIN_DEFAULT_ENABLED,
   TRASH_BIN_UI,
@@ -53,11 +51,9 @@ import { createClient } from "@/lib/supabase/browser";
 import {
   type AppearanceColorScheme,
   type AppearanceLocale,
-  type AppearanceTheme,
   type AppearanceTimeZone,
   appearanceColorSchemeSchema,
   appearanceLocaleSchema,
-  appearanceThemeSchema,
   appearanceTimeZoneSchema,
 } from "@/lib/validations/appearance";
 import { type MapProviderId, mapProviderSchema, mapSettingsFormSchema } from "@/lib/validations/map-settings";
@@ -149,7 +145,6 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
 
   const supabase = createClient();
   const queryClient = useQueryClient();
-  const { theme: nextTheme, setTheme } = useTheme();
   const t = useT("settings");
   const format = useFormat();
 
@@ -355,21 +350,6 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
   });
 
   const savingTrashBin = saveTrashBinMutation.isPending;
-
-  const appearanceThemeMutation = useMutation({
-    mutationFn: async (next: AppearanceTheme) => {
-      await saveAppearanceTheme(next);
-    },
-    onSuccess: async (_data, next) => {
-      setTheme(next);
-      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
-      toast.success(t("appearance.themeSaved"));
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : t("common.unknownError");
-      toast.error(t("appearance.themeSaveErrorTitle"), { description: message });
-    },
-  });
 
   const appearanceLocaleMutation = useMutation({
     mutationFn: async (locale: AppearanceLocale) => {
@@ -610,7 +590,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
     <div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Notifications Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Bell className="mr-2 h-5 w-5" />
@@ -697,7 +677,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         </Card>
 
         {/* Appearance Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+        <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Palette className="mr-2 h-5 w-5" />
@@ -707,32 +687,12 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
               {t("appearance.description")}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             <p className="text-muted-foreground text-xs">
               {t("appearance.datePreview", {
                 date: format.dateTime(new Date(), { dateStyle: "medium" }),
               })}
             </p>
-            <div className="space-y-2">
-              <Label htmlFor="appearance-theme">{t("appearance.themeLabel")}</Label>
-              <Select
-                value={selectMounted && nextTheme ? nextTheme : undefined}
-                onValueChange={(value) => {
-                  const parsed = appearanceThemeSchema.safeParse(value);
-                  if (parsed.success) appearanceThemeMutation.mutate(parsed.data);
-                }}
-                disabled={appearanceThemeMutation.isPending}
-              >
-                <SelectTrigger id="appearance-theme" className="w-full max-w-md">
-                  <SelectValue placeholder={selectMounted ? undefined : t("common.ellipsis")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="light">{t("appearance.themeLight")}</SelectItem>
-                  <SelectItem value="dark">{t("appearance.themeDark")}</SelectItem>
-                  <SelectItem value="system">{t("appearance.themeSystem")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="appearance-language">{t("appearance.languageLabel")}</Label>
               <Select
@@ -798,7 +758,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         </Card>
 
         {/* Trash bin preference */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className="shadow-sm md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
               <ArchiveRestore className="mr-2 h-5 w-5" />
@@ -844,7 +804,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         <AIEnrichmentSettingsCard initialSnapshot={initialAiEnrichmentSnapshot} />
 
         {/* Map provider (OpenMap basemap) */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className="shadow-sm md:col-span-2">
           <CardHeader className="space-y-2 pb-2">
             <CardTitle className="flex items-center text-lg">
               <Layers className="mr-2 h-5 w-5 shrink-0" />
@@ -921,7 +881,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         </Card>
 
         {/* OpenMap Settings Card */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className="shadow-sm md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
               <MapPin className="mr-2 h-5 w-5" />
@@ -1063,7 +1023,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         </Card>
 
         {/* Brevo Settings */}
-        <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+        <Card className="shadow-sm md:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Mail className="mr-2 h-5 w-5" />

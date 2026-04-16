@@ -211,7 +211,7 @@ export default function ProfileSecuritySection({
           {passwordSaved ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success"
                 aria-hidden
               >
                 <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
@@ -295,7 +295,7 @@ export default function ProfileSecuritySection({
                   />
                   <Button
                     type="submit"
-                    className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+                    className="h-11 w-full text-base"
                     disabled={passwordMutation.isPending}
                   >
                     {passwordMutation.isPending
@@ -311,7 +311,7 @@ export default function ProfileSecuritySection({
           {emailRequestSent ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success"
                 aria-hidden
               >
                 <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
@@ -355,7 +355,7 @@ export default function ProfileSecuritySection({
                   />
                   <Button
                     type="submit"
-                    className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+                    className="h-11 w-full text-base"
                     disabled={emailMutation.isPending}
                   >
                     {emailMutation.isPending

@@ -116,15 +116,42 @@ function kpiRoot(): HTMLElement {
   return el;
 }
 
-function getPeriodSelect(container: HTMLElement): HTMLSelectElement {
-  const candidates = [...container.querySelectorAll("select")];
-  const found = candidates.find(
-    (s) => s.querySelector('option[value="7d"]') && s.querySelector('option[value="30d"]'),
-  );
-  if (found === undefined || !(found instanceof HTMLSelectElement)) {
-    throw new Error("expected dashboard period <select> with 7d/30d options");
+/**
+ * Dashboard period filter uses shadcn Select (Radix), not a native HTML select.
+ * The trigger exposes role="combobox" and its accessible name comes from the displayed
+ * value (e.g. mocked `period30d` → "Last 30 days"). Options mount in a Radix portal on
+ * `document.body`, so after opening the menu use `screen.getByRole("option", …)` — not
+ * `within(container)`.
+ */
+function getPeriodSelectTrigger(container: HTMLElement): HTMLElement {
+  /* Radix trigger is role="combobox"; in jsdom the computed accessible name is often empty,
+   * but the mocked period label is still visible as text inside the trigger. */
+  return within(container).getByRole("combobox");
+}
+
+/**
+ * Radix Select relies on browser APIs that jsdom omits or stubs poorly.
+ * Without these, opening the period Select throws during pointer / focus handling.
+ */
+function ensureRadixSelectEnvironmentPolyfills(): void {
+  const proto = Element.prototype as Element & {
+    hasPointerCapture?: (id: number) => boolean;
+    setPointerCapture?: (id: number) => void;
+    releasePointerCapture?: (id: number) => void;
+    scrollIntoView?: (arg?: boolean | ScrollIntoViewOptions) => void;
+  };
+  if (typeof proto.hasPointerCapture !== "function") {
+    proto.hasPointerCapture = () => false;
   }
-  return found;
+  if (typeof proto.setPointerCapture !== "function") {
+    proto.setPointerCapture = () => undefined;
+  }
+  if (typeof proto.releasePointerCapture !== "function") {
+    proto.releasePointerCapture = () => undefined;
+  }
+  if (typeof proto.scrollIntoView !== "function") {
+    proto.scrollIntoView = () => undefined;
+  }
 }
 
 afterEach(() => {
@@ -179,6 +206,7 @@ class TestResizeObserver {
 describe("DashboardClient KPI statistics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    ensureRadixSelectEnvironmentPolyfills();
     globalThis.ResizeObserver = TestResizeObserver;
     mockedCreateClient.mockImplementation(() => supabaseClientFromData());
   });
@@ -288,21 +316,29 @@ describe("DashboardClient KPI statistics", () => {
     expect(within(kpiRoot()).getByText("Total companies")).toBeInTheDocument();
   });
 
-  it("changes the period filter via the native select", async () => {
+  it("changes the period filter via the shadcn Select", async () => {
     const user = userEvent.setup();
     renderDashboard();
 
     const root = kpiRoot();
     await waitFor(() => expect(within(root).getByText("Total companies")).toBeInTheDocument());
 
-    const periodSelect = getPeriodSelect(root);
-    expect(periodSelect).toHaveValue("30d");
+    const periodTrigger = getPeriodSelectTrigger(root);
+    expect(periodTrigger).toHaveTextContent("Last 30 days");
 
-    await user.selectOptions(periodSelect, "7d");
-    await waitFor(() => expect(periodSelect).toHaveValue("7d"));
+    await user.click(periodTrigger);
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /Last 7 days/i })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("option", { name: /Last 7 days/i }));
+    await waitFor(() => expect(periodTrigger).toHaveTextContent("Last 7 days"));
 
-    await user.selectOptions(periodSelect, "90d");
-    await waitFor(() => expect(periodSelect).toHaveValue("90d"));
+    await user.click(periodTrigger);
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /Last 90 days/i })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("option", { name: /Last 90 days/i }));
+    await waitFor(() => expect(periodTrigger).toHaveTextContent("Last 90 days"));
   });
 });
 

@@ -22,7 +22,7 @@ export const skeletonCardChrome = cn(
 
 /** Chart / wide panels — no borders, with fade */
 export const skeletonPanelChrome = cn(
-  "rounded-2xl bg-card/92 p-6 shadow-none dark:bg-card/85 transition-all duration-300 ease-out",
+  "rounded-(--radius) bg-card/92 p-6 shadow-none dark:bg-card/85 transition-all duration-300 ease-out",
 );
 
 /** Dense row shell — completely borderless with fade */
@@ -100,7 +100,7 @@ export function SkeletonStatStrip({
       {keys.map((key) => (
         <Skeleton
           key={key}
-          className="h-28 rounded-2xl bg-card/90 dark:bg-card/80 transition-all duration-300 ease-out"
+          className="h-28 rounded-(--radius) bg-card/90 dark:bg-card/80 transition-all duration-300 ease-out"
         />
       ))}
     </div>

@@ -1184,5 +1184,38 @@
         "dataType": "Text"
       }
     }
+  },
+  "login": {
+    "heroTitle": "Dein europäisches Waterfront-Netzwerk – auf einen Blick",
+    "heroDescription": "Die interne Kommandozentrale für AquaDocks Vertrieb, Partnerschaften und Wachstum — vom ersten Lead bis zum langfristigen Betreiber-Erfolg.",
+    "benefit1": "Volle Pipeline-Übersicht über alle Märkte",
+    "benefit2": "Automatisierte Follow-ups und Massen-E-Mail-Kampagnen",
+    "benefit3": "OpenMap-Lead-Erkennung und Deal-Tracking",
+    "trustStatement": "Das interne CRM hinter AquaDocks Expansion in ganz Europa",
+    "mobileTagline": "AquaDocks internes Vertriebs- und Partner-CRM",
+    "signInTitle": "Anmelden",
+    "signInDescription": "Geben Sie Ihre Zugangsdaten ein, um auf AquaDock CRM zuzugreifen",
+    "recoveryLinkExpiredTitle": "Link ungültig oder abgelaufen",
+    "recoveryLinkExpiredDescription": "Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn aus der E-Mail erneut.",
+    "recoverySetTitle": "Neues Passwort festlegen",
+    "recoverySetDescription": "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen.",
+    "recoverySessionPreparing": "Sitzung wird vorbereitet…",
+    "recoveryPersistentError": "Wenn das Problem weiterhin besteht, prüfen Sie, ob der Link vollständig geöffnet wurde, und wiederholen Sie den Vorgang mit einem neuen Link.",
+    "recoveryPleaseWait": "Bitte einen Moment gedulden…",
+    "loading": "Wird geladen…",
+    "recoveryNewPasswordLabel": "Neues Passwort",
+    "recoveryConfirmPasswordLabel": "Passwort bestätigen",
+    "recoverySaveButton": "Neues Passwort speichern",
+    "recoverySaving": "Wird gespeichert…",
+    "recoverySuccess": "Passwort erfolgreich geändert. Sie werden zur Anmeldung weitergeleitet...",
+    "hidePassword": "Passwort verbergen",
+    "showPassword": "Passwort anzeigen",
+    "hideConfirmPassword": "Passwortbestätigung verbergen",
+    "showConfirmPassword": "Passwortbestätigung anzeigen",
+    "recoveryTimeoutToastTitle": "Link ungültig oder abgelaufen.",
+    "recoveryTimeoutToastDescription": "Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn erneut.",
+    "recoveryErrorToast": "Passwort konnte nicht gespeichert werden.",
+    "errorBoundaryToast": "Ein unerwarteter Fehler ist aufgetreten.",
+    "errorBoundaryReload": "Bitte laden Sie die Seite neu."
   }
 }

@@ -487,7 +487,7 @@ export default function AdminTrashBinCard() {
   const isLoading = prefLoading || (trashEnabled && rowsLoading);
 
   return (
-    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-lg">
+    <Card className="shadow-sm">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2 text-xl">
           <ArchiveRestore className="h-6 w-6 text-primary" />

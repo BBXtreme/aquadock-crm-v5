@@ -3,12 +3,13 @@
 
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { Bell, LogOut, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bell, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,13 +27,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { useT } from "@/lib/i18n/use-translations";
+import { saveAppearanceTheme } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { appearanceThemeSchema } from "@/lib/validations/appearance";
 
 const PLACEHOLDER_AVATAR_SRC = "/placeholder-avatar.png";
 
@@ -56,21 +62,53 @@ type HeaderProps = {
   user: AuthUser;
 };
 
+const THEME_ICON = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
+} as const;
+
 export default function Header({ user }: HeaderProps) {
   const t = useT("layout");
+  const ts = useT("settings");
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
-    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const themeMutation = useMutation({
+    mutationFn: saveAppearanceTheme,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appearance-settings"] });
+      toast.success(ts("appearance.themeSaved"));
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : ts("common.unknownError");
+      toast.error(ts("appearance.themeSaveErrorTitle"), { description: message });
+    },
+  });
+
+  const handleThemeChange = (value: string) => {
+    const parsed = appearanceThemeSchema.safeParse(value);
+    if (parsed.success) {
+      setTheme(parsed.data);
+      themeMutation.mutate(parsed.data);
+    }
+  };
+
+  const ThemeTriggerIcon =
+    mounted && theme ? THEME_ICON[theme as keyof typeof THEME_ICON] ?? Monitor : Monitor;
 
   // Reminder calculations (Monday–Sunday week)
   const now = new Date();
@@ -127,13 +165,14 @@ export default function Header({ user }: HeaderProps) {
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border flex h-14 items-center justify-between p-0.5 pr-5 ${
-        isScrolled ? "shadow-md" : "shadow-sm"
-      }`}
+      className={cn(
+        "sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border bg-background/80 px-5 backdrop-blur-md transition-shadow",
+        isScrolled ? "shadow-md" : "shadow-none",
+      )}
     >
       <div className="flex items-center space-x-4">
         <Link href="/dashboard">
-          <div className="ml-5 flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
+          <div className="flex h-22 w-22 items-center justify-center transition-transform hover:scale-105 md:h-26 md:w-26">
             <Image
               src={mounted && resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
               alt="AquaDock CRM"
@@ -159,7 +198,10 @@ export default function Header({ user }: HeaderProps) {
           <Link href="/reminders?status=overdue">
             <Button variant="ghost" className="relative">
               <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white">
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs"
+              >
                 {overdueRemindersCount}
               </Badge>
             </Button>
@@ -194,25 +236,34 @@ export default function Header({ user }: HeaderProps) {
           </AlertDialogContent>
         </AlertDialog>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            const next =
-              theme === "system"
-                ? resolvedTheme === "dark"
-                  ? "light"
-                  : "dark"
-                : theme === "dark"
-                  ? "light"
-                  : "dark";
-            setTheme(next);
-          }}
-          aria-label="Toggle theme"
-          suppressHydrationWarning={true}
-        >
-          {mounted && (resolvedTheme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />)}
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={ts("appearance.themeLabel")}
+              suppressHydrationWarning={true}
+            >
+              <ThemeTriggerIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-32">
+            <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
+              <DropdownMenuRadioItem value="light" className="gap-2">
+                <Sun className="h-4 w-4 shrink-0" />
+                {ts("appearance.themeLight")}
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="dark" className="gap-2">
+                <Moon className="h-4 w-4 shrink-0" />
+                {ts("appearance.themeDark")}
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="system" className="gap-2">
+                <Monitor className="h-4 w-4 shrink-0" />
+                {ts("appearance.themeSystem")}
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

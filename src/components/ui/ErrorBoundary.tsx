@@ -24,7 +24,7 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
       fallback || (
         <div className="h-full flex items-center justify-center bg-muted/40 p-8">
           <div className="text-center max-w-md">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h3 className="font-semibold text-lg mb-2">Kartenfehler</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Die Karte konnte nicht geladen werden. Bitte versuchen Sie es erneut.

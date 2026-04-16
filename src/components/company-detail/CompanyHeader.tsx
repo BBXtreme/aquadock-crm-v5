@@ -122,14 +122,14 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
       <div className="flex items-center gap-4 flex-wrap">
         <Badge
           className={cn(
-            company.status === "gewonnen" && "bg-emerald-600 text-white",
-            company.status === "verloren" && "bg-rose-600 text-white",
-            company.status === "lead" && "bg-amber-600 text-white",
+            company.status === "gewonnen" && "bg-success text-success-foreground",
+            company.status === "verloren" && "bg-destructive text-destructive-foreground",
+            company.status === "lead" && "bg-warning text-warning-foreground",
           )}
         >
           {getStatusLabel(company.status)}
         </Badge>
-        {company.kundentyp && <Badge className="bg-[#24BACC] text-white">{getKundentypLabel(company.kundentyp)}</Badge>}
+        {company.kundentyp && <Badge className="bg-primary text-primary-foreground">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>}
         {company.wassertyp && (
           <Badge variant="outline">

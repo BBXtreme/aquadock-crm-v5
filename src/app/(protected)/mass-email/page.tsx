@@ -7,6 +7,7 @@
 
 import { Suspense } from "react";
 import { MassEmailPageSkeleton } from "@/components/ui/page-list-skeleton";
+import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import ClientMassEmailPage from "./ClientMassEmailPage";
 
@@ -14,12 +15,10 @@ export default async function MassEmailPage() {
   await requireUser();
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <Suspense fallback={<MassEmailPageSkeleton />}>
-          <ClientMassEmailPage />
-        </Suspense>
-      </div>
-    </div>
+    <PageShell>
+      <Suspense fallback={<MassEmailPageSkeleton />}>
+        <ClientMassEmailPage />
+      </Suspense>
+    </PageShell>
   );
 }

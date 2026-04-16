@@ -195,10 +195,10 @@ export default function RemindersCard({ companyId }: Props) {
                           <Badge
                             className={
                               reminder.priority === "hoch"
-                                ? "bg-orange-500 text-white"
+                                ? "bg-warning text-warning-foreground"
                                 : reminder.priority === "normal"
-                                  ? "bg-blue-500 text-white"
-                                  : "bg-muted text-foreground"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
                             }
                           >
                             {t(priorityKey(reminder.priority))}

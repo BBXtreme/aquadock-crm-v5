@@ -28,41 +28,41 @@ export default function SalesPipelineFunnel(props: SalesPipelineFunnelProps = de
       name: "Leads",
       value: leads,
       height: "h-[30px] md:h-[42px]",
-      gradient: "bg-blue-500",
+      gradient: "bg-chart-1",
       clipPath: "polygon(20% 0%, 80% 0%, 75% 100%, 25% 100%)",
     },
     {
       name: "Qualified",
       value: qualified,
       height: "h-[25px] md:h-[36px]",
-      gradient: "bg-green-500",
+      gradient: "bg-chart-2",
       clipPath: "polygon(25% 0%, 75% 0%, 70% 100%, 30% 100%)",
     },
     {
       name: "Proposal Sent",
       value: proposal,
       height: "h-[21px] md:h-[30px]",
-      gradient: "bg-yellow-500",
+      gradient: "bg-chart-3",
       clipPath: "polygon(30% 0%, 70% 0%, 65% 100%, 35% 100%)",
     },
     {
       name: "Negotiation",
       value: negotiation,
       height: "h-[17px] md:h-[24px]",
-      gradient: "bg-orange-500",
+      gradient: "bg-chart-4",
       clipPath: "polygon(35% 0%, 65% 0%, 60% 100%, 40% 100%)",
     },
     {
       name: "Won",
       value: won,
       height: "h-[13px] md:h-[18px]",
-      gradient: "bg-red-500",
+      gradient: "bg-chart-5",
       clipPath: "polygon(40% 0%, 60% 0%, 55% 100%, 45% 100%)",
     },
   ];
 
   return (
-    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <Card className="shadow-sm">
       <CardContent className="p-6">
         <h3 className="mb-4 font-semibold text-lg">Sales Pipeline</h3>
         <div className="flex flex-col items-center">

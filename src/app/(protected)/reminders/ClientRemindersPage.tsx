@@ -170,7 +170,7 @@ function ClientRemindersPage() {
         <StatCard title={t("statOpen")} value={stats.open.toString()} icon={<CheckCircle className="h-4 w-4" />} />
         <StatCard
           title={t("statOverdue")}
-          value={<span className={stats.overdue > 0 ? "text-red-600" : ""}>{stats.overdue.toString()}</span>}
+          value={<span className={stats.overdue > 0 ? "text-destructive" : ""}>{stats.overdue.toString()}</span>}
           icon={<AlertTriangle className="h-4 w-4" />}
         />
         <StatCard title={t("statThisWeek")} value={stats.thisWeek.toString()} icon={<Calendar className="h-4 w-4" />} />
@@ -232,10 +232,10 @@ function ClientRemindersPage() {
                         <Badge
                           className={
                             reminder.priority === "hoch"
-                              ? "bg-orange-500 text-white"
+                              ? "bg-warning text-warning-foreground"
                               : reminder.priority === "normal"
-                                ? "bg-blue-500 text-white"
-                                : "bg-gray-500 text-white"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground"
                           }
                         >
                           {reminder.priority === "hoch"

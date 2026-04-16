@@ -1184,5 +1184,38 @@
         "dataType": "Tekst"
       }
     }
+  },
+  "login": {
+    "heroTitle": "Svaka europska prilika na obali — jedan pogled",
+    "heroDescription": "Interni upravljački centar za AquaDock prodaju, partnerstva i rast — od prvog leada do dugoročnog uspjeha operatera.",
+    "benefit1": "Potpuna vidljivost prodajnog kanala na svim tržištima",
+    "benefit2": "Automatizirani follow-upovi i masovne e-mail kampanje",
+    "benefit3": "OpenMap otkrivanje leadova i praćenje poslova",
+    "trustStatement": "Interni CRM koji pokreće AquaDock ekspanziju diljem Europe",
+    "mobileTagline": "AquaDock interni CRM za prodaju i partnere",
+    "signInTitle": "Prijava",
+    "signInDescription": "Unesite svoje podatke za pristup AquaDock CRM-u",
+    "recoveryLinkExpiredTitle": "Poveznica je nevažeća ili istekla",
+    "recoveryLinkExpiredDescription": "Zatražite novu poveznicu za resetiranje i otvorite je iz e-pošte.",
+    "recoverySetTitle": "Postavite novu lozinku",
+    "recoverySetDescription": "Odaberite sigurnu lozinku koju ne koristite nigdje drugdje.",
+    "recoverySessionPreparing": "Priprema sesije…",
+    "recoveryPersistentError": "Ako se problem nastavi, provjerite je li poveznica u potpunosti otvorena i pokušajte ponovno s novom poveznicom.",
+    "recoveryPleaseWait": "Pričekajte trenutak…",
+    "loading": "Učitavanje…",
+    "recoveryNewPasswordLabel": "Nova lozinka",
+    "recoveryConfirmPasswordLabel": "Potvrda lozinke",
+    "recoverySaveButton": "Spremi novu lozinku",
+    "recoverySaving": "Spremanje…",
+    "recoverySuccess": "Lozinka je uspješno promijenjena. Preusmjeravamo vas na prijavu...",
+    "hidePassword": "Sakrij lozinku",
+    "showPassword": "Prikaži lozinku",
+    "hideConfirmPassword": "Sakrij potvrdu lozinke",
+    "showConfirmPassword": "Prikaži potvrdu lozinke",
+    "recoveryTimeoutToastTitle": "Poveznica je nevažeća ili istekla.",
+    "recoveryTimeoutToastDescription": "Zatražite novu poveznicu za resetiranje i pokušajte ponovno.",
+    "recoveryErrorToast": "Lozinka se nije mogla spremiti.",
+    "errorBoundaryToast": "Došlo je do neočekivane pogreške.",
+    "errorBoundaryReload": "Molimo ponovno učitajte stranicu."
   }
 }

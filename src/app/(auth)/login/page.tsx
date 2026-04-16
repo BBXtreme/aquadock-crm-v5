@@ -11,6 +11,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Component,
@@ -45,6 +46,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PW_RECOVERY_SESSION_STORAGE_KEY } from "@/lib/constants/auth-recovery";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import {
   type PasswordRecoverySetFormValues,
@@ -54,9 +56,9 @@ import {
 /** Supabase Auth UI theme tokens — use CSS variables so light/dark follow `html.dark` (ThemeSupa defaults hard-code `inputText: black`). */
 const loginAuthAppearanceVariables = {
   colors: {
-    brand: "#24BACC",
-    brandAccent: "#1da0a8",
-    brandButtonText: "#ffffff",
+    brand: "var(--primary)",
+    brandAccent: "var(--ring)",
+    brandButtonText: "var(--primary-foreground)",
     defaultButtonBackground: "var(--card)",
     defaultButtonBackgroundHover: "var(--muted)",
     defaultButtonBorder: "var(--border)",
@@ -113,7 +115,11 @@ function getLoginPageSupabaseClient(): SupabaseClient {
 
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
-type LoginAuthErrorBoundaryProps = { children: ReactNode };
+type LoginAuthErrorBoundaryProps = {
+  children: ReactNode;
+  errorToast: string;
+  reloadMessage: string;
+};
 
 type LoginAuthErrorBoundaryState = { didCatch: boolean };
 
@@ -130,8 +136,8 @@ class LoginAuthErrorBoundary extends Component<
 
   componentDidCatch(error: unknown, _info: ErrorInfo) {
     const message =
-      error instanceof Error ? error.message : "Unbekannter Fehler";
-    toast.error("Ein unerwarteter Fehler ist aufgetreten.", {
+      error instanceof Error ? error.message : "Unknown error";
+    toast.error(this.props.errorToast, {
       description: message,
     });
   }
@@ -140,7 +146,7 @@ class LoginAuthErrorBoundary extends Component<
     if (this.state.didCatch) {
       return (
         <p className="text-center text-muted-foreground text-sm">
-          Bitte laden Sie die Seite neu.
+          {this.props.reloadMessage}
         </p>
       );
     }
@@ -291,6 +297,7 @@ export function PasswordRecoveryUpdatePanel({
   recoverySaved: boolean;
   onRecoverySuccess: () => void;
 }) {
+  const t = useT("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -331,8 +338,8 @@ export function PasswordRecoveryUpdatePanel({
               "message" in err &&
               typeof (err as { message: unknown }).message === "string"
             ? (err as { message: string }).message
-            : "Unbekannter Fehler";
-      toast.error("Passwort konnte nicht gespeichert werden.", {
+            : "Unknown error";
+      toast.error(t("recoveryErrorToast"), {
         description,
       });
     },
@@ -346,14 +353,13 @@ export function PasswordRecoveryUpdatePanel({
     return (
       <div className="flex flex-col items-center gap-8 py-2 text-center">
         <div
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+          className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success"
           aria-hidden
         >
           <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
         </div>
         <p className="font-medium text-foreground text-lg tracking-tight">
-          Passwort erfolgreich geändert. Sie werden zur Anmeldung
-          weitergeleitet...
+          {t("recoverySuccess")}
         </p>
       </div>
     );
@@ -367,7 +373,9 @@ export function PasswordRecoveryUpdatePanel({
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Neues Passwort</FormLabel>
+              <FormLabel className="text-base">
+                {t("recoveryNewPasswordLabel")}
+              </FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
@@ -390,7 +398,7 @@ export function PasswordRecoveryUpdatePanel({
                     toggleShowPassword();
                   }}
                   aria-label={
-                    showPassword ? "Passwort verbergen" : "Passwort anzeigen"
+                    showPassword ? t("hidePassword") : t("showPassword")
                   }
                 >
                   {showPassword ? (
@@ -409,7 +417,9 @@ export function PasswordRecoveryUpdatePanel({
           name="confirm_password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Passwort bestätigen</FormLabel>
+              <FormLabel className="text-base">
+                {t("recoveryConfirmPasswordLabel")}
+              </FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
@@ -435,8 +445,8 @@ export function PasswordRecoveryUpdatePanel({
                   }}
                   aria-label={
                     showConfirmPassword
-                      ? "Passwortbestätigung verbergen"
-                      : "Passwortbestätigung anzeigen"
+                      ? t("hideConfirmPassword")
+                      : t("showConfirmPassword")
                   }
                 >
                   {showConfirmPassword ? (
@@ -452,12 +462,12 @@ export function PasswordRecoveryUpdatePanel({
         />
         <Button
           type="submit"
-          className="h-11 w-full bg-[#24BACC] text-base text-white transition-colors hover:bg-[#1da0a8]"
+          className="h-11 w-full text-base"
           disabled={updatePassword.isPending}
         >
           {updatePassword.isPending
-            ? "Wird gespeichert…"
-            : "Neues Passwort speichern"}
+            ? t("recoverySaving")
+            : t("recoverySaveButton")}
         </Button>
       </form>
     </Form>
@@ -465,6 +475,7 @@ export function PasswordRecoveryUpdatePanel({
 }
 
 export default function LoginPage() {
+  const t = useT("login");
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [recoverySaved, setRecoverySaved] = useState(false);
@@ -527,14 +538,13 @@ export default function LoginPage() {
       setRecoverySessionTimedOut(true);
       if (!recoveryTimeoutToastShownRef.current) {
         recoveryTimeoutToastShownRef.current = true;
-        toast.error("Link ungültig oder abgelaufen.", {
-          description:
-            "Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn erneut.",
+        toast.error(t("recoveryTimeoutToastTitle"), {
+          description: t("recoveryTimeoutToastDescription"),
         });
       }
     }, RECOVERY_SESSION_READY_TIMEOUT_MS);
     return () => window.clearTimeout(id);
-  }, [view, recoverySaved, recoverySessionReady]);
+  }, [view, recoverySaved, recoverySessionReady, t]);
 
   useEffect(() => {
     if (!supabase) {
@@ -642,142 +652,210 @@ export default function LoginPage() {
   }, [router, getRedirectPath, supabase]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card
-        className={
-          view === "update_password"
-            ? "w-full max-w-lg rounded-2xl border border-border bg-card px-2 py-1 text-card-foreground shadow-lg sm:px-4"
-            : "w-full max-w-md rounded-xl border border-border bg-card text-card-foreground shadow-sm"
-        }
-      >
-        <CardHeader className="space-y-2 pb-2 text-center sm:pb-4">
-          {view === "update_password" ? (
-            recoverySaved ? null : recoverySessionTimedOut &&
-              !recoverySessionReady ? (
-              <>
-                <CardTitle className="font-semibold text-3xl tracking-tight">
-                  Link ungültig oder abgelaufen
-                </CardTitle>
-                <CardDescription className="text-base text-muted-foreground">
-                  Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn
-                  aus der E-Mail erneut.
-                </CardDescription>
-              </>
-            ) : (
-              <>
-                <CardTitle className="font-semibold text-3xl tracking-tight">
-                  Neues Passwort festlegen
-                </CardTitle>
-                <CardDescription className="flex items-center justify-center gap-2 text-base text-muted-foreground">
-                  {!recoverySessionReady ? (
-                    <Loader2
-                      className="size-4 shrink-0 animate-spin text-muted-foreground"
-                      aria-hidden
-                    />
-                  ) : null}
-                  <span>
-                    {recoverySessionReady
-                      ? "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen."
-                      : "Sitzung wird vorbereitet…"}
-                  </span>
-                </CardDescription>
-              </>
-            )
-          ) : (
-            <CardTitle className="font-semibold text-2xl">
-              Sign In to AquaDock CRM
-            </CardTitle>
-          )}
-        </CardHeader>
-        <CardContent
+    <div className="flex min-h-screen bg-background">
+      {/* ─── Hero Panel (desktop) ─── */}
+      <aside className="relative hidden overflow-hidden border-r border-border lg:flex lg:w-[45%] lg:flex-col lg:justify-between lg:p-12 xl:p-16">
+        <div
+          className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/4 to-primary/8"
+          aria-hidden="true"
+        />
+
+        <div className="relative">
+          <Image
+            src="/logo-light.png"
+            alt="AquaDock"
+            width={180}
+            height={48}
+            className="block h-10 w-auto object-contain dark:hidden"
+            priority
+          />
+          <Image
+            src="/logo-dark.png"
+            alt="AquaDock"
+            width={180}
+            height={48}
+            className="hidden h-10 w-auto object-contain dark:block"
+            priority
+          />
+        </div>
+
+        <div className="relative space-y-6">
+          <h1 className="max-w-sm text-3xl font-semibold leading-[1.15] tracking-tight text-foreground xl:text-4xl">
+            {t("heroTitle")}
+          </h1>
+          <p className="max-w-md leading-relaxed text-muted-foreground">
+            {t("heroDescription")}
+          </p>
+          <ul className="space-y-3.5 pt-2" aria-label="Key benefits">
+            {(["benefit1", "benefit2", "benefit3"] as const).map((key) => (
+              <li key={key} className="flex items-center gap-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                </span>
+                <span className="text-sm text-foreground">{t(key)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="relative text-xs text-muted-foreground">
+          {t("trustStatement")}
+        </p>
+      </aside>
+
+      {/* ─── Auth Panel ─── */}
+      <main className="flex flex-1 flex-col items-center justify-center p-4 sm:p-8">
+        <div className="mb-8 flex flex-col items-center gap-3 lg:hidden">
+          <Image
+            src="/logo-light.png"
+            alt="AquaDock"
+            width={160}
+            height={40}
+            className="block h-8 w-auto object-contain dark:hidden"
+            priority
+          />
+          <Image
+            src="/logo-dark.png"
+            alt="AquaDock"
+            width={160}
+            height={40}
+            className="hidden h-8 w-auto object-contain dark:block"
+            priority
+          />
+          <p className="text-sm text-muted-foreground">
+            {t("mobileTagline")}
+          </p>
+        </div>
+
+        <Card
           className={
             view === "update_password"
-              ? "space-y-4 px-4 pb-8 sm:px-8"
-              : "space-y-4 px-4 pb-8 sm:px-6"
+              ? "w-full max-w-lg py-6 shadow-sm"
+              : "w-full max-w-md py-6 shadow-sm"
           }
         >
-          {view !== "update_password" ? (
-            <div className="mb-4 flex justify-center space-x-2">
-              <Button
-                variant={view === "sign_in" ? "default" : "outline"}
-                onClick={() => setView("sign_in")}
-                className="flex-1"
-              >
-                Sign In
-              </Button>
-              <Button
-                variant="outline"
-                disabled
-                className="flex-1 opacity-50"
-              >
-                Sign Up
-              </Button>
-            </div>
-          ) : null}
-
-          {supabase ? (
-            <LoginAuthErrorBoundary>
-              {view === "update_password" ? (
-                recoverySessionTimedOut && !recoverySessionReady && !recoverySaved ? (
-                  <p className="text-center text-muted-foreground text-sm">
-                    Wenn das Problem weiterhin besteht, prüfen Sie, ob der Link vollständig
-                    geöffnet wurde, und wiederholen Sie den Vorgang mit einem neuen Link.
-                  </p>
-                ) : recoverySaved || recoverySessionReady ? (
-                  <PasswordRecoveryUpdatePanel
-                    supabase={supabase}
-                    recoverySaved={recoverySaved}
-                    onRecoverySuccess={() => {
-                      isRecoveryFlowRef.current = false;
-                      setRecoverySaved(true);
-                      startTransition(() => {
-                        router.replace("/login");
-                      });
-                    }}
-                  />
-                ) : (
-                  <p className="flex items-center justify-center gap-2 text-center text-muted-foreground text-sm">
-                    <Loader2
-                      className="size-4 shrink-0 animate-spin text-muted-foreground"
-                      aria-hidden
-                    />
-                    <span>Bitte einen Moment gedulden…</span>
-                  </p>
-                )
+          <CardHeader className="space-y-1.5 pb-2 text-center sm:pb-4">
+            {view === "update_password" ? (
+              recoverySaved ? null : recoverySessionTimedOut &&
+                !recoverySessionReady ? (
+                <>
+                  <CardTitle className="text-2xl font-semibold tracking-tight">
+                    {t("recoveryLinkExpiredTitle")}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    {t("recoveryLinkExpiredDescription")}
+                  </CardDescription>
+                </>
               ) : (
-                <div
-                  className={
-                    "login-supabase-auth w-full [&_a]:!text-muted-foreground [&_a:hover]:!text-foreground " +
-                    "[&_input]:!border-border [&_input]:!bg-card [&_input]:!text-foreground " +
-                    "[&_input::placeholder]:!text-muted-foreground [&_label]:!text-foreground " +
-                    "[&_p]:!text-foreground"
-                  }
-                >
-                  <Auth
-                    supabaseClient={supabase}
-                    view={view}
-                    appearance={{
-                      theme: ThemeSupa,
-                      variables: {
-                        default: loginAuthAppearanceVariables,
-                      },
-                    }}
-                    providers={[]}
-                    redirectTo={authRedirectTo}
-                    onlyThirdPartyProviders={false}
-                    magicLink={true}
-                    showLinks={false}
-                  />
-                </div>
-              )}
-            </LoginAuthErrorBoundary>
-          ) : (
-            <p className="text-center text-muted-foreground text-sm">
-              Wird geladen…
-            </p>
-          )}
-        </CardContent>
-      </Card>
+                <>
+                  <CardTitle className="text-2xl font-semibold tracking-tight">
+                    {t("recoverySetTitle")}
+                  </CardTitle>
+                  <CardDescription className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    {!recoverySessionReady ? (
+                      <Loader2
+                        className="size-4 shrink-0 animate-spin text-muted-foreground"
+                        aria-hidden
+                      />
+                    ) : null}
+                    <span>
+                      {recoverySessionReady
+                        ? t("recoverySetDescription")
+                        : t("recoverySessionPreparing")}
+                    </span>
+                  </CardDescription>
+                </>
+              )
+            ) : (
+              <>
+                <CardTitle className="text-xl font-semibold tracking-tight">
+                  {t("signInTitle")}
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  {t("signInDescription")}
+                </CardDescription>
+              </>
+            )}
+          </CardHeader>
+          <CardContent
+            className={
+              view === "update_password"
+                ? "space-y-4 px-4 pb-6 sm:px-8"
+                : "space-y-4 px-4 pb-6 sm:px-6"
+            }
+          >
+            {supabase ? (
+              <LoginAuthErrorBoundary
+                errorToast={t("errorBoundaryToast")}
+                reloadMessage={t("errorBoundaryReload")}
+              >
+                {view === "update_password" ? (
+                  recoverySessionTimedOut &&
+                  !recoverySessionReady &&
+                  !recoverySaved ? (
+                    <p className="text-center text-sm text-muted-foreground">
+                      {t("recoveryPersistentError")}
+                    </p>
+                  ) : recoverySaved || recoverySessionReady ? (
+                    <PasswordRecoveryUpdatePanel
+                      supabase={supabase}
+                      recoverySaved={recoverySaved}
+                      onRecoverySuccess={() => {
+                        isRecoveryFlowRef.current = false;
+                        setRecoverySaved(true);
+                        startTransition(() => {
+                          router.replace("/login");
+                        });
+                      }}
+                    />
+                  ) : (
+                    <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+                      <Loader2
+                        className="size-4 shrink-0 animate-spin text-muted-foreground"
+                        aria-hidden
+                      />
+                      <span>{t("recoveryPleaseWait")}</span>
+                    </p>
+                  )
+                ) : (
+                  <div
+                    className={
+                    "login-supabase-auth w-full [&_a]:text-muted-foreground! [&_a:hover]:text-foreground! " +
+                    "[&_input]:border-border! [&_input]:bg-card! [&_input]:text-foreground! " +
+                    "[&_input::placeholder]:text-muted-foreground! [&_label]:text-foreground! " +
+                    "[&_p]:text-foreground!"
+                    }
+                  >
+                    <Auth
+                      supabaseClient={supabase}
+                      view={view}
+                      appearance={{
+                        theme: ThemeSupa,
+                        variables: {
+                          default: loginAuthAppearanceVariables,
+                        },
+                      }}
+                      providers={[]}
+                      redirectTo={authRedirectTo}
+                      onlyThirdPartyProviders={false}
+                      magicLink={true}
+                      showLinks={false}
+                    />
+                  </div>
+                )}
+              </LoginAuthErrorBoundary>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground">
+                {t("loading")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground lg:hidden">
+          {t("trustStatement")}
+        </p>
+      </main>
     </div>
   );
 }

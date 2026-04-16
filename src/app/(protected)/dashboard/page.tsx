@@ -5,8 +5,8 @@
 // Protected dashboard with real KPI calculations and beautiful visualizations.
 
 import { Suspense } from "react";
-
 import { DashboardContentSkeleton } from "@/components/ui/page-list-skeleton";
+import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import DashboardClient from "./DashboardClient";
 import { DashboardPageHeader } from "./DashboardPageHeader";
@@ -15,14 +15,12 @@ export default async function DashboardPage() {
   const user = await requireUser();
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <DashboardPageHeader displayName={user.display_name} />
+    <PageShell>
+      <DashboardPageHeader displayName={user.display_name} />
 
-        <Suspense fallback={<DashboardContentSkeleton />}>
-          <DashboardClient />
-        </Suspense>
-      </div>
-    </div>
+      <Suspense fallback={<DashboardContentSkeleton />}>
+        <DashboardClient />
+      </Suspense>
+    </PageShell>
   );
 }

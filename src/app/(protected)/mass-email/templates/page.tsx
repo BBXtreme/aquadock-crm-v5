@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import TemplatesClient from "@/components/tables/EmailTemplatesClient";
 import { skeletonCardChrome } from "@/components/ui/page-list-skeleton";
+import { PageShell } from "@/components/ui/page-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/require-user";
 import { cn } from "@/lib/utils";
@@ -11,9 +12,8 @@ export default async function TemplatesPage() {
   await requireUser();
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <Suspense
+    <PageShell>
+      <Suspense
           fallback={
             <div className="space-y-8">
               <div className="flex items-center justify-between">
@@ -21,7 +21,7 @@ export default async function TemplatesPage() {
                 <Skeleton key="templates-header-2" className="h-10 w-40 rounded-xl" />
               </div>
 
-              <div className={cn(skeletonCardChrome, "overflow-hidden rounded-2xl")}>
+              <div className={cn(skeletonCardChrome, "overflow-hidden rounded-(--radius)")}>
                 <div className="border-b border-border/8 px-8 py-5 dark:border-border/14">
                   <div className="grid grid-cols-12 gap-4">
                     <Skeleton className="col-span-5 h-5" />
@@ -57,7 +57,6 @@ export default async function TemplatesPage() {
         >
           <TemplatesClient />
         </Suspense>
-      </div>
-    </div>
+    </PageShell>
   );
 }

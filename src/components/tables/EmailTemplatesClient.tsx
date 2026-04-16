@@ -168,7 +168,7 @@ export default function TemplatesClient() {
       </div>
 
       {error ? (
-        <div className="text-red-500">{t("templatesLoadError", { message: error.message })}</div>
+        <div className="text-destructive">{t("templatesLoadError", { message: error.message })}</div>
       ) : null}
 
       {templatesLoading ? (

@@ -79,7 +79,7 @@ function ClientCompaniesPage() {
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [bulkAiEnrichPending, setBulkAiEnrichPending] = useState(false);
+  const [_bulkAiEnrichPending, setBulkAiEnrichPending] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
@@ -309,7 +309,7 @@ function ClientCompaniesPage() {
     },
   });
 
-  const handleBulkAiEnrich = async () => {
+  const _handleBulkAiEnrich = async () => {
     const selectedIds = Object.keys(rowSelection);
     if (selectedIds.length === 0) {
       return;

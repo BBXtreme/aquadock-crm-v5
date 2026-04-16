@@ -4,6 +4,7 @@
 
 import { Suspense } from "react";
 import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
+import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -28,14 +29,12 @@ export default async function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <div className="container mx-auto space-y-8 p-4 sm:p-6 lg:p-8">
-        <SettingsPageHeader displayName={user.display_name} />
+    <PageShell>
+      <SettingsPageHeader displayName={user.display_name} />
 
-        <Suspense fallback={<SettingsPageSkeleton />}>
-          <ClientSettingsPage initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot} />
-        </Suspense>
-      </div>
-    </div>
+      <Suspense fallback={<SettingsPageSkeleton />}>
+        <ClientSettingsPage initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot} />
+      </Suspense>
+    </PageShell>
   );
 }
