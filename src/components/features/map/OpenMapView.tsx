@@ -37,6 +37,7 @@ import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provi
 import { loadMapSettings } from "@/lib/services/map-settings";
 import { fetchOpenmapUserPreferenceRows } from "@/lib/services/openmap-user-preferences";
 import { cn } from "@/lib/utils";
+import { isWgs84Degrees, toFiniteLatLon } from "@/lib/utils/geo";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
@@ -173,23 +174,6 @@ function collectFreshOsmPoiKeys(prev: OsmPoi[], incoming: OsmPoi[]): Set<string>
     if (!prevKeys.has(k)) fresh.add(k);
   }
   return fresh;
-}
-
-/** Accepts DB/JSON lat-lon as number or numeric string; rejects NaN. */
-function toFiniteLatLon(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === "string" && value.trim() !== "") {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-/** Rejects bogus coordinates (e.g. microdegrees or corrupted imports) that blow up LatLngBounds / fitBounds. */
-function isWgs84Degrees(lat: number, lon: number): boolean {
-  return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
 }
 
 function collectCompanyLatLngs(companies: CompanyForOpenMap[]): L.LatLng[] {

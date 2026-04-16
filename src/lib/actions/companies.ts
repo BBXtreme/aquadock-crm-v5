@@ -5,10 +5,17 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
+import { type ParsedCompanyRow, parseCoordinate } from "@/lib/utils/csv-import";
+import {
+  type GeocodeAddressResult,
+  type GeocodeConfidence,
+  type GeocodeFailureReason,
+  geocodeAddress,
+} from "@/lib/utils/geocode-nominatim";
 import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
 import type {
   Company,
@@ -197,6 +204,12 @@ export async function getKpis(supabase: SupabaseClient): Promise<KPI[]> {
 /* ──────────────────────────────────────────────────────────────
    CSV IMPORT
    ────────────────────────────────────────────────────────────── */
+function validCoordOrNull(value: number | null | undefined, min: number, max: number): number | null {
+  if (value === undefined || value === null) return null;
+  if (!Number.isFinite(value) || value < min || value > max) return null;
+  return value;
+}
+
 export async function importCompaniesFromCSV(
   rows: ParsedCompanyRow[]
 ): Promise<{ imported: number; errors: string[]; importBatch: string; companyIds: string[] }> {
@@ -215,8 +228,8 @@ export async function importCompaniesFromCSV(
       telefon: row.telefon ?? null,
       website: row.website ?? null,
       email: row.email ?? null,
-      lat: row.lat ?? null,
-      lon: row.lon ?? null,
+      lat: validCoordOrNull(row.lat, -90, 90),
+      lon: validCoordOrNull(row.lon, -180, 180),
       osm: row.osm ?? null,
       wasserdistanz: row.wasser_distanz ?? null,
       wassertyp: row.wassertyp ?? null,
@@ -252,4 +265,240 @@ export async function importCompaniesFromCSV(
       companyIds: [],
     };
   }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   NOMINATIM GEOCODE (preview + selective apply)
+   ────────────────────────────────────────────────────────────── */
+
+const GEOCODE_BATCH_MAX = 50;
+const GEOCODE_REQUEST_GAP_MS = 1100;
+
+export type GeocodeBatchPreviewRow = {
+  rowId: string;
+  companyId: string | null;
+  firmenname: string | null;
+  addressLabel: string;
+  currentLat: number | null;
+  currentLon: number | null;
+  suggestedLat: number | null;
+  suggestedLon: number | null;
+  confidence: GeocodeConfidence | null;
+  importance: number | null;
+  displayName: string | null;
+  ok: boolean;
+  message: string | null;
+};
+
+const geocodeBatchItemSchema = z
+  .object({
+    rowId: z.string().trim().min(1),
+    companyId: z.string().uuid().optional(),
+    firmenname: z.string().trim().optional(),
+    strasse: z.string().trim().nullable().optional(),
+    plz: z.string().trim().nullable().optional(),
+    stadt: z.string().trim().nullable().optional(),
+    land: z.string().trim().nullable().optional(),
+    currentLat: z.number().finite().nullable().optional(),
+    currentLon: z.number().finite().nullable().optional(),
+  })
+  .strict();
+
+const geocodeCompanyBatchInputSchema = z
+  .object({
+    items: z.array(geocodeBatchItemSchema).min(1).max(GEOCODE_BATCH_MAX),
+  })
+  .strict();
+
+function geocodeFailureMessage(reason: GeocodeFailureReason | null): string {
+  switch (reason) {
+    case "INCOMPLETE_ADDRESS":
+      return "Adresse unvollständig: Bitte Straße oder PLZ sowie Ort angeben.";
+    case "NETWORK_ERROR":
+      return "Geocoding-Dienst vorübergehend nicht erreichbar.";
+    case "INVALID_COORDINATE":
+      return "Ungültige Koordinaten in der Antwort.";
+    case "NO_RESULT":
+      return "Kein Treffer für diese Adresse.";
+    default:
+      return "Geocoding fehlgeschlagen.";
+  }
+}
+
+export type GeocodeCompanyBatchResult =
+  | { ok: true; previewOnly: true; results: GeocodeBatchPreviewRow[] }
+  | { ok: false; error: string };
+
+export async function geocodeCompanyBatch(input: unknown): Promise<GeocodeCompanyBatchResult> {
+  const parsed = geocodeCompanyBatchInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Ungültige Eingabe für Geocoding." };
+  }
+
+  const cache = new Map<string, GeocodeAddressResult>();
+  const results: GeocodeBatchPreviewRow[] = [];
+
+  for (let index = 0; index < parsed.data.items.length; index += 1) {
+    if (index > 0) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, GEOCODE_REQUEST_GAP_MS);
+      });
+    }
+
+    const item = parsed.data.items[index];
+    if (item === undefined) {
+      continue;
+    }
+
+    const geo = await geocodeAddress(
+      {
+        strasse: item.strasse,
+        plz: item.plz,
+        stadt: item.stadt,
+        land: item.land,
+      },
+      cache,
+    );
+
+    const currentLat =
+      item.currentLat === undefined || item.currentLat === null ? null : item.currentLat;
+    const currentLon =
+      item.currentLon === undefined || item.currentLon === null ? null : item.currentLon;
+
+    const addressParts = [
+      item.strasse?.trim(),
+      item.plz?.trim(),
+      item.stadt?.trim(),
+      item.land?.trim(),
+    ].filter((part): part is string => typeof part === "string" && part.length > 0);
+    const addressLabel = addressParts.length > 0 ? addressParts.join(", ") : "—";
+
+    results.push({
+      rowId: item.rowId,
+      companyId: item.companyId ?? null,
+      firmenname: item.firmenname ?? null,
+      addressLabel,
+      currentLat,
+      currentLon,
+      suggestedLat: geo.ok ? geo.lat : null,
+      suggestedLon: geo.ok ? geo.lon : null,
+      confidence: geo.confidence,
+      importance: geo.importance,
+      displayName: geo.displayName,
+      ok: geo.ok,
+      message: geo.ok ? null : geocodeFailureMessage(geo.reason),
+    });
+  }
+
+  return { ok: true, previewOnly: true, results };
+}
+
+const applyGeocodeItemSchema = z
+  .object({
+    companyId: z.string().uuid().optional(),
+    rowId: z.string().trim().min(1).optional(),
+    suggestedLat: z.number().finite(),
+    suggestedLon: z.number().finite(),
+  })
+  .strict()
+  .superRefine((val, ctx) => {
+    if (val.companyId === undefined && val.rowId === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Entweder companyId oder rowId ist erforderlich.",
+        path: ["companyId"],
+      });
+    }
+  });
+
+const applyApprovedGeocodesInputSchema = z
+  .object({
+    items: z.array(applyGeocodeItemSchema).min(1),
+  })
+  .strict();
+
+export type ApplyGeocodeItemResult =
+  | {
+      ok: true;
+      companyId?: string;
+      rowId?: string;
+      lat: number;
+      lon: number;
+    }
+  | {
+      ok: false;
+      companyId?: string;
+      rowId?: string;
+      error: string;
+    };
+
+export type ApplyApprovedGeocodesResult =
+  | { ok: true; results: ApplyGeocodeItemResult[] }
+  | { ok: false; error: string };
+
+export async function applyApprovedGeocodes(input: unknown): Promise<ApplyApprovedGeocodesResult> {
+  const parsed = applyApprovedGeocodesInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Ungültige Eingabe für Koordinaten-Übernahme." };
+  }
+
+  const results: ApplyGeocodeItemResult[] = [];
+  let wroteCompany = false;
+
+  for (const item of parsed.data.items) {
+    const lat = parseCoordinate(String(item.suggestedLat), "lat");
+    const lon = parseCoordinate(String(item.suggestedLon), "lon");
+
+    if (lat === undefined || lon === undefined) {
+      results.push({
+        ok: false,
+        companyId: item.companyId,
+        rowId: item.rowId,
+        error: "Koordinaten außerhalb des gültigen Bereichs oder ungültig.",
+      });
+      continue;
+    }
+
+    if (item.companyId !== undefined) {
+      try {
+        await updateCompany(item.companyId, { lat, lon });
+        wroteCompany = true;
+        results.push({
+          ok: true,
+          companyId: item.companyId,
+          lat,
+          lon,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Update fehlgeschlagen.";
+        results.push({
+          ok: false,
+          companyId: item.companyId,
+          error: message,
+        });
+      }
+      continue;
+    }
+
+    if (item.rowId !== undefined) {
+      results.push({
+        ok: true,
+        rowId: item.rowId,
+        lat,
+        lon,
+      });
+      continue;
+    }
+
+    results.push({
+      ok: false,
+      error: "rowId oder companyId erforderlich.",
+    });
+  }
+
+  if (wroteCompany) {
+    revalidatePath("/companies", "page");
+  }
+
+  return { ok: true, results };
 }

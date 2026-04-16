@@ -1,13 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Building, DollarSign, Trash, Trophy, Users, X } from "lucide-react";
+import { Building, DollarSign, Loader2, MapPin, Trash, Trophy, Users, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import { CSVImportDialog } from "@/components/features/companies/CSVImportDialog";
+import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import CompaniesTable from "@/components/tables/CompaniesTable";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -28,7 +29,13 @@ import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/u
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { deleteCompany, updateCompany } from "@/lib/actions/companies";
+import {
+  applyApprovedGeocodes,
+  deleteCompany,
+  type GeocodeBatchPreviewRow,
+  geocodeCompanyBatch,
+  updateCompany,
+} from "@/lib/actions/companies";
 import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
@@ -41,6 +48,31 @@ import type { Company, Contact } from "@/types/database.types";
 type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
+
+const GEOCODE_BATCH_MAX = 50;
+
+function companyNeedsGeocode(company: Company): boolean {
+  const hasLat = typeof company.lat === "number" && Number.isFinite(company.lat);
+  const hasLon = typeof company.lon === "number" && Number.isFinite(company.lon);
+  const lat = company.lat;
+  const lon = company.lon;
+  const coordsOk =
+    hasLat &&
+    hasLon &&
+    typeof lat === "number" &&
+    typeof lon === "number" &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180;
+  if (coordsOk) {
+    return false;
+  }
+  const stadt = (company.stadt ?? "").trim();
+  const strasse = (company.strasse ?? "").trim();
+  const plz = (company.plz ?? "").trim();
+  return stadt.length > 0 && (strasse.length > 0 || plz.length > 0);
+}
 
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -80,6 +112,10 @@ function ClientCompaniesPage() {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [_bulkAiEnrichPending, setBulkAiEnrichPending] = useState(false);
+  const [geocodeModalOpen, setGeocodeModalOpen] = useState(false);
+  const [geocodePreviewRows, setGeocodePreviewRows] = useState<GeocodeBatchPreviewRow[]>([]);
+  const [geocodeLoading, setGeocodeLoading] = useState(false);
+  const [geocodeApplying, setGeocodeApplying] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
@@ -347,6 +383,124 @@ function ClientCompaniesPage() {
     }
   };
 
+  const handleBulkGeocodePreview = async () => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) {
+      return;
+    }
+
+    const items: {
+      rowId: string;
+      companyId: string;
+      firmenname: string;
+      strasse: string | null;
+      plz: string | null;
+      stadt: string | null;
+      land: string | null;
+      currentLat: number | null;
+      currentLon: number | null;
+    }[] = [];
+
+    for (const id of selectedIds) {
+      const company = companies.find((c) => c.id === id);
+      if (company === undefined || !companyNeedsGeocode(company)) {
+        continue;
+      }
+      items.push({
+        rowId: `company-geocode-${company.id}`,
+        companyId: company.id,
+        firmenname: company.firmenname,
+        strasse: company.strasse ?? null,
+        plz: company.plz ?? null,
+        stadt: company.stadt ?? null,
+        land: company.land ?? null,
+        currentLat: typeof company.lat === "number" ? company.lat : null,
+        currentLon: typeof company.lon === "number" ? company.lon : null,
+      });
+    }
+
+    if (items.length === 0) {
+      toast.message("Keine ausgewählten Einträge für Geocoding.", {
+        description: "Es fehlen gültige Adressdaten oder die Koordinaten sind bereits vollständig.",
+      });
+      return;
+    }
+
+    const trimmed = items.slice(0, GEOCODE_BATCH_MAX);
+    if (items.length > GEOCODE_BATCH_MAX) {
+      toast.message(`Es werden nur die ersten ${String(GEOCODE_BATCH_MAX)} Einträge geocodiert.`);
+    }
+
+    setGeocodeLoading(true);
+    try {
+      const res = await geocodeCompanyBatch({ items: trimmed });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      setGeocodePreviewRows(res.results);
+      setGeocodeModalOpen(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Geocoding fehlgeschlagen.";
+      toast.error(message);
+    } finally {
+      setGeocodeLoading(false);
+    }
+  };
+
+  const handleApplyCompanyGeocodes = async (rowIds: string[]) => {
+    const previewById = new Map<string, GeocodeBatchPreviewRow>();
+    for (const row of geocodePreviewRows) {
+      previewById.set(row.rowId, row);
+    }
+
+    const applyItems = rowIds
+      .map((rowId) => previewById.get(rowId))
+      .filter(
+        (preview): preview is GeocodeBatchPreviewRow =>
+          preview !== undefined &&
+          preview.companyId !== null &&
+          preview.suggestedLat !== null &&
+          preview.suggestedLon !== null,
+      )
+      .map((preview) => ({
+        companyId: preview.companyId,
+        suggestedLat: preview.suggestedLat,
+        suggestedLon: preview.suggestedLon,
+      }));
+
+    if (applyItems.length === 0) {
+      return;
+    }
+
+    setGeocodeApplying(true);
+    try {
+      const applyRes = await applyApprovedGeocodes({ items: applyItems });
+      if (!applyRes.ok) {
+        toast.error(applyRes.error);
+        return;
+      }
+
+      const failed = applyRes.results.filter((r) => !r.ok).length;
+      const ok = applyRes.results.length - failed;
+      if (failed > 0) {
+        toast.success(`${String(ok)} übernommen, ${String(failed)} fehlgeschlagen.`);
+      } else {
+        toast.success(`${String(ok)} Koordinaten übernommen.`);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["companies"] });
+      setRowSelection({});
+      setGeocodeModalOpen(false);
+      setGeocodePreviewRows([]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Übernahme fehlgeschlagen.";
+      toast.error(message);
+    } finally {
+      setGeocodeApplying(false);
+    }
+  };
+
   const handleBulkDelete = async () => {
     const selectedIds = Object.keys(rowSelection);
     if (selectedIds.length === 0) return;
@@ -389,6 +543,18 @@ function ClientCompaniesPage() {
 
   return (
     <>
+      <GeocodeReviewModal
+        open={geocodeModalOpen}
+        onOpenChange={(next) => {
+          setGeocodeModalOpen(next);
+          if (!next) {
+            setGeocodePreviewRows([]);
+          }
+        }}
+        rows={geocodePreviewRows}
+        isApplying={geocodeApplying}
+        onApplySelected={handleApplyCompanyGeocodes}
+      />
       <div className="flex items-center justify-between pb-6 border-b">
         <div>
           <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
@@ -617,25 +783,41 @@ function ClientCompaniesPage() {
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}
               selectionActions={
-                <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("bulkDeleteTitle")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("bulkDeleteDescription", { count: Object.keys(rowSelection).length })}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleBulkDelete}>{t("delete")}</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    title="Koordinaten vervollständigen"
+                    disabled={geocodeLoading || Object.keys(rowSelection).length === 0}
+                    onClick={() => void handleBulkGeocodePreview()}
+                  >
+                    {geocodeLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <MapPin className="h-4 w-4" aria-hidden />
+                    )}
+                  </Button>
+                  <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("bulkDeleteTitle")}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("bulkDeleteDescription", { count: Object.keys(rowSelection).length })}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleBulkDelete}>{t("delete")}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
               }
             />
           </CardContent>

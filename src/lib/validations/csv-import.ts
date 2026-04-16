@@ -16,8 +16,8 @@ export const parsedCompanyRowSchema = z
     telefon: z.string().trim().optional(),
     website: z.string().trim().optional(),
     email: z.string().trim().optional(),
-    lat: z.number().optional(),
-    lon: z.number().optional(),
+    lat: z.number().min(-90).max(90).optional(),
+    lon: z.number().min(-180).max(180).optional(),
     osm: z.string().trim().optional(),
   })
   .strict();

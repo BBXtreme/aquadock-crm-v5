@@ -60,6 +60,34 @@ export function parseGermanFloat(value: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+export function parseCoordinate(value: string | undefined | null, kind: "lat" | "lon"): number | undefined {
+  if (!value || typeof value !== "string") return undefined;
+
+  let cleaned = value.trim().replace(/[°′″'"]+/g, "");
+  if (!cleaned) return undefined;
+
+  // European format: comma as decimal, no dot present
+  if (cleaned.includes(",") && !cleaned.includes(".")) {
+    cleaned = cleaned.replace(",", ".");
+  }
+  // Mixed separators - last separator is decimal
+  else if (cleaned.includes(",") && cleaned.includes(".")) {
+    const lastComma = cleaned.lastIndexOf(",");
+    const lastDot = cleaned.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+    } else {
+      cleaned = cleaned.replace(/,/g, "");
+    }
+  }
+
+  const num = parseFloat(cleaned);
+  if (!Number.isFinite(num)) return undefined;
+
+  const [min, max] = kind === "lat" ? [-90, 90] : [-180, 180];
+  return num >= min && num <= max ? num : undefined;
+}
+
 // Helper to strip emojis from a string
 export function stripEmojis(text: string): string {
   if (!text) return "";
@@ -160,10 +188,10 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
                 parsedRow.email = trimmedValue;
                 break;
               case "lat":
-                parsedRow.lat = parseGermanFloat(trimmedValue);
+                parsedRow.lat = parseCoordinate(trimmedValue, "lat");
                 break;
               case "lon":
-                parsedRow.lon = parseGermanFloat(trimmedValue);
+                parsedRow.lon = parseCoordinate(trimmedValue, "lon");
                 break;
               case "osm":
                 parsedRow.osm = trimmedValue;

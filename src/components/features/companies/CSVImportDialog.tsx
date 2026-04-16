@@ -117,12 +117,12 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     onOpenChange(true);
   };
 
-  const handleImport = async () => {
-    if (parsedRows.length === 0) {
+  const handleImport = async (rowsToImport: ParsedCompanyRow[]) => {
+    if (rowsToImport.length === 0) {
       return;
     }
 
-    const validated = parsedCompanyRowsSchema.safeParse(parsedRows);
+    const validated = parsedCompanyRowsSchema.safeParse(rowsToImport);
     if (!validated.success) {
       const msg = validated.error.issues.map((i) => i.message).join("; ");
       toast.error(t("toastValidateErrorTitle"), { description: msg });
@@ -276,7 +276,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         isImporting={isImporting}
         aiEnrichNewCompanies={aiEnrichNewCompanies}
         onAiEnrichNewCompaniesChange={setAiEnrichNewCompanies}
-        onImportNow={handleImport}
+        onImportRows={handleImport}
         onBackToEdit={handleBackToEdit}
         onCancel={handlePreviewCancel}
       />
