@@ -96,7 +96,7 @@
     },
     "appearance": {
       "title": "Erscheinungsbild",
-      "description": "Passen Sie Darstellung und Sprache der Anwendung an: Hell- oder Dunkelmodus, Oberflächensprache, Zeitzone für Datums- und Uhrzeitangaben sowie Akzentfarben. Die Einstellungen gelten für Ihre gesamte Nutzung des CRM.",
+      "description": "Sprache, Zeitzone und Farbschema festlegen – gültig im gesamten CRM. Hell- und Dunkelmodus stellen Sie in der Kopfzeile ein.",
       "datePreview": "Heute ({date})",
       "themeLabel": "Theme",
       "themeLight": "Hell",
