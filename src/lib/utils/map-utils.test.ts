@@ -64,10 +64,11 @@ describe("getStatusIcon + statusColors", () => {
   });
 
   it("falls back to lead color for unknown CRM status keys", () => {
-    const icon = getStatusIcon("interessant");
+    const unknownKey = "xunknown-map-status";
+    const icon = getStatusIcon(unknownKey);
     const html = typeof icon.options.html === "string" ? icon.options.html : "";
     expect(html).toContain(statusColors.lead);
-    expect(html).toContain(">I<");
+    expect(html).toContain(">X<");
   });
 });
 
