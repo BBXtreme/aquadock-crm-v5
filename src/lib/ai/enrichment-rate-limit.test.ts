@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   effectiveEnrichmentUsedToday,
   enrichmentUsageRemaining,
@@ -36,6 +36,13 @@ function makeSettingsClient(opts: {
 }
 
 describe("enrichment-rate-limit", () => {
+  beforeEach(() => {
+    /* handleSupabaseError logs via console.group/error; expected-error tests stay quiet in CI. */
+    vi.spyOn(console, "group").mockImplementation(() => undefined);
+    vi.spyOn(console, "groupEnd").mockImplementation(() => undefined);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

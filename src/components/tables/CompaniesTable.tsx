@@ -38,6 +38,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
@@ -141,10 +148,10 @@ export default function CompaniesTable({
           return (
             <Badge
               className={cn(
-                value === "won" && "bg-emerald-600 text-white",
-                value === "lost" && "bg-rose-600 text-white",
-                value === "lead" && "bg-amber-600 text-white",
-                !["won", "lost", "lead"].includes(value) && "bg-zinc-500 text-white",
+                value === "won" && "bg-success text-success-foreground",
+                value === "lost" && "bg-destructive text-destructive-foreground",
+                value === "lead" && "bg-warning text-warning-foreground",
+                !["won", "lost", "lead"].includes(value) && "bg-muted text-muted-foreground",
               )}
             >
               {value}
@@ -372,22 +379,26 @@ export default function CompaniesTable({
           )}
         </div>
         <div className="flex space-x-2">
-          <select
-            value={pagination.pageSize}
-            onChange={(e) => {
-              const newSize = Number(e.target.value);
+          <Select
+            value={String(pagination.pageSize)}
+            onValueChange={(v) => {
+              const newSize = Number(v);
               const newPagination = { ...pagination, pageIndex: 0, pageSize: newSize };
               setPagination(newPagination);
               onPaginationChange(newPagination);
             }}
-            className="px-2 py-1 border rounded"
           >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={30}>30</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[10, 20, 30, 50, 100].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" type="button">

@@ -17,6 +17,7 @@ import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PW_RECOVERY_SESSION_STORAGE_KEY } from "@/lib/constants/auth-recovery";
+import deMessages from "@/messages/de.json";
 
 import LoginPage, {
   consumePasswordRecoveryBootstrapFlag,
@@ -64,6 +65,8 @@ vi.mock("sonner", () => ({
   },
 }));
 
+
+import { NextIntlClientProvider } from "next-intl";
 import { toast } from "sonner";
 
 const mockedToast = vi.mocked(toast);
@@ -76,7 +79,11 @@ function createQueryWrapper() {
     },
   });
   return function QueryWrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+      <NextIntlClientProvider locale="de" messages={deMessages}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </NextIntlClientProvider>
+    );
   };
 }
 

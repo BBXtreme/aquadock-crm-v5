@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PW_RECOVERY_SESSION_STORAGE_KEY } from "@/lib/constants/auth-recovery";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import {
   type PasswordRecoverySetFormValues,
@@ -114,7 +115,11 @@ function getLoginPageSupabaseClient(): SupabaseClient {
 
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
-type LoginAuthErrorBoundaryProps = { children: ReactNode };
+type LoginAuthErrorBoundaryProps = {
+  children: ReactNode;
+  errorToast: string;
+  reloadMessage: string;
+};
 
 type LoginAuthErrorBoundaryState = { didCatch: boolean };
 
@@ -131,8 +136,8 @@ class LoginAuthErrorBoundary extends Component<
 
   componentDidCatch(error: unknown, _info: ErrorInfo) {
     const message =
-      error instanceof Error ? error.message : "Unbekannter Fehler";
-    toast.error("Ein unerwarteter Fehler ist aufgetreten.", {
+      error instanceof Error ? error.message : "Unknown error";
+    toast.error(this.props.errorToast, {
       description: message,
     });
   }
@@ -141,7 +146,7 @@ class LoginAuthErrorBoundary extends Component<
     if (this.state.didCatch) {
       return (
         <p className="text-center text-muted-foreground text-sm">
-          Bitte laden Sie die Seite neu.
+          {this.props.reloadMessage}
         </p>
       );
     }
@@ -292,6 +297,7 @@ export function PasswordRecoveryUpdatePanel({
   recoverySaved: boolean;
   onRecoverySuccess: () => void;
 }) {
+  const t = useT("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -332,8 +338,8 @@ export function PasswordRecoveryUpdatePanel({
               "message" in err &&
               typeof (err as { message: unknown }).message === "string"
             ? (err as { message: string }).message
-            : "Unbekannter Fehler";
-      toast.error("Passwort konnte nicht gespeichert werden.", {
+            : "Unknown error";
+      toast.error(t("recoveryErrorToast"), {
         description,
       });
     },
@@ -353,8 +359,7 @@ export function PasswordRecoveryUpdatePanel({
           <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
         </div>
         <p className="font-medium text-foreground text-lg tracking-tight">
-          Passwort erfolgreich geändert. Sie werden zur Anmeldung
-          weitergeleitet...
+          {t("recoverySuccess")}
         </p>
       </div>
     );
@@ -368,7 +373,9 @@ export function PasswordRecoveryUpdatePanel({
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Neues Passwort</FormLabel>
+              <FormLabel className="text-base">
+                {t("recoveryNewPasswordLabel")}
+              </FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
@@ -391,7 +398,7 @@ export function PasswordRecoveryUpdatePanel({
                     toggleShowPassword();
                   }}
                   aria-label={
-                    showPassword ? "Passwort verbergen" : "Passwort anzeigen"
+                    showPassword ? t("hidePassword") : t("showPassword")
                   }
                 >
                   {showPassword ? (
@@ -410,7 +417,9 @@ export function PasswordRecoveryUpdatePanel({
           name="confirm_password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base">Passwort bestätigen</FormLabel>
+              <FormLabel className="text-base">
+                {t("recoveryConfirmPasswordLabel")}
+              </FormLabel>
               <div className="relative">
                 <FormControl>
                   <Input
@@ -436,8 +445,8 @@ export function PasswordRecoveryUpdatePanel({
                   }}
                   aria-label={
                     showConfirmPassword
-                      ? "Passwortbestätigung verbergen"
-                      : "Passwortbestätigung anzeigen"
+                      ? t("hideConfirmPassword")
+                      : t("showConfirmPassword")
                   }
                 >
                   {showConfirmPassword ? (
@@ -457,8 +466,8 @@ export function PasswordRecoveryUpdatePanel({
           disabled={updatePassword.isPending}
         >
           {updatePassword.isPending
-            ? "Wird gespeichert…"
-            : "Neues Passwort speichern"}
+            ? t("recoverySaving")
+            : t("recoverySaveButton")}
         </Button>
       </form>
     </Form>
@@ -466,6 +475,7 @@ export function PasswordRecoveryUpdatePanel({
 }
 
 export default function LoginPage() {
+  const t = useT("login");
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
   const [recoverySaved, setRecoverySaved] = useState(false);
@@ -528,14 +538,13 @@ export default function LoginPage() {
       setRecoverySessionTimedOut(true);
       if (!recoveryTimeoutToastShownRef.current) {
         recoveryTimeoutToastShownRef.current = true;
-        toast.error("Link ungültig oder abgelaufen.", {
-          description:
-            "Bitte fordern Sie einen neuen Zurücksetzen-Link an und öffnen Sie ihn erneut.",
+        toast.error(t("recoveryTimeoutToastTitle"), {
+          description: t("recoveryTimeoutToastDescription"),
         });
       }
     }, RECOVERY_SESSION_READY_TIMEOUT_MS);
     return () => window.clearTimeout(id);
-  }, [view, recoverySaved, recoverySessionReady]);
+  }, [view, recoverySaved, recoverySessionReady, t]);
 
   useEffect(() => {
     if (!supabase) {
@@ -672,33 +681,25 @@ export default function LoginPage() {
 
         <div className="relative space-y-6">
           <h1 className="max-w-sm text-3xl font-semibold leading-[1.15] tracking-tight text-foreground xl:text-4xl">
-            Steer Your Waterfront Operations Forward
+            {t("heroTitle")}
           </h1>
           <p className="max-w-md leading-relaxed text-muted-foreground">
-            The smart CRM for marinas, hotels, campsites, and watersports
-            operators — effortless visibility, streamlined management, real-time
-            insights.
+            {t("heroDescription")}
           </p>
           <ul className="space-y-3.5 pt-2" aria-label="Key benefits">
-            {(
-              [
-                "24/7 visibility across all operations",
-                "Streamlined guest & rental management",
-                "Real-time insights that drive revenue",
-              ] as const
-            ).map((text) => (
-              <li key={text} className="flex items-center gap-3">
+            {(["benefit1", "benefit2", "benefit3"] as const).map((key) => (
+              <li key={key} className="flex items-center gap-3">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 </span>
-                <span className="text-sm text-foreground">{text}</span>
+                <span className="text-sm text-foreground">{t(key)}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <p className="relative text-xs text-muted-foreground">
-          Trusted by marinas & hospitality operators across Europe
+          {t("trustStatement")}
         </p>
       </aside>
 
@@ -722,7 +723,7 @@ export default function LoginPage() {
             priority
           />
           <p className="text-sm text-muted-foreground">
-            Smart operations for waterfront businesses
+            {t("mobileTagline")}
           </p>
         </div>
 
@@ -739,17 +740,16 @@ export default function LoginPage() {
                 !recoverySessionReady ? (
                 <>
                   <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Link ungültig oder abgelaufen
+                    {t("recoveryLinkExpiredTitle")}
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
-                    Bitte fordern Sie einen neuen Zurücksetzen-Link an und
-                    öffnen Sie ihn aus der E-Mail erneut.
+                    {t("recoveryLinkExpiredDescription")}
                   </CardDescription>
                 </>
               ) : (
                 <>
                   <CardTitle className="text-2xl font-semibold tracking-tight">
-                    Neues Passwort festlegen
+                    {t("recoverySetTitle")}
                   </CardTitle>
                   <CardDescription className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     {!recoverySessionReady ? (
@@ -760,8 +760,8 @@ export default function LoginPage() {
                     ) : null}
                     <span>
                       {recoverySessionReady
-                        ? "Wählen Sie ein sicheres Passwort, das Sie nirgends sonst nutzen."
-                        : "Sitzung wird vorbereitet…"}
+                        ? t("recoverySetDescription")
+                        : t("recoverySessionPreparing")}
                     </span>
                   </CardDescription>
                 </>
@@ -769,10 +769,10 @@ export default function LoginPage() {
             ) : (
               <>
                 <CardTitle className="text-xl font-semibold tracking-tight">
-                  Sign in
+                  {t("signInTitle")}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Enter your credentials to access AquaDock CRM
+                  {t("signInDescription")}
                 </CardDescription>
               </>
             )}
@@ -785,15 +785,16 @@ export default function LoginPage() {
             }
           >
             {supabase ? (
-              <LoginAuthErrorBoundary>
+              <LoginAuthErrorBoundary
+                errorToast={t("errorBoundaryToast")}
+                reloadMessage={t("errorBoundaryReload")}
+              >
                 {view === "update_password" ? (
                   recoverySessionTimedOut &&
                   !recoverySessionReady &&
                   !recoverySaved ? (
                     <p className="text-center text-sm text-muted-foreground">
-                      Wenn das Problem weiterhin besteht, prüfen Sie, ob der
-                      Link vollständig geöffnet wurde, und wiederholen Sie den
-                      Vorgang mit einem neuen Link.
+                      {t("recoveryPersistentError")}
                     </p>
                   ) : recoverySaved || recoverySessionReady ? (
                     <PasswordRecoveryUpdatePanel
@@ -813,7 +814,7 @@ export default function LoginPage() {
                         className="size-4 shrink-0 animate-spin text-muted-foreground"
                         aria-hidden
                       />
-                      <span>Bitte einen Moment gedulden…</span>
+                      <span>{t("recoveryPleaseWait")}</span>
                     </p>
                   )
                 ) : (
@@ -845,14 +846,14 @@ export default function LoginPage() {
               </LoginAuthErrorBoundary>
             ) : (
               <p className="text-center text-sm text-muted-foreground">
-                Wird geladen…
+                {t("loading")}
               </p>
             )}
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground lg:hidden">
-          Trusted by marinas & hospitality operators across Europe
+          {t("trustStatement")}
         </p>
       </main>
     </div>

@@ -38,6 +38,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useT } from "@/lib/i18n/use-translations";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -350,16 +357,21 @@ export default function ContactsTable({
           )}
         </div>
         <div className="flex space-x-2">
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="px-2 py-1 border rounded"
+          <Select
+            value={String(table.getState().pagination.pageSize)}
+            onValueChange={(v) => table.setPageSize(Number(v))}
           >
-            <option value={20}>20</option>
-            <option value={30}>30</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[20, 30, 50, 100].map((size) => (
+                <SelectItem key={size} value={String(size)}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" type="button">
@@ -413,7 +425,7 @@ export default function ContactsTable({
         </div>
       </div>
       <div className="overflow-x-auto rounded-md border shadow-sm">
-        <Table className="[&>thead>tr>th]:!text-left">
+        <Table className="[&>thead>tr>th]:text-left!">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

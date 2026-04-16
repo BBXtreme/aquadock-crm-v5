@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: component-replacements
     content: Map custom or ad-hoc UI patterns to shadcn-first compositions.
-    status: pending
+    status: completed
   - id: login-redesign
     content: Redesign the login page into the first premium landing/auth experience.
     status: completed

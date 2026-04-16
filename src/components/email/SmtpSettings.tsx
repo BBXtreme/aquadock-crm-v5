@@ -123,7 +123,7 @@ export default function SmtpSettings() {
   };
 
   return (
-    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm">
+    <Card className="shadow-sm">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Mail className="mr-2 h-5 w-5" />

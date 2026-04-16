@@ -3,6 +3,7 @@
 dist
 build
 out
+.agents/**
 
 # Dependencies
 node_modules
