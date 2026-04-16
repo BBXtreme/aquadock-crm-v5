@@ -86,15 +86,14 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
               </p>
             </div>
             <div className="lg:col-span-2">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">{t("detailLabelOsmId")}</div>
-                  <p className="text-sm text-foreground">{formatOsmLink()}</p>
-                </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">{t("detailLabelOsmId")}</div>
+                <p className="text-sm text-foreground">{formatOsmLink()}</p>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
+                  className="mt-3"
                   onClick={() => {
                     if (company.lat && company.lon) {
                       router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);

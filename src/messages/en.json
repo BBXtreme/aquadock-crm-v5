@@ -898,6 +898,8 @@
     "activityEmail": "Email",
     "activityMeeting": "Meeting",
     "activityReminder": "Reminder",
+    "activityDeleted": "Deleted",
+    "activityAiEnrichment": "AI enrichment",
     "activityOther": "Other",
     "searchPlaceholder": "Search title, description, company, or contact…",
     "loadError": "Error loading timeline: {message}",

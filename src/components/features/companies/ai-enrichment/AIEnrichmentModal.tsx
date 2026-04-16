@@ -31,7 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
+import { logCompanyAiEnrichmentTimeline, researchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { getAiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { formatAiEnrichmentSummaryForDisplay } from "@/lib/ai/ai-enrichment-display";
 import type { CompanyEnrichmentWebSearchMode } from "@/lib/ai/company-enrichment-gateway";
@@ -632,10 +632,12 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
   const handleApply = () => {
     if (!result) return;
     const patch: Partial<CompanyForm> = {};
+    const selectedFieldKeys: EnrichmentFieldKey[] = [];
     for (const key of rows) {
       if (selected[key] !== true) continue;
       const s = result.suggestions[key];
       if (!s) continue;
+      selectedFieldKeys.push(key);
       mergeSuggestionValueIntoPatch(patch, key, s.value);
     }
     if (Object.keys(patch).length === 0) {
@@ -643,6 +645,21 @@ export function AIEnrichmentModal({ company, open, onOpenChange, onApplyPatch }:
       return;
     }
     onApplyPatch(patch);
+    void logCompanyAiEnrichmentTimeline({
+      companyId: company.id,
+      modelUsed: modelUsed ?? "unknown",
+      webSearchMode: enrichmentWebMode,
+      selectedFieldKeys,
+      selectedFieldCount: selectedFieldKeys.length,
+      suggestedFieldCount: rows.length,
+      summaryIncluded: result.aiSummary !== null && result.aiSummary !== undefined && result.aiSummary.trim() !== "",
+    }).then((logResult) => {
+      if (!logResult.ok) {
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: ["timeline", company.id] });
+      void queryClient.invalidateQueries({ queryKey: ["timeline"] });
+    });
     toast.success(t("aiEnrich.applyToast"));
     requestClose();
   };

@@ -898,6 +898,8 @@
     "activityEmail": "E-Mail",
     "activityMeeting": "Meeting",
     "activityReminder": "Erinnerung",
+    "activityDeleted": "Gelöscht",
+    "activityAiEnrichment": "AI Enrichment",
     "activityOther": "Sonstiges",
     "searchPlaceholder": "Suche nach Titel, Beschreibung, Firma oder Kontakt…",
     "loadError": "Fehler beim Laden der Historie: {message}",
