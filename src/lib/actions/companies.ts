@@ -170,6 +170,7 @@ export async function updateCompany(
   const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) throw handleSupabaseError(error, "updateCompany");
+  revalidatePath("/companies");
   revalidatePath(`/companies/${id}`, "page");
   return data as Company;
 }
