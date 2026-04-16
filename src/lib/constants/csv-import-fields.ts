@@ -139,7 +139,7 @@ export const csvImportParserFieldRows: readonly CsvImportParserFieldRow[] = [
     internalKey: "osm",
     recommendedHeader: "osm",
     acceptedHeaders: ["osm", "osm_id", "openstreetmap"],
-    example: "node/123456",
+    example: "node/123456 oder https://www.openstreetmap.org/node/123456 (gespeichert als node/123456)",
     required: false,
   },
 ];

@@ -108,6 +108,52 @@ const LAND_NORMALIZE_MAP: Record<string, string> = {
   // Add more as needed
 };
 
+const OSM_COMPACT_ID_REGEX = /^(node|way|relation)\/(\d+)$/i;
+
+export function normalizeCsvOsmId(value: string | undefined | null): string | undefined {
+  if (!value || typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const compactMatch = trimmed.match(OSM_COMPACT_ID_REGEX);
+  if (compactMatch) {
+    const type = compactMatch[1];
+    const id = compactMatch[2];
+    if (!type || !id) return undefined;
+    return `${type.toLowerCase()}/${id}`;
+  }
+
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    return undefined;
+  }
+
+  try {
+    const parsedUrl = new URL(trimmed);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    if (hostname !== "www.openstreetmap.org" && hostname !== "openstreetmap.org") {
+      return undefined;
+    }
+
+    const pathSegments = parsedUrl.pathname
+      .split("/")
+      .map((segment) => segment.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (pathSegments.length !== 2) return undefined;
+
+    const type = pathSegments[0];
+    const id = pathSegments[1];
+    if (!type || !id) return undefined;
+    const pathMatch = `${type}/${id}`.match(OSM_COMPACT_ID_REGEX);
+    if (!pathMatch) return undefined;
+
+    return `${type}/${id}`;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * CSV column headers (after trim + toLowerCase) → ParsedCompanyRow keys.
  * Delimiter: semicolon. Required per row: Firmenname + Kundentyp.
@@ -193,9 +239,13 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
               case "lon":
                 parsedRow.lon = parseCoordinate(trimmedValue, "lon");
                 break;
-              case "osm":
-                parsedRow.osm = trimmedValue;
+              case "osm": {
+                const normalizedOsm = normalizeCsvOsmId(trimmedValue);
+                if (normalizedOsm) {
+                  parsedRow.osm = normalizedOsm;
+                }
                 break;
+              }
             }
           }
 

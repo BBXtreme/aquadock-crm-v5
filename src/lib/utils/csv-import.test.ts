@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  normalizeCsvOsmId,
   type ParsedCompanyRow,
   parseCoordinate,
   parseCSVFile,
@@ -77,6 +78,27 @@ describe("stripEmojis", () => {
   });
 });
 
+describe("normalizeCsvOsmId", () => {
+  it("normalizes compact OSM ids to lowercase type/id", () => {
+    expect(normalizeCsvOsmId("node/12345")).toBe("node/12345");
+    expect(normalizeCsvOsmId("Way/987")).toBe("way/987");
+    expect(normalizeCsvOsmId("RELATION/42")).toBe("relation/42");
+  });
+
+  it("normalizes full openstreetmap URLs to compact type/id", () => {
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/node/12345")).toBe("node/12345");
+    expect(normalizeCsvOsmId("https://openstreetmap.org/way/99")).toBe("way/99");
+  });
+
+  it("returns undefined for invalid or unsupported OSM values", () => {
+    expect(normalizeCsvOsmId("n123")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://example.com/node/123")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/node/abc")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/changeset/123")).toBeUndefined();
+    expect(normalizeCsvOsmId("")).toBeUndefined();
+  });
+});
+
 describe("parseCSVFile", () => {
   beforeEach(() => {
     vi.mocked(Papa.parse).mockReset();
@@ -105,7 +127,7 @@ describe("parseCSVFile", () => {
             email: "a@b.co",
             lat: "53,5",
             lon: "10,1",
-            osm: "n123",
+            osm: "https://www.openstreetmap.org/node/123",
             unknown_column: "ignored",
           },
           {
@@ -134,6 +156,7 @@ describe("parseCSVFile", () => {
     expect(first.wassertyp).toBe("See");
     expect(first.lat).toBe(53.5);
     expect(first.lon).toBe(10.1);
+    expect(first.osm).toBe("node/123");
     const second = rows[1];
     if (second === undefined) {
       throw new Error("expected second row");
@@ -327,6 +350,42 @@ describe("parseCSVFile", () => {
     expect(row.firmenname).toBe("Trim GmbH");
     expect(row.kundentyp).toBe("marina");
     expect(row.website).toBeUndefined();
+  });
+
+  it("maps OSM header aliases and strips invalid OSM values silently", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          {
+            firmenname: "Alias Co",
+            kundentyp: "Hotel",
+            osm_id: "https://www.openstreetmap.org/way/456",
+          },
+          {
+            firmenname: "Invalid OSM Co",
+            kundentyp: "Hotel",
+            openstreetmap: "not-valid",
+          },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(2);
+
+    const first = rows[0];
+    const second = rows[1];
+    if (first === undefined || second === undefined) {
+      throw new Error("expected two rows");
+    }
+
+    expect(first.osm).toBe("way/456");
+    expect(second.osm).toBeUndefined();
   });
 });
 

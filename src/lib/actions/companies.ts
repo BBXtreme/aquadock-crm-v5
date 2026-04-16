@@ -23,6 +23,7 @@ import type {
   CompanyUpdate,
   Contact,
   KPI,
+  TimelineEntryInsert,
 } from "@/types/database.types";
 
 export type CompanyForOpenMap = Company & {
@@ -210,6 +211,49 @@ function validCoordOrNull(value: number | null | undefined, min: number, max: nu
   return value;
 }
 
+/** Best-effort: does not throw; import success must not depend on timeline writes. */
+async function createCsvImportTimelineEntries(
+  supabase: SupabaseClient,
+  companyIds: string[],
+): Promise<void> {
+  if (companyIds.length === 0) {
+    return;
+  }
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError !== null || user === null) {
+      return;
+    }
+
+    const rows: TimelineEntryInsert[] = companyIds.map((companyId) => ({
+      title: "CSV Import: Unternehmen importiert",
+      content: null,
+      activity_type: "csv_import",
+      company_id: companyId,
+      contact_id: null,
+      user_id: user.id,
+      created_by: user.id,
+      updated_by: user.id,
+    }));
+
+    const { error } = await supabase.from("timeline").insert(rows);
+
+    if (error !== null) {
+      console.error("[createCsvImportTimelineEntries] timeline insert failed:", {
+        code: error.code,
+        message: error.message,
+      });
+    }
+  } catch (err: unknown) {
+    console.error("[createCsvImportTimelineEntries] unexpected error:", err);
+  }
+}
+
 export async function importCompaniesFromCSV(
   rows: ParsedCompanyRow[]
 ): Promise<{ imported: number; errors: string[]; importBatch: string; companyIds: string[] }> {
@@ -250,6 +294,8 @@ export async function importCompaniesFromCSV(
     if (error) throw handleSupabaseError(error, "importCompaniesFromCSV");
 
     const companyIds = (data ?? []).map((row) => row.id);
+
+    await createCsvImportTimelineEntries(supabase, companyIds);
 
     return {
       imported: data?.length || 0,
