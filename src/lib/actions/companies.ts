@@ -256,7 +256,13 @@ async function createCsvImportTimelineEntries(
 
 export async function importCompaniesFromCSV(
   rows: ParsedCompanyRow[]
-): Promise<{ imported: number; errors: string[]; importBatch: string; companyIds: string[] }> {
+): Promise<{
+  imported: number;
+  importedWithCoordinates: number;
+  errors: string[];
+  importBatch: string;
+  companyIds: string[];
+}> {
   const supabase = await createServerSupabaseClient();
   const importBatch = new Date().toISOString();
 
@@ -286,6 +292,10 @@ export async function importCompaniesFromCSV(
       import_batch: importBatch,
     }));
 
+    const importedWithCoordinates = companiesToInsert.filter(
+      (row) => row.lat !== null && row.lon !== null,
+    ).length;
+
     const { data, error } = await supabase
       .from("companies")
       .insert(companiesToInsert)
@@ -299,6 +309,7 @@ export async function importCompaniesFromCSV(
 
     return {
       imported: data?.length || 0,
+      importedWithCoordinates,
       errors: [],
       importBatch,
       companyIds,
@@ -306,6 +317,7 @@ export async function importCompaniesFromCSV(
   } catch (error) {
     return {
       imported: 0,
+      importedWithCoordinates: 0,
       errors: [error instanceof Error ? error.message : "Unbekannter Importfehler"],
       importBatch,
       companyIds: [],

@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -195,7 +196,16 @@ export function GeocodeReviewModal({
               Abbrechen
             </Button>
             <Button type="button" onClick={handleApply} disabled={isApplying || selectedCount === 0}>
-              {selectedCount > 0 ? `${String(selectedCount)} übernehmen` : "Auswahl übernehmen"}
+              {isApplying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                  Übernehmen …
+                </>
+              ) : selectedCount > 0 ? (
+                `${String(selectedCount)} übernehmen`
+              ) : (
+                "Auswahl übernehmen"
+              )}
             </Button>
           </div>
         </DialogFooter>

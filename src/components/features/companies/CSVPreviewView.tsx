@@ -234,6 +234,11 @@ export function CSVPreviewView({
         toast.error(res.error);
         return;
       }
+      const geocodeHits = res.results.filter((row) => row.ok).length;
+      const geocodeMisses = res.results.length - geocodeHits;
+      toast.success("Geocoding abgeschlossen", {
+        description: `${String(geocodeHits)} Treffer, ${String(geocodeMisses)} ohne Treffer — bitte im Dialog prüfen.`,
+      });
       setGeocodePreviewRows(res.results);
       setGeocodeModalOpen(true);
     } catch (error) {
@@ -300,7 +305,10 @@ export function CSVPreviewView({
           return next;
         });
 
-        toast.success(`${String(applyItems.length)} Koordinaten übernommen.`);
+        const appliedOk = applyRes.results.filter((item) => item.ok === true && item.rowId !== undefined).length;
+        toast.success(`${String(appliedOk)} Zeilen mit Koordinaten aktualisiert`, {
+          description: `${String(applyItems.length)} ausgewählte Vorschläge übernommen.`,
+        });
         setGeocodeModalOpen(false);
         setGeocodePreviewRows([]);
       } catch (error) {
@@ -616,7 +624,7 @@ export function CSVPreviewView({
                   id="csv-ai-enrich-new"
                   checked={aiEnrichNewCompanies}
                   onCheckedChange={(checked) => onAiEnrichNewCompaniesChange(checked === true)}
-                  disabled={isImporting}
+                  disabled={isImporting || geocodeLoading || geocodeApplying}
                   aria-label={t("previewAiEnrichLabel")}
                 />
                 <Label htmlFor="csv-ai-enrich-new" className="cursor-pointer text-muted-foreground text-xs leading-snug sm:text-sm">
@@ -625,17 +633,33 @@ export function CSVPreviewView({
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isImporting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isImporting || geocodeLoading || geocodeApplying}
+              >
                 {t("previewCancel")}
               </Button>
-              <Button type="button" variant="secondary" onClick={onBackToEdit} disabled={isImporting}>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onBackToEdit}
+                disabled={isImporting || geocodeLoading || geocodeApplying}
+              >
                 {t("previewBack")}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => void handleOpenGeocodePreview()}
-                disabled={isImporting || geocodeLoading || displayRows.length === 0 || geocodeCandidateCount === 0}
+                disabled={
+                  isImporting ||
+                  geocodeLoading ||
+                  geocodeApplying ||
+                  displayRows.length === 0 ||
+                  geocodeCandidateCount === 0
+                }
                 title={
                   geocodeCandidateCount === 0
                     ? "Keine Zeilen mit Adresse und fehlenden Koordinaten"
@@ -657,7 +681,9 @@ export function CSVPreviewView({
               <Button
                 type="button"
                 onClick={() => void onImportRows(displayRows)}
-                disabled={isImporting || displayRows.length === 0}
+                disabled={
+                  isImporting || geocodeLoading || geocodeApplying || displayRows.length === 0
+                }
               >
                 {isImporting ? (
                   <>

@@ -3,7 +3,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
-import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
+import { Bell, Calendar, FileSpreadsheet, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -44,6 +44,8 @@ function activityIcon(t: string) {
       return <Calendar className="h-4 w-4" />;
     case "reminder":
       return <Bell className="h-4 w-4" />;
+    case "csv_import":
+      return <FileSpreadsheet className="h-4 w-4" />;
     default:
       return <MoreHorizontal className="h-4 w-4" />;
   }
@@ -61,6 +63,8 @@ function activityVariant(t: string) {
       return "destructive";
     case "reminder":
       return "secondary";
+    case "csv_import":
+      return "default";
     default:
       return "outline";
   }
@@ -244,9 +248,11 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                     ? t("activityMeeting")
                     : type === "reminder"
                       ? t("activityReminder")
-                      : type === "other"
-                        ? t("activityOther")
-                        : type;
+                      : type === "csv_import"
+                        ? "CSV Import"
+                        : type === "other"
+                          ? t("activityOther")
+                          : type;
           return (
             <Badge variant={activityVariant(type)} className="flex items-center gap-1">
               {activityIcon(type)}
