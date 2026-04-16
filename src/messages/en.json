@@ -96,7 +96,7 @@
     },
     "appearance": {
       "title": "Appearance",
-      "description": "Customize how the CRM looks and reads: light or dark mode, interface language, time zone for dates and times, and accent colors. These preferences apply throughout the application.",
+      "description": "Set interface language, time zone, and accent colors for the whole CRM. Switch light or dark mode from the header.",
       "datePreview": "Today ({date})",
       "themeLabel": "Theme",
       "themeLight": "Light",

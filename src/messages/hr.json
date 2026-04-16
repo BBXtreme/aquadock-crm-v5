@@ -96,7 +96,7 @@
     },
     "appearance": {
       "title": "Izgled",
-      "description": "Prilagodite izgled i jezik CRM-a: svijetli ili tamni način, jezik sučelja, vremenska zona za datume i vrijeme te naglasne boje. Postavke vrijede u cijeloj aplikaciji.",
+      "description": "Jezik sučelja, vremenska zona i naglasne boje za cijeli CRM. Svijetli ili tamni način birate u zaglavlju.",
       "datePreview": "Danas ({date})",
       "themeLabel": "Tema",
       "themeLight": "Svijetla",
