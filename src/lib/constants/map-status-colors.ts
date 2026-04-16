@@ -6,6 +6,7 @@
 
 export const statusColors: Record<string, string> = {
   lead: "#f59e0b", // amber
+  interessant: "#0ea5e9", // sky — between lead and qualifiziert
   qualifiziert: "#3b82f6", // blue
   akquise: "#8b5cf6", // violet
   angebot: "#22c55e", // emerald green (positive)
@@ -18,6 +19,7 @@ export const statusColors: Record<string, string> = {
 
 export const statusLabels: Record<string, string> = {
   lead: "Lead",
+  interessant: "Interessant",
   qualifiziert: "Qualifiziert",
   akquise: "Akquise",
   angebot: "Angebot",

@@ -1,5 +1,5 @@
 // src/components/tables/CompaniesTable.tsx
-// Explicit ColumnDef<Company> casts used to satisfy TanStack Table generics
+// TanStack Table: `columnHelper.accessor` infers per-column TValue; a single array cast matches docs/react-table-v8-ts-tricks.md Pattern B when `satisfies` conflicts with generics.
 "use client";
 
 import {
@@ -46,8 +46,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import { useT } from "@/lib/i18n/use-translations";
-import { cn } from "@/lib/utils";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 import type { Company, Contact } from "@/types/database.types";
 
@@ -107,177 +107,183 @@ export default function CompaniesTable({
     [setGlobalFilter, onPaginationChange, pagination.pageSize],
   );
 
-  const columns = useMemo<ColumnDef<CompanyWithContacts>[]>(
-    () => [
-      columnHelper.display({
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-            aria-label={t("tableSelectAllAria")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label={t("tableSelectRowAria")}
-          />
-        ),
-        enableSorting: false,
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("firmenname", {
-        id: "firmenname",
-        header: t("tableColFirmenname"),
-        cell: (info) => (
-          <Link href={`/companies/${info.row.original.id}`} className="text-primary hover:underline">
-            {safeDisplay(info.getValue())}
-          </Link>
-        ),
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("kundentyp", {
-        header: t("tableColKundentyp"),
-        cell: (info) => <Badge className="bg-primary text-primary-foreground">{safeDisplay(info.getValue())}</Badge>,
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("status", {
-        header: t("tableColStatus"),
-        cell: (info) => {
-          const raw = info.getValue();
-          const value = typeof raw === "string" ? raw : String(raw ?? "");
-          return (
-            <Badge
-              className={cn(
-                value === "won" && "bg-success text-success-foreground",
-                value === "lost" && "bg-destructive text-destructive-foreground",
-                value === "lead" && "bg-warning text-warning-foreground",
-                !["won", "lost", "lead"].includes(value) && "bg-muted text-muted-foreground",
-              )}
-            >
-              {value}
-            </Badge>
-          );
-        },
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("contacts", {
-        id: "hauptkontakt",
-        header: t("tableColHauptkontakt"),
-        cell: (info) => {
-          const contacts: Contact[] = info.row.original.contacts ?? [];
-          const primary = contacts.find((c) => c.is_primary);
-          if (!primary) return tCommon("dash");
-          return (
-            <div className="flex flex-col">
-              <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
-                {`${primary.vorname} ${primary.nachname}`}
-              </Link>
-              <span className="text-xs text-muted-foreground">{primary.position || tCommon("dash")}</span>
-            </div>
-          );
-        },
-        enableSorting: false,
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("contacts", {
-        id: "kontaktanzahl",
-        header: t("tableColKontaktanzahl"),
-        cell: (info) => {
-          const contacts: Contact[] = info.row.original.contacts ?? [];
-          const count = contacts.length;
-          if (count === 0) return <Badge variant="outline">{t("tableContactsNone")}</Badge>;
-          const hasPrimary = contacts.some((c) => c.is_primary);
-          return (
-            <Badge variant={hasPrimary ? "default" : "secondary"}>
-              {count} {hasPrimary ? t("tableContactsPrimary") : ""}
-            </Badge>
-          );
-        },
-        enableSorting: false,
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("stadt", {
-        id: "adresse",
-        header: t("tableColAdresse"),
-        cell: (info) => {
-          const row = info.row.original;
-          const strasse = row.strasse || "";
-          const plz = row.plz ? `${row.plz} ` : "";
-          const stadt = row.stadt || "";
-          const land = row.land || "";
-          return (
-            <div className="flex flex-col">
-              <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
-              {land && <span className="text-xs text-muted-foreground">{land}</span>}
-            </div>
-          );
-        },
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.accessor("created_at", {
-        id: "created_at",
-        header: t("tableColCreated"),
-        cell: (info) => {
-          const v = info.getValue();
-          const d =
-            v === null || v === undefined ? v : typeof v === "string" ? v : undefined;
-          return formatDateDistance(d);
-        },
-      }) as ColumnDef<CompanyWithContacts>,
-      columnHelper.display({
-        id: "actions",
-        header: t("tableColActions"),
-        cell: (info) => (
-          <div className="flex space-x-2">
-            <Link href={`/companies/${info.row.original.id}`}>
-              <Button variant="ghost" size="sm" type="button">
-                <Eye className="h-4 w-4" />
-              </Button>
+  const columns = useMemo(
+    () =>
+      [
+        columnHelper.display({
+          id: "select",
+          header: ({ table }) => (
+            <Checkbox
+              checked={table.getIsAllRowsSelected()}
+              onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+              aria-label={t("tableSelectAllAria")}
+            />
+          ),
+          cell: ({ row }) => (
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label={t("tableSelectRowAria")}
+            />
+          ),
+          enableSorting: false,
+        }),
+        columnHelper.accessor("firmenname", {
+          id: "firmenname",
+          header: t("tableColFirmenname"),
+          cell: (info) => (
+            <Link href={`/companies/${info.row.original.id}`} className="text-primary hover:underline">
+              {safeDisplay(info.getValue())}
             </Link>
-            <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
-              <Edit className="h-4 w-4" />
-            </Button>
-            <AlertDialog open={deleteDialogOpen && companyToDelete?.id === info.row.original.id} onOpenChange={setDeleteDialogOpen}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={() => {
-                    setCompanyToDelete(info.row.original);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash className="h-4 w-4" />
+          ),
+        }),
+        columnHelper.accessor("kundentyp", {
+          header: t("tableColKundentyp"),
+          cell: (info) => <Badge className="bg-primary text-primary-foreground">{safeDisplay(info.getValue())}</Badge>,
+        }),
+        columnHelper.accessor("status", {
+          header: t("tableColStatus"),
+          cell: (info) => {
+            const raw = info.getValue();
+            const asString =
+              raw === null || raw === undefined
+                ? ""
+                : typeof raw === "string"
+                  ? raw
+                  : String(raw);
+            const statusKey = asString.normalize("NFC").trim().toLowerCase();
+            const backgroundColor = statusColors[statusKey] ?? "#6b7280";
+            const label = statusLabels[statusKey] ?? asString.trim();
+            return (
+              <Badge
+                variant="secondary"
+                className="whitespace-nowrap border-transparent bg-transparent text-white shadow-sm ring-1 ring-border/60 hover:opacity-95 dark:ring-border"
+                style={{ backgroundColor }}
+              >
+                {label}
+              </Badge>
+            );
+          },
+        }),
+        columnHelper.accessor("contacts", {
+          id: "hauptkontakt",
+          header: t("tableColHauptkontakt"),
+          cell: (info) => {
+            const contacts: Contact[] = info.row.original.contacts ?? [];
+            const primary = contacts.find((c) => c.is_primary);
+            if (!primary) return tCommon("dash");
+            return (
+              <div className="flex flex-col">
+                <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
+                  {`${primary.vorname} ${primary.nachname}`}
+                </Link>
+                <span className="text-xs text-muted-foreground">{primary.position || tCommon("dash")}</span>
+              </div>
+            );
+          },
+          enableSorting: false,
+        }),
+        columnHelper.accessor("contacts", {
+          id: "kontaktanzahl",
+          header: t("tableColKontaktanzahl"),
+          cell: (info) => {
+            const contacts: Contact[] = info.row.original.contacts ?? [];
+            const count = contacts.length;
+            if (count === 0) return <Badge variant="outline">{t("tableContactsNone")}</Badge>;
+            const hasPrimary = contacts.some((c) => c.is_primary);
+            return (
+              <Badge variant={hasPrimary ? "default" : "secondary"}>
+                {count} {hasPrimary ? t("tableContactsPrimary") : ""}
+              </Badge>
+            );
+          },
+          enableSorting: false,
+        }),
+        columnHelper.accessor("stadt", {
+          id: "adresse",
+          header: t("tableColAdresse"),
+          cell: (info) => {
+            const row = info.row.original;
+            const strasse = row.strasse || "";
+            const plz = row.plz ? `${row.plz} ` : "";
+            const stadt = row.stadt || "";
+            const land = row.land || "";
+            return (
+              <div className="flex flex-col">
+                <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
+                {land && <span className="text-xs text-muted-foreground">{land}</span>}
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("created_at", {
+          id: "created_at",
+          header: t("tableColCreated"),
+          cell: (info) => {
+            const v = info.getValue();
+            const d =
+              v === null || v === undefined ? v : typeof v === "string" ? v : undefined;
+            return formatDateDistance(d);
+          },
+        }),
+        columnHelper.display({
+          id: "actions",
+          header: t("tableColActions"),
+          cell: (info) => (
+            <div className="flex space-x-2">
+              <Link href={`/companies/${info.row.original.id}`}>
+                <Button variant="ghost" size="sm" type="button">
+                  <Eye className="h-4 w-4" />
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
-                  <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
+              </Link>
+              <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
+                <Edit className="h-4 w-4" />
+              </Button>
+              <AlertDialog open={deleteDialogOpen && companyToDelete?.id === info.row.original.id} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
                     onClick={() => {
-                      if (companyToDelete) {
-                        try {
-                          onDelete?.(companyToDelete);
-                        } catch (error) {
-                          console.error("Error deleting company:", error);
-                          toast.error(t("tableToastDeleteFailed"));
-                        }
-                      }
-                      setDeleteDialogOpen(false);
-                      setCompanyToDelete(null);
+                      setCompanyToDelete(info.row.original);
+                      setDeleteDialogOpen(true);
                     }}
                   >
-                    {t("delete")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        ),
-        enableSorting: false,
-      }) as ColumnDef<CompanyWithContacts>,
-    ],
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        if (companyToDelete) {
+                          try {
+                            onDelete?.(companyToDelete);
+                          } catch (error) {
+                            console.error("Error deleting company:", error);
+                            toast.error(t("tableToastDeleteFailed"));
+                          }
+                        }
+                        setDeleteDialogOpen(false);
+                        setCompanyToDelete(null);
+                      }}
+                    >
+                      {t("delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          ),
+          enableSorting: false,
+        }),
+      ] as ColumnDef<CompanyWithContacts>[],
     [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, tCommon],
   );
 

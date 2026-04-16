@@ -637,6 +637,7 @@
     "googleSessionErrorHttp": "HTTP-Fehler: Schlüssel, Abrechnung und „Map Tiles API“ im Google-Projekt prüfen.",
     "googleSessionErrorUnexpected": "Unerwartete Antwort von Google — Session konnte nicht gelesen werden.",
     "status_lead": "Lead",
+    "status_interessant": "Interessant",
     "status_qualifiziert": "Qualifiziert",
     "status_akquise": "Akquise",
     "status_angebot": "Angebot",

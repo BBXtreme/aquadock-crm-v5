@@ -637,6 +637,7 @@
     "googleSessionErrorHttp": "HTTP greška: provjerite ključ, naplatu i Map Tiles API u Google projektu.",
     "googleSessionErrorUnexpected": "Neočekivani odgovor od Googlea — sesija se nije mogla pročitati.",
     "status_lead": "Lead",
+    "status_interessant": "Zanimljivo",
     "status_qualifiziert": "Kvalificirani",
     "status_akquise": "Akvizicija",
     "status_angebot": "Ponuda",
