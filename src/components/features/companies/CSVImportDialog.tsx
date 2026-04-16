@@ -3,6 +3,7 @@
 "use client";
 
 import { AlertCircle, BookOpen, FileText, Loader2, Upload } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { toast } from "sonner";
@@ -36,9 +37,33 @@ interface CSVImportDialogProps {
   onSuccess?: (result: { imported: number; errors: string[] }) => void;
 }
 
+function importSuccessCopy(
+  locale: string,
+  imported: number,
+  withCoordinates: number,
+): { title: string; description: string } {
+  if (locale === "en") {
+    return {
+      title: "Import successful",
+      description: `${String(imported)} companies imported · ${String(withCoordinates)} with coordinates`,
+    };
+  }
+  if (locale === "hr") {
+    return {
+      title: "Uvoz je uspio",
+      description: `${String(imported)} tvrtki uvezeno · ${String(withCoordinates)} s koordinatama`,
+    };
+  }
+  return {
+    title: "Import erfolgreich",
+    description: `${String(imported)} Unternehmen importiert · ${String(withCoordinates)} mit Koordinaten`,
+  };
+}
+
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
   const t = useT("csvImport");
   const tCompanies = useT("companies");
+  const locale = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedCompanyRow[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
@@ -117,12 +142,12 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     onOpenChange(true);
   };
 
-  const handleImport = async () => {
-    if (parsedRows.length === 0) {
+  const handleImport = async (rowsToImport: ParsedCompanyRow[]) => {
+    if (rowsToImport.length === 0) {
       return;
     }
 
-    const validated = parsedCompanyRowsSchema.safeParse(parsedRows);
+    const validated = parsedCompanyRowsSchema.safeParse(rowsToImport);
     if (!validated.success) {
       const msg = validated.error.issues.map((i) => i.message).join("; ");
       toast.error(t("toastValidateErrorTitle"), { description: msg });
@@ -140,6 +165,13 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         return;
       }
       onSuccess?.({ imported: result.imported, errors: [] });
+
+      const { title: successTitle, description: successDescription } = importSuccessCopy(
+        locale,
+        result.imported,
+        result.importedWithCoordinates,
+      );
+      toast.success(successTitle, { description: successDescription });
 
       if (aiEnrichNewCompanies && result.companyIds.length > 0) {
         const loadingId = toast.loading(
@@ -276,7 +308,7 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         isImporting={isImporting}
         aiEnrichNewCompanies={aiEnrichNewCompanies}
         onAiEnrichNewCompaniesChange={setAiEnrichNewCompanies}
-        onImportNow={handleImport}
+        onImportRows={handleImport}
         onBackToEdit={handleBackToEdit}
         onCancel={handlePreviewCancel}
       />

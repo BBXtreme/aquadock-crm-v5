@@ -898,6 +898,8 @@
     "activityEmail": "E-Mail",
     "activityMeeting": "Meeting",
     "activityReminder": "Erinnerung",
+    "activityDeleted": "Gelöscht",
+    "activityAiEnrichment": "AI Enrichment",
     "activityOther": "Sonstiges",
     "searchPlaceholder": "Suche nach Titel, Beschreibung, Firma oder Kontakt…",
     "loadError": "Fehler beim Laden der Historie: {message}",
@@ -1187,7 +1189,7 @@
   },
   "login": {
     "heroTitle": "Dein europäisches Waterfront-Netzwerk – auf einen Blick",
-    "heroDescription": "Die interne Kommandozentrale für AquaDocks Vertrieb, Partnerschaften und Wachstum — vom ersten Lead bis zum langfristigen Betreiber-Erfolg.",
+    "heroDescription": "Das interne CRM für AquaDocks Vertrieb, Partnerschaften und Wachstum — mit Leidenschaft für Wasser, Sport und Familie am Ufer.",
     "benefit1": "Volle Pipeline-Übersicht über alle Märkte",
     "benefit2": "Automatisierte Follow-ups und Massen-E-Mail-Kampagnen",
     "benefit3": "OpenMap-Lead-Erkennung und Deal-Tracking",

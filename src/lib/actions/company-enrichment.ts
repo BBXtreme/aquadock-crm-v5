@@ -17,6 +17,7 @@ import {
   type BulkResearchCompanyEnrichmentInput,
   bulkResearchCompanyEnrichmentInputSchema,
   type CompanyEnrichmentResult,
+  type EnrichmentFieldKey,
 } from "@/lib/validations/company-enrichment";
 import type { Database } from "@/types/database.types";
 
@@ -40,6 +41,16 @@ export type BulkCompanyEnrichmentItemResult =
 export type BulkResearchCompanyEnrichmentResponse =
   | { ok: true; results: BulkCompanyEnrichmentItemResult[] }
   | { ok: false; error: string };
+
+export type LogAiEnrichmentTimelineInput = {
+  companyId: string;
+  modelUsed: string;
+  webSearchMode: CompanyEnrichmentWebSearchMode;
+  selectedFieldKeys: EnrichmentFieldKey[];
+  selectedFieldCount: number;
+  suggestedFieldCount: number;
+  summaryIncluded: boolean;
+};
 
 const SYSTEM_PROMPT = `Du bist ein präziser Recherche-Assistent für AquaDock CRM (Wasser-/Hafen-/Gastronomie-Kontext).
 Nutze ausschließlich öffentlich zugängliche Fakten aus den Suchergebnissen.
@@ -349,5 +360,61 @@ export async function bulkResearchCompanyEnrichment(
     }
   } catch {
     return { ok: false, error: "ENRICHMENT_FAILED" };
+  }
+}
+
+function formatFieldKeysForTimeline(keys: EnrichmentFieldKey[]): string {
+  if (keys.length === 0) {
+    return "—";
+  }
+  return keys.join(", ");
+}
+
+export async function logCompanyAiEnrichmentTimeline(
+  input: LogAiEnrichmentTimelineInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "NOT_AUTHENTICATED" };
+    }
+
+    const resolved = await resolveCompanyDetail(input.companyId, supabase);
+    if (resolved.kind !== "active") {
+      return { ok: false, error: "COMPANY_NOT_FOUND" };
+    }
+
+    const model = input.modelUsed.trim() !== "" ? input.modelUsed.trim() : "unknown";
+    const webSearchLabel = input.webSearchMode === "full" ? "yes" : "no (model-only)";
+    const title = `AI Enrichment applied (${String(input.selectedFieldCount)} fields)`;
+    const content =
+      `Model: ${model}\n` +
+      `Web Search: ${webSearchLabel}\n` +
+      `Fields suggested: ${String(input.suggestedFieldCount)}\n` +
+      `Fields applied: ${String(input.selectedFieldCount)}\n` +
+      `Field keys: ${formatFieldKeysForTimeline(input.selectedFieldKeys)}\n` +
+      `AI Summary: ${input.summaryIncluded ? "yes" : "no"}`;
+
+    const { error } = await supabase.from("timeline").insert({
+      title,
+      content,
+      activity_type: "other",
+      company_id: input.companyId,
+      contact_id: null,
+      user_id: user.id,
+      created_by: user.id,
+      updated_by: user.id,
+      user_name: null,
+      deleted_at: null,
+    });
+    if (error) {
+      return { ok: false, error: "TIMELINE_INSERT_FAILED" };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "ENRICHMENT_TIMELINE_FAILED" };
   }
 }

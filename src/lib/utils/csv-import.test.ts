@@ -1,7 +1,9 @@
 import Papa from "papaparse";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  normalizeCsvOsmId,
   type ParsedCompanyRow,
+  parseCoordinate,
   parseCSVFile,
   parseGermanFloat,
   stripEmojis,
@@ -30,6 +32,41 @@ describe("parseGermanFloat", () => {
   });
 });
 
+describe("parseCoordinate", () => {
+  it("parses dot decimals without mangling", () => {
+    expect(parseCoordinate("50.1234", "lat")).toBe(50.1234);
+    expect(parseCoordinate("11.576124", "lon")).toBe(11.576124);
+    expect(parseCoordinate("48.137154", "lat")).toBe(48.137154);
+  });
+
+  it("parses comma decimals", () => {
+    expect(parseCoordinate("50,1234", "lat")).toBe(50.1234);
+    expect(parseCoordinate("11,576124", "lon")).toBe(11.576124);
+  });
+
+  it("parses mixed separators using last decimal separator", () => {
+    expect(parseCoordinate("1.234,5", "lat")).toBeUndefined();
+    expect(parseCoordinate("1,234.5", "lon")).toBeUndefined();
+  });
+
+  it("strips degree symbols and quotes", () => {
+    expect(parseCoordinate(`48.137154°`, "lat")).toBe(48.137154);
+    expect(parseCoordinate(`11.576124'"`, "lon")).toBe(11.576124);
+  });
+
+  it("returns undefined for out of range values", () => {
+    expect(parseCoordinate("200", "lat")).toBeUndefined();
+    expect(parseCoordinate("181", "lon")).toBeUndefined();
+  });
+
+  it("returns undefined for empty, invalid, null, and undefined input", () => {
+    expect(parseCoordinate("", "lat")).toBeUndefined();
+    expect(parseCoordinate("abc", "lat")).toBeUndefined();
+    expect(parseCoordinate(null, "lat")).toBeUndefined();
+    expect(parseCoordinate(undefined, "lat")).toBeUndefined();
+  });
+});
+
 describe("stripEmojis", () => {
   it("returns empty string when input is empty", () => {
     expect(stripEmojis("")).toBe("");
@@ -38,6 +75,27 @@ describe("stripEmojis", () => {
   it("removes common emoji blocks and trims", () => {
     expect(stripEmojis("🌊 See")).toBe("See");
     expect(stripEmojis("Marina ⛵")).toBe("Marina");
+  });
+});
+
+describe("normalizeCsvOsmId", () => {
+  it("normalizes compact OSM ids to lowercase type/id", () => {
+    expect(normalizeCsvOsmId("node/12345")).toBe("node/12345");
+    expect(normalizeCsvOsmId("Way/987")).toBe("way/987");
+    expect(normalizeCsvOsmId("RELATION/42")).toBe("relation/42");
+  });
+
+  it("normalizes full openstreetmap URLs to compact type/id", () => {
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/node/12345")).toBe("node/12345");
+    expect(normalizeCsvOsmId("https://openstreetmap.org/way/99")).toBe("way/99");
+  });
+
+  it("returns undefined for invalid or unsupported OSM values", () => {
+    expect(normalizeCsvOsmId("n123")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://example.com/node/123")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/node/abc")).toBeUndefined();
+    expect(normalizeCsvOsmId("https://www.openstreetmap.org/changeset/123")).toBeUndefined();
+    expect(normalizeCsvOsmId("")).toBeUndefined();
   });
 });
 
@@ -69,7 +127,7 @@ describe("parseCSVFile", () => {
             email: "a@b.co",
             lat: "53,5",
             lon: "10,1",
-            osm: "n123",
+            osm: "https://www.openstreetmap.org/node/123",
             unknown_column: "ignored",
           },
           {
@@ -96,6 +154,9 @@ describe("parseCSVFile", () => {
     expect(first.kundentyp).toBe("marina");
     expect(first.land).toBe("Deutschland");
     expect(first.wassertyp).toBe("See");
+    expect(first.lat).toBe(53.5);
+    expect(first.lon).toBe(10.1);
+    expect(first.osm).toBe("node/123");
     const second = rows[1];
     if (second === undefined) {
       throw new Error("expected second row");
@@ -221,6 +282,46 @@ describe("parseCSVFile", () => {
     expect(row.lon).toBeUndefined();
   });
 
+  it("keeps dot-decimal coordinates exact and rejects out-of-range values", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          {
+            firmenname: "Dot Decimal GmbH",
+            kundentyp: "Hotel",
+            lat: "50.1234",
+            lon: "11.576124",
+          },
+          {
+            firmenname: "Out of Range GmbH",
+            kundentyp: "Hotel",
+            lat: "501234",
+            lon: "11.576124",
+          },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(2);
+
+    const first = rows[0];
+    const second = rows[1];
+    if (first === undefined || second === undefined) {
+      throw new Error("expected two rows");
+    }
+
+    expect(first.lat).toBe(50.1234);
+    expect(first.lon).toBe(11.576124);
+    expect(second.lat).toBeUndefined();
+    expect(second.lon).toBe(11.576124);
+  });
+
   it("skips empty cells and unknown columns", async () => {
     vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
       const opts = options as {
@@ -249,6 +350,42 @@ describe("parseCSVFile", () => {
     expect(row.firmenname).toBe("Trim GmbH");
     expect(row.kundentyp).toBe("marina");
     expect(row.website).toBeUndefined();
+  });
+
+  it("maps OSM header aliases and strips invalid OSM values silently", async () => {
+    vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
+      const opts = options as {
+        complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
+      };
+      opts.complete({
+        errors: [],
+        data: [
+          {
+            firmenname: "Alias Co",
+            kundentyp: "Hotel",
+            osm_id: "https://www.openstreetmap.org/way/456",
+          },
+          {
+            firmenname: "Invalid OSM Co",
+            kundentyp: "Hotel",
+            openstreetmap: "not-valid",
+          },
+        ],
+      });
+    });
+
+    const file = new File([], "x.csv", { type: "text/csv" });
+    const rows = await parseCSVFile(file);
+    expect(rows).toHaveLength(2);
+
+    const first = rows[0];
+    const second = rows[1];
+    if (first === undefined || second === undefined) {
+      throw new Error("expected two rows");
+    }
+
+    expect(first.osm).toBe("way/456");
+    expect(second.osm).toBeUndefined();
   });
 });
 

@@ -111,14 +111,14 @@ export const csvImportParserFieldRows: readonly CsvImportParserFieldRow[] = [
     internalKey: "lat",
     recommendedHeader: "lat",
     acceptedHeaders: ["lat", "latitude", "breitengrad", "breite", "geo_lat"],
-    example: "48,137154",
+    example: "48.137154 oder 48,137154 (nur -90 bis 90)",
     required: false,
   },
   {
     internalKey: "lon",
     recommendedHeader: "lon",
     acceptedHeaders: ["lon", "lng", "longitude", "längengrad", "laengengrad", "lange", "geo_lon"],
-    example: "11,576124",
+    example: "11.576124 oder 11,576124 (nur -180 bis 180)",
     required: false,
   },
   {
@@ -139,7 +139,7 @@ export const csvImportParserFieldRows: readonly CsvImportParserFieldRow[] = [
     internalKey: "osm",
     recommendedHeader: "osm",
     acceptedHeaders: ["osm", "osm_id", "openstreetmap"],
-    example: "node/123456",
+    example: "node/123456 oder https://www.openstreetmap.org/node/123456 (gespeichert als node/123456)",
     required: false,
   },
 ];

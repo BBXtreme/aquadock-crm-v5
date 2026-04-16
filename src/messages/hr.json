@@ -898,6 +898,8 @@
     "activityEmail": "E-pošta",
     "activityMeeting": "Sastanak",
     "activityReminder": "Podsjetnik",
+    "activityDeleted": "Obrisano",
+    "activityAiEnrichment": "AI obogaćivanje",
     "activityOther": "Ostalo",
     "searchPlaceholder": "Pretraži naslov, opis, tvrtku ili kontakt…",
     "loadError": "Greška pri učitavanju vremenske crte: {message}",

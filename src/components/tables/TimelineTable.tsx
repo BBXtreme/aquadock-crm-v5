@@ -3,7 +3,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
-import { Bell, Calendar, FileText, Mail, MoreHorizontal, Pencil, Phone, Trash2 } from "lucide-react";
+import { Bell, Calendar, FileSpreadsheet, FileText, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -44,6 +44,12 @@ function activityIcon(t: string) {
       return <Calendar className="h-4 w-4" />;
     case "reminder":
       return <Bell className="h-4 w-4" />;
+    case "csv_import":
+      return <FileSpreadsheet className="h-4 w-4" />;
+    case "deleted":
+      return <Trash2 className="h-4 w-4" />;
+    case "ai_enrichment":
+      return <Sparkles className="h-4 w-4" />;
     default:
       return <MoreHorizontal className="h-4 w-4" />;
   }
@@ -61,9 +67,39 @@ function activityVariant(t: string) {
       return "destructive";
     case "reminder":
       return "secondary";
+    case "csv_import":
+      return "default";
+    case "deleted":
+      return "destructive";
+    case "ai_enrichment":
+      return "default";
     default:
       return "outline";
   }
+}
+
+function isDeletionAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): boolean {
+  if (entry.activity_type !== "other") {
+    return false;
+  }
+  return /(papierkorb verschoben|endgultig geloscht|endgültig gelöscht|geloscht|gelöscht)/i.test(entry.title ?? "");
+}
+
+function isAiEnrichmentAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): boolean {
+  if (entry.activity_type !== "other") {
+    return false;
+  }
+  return /^ai enrichment applied\b/i.test(entry.title ?? "");
+}
+
+function resolveDisplayActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+  if (isDeletionAuditEntry(entry)) {
+    return "deleted";
+  }
+  if (isAiEnrichmentAuditEntry(entry)) {
+    return "ai_enrichment";
+  }
+  return entry.activity_type;
 }
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
@@ -232,7 +268,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         header: t("colActivity"),
         enableSorting: true,
         cell: (info) => {
-          const type = info.row.original.activity_type;
+          const type = resolveDisplayActivityType(info.row.original);
           const label =
             type === "note"
               ? t("activityNote")
@@ -244,9 +280,15 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                     ? t("activityMeeting")
                     : type === "reminder"
                       ? t("activityReminder")
-                      : type === "other"
-                        ? t("activityOther")
-                        : type;
+                      : type === "csv_import"
+                        ? "CSV Import"
+                      : type === "deleted"
+                        ? t("activityDeleted")
+                        : type === "ai_enrichment"
+                          ? t("activityAiEnrichment")
+                        : type === "other"
+                          ? t("activityOther")
+                          : type;
           return (
             <Badge variant={activityVariant(type)} className="flex items-center gap-1">
               {activityIcon(type)}

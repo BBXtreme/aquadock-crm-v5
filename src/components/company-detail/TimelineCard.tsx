@@ -1,7 +1,7 @@
 // src/components/company-detail/TimelineCard.tsx
 "use client";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Bell, Calendar, Edit, FileText, Mail, MoreHorizontal, Phone, Plus, Trash } from "lucide-react";
+import { Bell, Calendar, Edit, FileSpreadsheet, FileText, Mail, MoreHorizontal, Phone, Plus, Sparkles, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
@@ -21,6 +21,30 @@ interface Props {
   companyId: string;
 }
 
+function isDeletionAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): boolean {
+  if (entry.activity_type !== "other") {
+    return false;
+  }
+  return /(papierkorb verschoben|endgultig geloscht|endgültig gelöscht|geloscht|gelöscht)/i.test(entry.title ?? "");
+}
+
+function isAiEnrichmentAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): boolean {
+  if (entry.activity_type !== "other") {
+    return false;
+  }
+  return /^ai enrichment applied\b/i.test(entry.title ?? "");
+}
+
+function resolveDisplayActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+  if (isDeletionAuditEntry(entry)) {
+    return "deleted";
+  }
+  if (isAiEnrichmentAuditEntry(entry)) {
+    return "ai_enrichment";
+  }
+  return entry.activity_type;
+}
+
 export default function TimelineCard({ companyId }: Props) {
   const t = useT("timeline");
   const tCommon = useT("common");
@@ -38,6 +62,12 @@ export default function TimelineCard({ companyId }: Props) {
         return t("activityMeeting");
       case "reminder":
         return t("activityReminder");
+      case "csv_import":
+        return "CSV Import";
+      case "deleted":
+        return t("activityDeleted");
+      case "ai_enrichment":
+        return t("activityAiEnrichment");
       default:
         return t("activityOther");
     }
@@ -54,6 +84,9 @@ export default function TimelineCard({ companyId }: Props) {
       case "email": return <Mail className="h-4 w-4" />;
       case "meeting": return <Calendar className="h-4 w-4" />;
       case "reminder": return <Bell className="h-4 w-4" />;
+      case "csv_import": return <FileSpreadsheet className="h-4 w-4" />;
+      case "deleted": return <Trash className="h-4 w-4" />;
+      case "ai_enrichment": return <Sparkles className="h-4 w-4" />;
       default: return <MoreHorizontal className="h-4 w-4" />;
     }
   };
@@ -65,6 +98,9 @@ export default function TimelineCard({ companyId }: Props) {
       case "email": return "outline";
       case "meeting": return "destructive";
       case "reminder": return "secondary";
+      case "csv_import": return "default";
+      case "deleted": return "destructive";
+      case "ai_enrichment": return "default";
       default: return "outline";
     }
   };
@@ -264,7 +300,9 @@ export default function TimelineCard({ companyId }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {timeline.map((entry) => (
+                    {timeline.map((entry) => {
+                      const displayType = resolveDisplayActivityType(entry);
+                      return (
                       <tr key={entry.id}>
                         <td>
                           {entry.created_at
@@ -275,9 +313,12 @@ export default function TimelineCard({ companyId }: Props) {
                             : tCommon("dash")}
                         </td>
                         <td>
-                          <Badge variant={getVariant(entry.activity_type)} className="flex items-center gap-1">
-                            {getIcon(entry.activity_type)}
-                            {activityLabel(entry.activity_type)}
+                          <Badge
+                            variant={getVariant(displayType)}
+                            className="flex items-center gap-1"
+                          >
+                            {getIcon(displayType)}
+                            {activityLabel(displayType)}
                           </Badge>
                         </td>
                         <td>{entry.title}</td>
@@ -307,7 +348,8 @@ export default function TimelineCard({ companyId }: Props) {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

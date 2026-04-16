@@ -60,6 +60,34 @@ export function parseGermanFloat(value: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+export function parseCoordinate(value: string | undefined | null, kind: "lat" | "lon"): number | undefined {
+  if (!value || typeof value !== "string") return undefined;
+
+  let cleaned = value.trim().replace(/[°′″'"]+/g, "");
+  if (!cleaned) return undefined;
+
+  // European format: comma as decimal, no dot present
+  if (cleaned.includes(",") && !cleaned.includes(".")) {
+    cleaned = cleaned.replace(",", ".");
+  }
+  // Mixed separators - last separator is decimal
+  else if (cleaned.includes(",") && cleaned.includes(".")) {
+    const lastComma = cleaned.lastIndexOf(",");
+    const lastDot = cleaned.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+    } else {
+      cleaned = cleaned.replace(/,/g, "");
+    }
+  }
+
+  const num = parseFloat(cleaned);
+  if (!Number.isFinite(num)) return undefined;
+
+  const [min, max] = kind === "lat" ? [-90, 90] : [-180, 180];
+  return num >= min && num <= max ? num : undefined;
+}
+
 // Helper to strip emojis from a string
 export function stripEmojis(text: string): string {
   if (!text) return "";
@@ -79,6 +107,52 @@ const LAND_NORMALIZE_MAP: Record<string, string> = {
   CH: "Schweiz",
   // Add more as needed
 };
+
+const OSM_COMPACT_ID_REGEX = /^(node|way|relation)\/(\d+)$/i;
+
+export function normalizeCsvOsmId(value: string | undefined | null): string | undefined {
+  if (!value || typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const compactMatch = trimmed.match(OSM_COMPACT_ID_REGEX);
+  if (compactMatch) {
+    const type = compactMatch[1];
+    const id = compactMatch[2];
+    if (!type || !id) return undefined;
+    return `${type.toLowerCase()}/${id}`;
+  }
+
+  if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+    return undefined;
+  }
+
+  try {
+    const parsedUrl = new URL(trimmed);
+    const hostname = parsedUrl.hostname.toLowerCase();
+    if (hostname !== "www.openstreetmap.org" && hostname !== "openstreetmap.org") {
+      return undefined;
+    }
+
+    const pathSegments = parsedUrl.pathname
+      .split("/")
+      .map((segment) => segment.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (pathSegments.length !== 2) return undefined;
+
+    const type = pathSegments[0];
+    const id = pathSegments[1];
+    if (!type || !id) return undefined;
+    const pathMatch = `${type}/${id}`.match(OSM_COMPACT_ID_REGEX);
+    if (!pathMatch) return undefined;
+
+    return `${type}/${id}`;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * CSV column headers (after trim + toLowerCase) → ParsedCompanyRow keys.
@@ -160,14 +234,18 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
                 parsedRow.email = trimmedValue;
                 break;
               case "lat":
-                parsedRow.lat = parseGermanFloat(trimmedValue);
+                parsedRow.lat = parseCoordinate(trimmedValue, "lat");
                 break;
               case "lon":
-                parsedRow.lon = parseGermanFloat(trimmedValue);
+                parsedRow.lon = parseCoordinate(trimmedValue, "lon");
                 break;
-              case "osm":
-                parsedRow.osm = trimmedValue;
+              case "osm": {
+                const normalizedOsm = normalizeCsvOsmId(trimmedValue);
+                if (normalizedOsm) {
+                  parsedRow.osm = normalizedOsm;
+                }
                 break;
+              }
             }
           }
 
