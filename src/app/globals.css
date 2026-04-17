@@ -207,6 +207,14 @@
 	  @apply bg-background text-foreground antialiased leading-7 font-sans;
 	}
 
+	/* Empty-cell em-dash placeholder. Forced via attribute selector so it
+	   cannot be overridden by parent utilities like `text-primary` on link
+	   wrappers or `text-foreground` on table cells. See EmptyDash component. */
+	[data-empty-dash] {
+	  color: var(--empty-placeholder, #e4e4e7) !important;
+	  font-weight: 400 !important;
+	}
+
 	html {
 	  @apply font-sans;
 	}

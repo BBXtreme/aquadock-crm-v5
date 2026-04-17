@@ -1016,7 +1016,8 @@
     "save": "Spremi",
     "metaCreated": "Stvoreno:",
     "metaUpdated": "Ažurirano:",
-    "undo": "Poništi"
+    "undo": "Poništi",
+    "comingSoon": "Uskoro dostupno"
   },
   "csvImport": {
     "dialogTitle": "Uvoz tvrtki iz CSV-a",

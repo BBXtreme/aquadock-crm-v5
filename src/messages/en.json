@@ -1016,7 +1016,8 @@
     "save": "Save",
     "metaCreated": "Created:",
     "metaUpdated": "Updated:",
-    "undo": "Undo"
+    "undo": "Undo",
+    "comingSoon": "Coming soon"
   },
   "csvImport": {
     "dialogTitle": "Import companies from CSV",

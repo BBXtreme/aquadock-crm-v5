@@ -11,12 +11,12 @@ export function EmptyDash({ className, style, ...rest }: ComponentProps<"span">)
   return (
     <span
       aria-hidden="true"
-      // `font-normal` prevents inheriting bold/medium weight from parent links
-      // (e.g. Hauptkontakt name cells). Color comes from --empty-placeholder,
-      // defined in globals.css for both light and dark themes. Inline style is
-      // used deliberately so it wins against any parent `text-*` utility.
-      className={cn("select-none font-normal", className)}
-      style={{ color: "var(--empty-placeholder)", ...style }}
+      data-empty-dash=""
+      // Color + weight are hardcoded via inline style so they win over any
+      // ancestor `text-*` / `font-medium` utility (e.g. name cells with link
+      // styling). No Tailwind JIT, no CSS variables — guaranteed to apply.
+      className={cn("select-none", className)}
+      style={{ color: "#e4e4e7", fontWeight: 400, ...style }}
       {...rest}
     >
       —

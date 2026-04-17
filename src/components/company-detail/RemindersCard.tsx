@@ -10,12 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { EmptyDash } from "@/components/ui/empty-dash";
+import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
-import { safeDisplay } from "@/lib/utils";
 import type { Reminder } from "@/types/database.types";
 
 interface Props {
@@ -180,7 +179,7 @@ export default function RemindersCard({ companyId }: Props) {
                               className="text-primary hover:underline cursor-pointer"
                               onClick={() => handleEdit(reminder)}
                             >
-                              {safeDisplay(reminder.title)}
+                              <DisplayOrDash value={reminder.title} />
                             </button>
                             {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
                             <div className="text-xs text-muted-foreground">

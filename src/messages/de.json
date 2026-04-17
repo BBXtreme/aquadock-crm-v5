@@ -1016,7 +1016,8 @@
     "save": "Speichern",
     "metaCreated": "Erstellt:",
     "metaUpdated": "Aktualisiert:",
-    "undo": "Rückgängig"
+    "undo": "Rückgängig",
+    "comingSoon": "Bald verfügbar"
   },
   "csvImport": {
     "dialogTitle": "Unternehmen aus CSV importieren",

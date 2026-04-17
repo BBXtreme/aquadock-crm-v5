@@ -6,7 +6,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
+import { ArrowLeft, Building, Edit, Linkedin, Trash, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/ui/page-shell";
@@ -53,7 +54,6 @@ import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { getKundentypLabel } from "@/lib/utils";
-import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
@@ -272,19 +272,19 @@ export default function ContactDetailClient({ contact: initialContact, companies
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formVorname")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.vorname)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.vorname} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formNachname")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.nachname)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.nachname} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formSalutation")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.anrede)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.anrede} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formPosition")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.position)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.position} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formEmail")}</div>
@@ -294,7 +294,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.email}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
@@ -306,7 +306,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.telefon}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
@@ -318,13 +318,28 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.mobil}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formDurchwahl")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.durchwahl)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.durchwahl} /></p>
+            </div>
+            {/* LinkedIn — placeholder, functionality coming in a later iteration.
+                Rendered at reduced opacity with a subtle "coming soon" hint so it
+                reads as present-but-dormant, in line with the card's tone. */}
+            <div aria-disabled="true" className="opacity-60">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                <Linkedin className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>LinkedIn</span>
+                <span className="ml-1 text-[10px] font-normal text-muted-foreground/80">
+                  · {tCommon("comingSoon")}
+                </span>
+              </div>
+              <p className="text-sm text-foreground cursor-not-allowed select-none">
+                <EmptyDash />
+              </p>
             </div>
             <div className="md:col-span-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -356,7 +371,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-foreground">{safeDisplay(contact.notes)}</p>
+                <p className="text-sm text-foreground"><DisplayOrDash value={contact.notes} /></p>
               )}
             </div>
           </div>

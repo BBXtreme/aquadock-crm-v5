@@ -38,8 +38,10 @@ function getInitials(vorname?: string | null, nachname?: string | null): string 
   const v = (vorname ?? "").trim();
   const n = (nachname ?? "").trim();
   if (!v && !n) return "?";
-  const first = v ? v[0] : "";
-  const second = n ? n[0] : v.length > 1 ? v[1] : "";
+  // `charAt` (vs `[idx]`) returns "" when out of bounds instead of `undefined`,
+  // which keeps the return type `string` under `noUncheckedIndexedAccess`.
+  const first = v.charAt(0);
+  const second = n ? n.charAt(0) : v.charAt(1);
   return (first + second).toUpperCase();
 }
 
