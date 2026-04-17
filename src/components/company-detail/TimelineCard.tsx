@@ -5,6 +5,16 @@ import { Bell, Calendar, Edit, FileSpreadsheet, FileText, Mail, MoreHorizontal, 
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,6 +85,7 @@ export default function TimelineCard({ companyId }: Props) {
   };
   const [editEntry, setEditEntry] = useState<TimelineEntryWithJoins | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<TimelineEntryWithJoins | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
 
@@ -248,10 +259,11 @@ export default function TimelineCard({ companyId }: Props) {
     setEditEntry(entry);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm(t("deleteConfirmDescription"))) {
-      deleteMutation.mutate(id);
-    }
+  const handleDeleteRequest = (entry: TimelineEntryWithJoins) => setEntryToDelete(entry);
+  const handleDeleteConfirm = () => {
+    if (!entryToDelete) return;
+    deleteMutation.mutate(entryToDelete.id);
+    setEntryToDelete(null);
   };
 
   const handleUpdate = async (values: Partial<TimelineEntryWithJoins>) => {
@@ -342,7 +354,8 @@ export default function TimelineCard({ companyId }: Props) {
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
-                              onClick={() => handleDelete(entry.id)}
+                              onClick={() => handleDeleteRequest(entry)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
@@ -390,6 +403,24 @@ export default function TimelineCard({ companyId }: Props) {
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!entryToDelete}
+        onOpenChange={(open) => {
+          if (!open) setEntryToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("deleteConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("formCancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>{t("deleteConfirmAction")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -369,6 +369,7 @@
     "detailLabelLongitude": "Geografska dužina",
     "detailLabelOsmId": "OSM ID",
     "detailOpenMapButton": "Prikaži u OpenMapu",
+    "detailMissingCoordinatesTooltip": "Nedostaju geografska širina i dužina. Najprije unesite koordinate.",
     "detailMeters": "{meters} m",
     "detailCrmLabelStatus": "Status",
     "detailCrmLabelValue": "Vrijednost",
@@ -577,7 +578,16 @@
     "detailLinkedTitle": "Povezani kontakti ({count})",
     "detailAddContact": "Dodaj kontakt",
     "detailEmptyLinkedCompany": "Nema kontakata povezanih s ovom tvrtkom.",
-    "detailSavedToast": "Kontakt spremljen"
+    "detailSavedToast": "Kontakt spremljen",
+    "formCompanyClearAria": "Ukloni poveznicu s tvrtkom",
+    "unlinkButtonAria": "Odvoji od tvrtke",
+    "unlinkConfirmTitle": "Odvojiti kontakt?",
+    "unlinkConfirmDescription": "Kontakt neće biti izbrisan, samo odvojen od tvrtke.",
+    "unlinkConfirmAction": "Odvoji",
+    "unlinkToastSuccess": "Kontakt odvojen",
+    "unlinkToastFailed": "Kontakt nije mogao biti odvojen",
+    "unlinkToastUndo": "Poništi",
+    "unlinkToastUndone": "Poveznica obnovljena"
   },
   "reminders": {
     "breadcrumb": "Početna → Podsjetnici",

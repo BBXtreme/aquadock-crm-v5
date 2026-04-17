@@ -1,10 +1,20 @@
 // This component renders a list of contacts linked to a specific company. It allows users to view, add, edit, and delete contacts. Each contact can be associated with a company and includes details like name, email, phone, and position. The component uses React Query for data fetching and mutations, and Supabase as the backend database. It also includes loading states and error handling with toast notifications.  - source:
 "use client";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Edit, Plus, Trash, User } from "lucide-react";
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Edit, Plus, Trash, Unlink, User } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import ContactEditForm from "@/components/features/contacts/ContactEditForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +22,8 @@ import { ContactAvatar } from "@/components/ui/contact-avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { updateContact } from "@/lib/actions/contacts";
+import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
@@ -24,7 +36,20 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const t = useT("contacts");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [contactToDelete, setContactToDelete] = useState<Contact | null>(null);
+  const [contactToUnlink, setContactToUnlink] = useState<Contact | null>(null);
   const queryClient = useQueryClient();
+
+  const invalidateContactQueries = (previousCompanyId: string | null) => {
+    queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+    queryClient.invalidateQueries({ queryKey: ["contacts"] });
+    queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    if (previousCompanyId && previousCompanyId !== companyId) {
+      queryClient.invalidateQueries({ queryKey: ["contacts", previousCompanyId] });
+      queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+    }
+  };
 
   const { data: contacts = [] } = useSuspenseQuery({
     queryKey: ["contacts", companyId],
@@ -48,9 +73,111 @@ export default function LinkedContactsCard({ companyId }: Props) {
     refetchOnReconnect: true,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteContactWithTrash(id),
+    onMutate: async (id) => {
+      const queryKey = ["contacts", companyId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Contact[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<Contact[]>(
+          queryKey,
+          previous.filter((c) => c.id !== id),
+        );
+      }
+      return { previous, queryKey };
+    },
+    onError: (err, _id, context) => {
+      if (context?.previous && context.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+      toast.error(t("tableToastDeleteFailed"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    },
+    onSuccess: (mode, id) => {
+      queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+      if (mode === "soft") {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: "Rückgängig",
+            onClick: () => {
+              void restoreContactWithTrash(id).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+                queryClient.invalidateQueries({ queryKey: ["contacts"] });
+                queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+                toast.success(t("toastUpdated"));
+              });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
+    },
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: (contact: Contact) => updateContact(contact.id, { company_id: null }),
+    onMutate: async (contact) => {
+      const queryKey = ["contacts", companyId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Contact[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<Contact[]>(
+          queryKey,
+          previous.filter((c) => c.id !== contact.id),
+        );
+      }
+      return { previous, queryKey, previousCompanyId: contact.company_id };
+    },
+    onError: (err, _contact, context) => {
+      if (context?.previous && context.queryKey) {
+        queryClient.setQueryData(context.queryKey, context.previous);
+      }
+      toast.error(t("unlinkToastFailed"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    },
+    onSuccess: (_data, contact, context) => {
+      invalidateContactQueries(context?.previousCompanyId ?? null);
+      toast.success(t("unlinkToastSuccess"), {
+        action: {
+          label: t("unlinkToastUndo"),
+          onClick: () => {
+            void updateContact(contact.id, { company_id: companyId })
+              .then(() => {
+                invalidateContactQueries(null);
+                toast.success(t("unlinkToastUndone"));
+              })
+              .catch((err: unknown) => {
+                toast.error(t("unlinkToastFailed"), {
+                  description: err instanceof Error ? err.message : undefined,
+                });
+              });
+          },
+        },
+      });
+    },
+  });
+
   const handleAdd = () => setAddDialogOpen(true);
   const handleEdit = (contact: Contact) => setEditContact(contact);
-  const handleDelete = (id: string) => console.log("Delete contact", id);
+  const handleDeleteRequest = (contact: Contact) => setContactToDelete(contact);
+  const handleDeleteConfirm = () => {
+    if (!contactToDelete) return;
+    deleteMutation.mutate(contactToDelete.id);
+    setContactToDelete(null);
+  };
+  const handleUnlinkRequest = (contact: Contact) => setContactToUnlink(contact);
+  const handleUnlinkConfirm = () => {
+    if (!contactToUnlink) return;
+    unlinkMutation.mutate(contactToUnlink);
+    setContactToUnlink(null);
+  };
 
   return (
     <>
@@ -124,14 +251,31 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           <td>{contact.is_primary && <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge>}</td>
                           <td className="text-right">
                             <div className="flex justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(contact)}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEdit(contact)}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleUnlinkRequest(contact)}
+                                disabled={unlinkMutation.isPending}
+                                aria-label={t("unlinkButtonAria")}
+                                title={t("unlinkButtonAria")}
+                              >
+                                <Unlink className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive/90"
-                                onClick={() => handleDelete(contact.id)}
+                                onClick={() => handleDeleteRequest(contact)}
+                                disabled={deleteMutation.isPending}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>
@@ -164,6 +308,42 @@ export default function LinkedContactsCard({ companyId }: Props) {
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!contactToDelete}
+        onOpenChange={(open) => {
+          if (!open) setContactToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>{t("delete")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!contactToUnlink}
+        onOpenChange={(open) => {
+          if (!open) setContactToUnlink(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("unlinkConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("unlinkConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnlinkConfirm}>{t("unlinkConfirmAction")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent>
