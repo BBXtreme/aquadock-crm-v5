@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import type { VisibilityState } from "@tanstack/react-table";
 import { Building, Plus, Users } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,6 +19,17 @@ import { getContacts } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  contactsColumnVisibilityEqual,
+  hasContactsColumnsParam,
+  mergeContactsColumnsIntoPath,
+  mergeSessionContactsColumnsIntoPath,
+  parseContactsColumnVisibility,
+  readContactsColumnsFromSession,
+  serializeContactsColumnVisibility,
+  shouldDeferEmptyContactsSessionWriteWhileRestoring,
+  writeContactsColumnsToSession,
+} from "@/lib/utils/contacts-columns-url-state";
 import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
@@ -25,10 +37,11 @@ type ContactWithCompany = Contact & { companies?: { firmenname: string } | null 
 function ClientContactsPage() {
   const t = useT("contacts");
   const router = useRouter();
+  const pathname = usePathname();
   const localeTag = useNumberLocaleTag();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [_columnVisibility, _setColumnVisibility] = useState({ anrede: false });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
@@ -152,6 +165,48 @@ function ClientContactsPage() {
   const searchParams = useSearchParams();
   const createIntent = searchParams.get("create");
   const trashedContactRedirect = searchParams.get("trashedContact") === "1";
+  const searchParamsString = searchParams.toString();
+
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParamsString);
+    if (hasContactsColumnsParam(sp)) {
+      return;
+    }
+    const saved = readContactsColumnsFromSession();
+    if (saved === null || saved.length === 0) {
+      return;
+    }
+    const href = mergeSessionContactsColumnsIntoPath(pathname, sp, saved);
+    const currentHref = `${pathname}${searchParamsString.length > 0 ? `?${searchParamsString}` : ""}`;
+    if (href === currentHref) {
+      return;
+    }
+    router.replace(href, { scroll: false });
+  }, [pathname, router, searchParamsString]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParamsString);
+    const fromUrl = parseContactsColumnVisibility(sp);
+    setColumnVisibility(fromUrl);
+  }, [searchParamsString]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParamsString);
+    const fromUrl = parseContactsColumnVisibility(sp);
+    const serialized = serializeContactsColumnVisibility(columnVisibility);
+    if (!shouldDeferEmptyContactsSessionWriteWhileRestoring(serialized, sp)) {
+      writeContactsColumnsToSession(serialized);
+    }
+    if (contactsColumnVisibilityEqual(fromUrl, columnVisibility)) {
+      return;
+    }
+    const href = mergeContactsColumnsIntoPath(pathname, sp, columnVisibility);
+    const currentHref = `${pathname}${searchParamsString.length > 0 ? `?${searchParamsString}` : ""}`;
+    if (href === currentHref) {
+      return;
+    }
+    router.replace(href, { scroll: false });
+  }, [columnVisibility, pathname, router, searchParamsString]);
 
   useEffect(() => {
     if (createIntent === "true") {
@@ -164,8 +219,11 @@ function ClientContactsPage() {
       return;
     }
     toast.message(t("toastTrashedContact"));
-    router.replace("/contacts", { scroll: false });
-  }, [trashedContactRedirect, router, t]);
+    const next = new URLSearchParams(searchParamsString);
+    next.delete("trashedContact");
+    const qs = next.toString();
+    router.replace(qs.length > 0 ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [trashedContactRedirect, router, t, searchParamsString, pathname]);
 
   return (
     <>
@@ -229,6 +287,8 @@ function ClientContactsPage() {
             onPaginationChange={setPagination}
             sorting={sorting}
             onSortingChange={setSorting}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
           />
         </CardContent>
       </Card>

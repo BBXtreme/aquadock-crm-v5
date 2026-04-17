@@ -8,7 +8,9 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  type OnChangeFn,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
@@ -63,6 +65,8 @@ interface ContactsTableProps {
   onPaginationChange: (pagination: { pageIndex: number; pageSize: number }) => void;
   sorting: { id: string; desc: boolean }[];
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
+  columnVisibility?: VisibilityState;
+  onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
 }
 
 const columnHelper = createColumnHelper<ContactWithCompany>();
@@ -77,10 +81,12 @@ export default function ContactsTable({
   onPaginationChange,
   sorting,
   onSortingChange,
+  columnVisibility: propColumnVisibility,
+  onColumnVisibilityChange: propOnColumnVisibilityChange,
 }: ContactsTableProps) {
   const t = useT("contacts");
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
+  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -88,6 +94,8 @@ export default function ContactsTable({
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
+  const columnVisibility = propColumnVisibility ?? localColumnVisibility;
+  const setColumnVisibility = propOnColumnVisibilityChange ?? setLocalColumnVisibility;
 
   const handleGlobalFilterChange = useCallback(
     (value: string) => {

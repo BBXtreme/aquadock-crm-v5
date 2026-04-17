@@ -35,6 +35,13 @@ describe("parseCompaniesListState", () => {
     expect(parseCompaniesListState(sp).activeFilters.kategorie).toEqual(["a", "b"]);
   });
 
+  it("parses hidden columns into VisibilityState entries", () => {
+    const sp = new URLSearchParams();
+    sp.set("cols", "status,wassertyp");
+    const s = parseCompaniesListState(sp);
+    expect(s.columnVisibility).toEqual({ status: false, wassertyp: false });
+  });
+
   it("parses water preset when valid", () => {
     const sp = new URLSearchParams();
     sp.set("water", "le500");
@@ -95,6 +102,7 @@ describe("serializeCompaniesListToSearchParamsString", () => {
     sp.set("page", "2");
     sp.set("size", "10");
     sp.set("q", "foo");
+    sp.set("cols", "status,wassertyp");
     const parsed = parseCompaniesListState(sp);
     const again = parseCompaniesListState(new URLSearchParams(serializeCompaniesListToSearchParamsString(parsed)));
     expect(companiesListStatesEqual(parsed, again)).toBe(true);

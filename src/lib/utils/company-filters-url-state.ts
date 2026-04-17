@@ -11,6 +11,8 @@ export type CompaniesListUrlState = {
   pagination: { pageIndex: number; pageSize: number };
   sorting: { id: string; desc: boolean }[];
   activeFilters: Record<CompaniesFilterGroup, string[]>;
+  /** TanStack VisibilityState persisted as hidden column ids. */
+  columnVisibility: Record<string, boolean>;
   waterFilter: CompaniesWaterPreset | null;
   /** Search string applied to the list query (debounced in the page). */
   globalFilter: string;
@@ -26,6 +28,7 @@ export const COMPANIES_LIST_PARAM_KEYS = [
   "land",
   "wassertyp",
   "water",
+  "cols",
   "sort",
   "dir",
   "page",
@@ -62,6 +65,7 @@ export function defaultCompaniesListUrlState(): CompaniesListUrlState {
       land: [],
       wassertyp: [],
     },
+    columnVisibility: {},
     waterFilter: null,
     globalFilter: "",
   };
@@ -135,6 +139,18 @@ function parseDesc(raw: string | null): boolean {
   return raw === "desc";
 }
 
+function parseColumnVisibility(raw: string | null): Record<string, boolean> {
+  const hidden = splitCommaList(raw);
+  if (hidden.length === 0) {
+    return {};
+  }
+  const state: Record<string, boolean> = {};
+  for (const columnId of hidden) {
+    state[columnId] = false;
+  }
+  return state;
+}
+
 export function parseCompaniesListState(searchParams: CompaniesListSearchParamsRead): CompaniesListUrlState {
   const sortId = parseSortId(searchParams.get("sort"));
   const desc = parseDesc(searchParams.get("dir"));
@@ -151,6 +167,7 @@ export function parseCompaniesListState(searchParams: CompaniesListSearchParamsR
       land: splitCommaList(searchParams.get("land")),
       wassertyp: splitCommaList(searchParams.get("wassertyp")),
     },
+    columnVisibility: parseColumnVisibility(searchParams.get("cols")),
     waterFilter: parseWater(searchParams.get("water")),
     globalFilter: searchParams.get("q") ?? "",
   };
@@ -158,6 +175,14 @@ export function parseCompaniesListState(searchParams: CompaniesListSearchParamsR
 
 function sortedCopy(arr: string[]): string[] {
   return [...arr].sort((a, b) => a.localeCompare(b));
+}
+
+function hiddenColumnIds(columnVisibility: Record<string, boolean>): string[] {
+  return sortedCopy(
+    Object.entries(columnVisibility)
+      .filter(([, isVisible]) => isVisible === false)
+      .map(([columnId]) => columnId),
+  );
 }
 
 /** Stable key for equality checks (normalized arrays). */
@@ -173,6 +198,7 @@ export function companiesListStateKey(state: CompaniesListUrlState): string {
     betriebstyp: sortedCopy(state.activeFilters.betriebstyp),
     land: sortedCopy(state.activeFilters.land),
     wassertyp: sortedCopy(state.activeFilters.wassertyp),
+    hiddenColumns: hiddenColumnIds(state.columnVisibility),
     water: state.waterFilter,
     q: state.globalFilter.trim(),
   });
@@ -200,6 +226,10 @@ export function serializeCompaniesListToSearchParamsString(state: CompaniesListU
   setCsv("betriebstyp", state.activeFilters.betriebstyp);
   setCsv("land", state.activeFilters.land);
   setCsv("wassertyp", state.activeFilters.wassertyp);
+  const hiddenColumns = hiddenColumnIds(state.columnVisibility);
+  if (hiddenColumns.length > 0) {
+    next.set("cols", hiddenColumns.join(","));
+  }
   if (state.waterFilter) {
     next.set("water", state.waterFilter);
   }

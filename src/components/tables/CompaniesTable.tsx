@@ -8,8 +8,10 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  type OnChangeFn,
   type Updater,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
@@ -78,6 +80,9 @@ interface CompaniesTableProps {
   onRowSelectionChange: (updater: Updater<Record<string, boolean>>) => void;
   /** Shown inline after the “N selected” label when at least one row is selected */
   selectionActions?: ReactNode;
+  /** Optional controlled VisibilityState for persisted column toggles */
+  columnVisibility?: VisibilityState;
+  onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   /** List-only query string (no `?`) to preserve /companies filters when opening detail/contact links */
   companiesListSearchParams?: string;
 }
@@ -98,12 +103,14 @@ export default function CompaniesTable({
   rowSelection,
   onRowSelectionChange,
   selectionActions,
+  columnVisibility: propColumnVisibility,
+  onColumnVisibilityChange: propOnColumnVisibilityChange,
   companiesListSearchParams = "",
 }: CompaniesTableProps) {
   const t = useT("companies");
   const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<CompanyWithContacts | null>(null);
@@ -112,6 +119,8 @@ export default function CompaniesTable({
 
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
+  const columnVisibility = propColumnVisibility ?? localColumnVisibility;
+  const setColumnVisibility = propOnColumnVisibilityChange ?? setLocalColumnVisibility;
 
   const handleGlobalFilterChange = useCallback(
     (value: string) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import type { VisibilityState } from "@tanstack/react-table";
 import { Building, DollarSign, Loader2, MapPin, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -135,6 +136,7 @@ function ClientCompaniesPage() {
     wassertyp: [],
   });
   const [waterFilter, setWaterFilter] = useState<WaterPreset | null>(null);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -175,6 +177,7 @@ function ClientCompaniesPage() {
     setPagination(fromUrl.pagination);
     setSorting(fromUrl.sorting);
     setActiveFilters(fromUrl.activeFilters);
+    setColumnVisibility(fromUrl.columnVisibility);
     setWaterFilter(fromUrl.waterFilter);
     setGlobalFilter(fromUrl.globalFilter);
   }, [searchParamsString]);
@@ -185,6 +188,7 @@ function ClientCompaniesPage() {
       pagination,
       sorting,
       activeFilters,
+      columnVisibility,
       waterFilter,
       globalFilter: debouncedGlobalFilter,
     };
@@ -207,7 +211,7 @@ function ClientCompaniesPage() {
     }
     persistSession();
     router.replace(href, { scroll: false });
-  }, [pagination, sorting, activeFilters, waterFilter, debouncedGlobalFilter, pathname, router]);
+  }, [pagination, sorting, activeFilters, columnVisibility, waterFilter, debouncedGlobalFilter, pathname, router]);
 
   const { data: distinctFilterValues } = useQuery({
     queryKey: ["companies-filter-options"],
@@ -670,10 +674,11 @@ function ClientCompaniesPage() {
         pagination,
         sorting,
         activeFilters,
+        columnVisibility,
         waterFilter,
         globalFilter: debouncedGlobalFilter,
       }),
-    [pagination, sorting, activeFilters, waterFilter, debouncedGlobalFilter],
+    [pagination, sorting, activeFilters, columnVisibility, waterFilter, debouncedGlobalFilter],
   );
 
   useEffect(() => {
@@ -1039,6 +1044,8 @@ function ClientCompaniesPage() {
               onPaginationChange={setPagination}
               sorting={sorting}
               onSortingChange={handleSortingChange}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
               companiesListSearchParams={companiesListLinkSearch}
               onImportCSV={() => setCsvDialogOpen(true)}
               rowSelection={rowSelection}
