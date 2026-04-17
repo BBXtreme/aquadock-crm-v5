@@ -344,6 +344,8 @@
     "tableContactsNone": "Nema",
     "tableContactsPrimary": "(primarni)",
     "headerAddTimeline": "Aktivnost",
+    "detailNavPreviousAria": "Prethodno poduzeće (redoslijed popisa)",
+    "detailNavNextAria": "Sljedeće poduzeće (redoslijed popisa)",
     "detailKpiTotalContacts": "Kontakata ukupno",
     "detailKpiPrimaryContacts": "Primarni kontakti",
     "detailKpiOpenReminders": "Otvoreni podsjetnici",

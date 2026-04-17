@@ -39,6 +39,7 @@ import {
 } from "@/lib/actions/companies";
 import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
+import { applyCompaniesListFiltersToCompaniesQuery } from "@/lib/companies/companies-list-supabase";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { wassertypOptions } from "@/lib/constants/wassertyp";
@@ -274,10 +275,8 @@ function ClientCompaniesPage() {
     ],
     queryFn: async () => {
       const supabase = createClient();
-      let query = supabase
-        .from("companies")
-        .select(
-          `
+      let query = supabase.from("companies").select(
+        `
           *,
           contacts (
             id,
@@ -288,53 +287,13 @@ function ClientCompaniesPage() {
             deleted_at
           )
         `,
-          { count: "exact" },
-        )
-        .is("deleted_at", null);
-
-      // Apply global filter
-      if (debouncedGlobalFilter) {
-        query = query.or(
-          `firmenname.ilike.%${debouncedGlobalFilter}%,strasse.ilike.%${debouncedGlobalFilter}%,stadt.ilike.%${debouncedGlobalFilter}%`,
-        );
-      }
-
-      // Apply active filters
-      if (activeFilters.status.length > 0) {
-        query = query.in("status", activeFilters.status);
-      }
-      if (activeFilters.kategorie.length > 0) {
-        query = query.in("kundentyp", activeFilters.kategorie);
-      }
-      if (activeFilters.betriebstyp.length > 0) {
-        query = query.in("firmentyp", activeFilters.betriebstyp);
-      }
-      if (activeFilters.land.length > 0) {
-        query = query.in("land", activeFilters.land);
-      }
-      if (activeFilters.wassertyp.length > 0) {
-        query = query.in("wassertyp", activeFilters.wassertyp);
-      }
-
-      if (waterFilter) {
-        switch (waterFilter) {
-          case "at":
-            query = query.eq("wasserdistanz", 0);
-            break;
-          case "le100":
-            query = query.lte("wasserdistanz", 100);
-            break;
-          case "le500":
-            query = query.lte("wasserdistanz", 500);
-            break;
-          case "le1km":
-            query = query.lte("wasserdistanz", 1000);
-            break;
-          case "gt1km":
-            query = query.gt("wasserdistanz", 1000);
-            break;
-        }
-      }
+        { count: "exact" },
+      );
+      query = applyCompaniesListFiltersToCompaniesQuery(query, {
+        globalFilter: debouncedGlobalFilter,
+        activeFilters,
+        waterFilter,
+      });
 
       // Apply sorting
       if (sorting.length > 0) {

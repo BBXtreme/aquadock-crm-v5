@@ -344,6 +344,8 @@
     "tableContactsNone": "None",
     "tableContactsPrimary": "(primary)",
     "headerAddTimeline": "Activity",
+    "detailNavPreviousAria": "Previous company (list order)",
+    "detailNavNextAria": "Next company (list order)",
     "detailKpiTotalContacts": "Total contacts",
     "detailKpiPrimaryContacts": "Primary contacts",
     "detailKpiOpenReminders": "Open reminders",

@@ -4,8 +4,8 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
 import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
@@ -20,25 +20,58 @@ import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageShell } from "@/components/ui/page-shell";
+import { fetchAllCompanyIdsForListNavigation } from "@/lib/companies/companies-list-supabase";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import {
+  companiesListStateKey,
+  extractCompaniesListSearchParamsString,
+  hasAnyCompaniesListParamKey,
+  parseCompaniesListState,
+} from "@/lib/utils/company-filters-url-state";
 import type { CompanyForm } from "@/lib/validations/company";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
-interface CompanyDetailClientProps {
+export interface CompanyDetailClientProps {
   company: Company;
   initialAiEnrichOpen?: boolean;
+  /** List-only query string from the server (no `?`); mirrors URL when opened from /companies */
+  initialCompaniesListSearch?: string;
 }
 
-export default function CompanyDetailClient({ company, initialAiEnrichOpen = false }: CompanyDetailClientProps) {
+function CompanyDetailShell({
+  company,
+  initialAiEnrichOpen = false,
+  initialCompaniesListSearch = "",
+}: CompanyDetailClientProps) {
   const tCompanies = useT("companies");
   const tTimeline = useT("timeline");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [, startTransition] = useTransition();
   const id = company.id;
+
+  const companiesListSearchParams = useMemo(() => {
+    const fromUrl = extractCompaniesListSearchParamsString(searchParams);
+    if (fromUrl.length > 0) {
+      return fromUrl;
+    }
+    return initialCompaniesListSearch.trim();
+  }, [searchParams, initialCompaniesListSearch]);
+
+  const hasListNavContext = useMemo(() => {
+    if (companiesListSearchParams.length > 0) {
+      return true;
+    }
+    return hasAnyCompaniesListParamKey(searchParams);
+  }, [companiesListSearchParams, searchParams]);
+
+  const listStateForNav = useMemo(() => {
+    return parseCompaniesListState(new URLSearchParams(companiesListSearchParams));
+  }, [companiesListSearchParams]);
 
   const refreshCompanyDetail = useCallback(() => {
     startTransition(() => {
@@ -52,9 +85,17 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
   const [aiPrefill, setAiPrefill] = useState<{ version: number; patch: Partial<CompanyForm> } | null>(null);
 
   useEffect(() => {
-    if (!initialAiEnrichOpen) return;
-    router.replace(`/companies/${id}`, { scroll: false });
-  }, [initialAiEnrichOpen, id, router]);
+    if (!initialAiEnrichOpen) {
+      return;
+    }
+    const sp = new URLSearchParams(searchParams.toString());
+    if (sp.get("aiEnrich") !== "1") {
+      return;
+    }
+    sp.delete("aiEnrich");
+    const qs = sp.toString();
+    router.replace(qs.length > 0 ? `/companies/${id}?${qs}` : `/companies/${id}`, { scroll: false });
+  }, [initialAiEnrichOpen, id, router, searchParams]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -102,6 +143,30 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
     },
   });
 
+  const { data: orderedNavIds = [], isPending: listNavIdsPending } = useQuery({
+    queryKey: ["company-detail-nav-ids", companiesListStateKey(listStateForNav)],
+    enabled: hasListNavContext,
+    queryFn: async () => fetchAllCompanyIdsForListNavigation(createClient(), listStateForNav),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { prevCompanyId, nextCompanyId } = useMemo(() => {
+    if (!hasListNavContext || orderedNavIds.length === 0) {
+      return { prevCompanyId: null as string | null, nextCompanyId: null as string | null };
+    }
+    const idx = orderedNavIds.indexOf(id);
+    if (idx < 0) {
+      return { prevCompanyId: null, nextCompanyId: null };
+    }
+    const prev = idx > 0 ? orderedNavIds[idx - 1] : undefined;
+    const next = idx < orderedNavIds.length - 1 ? orderedNavIds[idx + 1] : undefined;
+    return {
+      prevCompanyId: typeof prev === "string" ? prev : null,
+      nextCompanyId: typeof next === "string" ? next : null,
+    };
+  }, [hasListNavContext, orderedNavIds, id]);
+
   useEffect(() => {
     if (company?.id) {
       queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
@@ -115,26 +180,29 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
   };
 
   return (
-    <PageShell>
-      <Suspense fallback={<LoadingState count={8} />}>
-        <CompanyHeader
-          company={company}
-          id={id}
-          router={router}
-          onAddTimeline={() => setAddTimelineDialogOpen(true)}
-          onEdit={() => setEditCompanyDialogOpen(true)}
-          onAiEnrich={() => setAiModalOpen(true)}
-        />
-        <CompanyKpiCards company={company} />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-          <CompanyDetailsCard company={company} onCompanyUpdated={refreshCompanyDetail} />
-          <AquaDockCard company={company} onCompanyUpdated={refreshCompanyDetail} />
-          <CrmCard company={company} />
-        </div>
-        <LinkedContactsCard companyId={id} />
-        <RemindersCard companyId={id} />
-        <TimelineCard companyId={id} />
-      </Suspense>
+    <>
+      <CompanyHeader
+        company={company}
+        id={id}
+        router={router}
+        companiesListSearchParams={companiesListSearchParams}
+        hasListNavContext={hasListNavContext}
+        prevCompanyId={prevCompanyId}
+        nextCompanyId={nextCompanyId}
+        listNavIdsLoading={hasListNavContext && listNavIdsPending}
+        onAddTimeline={() => setAddTimelineDialogOpen(true)}
+        onEdit={() => setEditCompanyDialogOpen(true)}
+        onAiEnrich={() => setAiModalOpen(true)}
+      />
+      <CompanyKpiCards company={company} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+        <CompanyDetailsCard company={company} onCompanyUpdated={refreshCompanyDetail} />
+        <AquaDockCard company={company} onCompanyUpdated={refreshCompanyDetail} />
+        <CrmCard company={company} />
+      </div>
+      <LinkedContactsCard companyId={id} />
+      <RemindersCard companyId={id} />
+      <TimelineCard companyId={id} />
 
       <AIEnrichmentModal
         company={company}
@@ -181,6 +249,16 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
           />
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+export default function CompanyDetailClient(props: CompanyDetailClientProps) {
+  return (
+    <PageShell>
+      <Suspense fallback={<LoadingState count={8} />}>
+        <CompanyDetailShell {...props} />
+      </Suspense>
     </PageShell>
   );
 }

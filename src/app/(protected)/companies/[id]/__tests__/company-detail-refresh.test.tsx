@@ -8,7 +8,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CompanyDetailClient from "@/app/(protected)/companies/[id]/CompanyDetailClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -163,7 +163,11 @@ function Harness({ initial }: { initial: Company }) {
       testCtx.unregisterSetCompany();
     };
   }, []);
-  return <CompanyDetailClient company={company} />;
+  return (
+    <Suspense fallback={null}>
+      <CompanyDetailClient company={company} />
+    </Suspense>
+  );
 }
 
 function renderDetail(ui: ReactElement) {

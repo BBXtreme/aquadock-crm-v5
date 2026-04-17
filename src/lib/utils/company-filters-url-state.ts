@@ -260,6 +260,34 @@ export function hasAnyCompaniesListParamKey(searchParams: CompaniesListSearchPar
   return false;
 }
 
+/** From full URL search params, keep only companies-list keys (for `/companies?...` ↔ detail links). */
+export function extractCompaniesListSearchParamsString(searchParams: CompaniesListSearchParamsRead): string {
+  const next = new URLSearchParams();
+  for (const k of COMPANIES_LIST_PARAM_KEYS) {
+    const v = searchParams.get(k);
+    if (v !== null && v !== "") {
+      next.set(k, v);
+    }
+  }
+  return next.toString();
+}
+
+/** Build list-only query string from Next.js `searchParams` on a server page. */
+export function companiesListSearchStringFromPageSearchParams(
+  sp: Record<string, string | string[] | undefined>,
+): string {
+  const u = new URLSearchParams();
+  for (const k of COMPANIES_LIST_PARAM_KEYS) {
+    const raw = sp[k];
+    if (typeof raw === "string" && raw.length > 0) {
+      u.set(k, raw);
+    } else if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === "string" && raw[0].length > 0) {
+      u.set(k, raw[0]);
+    }
+  }
+  return extractCompaniesListSearchParamsString(u);
+}
+
 /** Merge list state into current search params; returns full path `/companies?...` or `/companies`. */
 export function mergeCompaniesListIntoPath(
   pathname: string,

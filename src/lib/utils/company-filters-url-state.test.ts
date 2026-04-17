@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   COMPANIES_LIST_PARAM_KEYS,
   type CompaniesListUrlState,
+  companiesListSearchStringFromPageSearchParams,
   companiesListStatesEqual,
   companiesSortIdForQuery,
   defaultCompaniesListUrlState,
+  extractCompaniesListSearchParamsString,
   hasAnyCompaniesListParamKey,
   mergeCompaniesListIntoPath,
   mergeSessionCompaniesListQuery,
@@ -159,5 +161,27 @@ describe("companiesSortIdForQuery", () => {
 
   it("passes through db column ids", () => {
     expect(companiesSortIdForQuery("firmenname")).toBe("firmenname");
+  });
+});
+
+describe("extractCompaniesListSearchParamsString", () => {
+  it("keeps only companies list keys and drops others", () => {
+    const sp = new URLSearchParams();
+    sp.set("status", "lead");
+    sp.set("aiEnrich", "1");
+    sp.set("foo", "bar");
+    expect(extractCompaniesListSearchParamsString(sp)).toBe("status=lead");
+  });
+});
+
+describe("companiesListSearchStringFromPageSearchParams", () => {
+  it("extracts list keys from Next-style search param record", () => {
+    const s = companiesListSearchStringFromPageSearchParams({
+      status: "lead,gewonnen",
+      aiEnrich: "1",
+      unrelated: "x",
+    });
+    expect(new URLSearchParams(s).get("status")).toBe("lead,gewonnen");
+    expect(s.includes("aiEnrich")).toBe(false);
   });
 });

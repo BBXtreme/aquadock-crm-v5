@@ -7,6 +7,7 @@
 import { notFound, redirect } from "next/navigation";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { companiesListSearchStringFromPageSearchParams } from "@/lib/utils/company-filters-url-state";
 import CompanyDetailClient from "./CompanyDetailClient";
 
 export default async function CompanyDetailPage({
@@ -14,7 +15,7 @@ export default async function CompanyDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ aiEnrich?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { id } = await params;
 
@@ -31,6 +32,13 @@ export default async function CompanyDetailPage({
 
   const sp = searchParams ? await searchParams : {};
   const initialAiEnrichOpen = sp?.aiEnrich === "1";
+  const initialCompaniesListSearch = companiesListSearchStringFromPageSearchParams(sp);
 
-  return <CompanyDetailClient company={resolved.company} initialAiEnrichOpen={initialAiEnrichOpen} />;
+  return (
+    <CompanyDetailClient
+      company={resolved.company}
+      initialAiEnrichOpen={initialAiEnrichOpen}
+      initialCompaniesListSearch={initialCompaniesListSearch}
+    />
+  );
 }
