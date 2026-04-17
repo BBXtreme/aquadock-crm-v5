@@ -78,9 +78,14 @@
 	--warning-foreground: oklch(0.99 0 0);
 	--success: oklch(0.72 0.17 155);
 	--success-foreground: oklch(0.99 0 0);
-	--border: oklch(0.90 0.01 240);
+	--border: oklch(0.955 0.004 240);
 	--input: oklch(0.91 0.01 240);
 	--ring: oklch(0.645 0.16 197);
+
+	/* Empty-state placeholder (em-dash in table cells / "no data" fields).
+	   Deliberately just a touch darker than --border so it reads as absent-but-aligned.
+	   Use via the .empty-dash utility (src/components/ui/empty-dash.tsx). */
+	--empty-placeholder: oklch(0.88 0.005 240);
 
 	/* Dashboard & chart palette — aqua/teal family */
 	--chart-1: oklch(0.645 0.16 197);
@@ -125,6 +130,9 @@
 	--border: oklch(1 0 0 / 0.12);
 	--input: oklch(1 0 0 / 0.18);
 	--ring: oklch(0.74 0.14 197);
+
+	/* Empty-state placeholder — muted white-ish tone for dark card surfaces. */
+	--empty-placeholder: oklch(0.38 0.005 240);
 
 	/* Dashboard & chart palette — brighter for dark surfaces */
 	--chart-1: oklch(0.74 0.14 197);
@@ -197,6 +205,14 @@
 
 	body {
 	  @apply bg-background text-foreground antialiased leading-7 font-sans;
+	}
+
+	/* Empty-cell em-dash placeholder. Forced via attribute selector so it
+	   cannot be overridden by parent utilities like `text-primary` on link
+	   wrappers or `text-foreground` on table cells. See EmptyDash component. */
+	[data-empty-dash] {
+	  color: var(--empty-placeholder, #e4e4e7) !important;
+	  font-weight: 400 !important;
 	}
 
 	html {

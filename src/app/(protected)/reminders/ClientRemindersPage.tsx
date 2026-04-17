@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { endOfWeek, startOfWeek } from "date-fns";
-import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Trash2 } from "lucide-react";
+import { AlertTriangle, Calendar, CheckCircle, FileText, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
@@ -154,15 +154,18 @@ function ClientRemindersPage() {
 
   return (
     <Suspense fallback={<LoadingState count={20} />}>
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
+      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
           <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
           <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {t("title")}
           </h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => setReminderDialogOpen(true)}>{t("newReminder")}</Button>
+        <Button onClick={() => setReminderDialogOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("createButtonLabel")}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-6">

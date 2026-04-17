@@ -192,10 +192,10 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   });
 
   const sectionClass =
-    "space-y-3 rounded-lg border border-border bg-muted/15 px-4 py-4 sm:px-5 sm:py-4";
+    "space-y-3 rounded-lg border border-border/40 bg-muted/15 px-4 py-4 sm:px-5 sm:py-4";
 
   return (
-    <Card className="rounded-xl border border-border bg-card text-card-foreground shadow-sm md:col-span-2">
+    <Card className="shadow-sm md:col-span-2">
       <CardHeader className="space-y-1 pb-4">
         <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <Sparkles className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
@@ -244,7 +244,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
               onChange={(e) => setDailyLimit(e.target.value)}
             />
           </div>
-          <div className="border-border/60 space-y-2 border-t pt-3">
+          <div className="border-border/40 space-y-2 border-t pt-3">
             <p className="text-muted-foreground text-sm tabular-nums">
               {t("aiEnrichment.usageLine", { used: usedToday, limit })}
             </p>
@@ -378,7 +378,7 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
             </div>
           </div>
 
-          <div className="border-border/60 mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="border-border/40 mt-4 flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 flex-1 space-y-1">
               <Label htmlFor="ai-enrich-address-focus" className="text-sm font-medium">
                 {t("aiEnrichment.addressFocusLabel")}

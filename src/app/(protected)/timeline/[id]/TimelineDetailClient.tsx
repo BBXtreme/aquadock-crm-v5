@@ -6,8 +6,16 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import TimelineEntryForm, { type TimelineEntryFormValues } from "@/components/features/timeline/TimelineEntryForm";
-import { Button } from "@/components/ui/button";
-import { useT } from "@/lib/i18n/use-translations";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { PageShell } from "@/components/ui/page-shell";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { TimelineEntry } from "@/types/database.types";
 
@@ -19,6 +27,7 @@ export default function TimelineDetailClient({
   initialEntry: TimelineEntry;
 }) {
   const t = useT("timeline");
+  const localeTag = useNumberLocaleTag();
   const router = useRouter();
 
   const { data: companies = [] } = useSuspenseQuery({
@@ -71,13 +80,40 @@ export default function TimelineDetailClient({
     },
   });
 
+  const createdDate = initialEntry.created_at
+    ? new Date(initialEntry.created_at).toLocaleDateString(localeTag)
+    : null;
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="ghost" size="sm" asChild>
-          <Link href="/timeline">{t("detailBackLink")}</Link>
-        </Button>
-      </div>
+    <PageShell className="max-w-3xl">
+      <header className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/timeline">{t("title")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="max-w-[40ch] truncate">{initialEntry.title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{initialEntry.title}</h1>
+            {createdDate && (
+              <p className="mt-1 text-muted-foreground">
+                {initialEntry.activity_type}
+                {" · "}
+                {createdDate}
+              </p>
+            )}
+          </div>
+        </div>
+      </header>
+
       <TimelineEntryForm
         editEntry={initialEntry}
         companies={companies}
@@ -85,6 +121,6 @@ export default function TimelineDetailClient({
         isSubmitting={mutation.isPending}
         onSubmit={(values) => mutation.mutateAsync(values)}
       />
-    </div>
+    </PageShell>
   );
 }

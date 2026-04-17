@@ -22,10 +22,8 @@ export default async function TimelineEntryDetailPage({ params }: { params: Prom
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <Suspense fallback={<TimelinePageSkeleton />}>
-        <TimelineDetailClient entryId={id} initialEntry={resolved.entry} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<TimelinePageSkeleton />}>
+      <TimelineDetailClient entryId={id} initialEntry={resolved.entry} />
+    </Suspense>
   );
 }

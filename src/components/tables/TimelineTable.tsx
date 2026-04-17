@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
@@ -237,7 +238,6 @@ interface TimelineTableProps {
 export default function TimelineTable({ data, isLoading }: TimelineTableProps = {}) {
   const [_pagination, _setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const t = useT("timeline");
-  const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
 
   const columns = useMemo<ColumnDef<TimelineEntryWithJoins>[]>(
@@ -249,7 +249,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         cell: (info) => {
           const date = info.getValue();
           if (!date) {
-            return <span>{tCommon("dash")}</span>;
+            return <EmptyDash />;
           }
           const formatted = new Intl.DateTimeFormat(localeTag, {
             day: "2-digit",
@@ -306,7 +306,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
           const b = rowB.original.profiles?.display_name || "";
           return a.localeCompare(b);
         },
-        cell: (info) => <span>{info.row.original.profiles?.display_name || tCommon("dash")}</span>,
+        cell: (info) => <span>{info.row.original.profiles?.display_name || <EmptyDash />}</span>,
       }) as ColumnDef<TimelineEntryWithJoins>,
       columnHelper.display({
         id: "company",
@@ -323,7 +323,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
               {info.row.original.companies.firmenname}
             </Link>
           ) : (
-            <span className="text-muted-foreground">{tCommon("dash")}</span>
+            <EmptyDash />
           ),
       }) as ColumnDef<TimelineEntryWithJoins>,
       columnHelper.display({
@@ -341,7 +341,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
               {info.row.original.contacts.vorname} {info.row.original.contacts.nachname}
             </Link>
           ) : (
-            <span className="text-muted-foreground">{tCommon("dash")}</span>
+            <EmptyDash />
           ),
       }) as ColumnDef<TimelineEntryWithJoins>,
       columnHelper.display({
@@ -356,7 +356,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         cell: (info) => (
           <div className="space-y-1">
             <div className="font-medium">{info.row.original.title}</div>
-            <div className="text-sm text-muted-foreground">{info.row.original.content || tCommon("dash")}</div>
+            <div className="text-sm text-muted-foreground">{info.row.original.content || <EmptyDash />}</div>
           </div>
         ),
       }) as ColumnDef<TimelineEntryWithJoins>,
@@ -366,7 +366,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         cell: (info) => <ActionCell entry={info.row.original} />,
       }) as ColumnDef<TimelineEntryWithJoins>,
     ],
-    [t, tCommon, localeTag],
+    [t, localeTag],
   );
 
   const { data: internalData = [], isLoading: internalLoading, error: internalError } = useQuery({

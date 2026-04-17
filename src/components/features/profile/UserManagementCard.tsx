@@ -164,8 +164,8 @@ function UserManagementCard({
             onClick={() => setCreateDialogOpen(true)}
             className="flex items-center"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            {t("userManagement.newUserAccount")}
+            <Plus className="mr-2 h-4 w-4" />
+            {t("userManagement.userCreateButtonLabel")}
           </Button>
         </CardHeader>
         <CardContent>

@@ -10,7 +10,7 @@ export function BrevoMarketingHeader() {
   const t = useT("brevo");
 
   return (
-    <header className="flex flex-col gap-6 border-b border-border/60 pb-6 sm:flex-row sm:items-start sm:justify-between">
+    <header className="flex flex-col gap-6 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1 space-y-2">
         <nav aria-label={t("pageBreadcrumb")}>
           <p className="text-sm leading-normal text-muted-foreground">{t("pageBreadcrumb")}</p>

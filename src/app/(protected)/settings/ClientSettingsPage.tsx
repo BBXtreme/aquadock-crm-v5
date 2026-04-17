@@ -996,7 +996,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
                 }
               />
             </div>
-            <div className="border-t border-border pt-4">
+            <div className="border-t border-border/40 pt-4">
               <Button type="button" variant="outline" onClick={clearCache}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 {t("openMap.clearCache")}

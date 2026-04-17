@@ -7,6 +7,7 @@ import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
@@ -19,13 +20,12 @@ interface Props {
 
 export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
-  const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const formatOsmLink = () => {
-    if (!company.osm) return tCommon("dash");
+    if (!company.osm) return <EmptyDash />;
 
     const zoom = 16;
     const lat = company.lat ?? 50.0;
@@ -66,23 +66,23 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
               <p className="text-sm text-foreground">
                 {company.wasserdistanz != null
                   ? t("detailMeters", { meters: company.wasserdistanz })
-                  : tCommon("dash")}
+                  : <EmptyDash />}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelWassertyp")}</div>
-              <p className="text-sm text-foreground">{company.wassertyp || tCommon("dash")}</p>
+              <p className="text-sm text-foreground">{company.wassertyp || <EmptyDash />}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLatitude")}</div>
               <p className="text-sm text-foreground">
-                {company.lat != null ? company.lat.toLocaleString(localeTag) : tCommon("dash")}
+                {company.lat != null ? company.lat.toLocaleString(localeTag) : <EmptyDash />}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLongitude")}</div>
               <p className="text-sm text-foreground">
-                {company.lon != null ? company.lon.toLocaleString(localeTag) : tCommon("dash")}
+                {company.lon != null ? company.lon.toLocaleString(localeTag) : <EmptyDash />}
               </p>
             </div>
             <div className="lg:col-span-2">

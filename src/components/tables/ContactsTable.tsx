@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ContactAvatar } from "@/components/ui/contact-avatar";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -37,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -47,7 +49,6 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useT } from "@/lib/i18n/use-translations";
-import { safeDisplay } from "@/lib/utils/data-format";
 import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
@@ -78,7 +79,6 @@ export default function ContactsTable({
   onSortingChange,
 }: ContactsTableProps) {
   const t = useT("contacts");
-  const tCommon = useT("common");
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
@@ -126,13 +126,16 @@ export default function ContactsTable({
           const nachname = info.row.original.nachname;
           const position = info.row.original.position;
           return (
-            <div>
-              <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
-                <div>
-                  {vorname} {nachname}
-                </div>
-              </Link>
-              {position && <div className="text-xs text-muted-foreground">{position}</div>}
+            <div className="flex items-center gap-2.5">
+              <ContactAvatar vorname={vorname} nachname={nachname} />
+              <div className="min-w-0">
+                <Link href={`/contacts/${info.row.original.id}`} className="text-primary hover:underline">
+                  <div className="truncate">
+                    {vorname} {nachname}
+                  </div>
+                </Link>
+                {position && <div className="truncate text-xs text-muted-foreground">{position}</div>}
+              </div>
             </div>
           );
         },
@@ -141,19 +144,19 @@ export default function ContactsTable({
         id: "is_primary",
         header: t("tableColPrimary"),
         cell: (info) =>
-          info.getValue() ? <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge> : tCommon("dash"),
+          info.getValue() ? <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge> : <EmptyDash />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.accessor("anrede", {
         id: "anrede",
         header: t("tableColSalutation"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.display({
         id: "company",
         header: t("tableColCompany"),
         cell: (info) => {
           const company = info.row.original.companies;
-          if (!company) return tCommon("dash");
+          if (!company) return <EmptyDash />;
           return (
             <Link href={`/companies/${info.row.original.company_id}`} className="text-primary hover:underline">
               {company.firmenname}
@@ -164,27 +167,27 @@ export default function ContactsTable({
       columnHelper.accessor("email", {
         id: "email",
         header: t("tableColEmail"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.accessor("telefon", {
         id: "telefon",
         header: t("tableColPhone"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.accessor("mobil", {
         id: "mobil",
         header: t("tableColMobile"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.accessor("durchwahl", {
         id: "durchwahl",
         header: t("tableColExtension"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.accessor("notes", {
         id: "notes",
         header: t("tableColNotes"),
-        cell: (info) => safeDisplay(info.getValue()),
+        cell: (info) => <DisplayOrDash value={info.getValue()} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.display({
         id: "actions",
@@ -244,7 +247,7 @@ export default function ContactsTable({
         enableSorting: false,
       }) as ColumnDef<ContactWithCompany>,
     ],
-    [t, tCommon, onEdit, onDelete, deleteDialogOpen, contactToDelete],
+    [t, onEdit, onDelete, deleteDialogOpen, contactToDelete],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library

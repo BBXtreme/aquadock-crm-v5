@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
@@ -276,8 +277,8 @@ export default function TimelineCard({ companyId }: Props) {
               {t("detailCardTitle", { count: timeline.length })}
             </CardTitle>
             <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("detailNewEntry")}
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
             </Button>
           </div>
         </CardHeader>
@@ -310,7 +311,7 @@ export default function TimelineCard({ companyId }: Props) {
                                 dateStyle: "medium",
                                 timeStyle: "short",
                               })
-                            : tCommon("dash")}
+                            : <EmptyDash />}
                         </td>
                         <td>
                           <Badge
@@ -322,9 +323,9 @@ export default function TimelineCard({ companyId }: Props) {
                           </Badge>
                         </td>
                         <td>{entry.title}</td>
-                        <td>{entry.companies?.firmenname || tCommon("dash")}</td>
-                        <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : tCommon("dash")}</td>
-                        <td>{profiles.find(p => p.id === entry.created_by)?.display_name || tCommon("dash")}</td>
+                        <td>{entry.companies?.firmenname || <EmptyDash />}</td>
+                        <td>{entry.contacts ? `${entry.contacts.vorname} ${entry.contacts.nachname}` : <EmptyDash />}</td>
+                        <td>{profiles.find(p => p.id === entry.created_by)?.display_name || <EmptyDash />}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button

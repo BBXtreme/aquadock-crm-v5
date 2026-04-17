@@ -6,7 +6,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
+import { ArrowLeft, Building, Edit, Linkedin, Trash, User } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
@@ -25,21 +26,34 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PageShell } from "@/components/ui/page-shell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { getContactById, updateContact } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
-import { safeDisplay } from "@/lib/utils/data-format";
+import { getKundentypLabel } from "@/lib/utils";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
@@ -146,19 +160,45 @@ export default function ContactDetailClient({ contact: initialContact, companies
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <PageShell>
       {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
-          <div className="text-sm text-muted-foreground">
-            {t("title")} → {contact.vorname} {contact.nachname}
+      <header className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/contacts">{t("title")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {linkedCompany && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href={`/companies/${linkedCompany.id}`} className="max-w-[32ch] truncate">
+                        {linkedCompany.firmenname}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="max-w-[40ch] truncate">
+                  {contact.vorname} {contact.nachname}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              {contact.vorname} {contact.nachname}
+            </h1>
+            {contact.position && <p className="mt-1 text-muted-foreground">{contact.position}</p>}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {contact.vorname} {contact.nachname}
-          </h1>
-          {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
             <Edit className="w-4 h-4" />
           </Button>
@@ -183,26 +223,24 @@ export default function ContactDetailClient({ contact: initialContact, companies
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </header>
 
-      {/* Badges and Primary Contact Checkbox */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">{t("formIsPrimary")}</Badge>}
-          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+      {/* Meta + primary toggle */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           {contact.created_at && (
-            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
+            <span suppressHydrationWarning={true}>
               {tCommon("metaCreated")} {new Date(contact.created_at).toLocaleDateString(localeTag)}
             </span>
           )}
           {contact.updated_at && (
-            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
+            <span suppressHydrationWarning={true}>
               {tCommon("metaUpdated")} {new Date(contact.updated_at).toLocaleDateString(localeTag)}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox
+          <Switch
             id="primary-contact"
             checked={contact.is_primary || false}
             onCheckedChange={async (checked) => {
@@ -234,19 +272,19 @@ export default function ContactDetailClient({ contact: initialContact, companies
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formVorname")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.vorname)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.vorname} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formNachname")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.nachname)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.nachname} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formSalutation")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.anrede)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.anrede} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formPosition")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.position)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.position} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formEmail")}</div>
@@ -256,7 +294,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.email}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
@@ -268,7 +306,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.telefon}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
@@ -280,13 +318,28 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     {contact.mobil}
                   </a>
                 ) : (
-                  safeDisplay(null)
+                  <EmptyDash />
                 )}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("formDurchwahl")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(contact.durchwahl)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={contact.durchwahl} /></p>
+            </div>
+            {/* LinkedIn — placeholder, functionality coming in a later iteration.
+                Rendered at reduced opacity with a subtle "coming soon" hint so it
+                reads as present-but-dormant, in line with the card's tone. */}
+            <div aria-disabled="true" className="opacity-60">
+              <div className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                <Linkedin className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>LinkedIn</span>
+                <span className="ml-1 text-[10px] font-normal text-muted-foreground/80">
+                  · {tCommon("comingSoon")}
+                </span>
+              </div>
+              <p className="text-sm text-foreground cursor-not-allowed select-none">
+                <EmptyDash />
+              </p>
             </div>
             <div className="md:col-span-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -318,7 +371,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-foreground">{safeDisplay(contact.notes)}</p>
+                <p className="text-sm text-foreground"><DisplayOrDash value={contact.notes} /></p>
               )}
             </div>
           </div>
@@ -347,25 +400,13 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {linkedCompany.status && <StatusBadge status={linkedCompany.status} showEmoji />}
                 {linkedCompany.kundentyp && (
-                  <Badge variant="secondary">
-                    {linkedCompany.kundentyp.charAt(0).toUpperCase() + linkedCompany.kundentyp.slice(1)}
+                  <Badge className="bg-primary text-primary-foreground">
+                    {getKundentypLabel(linkedCompany.kundentyp)}
                   </Badge>
                 )}
-                {linkedCompany.status && (
-                  <Badge
-                    className={
-                      linkedCompany.status === "gewonnen"
-                        ? "bg-emerald-600 text-white"
-                        : linkedCompany.status === "lead"
-                          ? "bg-amber-600 text-white"
-                          : "bg-zinc-500 text-white"
-                    }
-                  >
-                    {linkedCompany.status}
-                  </Badge>
-                )}
-                {linkedCompany.wassertyp && <Badge variant="outline">{linkedCompany.wassertyp}</Badge>}
+                <WassertypBadge wassertyp={linkedCompany.wassertyp} />
                 {linkedCompany.wasserdistanz && <Badge variant="outline">{linkedCompany.wasserdistanz} m</Badge>}
               </div>
 
@@ -474,7 +515,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
           </Select>
         </WideDialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }
 

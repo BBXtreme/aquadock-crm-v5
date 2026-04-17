@@ -7,9 +7,9 @@ import FirmendatenEditForm from "@/components/features/companies/FirmendatenEdit
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { useT } from "@/lib/i18n/use-translations";
 import { getCountryFlag } from "@/lib/utils";
-import { safeDisplay } from "@/lib/utils/data-format";
 import type { Company } from "@/types/database.types";
 
 interface Props {
@@ -19,33 +19,39 @@ interface Props {
 
 export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
-  const tCommon = useT("common");
   const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
   const [adresseEditOpen, setAdresseEditOpen] = useState(false);
 
   const formatWebsite = (website: string | null) => {
-    if (!website) return safeDisplay(website);
+    if (!website) return <EmptyDash />;
     const url = website.startsWith("http") ? website : `https://${website}`;
+    const display = website.replace(/^https?:\/\//, "").replace(/\/$/, "");
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-4 hover:underline">
-        {website}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={website}
+        className="block truncate text-primary underline-offset-4 hover:underline"
+      >
+        {display}
       </a>
     );
   };
 
   const formatTelefon = (telefon: string | null) => {
-    if (!telefon) return safeDisplay(telefon);
+    if (!telefon) return <EmptyDash />;
     return (
-      <a href={`tel:${telefon}`} className="text-primary underline-offset-4 hover:underline">
+      <a href={`tel:${telefon}`} className="block truncate text-primary underline-offset-4 hover:underline" title={telefon}>
         {telefon}
       </a>
     );
   };
 
   const formatEmail = (email: string | null) => {
-    if (!email) return safeDisplay(email);
+    if (!email) return <EmptyDash />;
     return (
-      <a href={`mailto:${email}`} className="text-primary underline-offset-4 hover:underline">
+      <a href={`mailto:${email}`} className="block truncate text-primary underline-offset-4 hover:underline" title={email}>
         {email}
       </a>
     );
@@ -69,26 +75,26 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>div]:min-w-0">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelFirmenname")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(company.firmenname)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={company.firmenname} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelRechtsform")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(company.rechtsform)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={company.rechtsform} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelKundentyp")}</div>
               <p className="text-sm text-foreground">
                 {company.kundentyp
                   ? company.kundentyp.charAt(0).toUpperCase() + company.kundentyp.slice(1)
-                  : safeDisplay(company.kundentyp)}
+                  : <EmptyDash />}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelFirmentyp")}</div>
-              <p className="text-sm text-foreground">{safeDisplay(company.firmentyp)}</p>
+              <p className="text-sm text-foreground"><DisplayOrDash value={company.firmentyp} /></p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelWebsite")}</div>
@@ -114,27 +120,33 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>div]:min-w-0">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelStrasse")}</div>
-              <p className="text-sm text-foreground">{company.strasse || tCommon("dash")}</p>
+              <p className="text-sm text-foreground">{company.strasse || <EmptyDash />}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelPlzStadt")}</div>
               <p className="text-sm text-foreground">
-                {company.plz ? `${company.plz} ` : ""}
-                {company.stadt || tCommon("dash")}
+                {company.plz || company.stadt ? (
+                  <>
+                    {company.plz ? `${company.plz} ` : ""}
+                    {company.stadt || ""}
+                  </>
+                ) : (
+                  <EmptyDash />
+                )}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelBundesland")}</div>
-              <p className="text-sm text-foreground">{company.bundesland || tCommon("dash")}</p>
+              <p className="text-sm text-foreground">{company.bundesland || <EmptyDash />}</p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLand")}</div>
               <p className="text-sm text-foreground flex items-center gap-2">
                 {countryFlag && <span className="text-xl">{countryFlag}</span>}
-                {company.land || tCommon("dash")}
+                {company.land || <EmptyDash />}
               </p>
             </div>
           </div>
