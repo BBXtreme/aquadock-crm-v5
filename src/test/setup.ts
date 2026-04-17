@@ -1,6 +1,21 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
+if (typeof globalThis.ResizeObserver === "undefined") {
+  class ResizeObserverMock {
+    observe() {
+      return undefined;
+    }
+    unobserve() {
+      return undefined;
+    }
+    disconnect() {
+      return undefined;
+    }
+  }
+  globalThis.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+}
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
