@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ContactAvatar } from "@/components/ui/contact-avatar";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -37,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -96,7 +98,6 @@ export default function CompaniesTable({
   selectionActions,
 }: CompaniesTableProps) {
   const t = useT("companies");
-  const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
@@ -150,7 +151,7 @@ export default function CompaniesTable({
           header: t("tableColKundentyp"),
           cell: (info) => {
             const raw = info.getValue();
-            if (!raw) return <span className="text-muted-foreground">{tCommon("dash")}</span>;
+            if (!raw) return <EmptyDash />;
             const key = String(raw).toLowerCase();
             const Icon = kategorieIcons[key];
             const label = KUNDENTYP_LABEL_MAP[key] ?? String(raw);
@@ -176,13 +177,21 @@ export default function CompaniesTable({
           cell: (info) => {
             const contacts: Contact[] = info.row.original.contacts ?? [];
             const primary = contacts.find((c) => c.is_primary);
-            if (!primary) return tCommon("dash");
+            if (!primary) return <EmptyDash />;
             return (
-              <div className="flex flex-col">
-                <Link href={`/contacts/${primary.id}`} className="text-primary hover:underline font-medium">
-                  {`${primary.vorname} ${primary.nachname}`}
-                </Link>
-                <span className="text-xs text-muted-foreground">{primary.position || tCommon("dash")}</span>
+              <div className="flex items-center gap-2.5">
+                <ContactAvatar vorname={primary.vorname} nachname={primary.nachname} />
+                <div className="flex flex-col min-w-0">
+                  <Link
+                    href={`/contacts/${primary.id}`}
+                    className="truncate text-primary hover:underline font-medium"
+                  >
+                    {`${primary.vorname} ${primary.nachname}`}
+                  </Link>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {primary.position || <EmptyDash />}
+                  </span>
+                </div>
               </div>
             );
           },
@@ -227,7 +236,7 @@ export default function CompaniesTable({
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) {
-              return <div className="text-right text-muted-foreground">{tCommon("dash")}</div>;
+              return <div className="text-right"><EmptyDash /></div>;
             }
             const num = Number(value);
             if (num === 0) {
@@ -250,7 +259,7 @@ export default function CompaniesTable({
           header: t("tableColWassertyp"),
           cell: (info) => {
             const value = info.getValue();
-            if (!value) return <span className="text-muted-foreground">{tCommon("dash")}</span>;
+            if (!value) return <EmptyDash />;
             return <WassertypBadge wassertyp={String(value)} />;
           },
         }),
@@ -322,7 +331,7 @@ export default function CompaniesTable({
           enableSorting: false,
         }),
       ] as ColumnDef<CompanyWithContacts>[],
-    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, tCommon, localeTag],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library

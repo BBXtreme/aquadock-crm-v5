@@ -22,10 +22,8 @@ export default async function ReminderDetailPage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-background to-muted/30">
-      <Suspense fallback={<RemindersPageSkeleton />}>
-        <ReminderDetailClient reminder={resolved.reminder} />
-      </Suspense>
-    </div>
+    <Suspense fallback={<RemindersPageSkeleton />}>
+      <ReminderDetailClient reminder={resolved.reminder} />
+    </Suspense>
   );
 }

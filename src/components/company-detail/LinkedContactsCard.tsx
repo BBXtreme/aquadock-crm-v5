@@ -8,7 +8,9 @@ import ContactEditForm from "@/components/features/contacts/ContactEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ContactAvatar } from "@/components/ui/contact-avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -20,7 +22,6 @@ interface Props {
 
 export default function LinkedContactsCard({ companyId }: Props) {
   const t = useT("contacts");
-  const tCommon = useT("common");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -85,23 +86,28 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   </thead>
                   <tbody>
                     {contacts.map((contact) => {
-                      const displayName =
-                        [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
-                          .filter(Boolean)
-                          .join(" ") || tCommon("dash");
+                      const nameParts = [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
+                        .filter(Boolean)
+                        .join(" ");
+                      const displayName = nameParts ? nameParts : <EmptyDash />;
 
                       return (
                         <tr key={contact.id}>
                           <td>
-                            <div>
-                              {contact.id ? (
-                                <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
-                                  {displayName}
-                                </a>
-                              ) : (
-                                <span>{displayName}</span>
-                              )}
-                              {contact.position && <div className="text-xs text-muted-foreground">{contact.position}</div>}
+                            <div className="flex items-center gap-2.5">
+                              <ContactAvatar vorname={contact.vorname} nachname={contact.nachname} />
+                              <div className="min-w-0">
+                                {contact.id ? (
+                                  <a href={`/contacts/${contact.id}`} className="text-primary hover:underline">
+                                    {displayName}
+                                  </a>
+                                ) : (
+                                  <span>{displayName}</span>
+                                )}
+                                {contact.position && (
+                                  <div className="text-xs text-muted-foreground">{contact.position}</div>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td>
@@ -110,11 +116,11 @@ export default function LinkedContactsCard({ companyId }: Props) {
                                 {contact.email}
                               </a>
                             ) : (
-                              tCommon("dash")
+                              <EmptyDash />
                             )}
                           </td>
-                          <td>{contact.telefon || tCommon("dash")}</td>
-                          <td>{contact.mobil || tCommon("dash")}</td>
+                          <td>{contact.telefon || <EmptyDash />}</td>
+                          <td>{contact.mobil || <EmptyDash />}</td>
                           <td>{contact.is_primary && <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge>}</td>
                           <td className="text-right">
                             <div className="flex justify-end gap-1">

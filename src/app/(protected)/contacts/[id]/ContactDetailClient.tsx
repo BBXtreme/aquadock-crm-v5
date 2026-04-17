@@ -7,6 +7,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building, Edit, Trash, User } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
@@ -25,6 +26,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -153,17 +162,43 @@ export default function ContactDetailClient({ contact: initialContact, companies
   return (
     <PageShell>
       {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <div className="text-sm text-muted-foreground">
-            {t("title")} → {contact.vorname} {contact.nachname}
+      <header className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/contacts">{t("title")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {linkedCompany && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href={`/companies/${linkedCompany.id}`} className="max-w-[32ch] truncate">
+                        {linkedCompany.firmenname}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="max-w-[40ch] truncate">
+                  {contact.vorname} {contact.nachname}
+                </BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              {contact.vorname} {contact.nachname}
+            </h1>
+            {contact.position && <p className="mt-1 text-muted-foreground">{contact.position}</p>}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            {contact.vorname} {contact.nachname}
-          </h1>
-          {contact.position && <p className="text-muted-foreground">{contact.position}</p>}
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
             <Edit className="w-4 h-4" />
           </Button>
@@ -188,7 +223,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* Meta + primary toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

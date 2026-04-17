@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
@@ -190,7 +191,7 @@ export default function RemindersCard({ companyId }: Props) {
                             </div>
                           </div>
                         </td>
-                        <td>{formatDetailDate(reminder.due_date)}</td>
+                        <td>{reminder.due_date ? formatDetailDate(reminder.due_date) : <EmptyDash />}</td>
                         <td>
                           <Badge
                             className={

@@ -82,6 +82,11 @@
 	--input: oklch(0.91 0.01 240);
 	--ring: oklch(0.645 0.16 197);
 
+	/* Empty-state placeholder (em-dash in table cells / "no data" fields).
+	   Deliberately just a touch darker than --border so it reads as absent-but-aligned.
+	   Use via the .empty-dash utility (src/components/ui/empty-dash.tsx). */
+	--empty-placeholder: oklch(0.88 0.005 240);
+
 	/* Dashboard & chart palette — aqua/teal family */
 	--chart-1: oklch(0.645 0.16 197);
 	--chart-2: oklch(0.55 0.13 225);
@@ -125,6 +130,9 @@
 	--border: oklch(1 0 0 / 0.12);
 	--input: oklch(1 0 0 / 0.18);
 	--ring: oklch(0.74 0.14 197);
+
+	/* Empty-state placeholder — muted white-ish tone for dark card surfaces. */
+	--empty-placeholder: oklch(0.38 0.005 240);
 
 	/* Dashboard & chart palette — brighter for dark surfaces */
 	--chart-1: oklch(0.74 0.14 197);

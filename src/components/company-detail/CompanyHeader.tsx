@@ -6,6 +6,14 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { WassertypBadge } from "@/components/ui/wassertyp-badge";
@@ -43,19 +51,27 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
 
   return (
     <>
-      <nav className="text-sm text-muted-foreground">
-        <Link href="/companies" className="hover:underline">
-          {t("title")}
-        </Link>{" "}
-        &gt; {company.firmenname}
-      </nav>
-
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{company.firmenname}</h1>
-          {company.rechtsform && <p className="text-muted-foreground mt-1">{company.rechtsform}</p>}
+      <header className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/companies">{t("title")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="max-w-[60ch] truncate">{company.firmenname}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{company.firmenname}</h1>
+            {company.rechtsform && <p className="mt-1 text-muted-foreground">{company.rechtsform}</p>}
+          </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" type="button" onClick={onAddTimeline}>
             <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
             {t("headerAddTimeline")}
@@ -118,7 +134,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
-      </div>
+      </header>
 
       <div className="flex items-center gap-4 flex-wrap">
         <StatusBadge status={company.status} showEmoji />

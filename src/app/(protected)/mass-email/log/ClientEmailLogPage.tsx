@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyDash } from "@/components/ui/empty-dash";
 import { Input } from "@/components/ui/input";
 import { PageShell } from "@/components/ui/page-shell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,7 +25,6 @@ type ClientEmailLogPageProps = {
 export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
   const router = useRouter();
   const t = useT("massEmail");
-  const tCommon = useT("common");
   const format = useFormat();
   const safeLogs = logs ?? [];
   const [filter, setFilter] = useState<"all" | "sent" | "error">("all");
@@ -117,11 +117,13 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                   </TableCell>
                   <TableCell className="max-w-xs">
                     <div className="truncate">
-                      {log.subject == null
-                        ? tCommon("dash")
-                        : log.subject.length > 50
-                          ? `${log.subject.slice(0, 50)}...`
-                          : log.subject}
+                      {log.subject == null ? (
+                        <EmptyDash />
+                      ) : log.subject.length > 50 ? (
+                        `${log.subject.slice(0, 50)}...`
+                      ) : (
+                        log.subject
+                      )}
                     </div>
                     {log.status === "error" && log.error_msg ? (
                       <div className="text-xs text-destructive mt-1 truncate">{log.error_msg}</div>
@@ -135,7 +137,7 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
                         </Badge>
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground">{tCommon("dash")}</span>
+                      <EmptyDash />
                     )}
                   </TableCell>
                   <TableCell>

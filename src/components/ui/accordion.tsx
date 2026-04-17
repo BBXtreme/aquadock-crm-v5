@@ -66,15 +66,13 @@ function AccordionContent({ className, children, open, setOpen: _setOpen, ...pro
   return (
     <div
       className={cn(
-        "grid overflow-hidden text-sm transition-[grid-template-rows] duration-200 ease-out",
-        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        "overflow-hidden text-sm transition-[max-height] duration-200 ease-out",
+        open ? "max-h-[2000px]" : "max-h-0",
         className,
       )}
       {...props}
     >
-      <div className="min-h-0">
-        <div className="pb-4 pt-0">{children}</div>
-      </div>
+      <div className="pb-4 pt-0">{children}</div>
     </div>
   );
 }

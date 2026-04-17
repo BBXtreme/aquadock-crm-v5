@@ -54,13 +54,13 @@ type CompanyWithContacts = Company & { contacts?: Contact[] };
 
 const GEOCODE_BATCH_MAX = 50;
 
-const WATER_PRESETS: { value: WaterPreset; labelKey: string }[] = [
+const WATER_PRESETS = [
   { value: "at", labelKey: "waterAtWater" },
   { value: "le100", labelKey: "waterLe100" },
   { value: "le500", labelKey: "waterLe500" },
   { value: "le1km", labelKey: "waterLe1km" },
   { value: "gt1km", labelKey: "waterGt1km" },
-];
+] as const;
 
 function companyNeedsGeocode(company: Company): boolean {
   const hasLat = typeof company.lat === "number" && Number.isFinite(company.lat);
