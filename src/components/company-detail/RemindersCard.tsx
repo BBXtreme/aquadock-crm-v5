@@ -6,6 +6,16 @@ import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
 import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +52,7 @@ export default function RemindersCard({ companyId }: Props) {
   const localeTag = useNumberLocaleTag();
   const [editReminder, setEditReminder] = useState<Reminder | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
   const queryClient = useQueryClient();
 
   const formatDetailDate = (dateStr: string | null | undefined) => {
@@ -133,8 +144,11 @@ export default function RemindersCard({ companyId }: Props) {
 
   const handleAdd = () => setAddDialogOpen(true);
   const handleEdit = (reminder: Reminder) => setEditReminder(reminder);
-  const handleDelete = (id: string) => {
-    if (confirm(t("deleteDescription"))) deleteMutation.mutate(id);
+  const handleDeleteRequest = (reminder: Reminder) => setReminderToDelete(reminder);
+  const handleDeleteConfirm = () => {
+    if (!reminderToDelete) return;
+    deleteMutation.mutate(reminderToDelete.id);
+    setReminderToDelete(null);
   };
 
   return (
@@ -226,7 +240,8 @@ export default function RemindersCard({ companyId }: Props) {
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive/90"
                               type="button"
-                              onClick={() => handleDelete(reminder.id)}
+                              onClick={() => handleDeleteRequest(reminder)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
@@ -278,6 +293,24 @@ export default function RemindersCard({ companyId }: Props) {
           />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!reminderToDelete}
+        onOpenChange={(open) => {
+          if (!open) setReminderToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>{t("delete")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -8,8 +8,10 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  type OnChangeFn,
   type Updater,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
 import Link from "next/link";
@@ -78,6 +80,11 @@ interface CompaniesTableProps {
   onRowSelectionChange: (updater: Updater<Record<string, boolean>>) => void;
   /** Shown inline after the “N selected” label when at least one row is selected */
   selectionActions?: ReactNode;
+  /** Optional controlled VisibilityState for persisted column toggles */
+  columnVisibility?: VisibilityState;
+  onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
+  /** List-only query string (no `?`) to preserve /companies filters when opening detail/contact links */
+  companiesListSearchParams?: string;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -96,17 +103,24 @@ export default function CompaniesTable({
   rowSelection,
   onRowSelectionChange,
   selectionActions,
+  columnVisibility: propColumnVisibility,
+  onColumnVisibilityChange: propOnColumnVisibilityChange,
+  companiesListSearchParams = "",
 }: CompaniesTableProps) {
   const t = useT("companies");
   const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<CompanyWithContacts | null>(null);
 
+  const listQs = companiesListSearchParams.length > 0 ? `?${companiesListSearchParams}` : "";
+
   const globalFilter = propGlobalFilter ?? localGlobalFilter;
   const setGlobalFilter = propOnGlobalFilterChange ?? setLocalGlobalFilter;
+  const columnVisibility = propColumnVisibility ?? localColumnVisibility;
+  const setColumnVisibility = propOnColumnVisibilityChange ?? setLocalColumnVisibility;
 
   const handleGlobalFilterChange = useCallback(
     (value: string) => {
@@ -142,7 +156,7 @@ export default function CompaniesTable({
           id: "firmenname",
           header: t("tableColFirmenname"),
           cell: (info) => (
-            <Link href={`/companies/${info.row.original.id}`} className="text-primary hover:underline">
+            <Link href={`/companies/${info.row.original.id}${listQs}`} className="text-primary hover:underline">
               {safeDisplay(info.getValue())}
             </Link>
           ),
@@ -183,7 +197,7 @@ export default function CompaniesTable({
                 <ContactAvatar vorname={primary.vorname} nachname={primary.nachname} />
                 <div className="flex flex-col min-w-0">
                   <Link
-                    href={`/contacts/${primary.id}`}
+                    href={`/contacts/${primary.id}${listQs}`}
                     className="truncate text-primary hover:underline font-medium"
                   >
                     {`${primary.vorname} ${primary.nachname}`}
@@ -278,7 +292,7 @@ export default function CompaniesTable({
           header: t("tableColActions"),
           cell: (info) => (
             <div className="flex space-x-2">
-              <Link href={`/companies/${info.row.original.id}`}>
+              <Link href={`/companies/${info.row.original.id}${listQs}`}>
                 <Button variant="ghost" size="sm" type="button">
                   <Eye className="h-4 w-4" />
                 </Button>
@@ -331,7 +345,7 @@ export default function CompaniesTable({
           enableSorting: false,
         }),
       ] as ColumnDef<CompanyWithContacts>[],
-    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag, listQs],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library

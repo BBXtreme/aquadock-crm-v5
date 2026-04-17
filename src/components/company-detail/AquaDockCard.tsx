@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyDash } from "@/components/ui/empty-dash";
-import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -20,17 +21,19 @@ interface Props {
 
 export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
-  const localeTag = useNumberLocaleTag();
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const hasCoordinates = company.lat != null && company.lon != null;
 
   const formatOsmLink = () => {
     if (!company.osm) return <EmptyDash />;
 
-    const zoom = 16;
-    const lat = company.lat ?? 50.0;
-    const lon = company.lon ?? 9.0;
-    const url = `https://www.openstreetmap.org/${company.osm}#map=${zoom}/${lat}/${lon}`;
+    // OSM resolves the object from its path (e.g. /node/123) and centers
+    // the viewport on it automatically. Only append `#map=zoom/lat/lon`
+    // when we actually have coordinates — never fabricate a location.
+    const base = `https://www.openstreetmap.org/${company.osm}`;
+    const url = hasCoordinates ? `${base}#map=16/${company.lat}/${company.lon}` : base;
 
     return (
       <a
@@ -44,6 +47,29 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
       </a>
     );
   };
+
+  const openMapButton = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="mt-3"
+      aria-disabled={!hasCoordinates}
+      onClick={() => {
+        if (!hasCoordinates) return;
+        router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);
+      }}
+      data-state={hasCoordinates ? "enabled" : "disabled"}
+      // Keep the button focusable/hoverable when "disabled" so the tooltip
+      // still activates. We use aria-disabled + a no-op click instead of
+      // the native `disabled` attribute.
+      tabIndex={0}
+      style={hasCoordinates ? undefined : { opacity: 0.5, cursor: "not-allowed" }}
+    >
+      <MapPin className="h-4 w-4 mr-2" />
+      {t("detailOpenMapButton")}
+    </Button>
+  );
 
   return (
     <>
@@ -75,36 +101,31 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLatitude")}</div>
-              <p className="text-sm text-foreground">
-                {company.lat != null ? company.lat.toLocaleString(localeTag) : <EmptyDash />}
+              <p className="text-sm text-foreground font-mono">
+                {company.lat != null ? company.lat.toString() : <EmptyDash />}
               </p>
             </div>
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLongitude")}</div>
-              <p className="text-sm text-foreground">
-                {company.lon != null ? company.lon.toLocaleString(localeTag) : <EmptyDash />}
+              <p className="text-sm text-foreground font-mono">
+                {company.lon != null ? company.lon.toString() : <EmptyDash />}
               </p>
             </div>
             <div className="lg:col-span-2">
               <div>
                 <div className="text-sm font-medium text-muted-foreground">{t("detailLabelOsmId")}</div>
                 <p className="text-sm text-foreground">{formatOsmLink()}</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => {
-                    if (company.lat && company.lon) {
-                      router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);
-                    } else {
-                      router.push("/openmap");
-                    }
-                  }}
-                >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  {t("detailOpenMapButton")}
-                </Button>
+
+                {hasCoordinates ? (
+                  openMapButton
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-block">{openMapButton}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>{t("detailMissingCoordinatesTooltip")}</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             </div>
           </div>

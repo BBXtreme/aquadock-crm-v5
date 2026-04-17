@@ -1,6 +1,6 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { ArrowLeft, Edit, Plus, Sparkles, Trash } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Edit, Plus, Sparkles, Trash } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,12 +27,30 @@ interface Props {
   company: Company;
   id: string;
   router: { push: (href: string) => void };
+  /** Serialized `/companies` list query (no `?`), preserved on detail links */
+  companiesListSearchParams?: string;
+  hasListNavContext?: boolean;
+  prevCompanyId?: string | null;
+  nextCompanyId?: string | null;
+  listNavIdsLoading?: boolean;
   onAddTimeline: () => void;
   onEdit: () => void;
   onAiEnrich?: () => void;
 }
 
-export default function CompanyHeader({ company, id, router, onAddTimeline, onEdit, onAiEnrich }: Props) {
+export default function CompanyHeader({
+  company,
+  id,
+  router,
+  companiesListSearchParams = "",
+  hasListNavContext = false,
+  prevCompanyId = null,
+  nextCompanyId = null,
+  listNavIdsLoading = false,
+  onAddTimeline,
+  onEdit,
+  onAiEnrich,
+}: Props) {
   const t = useT("companies");
   const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
@@ -49,6 +67,12 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
     }
   }, []);
 
+  const listSuffix = companiesListSearchParams.length > 0 ? `?${companiesListSearchParams}` : "";
+  const companiesIndexHref = `/companies${listSuffix}`;
+  const pushCompany = (targetId: string) => {
+    router.push(`/companies/${targetId}${listSuffix}`);
+  };
+
   return (
     <>
       <header className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
@@ -57,7 +81,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/companies">{t("title")}</Link>
+                  <Link href={companiesIndexHref}>{t("title")}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -122,7 +146,7 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
                     } else {
                       toast.success(t("toastDeleted"));
                     }
-                    router.push("/companies");
+                    router.push(companiesIndexHref);
                   }}
                 >
                   {t("delete")}
@@ -130,7 +154,41 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button onClick={() => router.push("/companies")} size="sm" type="button">
+          {hasListNavContext ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={listNavIdsLoading || !prevCompanyId}
+                aria-label={t("detailNavPreviousAria")}
+                title={t("detailNavPreviousAria")}
+                onClick={() => {
+                  if (prevCompanyId) {
+                    pushCompany(prevCompanyId);
+                  }
+                }}
+              >
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={listNavIdsLoading || !nextCompanyId}
+                aria-label={t("detailNavNextAria")}
+                title={t("detailNavNextAria")}
+                onClick={() => {
+                  if (nextCompanyId) {
+                    pushCompany(nextCompanyId);
+                  }
+                }}
+              >
+                <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+              </Button>
+            </>
+          ) : null}
+          <Button onClick={() => router.push(companiesIndexHref)} size="sm" type="button">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>

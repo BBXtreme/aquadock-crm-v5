@@ -1,9 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import type { VisibilityState } from "@tanstack/react-table";
 import { Building, DollarSign, Loader2, MapPin, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import CompanyCreateForm from "@/components/features/companies/CompanyCreateForm";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
@@ -38,15 +39,27 @@ import {
 } from "@/lib/actions/companies";
 import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
+import { applyCompaniesListFiltersToCompaniesQuery } from "@/lib/companies/companies-list-supabase";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { wassertypOptions } from "@/lib/constants/wassertyp";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
+import {
+  type CompaniesFilterGroup,
+  companiesListStatesEqual,
+  companiesSortIdForQuery,
+  hasAnyCompaniesListParamKey,
+  mergeCompaniesListIntoPath,
+  mergeSessionCompaniesListQuery,
+  parseCompaniesListState,
+  readCompaniesListQueryFromSession,
+  serializeCompaniesListToSearchParamsString,
+  shouldDeferEmptySessionWriteWhileRestoring,
+  writeCompaniesListQueryToSession,
+} from "@/lib/utils/company-filters-url-state";
 import type { Company, Contact } from "@/types/database.types";
-
-type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land" | "wassertyp";
 
 type WaterPreset = "at" | "le100" | "le500" | "le1km" | "gt1km";
 
@@ -104,6 +117,10 @@ const useDebounce = (value: string, delay: number) => {
 function ClientCompaniesPage() {
   const t = useT("companies");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
   const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -112,7 +129,7 @@ function ClientCompaniesPage() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
 
-  const [activeFilters, setActiveFilters] = useState<Record<FilterGroup, string[]>>({
+  const [activeFilters, setActiveFilters] = useState<Record<CompaniesFilterGroup, string[]>>({
     status: [],
     kategorie: [],
     betriebstyp: [],
@@ -120,6 +137,7 @@ function ClientCompaniesPage() {
     wassertyp: [],
   });
   const [waterFilter, setWaterFilter] = useState<WaterPreset | null>(null);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -131,6 +149,70 @@ function ClientCompaniesPage() {
   const [geocodeApplying, setGeocodeApplying] = useState(false);
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
+
+  const openCreateFromQuery = searchParams.get("create") === "true";
+  const trashedCompanyRedirect = searchParams.get("trashedCompany") === "1";
+
+  const searchParamsString = searchParams.toString();
+
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParamsString);
+    if (hasAnyCompaniesListParamKey(sp)) {
+      return;
+    }
+    const sq = readCompaniesListQueryFromSession();
+    if (sq === null || sq.length === 0) {
+      return;
+    }
+    const href = mergeSessionCompaniesListQuery(pathname, sp, sq);
+    const currentHref = `${pathname}${searchParamsString.length > 0 ? `?${searchParamsString}` : ""}`;
+    if (href === currentHref) {
+      return;
+    }
+    router.replace(href, { scroll: false });
+  }, [pathname, router, searchParamsString]);
+
+  useEffect(() => {
+    const sp = new URLSearchParams(searchParamsString);
+    const fromUrl = parseCompaniesListState(sp);
+    setPagination(fromUrl.pagination);
+    setSorting(fromUrl.sorting);
+    setActiveFilters(fromUrl.activeFilters);
+    setColumnVisibility(fromUrl.columnVisibility);
+    setWaterFilter(fromUrl.waterFilter);
+    setGlobalFilter(fromUrl.globalFilter);
+  }, [searchParamsString]);
+
+  useEffect(() => {
+    const sp = searchParamsRef.current;
+    const reactState = {
+      pagination,
+      sorting,
+      activeFilters,
+      columnVisibility,
+      waterFilter,
+      globalFilter: debouncedGlobalFilter,
+    };
+    const urlState = parseCompaniesListState(sp);
+    const persistSession = () => {
+      const serialized = serializeCompaniesListToSearchParamsString(reactState);
+      if (!shouldDeferEmptySessionWriteWhileRestoring(serialized, sp)) {
+        writeCompaniesListQueryToSession(serialized);
+      }
+    };
+    if (companiesListStatesEqual(reactState, urlState)) {
+      persistSession();
+      return;
+    }
+    const href = mergeCompaniesListIntoPath(pathname, sp, reactState);
+    const currentHref = `${pathname}${sp.toString().length > 0 ? `?${sp.toString()}` : ""}`;
+    if (href === currentHref) {
+      persistSession();
+      return;
+    }
+    persistSession();
+    router.replace(href, { scroll: false });
+  }, [pagination, sorting, activeFilters, columnVisibility, waterFilter, debouncedGlobalFilter, pathname, router]);
 
   const { data: distinctFilterValues } = useQuery({
     queryKey: ["companies-filter-options"],
@@ -160,18 +242,25 @@ function ClientCompaniesPage() {
     ? Array.from(distinctFilterValues.land).sort()
     : [];
 
-  const toggleFilter = (group: FilterGroup, value: string) => {
+  const toggleFilter = (group: CompaniesFilterGroup, value: string) => {
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
     setActiveFilters((prev) => ({
       ...prev,
       [group]: prev[group].includes(value) ? prev[group].filter((v) => v !== value) : [...prev[group], value],
     }));
   };
 
-  const removeFilter = (group: FilterGroup, value: string) => {
+  const removeFilter = (group: CompaniesFilterGroup, value: string) => {
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
     setActiveFilters((prev) => ({
       ...prev,
       [group]: prev[group].filter((v) => v !== value),
     }));
+  };
+
+  const handleSortingChange = (next: { id: string; desc: boolean }[]) => {
+    setSorting(next);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
   const companiesData = useSuspenseQuery({
@@ -186,10 +275,8 @@ function ClientCompaniesPage() {
     ],
     queryFn: async () => {
       const supabase = createClient();
-      let query = supabase
-        .from("companies")
-        .select(
-          `
+      let query = supabase.from("companies").select(
+        `
           *,
           contacts (
             id,
@@ -200,59 +287,19 @@ function ClientCompaniesPage() {
             deleted_at
           )
         `,
-          { count: "exact" },
-        )
-        .is("deleted_at", null);
-
-      // Apply global filter
-      if (debouncedGlobalFilter) {
-        query = query.or(
-          `firmenname.ilike.%${debouncedGlobalFilter}%,strasse.ilike.%${debouncedGlobalFilter}%,stadt.ilike.%${debouncedGlobalFilter}%`,
-        );
-      }
-
-      // Apply active filters
-      if (activeFilters.status.length > 0) {
-        query = query.in("status", activeFilters.status);
-      }
-      if (activeFilters.kategorie.length > 0) {
-        query = query.in("kundentyp", activeFilters.kategorie);
-      }
-      if (activeFilters.betriebstyp.length > 0) {
-        query = query.in("firmentyp", activeFilters.betriebstyp);
-      }
-      if (activeFilters.land.length > 0) {
-        query = query.in("land", activeFilters.land);
-      }
-      if (activeFilters.wassertyp.length > 0) {
-        query = query.in("wassertyp", activeFilters.wassertyp);
-      }
-
-      if (waterFilter) {
-        switch (waterFilter) {
-          case "at":
-            query = query.eq("wasserdistanz", 0);
-            break;
-          case "le100":
-            query = query.lte("wasserdistanz", 100);
-            break;
-          case "le500":
-            query = query.lte("wasserdistanz", 500);
-            break;
-          case "le1km":
-            query = query.lte("wasserdistanz", 1000);
-            break;
-          case "gt1km":
-            query = query.gt("wasserdistanz", 1000);
-            break;
-        }
-      }
+        { count: "exact" },
+      );
+      query = applyCompaniesListFiltersToCompaniesQuery(query, {
+        globalFilter: debouncedGlobalFilter,
+        activeFilters,
+        waterFilter,
+      });
 
       // Apply sorting
       if (sorting.length > 0) {
         const sort = sorting[0];
         if (sort) {
-          query = query.order(sort.id, { ascending: !sort.desc });
+          query = query.order(companiesSortIdForQuery(sort.id), { ascending: !sort.desc });
         }
       }
 
@@ -580,9 +627,18 @@ function ClientCompaniesPage() {
     toast.success(t("toastImportSuccess"));
   };
 
-  const searchParams = useSearchParams();
-  const openCreateFromQuery = searchParams.get("create") === "true";
-  const trashedCompanyRedirect = searchParams.get("trashedCompany") === "1";
+  const companiesListLinkSearch = useMemo(
+    () =>
+      serializeCompaniesListToSearchParamsString({
+        pagination,
+        sorting,
+        activeFilters,
+        columnVisibility,
+        waterFilter,
+        globalFilter: debouncedGlobalFilter,
+      }),
+    [pagination, sorting, activeFilters, columnVisibility, waterFilter, debouncedGlobalFilter],
+  );
 
   useEffect(() => {
     if (openCreateFromQuery) {
@@ -595,8 +651,11 @@ function ClientCompaniesPage() {
       return;
     }
     toast.message(t("toastTrashedCompany"));
-    router.replace("/companies", { scroll: false });
-  }, [trashedCompanyRedirect, router, t]);
+    const next = new URLSearchParams(searchParamsString);
+    next.delete("trashedCompany");
+    const qs = next.toString();
+    router.replace(qs.length > 0 ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [trashedCompanyRedirect, router, t, searchParamsString, pathname]);
 
   return (
     <>
@@ -690,7 +749,10 @@ function ClientCompaniesPage() {
                     values.map((v) => (
                       <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
                         {v}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => removeFilter(group as CompaniesFilterGroup, v)}
+                        />
                       </Badge>
                     )),
                   )}
@@ -698,7 +760,13 @@ function ClientCompaniesPage() {
                     <Badge variant="secondary" className="flex items-center gap-1">
                       <Waves className="h-3 w-3" />
                       {t(waterPreset.labelKey)}
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => setWaterFilter(null)} />
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => {
+                          setPagination((p) => ({ ...p, pageIndex: 0 }));
+                          setWaterFilter(null);
+                        }}
+                      />
                     </Badge>
                   )}
                   {totalActiveFilters > 0 && (
@@ -706,6 +774,7 @@ function ClientCompaniesPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
+                        setPagination((p) => ({ ...p, pageIndex: 0 }));
                         setActiveFilters({
                           status: [],
                           kategorie: [],
@@ -714,6 +783,7 @@ function ClientCompaniesPage() {
                           wassertyp: [],
                         });
                         setWaterFilter(null);
+                        setGlobalFilter("");
                       }}
                     >
                       {t("clearAllFilters")}
@@ -850,7 +920,10 @@ function ClientCompaniesPage() {
                                 ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
                                 : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
                             }
-                            onClick={() => setWaterFilter(isActive ? null : preset.value)}
+                            onClick={() => {
+                              setPagination((p) => ({ ...p, pageIndex: 0 }));
+                              setWaterFilter(isActive ? null : preset.value);
+                            }}
                           >
                             <Waves className="mr-1.5 h-3.5 w-3.5" />
                             {t(preset.labelKey)}
@@ -929,7 +1002,10 @@ function ClientCompaniesPage() {
               pageCount={pageCount}
               onPaginationChange={setPagination}
               sorting={sorting}
-              onSortingChange={setSorting}
+              onSortingChange={handleSortingChange}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              companiesListSearchParams={companiesListLinkSearch}
               onImportCSV={() => setCsvDialogOpen(true)}
               rowSelection={rowSelection}
               onRowSelectionChange={setRowSelection}

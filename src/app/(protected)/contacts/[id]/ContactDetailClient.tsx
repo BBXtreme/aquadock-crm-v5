@@ -6,7 +6,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Building, Edit, Linkedin, Trash, User } from "lucide-react";
+import { ArrowLeft, Building, Edit, Linkedin, Trash, Unlink, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -77,6 +77,8 @@ export default function ContactDetailClient({ contact: initialContact, companies
   const [editCompanyDialog, setEditCompanyDialog] = useState(false);
   const [changeCompanyDialog, setChangeCompanyDialog] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [unlinkCompanyDialogOpen, setUnlinkCompanyDialogOpen] = useState(false);
+  const [isUnlinking, setIsUnlinking] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -141,6 +143,47 @@ export default function ContactDetailClient({ contact: initialContact, companies
       router.push("/contacts");
     } catch (_error) {
       toast.error(t("tableToastDeleteFailed"));
+    }
+  };
+
+  const handleUnlinkCompany = async () => {
+    if (!contact?.company_id) return;
+    const previousCompanyId = contact.company_id;
+    setIsUnlinking(true);
+    try {
+      const supabase = createClient();
+      await updateContact(contact.id, { company_id: null }, supabase);
+      setUnlinkCompanyDialogOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+      await queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["contacts", previousCompanyId] });
+      await queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success(t("unlinkToastSuccess"), {
+        action: {
+          label: t("unlinkToastUndo"),
+          onClick: () => {
+            void updateContact(contact.id, { company_id: previousCompanyId }, createClient())
+              .then(async () => {
+                await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                await queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+                await queryClient.invalidateQueries({ queryKey: ["contacts", previousCompanyId] });
+                await queryClient.invalidateQueries({ queryKey: ["contacts"] });
+                toast.success(t("unlinkToastUndone"));
+              })
+              .catch((err: unknown) => {
+                toast.error(t("unlinkToastFailed"), {
+                  description: err instanceof Error ? err.message : undefined,
+                });
+              });
+          },
+        },
+      });
+    } catch (err) {
+      toast.error(t("unlinkToastFailed"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
+    } finally {
+      setIsUnlinking(false);
     }
   };
 
@@ -430,9 +473,21 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 )}
               </div>
 
-              <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
-                {t("detailChangeCompany")}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
+                  {t("detailChangeCompany")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setUnlinkCompanyDialogOpen(true)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={t("unlinkButtonAria")}
+                >
+                  <Unlink className="mr-2 h-4 w-4" />
+                  {t("unlinkConfirmAction")}
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -477,6 +532,22 @@ export default function ContactDetailClient({ contact: initialContact, companies
           />
         </WideDialogContent>
       </Dialog>
+
+      {/* Unlink Company Confirmation */}
+      <AlertDialog open={unlinkCompanyDialogOpen} onOpenChange={setUnlinkCompanyDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("unlinkConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("unlinkConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnlinkCompany} disabled={isUnlinking}>
+              {t("unlinkConfirmAction")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Change Company Dialog */}
       <Dialog open={changeCompanyDialog} onOpenChange={setChangeCompanyDialog}>
