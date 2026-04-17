@@ -276,8 +276,8 @@ export default function TimelineCard({ companyId }: Props) {
               {t("detailCardTitle", { count: timeline.length })}
             </CardTitle>
             <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("detailNewEntry")}
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
             </Button>
           </div>
         </CardHeader>

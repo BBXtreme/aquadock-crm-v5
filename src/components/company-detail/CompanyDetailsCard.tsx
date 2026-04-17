@@ -26,9 +26,16 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
   const formatWebsite = (website: string | null) => {
     if (!website) return safeDisplay(website);
     const url = website.startsWith("http") ? website : `https://${website}`;
+    const display = website.replace(/^https?:\/\//, "").replace(/\/$/, "");
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-4 hover:underline">
-        {website}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={website}
+        className="block truncate text-primary underline-offset-4 hover:underline"
+      >
+        {display}
       </a>
     );
   };
@@ -36,7 +43,7 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
   const formatTelefon = (telefon: string | null) => {
     if (!telefon) return safeDisplay(telefon);
     return (
-      <a href={`tel:${telefon}`} className="text-primary underline-offset-4 hover:underline">
+      <a href={`tel:${telefon}`} className="block truncate text-primary underline-offset-4 hover:underline" title={telefon}>
         {telefon}
       </a>
     );
@@ -45,7 +52,7 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
   const formatEmail = (email: string | null) => {
     if (!email) return safeDisplay(email);
     return (
-      <a href={`mailto:${email}`} className="text-primary underline-offset-4 hover:underline">
+      <a href={`mailto:${email}`} className="block truncate text-primary underline-offset-4 hover:underline" title={email}>
         {email}
       </a>
     );
@@ -69,7 +76,7 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>div]:min-w-0">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelFirmenname")}</div>
               <p className="text-sm text-foreground">{safeDisplay(company.firmenname)}</p>
@@ -114,7 +121,7 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>div]:min-w-0">
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelStrasse")}</div>
               <p className="text-sm text-foreground">{company.strasse || tCommon("dash")}</p>

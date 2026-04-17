@@ -31,14 +31,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PageShell } from "@/components/ui/page-shell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { getContactById, updateContact } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import { getKundentypLabel } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
@@ -146,17 +151,17 @@ export default function ContactDetailClient({ contact: initialContact, companies
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <PageShell>
       {/* Header */}
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
+      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
           <div className="text-sm text-muted-foreground">
             {t("title")} → {contact.vorname} {contact.nachname}
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {contact.vorname} {contact.nachname}
           </h1>
-          {contact.position && <p className="text-muted-foreground mt-1">{contact.position}</p>}
+          {contact.position && <p className="text-muted-foreground">{contact.position}</p>}
         </div>
         <div className="flex gap-3">
           <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
@@ -185,24 +190,22 @@ export default function ContactDetailClient({ contact: initialContact, companies
         </div>
       </div>
 
-      {/* Badges and Primary Contact Checkbox */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          {contact.is_primary && <Badge variant="secondary">{t("formIsPrimary")}</Badge>}
-          {contact.anrede && <Badge variant="outline">{contact.anrede}</Badge>}
+      {/* Meta + primary toggle */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           {contact.created_at && (
-            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
+            <span suppressHydrationWarning={true}>
               {tCommon("metaCreated")} {new Date(contact.created_at).toLocaleDateString(localeTag)}
             </span>
           )}
           {contact.updated_at && (
-            <span className="text-sm text-muted-foreground" suppressHydrationWarning={true}>
+            <span suppressHydrationWarning={true}>
               {tCommon("metaUpdated")} {new Date(contact.updated_at).toLocaleDateString(localeTag)}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox
+          <Switch
             id="primary-contact"
             checked={contact.is_primary || false}
             onCheckedChange={async (checked) => {
@@ -347,25 +350,13 @@ export default function ContactDetailClient({ contact: initialContact, companies
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {linkedCompany.status && <StatusBadge status={linkedCompany.status} showEmoji />}
                 {linkedCompany.kundentyp && (
-                  <Badge variant="secondary">
-                    {linkedCompany.kundentyp.charAt(0).toUpperCase() + linkedCompany.kundentyp.slice(1)}
+                  <Badge className="bg-primary text-primary-foreground">
+                    {getKundentypLabel(linkedCompany.kundentyp)}
                   </Badge>
                 )}
-                {linkedCompany.status && (
-                  <Badge
-                    className={
-                      linkedCompany.status === "gewonnen"
-                        ? "bg-emerald-600 text-white"
-                        : linkedCompany.status === "lead"
-                          ? "bg-amber-600 text-white"
-                          : "bg-zinc-500 text-white"
-                    }
-                  >
-                    {linkedCompany.status}
-                  </Badge>
-                )}
-                {linkedCompany.wassertyp && <Badge variant="outline">{linkedCompany.wassertyp}</Badge>}
+                <WassertypBadge wassertyp={linkedCompany.wassertyp} />
                 {linkedCompany.wasserdistanz && <Badge variant="outline">{linkedCompany.wasserdistanz} m</Badge>}
               </div>
 
@@ -474,7 +465,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
           </Select>
         </WideDialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }
 

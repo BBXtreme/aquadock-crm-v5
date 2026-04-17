@@ -62,10 +62,19 @@ function AccordionTrigger({ className, children, open, setOpen, ...props }: Acco
   );
 }
 
-function AccordionContent({ className, children, open, setOpen, ...props }: AccordionContentProps) {
+function AccordionContent({ className, children, open, setOpen: _setOpen, ...props }: AccordionContentProps) {
   return (
-    <div className={cn("overflow-hidden text-sm transition-all", open ? "max-h-96" : "max-h-0", className)} {...props}>
-      <div className="pb-4 pt-0">{children}</div>
+    <div
+      className={cn(
+        "grid overflow-hidden text-sm transition-[grid-template-rows] duration-200 ease-out",
+        open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        className,
+      )}
+      {...props}
+    >
+      <div className="min-h-0">
+        <div className="pb-4 pt-0">{children}</div>
+      </div>
     </div>
   );
 }

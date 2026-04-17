@@ -11,7 +11,7 @@ export function BrevoMassSyncCard({ children }: { children: ReactNode }) {
   return (
     <section aria-labelledby="brevo-mass-sync-heading">
       <Card className="shadow-sm transition-shadow dark:shadow-md dark:shadow-black/25 dark:ring-foreground/15">
-        <CardHeader className="space-y-2 border-b border-border/50 pb-4">
+        <CardHeader className="space-y-2 border-b border-border/40 pb-4">
           <CardTitle
             id="brevo-mass-sync-heading"
             className="text-xl font-semibold tracking-tight text-foreground"

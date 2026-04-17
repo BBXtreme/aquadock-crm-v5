@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Building, DollarSign, Loader2, MapPin, Trash, Trophy, Users, X } from "lucide-react";
+import { Building, DollarSign, Loader2, MapPin, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -40,16 +40,27 @@ import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment"
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { wassertypOptions } from "@/lib/constants/wassertyp";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import type { Company, Contact } from "@/types/database.types";
 
-type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land";
+type FilterGroup = "status" | "kategorie" | "betriebstyp" | "land" | "wassertyp";
+
+type WaterPreset = "at" | "le100" | "le500" | "le1km" | "gt1km";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
 
 const GEOCODE_BATCH_MAX = 50;
+
+const WATER_PRESETS: { value: WaterPreset; labelKey: string }[] = [
+  { value: "at", labelKey: "waterAtWater" },
+  { value: "le100", labelKey: "waterLe100" },
+  { value: "le500", labelKey: "waterLe500" },
+  { value: "le1km", labelKey: "waterLe1km" },
+  { value: "gt1km", labelKey: "waterGt1km" },
+];
 
 function companyNeedsGeocode(company: Company): boolean {
   const hasLat = typeof company.lat === "number" && Number.isFinite(company.lat);
@@ -106,7 +117,9 @@ function ClientCompaniesPage() {
     kategorie: [],
     betriebstyp: [],
     land: [],
+    wassertyp: [],
   });
+  const [waterFilter, setWaterFilter] = useState<WaterPreset | null>(null);
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
@@ -119,22 +132,33 @@ function ClientCompaniesPage() {
 
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
 
-  const { data: distinctLands = [] } = useQuery({
-    queryKey: ["distinct-lands"],
+  const { data: distinctFilterValues } = useQuery({
+    queryKey: ["companies-filter-options"],
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("companies")
-        .select("land")
-        .is("deleted_at", null)
-        .not("land", "is", null);
+        .select("status, kundentyp, firmentyp, land, wassertyp")
+        .is("deleted_at", null);
       if (error) throw error;
-      const distinctLands = Array.from(new Set(data.map((d) => d.land).filter(Boolean))).sort();
-      return distinctLands;
+      const rows = data ?? [];
+      const pick = (key: "status" | "kundentyp" | "firmentyp" | "land" | "wassertyp") =>
+        new Set(rows.map((r) => r[key]).filter((v): v is string => !!v));
+      return {
+        status: pick("status"),
+        kundentyp: pick("kundentyp"),
+        firmentyp: pick("firmentyp"),
+        land: pick("land"),
+        wassertyp: pick("wassertyp"),
+      };
     },
   });
+
+  const distinctLands = distinctFilterValues
+    ? Array.from(distinctFilterValues.land).sort()
+    : [];
 
   const toggleFilter = (group: FilterGroup, value: string) => {
     setActiveFilters((prev) => ({
@@ -151,7 +175,15 @@ function ClientCompaniesPage() {
   };
 
   const companiesData = useSuspenseQuery({
-    queryKey: ["companies", pagination.pageIndex, pagination.pageSize, activeFilters, sorting, debouncedGlobalFilter],
+    queryKey: [
+      "companies",
+      pagination.pageIndex,
+      pagination.pageSize,
+      activeFilters,
+      waterFilter,
+      sorting,
+      debouncedGlobalFilter,
+    ],
     queryFn: async () => {
       const supabase = createClient();
       let query = supabase
@@ -191,6 +223,29 @@ function ClientCompaniesPage() {
       }
       if (activeFilters.land.length > 0) {
         query = query.in("land", activeFilters.land);
+      }
+      if (activeFilters.wassertyp.length > 0) {
+        query = query.in("wassertyp", activeFilters.wassertyp);
+      }
+
+      if (waterFilter) {
+        switch (waterFilter) {
+          case "at":
+            query = query.eq("wasserdistanz", 0);
+            break;
+          case "le100":
+            query = query.lte("wasserdistanz", 100);
+            break;
+          case "le500":
+            query = query.lte("wasserdistanz", 500);
+            break;
+          case "le1km":
+            query = query.lte("wasserdistanz", 1000);
+            break;
+          case "gt1km":
+            query = query.gt("wasserdistanz", 1000);
+            break;
+        }
       }
 
       // Apply sorting
@@ -255,6 +310,7 @@ function ClientCompaniesPage() {
         pagination.pageIndex,
         pagination.pageSize,
         activeFilters,
+        waterFilter,
         sorting,
         debouncedGlobalFilter,
       ];
@@ -297,6 +353,7 @@ function ClientCompaniesPage() {
         pagination.pageIndex,
         pagination.pageSize,
         activeFilters,
+        waterFilter,
         sorting,
         debouncedGlobalFilter,
       ];
@@ -555,8 +612,8 @@ function ClientCompaniesPage() {
         isApplying={geocodeApplying}
         onApplySelected={handleApplyCompanyGeocodes}
       />
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
+      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
           <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
           <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {t("title")}
@@ -565,7 +622,10 @@ function ClientCompaniesPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>{t("newCompany")}</Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
+            </Button>
           </DialogTrigger>
           <WideDialogContent size="2xl">
             <DialogHeader>
@@ -613,54 +673,79 @@ function ClientCompaniesPage() {
         <Card className="border-border rounded-xl shadow-sm">
           <CardContent className="p-6">
             {/* Active Filters Badges */}
-            <div
-              className={cn(
-                "flex flex-wrap gap-2 items-center",
-                Object.values(activeFilters).flat().length === 0 ? "mt-1" : "mt-4",
-              )}
-            >
-              {Object.entries(activeFilters).map(([group, values]) =>
-                values.map((v) => (
-                  <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-                    {v}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
-                  </Badge>
-                )),
-              )}
-              {Object.values(activeFilters).flat().length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setActiveFilters({
-                      status: [],
-                      kategorie: [],
-                      betriebstyp: [],
-                      land: [],
-                    })
-                  }
+            {(() => {
+              const totalActiveFilters =
+                Object.values(activeFilters).flat().length + (waterFilter ? 1 : 0);
+              const waterPreset = waterFilter
+                ? WATER_PRESETS.find((p) => p.value === waterFilter)
+                : null;
+              return (
+                <div
+                  className={cn(
+                    "flex flex-wrap gap-2 items-center",
+                    totalActiveFilters === 0 ? "mt-1" : "mt-4",
+                  )}
                 >
-                  {t("clearAllFilters")}
-                </Button>
-              )}
-            </div>
+                  {Object.entries(activeFilters).map(([group, values]) =>
+                    values.map((v) => (
+                      <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
+                        {v}
+                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter(group as FilterGroup, v)} />
+                      </Badge>
+                    )),
+                  )}
+                  {waterPreset && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <Waves className="h-3 w-3" />
+                      {t(waterPreset.labelKey)}
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => setWaterFilter(null)} />
+                    </Badge>
+                  )}
+                  {totalActiveFilters > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setActiveFilters({
+                          status: [],
+                          kategorie: [],
+                          betriebstyp: [],
+                          land: [],
+                          wassertyp: [],
+                        });
+                        setWaterFilter(null);
+                      }}
+                    >
+                      {t("clearAllFilters")}
+                    </Button>
+                  )}
+                </div>
+              );
+            })()}
 
             <Accordion type="single" collapsible className="mb-4">
               <AccordionItem>
                 <AccordionTrigger open={accordionOpen} setOpen={setAccordionOpen}>
-                  {Object.values(activeFilters).flat().length > 0
-                    ? t("filtersWithCount", {
-                        count: Object.values(activeFilters).flat().length,
-                        total,
-                      })
-                    : t("filters")}
+                  {(() => {
+                    const count = Object.values(activeFilters).flat().length + (waterFilter ? 1 : 0);
+                    return count > 0
+                      ? t("filtersWithCount", { count, total })
+                      : t("filters");
+                  })()}
                 </AccordionTrigger>
                 <AccordionContent open={accordionOpen} setOpen={setAccordionOpen}>
                   {/* Status */}
                   <div className="mb-4">
                     <h4 className="font-normal mb-2">{t("filterStatus")}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {statusOptions.map((option) => {
+                      {statusOptions
+                        .filter(
+                          (o) =>
+                            !distinctFilterValues ||
+                            distinctFilterValues.status.has(o.value) ||
+                            activeFilters.status.includes(o.value),
+                        )
+                        .map((option) => {
                         const Icon = statusIcons[option.value];
                         const isActive = activeFilters.status.includes(option.value);
                         return (
@@ -687,7 +772,14 @@ function ClientCompaniesPage() {
                   <div className="mb-4">
                     <h4 className="font-normal mb-2">{t("filterCategory")}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {kundentypOptions.map((option) => {
+                      {kundentypOptions
+                        .filter(
+                          (o) =>
+                            !distinctFilterValues ||
+                            distinctFilterValues.kundentyp.has(o.value) ||
+                            activeFilters.kategorie.includes(o.value),
+                        )
+                        .map((option) => {
                         const Icon = kategorieIcons[option.value];
                         const isActive = activeFilters.kategorie.includes(option.value);
                         return (
@@ -714,7 +806,14 @@ function ClientCompaniesPage() {
                   <div className="mb-4">
                     <h4 className="font-normal mb-2">{t("filterBusinessType")}</h4>
                     <div className="flex flex-wrap gap-2">
-                      {firmentypOptions.map((option) => {
+                      {firmentypOptions
+                        .filter(
+                          (o) =>
+                            !distinctFilterValues ||
+                            distinctFilterValues.firmentyp.has(o.value) ||
+                            activeFilters.betriebstyp.includes(o.value),
+                        )
+                        .map((option) => {
                         const isActive = activeFilters.betriebstyp.includes(option.value);
                         return (
                           <Button
@@ -728,6 +827,58 @@ function ClientCompaniesPage() {
                             }
                             onClick={() => toggleFilter("betriebstyp", option.value)}
                           >
+                            {option.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Wasser (distance + type) */}
+                  <div className="mb-4">
+                    <h4 className="font-normal mb-2">{t("filterWater")}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {WATER_PRESETS.map((preset) => {
+                        const isActive = waterFilter === preset.value;
+                        return (
+                          <Button
+                            key={preset.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => setWaterFilter(isActive ? null : preset.value)}
+                          >
+                            <Waves className="mr-1.5 h-3.5 w-3.5" />
+                            {t(preset.labelKey)}
+                          </Button>
+                        );
+                      })}
+                      {wassertypOptions
+                        .filter(
+                          (o) =>
+                            !distinctFilterValues ||
+                            distinctFilterValues.wassertyp.has(o.value) ||
+                            activeFilters.wassertyp.includes(o.value),
+                        )
+                        .map((option) => {
+                        const isActive = activeFilters.wassertyp.includes(option.value);
+                        return (
+                          <Button
+                            key={option.value}
+                            variant={isActive ? "secondary" : "ghost"}
+                            size="sm"
+                            className={
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/20"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                            }
+                            onClick={() => toggleFilter("wassertyp", option.value)}
+                          >
+                            <Waves className="mr-1.5 h-3.5 w-3.5" />
                             {option.label}
                           </Button>
                         );

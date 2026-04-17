@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageShell } from "@/components/ui/page-shell";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -48,12 +49,14 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
   };
 
   return (
-    <div className="container mx-auto space-y-8 p-6 lg:p-8">
-      <div className="flex justify-between items-center">
-        <div>
+    <PageShell>
+      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            <h1 className="text-3xl font-bold">{t("logTitle")}</h1>
+            <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {t("logTitle")}
+            </h1>
           </div>
           <p className="text-muted-foreground">{t("logSubtitle")}</p>
         </div>
@@ -162,6 +165,6 @@ export default function ClientEmailLogPage({ logs }: ClientEmailLogPageProps) {
           </TableBody>
         </Table>
       </div>
-    </div>
+    </PageShell>
   );
 }

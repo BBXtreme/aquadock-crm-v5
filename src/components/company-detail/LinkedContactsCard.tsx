@@ -61,7 +61,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
               {t("detailLinkedTitle", { count: contacts.length })}
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" /> {t("detailAddContact")}
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
             </Button>
           </div>
         </CardHeader>

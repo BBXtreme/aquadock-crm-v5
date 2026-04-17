@@ -1,18 +1,19 @@
 // This component renders the header section of the company detail page, including the company name, status badges, and action buttons for editing and adding timeline entries. It also handles the logic for opening dialogs and submitting forms related to the company.  - source:
 "use client";
-import { ArrowLeft, Edit, Plus, Sparkles, Trash, Waves } from "lucide-react";
+import { ArrowLeft, Edit, Plus, Sparkles, Trash } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { deleteCompany } from "@/lib/actions/companies";
 import { restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
-import { cn } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
-import { getCountryFlag, getFirmentypLabel, getKundentypLabel, getStatusLabel } from "../../lib/utils";
+import { getCountryFlag, getFirmentypLabel, getKundentypLabel } from "../../lib/utils";
 
 interface Props {
   company: Company;
@@ -120,22 +121,10 @@ export default function CompanyHeader({ company, id, router, onAddTimeline, onEd
       </div>
 
       <div className="flex items-center gap-4 flex-wrap">
-        <Badge
-          className={cn(
-            company.status === "gewonnen" && "bg-success text-success-foreground",
-            company.status === "verloren" && "bg-destructive text-destructive-foreground",
-            company.status === "lead" && "bg-warning text-warning-foreground",
-          )}
-        >
-          {getStatusLabel(company.status)}
-        </Badge>
+        <StatusBadge status={company.status} showEmoji />
         {company.kundentyp && <Badge className="bg-primary text-primary-foreground">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>}
-        {company.wassertyp && (
-          <Badge variant="outline">
-            <Waves className="w-3 h-3 mr-1" /> {company.wassertyp}
-          </Badge>
-        )}
+        <WassertypBadge wassertyp={company.wassertyp} />
         {countryFlag && (
           <Badge variant="outline" className="text-lg">
             {countryFlag}

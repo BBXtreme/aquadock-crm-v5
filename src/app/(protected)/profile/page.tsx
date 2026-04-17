@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageShell } from "@/components/ui/page-shell";
 import { Separator } from "@/components/ui/separator";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -137,8 +138,8 @@ export default async function ProfilePage() {
         })();
 
 return (
-  <div className="container mx-auto max-w-6xl space-y-10 p-6 lg:p-10">
-    <section aria-labelledby="profile-page-title" className="space-y-2">
+  <PageShell>
+    <section aria-labelledby="profile-page-title" className="space-y-2 border-b border-border/40 pb-6">
       <h1
         id="profile-page-title"
         className="bg-linear-to-r from-primary to-primary/70 bg-clip-text font-bold text-3xl text-transparent tracking-tight"
@@ -185,7 +186,7 @@ return (
                   {role}
                 </Badge>
               </div>
-              <div className="w-full space-y-1 border-border/50 border-t pt-4 text-center">
+              <div className="w-full space-y-1 border-border/40 border-t pt-4 text-center">
                 <p className="text-muted-foreground text-xs">
                   <span className="font-medium">Created:</span>{" "}
                   {profileRow.created_at === null ||
@@ -203,7 +204,7 @@ return (
               </div>
             </div>
             <section
-              className="border-border/50 border-t pt-6"
+              className="border-border/40 border-t pt-6"
               aria-label="Account actions"
             >
               <ProfileSignOutButton className="w-full justify-center" />
@@ -213,7 +214,7 @@ return (
 
         {/* Profil bearbeiten — settings card (aligned with profile overview card) */}
         <Card className="shadow-sm">
-          <CardHeader className="gap-2 border-border/60 border-b px-6 pb-5">
+          <CardHeader className="gap-2 border-border/40 border-b px-6 pb-5">
             <CardTitle className="flex items-center font-heading text-xl">
               <Settings2
                 className="mr-3 h-6 w-6 shrink-0 text-primary"
@@ -264,6 +265,6 @@ return (
         <AdminTrashBinCard />
       </section>
     ) : null}
-  </div>
+  </PageShell>
 );
 }

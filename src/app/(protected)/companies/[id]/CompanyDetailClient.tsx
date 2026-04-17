@@ -19,6 +19,7 @@ import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
+import { PageShell } from "@/components/ui/page-shell";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { CompanyForm } from "@/lib/validations/company";
@@ -114,8 +115,8 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
   };
 
   return (
-    <Suspense fallback={<LoadingState count={8} />}>
-      <div className="min-h-[calc(100vh-4rem)] p-4 md:p-6 lg:p-8 space-y-4 md:space-y-6 overflow-auto">
+    <PageShell>
+      <Suspense fallback={<LoadingState count={8} />}>
         <CompanyHeader
           company={company}
           id={id}
@@ -133,7 +134,7 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
         <LinkedContactsCard companyId={id} />
         <RemindersCard companyId={id} />
         <TimelineCard companyId={id} />
-      </div>
+      </Suspense>
 
       <AIEnrichmentModal
         company={company}
@@ -180,6 +181,6 @@ export default function CompanyDetailClient({ company, initialAiEnrichOpen = fal
           />
         </DialogContent>
       </Dialog>
-    </Suspense>
+    </PageShell>
   );
 }

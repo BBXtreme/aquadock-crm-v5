@@ -147,8 +147,8 @@ export default function RemindersCard({ companyId }: Props) {
               {t("cardTitle", { count: reminders.length })}
             </CardTitle>
             <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t("newReminder")}
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
             </Button>
           </div>
         </CardHeader>

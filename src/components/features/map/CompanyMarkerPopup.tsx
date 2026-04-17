@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Droplets, ExternalLink, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Droplets, ExternalLink, Globe, Mail, MapPin, Phone, Waves } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps)
             className="flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-white shadow-sm ring-1 ring-border/60 dark:ring-border"
             style={{ backgroundColor: wassertypColor }}
           >
-            <Droplets className="h-3.5 w-3.5 opacity-95" aria-hidden />
+            <Waves className="h-3.5 w-3.5 opacity-95" aria-hidden />
             {company.wassertyp}
           </div>
         )}

@@ -23,7 +23,7 @@ export function BrevoSyncPageHeader() {
         </Link>
       </Button>
 
-      <header className="border-b border-border/60 pb-6">
+      <header className="border-b border-border/40 pb-6">
         <nav aria-label={t("syncBreadcrumb")}>
           <p className="text-sm leading-normal text-muted-foreground">{t("syncBreadcrumb")}</p>
         </nav>

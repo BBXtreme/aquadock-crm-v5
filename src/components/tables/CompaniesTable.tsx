@@ -45,10 +45,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
-import { useT } from "@/lib/i18n/use-translations";
+import { WassertypBadge } from "@/components/ui/wassertyp-badge";
+import { kategorieIcons } from "@/lib/constants/company-icons";
+import { kundentypOptions } from "@/lib/constants/company-options";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+
+const KUNDENTYP_LABEL_MAP: Record<string, string> = Object.fromEntries(
+  kundentypOptions.map((o) => [o.value, o.label]),
+);
+
 import type { Company, Contact } from "@/types/database.types";
 
 type CompanyWithContacts = Company & { contacts?: Contact[] };
@@ -89,6 +97,7 @@ export default function CompaniesTable({
 }: CompaniesTableProps) {
   const t = useT("companies");
   const tCommon = useT("common");
+  const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [columnVisibility, setColumnVisibility] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
@@ -139,30 +148,26 @@ export default function CompaniesTable({
         }),
         columnHelper.accessor("kundentyp", {
           header: t("tableColKundentyp"),
-          cell: (info) => <Badge className="bg-primary text-primary-foreground">{safeDisplay(info.getValue())}</Badge>,
+          cell: (info) => {
+            const raw = info.getValue();
+            if (!raw) return <span className="text-muted-foreground">{tCommon("dash")}</span>;
+            const key = String(raw).toLowerCase();
+            const Icon = kategorieIcons[key];
+            const label = KUNDENTYP_LABEL_MAP[key] ?? String(raw);
+            return (
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-muted-foreground">
+                {Icon && <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />}
+                {label}
+              </span>
+            );
+          },
         }),
         columnHelper.accessor("status", {
           header: t("tableColStatus"),
           cell: (info) => {
             const raw = info.getValue();
-            const asString =
-              raw === null || raw === undefined
-                ? ""
-                : typeof raw === "string"
-                  ? raw
-                  : String(raw);
-            const statusKey = asString.normalize("NFC").trim().toLowerCase();
-            const backgroundColor = statusColors[statusKey] ?? "#6b7280";
-            const label = statusLabels[statusKey] ?? asString.trim();
-            return (
-              <Badge
-                variant="secondary"
-                className="whitespace-nowrap border-transparent bg-transparent text-white shadow-sm ring-1 ring-border/60 hover:opacity-95 dark:ring-border"
-                style={{ backgroundColor }}
-              >
-                {label}
-              </Badge>
-            );
+            const asString = raw === null || raw === undefined ? "" : typeof raw === "string" ? raw : String(raw);
+            return <StatusBadge status={asString} />;
           },
         }),
         columnHelper.accessor("contacts", {
@@ -214,6 +219,39 @@ export default function CompaniesTable({
                 {land && <span className="text-xs text-muted-foreground">{land}</span>}
               </div>
             );
+          },
+        }),
+        columnHelper.accessor("wasserdistanz", {
+          id: "wasserdistanz",
+          header: () => <span className="block text-right">{t("tableColWasserdistanz")}</span>,
+          cell: (info) => {
+            const value = info.getValue();
+            if (value === null || value === undefined) {
+              return <div className="text-right text-muted-foreground">{tCommon("dash")}</div>;
+            }
+            const num = Number(value);
+            if (num === 0) {
+              return (
+                <div className="text-right whitespace-nowrap font-medium text-emerald-600 dark:text-emerald-400">
+                  {t("waterAtWater")}
+                </div>
+              );
+            }
+            const formatted = new Intl.NumberFormat(localeTag).format(num);
+            return (
+              <div className="text-right tabular-nums whitespace-nowrap">
+                {formatted} <span className="text-muted-foreground">m</span>
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("wassertyp", {
+          id: "wassertyp",
+          header: t("tableColWassertyp"),
+          cell: (info) => {
+            const value = info.getValue();
+            if (!value) return <span className="text-muted-foreground">{tCommon("dash")}</span>;
+            return <WassertypBadge wassertyp={String(value)} />;
           },
         }),
         columnHelper.accessor("created_at", {
@@ -284,7 +322,7 @@ export default function CompaniesTable({
           enableSorting: false,
         }),
       ] as ColumnDef<CompanyWithContacts>[],
-    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, tCommon],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, tCommon, localeTag],
   );
 
   // eslint-disable-next-line react-hooks/incompatible-library
@@ -454,11 +492,15 @@ export default function CompaniesTable({
                                 ? t("tableColKontaktanzahl")
                                 : id === "adresse"
                                   ? t("tableColAdresse")
-                                  : id === "created_at"
-                                    ? t("tableColCreated")
-                                    : id === "actions"
-                                      ? t("tableColActions")
-                                      : id;
+                                  : id === "wasserdistanz"
+                                    ? t("tableColWasserdistanz")
+                                    : id === "wassertyp"
+                                      ? t("tableColWassertyp")
+                                      : id === "created_at"
+                                        ? t("tableColCreated")
+                                        : id === "actions"
+                                          ? t("tableColActions")
+                                          : id;
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}

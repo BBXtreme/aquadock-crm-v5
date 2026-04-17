@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Building, Users } from "lucide-react";
+import { Building, Plus, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -169,8 +169,8 @@ function ClientContactsPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between pb-6 border-b">
-        <div>
+      <div className="flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
           <div className="text-sm text-muted-foreground">{t("breadcrumb")}</div>
           <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             {t("title")}
@@ -179,7 +179,10 @@ function ClientContactsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>{t("newContact")}</Button>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("createButtonLabel")}
+            </Button>
           </DialogTrigger>
           <WideDialogContent size="2xl">
             <DialogHeader>
