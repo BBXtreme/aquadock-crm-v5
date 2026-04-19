@@ -1,6 +1,6 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.36",
+  "version": "0.5.37",
   "private": true,
   "scripts": {
     "supabase:types": "npx --yes supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",

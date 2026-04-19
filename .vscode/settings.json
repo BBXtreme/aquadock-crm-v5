@@ -31,5 +31,6 @@
   "cSpell.words": [
     "Adresse",
     "Firmendaten"
-  ]
+  ],
+  "git.ignoreLimitWarning": true
 }
