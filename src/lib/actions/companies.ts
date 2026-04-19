@@ -7,6 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
+import { generateAndStoreCompanyEmbedding } from "@/lib/services/semantic-search";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { type ParsedCompanyRow, parseCoordinate } from "@/lib/utils/csv-import";
@@ -29,6 +30,49 @@ import type {
 export type CompanyForOpenMap = Company & {
   contacts?: Contact[];
 };
+
+const COMPANY_SEMANTIC_UPDATE_FIELDS: ReadonlySet<keyof CompanyUpdate> = new Set([
+  "firmenname",
+  "kundentyp",
+  "firmentyp",
+  "rechtsform",
+  "strasse",
+  "plz",
+  "stadt",
+  "bundesland",
+  "land",
+  "notes",
+  "status",
+  "wassertyp",
+  "website",
+  "email",
+  "telefon",
+]);
+
+function toCompanySemanticInput(company: Company) {
+  return {
+    firmenname: company.firmenname,
+    kundentyp: company.kundentyp,
+    firmentyp: company.firmentyp,
+    rechtsform: company.rechtsform,
+    strasse: company.strasse,
+    plz: company.plz,
+    stadt: company.stadt,
+    bundesland: company.bundesland,
+    land: company.land,
+    notes: company.notes,
+    status: company.status,
+    wassertyp: company.wassertyp,
+    website: company.website,
+    email: company.email,
+    telefon: company.telefon,
+  };
+}
+
+function shouldRegenerateCompanyEmbedding(updates: CompanyUpdate): boolean {
+  const keys = Object.keys(updates) as (keyof CompanyUpdate)[];
+  return keys.some((key) => COMPANY_SEMANTIC_UPDATE_FIELDS.has(key));
+}
 
 /* ──────────────────────────────────────────────────────────────
    GET ALL COMPANIES FOR MAP
@@ -156,7 +200,9 @@ export async function createCompany(values: CompanyFormValues, supabase?: Supaba
   const { data, error } = await client.from("companies").insert(insertData).select().single();
 
   if (error) throw handleSupabaseError(error, "createCompany");
-  return data as Company;
+  const company = data as Company;
+  void generateAndStoreCompanyEmbedding(client, company.id, toCompanySemanticInput(company));
+  return company;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -170,9 +216,13 @@ export async function updateCompany(
   const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
 
   if (error) throw handleSupabaseError(error, "updateCompany");
+  const company = data as Company;
+  if (shouldRegenerateCompanyEmbedding(updates)) {
+    void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));
+  }
   revalidatePath("/companies");
   revalidatePath(`/companies/${id}`, "page");
-  return data as Company;
+  return company;
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -305,6 +355,11 @@ export async function importCompaniesFromCSV(
     if (error) throw handleSupabaseError(error, "importCompaniesFromCSV");
 
     const companyIds = (data ?? []).map((row) => row.id);
+    const insertedCompanies = (data ?? []) as Company[];
+
+    for (const company of insertedCompanies) {
+      void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));
+    }
 
     await createCsvImportTimelineEntries(supabase, companyIds);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import type { VisibilityState } from "@tanstack/react-table";
 import { Building, DollarSign, Loader2, MapPin, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -39,17 +39,16 @@ import {
 } from "@/lib/actions/companies";
 import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { bulkDeleteCompaniesWithTrash, restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
-import { applyCompaniesListFiltersToCompaniesQuery } from "@/lib/companies/companies-list-supabase";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { wassertypOptions } from "@/lib/constants/wassertyp";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import type { SearchCompaniesListResult } from "@/lib/server/companies-search";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import {
   type CompaniesFilterGroup,
   companiesListStatesEqual,
-  companiesSortIdForQuery,
   hasAnyCompaniesListParamKey,
   mergeCompaniesListIntoPath,
   mergeSessionCompaniesListQuery,
@@ -148,7 +147,11 @@ function ClientCompaniesPage() {
   const [geocodeLoading, setGeocodeLoading] = useState(false);
   const [geocodeApplying, setGeocodeApplying] = useState(false);
 
+  // Fast debounce drives the actual query (semantic/hybrid search + TanStack Query key).
   const debouncedGlobalFilter = useDebounce(globalFilter, 300);
+  // Slower debounce drives URL + session persistence so typing never feels janky
+  // (router.replace on every keystroke is expensive in Next.js App Router).
+  const urlDebouncedGlobalFilter = useDebounce(globalFilter, 800);
 
   const openCreateFromQuery = searchParams.get("create") === "true";
   const trashedCompanyRedirect = searchParams.get("trashedCompany") === "1";
@@ -191,7 +194,7 @@ function ClientCompaniesPage() {
       activeFilters,
       columnVisibility,
       waterFilter,
-      globalFilter: debouncedGlobalFilter,
+      globalFilter: urlDebouncedGlobalFilter,
     };
     const urlState = parseCompaniesListState(sp);
     const persistSession = () => {
@@ -211,8 +214,15 @@ function ClientCompaniesPage() {
       return;
     }
     persistSession();
-    router.replace(href, { scroll: false });
-  }, [pagination, sorting, activeFilters, columnVisibility, waterFilter, debouncedGlobalFilter, pathname, router]);
+    // Use history.replaceState (not router.replace) so the URL bar updates
+    // without triggering a Next.js router state change. This prevents every
+    // debounced keystroke from re-rendering the whole page tree via
+    // useSearchParams subscribers; only the components reading our local
+    // React state re-render, which is what we want.
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, "", href);
+    }
+  }, [pagination, sorting, activeFilters, columnVisibility, waterFilter, urlDebouncedGlobalFilter, pathname]);
 
   const { data: distinctFilterValues } = useQuery({
     queryKey: ["companies-filter-options"],
@@ -263,7 +273,10 @@ function ClientCompaniesPage() {
     setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
-  const companiesData = useSuspenseQuery({
+  // Non-suspense query so typing into the search box refreshes ONLY the table,
+  // keeping previous rows visible while the new result is in flight — the page
+  // no longer falls back to the outer <CompaniesPageSkeleton> on every keystroke.
+  const companiesData = useQuery({
     queryKey: [
       "companies",
       pagination.pageIndex,
@@ -273,52 +286,25 @@ function ClientCompaniesPage() {
       sorting,
       debouncedGlobalFilter,
     ],
-    queryFn: async () => {
-      const supabase = createClient();
-      let query = supabase.from("companies").select(
-        `
-          *,
-          contacts (
-            id,
-            vorname,
-            nachname,
-            position,
-            is_primary,
-            deleted_at
-          )
-        `,
-        { count: "exact" },
-      );
-      query = applyCompaniesListFiltersToCompaniesQuery(query, {
-        globalFilter: debouncedGlobalFilter,
-        activeFilters,
-        waterFilter,
+    queryFn: async ({ signal }) => {
+      const res = await fetch("/api/companies/search", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          globalFilter: debouncedGlobalFilter,
+          activeFilters,
+          waterFilter,
+          sorting,
+          pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
+        }),
+        signal,
       });
-
-      // Apply sorting
-      if (sorting.length > 0) {
-        const sort = sorting[0];
-        if (sort) {
-          query = query.order(companiesSortIdForQuery(sort.id), { ascending: !sort.desc });
-        }
+      if (!res.ok) {
+        throw new Error(`Companies search failed (${res.status})`);
       }
-
-      // Apply pagination
-      const from = pagination.pageIndex * pagination.pageSize;
-      const to = from + pagination.pageSize - 1;
-      query = query.range(from, to);
-
-      const { data, error, count } = await query;
-      if (error) throw error;
-      const raw = data ?? [];
-      const companies = raw.map((row) => ({
-        ...row,
-        contacts: (row.contacts ?? []).filter(
-          (ct: { deleted_at?: string | null }) => ct.deleted_at == null,
-        ),
-      })) as CompanyWithContacts[];
-      return { companies, totalCount: count ?? 0 };
+      return (await res.json()) as SearchCompaniesListResult;
     },
+    placeholderData: keepPreviousData,
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -326,9 +312,11 @@ function ClientCompaniesPage() {
     gcTime: 5 * 60 * 1000,
   });
 
-  const companies = companiesData.data.companies;
-  const total = companiesData.data.totalCount;
-  const pageCount = Math.ceil(total / pagination.pageSize);
+  const companies = companiesData.data?.companies ?? [];
+  const total = companiesData.data?.totalCount ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pagination.pageSize));
+  const companiesInitialLoading = companiesData.isPending && companiesData.data === undefined;
+  const companiesIsFetching = companiesData.isFetching;
 
   const statsData = useSuspenseQuery({
     queryKey: ["companies-stats"],
@@ -992,6 +980,8 @@ function ClientCompaniesPage() {
 
             <CompaniesTable
               companies={companies}
+              isInitialLoading={companiesInitialLoading}
+              isFetching={companiesIsFetching}
               globalFilter={globalFilter}
               onGlobalFilterChange={setGlobalFilter}
               onEdit={(company) => setEditingCompany(company)}

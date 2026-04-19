@@ -13,7 +13,18 @@ import {
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, Columns, Download, Edit, Eye, Trash, Upload } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Columns,
+  Download,
+  Edit,
+  Eye,
+  Loader2,
+  Sparkles,
+  Trash,
+  Upload,
+} from "lucide-react";
 import Link from "next/link";
 import Papa from "papaparse";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
@@ -51,6 +62,7 @@ import {
 } from "@/components/ui/select";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { kategorieIcons } from "@/lib/constants/company-icons";
 import { kundentypOptions } from "@/lib/constants/company-options";
@@ -85,9 +97,24 @@ interface CompaniesTableProps {
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   /** List-only query string (no `?`) to preserve /companies filters when opening detail/contact links */
   companiesListSearchParams?: string;
+  /** True while the first page of results is being fetched (no data yet). */
+  isInitialLoading?: boolean;
+  /** True whenever a search/fetch is in flight (including background refetches). */
+  isFetching?: boolean;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
+
+const SKELETON_ROW_KEYS = [
+  "skeleton-a",
+  "skeleton-b",
+  "skeleton-c",
+  "skeleton-d",
+  "skeleton-e",
+  "skeleton-f",
+  "skeleton-g",
+  "skeleton-h",
+] as const;
 
 export default function CompaniesTable({
   companies,
@@ -105,6 +132,8 @@ export default function CompaniesTable({
   selectionActions,
   columnVisibility: propColumnVisibility,
   onColumnVisibilityChange: propOnColumnVisibilityChange,
+  isInitialLoading = false,
+  isFetching = false,
   companiesListSearchParams = "",
 }: CompaniesTableProps) {
   const t = useT("companies");
@@ -427,15 +456,42 @@ export default function CompaniesTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Input
-            key="companies-search-input"
-            placeholder={t("tableSearchPlaceholder")}
-            value={globalFilter ?? ""}
-            onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
-            className="max-w-sm"
-          />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <TooltipProvider delayDuration={250}>
+            <div className="group relative w-full min-w-0 sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    aria-label={t("tableSemanticSearchAria")}
+                    className="absolute inset-y-0 left-0 flex w-10 cursor-help items-center justify-center text-primary/70 transition-colors group-focus-within:text-primary hover:text-primary"
+                  >
+                    {isFetching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Sparkles className="h-4 w-4" aria-hidden />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={8} className="max-w-[260px] text-center text-xs leading-relaxed">
+                  {t("tableSemanticSearchTooltip")}
+                </TooltipContent>
+              </Tooltip>
+              <Input
+                key="companies-search-input"
+                type="search"
+                spellCheck={false}
+                autoComplete="off"
+                placeholder={t("tableSearchPlaceholder")}
+                value={globalFilter ?? ""}
+                onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
+                aria-label={t("tableSearchPlaceholder")}
+                className="h-10 w-full rounded-lg border-border/70 bg-background/60 pl-10 pr-3 text-sm shadow-xs backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 hover:border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/15"
+              />
+            </div>
+          </TooltipProvider>
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -566,8 +622,18 @@ export default function CompaniesTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
+          <TableBody className={isFetching && !isInitialLoading ? "opacity-70 transition-opacity" : "transition-opacity"}>
+            {isInitialLoading ? (
+              SKELETON_ROW_KEYS.map((rowKey) => (
+                <TableRow key={rowKey} className="animate-pulse">
+                  {table.getVisibleLeafColumns().map((col) => (
+                    <TableCell key={`${rowKey}-${col.id}`}>
+                      <div className="h-4 w-full max-w-[160px] rounded bg-muted/60" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
