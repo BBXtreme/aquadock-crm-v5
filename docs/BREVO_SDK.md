@@ -24,7 +24,7 @@
 
 **API keys:** Brevo distinguishes **REST API keys** (often prefix `xkeysib-`) from **SMTP relay keys** (`xsmtpsib-`). REST operations against `api.brevo.com` need the correct key type; the service layer surfaces a German hint on `401` when the key is wrong (see `BREVO_401_REST_KEY_HINT` in `brevo.ts`).
 
-**Transitive / unused `brevo` entry:** `package.json` may still list the older `brevo` package name; there are **no** imports from that package under `src/`. All Brevo usage goes through `@getbrevo/brevo` — treat the legacy name as a dependency cleanup candidate, not an API to use.
+**Transitive / unused `brevo` entry:** `package.json` currently still lists the older `brevo` package name (version `^1.0.0`), but there are **no** imports from it under `src/`. All Brevo usage goes through `@getbrevo/brevo`. Treat the legacy `brevo` dependency as a cleanup candidate (safe to remove when convenient), not an API to use.
 
 ---
 
@@ -67,4 +67,4 @@ The SDK can throw typed errors (e.g. `BrevoError`, `UnauthorizedError`, `TooMany
 
 ---
 
-Last reviewed: April 2026
+Last reviewed: April 20, 2026

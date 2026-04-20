@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,51 @@ function formatCoord(value: number | null): string {
     return "—";
   }
   return value.toFixed(5);
+}
+
+function formatCoordPair(lat: number | null, lon: number | null): string {
+  if (lat === null && lon === null) return "—";
+  return `${formatCoord(lat)}, ${formatCoord(lon)}`;
+}
+
+/**
+ * Stacked "current → suggested" diff view for the coordinates column.
+ * Renders as a single cell so the review modal reads like a change set,
+ * not two parallel data columns. Saves ~110px of horizontal space that
+ * would otherwise push long addresses into neighbouring cells.
+ */
+function CoordinateDiff({ row }: { row: GeocodeBatchPreviewRow }) {
+  const hasCurrent = row.currentLat !== null && row.currentLon !== null;
+  const hasSuggested = row.suggestedLat !== null && row.suggestedLon !== null;
+
+  if (!hasCurrent && hasSuggested) {
+    return (
+      <div className="flex items-center gap-1 whitespace-nowrap font-mono text-xs">
+        <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+        <span className="font-semibold">{formatCoordPair(row.suggestedLat, row.suggestedLon)}</span>
+      </div>
+    );
+  }
+
+  if (hasCurrent && !hasSuggested) {
+    return (
+      <span className="whitespace-nowrap font-mono text-muted-foreground text-xs">
+        {formatCoordPair(row.currentLat, row.currentLon)}
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 whitespace-nowrap font-mono text-xs leading-tight">
+      <span className="text-muted-foreground">
+        {formatCoordPair(row.currentLat, row.currentLon)}
+      </span>
+      <span className="flex items-center gap-1 font-semibold">
+        <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+        {formatCoordPair(row.suggestedLat, row.suggestedLon)}
+      </span>
+    </div>
+  );
 }
 
 function ConfidenceBadge({ confidence }: { confidence: GeocodeBatchPreviewRow["confidence"] }) {
@@ -131,14 +176,23 @@ export function GeocodeReviewModal({
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border">
-          <Table>
+          <Table className="table-fixed">
+            {/* Explicit column widths so long addresses wrap in place instead
+                of overflowing into the coordinates cell. */}
+            <colgroup>
+              <col className="w-10" />
+              <col className="w-[18%]" />
+              <col className="w-[26%]" />
+              <col className="w-[22%]" />
+              <col className="w-[10%]" />
+              <col />
+            </colgroup>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10" />
                 <TableHead>Firma</TableHead>
                 <TableHead>Adresse</TableHead>
-                <TableHead>Aktuell</TableHead>
-                <TableHead>Vorschlag</TableHead>
+                <TableHead>Koordinaten</TableHead>
                 <TableHead>Qualität</TableHead>
                 <TableHead>Hinweis</TableHead>
               </TableRow>
@@ -147,9 +201,10 @@ export function GeocodeReviewModal({
               {rows.map((row) => {
                 const selectable = isSelectableRow(row);
                 const checked = selected[row.rowId] === true;
+                const hint = row.message ?? row.displayName ?? "—";
                 return (
-                  <TableRow key={row.rowId}>
-                    <TableCell>
+                  <TableRow key={row.rowId} className="align-top">
+                    <TableCell className="pt-3">
                       <Checkbox
                         checked={checked}
                         disabled={!selectable || isApplying}
@@ -159,21 +214,29 @@ export function GeocodeReviewModal({
                         aria-label={`Zeile ${row.rowId} auswählen`}
                       />
                     </TableCell>
-                    <TableCell className="max-w-[140px] truncate font-medium">
+                    <TableCell
+                      className="whitespace-normal wrap-break-word font-medium text-sm leading-snug"
+                      title={row.firmenname ?? undefined}
+                    >
                       {row.firmenname ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[200px] text-muted-foreground text-xs">{row.addressLabel}</TableCell>
-                    <TableCell className="whitespace-nowrap text-xs">
-                      {formatCoord(row.currentLat)}, {formatCoord(row.currentLon)}
+                    <TableCell
+                      className="whitespace-normal wrap-break-word text-muted-foreground text-xs leading-snug"
+                      title={row.addressLabel}
+                    >
+                      {row.addressLabel}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-xs">
-                      {formatCoord(row.suggestedLat)}, {formatCoord(row.suggestedLon)}
+                    <TableCell>
+                      <CoordinateDiff row={row} />
                     </TableCell>
                     <TableCell>
                       <ConfidenceBadge confidence={row.confidence} />
                     </TableCell>
-                    <TableCell className="max-w-[220px] text-muted-foreground text-xs">
-                      {row.message ?? (row.displayName ? row.displayName : "—")}
+                    <TableCell
+                      className="whitespace-normal wrap-break-word text-muted-foreground text-xs leading-snug"
+                      title={typeof hint === "string" ? hint : undefined}
+                    >
+                      {hint}
                     </TableCell>
                   </TableRow>
                 );

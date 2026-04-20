@@ -84,6 +84,7 @@ describe("POST /api/companies/search", () => {
     mockSearchCompaniesList.mockResolvedValue({
       companies: [{ id: "c1", firmenname: "Marina Hotel" }],
       totalCount: 1,
+      globalSearchStrategy: "hybrid",
     });
 
     const req = new Request("http://localhost/api/companies/search", {
@@ -98,7 +99,39 @@ describe("POST /api/companies/search", () => {
     expect(await res.json()).toEqual({
       companies: [{ id: "c1", firmenname: "Marina Hotel" }],
       totalCount: 1,
+      globalSearchStrategy: "hybrid",
     });
+  });
+
+  it("forwards sortExplicit to searchCompaniesList verbatim", async () => {
+    const parsed = {
+      globalFilter: "marina",
+      activeFilters: { status: [], kategorie: [], betriebstyp: [], land: [], wassertyp: [] },
+      waterFilter: null,
+      sorting: [{ id: "status", desc: true }],
+      pagination: { pageIndex: 0, pageSize: 20 },
+      sortExplicit: true,
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      },
+    });
+    mockSafeParse.mockReturnValue({ success: true, data: parsed });
+    mockSearchCompaniesList.mockResolvedValue({
+      companies: [],
+      totalCount: 0,
+      globalSearchStrategy: "hybrid",
+    });
+
+    const req = new Request("http://localhost/api/companies/search", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(parsed),
+    });
+    await POST(req);
+
+    expect(mockSearchCompaniesList).toHaveBeenCalledWith(expect.objectContaining({ sortExplicit: true }));
   });
 
   it("returns 500 on unexpected errors", async () => {

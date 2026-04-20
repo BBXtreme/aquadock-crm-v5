@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestore, Bell, Layers, Loader2, Mail, MapPin, Palette, Trash2 } from "lucide-react";
+import { ArchiveRestore, Bell, Layers, Loader2, Mail, MapPin, Palette, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
+import { testEmbeddingConnectionAction } from "@/lib/actions/semantic-search";
 import type { AiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { saveTrashBinPreferenceAction } from "@/lib/actions/trash-settings";
 import { poiCategories } from "@/lib/constants/map-poi-config";
@@ -103,6 +104,37 @@ out center;
   return query.trim();
 };
 
+const DEFAULT_SEMANTIC_SETTINGS = {
+  embeddingProvider: "gateway",
+  embeddingModel: "text-embedding-3-small",
+  semanticSearchEnabled: true,
+  autoBackfillEmbeddings: true,
+  showSemanticBadge: true,
+} as const;
+
+type SemanticEmbeddingProvider = "gateway" | "openai" | "xai";
+type SemanticEmbeddingModel = "text-embedding-3-small" | "text-embedding-3-large" | "grok-embedding-small";
+type SemanticConnectionStatus = "connected" | "checking" | "failed" | "not_configured" | "disabled";
+
+function parseBooleanSetting(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "1" || value === 1) return true;
+  if (value === "false" || value === "0" || value === 0) return false;
+  return fallback;
+}
+
+function parseEmbeddingProvider(value: unknown): SemanticEmbeddingProvider {
+  if (value === "gateway" || value === "vercel") return "gateway";
+  if (value === "xai") return "xai";
+  return "openai";
+}
+
+function parseEmbeddingModel(value: unknown): SemanticEmbeddingModel {
+  if (value === "grok-embedding-small") return "grok-embedding-small";
+  if (value === "text-embedding-3-large") return "text-embedding-3-large";
+  return "text-embedding-3-small";
+}
+
 type ClientSettingsPageProps = {
   initialAiEnrichmentSnapshot: AiEnrichmentSettingsSnapshot;
 };
@@ -138,6 +170,22 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
 
   const [brevoSenderName, setBrevoSenderName] = useState("");
   const [brevoSenderEmail, setBrevoSenderEmail] = useState("");
+  const [embeddingProvider, setEmbeddingProvider] = useState<SemanticEmbeddingProvider>(
+    DEFAULT_SEMANTIC_SETTINGS.embeddingProvider,
+  );
+  const [embeddingModel, setEmbeddingModel] = useState<SemanticEmbeddingModel>(
+    DEFAULT_SEMANTIC_SETTINGS.embeddingModel,
+  );
+  const [semanticSearchEnabled, setSemanticSearchEnabled] = useState<boolean>(
+    DEFAULT_SEMANTIC_SETTINGS.semanticSearchEnabled,
+  );
+  const [autoBackfillEmbeddings, setAutoBackfillEmbeddings] = useState<boolean>(
+    DEFAULT_SEMANTIC_SETTINGS.autoBackfillEmbeddings,
+  );
+  const [showSemanticBadge, setShowSemanticBadge] = useState<boolean>(
+    DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge,
+  );
+  const [semanticSettingsHydrated, setSemanticSettingsHydrated] = useState(false);
 
   const [mapProvider, setMapProvider] = useState<MapProviderId>("osm");
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState("");
@@ -153,6 +201,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
   }, []);
 
   const openmapDbHydratedRef = useRef(false);
+  const semanticDbHydratedRef = useRef(false);
 
   const normalizeCacheTtlMinutes = useCallback((raw: string | null): OpenmapCacheTtlMinutes | null => {
     if (raw === null || raw === "") return null;
@@ -223,6 +272,79 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
       return next;
     });
   }, [settings, settingsLoading]);
+
+  useEffect(() => {
+    if (settingsLoading) return;
+    if (semanticDbHydratedRef.current) return;
+    semanticDbHydratedRef.current = true;
+
+    setEmbeddingProvider(parseEmbeddingProvider(settings.embedding_provider));
+    setEmbeddingModel(parseEmbeddingModel(settings.embedding_model));
+    setSemanticSearchEnabled(
+      parseBooleanSetting(settings.semantic_search_enabled, DEFAULT_SEMANTIC_SETTINGS.semanticSearchEnabled),
+    );
+    setAutoBackfillEmbeddings(
+      parseBooleanSetting(settings.auto_backfill_embeddings, DEFAULT_SEMANTIC_SETTINGS.autoBackfillEmbeddings),
+    );
+    setShowSemanticBadge(
+      parseBooleanSetting(settings.show_semantic_badge, DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge),
+    );
+    setSemanticSettingsHydrated(true);
+  }, [settings, settingsLoading]);
+
+  const semanticConnectionQuery = useQuery({
+    queryKey: [
+      "semantic-connection-status",
+      semanticSearchEnabled,
+      embeddingProvider,
+      embeddingModel,
+    ],
+    enabled: semanticSettingsHydrated,
+    queryFn: async () => {
+      if (!semanticSearchEnabled) {
+        return { ok: false as const, reason: "disabled" as const };
+      }
+      return await testEmbeddingConnectionAction({
+        embeddingProvider,
+        embeddingModel,
+        semanticSearchEnabled,
+      });
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const semanticConnectionStatus: SemanticConnectionStatus = !semanticSettingsHydrated
+    ? "checking"
+    : semanticConnectionQuery.isFetching
+      ? "checking"
+      : semanticSearchEnabled === false
+        ? "disabled"
+        : semanticConnectionQuery.data?.ok
+          ? "connected"
+          : semanticConnectionQuery.data?.reason === "not_configured"
+            ? "not_configured"
+            : "failed";
+
+  const semanticConnectionLabel =
+    semanticConnectionStatus === "connected"
+      ? t("semanticSearch.connectionStatusConnected")
+      : semanticConnectionStatus === "checking"
+        ? t("semanticSearch.connectionStatusChecking")
+        : semanticConnectionStatus === "failed"
+          ? t("semanticSearch.connectionStatusFailed")
+          : semanticConnectionStatus === "disabled"
+            ? t("semanticSearch.connectionStatusDisabled")
+            : t("semanticSearch.connectionStatusNotConfigured");
+
+  const semanticConnectionDotClass =
+    semanticConnectionStatus === "connected"
+      ? "bg-emerald-500"
+      : semanticConnectionStatus === "checking"
+        ? "bg-orange-400"
+        : semanticConnectionStatus === "failed"
+          ? "bg-red-500"
+          : "bg-muted-foreground/50";
 
   const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
     queryKey: ["map-provider-settings"],
@@ -478,6 +600,43 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
         return;
       }
       toast.error(t("brevo.saveErrorTitle"), { description: message });
+    },
+  });
+
+  const semanticSettingsMutation = useMutation({
+    mutationFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error(t("brevo.notSignedIn"));
+
+      const rows = [
+        { user_id: user.id, key: "embedding_provider", value: embeddingProvider },
+        { user_id: user.id, key: "embedding_model", value: embeddingModel },
+        { user_id: user.id, key: "semantic_search_enabled", value: semanticSearchEnabled },
+        { user_id: user.id, key: "auto_backfill_embeddings", value: autoBackfillEmbeddings },
+        { user_id: user.id, key: "show_semantic_badge", value: showSemanticBadge },
+      ];
+
+      for (const row of rows) {
+        const { error } = await supabase.from("user_settings").upsert(row, { onConflict: "user_id,key" });
+        if (error) throw error;
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["settings"] });
+      await queryClient.invalidateQueries({ queryKey: ["companies-semantic-badge-setting"] });
+      toast.success(t("semanticSearch.savedToast"), {
+        description: t("semanticSearch.savedToastDescription"),
+      });
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      if (message === t("brevo.notSignedIn")) {
+        toast.error(t("brevo.notSignedIn"));
+        return;
+      }
+      toast.error(t("semanticSearch.saveErrorTitle"), { description: message });
     },
   });
 
@@ -798,6 +957,142 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
                 ) : null}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm md:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Sparkles className="mr-2 h-5 w-5" />
+              {t("semanticSearch.cardTitle")}
+            </CardTitle>
+            <CardDescription>{t("semanticSearch.cardDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5" aria-busy={semanticSettingsMutation.isPending}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <Label htmlFor="semantic-search-enabled" className="text-sm font-medium">
+                  {t("semanticSearch.semanticSearchEnabledLabel")}
+                </Label>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {t("semanticSearch.semanticSearchEnabledHelp")}
+                </p>
+              </div>
+              <Switch
+                id="semantic-search-enabled"
+                className="shrink-0"
+                checked={semanticSearchEnabled}
+                disabled={semanticSettingsMutation.isPending}
+                onCheckedChange={setSemanticSearchEnabled}
+              />
+            </div>
+            {semanticSearchEnabled ? (
+              <>
+                <div className="flex items-center justify-between rounded-md border border-border/60 bg-muted/30 px-3 py-2">
+                  <span className="text-sm font-medium">{t("semanticSearch.connectionStatusLabel")}</span>
+                  <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className={`h-2.5 w-2.5 rounded-full ${semanticConnectionDotClass}`} aria-hidden />
+                    {semanticConnectionLabel}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="semantic-embedding-provider">{t("semanticSearch.embeddingProviderLabel")}</Label>
+                  <Select
+                    value={embeddingProvider}
+                    onValueChange={(value) => {
+                      const nextProvider = parseEmbeddingProvider(value);
+                      setEmbeddingProvider(nextProvider);
+                      if (nextProvider === "xai") {
+                        setEmbeddingModel("grok-embedding-small");
+                        return;
+                      }
+                      if (embeddingModel === "grok-embedding-small") {
+                        setEmbeddingModel("text-embedding-3-small");
+                      }
+                    }}
+                    disabled={semanticSettingsMutation.isPending}
+                  >
+                    <SelectTrigger id="semantic-embedding-provider" className="w-full max-w-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gateway">{t("semanticSearch.embeddingProviderGateway")}</SelectItem>
+                      <SelectItem value="openai">{t("semanticSearch.embeddingProviderOpenAi")}</SelectItem>
+                      <SelectItem value="xai">{t("semanticSearch.embeddingProviderXai")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t("semanticSearch.providerModelChangeHelp")}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="semantic-embedding-model">{t("semanticSearch.embeddingModelLabel")}</Label>
+                  <Select
+                    value={embeddingModel}
+                    onValueChange={(value) => setEmbeddingModel(parseEmbeddingModel(value))}
+                    disabled={semanticSettingsMutation.isPending}
+                  >
+                    <SelectTrigger id="semantic-embedding-model" className="w-full max-w-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {embeddingProvider === "xai" ? (
+                        <SelectItem value="grok-embedding-small">grok-embedding-small</SelectItem>
+                      ) : (
+                        <>
+                          <SelectItem value="text-embedding-3-small">text-embedding-3-small</SelectItem>
+                          <SelectItem value="text-embedding-3-large">text-embedding-3-large</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t("semanticSearch.providerModelChangeHelp")}
+                  </p>
+                </div>
+              </>
+            ) : null}
+            {semanticSearchEnabled ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 space-y-1">
+                    <Label htmlFor="semantic-backfill-enabled" className="text-sm font-medium">
+                      {t("semanticSearch.autoBackfillLabel")}
+                    </Label>
+                    <p className="text-muted-foreground text-xs leading-relaxed">{t("semanticSearch.autoBackfillHelp")}</p>
+                  </div>
+                  <Switch
+                    id="semantic-backfill-enabled"
+                    className="shrink-0"
+                    checked={autoBackfillEmbeddings}
+                    disabled={semanticSettingsMutation.isPending}
+                    onCheckedChange={setAutoBackfillEmbeddings}
+                  />
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 space-y-1">
+                    <Label htmlFor="semantic-badge-enabled" className="text-sm font-medium">
+                      {t("semanticSearch.showBadgeLabel")}
+                    </Label>
+                    <p className="text-muted-foreground text-xs leading-relaxed">{t("semanticSearch.showBadgeHelp")}</p>
+                  </div>
+                  <Switch
+                    id="semantic-badge-enabled"
+                    className="shrink-0"
+                    checked={showSemanticBadge}
+                    disabled={semanticSettingsMutation.isPending}
+                    onCheckedChange={setShowSemanticBadge}
+                  />
+                </div>
+              </>
+            ) : null}
+            <Button
+              type="button"
+              onClick={() => semanticSettingsMutation.mutate()}
+              disabled={semanticSettingsMutation.isPending}
+            >
+              {semanticSettingsMutation.isPending ? t("common.saving") : t("common.save")}
+            </Button>
           </CardContent>
         </Card>
 

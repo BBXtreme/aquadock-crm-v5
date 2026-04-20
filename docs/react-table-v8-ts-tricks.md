@@ -1,7 +1,7 @@
 # TanStack Table v8 — TypeScript patterns (AquaDock CRM)
 
-**Last updated:** April 2026  
-**Package:** `@tanstack/react-table` (see `package.json` for exact version).
+**Last updated:** April 20, 2026  
+**Package:** `@tanstack/react-table` (see `package.json` for exact version; currently `^8.21`).
 
 ---
 

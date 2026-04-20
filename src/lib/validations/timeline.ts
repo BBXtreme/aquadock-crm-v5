@@ -6,7 +6,7 @@ import type { TimelineEntryInsert } from "@/types/database.types";
 
 export const timelineSchema = z.object({
   title: z.string().min(3, "Titel muss mindestens 3 Zeichen lang sein").max(200, "Titel darf maximal 200 Zeichen lang sein").trim(),
-  activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"], { required_error: "Aktivitätstyp ist erforderlich" }),
+  activity_type: z.enum(["note", "call", "email", "meeting", "other"], { required_error: "Aktivitätstyp ist erforderlich" }),
   content: z.string().max(2000, "Inhalt darf maximal 2000 Zeichen lang sein").nullable().optional(),
   company_id: z.string().uuid("Ungültige Unternehmens-ID").nullable().optional(),
   contact_id: z.string().uuid("Ungültige Kontakt-ID").nullable().optional(),
