@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/lib/i18n/use-translations";
 import { updateEmailTemplate } from "@/lib/services/email";
 import { createClient } from "@/lib/supabase/browser";
 import type { EmailTemplate } from "@/types/database.types";
@@ -37,19 +38,20 @@ export default function EmailComposer({
   handleTemplateChange,
 }: EmailComposerProps) {
   const queryClient = useQueryClient();
+  const t = useT("massEmail");
 
   const saveToTemplateMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedTemplateId) throw new Error("Keine Vorlage ausgewählt");
+      if (!selectedTemplateId) throw new Error(t("composerNoTemplateError"));
       const client = createClient();
       return updateEmailTemplate(selectedTemplateId, { subject, body }, client);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
-      toast.success("In Vorlage gespeichert");
+      toast.success(t("composerSaveSuccess"));
     },
     onError: (error: Error) => {
-      toast.error("Fehler beim Speichern", { description: error.message });
+      toast.error(t("composerSaveError"), { description: error.message });
     },
   });
 
@@ -60,31 +62,31 @@ export default function EmailComposer({
   return (
     <Card className="h-full">
       <CardHeader className="pb-1">
-        <CardTitle>E-Mail erstellen</CardTitle>
+        <CardTitle>{t("composerCardTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-6">
         <div>
-          <Label className="mb-3">Vorlage</Label>
+          <Label className="mb-3">{t("composerTemplateLabel")}</Label>
           <div className="flex gap-3">
             <div className="flex-1">
               {templates.length === 0 ? (
                 <div className="text-center py-8 px-4 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-                  <p className="text-muted-foreground mb-4">Noch keine Vorlagen vorhanden</p>
+                  <p className="text-muted-foreground mb-4">{t("composerNoTemplates")}</p>
                   <Link href="/mass-email/templates">
                     <Button variant="outline" size="sm">
                       <Plus className="h-4 w-4 mr-2" />
-                      Vorlage erstellen
+                      {t("composerCreateTemplate")}
                     </Button>
                   </Link>
                 </div>
               ) : (
                 <Select value={selectedTemplateId} onValueChange={handleTemplateChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Vorlage auswählen" />
+                    <SelectValue placeholder={t("composerTemplatePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {templates.map((t: EmailTemplate) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                    {templates.map((tpl: EmailTemplate) => (
+                      <SelectItem key={tpl.id} value={tpl.id}>{tpl.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -100,13 +102,13 @@ export default function EmailComposer({
                     disabled={saveToTemplateMutation.isPending}
                   >
                     <Save className="h-4 w-4 mr-2" />
-                    In Vorlage speichern
+                    {t("composerSaveToTemplate")}
                   </Button>
                 )}
                 <Link href="/mass-email/templates">
                   <Button variant="outline" className="h-10">
                     <Plus className="h-4 w-4 mr-2" />
-                    Neue Vorlage
+                    {t("composerNewTemplate")}
                   </Button>
                 </Link>
               </>
@@ -115,17 +117,17 @@ export default function EmailComposer({
         </div>
 
         <div>
-          <Label className="mb-3">Betreff</Label>
-          <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Betreff der E-Mail" />
+          <Label className="mb-3">{t("composerSubjectLabel")}</Label>
+          <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={t("composerSubjectPlaceholder")} />
         </div>
 
         <div>
-          <Label className="mb-3">Inhalt (HTML unterstützt)</Label>
+          <Label className="mb-3">{t("composerBodyLabel")}</Label>
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={12}
-            placeholder="Verwenden Sie {{vorname}}, {{firmenname}}, {{anrede}} ..."
+            placeholder={t("composerBodyPlaceholder")}
           />
         </div>
       </CardContent>

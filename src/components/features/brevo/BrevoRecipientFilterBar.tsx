@@ -4,6 +4,7 @@ import { BREVO_RECIPIENT_FILTER_ALL } from "@/components/features/brevo/brevo-re
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { useT } from "@/lib/i18n/use-translations";
 
 type BrevoRecipientFilterBarProps = {
   globalFilter: string;
@@ -22,20 +23,21 @@ export function BrevoRecipientFilterBar({
   statusValue,
   onStatusChange,
 }: BrevoRecipientFilterBarProps) {
+  const t = useT("brevo");
   return (
     <div className="flex gap-4">
       <Input
-        placeholder="Search contacts..."
+        placeholder={t("recipientSearchPlaceholder")}
         value={globalFilter}
         onChange={(e) => onGlobalFilterChange(e.target.value)}
         className="max-w-sm"
       />
       <Select value={kundentypValue} onValueChange={onKundentypChange}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="All Kundentyp" />
+          <SelectValue placeholder={t("recipientFilterAllKundentyp")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={BREVO_RECIPIENT_FILTER_ALL}>All</SelectItem>
+          <SelectItem value={BREVO_RECIPIENT_FILTER_ALL}>{t("recipientFilterAll")}</SelectItem>
           {kundentypOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
@@ -45,10 +47,10 @@ export function BrevoRecipientFilterBar({
       </Select>
       <Select value={statusValue} onValueChange={onStatusChange}>
         <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="All Status" />
+          <SelectValue placeholder={t("recipientFilterAllStatus")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={BREVO_RECIPIENT_FILTER_ALL}>All</SelectItem>
+          <SelectItem value={BREVO_RECIPIENT_FILTER_ALL}>{t("recipientFilterAll")}</SelectItem>
           {statusOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

@@ -259,8 +259,12 @@ describe("CompanyDetailClient refresh after inline edits", () => {
     const cardEl = card as HTMLElement;
     await within(cardEl).findByText("100 m");
 
-    const editButtons = within(cardEl).getAllByRole("button");
-    await user.click(requireHtmlElement(editButtons[0], "AquaDock edit button"));
+    // Locate the pencil by its aria-label so the test is resilient to new
+    // sibling icon buttons in the card header (e.g. the geocode button).
+    const editButton = within(cardEl).getByRole("button", {
+      name: deMessages.companies.dialogEditAquadockTitle,
+    });
+    await user.click(editButton);
 
     await screen.findByRole("dialog", { name: "AquaDock-Daten bearbeiten" });
     const dialog = screen.getByRole("dialog", { name: "AquaDock-Daten bearbeiten" });

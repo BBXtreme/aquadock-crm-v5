@@ -15,8 +15,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type GeocodeAddressResult,
-  NOMINATIM_USER_AGENT,
   geocodeAddress,
+  NOMINATIM_USER_AGENT,
 } from "./geocode-nominatim";
 
 type FetchSpy = ReturnType<typeof vi.fn>;

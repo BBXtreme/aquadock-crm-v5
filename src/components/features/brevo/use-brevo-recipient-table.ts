@@ -8,9 +8,11 @@ import {
   type OnChangeFn,
   useReactTable,
 } from "@tanstack/react-table";
+import { useMemo } from "react";
 
-import { brevoRecipientColumns } from "@/components/features/brevo/brevo-recipient-columns";
+import { buildBrevoRecipientColumns } from "@/components/features/brevo/brevo-recipient-columns";
 import { useBrevoRecipientRowSelection } from "@/components/features/brevo/use-brevo-recipient-row-selection";
+import { useT } from "@/lib/i18n/use-translations";
 import type { BrevoContactWithCompany } from "@/types/brevo";
 
 export type BrevoRecipientTableFilters = {
@@ -28,10 +30,15 @@ export function useBrevoRecipientTable(
   const { rowSelection, onRowSelectionChange } = useBrevoRecipientRowSelection(setSelectedRecipients);
 
   const { globalFilter, setGlobalFilter, columnFilters, setColumnFilters } = filters;
+  const t = useT("brevo");
+  const columns = useMemo(
+    () => buildBrevoRecipientColumns((key) => t(key as Parameters<typeof t>[0])),
+    [t],
+  );
 
   return useReactTable({
     data: contacts,
-    columns: brevoRecipientColumns,
+    columns,
     getRowId: (row) => row.id,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

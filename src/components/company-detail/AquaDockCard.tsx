@@ -4,8 +4,8 @@ import { Edit, Loader2, Locate, MapPin, Waves } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import AquaDockEditForm from "@/components/features/companies/AquaDockEditForm";
+import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -213,7 +213,13 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
                   <TooltipContent>{t("geocodeDetailIncompleteAddressTooltip")}</TooltipContent>
                 </Tooltip>
               )}
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEditDialogOpen(true)}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={t("dialogEditAquadockTitle")}
+                onClick={() => setEditDialogOpen(true)}
+              >
                 <Edit className="h-4 w-4" />
               </Button>
             </div>
