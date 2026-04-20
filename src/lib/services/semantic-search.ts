@@ -485,7 +485,8 @@ export async function createCompanySearchEmbedding(
     // Skip embedding generation entirely when semantic search is turned off.
     throw new Error("Semantic search is disabled for this user.");
   }
-  if (!hasProviderCredentials(settings.embeddingProvider)) {
+  const hasCredentials = hasProviderCredentials(settings.embeddingProvider);
+  if (!hasCredentials) {
     throw new Error(`Missing credentials for embedding provider "${settings.embeddingProvider}".`);
   }
 

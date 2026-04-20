@@ -90,7 +90,7 @@ describe("semantic-search service", () => {
         },
       ),
     ).resolves.toHaveLength(COMPANY_SEARCH_EMBEDDING_DIMENSION);
-    expect(mockGatewayModel).toHaveBeenCalledWith("xai/text-embedding-3-small");
+    expect(mockGatewayModel).toHaveBeenCalledWith("xai/grok-embedding-small");
   });
 
   it("createCompanySearchEmbedding throws on wrong embedding dimension", async () => {
@@ -100,7 +100,9 @@ describe("semantic-search service", () => {
 
   it("createCompanySearchEmbedding throws when gateway key is missing", async () => {
     delete process.env.AI_GATEWAY_API_KEY;
-    await expect(createCompanySearchEmbedding({ text: "query" })).rejects.toThrow("AI Gateway key is not configured.");
+    await expect(createCompanySearchEmbedding({ text: "query" })).rejects.toThrow(
+      'Missing credentials for embedding provider "gateway".',
+    );
   });
 
   it("resolveSemanticSearchSettings uses defaults when user has no rows", async () => {
@@ -117,7 +119,7 @@ describe("semantic-search service", () => {
     expect(settings.semanticSearchEnabled).toBe(true);
     expect(settings.autoBackfillEmbeddings).toBe(true);
     expect(settings.showSemanticBadge).toBe(true);
-    expect(settings.embeddingProvider).toBe("openai");
+    expect(settings.embeddingProvider).toBe("gateway");
     expect(settings.embeddingModel).toBe("text-embedding-3-small");
   });
 
