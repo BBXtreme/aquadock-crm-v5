@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import type { VisibilityState } from "@tanstack/react-table";
-import { Building, DollarSign, Loader2, MapPin, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
+import { Building, DollarSign, Loader2, Locate, Plus, Trash, Trophy, Users, Waves, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { StatCard } from "@/components/ui/StatCard";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import {
   applyApprovedGeocodes,
@@ -58,11 +59,9 @@ import {
   shouldDeferEmptySessionWriteWhileRestoring,
   writeCompaniesListQueryToSession,
 } from "@/lib/utils/company-filters-url-state";
-import type { Company, Contact } from "@/types/database.types";
+import type { Company } from "@/types/database.types";
 
 type WaterPreset = "at" | "le100" | "le500" | "le1km" | "gt1km";
-
-type CompanyWithContacts = Company & { contacts?: Contact[] };
 
 const GEOCODE_BATCH_MAX = 50;
 
@@ -127,6 +126,12 @@ function ClientCompaniesPage() {
   const [accordionOpen, setAccordionOpen] = useState(false);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [sorting, setSorting] = useState<{ id: string; desc: boolean }[]>([{ id: "firmenname", desc: false }]);
+  // Tracks whether the current `sorting` was set by a user column-header click
+  // (true) or is the app default / restored from URL (false). The server uses
+  // it to pick between RRF relevance ordering (default) and the user's sort
+  // in the hybrid-search path. Reset when the search box is cleared so
+  // relevance ordering becomes the default again on the next search.
+  const [sortExplicit, setSortExplicit] = useState(false);
 
   const [activeFilters, setActiveFilters] = useState<Record<CompaniesFilterGroup, string[]>>({
     status: [],
@@ -252,6 +257,14 @@ function ClientCompaniesPage() {
     ? Array.from(distinctFilterValues.land).sort()
     : [];
 
+  const handleGlobalFilterChange = (next: string) => {
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
+    setGlobalFilter(next);
+    if (next.trim().length === 0) {
+      setSortExplicit(false);
+    }
+  };
+
   const toggleFilter = (group: CompaniesFilterGroup, value: string) => {
     setPagination((p) => ({ ...p, pageIndex: 0 }));
     setActiveFilters((prev) => ({
@@ -270,6 +283,7 @@ function ClientCompaniesPage() {
 
   const handleSortingChange = (next: { id: string; desc: boolean }[]) => {
     setSorting(next);
+    setSortExplicit(true);
     setPagination((p) => ({ ...p, pageIndex: 0 }));
   };
 
@@ -284,6 +298,7 @@ function ClientCompaniesPage() {
       activeFilters,
       waterFilter,
       sorting,
+      sortExplicit,
       debouncedGlobalFilter,
     ],
     queryFn: async ({ signal }) => {
@@ -295,6 +310,7 @@ function ClientCompaniesPage() {
           activeFilters,
           waterFilter,
           sorting,
+          sortExplicit,
           pagination: { pageIndex: pagination.pageIndex, pageSize: pagination.pageSize },
         }),
         signal,
@@ -314,9 +330,51 @@ function ClientCompaniesPage() {
 
   const companies = companiesData.data?.companies ?? [];
   const total = companiesData.data?.totalCount ?? 0;
+  const globalSearchStrategyFromApi = companiesData.data?.globalSearchStrategy ?? "none";
   const pageCount = Math.max(1, Math.ceil(total / pagination.pageSize));
   const companiesInitialLoading = companiesData.isPending && companiesData.data === undefined;
   const companiesIsFetching = companiesData.isFetching;
+
+  const semanticBadgeData = useQuery({
+    queryKey: ["companies-semantic-badge-setting"],
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    queryFn: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return { semanticSearchEnabled: true, showSemanticBadge: true };
+      }
+      const { data: rows, error } = await supabase
+        .from("user_settings")
+        .select("key, value")
+        .eq("user_id", user.id)
+        .in("key", ["semantic_search_enabled", "show_semantic_badge"]);
+      if (error || !rows?.length) {
+        return { semanticSearchEnabled: true, showSemanticBadge: true };
+      }
+      const parseBool = (key: string, fallback: boolean): boolean => {
+        const row = rows.find((r) => r.key === key);
+        if (!row) return fallback;
+        const raw = row.value;
+        if (typeof raw === "boolean") return raw;
+        if (raw === "true" || raw === "1" || raw === 1) return true;
+        if (raw === "false" || raw === "0" || raw === 0) return false;
+        return fallback;
+      };
+      return {
+        semanticSearchEnabled: parseBool("semantic_search_enabled", true),
+        showSemanticBadge: parseBool("show_semantic_badge", true),
+      };
+    },
+  });
+  /** Sparkles only when semantic search is on AND the user keeps “show badge” enabled in Settings. */
+  const showSemanticBadge =
+    (semanticBadgeData.data?.semanticSearchEnabled ?? true) &&
+    (semanticBadgeData.data?.showSemanticBadge ?? true);
 
   const statsData = useSuspenseQuery({
     queryKey: ["companies-stats"],
@@ -347,12 +405,11 @@ function ClientCompaniesPage() {
         activeFilters,
         waterFilter,
         sorting,
+        sortExplicit,
         debouncedGlobalFilter,
       ];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
+      const previousCompanies = queryClient.getQueryData<SearchCompaniesListResult>(queryKey);
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
           ...previousCompanies,
@@ -365,7 +422,7 @@ function ClientCompaniesPage() {
     },
     onError: (err, _variables, context) => {
       const ctx = context as {
-        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
+        previousCompanies?: SearchCompaniesListResult;
         queryKey?: string[];
       };
       if (ctx?.previousCompanies && ctx.queryKey) {
@@ -390,23 +447,23 @@ function ClientCompaniesPage() {
         activeFilters,
         waterFilter,
         sorting,
+        sortExplicit,
         debouncedGlobalFilter,
       ];
       await queryClient.cancelQueries({ queryKey });
-      const previousCompanies = queryClient.getQueryData<{ companies: CompanyWithContacts[]; totalCount: number }>(
-        queryKey,
-      );
+      const previousCompanies = queryClient.getQueryData<SearchCompaniesListResult>(queryKey);
       if (previousCompanies) {
         queryClient.setQueryData(queryKey, {
+          ...previousCompanies,
           companies: previousCompanies.companies.filter((company) => company.id !== id),
-          totalCount: previousCompanies.totalCount - 1,
+          totalCount: Math.max(0, previousCompanies.totalCount - 1),
         });
       }
       return { previousCompanies, queryKey };
     },
     onError: (err, _id, context) => {
       const ctx = context as {
-        previousCompanies?: { companies: CompanyWithContacts[]; totalCount: number };
+        previousCompanies?: SearchCompaniesListResult;
         queryKey?: string[];
       };
       if (ctx?.previousCompanies && ctx.queryKey) {
@@ -614,6 +671,23 @@ function ClientCompaniesPage() {
     window.dispatchEvent(new CustomEvent("company-imported"));
     toast.success(t("toastImportSuccess"));
   };
+
+  // Live count used by the bulk geocode tooltip so the user knows how many
+  // of their selected rows actually have a geocodable address. The full
+  // `rowSelection` can include rows whose coords are already set or whose
+  // addresses are too incomplete to send to Nominatim.
+  const selectedRowIds = useMemo(() => Object.keys(rowSelection), [rowSelection]);
+  const geocodableSelectedCount = useMemo(() => {
+    if (selectedRowIds.length === 0) return 0;
+    const selectedSet = new Set(selectedRowIds);
+    let count = 0;
+    for (const company of companies) {
+      if (selectedSet.has(company.id) && companyNeedsGeocode(company)) {
+        count += 1;
+      }
+    }
+    return count;
+  }, [companies, selectedRowIds]);
 
   const companiesListLinkSearch = useMemo(
     () =>
@@ -982,8 +1056,11 @@ function ClientCompaniesPage() {
               companies={companies}
               isInitialLoading={companiesInitialLoading}
               isFetching={companiesIsFetching}
+              showSemanticBadge={showSemanticBadge}
+              globalSearchStrategy={globalSearchStrategyFromApi}
+              showSearchModeIndicator={debouncedGlobalFilter.trim().length > 0}
               globalFilter={globalFilter}
-              onGlobalFilterChange={setGlobalFilter}
+              onGlobalFilterChange={handleGlobalFilterChange}
               onEdit={(company) => setEditingCompany(company)}
               onDelete={(companyOrId) => {
                 const id = typeof companyOrId === "string" ? companyOrId : companyOrId.id;
@@ -1001,20 +1078,41 @@ function ClientCompaniesPage() {
               onRowSelectionChange={setRowSelection}
               selectionActions={
                 <>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    title="Koordinaten vervollständigen"
-                    disabled={geocodeLoading || Object.keys(rowSelection).length === 0}
-                    onClick={() => void handleBulkGeocodePreview()}
-                  >
-                    {geocodeLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    ) : (
-                      <MapPin className="h-4 w-4" aria-hidden />
-                    )}
-                  </Button>
+                  {(() => {
+                    const selectedCount = selectedRowIds.length;
+                    const hasGeocodable = geocodableSelectedCount > 0;
+                    const tooltipLabel = hasGeocodable
+                      ? t("geocodeBulkTooltipReady", {
+                          geocodable: geocodableSelectedCount,
+                          selected: selectedCount,
+                        })
+                      : t("geocodeBulkTooltipNone");
+                    const geocodeButton = (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        aria-label={tooltipLabel}
+                        disabled={geocodeLoading || !hasGeocodable}
+                        onClick={() => void handleBulkGeocodePreview()}
+                      >
+                        {geocodeLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : (
+                          <Locate className="h-4 w-4" aria-hidden />
+                        )}
+                      </Button>
+                    );
+                    return (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          {/* Wrap in span so the tooltip still opens while the button is disabled */}
+                          <span className="inline-flex">{geocodeButton}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{tooltipLabel}</TooltipContent>
+                      </Tooltip>
+                    );
+                  })()}
                   <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" title={t("deleteSelectedTitle")}>

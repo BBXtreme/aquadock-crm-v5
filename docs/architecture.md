@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 2026  
+**Last updated:** April 20, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 

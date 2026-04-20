@@ -24,10 +24,11 @@ A committed template with placeholders lives at **`.env.example`** in the reposi
 | `AI_GATEWAY_API_KEY` | For enrichment + gateway credit checks | Server only; from [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) |
 | `AI_ENRICHMENT_XAI_API_KEY` | No | xAI BYOK so Grok usage can bill through your xAI account via the gateway |
 | `AI_ENRICHMENT_GROK_MODEL` | No | Override Gateway model id for the enrichment **fallback** structuring model (see `src/lib/ai/company-enrichment-gateway.ts`) |
+| `AI_ENRICHMENT_DAILY_LIMIT_DEFAULT` | No | Override the per-user default daily enrichment quota when a user has no `ai_enrichment` row in `user_settings` (see `src/lib/services/ai-enrichment-policy.ts`) |
 
 Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` (see [`BREVO_SDK.md`](BREVO_SDK.md)).
 
-**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (**22.x** — see `.github/workflows/ci.yml`). **Package manager:** CI pins **pnpm 10** via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
+**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (**22.x** — see `.github/workflows/ci.yml`). Vercel's current default Node runtime is **24 LTS**; pinning to **22.x** in the project settings keeps CI and production aligned. **Package manager:** CI pins **pnpm 10** via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
 
 ---
 
@@ -110,4 +111,4 @@ Replace placeholders with your team’s contacts:
 
 ---
 
-Last reviewed: April 2026
+Last reviewed: April 20, 2026

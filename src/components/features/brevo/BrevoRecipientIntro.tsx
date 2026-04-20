@@ -1,8 +1,13 @@
+"use client";
+
+import { useT } from "@/lib/i18n/use-translations";
+
 export function BrevoRecipientIntro() {
+  const t = useT("brevo");
   return (
     <p className="text-sm text-muted-foreground">
-      Filter gelten nur für diese Empfängertabelle (Kampagne). Massen-Sync zu Brevo:{" "}
-      <span className="font-medium text-foreground">Brevo → Kontakte abgleichen</span> (
+      {t("recipientIntro")}{" "}
+      <span className="font-medium text-foreground">{t("recipientIntroLinkLabel")}</span> (
       <span className="font-mono text-foreground">/brevo/sync</span>).
     </p>
   );

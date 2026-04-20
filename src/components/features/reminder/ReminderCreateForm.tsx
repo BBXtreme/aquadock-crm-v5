@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import type { Database } from "@/types/database.types";
 
@@ -31,11 +32,23 @@ const reminderSchema = z.object({
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
-export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, user }: { 
-  onSuccess?: () => void; 
+const PRIORITY_LABEL_KEYS = {
+  hoch: "priorityHoch",
+  normal: "priorityNormal",
+  niedrig: "priorityNiedrig",
+} as const;
+
+const STATUS_LABEL_KEYS = {
+  open: "statusOpen",
+  closed: "statusClosed",
+} as const;
+
+export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, user }: {
+  onSuccess?: () => void;
   preselectedCompanyId?: string;
   user?: { id: string } | null;
 }) {
+  const t = useT("reminders");
   const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
@@ -81,11 +94,11 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
     mutationFn: (data: ReminderFormValues) => createReminder({ ...data, user_id: user?.id }, createClient()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      toast.success("Reminder created");
+      toast.success(t("toastCreated"));
       form.reset();
       onSuccess?.();
     },
-    onError: (err) => toast.error("Creation failed", { description: err.message }),
+    onError: (err) => toast.error(t("toastCreateFailed"), { description: err.message }),
   });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
@@ -98,7 +111,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>{t("formLabelTitle")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -111,11 +124,11 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="company_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Company</FormLabel>
+              <FormLabel>{t("formLabelCompany")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select company" />
+                    <SelectValue placeholder={t("formPlaceholderCompany")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -135,7 +148,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="due_date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Due Date</FormLabel>
+              <FormLabel>{t("formLabelDueDate")}</FormLabel>
               <FormControl>
                 <Input type="datetime-local" {...field} />
               </FormControl>
@@ -148,19 +161,22 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="priority"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Priority</FormLabel>
+              <FormLabel>{t("formLabelPriority")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
+                    <SelectValue placeholder={t("formPlaceholderPriority")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {priorityOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {priorityOptions.map((option) => {
+                    const key = PRIORITY_LABEL_KEYS[option.value as keyof typeof PRIORITY_LABEL_KEYS];
+                    return (
+                      <SelectItem key={option.value} value={option.value}>
+                        {key ? t(key) : option.label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -172,19 +188,22 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>{t("formLabelStatus")}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder={t("formPlaceholderStatus")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {reminderStatusOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {reminderStatusOptions.map((option) => {
+                    const key = STATUS_LABEL_KEYS[option.value as keyof typeof STATUS_LABEL_KEYS];
+                    return (
+                      <SelectItem key={option.value} value={option.value}>
+                        {key ? t(key) : option.label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -196,18 +215,18 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assigned To</FormLabel>
+              <FormLabel>{t("formLabelAssignedTo")}</FormLabel>
               <Select onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)} value={field.value ?? "unassigned"}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select user" />
+                    <SelectValue placeholder={t("formPlaceholderAssignee")} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">{t("unassigned")}</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.id} value={profile.id}>
-                      {profile.display_name || "Unnamed User"}
+                      {profile.display_name || t("formAssigneeUnnamed")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -221,7 +240,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>{t("formLabelDescription")}</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -230,7 +249,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
           )}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "Creating..." : "Create Reminder"}
+          {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
         </Button>
       </form>
     </Form>

@@ -2,6 +2,7 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
@@ -17,12 +18,14 @@ export default function BrevoTemplateSelector({
   templates,
   value,
   onChange,
-  placeholder = "Select a template",
+  placeholder,
 }: BrevoTemplateSelectorProps) {
+  const t = useT("brevo");
+  const resolvedPlaceholder = placeholder ?? t("templateSelectorPlaceholder");
   return (
     <Select value={value || ""} onValueChange={onChange}>
       <SelectTrigger className="w-full">
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={resolvedPlaceholder} />
       </SelectTrigger>
       <SelectContent>
         {templates.map((template) => (

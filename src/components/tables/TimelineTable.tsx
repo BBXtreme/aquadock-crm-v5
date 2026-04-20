@@ -3,7 +3,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
-import { Bell, Calendar, FileSpreadsheet, FileText, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
+import { Calendar, FileSpreadsheet, FileText, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -43,8 +43,6 @@ function activityIcon(t: string) {
       return <Mail className="h-4 w-4" />;
     case "meeting":
       return <Calendar className="h-4 w-4" />;
-    case "reminder":
-      return <Bell className="h-4 w-4" />;
     case "csv_import":
       return <FileSpreadsheet className="h-4 w-4" />;
     case "deleted":
@@ -66,8 +64,6 @@ function activityVariant(t: string) {
       return "outline";
     case "meeting":
       return "destructive";
-    case "reminder":
-      return "secondary";
     case "csv_import":
       return "default";
     case "deleted":
@@ -278,17 +274,15 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                   ? t("activityEmail")
                   : type === "meeting"
                     ? t("activityMeeting")
-                    : type === "reminder"
-                      ? t("activityReminder")
-                      : type === "csv_import"
-                        ? "CSV Import"
+                    : type === "csv_import"
+                      ? "CSV Import"
                       : type === "deleted"
                         ? t("activityDeleted")
                         : type === "ai_enrichment"
                           ? t("activityAiEnrichment")
-                        : type === "other"
-                          ? t("activityOther")
-                          : type;
+                          : type === "other"
+                            ? t("activityOther")
+                            : type;
           return (
             <Badge variant={activityVariant(type)} className="flex items-center gap-1">
               {activityIcon(type)}

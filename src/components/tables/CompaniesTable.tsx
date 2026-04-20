@@ -7,7 +7,6 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   type OnChangeFn,
   type Updater,
   useReactTable,
@@ -64,9 +63,11 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WassertypBadge } from "@/components/ui/wassertyp-badge";
+import type { CompaniesGlobalSearchStrategy } from "@/lib/companies/companies-list-supabase";
 import { kategorieIcons } from "@/lib/constants/company-icons";
 import { kundentypOptions } from "@/lib/constants/company-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { cn } from "@/lib/utils";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 
 const KUNDENTYP_LABEL_MAP: Record<string, string> = Object.fromEntries(
@@ -101,6 +102,12 @@ interface CompaniesTableProps {
   isInitialLoading?: boolean;
   /** True whenever a search/fetch is in flight (including background refetches). */
   isFetching?: boolean;
+  /** Controls visibility of the semantic Sparkles badge in the search input. */
+  showSemanticBadge?: boolean;
+  /** Last server-applied search strategy for the debounced query (hybrid vs keyword). */
+  globalSearchStrategy?: CompaniesGlobalSearchStrategy;
+  /** When true and strategy is set, show the subtle mode hint beside the search field. */
+  showSearchModeIndicator?: boolean;
 }
 
 const columnHelper = createColumnHelper<CompanyWithContacts>();
@@ -134,6 +141,9 @@ export default function CompaniesTable({
   onColumnVisibilityChange: propOnColumnVisibilityChange,
   isInitialLoading = false,
   isFetching = false,
+  showSemanticBadge = true,
+  globalSearchStrategy = "none",
+  showSearchModeIndicator = false,
   companiesListSearchParams = "",
 }: CompaniesTableProps) {
   const t = useT("companies");
@@ -377,27 +387,30 @@ export default function CompaniesTable({
     [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag, listQs],
   );
 
+  // Server is the authority for filtering (hybrid semantic + lexical search in the
+  // `/api/companies/search` Route Handler). We intentionally do NOT register a
+  // `getFilteredRowModel` or `globalFilterFn`: re-filtering the server result set
+  // with `includesString` would drop every semantic match that doesn't also
+  // contain the raw query substring. `manualFiltering` keeps the table honest.
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
     data: companies,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     manualPagination: true,
     manualSorting: true,
+    manualFiltering: true,
     pageCount,
     getRowId: (row) => row.id,
     initialState: {
       pagination: { pageSize: 20 },
     },
     state: {
-      globalFilter,
       columnVisibility,
       rowSelection,
       pagination,
       sorting,
     },
-    onGlobalFilterChange: handleGlobalFilterChange,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: onRowSelectionChange,
     onPaginationChange: (updater) => {
@@ -410,13 +423,26 @@ export default function CompaniesTable({
       onSortingChange(newSorting);
     },
     enableRowSelection: true,
-    globalFilterFn: "includesString",
-    filterFromLeafRows: true,
   });
+
+  const searchModeTooltip =
+    globalSearchStrategy === "hybrid"
+      ? t("tableSearchModeTooltipHybrid")
+      : globalSearchStrategy === "keyword_semantic_disabled"
+        ? t("tableSearchModeTooltipKeywordDisabled")
+        : globalSearchStrategy === "keyword_fallback"
+          ? t("tableSearchModeTooltipKeywordFallback")
+          : "";
+  const showModeChip =
+    showSearchModeIndicator &&
+    globalSearchStrategy !== "none" &&
+    (globalSearchStrategy === "hybrid" ||
+      globalSearchStrategy === "keyword_semantic_disabled" ||
+      globalSearchStrategy === "keyword_fallback");
 
   const handleExportCSV = () => {
     try {
-      const data = table.getFilteredRowModel().rows.map((row) => row.original);
+      const data = table.getRowModel().rows.map((row) => row.original);
       const csv = Papa.unparse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
@@ -435,7 +461,7 @@ export default function CompaniesTable({
 
   const handleExportJSON = () => {
     try {
-      const data = table.getFilteredRowModel().rows.map((row) => row.original);
+      const data = table.getRowModel().rows.map((row) => row.original);
       const json = JSON.stringify(data, null, 2);
       const blob = new Blob([json], {
         type: "application/json;charset=utf-8;",
@@ -459,43 +485,81 @@ export default function CompaniesTable({
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           <TooltipProvider delayDuration={250}>
-            <div className="group relative w-full min-w-0 sm:max-w-lg md:max-w-xl lg:max-w-2xl">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    aria-label={t("tableSemanticSearchAria")}
-                    className="absolute inset-y-0 left-0 flex w-10 cursor-help items-center justify-center text-primary/70 transition-colors group-focus-within:text-primary hover:text-primary"
-                  >
-                    {isFetching ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    ) : (
-                      <Sparkles className="h-4 w-4" aria-hidden />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={8} className="max-w-[260px] text-center text-xs leading-relaxed">
-                  {t("tableSemanticSearchTooltip")}
-                </TooltipContent>
-              </Tooltip>
-              <Input
-                key="companies-search-input"
-                type="search"
-                spellCheck={false}
-                autoComplete="off"
-                placeholder={t("tableSearchPlaceholder")}
-                value={globalFilter ?? ""}
-                onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
-                aria-label={t("tableSearchPlaceholder")}
-                className="h-10 w-full rounded-lg border-border/70 bg-background/60 pl-10 pr-3 text-sm shadow-xs backdrop-blur-sm transition-colors placeholder:text-muted-foreground/60 hover:border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/15"
-              />
+            <div className="flex w-full min-w-0 items-center gap-2.5 sm:max-w-lg md:max-w-xl lg:max-w-2xl">
+              <div className="group relative min-w-0 flex-1">
+                {showSemanticBadge ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label={t("tableSemanticSearchAria")}
+                        className="absolute inset-y-0 left-0 z-10 flex w-10 cursor-help items-center justify-center transition-colors"
+                      >
+                        <span className="flex h-6 w-6 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary shadow-sm">
+                          {isFetching ? (
+                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          ) : (
+                            <Sparkles className="h-4 w-4" aria-hidden />
+                          )}
+                        </span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="max-w-[260px] text-center text-xs leading-relaxed">
+                      {t("tableSemanticSearchTooltip")}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+                <Input
+                  key="companies-search-input"
+                  type="search"
+                  spellCheck={false}
+                  autoComplete="off"
+                  placeholder={t("tableSearchPlaceholder")}
+                  value={globalFilter ?? ""}
+                  onChange={(event) => handleGlobalFilterChange(String(event.target.value))}
+                  aria-label={t("tableSearchPlaceholder")}
+                  className={`h-10 w-full appearance-none rounded-lg border-border/70 bg-background/80 pr-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground/60 hover:border-border focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/15 [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none ${
+                    showSemanticBadge ? "pl-10" : "pl-3"
+                  }`}
+                />
+              </div>
+              {showModeChip && searchModeTooltip.length > 0 ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={searchModeTooltip}
+                      className={cn(
+                        "hidden shrink-0 cursor-help items-center gap-1 rounded-md border-0 bg-transparent px-1 py-0.5 text-left shadow-none outline-none sm:inline-flex",
+                        "focus-visible:ring-2 focus-visible:ring-ring/35",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "h-1 w-1 shrink-0 rounded-full",
+                          globalSearchStrategy === "hybrid" ? "bg-primary/40" : "bg-muted-foreground/25",
+                        )}
+                        aria-hidden
+                      />
+                      <span className="font-medium text-[0.65rem] text-muted-foreground/45 uppercase leading-none tracking-[0.2em]">
+                        {globalSearchStrategy === "hybrid"
+                          ? t("tableSearchModeAbbrHybrid")
+                          : t("tableSearchModeAbbrKeyword")}
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="end" sideOffset={6} className="max-w-[min(18rem,calc(100vw-2rem))] text-xs leading-relaxed">
+                    {searchModeTooltip}
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
             </div>
           </TooltipProvider>
-          {table.getFilteredSelectedRowModel().rows.length > 0 && (
+          {table.getSelectedRowModel().rows.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {t("tableSelectedCount", { count: table.getFilteredSelectedRowModel().rows.length })}
+                {t("tableSelectedCount", { count: table.getSelectedRowModel().rows.length })}
               </span>
               {selectionActions}
             </div>
@@ -622,7 +686,7 @@ export default function CompaniesTable({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody className={isFetching && !isInitialLoading ? "opacity-70 transition-opacity" : "transition-opacity"}>
+          <TableBody>
             {isInitialLoading ? (
               SKELETON_ROW_KEYS.map((rowKey) => (
                 <TableRow key={rowKey} className="animate-pulse">
@@ -654,8 +718,8 @@ export default function CompaniesTable({
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-muted-foreground text-sm">
           {t("tableRowsSelectedSummary", {
-            selected: table.getFilteredSelectedRowModel().rows.length,
-            total: table.getFilteredRowModel().rows.length,
+            selected: table.getSelectedRowModel().rows.length,
+            total: table.getRowModel().rows.length,
           })}
         </div>
         <div className="space-x-2">

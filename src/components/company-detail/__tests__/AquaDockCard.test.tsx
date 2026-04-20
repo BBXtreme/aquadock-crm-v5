@@ -10,9 +10,12 @@
  *   3. When lat/lon are missing the "Open Map" button must not navigate —
  *      we guide the user to fill in the coordinates instead.
  *   4. The OSM-ID link must never fabricate fallback coordinates in the URL.
+ *   5. The Nominatim geocode button must be disabled when the address is
+ *      incomplete (Stadt + Strasse/PLZ required) and must go through the
+ *      review modal — never silently overwrite stored coordinates.
  */
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +24,8 @@ import deMessages from "@/messages/de.json";
 import type { Company } from "@/types/database.types";
 
 const pushMock = vi.fn();
+const geocodeBatchMock = vi.fn();
+const applyGeocodesMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, replace: vi.fn(), refresh: vi.fn() }),
@@ -31,6 +36,24 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/features/companies/AquaDockEditForm", () => ({
   default: () => null,
+}));
+
+// The server-action module transitively imports supabase/server, which throws
+// in jsdom without env. We don't need the real actions for UI tests — just
+// stable spies we can assert against.
+vi.mock("@/lib/actions/companies", () => ({
+  geocodeCompanyBatch: (...args: unknown[]) => geocodeBatchMock(...args),
+  applyApprovedGeocodes: (...args: unknown[]) => applyGeocodesMock(...args),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    message: vi.fn(),
+    loading: vi.fn(),
+    dismiss: vi.fn(),
+  },
 }));
 
 function mockCompany(overrides: Partial<Company> = {}): Company {
@@ -82,6 +105,8 @@ async function renderCard(company: Company) {
 
 beforeEach(() => {
   pushMock.mockReset();
+  geocodeBatchMock.mockReset();
+  applyGeocodesMock.mockReset();
 });
 
 afterEach(() => {
@@ -156,5 +181,179 @@ describe("AquaDockCard OSM-ID link", () => {
 
     const link = screen.getByRole("link", { name: /way\/9999/ });
     expect(link).toHaveAttribute("href", "https://www.openstreetmap.org/way/9999#map=16/50.5/9.25");
+  });
+});
+
+describe("AquaDockCard geocode button", () => {
+  const fillLabel = deMessages.companies.geocodeDetailFillLabel;
+  const refreshLabel = deMessages.companies.geocodeDetailRefreshLabel;
+
+  it("is disabled when the address is incomplete (no Stadt)", async () => {
+    await renderCard(
+      mockCompany({ strasse: "Hauptstr. 1", plz: "80331", stadt: null, lat: null, lon: null }),
+    );
+
+    const button = screen.getByRole("button", { name: fillLabel });
+    expect(button).toBeDisabled();
+  });
+
+  it("is disabled when only Stadt is set (missing Strasse and PLZ)", async () => {
+    await renderCard(
+      mockCompany({ strasse: null, plz: null, stadt: "München", lat: null, lon: null }),
+    );
+
+    const button = screen.getByRole("button", { name: fillLabel });
+    expect(button).toBeDisabled();
+  });
+
+  it("labels the button as 'aktualisieren' when coordinates already exist", async () => {
+    await renderCard(
+      mockCompany({
+        strasse: "Hauptstr. 1",
+        plz: "80331",
+        stadt: "München",
+        lat: 48.137,
+        lon: 11.575,
+      }),
+    );
+
+    expect(screen.getByRole("button", { name: refreshLabel })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: fillLabel })).not.toBeInTheDocument();
+  });
+
+  it("sends the single-row payload to geocodeCompanyBatch and opens the review modal on success", async () => {
+    geocodeBatchMock.mockResolvedValueOnce({
+      ok: true,
+      previewOnly: true,
+      results: [
+        {
+          rowId: "company-geocode-test-id",
+          companyId: "test-id",
+          firmenname: "Fixture GmbH",
+          addressLabel: "Hauptstr. 1, 80331, München",
+          currentLat: null,
+          currentLon: null,
+          suggestedLat: 48.137,
+          suggestedLon: 11.575,
+          confidence: "high",
+          importance: 0.9,
+          displayName: "Hauptstraße 1, München, Bayern, DE",
+          ok: true,
+          message: null,
+        },
+      ],
+    });
+
+    const user = userEvent.setup();
+    await renderCard(
+      mockCompany({
+        strasse: "Hauptstr. 1",
+        plz: "80331",
+        stadt: "München",
+        land: "DE",
+        lat: null,
+        lon: null,
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: fillLabel }));
+
+    expect(geocodeBatchMock).toHaveBeenCalledTimes(1);
+    const payload = geocodeBatchMock.mock.calls[0]?.[0] as { items: unknown[] };
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0]).toMatchObject({
+      companyId: "test-id",
+      stadt: "München",
+      plz: "80331",
+      strasse: "Hauptstr. 1",
+      currentLat: null,
+      currentLon: null,
+    });
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("Geocoding prüfen")).toBeInTheDocument();
+    // Suggested coordinates from the mocked Nominatim response rendered in the diff column
+    expect(within(dialog).getByText(/48\.13700, 11\.57500/)).toBeInTheDocument();
+  });
+
+  it("calls applyApprovedGeocodes and onCompanyUpdated after the user approves the suggestion", async () => {
+    geocodeBatchMock.mockResolvedValueOnce({
+      ok: true,
+      previewOnly: true,
+      results: [
+        {
+          rowId: "company-geocode-test-id",
+          companyId: "test-id",
+          firmenname: "Fixture GmbH",
+          addressLabel: "Hauptstr. 1, 80331, München",
+          currentLat: null,
+          currentLon: null,
+          suggestedLat: 48.137,
+          suggestedLon: 11.575,
+          confidence: "high",
+          importance: 0.9,
+          displayName: "Hauptstraße 1, München, Bayern, DE",
+          ok: true,
+          message: null,
+        },
+      ],
+    });
+    applyGeocodesMock.mockResolvedValueOnce({
+      ok: true,
+      results: [{ ok: true, companyId: "test-id", lat: 48.137, lon: 11.575 }],
+    });
+
+    const onCompanyUpdated = vi.fn();
+    const user = userEvent.setup();
+    const { default: AquaDockCard } = await import("../AquaDockCard");
+    render(
+      <NextIntlClientProvider locale="de" messages={deMessages}>
+        <TooltipProvider>
+          <AquaDockCard
+            company={mockCompany({
+              strasse: "Hauptstr. 1",
+              plz: "80331",
+              stadt: "München",
+              lat: null,
+              lon: null,
+            })}
+            onCompanyUpdated={onCompanyUpdated}
+          />
+        </TooltipProvider>
+      </NextIntlClientProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: deMessages.companies.geocodeDetailFillLabel }));
+
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: /Alle gültigen auswählen/ }));
+    await user.click(within(dialog).getByRole("button", { name: /^1 übernehmen$/ }));
+
+    expect(applyGeocodesMock).toHaveBeenCalledTimes(1);
+    const applyPayload = applyGeocodesMock.mock.calls[0]?.[0] as { items: unknown[] };
+    expect(applyPayload.items).toEqual([
+      { companyId: "test-id", suggestedLat: 48.137, suggestedLon: 11.575 },
+    ]);
+    expect(onCompanyUpdated).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the button enabled while showing a toast when geocodeCompanyBatch reports failure", async () => {
+    geocodeBatchMock.mockResolvedValueOnce({ ok: false, error: "Ungültige Eingabe" });
+
+    const user = userEvent.setup();
+    await renderCard(
+      mockCompany({
+        strasse: "Hauptstr. 1",
+        plz: "80331",
+        stadt: "München",
+        lat: null,
+        lon: null,
+      }),
+    );
+
+    await user.click(screen.getByRole("button", { name: deMessages.companies.geocodeDetailFillLabel }));
+
+    expect(geocodeBatchMock).toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

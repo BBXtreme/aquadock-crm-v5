@@ -12,9 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 
 export default function SmtpSettings() {
+  const t = useT("settings.smtp");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("587");
   const [user, setUser] = useState("");
@@ -52,13 +54,13 @@ export default function SmtpSettings() {
         setFromName(config.fromName || "");
         setSecure(config.secure || false);
         if (notify) {
-          toast.success("SMTP-Konfiguration geladen", {
-            description: "Die Einstellungen wurden erfolgreich aus der Datenbank geladen.",
+          toast.success(t("toastConfigLoaded"), {
+            description: t("toastConfigLoadedDescLoaded"),
           });
         }
       } else if (notify) {
-        toast.success("SMTP-Konfiguration geladen", {
-          description: "Keine gespeicherte Konfiguration gefunden. Felder sind leer.",
+        toast.success(t("toastConfigLoaded"), {
+          description: t("toastConfigLoadedDescEmpty"),
         });
       }
     } catch (error) {
@@ -66,8 +68,8 @@ export default function SmtpSettings() {
         return;
       }
       console.error("Failed to load SMTP config:", error);
-      const message = error instanceof Error ? error.message : "Unbekannter Fehler beim Laden der Konfiguration";
-      toast.error("Fehler beim Laden der SMTP-Konfiguration", {
+      const message = error instanceof Error ? error.message : t("toastLoadFailedDefaultDesc");
+      toast.error(t("toastLoadFailedTitle"), {
         description: message,
       });
     } finally {
@@ -75,7 +77,7 @@ export default function SmtpSettings() {
         setIsLoadingConfig(false);
       }
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -94,9 +96,9 @@ export default function SmtpSettings() {
       const { saveSmtpConfig } = await import("@/lib/services/smtp");
       const config = { host, port, user, password, fromName, secure };
       await saveSmtpConfig(config);
-      toast.success("SMTP-Konfiguration gespeichert");
+      toast.success(t("toastSaved"));
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Fehler beim Speichern";
+      const message = error instanceof Error ? error.message : t("toastSaveErrorDefault");
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -105,7 +107,7 @@ export default function SmtpSettings() {
 
   const handleTest = async () => {
     if (!testEmail) {
-      toast.error("Bitte eine Test-E-Mail-Adresse eingeben");
+      toast.error(t("toastTestEmailRequired"));
       return;
     }
 
@@ -113,9 +115,9 @@ export default function SmtpSettings() {
     try {
       const { sendTestEmail } = await import("@/lib/services/send-test-email");
       const _result = await sendTestEmail(testEmail);
-      toast.success("Test-E-Mail erfolgreich gesendet!", { description: `An ${testEmail}` });
+      toast.success(t("toastTestSent"), { description: t("toastTestSentDescription", { email: testEmail }) });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Test fehlgeschlagen";
+      const message = error instanceof Error ? error.message : t("toastTestFailedDefault");
       toast.error(message);
     } finally {
       setIsTesting(false);
@@ -127,56 +129,54 @@ export default function SmtpSettings() {
       <CardHeader>
         <CardTitle className="flex items-center">
           <Mail className="mr-2 h-5 w-5" />
-          SMTP-Konfiguration
+          {t("cardTitle")}
         </CardTitle>
-        <CardDescription>
-          Versand von E-Mails über Ihren SMTP-Server. Zugangsdaten werden pro Benutzer gespeichert.
-        </CardDescription>
+        <CardDescription>{t("cardDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="smtp-host" className="text-sm font-medium">
-            Host
+            {t("hostLabel")}
           </Label>
           <Input
             id="smtp-host"
             className="max-w-md"
             value={host}
             onChange={(e) => setHost(e.target.value)}
-            placeholder="smtp.example.com"
+            placeholder={t("hostPlaceholder")}
             autoComplete="off"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="smtp-port" className="text-sm font-medium">
-            Port
+            {t("portLabel")}
           </Label>
           <Input
             id="smtp-port"
             className="max-w-md"
             value={port}
             onChange={(e) => setPort(e.target.value)}
-            placeholder="587"
+            placeholder={t("portPlaceholder")}
             inputMode="numeric"
             autoComplete="off"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="smtp-user" className="text-sm font-medium">
-            User (E-Mail)
+            {t("userLabel")}
           </Label>
           <Input
             id="smtp-user"
             className="max-w-md"
             value={user}
             onChange={(e) => setUser(e.target.value)}
-            placeholder="your@email.com"
+            placeholder={t("userPlaceholder")}
             autoComplete="username"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="smtp-password" className="text-sm font-medium">
-            Password
+            {t("passwordLabel")}
           </Label>
           <Input
             id="smtp-password"
@@ -189,14 +189,14 @@ export default function SmtpSettings() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="smtp-from-name" className="text-sm font-medium">
-            From Name
+            {t("fromNameLabel")}
           </Label>
           <Input
             id="smtp-from-name"
             className="max-w-md"
             value={fromName}
             onChange={(e) => setFromName(e.target.value)}
-            placeholder="AquaDock CRM"
+            placeholder={t("fromNamePlaceholder")}
             autoComplete="off"
           />
         </div>
@@ -207,14 +207,14 @@ export default function SmtpSettings() {
             onCheckedChange={(checked) => setSecure(checked === true)}
           />
           <Label htmlFor="secure" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            SSL/TLS verwenden
+            {t("secureLabel")}
           </Label>
         </div>
 
         <div className="border-t border-border pt-4 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="smtp-test-email" className="text-sm font-medium">
-              Test-E-Mail-Adresse
+              {t("testEmailLabel")}
             </Label>
             <Input
               id="smtp-test-email"
@@ -222,7 +222,7 @@ export default function SmtpSettings() {
               type="email"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
-              placeholder="deine@email.de"
+              placeholder={t("testEmailPlaceholder")}
               autoComplete="email"
             />
           </div>
@@ -233,15 +233,15 @@ export default function SmtpSettings() {
               disabled={isLoadingConfig}
               variant="outline"
               size="icon"
-              title="Konfiguration neu laden"
+              title={t("reloadConfigTitle")}
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingConfig ? "animate-spin" : ""}`} />
             </Button>
             <Button type="button" onClick={() => void handleTest()} disabled={isTesting}>
-              {isTesting ? "Sende Test..." : "Verbindung testen & E-Mail senden"}
+              {isTesting ? t("testButtonSending") : t("testButton")}
             </Button>
             <Button type="button" onClick={() => void handleSave()} disabled={isSaving}>
-              {isSaving ? "Speichere..." : "Konfiguration speichern"}
+              {isSaving ? t("saveButtonSaving") : t("saveButton")}
             </Button>
           </div>
         </div>

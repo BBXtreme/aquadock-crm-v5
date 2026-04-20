@@ -8,7 +8,10 @@
 import "server-only";
 
 import { z } from "zod";
-import { buildCompaniesFilterApplier } from "@/lib/companies/companies-list-supabase";
+import {
+  buildCompaniesFilterApplier,
+  type CompaniesGlobalSearchStrategy,
+} from "@/lib/companies/companies-list-supabase";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type CompaniesFilterGroup,
@@ -24,6 +27,14 @@ export type SearchCompaniesListInput = {
   waterFilter: CompaniesListWaterPreset | null;
   sorting: { id: string; desc: boolean }[];
   pagination: { pageIndex: number; pageSize: number };
+  /**
+   * True when the user explicitly clicked a column header; false when the
+   * sort is the app default. Only matters in the hybrid search path — if
+   * false and hybrid is active, the server sorts by RRF relevance instead
+   * of `sorting`, so the most semantically relevant row stays at the top.
+   * If true, the user's column sort wins over RRF.
+   */
+  sortExplicit?: boolean;
 };
 
 export type CompanyWithContacts = Company & { contacts?: Contact[] };
@@ -31,6 +42,8 @@ export type CompanyWithContacts = Company & { contacts?: Contact[] };
 export type SearchCompaniesListResult = {
   companies: CompanyWithContacts[];
   totalCount: number;
+  /** How `globalFilter` was applied on the server (hybrid vs keyword paths). */
+  globalSearchStrategy: CompaniesGlobalSearchStrategy;
 };
 
 const filterGroupSchema = z.object({
@@ -50,21 +63,10 @@ export const searchCompaniesListInputSchema = z.object({
     pageIndex: z.number().int().min(0),
     pageSize: z.number().int().min(1).max(500),
   }),
+  sortExplicit: z.boolean().optional(),
 });
 
-export async function searchCompaniesList(
-  input: SearchCompaniesListInput,
-): Promise<SearchCompaniesListResult> {
-  const supabase = await createServerSupabaseClient();
-
-  const applyFilters = await buildCompaniesFilterApplier(supabase, {
-    globalFilter: input.globalFilter,
-    activeFilters: input.activeFilters,
-    waterFilter: input.waterFilter,
-  });
-
-  const baseQuery = supabase.from("companies").select(
-    `
+const COMPANIES_SELECT = `
       *,
       contacts (
         id,
@@ -74,9 +76,93 @@ export async function searchCompaniesList(
         is_primary,
         deleted_at
       )
-    `,
-    { count: "exact" },
+    `;
+
+function stripDeletedContacts(rows: CompanyWithContacts[]): CompanyWithContacts[] {
+  return rows.map((row) => ({
+    ...row,
+    contacts: (row.contacts ?? []).filter(
+      (ct: { deleted_at?: string | null }) => ct.deleted_at == null,
+    ),
+  }));
+}
+
+export async function searchCompaniesList(
+  input: SearchCompaniesListInput,
+): Promise<SearchCompaniesListResult> {
+  const supabase = await createServerSupabaseClient();
+
+  const { applyFilters, globalSearchStrategy, rankedIds } = await buildCompaniesFilterApplier(
+    supabase,
+    {
+      globalFilter: input.globalFilter,
+      activeFilters: input.activeFilters,
+      waterFilter: input.waterFilter,
+    },
   );
+
+  // Hybrid path: matching rows = `rankedIds` ∩ non-global filters.
+  //
+  // Ordering rules:
+  //  - Default (user hasn't clicked a column header while searching):
+  //    rows are returned in RRF-relevance order so the best semantic match
+  //    is always at the top.
+  //  - When the user explicitly clicks a column header (`sortExplicit` is
+  //    true), that sort wins — the hybrid-matched rows are re-sorted by
+  //    the chosen column. Relevance is only the *default* within the
+  //    hybrid-filtered set, not a lock.
+  if (rankedIds !== undefined) {
+    if (rankedIds.length === 0) {
+      return { companies: [], totalCount: 0, globalSearchStrategy };
+    }
+
+    const filteredQuery = applyFilters(supabase.from("companies").select(COMPANIES_SELECT));
+    const { data, error } = await filteredQuery.limit(rankedIds.length);
+    if (error) {
+      throw error;
+    }
+    const rows = (data ?? []) as CompanyWithContacts[];
+
+    const explicitSort = input.sortExplicit === true ? input.sorting[0] : undefined;
+    let orderedRows: CompanyWithContacts[];
+    if (explicitSort) {
+      const sortKey = companiesSortIdForQuery(explicitSort.id) as keyof CompanyWithContacts;
+      const direction = explicitSort.desc ? -1 : 1;
+      orderedRows = [...rows].sort((a, b) => {
+        const av = a[sortKey];
+        const bv = b[sortKey];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        if (typeof av === "number" && typeof bv === "number") {
+          return (av - bv) * direction;
+        }
+        return String(av).localeCompare(String(bv), "de", { sensitivity: "base" }) * direction;
+      });
+    } else {
+      const byId = new Map(rows.map((row) => [row.id, row]));
+      orderedRows = [];
+      for (const id of rankedIds) {
+        const row = byId.get(id);
+        if (row) {
+          orderedRows.push(row);
+        }
+      }
+    }
+
+    const from = input.pagination.pageIndex * input.pagination.pageSize;
+    const to = from + input.pagination.pageSize;
+    const pageRows = orderedRows.slice(from, to);
+    return {
+      companies: stripDeletedContacts(pageRows),
+      totalCount: orderedRows.length,
+      globalSearchStrategy,
+    };
+  }
+
+  const baseQuery = supabase
+    .from("companies")
+    .select(COMPANIES_SELECT, { count: "exact" });
 
   let query = applyFilters(baseQuery);
 
@@ -96,11 +182,11 @@ export async function searchCompaniesList(
     throw error;
   }
   const rows = (data ?? []) as CompanyWithContacts[];
-  const companies = rows.map((row) => ({
-    ...row,
-    contacts: (row.contacts ?? []).filter(
-      (ct: { deleted_at?: string | null }) => ct.deleted_at == null,
-    ),
-  }));
-  return { companies, totalCount: count ?? 0 };
+  return {
+    companies: stripDeletedContacts(rows),
+    totalCount: count ?? 0,
+    globalSearchStrategy,
+  };
 }
+
+export type { CompaniesGlobalSearchStrategy } from "@/lib/companies/companies-list-supabase";

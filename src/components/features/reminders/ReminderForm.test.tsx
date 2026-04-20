@@ -8,6 +8,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,6 +16,7 @@ import {
   reminderSchema,
   toReminderInsert,
 } from "@/lib/validations/reminder";
+import enMessages from "@/messages/en.json";
 import ReminderEditForm from "../reminder/ReminderEditForm";
 
 const { mockCreateClient, lastReminderInsert, COMPANY_ID } = vi.hoisted(() => {
@@ -102,7 +104,11 @@ function createQueryWrapper() {
     },
   });
   return function QueryWrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </NextIntlClientProvider>
+    );
   };
 }
 

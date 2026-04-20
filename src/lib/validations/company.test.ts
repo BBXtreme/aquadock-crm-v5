@@ -424,7 +424,7 @@ describe("timelineSchema", () => {
     expect(parsed.title).toBe("padded title");
   });
 
-  test.each(["note", "call", "email", "meeting", "reminder", "other"] as const)("accepts activity_type %s", (activity_type) => {
+  test.each(["note", "call", "email", "meeting", "other"] as const)("accepts activity_type %s", (activity_type) => {
     const parsed = timelineSchema.parse({ title: "Titel lang genug", activity_type });
     expect(parsed.activity_type).toBe(activity_type);
   });

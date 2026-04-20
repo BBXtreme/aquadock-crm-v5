@@ -1,11 +1,39 @@
+import { createGateway } from "@ai-sdk/gateway";
+import { openai } from "@ai-sdk/openai";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { embed } from "ai";
 
 export const COMPANY_SEARCH_EMBEDDING_DIMENSION = 1536 as const;
-export const COMPANY_SEARCH_EMBEDDING_MODEL = "grok-embedding-small" as const;
-const XAI_EMBEDDINGS_ENDPOINT = "https://api.x.ai/v1/embeddings";
-const XAI_EMBEDDINGS_TIMEOUT_MS = 12_000;
+export const COMPANY_SEARCH_EMBEDDING_MODEL = "text-embedding-3-small" as const;
+const EMBEDDINGS_TIMEOUT_MS = 12_000;
+const XAI_EMBEDDING_MODEL = "grok-embedding-small" as const;
+
+export const DEFAULT_SEMANTIC_SETTINGS = {
+  embeddingProvider: "gateway",
+  embeddingModel: "text-embedding-3-small",
+  semanticSearchEnabled: true,
+  autoBackfillEmbeddings: true,
+  showSemanticBadge: true,
+} as const;
 
 type SemanticNullableText = string | null | undefined;
+type EmbeddingProvider = "gateway" | "openai" | "xai";
+type UserSettingsRow = { key: string; value: unknown };
+type EmbeddingAttempt =
+  | { kind: "openai-direct"; model: ReturnType<typeof openai.textEmbedding>; modelId: string }
+  | {
+      kind: "gateway-openai" | "gateway-xai";
+      model: ReturnType<NonNullable<ReturnType<typeof createGateway>>["embeddingModel"]>;
+      modelId: string;
+    };
+
+export type SemanticSearchSettings = {
+  embeddingProvider: EmbeddingProvider;
+  embeddingModel: string;
+  semanticSearchEnabled: boolean;
+  autoBackfillEmbeddings: boolean;
+  showSemanticBadge: boolean;
+};
 
 export type CompanySemanticDocumentInput = {
   firmenname: string;
@@ -32,6 +60,15 @@ export type HybridCompanySearchParams = {
   rrfK?: number;
   ftsWeight?: number;
   vectorWeight?: number;
+  /**
+   * Cosine distance upper bound for vector candidates (pgvector `<=>`, range 0..2).
+   * Rows beyond this are excluded entirely — without it, `hybrid_company_search`
+   * pads the result set with the "least bad" nearest neighbours, making random
+   * queries look like they "find something". Defaults to the RPC default
+   * (0.5): admits on-topic conceptual German queries while rejecting
+   * off-topic and cross-language noise. FTS matches are always kept regardless.
+   */
+  maxVectorDistance?: number;
 };
 
 export type HybridCompanySearchResultRow = {
@@ -41,6 +78,11 @@ export type HybridCompanySearchResultRow = {
   vectorRank: number | null;
 };
 
+export type EmbeddingConnectionTestResult = {
+  ok: boolean;
+  reason: "connected" | "disabled" | "not_configured" | "failed";
+};
+
 type HybridCompanySearchRpcRow = {
   company_id: unknown;
   rrf_score: unknown;
@@ -48,9 +90,34 @@ type HybridCompanySearchRpcRow = {
   vector_rank: unknown;
 };
 
-type XaiEmbeddingResponse = {
-  data?: Array<{ embedding?: unknown }>;
-};
+function emitDebugLog(payload: {
+  runId: string;
+  hypothesisId: string;
+  location: string;
+  message: string;
+  data?: Record<string, unknown>;
+}) {
+  // #region agent log
+  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "cc0d67",
+    },
+    body: JSON.stringify({
+      sessionId: "cc0d67",
+      runId: payload.runId,
+      hypothesisId: payload.hypothesisId,
+      location: payload.location,
+      message: payload.message,
+      data: payload.data ?? {},
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {
+    // debug logging is best-effort
+  });
+  // #endregion
+}
 
 function normalizeText(value: SemanticNullableText): string | null {
   if (typeof value !== "string") {
@@ -84,14 +151,14 @@ function asNonNegativeNumber(value: number | undefined, fallback: number): numbe
 
 function parseEmbedding(raw: unknown): number[] {
   if (!Array.isArray(raw)) {
-    throw new Error("xAI embedding response did not return an embedding array.");
+    throw new Error("Embedding response did not return an embedding array.");
   }
   const parsed = raw
     .map((value) => toFiniteNumber(value))
     .filter((value): value is number => value !== null);
   if (parsed.length !== COMPANY_SEARCH_EMBEDDING_DIMENSION) {
     throw new Error(
-      `xAI embedding dimension mismatch: expected ${String(COMPANY_SEARCH_EMBEDDING_DIMENSION)}, got ${String(parsed.length)}.`,
+      `Embedding dimension mismatch: expected ${String(COMPANY_SEARCH_EMBEDDING_DIMENSION)}, got ${String(parsed.length)}.`,
     );
   }
   return parsed;
@@ -112,12 +179,195 @@ function toPgVectorLiteral(vector: readonly number[]): string {
   return `[${values.join(",")}]`;
 }
 
-function ensureApiKey(): string {
-  const key = process.env.XAI_API_KEY?.trim() ?? process.env.XAI_EMBEDDING_API_KEY?.trim();
-  if (!key) {
-    throw new Error("Missing xAI API key. Set XAI_API_KEY (or XAI_EMBEDDING_API_KEY).");
+function parseBooleanSetting(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "1" || value === 1) return true;
+  if (value === "false" || value === "0" || value === 0) return false;
+  return fallback;
+}
+
+function normalizeEmbeddingProvider(value: unknown): EmbeddingProvider {
+  if (typeof value !== "string") {
+    return DEFAULT_SEMANTIC_SETTINGS.embeddingProvider;
   }
-  return key;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "gateway" || normalized === "vercel") {
+    return "gateway";
+  }
+  if (normalized === "openai") {
+    return "openai";
+  }
+  if (normalized === "xai") {
+    return "xai";
+  }
+  console.warn(
+    `[semantic-search] Unsupported EMBEDDING_PROVIDER "${normalized}". Falling back to "${DEFAULT_SEMANTIC_SETTINGS.embeddingProvider}".`,
+  );
+  return DEFAULT_SEMANTIC_SETTINGS.embeddingProvider;
+}
+
+function normalizeEmbeddingModel(value: unknown, fallback: string): string {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : fallback;
+}
+
+function hasProviderCredentials(provider: EmbeddingProvider): boolean {
+  if (provider === "openai") return Boolean(process.env.OPENAI_API_KEY?.trim());
+  if (provider === "gateway" || provider === "xai") return Boolean(process.env.AI_GATEWAY_API_KEY?.trim());
+  return false;
+}
+
+function getGateway() {
+  const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
+  if (!apiKey) {
+    return null;
+  }
+  return createGateway({ apiKey });
+}
+
+function isCredentialConfigurationError(err: unknown): boolean {
+  if (!err || typeof err !== "object") {
+    return false;
+  }
+  const maybe = err as {
+    statusCode?: unknown;
+    data?: unknown;
+    message?: unknown;
+    cause?: unknown;
+    responseBody?: unknown;
+  };
+  const message = typeof maybe.message === "string" ? maybe.message.toLowerCase() : "";
+  if (message.includes("incorrect api key provided") || message.includes("api key is missing")) {
+    return true;
+  }
+  if (maybe.statusCode === 401) {
+    return true;
+  }
+  const dataError =
+    maybe.data && typeof maybe.data === "object"
+      ? (maybe.data as { error?: { code?: unknown; type?: unknown } }).error
+      : undefined;
+  if (dataError?.code === "invalid_api_key") {
+    return true;
+  }
+  const causeObj =
+    maybe.cause && typeof maybe.cause === "object"
+      ? (maybe.cause as { statusCode?: unknown; message?: unknown; data?: unknown; code?: unknown })
+      : undefined;
+  if (causeObj?.statusCode === 401 || causeObj?.code === "invalid_api_key") {
+    return true;
+  }
+  const causeMessage = typeof causeObj?.message === "string" ? causeObj.message.toLowerCase() : "";
+  if (causeMessage.includes("incorrect api key provided") || causeMessage.includes("api key is missing")) {
+    return true;
+  }
+  const responseBodyText = typeof maybe.responseBody === "string" ? maybe.responseBody.toLowerCase() : "";
+  if (responseBodyText.includes("invalid_api_key") || responseBodyText.includes("incorrect api key provided")) {
+    return true;
+  }
+  const causeDataError =
+    causeObj?.data && typeof causeObj.data === "object"
+      ? (causeObj.data as { error?: { code?: unknown; type?: unknown } }).error
+      : undefined;
+  if (causeDataError?.code === "invalid_api_key") {
+    return true;
+  }
+  if (dataError?.type === "invalid_request_error") {
+    if (message.includes("api key")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function fetchCurrentUserSettings(
+  supabase: SupabaseClient,
+): Promise<UserSettingsRow[] | null> {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return null;
+    }
+    const { data, error } = await supabase
+      .from("user_settings")
+      .select("key, value")
+      .eq("user_id", user.id)
+      .in("key", [
+        "embedding_provider",
+        "embedding_model",
+        "semantic_search_enabled",
+        "auto_backfill_embeddings",
+        "show_semantic_badge",
+      ]);
+    if (error) {
+      return null;
+    }
+    return (data ?? []) as UserSettingsRow[];
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveSemanticSearchSettings(
+  supabase?: SupabaseClient,
+): Promise<SemanticSearchSettings> {
+  const envProvider = normalizeEmbeddingProvider(process.env.EMBEDDING_PROVIDER);
+  const envModel = normalizeEmbeddingModel(process.env.EMBEDDING_MODEL, DEFAULT_SEMANTIC_SETTINGS.embeddingModel);
+
+  const defaults: SemanticSearchSettings = {
+    embeddingProvider: envProvider,
+    embeddingModel: envModel,
+    semanticSearchEnabled: DEFAULT_SEMANTIC_SETTINGS.semanticSearchEnabled,
+    autoBackfillEmbeddings: DEFAULT_SEMANTIC_SETTINGS.autoBackfillEmbeddings,
+    showSemanticBadge: DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge,
+  };
+
+  if (!supabase) {
+    return defaults;
+  }
+
+  const rows = await fetchCurrentUserSettings(supabase);
+  if (rows === null) {
+    return defaults;
+  }
+
+  let embeddingProvider = defaults.embeddingProvider;
+  let embeddingModel = defaults.embeddingModel;
+  let semanticSearchEnabled = defaults.semanticSearchEnabled;
+  let autoBackfillEmbeddings = defaults.autoBackfillEmbeddings;
+  let showSemanticBadge = defaults.showSemanticBadge;
+
+  for (const row of rows) {
+    if (row.key === "embedding_provider") {
+      embeddingProvider = normalizeEmbeddingProvider(row.value);
+    }
+    if (row.key === "embedding_model") {
+      embeddingModel = normalizeEmbeddingModel(row.value, defaults.embeddingModel);
+    }
+    if (row.key === "semantic_search_enabled") {
+      semanticSearchEnabled = parseBooleanSetting(row.value, defaults.semanticSearchEnabled);
+    }
+    if (row.key === "auto_backfill_embeddings") {
+      autoBackfillEmbeddings = parseBooleanSetting(row.value, defaults.autoBackfillEmbeddings);
+    }
+    if (row.key === "show_semantic_badge") {
+      showSemanticBadge = parseBooleanSetting(row.value, defaults.showSemanticBadge);
+    }
+  }
+
+  return {
+    embeddingProvider,
+    embeddingModel,
+    semanticSearchEnabled,
+    autoBackfillEmbeddings,
+    showSemanticBadge,
+  };
 }
 
 export function buildCompanySemanticDocument(input: CompanySemanticDocumentInput): string {
@@ -148,57 +398,290 @@ export function buildCompanySemanticDocument(input: CompanySemanticDocumentInput
   return chunks.join("\n");
 }
 
+function resolveOpenAIEmbeddingModel(modelId: string) {
+  const model = normalizeEmbeddingModel(modelId, COMPANY_SEARCH_EMBEDDING_MODEL);
+  if (model === "text-embedding-3-large") {
+    return openai.textEmbedding("text-embedding-3-large");
+  }
+  if (model !== COMPANY_SEARCH_EMBEDDING_MODEL) {
+    console.warn(
+      `[semantic-search] Unsupported embedding model "${model}". Falling back to "${COMPANY_SEARCH_EMBEDDING_MODEL}".`,
+    );
+  }
+  return openai.textEmbedding("text-embedding-3-small");
+}
+
+function buildSelectedProviderAttempt(settings: SemanticSearchSettings): EmbeddingAttempt {
+  const model = normalizeEmbeddingModel(settings.embeddingModel, COMPANY_SEARCH_EMBEDDING_MODEL);
+  if (settings.embeddingProvider === "openai") {
+    return {
+      kind: "openai-direct",
+      model: resolveOpenAIEmbeddingModel(model),
+      modelId: model,
+    };
+  }
+  const gateway = getGateway();
+  if (!gateway) {
+    throw new Error("AI Gateway key is not configured.");
+  }
+  if (settings.embeddingProvider === "gateway") {
+    return {
+      kind: "gateway-openai",
+      model: gateway.embeddingModel(`openai/${model}`),
+      modelId: `openai/${model}`,
+    };
+  }
+  const xaiModel = model === XAI_EMBEDDING_MODEL ? model : XAI_EMBEDDING_MODEL;
+  return {
+    kind: "gateway-xai",
+    model: gateway.embeddingModel(`xai/${xaiModel}`),
+    modelId: `xai/${xaiModel}`,
+  };
+}
+
+export async function createCompanySearchEmbedding(
+  input: {
+    text: string;
+    signal?: AbortSignal;
+    supabase?: SupabaseClient;
+  },
+  settingsOverride?: SemanticSearchSettings,
+): Promise<number[]> {
+  const text = input.text.trim();
+  // #region agent log
+  emitDebugLog({
+    runId: "pre-fix",
+    hypothesisId: "H1",
+    location: "semantic-search.ts:createCompanySearchEmbedding:entry",
+    message: "Embedding call started",
+    data: {
+      textLength: text.length,
+      hasSupabase: Boolean(input.supabase),
+      hasSignal: Boolean(input.signal),
+    },
+  });
+  // #endregion
+  if (text.length === 0) {
+    throw new Error("Cannot generate embedding for empty text.");
+  }
+
+  const settings = settingsOverride ?? (await resolveSemanticSearchSettings(input.supabase));
+  // #region agent log
+  emitDebugLog({
+    runId: "pre-fix",
+    hypothesisId: "H2",
+    location: "semantic-search.ts:createCompanySearchEmbedding:settings",
+    message: "Resolved embedding settings",
+    data: {
+      provider: settings.embeddingProvider,
+      model: settings.embeddingModel,
+      semanticSearchEnabled: settings.semanticSearchEnabled,
+      hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
+      hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY?.trim()),
+    },
+  });
+  // #endregion
+  if (!settings.semanticSearchEnabled) {
+    // Skip embedding generation entirely when semantic search is turned off.
+    throw new Error("Semantic search is disabled for this user.");
+  }
+  const hasCredentials = hasProviderCredentials(settings.embeddingProvider);
+  if (!hasCredentials) {
+    throw new Error(`Missing credentials for embedding provider "${settings.embeddingProvider}".`);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), EMBEDDINGS_TIMEOUT_MS);
+  const onAbort = () => controller.abort();
+  input.signal?.addEventListener("abort", onAbort);
+
+  try {
+    const attempt = buildSelectedProviderAttempt(settings);
+    // #region agent log
+    emitDebugLog({
+      runId: "post-fix",
+      hypothesisId: "H12",
+      location: "semantic-search.ts:createCompanySearchEmbedding:selected-provider-attempt",
+      message: "Calling selected provider only",
+      data: {
+        provider: settings.embeddingProvider,
+        model: attempt.modelId,
+      },
+    });
+    // #endregion
+    const result = await embed({
+      model: attempt.model,
+      value: text,
+      abortSignal: controller.signal,
+    });
+    // #region agent log
+    emitDebugLog({
+      runId: "post-fix",
+      hypothesisId: "H12",
+      location: "semantic-search.ts:createCompanySearchEmbedding:selected-provider-result",
+      message: "Selected provider call completed",
+      data: {
+        provider: settings.embeddingProvider,
+        embeddingLength: Array.isArray(result.embedding) ? result.embedding.length : -1,
+      },
+    });
+    // #endregion
+    return parseEmbedding(result.embedding);
+  } catch (err) {
+    const errMeta =
+      typeof err === "object" && err !== null
+        ? (err as { message?: unknown; statusCode?: unknown; cause?: unknown; data?: unknown })
+        : undefined;
+    // #region agent log
+    emitDebugLog({
+      runId: "pre-fix",
+      hypothesisId: "H1",
+      location: "semantic-search.ts:createCompanySearchEmbedding:embed-error",
+      message: "Embed call failed",
+      data: {
+        message: typeof errMeta?.message === "string" ? errMeta.message : String(err),
+        statusCode: typeof errMeta?.statusCode === "number" ? errMeta.statusCode : null,
+        hasCause: Boolean(errMeta?.cause),
+        hasData: Boolean(errMeta?.data),
+      },
+    });
+    // #endregion
+    console.warn("[semantic-search] Embedding generation failed for selected provider. Falling back to lexical search.", err);
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+    input.signal?.removeEventListener("abort", onAbort);
+  }
+}
+
 export async function createXaiEmbedding(input: {
   text: string;
   model?: string;
   signal?: AbortSignal;
 }): Promise<number[]> {
-  const text = input.text.trim();
-  if (text.length === 0) {
-    throw new Error("Cannot generate embedding for empty text.");
+  return await createCompanySearchEmbedding(
+    {
+      text: input.text,
+      signal: input.signal,
+    },
+    {
+      ...DEFAULT_SEMANTIC_SETTINGS,
+      embeddingProvider: "xai",
+      embeddingModel: input.model?.trim() || XAI_EMBEDDING_MODEL,
+      semanticSearchEnabled: true,
+      autoBackfillEmbeddings: true,
+      showSemanticBadge: true,
+    },
+  );
+}
+
+export async function testEmbeddingConnection(
+  settings: Pick<SemanticSearchSettings, "embeddingProvider" | "embeddingModel" | "semanticSearchEnabled">,
+): Promise<EmbeddingConnectionTestResult> {
+  // #region agent log
+  emitDebugLog({
+    runId: "pre-fix",
+    hypothesisId: "H5",
+    location: "semantic-search.ts:testEmbeddingConnection:start",
+    message: "Connection test started",
+    data: {
+      provider: settings.embeddingProvider,
+      model: settings.embeddingModel,
+      semanticSearchEnabled: settings.semanticSearchEnabled,
+    },
+  });
+  // #endregion
+  if (!settings.semanticSearchEnabled) {
+    return { ok: false, reason: "disabled" };
   }
 
-  const apiKey = ensureApiKey();
-  const endpoint = process.env.XAI_EMBEDDINGS_URL?.trim() || XAI_EMBEDDINGS_ENDPOINT;
-  const model = input.model?.trim() || COMPANY_SEARCH_EMBEDDING_MODEL;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, XAI_EMBEDDINGS_TIMEOUT_MS);
-  const onAbort = () => {
-    controller.abort();
-  };
-  input.signal?.addEventListener("abort", onAbort);
+  if (!hasProviderCredentials(settings.embeddingProvider)) {
+    // #region agent log
+    emitDebugLog({
+      runId: "pre-fix",
+      hypothesisId: "H2",
+      location: "semantic-search.ts:testEmbeddingConnection:not-configured",
+      message: "No embedding credentials detected",
+      data: {
+        provider: settings.embeddingProvider,
+        hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
+        hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY?.trim()),
+      },
+    });
+    // #endregion
+    return { ok: false, reason: "not_configured" };
+  }
 
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
+    await createCompanySearchEmbedding(
+      {
+        text: "test connection",
       },
-      body: JSON.stringify({
-        model,
-        input: text,
-      }),
-      signal: controller.signal,
+      {
+        ...DEFAULT_SEMANTIC_SETTINGS,
+        embeddingProvider: settings.embeddingProvider,
+        embeddingModel: settings.embeddingModel,
+        semanticSearchEnabled: settings.semanticSearchEnabled,
+      },
+    );
+    // #region agent log
+    emitDebugLog({
+      runId: "pre-fix",
+      hypothesisId: "H4",
+      location: "semantic-search.ts:testEmbeddingConnection:connected",
+      message: "Connection test succeeded",
+      data: {
+        provider: settings.embeddingProvider,
+      },
     });
-
-    if (!response.ok) {
-      const bodyText = await response.text();
-      throw new Error(`xAI embeddings request failed (${String(response.status)}): ${bodyText}`);
+    // #endregion
+    return { ok: true, reason: "connected" };
+  } catch (err) {
+    // #region agent log
+    emitDebugLog({
+      runId: "post-fix",
+      hypothesisId: "H6",
+      location: "semantic-search.ts:testEmbeddingConnection:classification-eval",
+      message: "Credential error classifier evaluated catch error",
+      data: {
+        isCredentialError: isCredentialConfigurationError(err),
+        hasStatusCode: typeof (err as { statusCode?: unknown })?.statusCode === "number",
+        hasCause: Boolean((err as { cause?: unknown })?.cause),
+        hasData: Boolean((err as { data?: unknown })?.data),
+        message: err instanceof Error ? err.message : String(err),
+      },
+    });
+    // #endregion
+    if (isCredentialConfigurationError(err)) {
+      // #region agent log
+      emitDebugLog({
+        runId: "post-fix",
+        hypothesisId: "H6",
+        location: "semantic-search.ts:testEmbeddingConnection:credential-error",
+        message: "Connection test classified as not_configured due to credential error",
+        data: {
+          statusCode:
+            typeof (err as { statusCode?: unknown })?.statusCode === "number"
+              ? (err as { statusCode: number }).statusCode
+              : null,
+        },
+      });
+      // #endregion
+      return { ok: false, reason: "not_configured" };
     }
-
-    const payload = (await response.json()) as XaiEmbeddingResponse;
-    const first = payload.data?.[0];
-    if (!first || first.embedding === undefined) {
-      throw new Error("xAI embedding response is missing data[0].embedding.");
-    }
-    return parseEmbedding(first.embedding);
-  } finally {
-    clearTimeout(timeout);
-    input.signal?.removeEventListener("abort", onAbort);
+    // #region agent log
+    emitDebugLog({
+      runId: "pre-fix",
+      hypothesisId: "H1",
+      location: "semantic-search.ts:testEmbeddingConnection:failed",
+      message: "Connection test failed",
+      data: {
+        error: err instanceof Error ? err.message : String(err),
+      },
+    });
+    // #endregion
+    console.warn("[semantic-search] Embedding connection test failed.", err);
+    return { ok: false, reason: "failed" };
   }
 }
 
@@ -221,6 +704,7 @@ export async function hybridCompanySearch(
   const rrfK = asPositiveInteger(params.rrfK, 60);
   const ftsWeight = asNonNegativeNumber(params.ftsWeight, 1);
   const vectorWeight = asNonNegativeNumber(params.vectorWeight, 1);
+  const maxVectorDistance = asNonNegativeNumber(params.maxVectorDistance, 0.5);
   const queryEmbedding = toPgVectorLiteral(params.queryEmbedding);
 
   const { data, error } = await supabase.rpc("hybrid_company_search", {
@@ -230,6 +714,7 @@ export async function hybridCompanySearch(
     p_rrf_k: rrfK,
     p_fts_weight: ftsWeight,
     p_vector_weight: vectorWeight,
+    p_max_vector_distance: maxVectorDistance,
   });
 
   if (error) {
@@ -265,12 +750,24 @@ export async function generateAndStoreCompanyEmbedding(
   signal?: AbortSignal,
 ): Promise<void> {
   try {
+    const settings = await resolveSemanticSearchSettings(supabase);
+    if (!settings.semanticSearchEnabled) {
+      // Skip embedding generation entirely when semantic search is disabled.
+      return;
+    }
+    if (!settings.autoBackfillEmbeddings) {
+      return;
+    }
+
     const text = buildCompanySemanticDocument(input);
     if (text.length < 10) {
       return;
     }
 
-    const embedding = await createXaiEmbedding({ text, signal });
+    const embedding = await createCompanySearchEmbedding(
+      { text, signal, supabase },
+      settings,
+    );
     const pgVector = toPgVectorLiteral(embedding);
 
     const { error } = await supabase

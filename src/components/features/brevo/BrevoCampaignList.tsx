@@ -10,6 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { RefreshCw } from "lucide-react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -17,6 +18,7 @@ import {
   fetchBrevoCampaignStatsAction,
   fetchBrevoCampaignsAction,
 } from "@/lib/actions/brevo";
+import { useFormat, useT } from "@/lib/i18n/use-translations";
 
 type BrevoCampaign = {
   id: number;
@@ -26,100 +28,104 @@ type BrevoCampaign = {
   createdAt?: string | null;
 };
 
-const columns = [
-  { accessorKey: "name", header: "Name" },
-  { accessorKey: "subject", header: "Subject" },
-  { accessorKey: "status", header: "Status" },
-  {
-    accessorKey: "createdAt",
-    header: "Created At",
-    cell: ({ getValue }: CellContext<BrevoCampaign, unknown>) => {
-      const raw = getValue();
-      if (typeof raw !== "string" || raw === "") return "—";
-      const date = new Date(raw);
-      if (Number.isNaN(date.getTime())) return "—";
-      return date.toLocaleDateString("de-DE");
-    },
-  },
-] satisfies ColumnDef<BrevoCampaign>[];
-
-const statsColumns = [
-  { accessorKey: "name", header: "Kampagne" },
-  { accessorKey: "status", header: "Status" },
-  {
-    accessorKey: "sent",
-    header: "Gesendet",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-  {
-    accessorKey: "delivered",
-    header: "Zugestellt",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-  {
-    accessorKey: "opensRatePercent",
-    header: "Öffnungsrate",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const v = getValue();
-      if (typeof v !== "number" || Number.isNaN(v)) return "—";
-      return `${v.toLocaleString("de-DE")} %`;
-    },
-  },
-  {
-    accessorKey: "clickRatePercent",
-    header: "Klickrate",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const v = getValue();
-      if (typeof v !== "number" || Number.isNaN(v)) return "—";
-      return `${v.toLocaleString("de-DE")} %`;
-    },
-  },
-  {
-    accessorKey: "uniqueViews",
-    header: "Eindeutige Öffnungen",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-  {
-    accessorKey: "uniqueClicks",
-    header: "Eindeutige Klicks",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-  {
-    accessorKey: "complaints",
-    header: "Beschwerden",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-  {
-    accessorKey: "unsubscriptions",
-    header: "Abmeldungen",
-    cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
-      const n = Number(getValue());
-      return formatStatInt(Number.isFinite(n) ? n : 0);
-    },
-  },
-] satisfies ColumnDef<BrevoCampaignStatsRow>[];
-
-function formatStatInt(value: number): string {
-  return value.toLocaleString("de-DE");
-}
-
 export default function BrevoCampaignList() {
+  const t = useT("brevo");
+  const format = useFormat();
   const queryClient = useQueryClient();
+
+  const columns = useMemo<ColumnDef<BrevoCampaign>[]>(
+    () => [
+      { accessorKey: "name", header: t("campaignListColName") },
+      { accessorKey: "subject", header: t("campaignListColSubject") },
+      { accessorKey: "status", header: t("campaignListColStatus") },
+      {
+        accessorKey: "createdAt",
+        header: t("campaignListColCreatedAt"),
+        cell: ({ getValue }: CellContext<BrevoCampaign, unknown>) => {
+          const raw = getValue();
+          if (typeof raw !== "string" || raw === "") return "—";
+          const date = new Date(raw);
+          if (Number.isNaN(date.getTime())) return "—";
+          return format.dateTime(date, { dateStyle: "medium" });
+        },
+      },
+    ],
+    [t, format],
+  );
+
+  const statsColumns = useMemo<ColumnDef<BrevoCampaignStatsRow>[]>(
+    () => [
+      { accessorKey: "name", header: t("campaignListColCampaign") },
+      { accessorKey: "status", header: t("campaignListColStatus") },
+      {
+        accessorKey: "sent",
+        header: t("campaignListColSent"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+      {
+        accessorKey: "delivered",
+        header: t("campaignListColDelivered"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+      {
+        accessorKey: "opensRatePercent",
+        header: t("campaignListColOpenRate"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const v = getValue();
+          if (typeof v !== "number" || Number.isNaN(v)) return "—";
+          return `${format.number(v)} %`;
+        },
+      },
+      {
+        accessorKey: "clickRatePercent",
+        header: t("campaignListColClickRate"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const v = getValue();
+          if (typeof v !== "number" || Number.isNaN(v)) return "—";
+          return `${format.number(v)} %`;
+        },
+      },
+      {
+        accessorKey: "uniqueViews",
+        header: t("campaignListColUniqueOpens"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+      {
+        accessorKey: "uniqueClicks",
+        header: t("campaignListColUniqueClicks"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+      {
+        accessorKey: "complaints",
+        header: t("campaignListColComplaints"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+      {
+        accessorKey: "unsubscriptions",
+        header: t("campaignListColUnsubscriptions"),
+        cell: ({ getValue }: CellContext<BrevoCampaignStatsRow, unknown>) => {
+          const n = Number(getValue());
+          return format.number(Number.isFinite(n) ? n : 0);
+        },
+      },
+    ],
+    [t, format],
+  );
 
   const { data: campaigns = [], isLoading, error } = useQuery({
     queryKey: ["brevo-campaigns"],
@@ -156,21 +162,21 @@ export default function BrevoCampaignList() {
     void queryClient.invalidateQueries({ queryKey: ["brevo-campaign-stats"] });
   };
 
-  if (isLoading) return <div className="text-muted-foreground">Loading your campaigns...</div>;
+  if (isLoading) return <div className="text-muted-foreground">{t("campaignListLoading")}</div>;
   if (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return <div className="text-destructive">Error loading campaigns: {message}</div>;
+    const message = error instanceof Error ? error.message : t("unknownError");
+    return <div className="text-destructive">{t("campaignListLoadError", { message })}</div>;
   }
 
-  const statsMessage = statsError instanceof Error ? statsError.message : "Unbekannter Fehler";
+  const statsMessage = statsError instanceof Error ? statsError.message : t("unknownError");
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Your Brevo Campaigns</h2>
+        <h2 className="text-lg font-semibold">{t("campaignListHeading")}</h2>
         <Button onClick={handleRefresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
+          {t("campaignListRefresh")}
         </Button>
       </div>
       <Table>
@@ -198,24 +204,23 @@ export default function BrevoCampaignList() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={4} className="h-24 text-center">No campaigns found</TableCell>
+              <TableCell colSpan={4} className="h-24 text-center">{t("campaignListEmpty")}</TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
 
       <div className="space-y-2 pt-6">
-        <h3 className="text-base font-semibold">Kampagnen-Statistiken</h3>
+        <h3 className="text-base font-semibold">{t("campaignListStatsHeading")}</h3>
         <p className="text-muted-foreground text-sm">
-          Kennzahlen aus Brevo (globalStats). Für ältere Kampagnen kann die API nur Ereignisse der letzten Monate
-          liefern.
+          {t("campaignListStatsDescription")}
         </p>
         {statsError ? (
-          <div className="text-destructive text-sm">Statistiken konnten nicht geladen werden: {statsMessage}</div>
+          <div className="text-destructive text-sm">{t("campaignListStatsLoadError", { message: statsMessage })}</div>
         ) : statsLoading ? (
-          <div className="text-muted-foreground text-sm">Statistiken werden geladen …</div>
+          <div className="text-muted-foreground text-sm">{t("campaignListStatsLoading")}</div>
         ) : campaignStats.length === 0 ? (
-          <div className="text-muted-foreground text-sm">Keine Kampagnen für Statistiken.</div>
+          <div className="text-muted-foreground text-sm">{t("campaignListStatsEmpty")}</div>
         ) : (
           <Table>
             <TableHeader>
@@ -245,7 +250,7 @@ export default function BrevoCampaignList() {
           </Table>
         )}
         <p className="text-muted-foreground text-sm">
-          Ausführlichere Auswertungen und Kampagnenverwaltung direkt in Brevo:{" "}
+          {t("campaignListStatsFooter")}{" "}
           <a
             href="https://app.brevo.com/campaigns/listing"
             target="_blank"

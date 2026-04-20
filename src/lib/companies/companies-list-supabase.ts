@@ -4,12 +4,23 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createXaiEmbedding, hybridCompanySearch } from "@/lib/services/semantic-search";
+import {
+  createCompanySearchEmbedding,
+  hybridCompanySearch,
+  resolveSemanticSearchSettings,
+} from "@/lib/services/semantic-search";
 import type { CompaniesListUrlState } from "@/lib/utils/company-filters-url-state";
 import { companiesSortIdForQuery } from "@/lib/utils/company-filters-url-state";
 import type { Database } from "@/types/database.types";
 
 export type CompaniesListFilterSlice = Pick<CompaniesListUrlState, "globalFilter" | "activeFilters" | "waterFilter">;
+
+/** How the list query resolved `globalFilter` (for subtle UI + debugging). */
+export type CompaniesGlobalSearchStrategy =
+  | "none"
+  | "hybrid"
+  | "keyword_semantic_disabled"
+  | "keyword_fallback";
 
 const CHUNK = 1000;
 const HYBRID_MATCH_COUNT = 1000;
@@ -25,7 +36,26 @@ function applyLexicalGlobalFilter(
   if (g.length === 0) {
     return query;
   }
-  return query.or(`firmenname.ilike.%${g}%,strasse.ilike.%${g}%,stadt.ilike.%${g}%`);
+  // Keep in sync with fields users expect from “full text” + company form (ilike substrings).
+  return query.or(
+    [
+      `firmenname.ilike.%${g}%`,
+      `kundentyp.ilike.%${g}%`,
+      `firmentyp.ilike.%${g}%`,
+      `rechtsform.ilike.%${g}%`,
+      `strasse.ilike.%${g}%`,
+      `plz.ilike.%${g}%`,
+      `stadt.ilike.%${g}%`,
+      `bundesland.ilike.%${g}%`,
+      `land.ilike.%${g}%`,
+      `notes.ilike.%${g}%`,
+      `website.ilike.%${g}%`,
+      `email.ilike.%${g}%`,
+      `telefon.ilike.%${g}%`,
+      `status.ilike.%${g}%`,
+      `wassertyp.ilike.%${g}%`,
+    ].join(","),
+  );
 }
 
 function applyNonGlobalCompaniesFilters(
@@ -106,7 +136,7 @@ export type CompaniesFilterApplier = (query: any) => any;
  * Behaviour (unchanged semantics):
  *   1. Applies all non-global filters (status, kategorie, betriebstyp, land,
  *      wassertyp, waterFilter, deleted_at).
- *   2. For a non-empty `globalFilter`, generates an xAI embedding and calls
+ *   2. For a non-empty `globalFilter`, generates an embedding and calls
  *      `hybrid_company_search`, constraining with `.in("id", rankedIds)`.
  *   3. Any failure (embedding API, RPC, network) silently falls back to the
  *      lexical `ilike` path.
@@ -114,32 +144,158 @@ export type CompaniesFilterApplier = (query: any) => any;
  * Note: requires the injected {@link SupabaseClient} used for the caller query
  * — never create a new browser client here.
  */
+export type BuildCompaniesFilterApplierResult = {
+  applyFilters: CompaniesFilterApplier;
+  globalSearchStrategy: CompaniesGlobalSearchStrategy;
+  /**
+   * Company ids returned by `hybrid_company_search`, in RRF-descending order.
+   * Only populated for the `"hybrid"` strategy — callers can use it to sort
+   * the visible page by semantic relevance (the applier's `.in("id", ...)`
+   * filter alone does not preserve order). Still subject to the caller's
+   * non-global filters (status/kategorie/etc.), so the visible set is the
+   * intersection of `rankedIds` and those filters.
+   */
+  rankedIds?: string[];
+};
+
 export async function buildCompaniesFilterApplier(
   supabase: SupabaseClient<Database>,
   filters: CompaniesListFilterSlice,
-): Promise<CompaniesFilterApplier> {
+): Promise<BuildCompaniesFilterApplierResult> {
   const trimmed = filters.globalFilter.trim();
+  // #region agent log
+  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "cc0d67",
+    },
+    body: JSON.stringify({
+      sessionId: "cc0d67",
+      runId: "pre-fix",
+      hypothesisId: "H3",
+      location: "companies-list-supabase.ts:buildCompaniesFilterApplier:start",
+      message: "Build companies filter applier invoked",
+      data: {
+        globalFilterLength: trimmed.length,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {
+    // debug logging is best-effort
+  });
+  // #endregion
   if (trimmed.length === 0) {
-    return (query) => applyNonGlobalCompaniesFilters(query, filters);
+    return {
+      applyFilters: (query) => applyNonGlobalCompaniesFilters(query, filters),
+      globalSearchStrategy: "none",
+    };
+  }
+
+  const semanticSettings = await resolveSemanticSearchSettings(supabase);
+  if (!semanticSettings.semanticSearchEnabled) {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "cc0d67",
+      },
+      body: JSON.stringify({
+        sessionId: "cc0d67",
+        runId: "pre-fix",
+        hypothesisId: "H3",
+        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:semantic-disabled",
+        message: "Semantic disabled, lexical fallback selected",
+        data: {
+          semanticSearchEnabled: semanticSettings.semanticSearchEnabled,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      // debug logging is best-effort
+    });
+    // #endregion
+    return {
+      applyFilters: (query) =>
+        applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(query, filters), trimmed),
+      globalSearchStrategy: "keyword_semantic_disabled",
+    };
   }
 
   try {
-    const embedding = await createXaiEmbedding({ text: trimmed });
+    const embedding = await createCompanySearchEmbedding(
+      { text: trimmed, supabase },
+      semanticSettings,
+    );
     const ranked = await hybridCompanySearch(supabase, {
       query: trimmed,
       queryEmbedding: embedding,
       matchCount: HYBRID_MATCH_COUNT,
     });
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "cc0d67",
+      },
+      body: JSON.stringify({
+        sessionId: "cc0d67",
+        runId: "pre-fix",
+        hypothesisId: "H4",
+        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:hybrid-success",
+        message: "Hybrid company search executed",
+        data: {
+          rankedCount: ranked.length,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      // debug logging is best-effort
+    });
+    // #endregion
     const rankedIds = ranked.map((row) => row.companyId);
-    return (query) => {
-      const base = applyNonGlobalCompaniesFilters(query, filters);
-      if (rankedIds.length === 0) {
-        return base.eq("id", HYBRID_EMPTY_RESULT_SENTINEL);
-      }
-      return base.in("id", rankedIds);
+    return {
+      applyFilters: (query) => {
+        const base = applyNonGlobalCompaniesFilters(query, filters);
+        if (rankedIds.length === 0) {
+          return base.eq("id", HYBRID_EMPTY_RESULT_SENTINEL);
+        }
+        return base.in("id", rankedIds);
+      },
+      globalSearchStrategy: "hybrid",
+      rankedIds,
     };
-  } catch {
-    return (query) => applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(query, filters), trimmed);
+  } catch (err) {
+    // #region agent log
+    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "cc0d67",
+      },
+      body: JSON.stringify({
+        sessionId: "cc0d67",
+        runId: "pre-fix",
+        hypothesisId: "H3",
+        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:catch",
+        message: "Hybrid search failed, lexical fallback selected",
+        data: {
+          error: err instanceof Error ? err.message : String(err),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {
+      // debug logging is best-effort
+    });
+    // #endregion
+    console.warn("[companies-list-supabase] Semantic search failed, falling back to lexical search.", err);
+    return {
+      applyFilters: (query) =>
+        applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(query, filters), trimmed),
+      globalSearchStrategy: "keyword_fallback",
+    };
   }
 }
 
@@ -157,8 +313,36 @@ export async function fetchAllCompanyIdsForListNavigation(
     activeFilters: listState.activeFilters,
     waterFilter: listState.waterFilter,
   };
-  const applyFilters = await buildCompaniesFilterApplier(supabase, filterSlice);
+  const { applyFilters, rankedIds } = await buildCompaniesFilterApplier(supabase, filterSlice);
   const sort = listState.sorting[0];
+
+  // Hybrid path: matching ids are `rankedIds` intersected with non-global
+  // filters. Keep them in RRF order so prev/next on the detail page follows
+  // the same semantic ranking the list visibly uses.
+  if (rankedIds !== undefined) {
+    if (rankedIds.length === 0) {
+      return [];
+    }
+    const survivingIds = new Set<string>();
+    let offset = 0;
+    for (;;) {
+      const baseQuery = supabase.from("companies").select("id");
+      const { data, error } = await applyFilters(baseQuery).range(offset, offset + CHUNK - 1);
+      if (error) {
+        throw error;
+      }
+      const rows = data ?? [];
+      for (const row of rows) {
+        survivingIds.add(row.id);
+      }
+      if (rows.length < CHUNK) {
+        break;
+      }
+      offset += CHUNK;
+    }
+    return rankedIds.filter((id) => survivingIds.has(id));
+  }
+
   const ids: string[] = [];
   let offset = 0;
   for (;;) {

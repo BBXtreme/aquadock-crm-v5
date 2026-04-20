@@ -19,6 +19,7 @@ Variable names mirror **`.env.example`** at the repo root (safe to commit; copy 
 - [ ] `AI_GATEWAY_API_KEY` — enables company/contact AI enrichment and gateway credit UI (`src/lib/ai/company-enrichment-gateway.ts`, `src/lib/actions/vercel-ai-credits.ts`)  
 - [ ] `AI_ENRICHMENT_XAI_API_KEY` — optional xAI BYOK for Grok via the gateway  
 - [ ] `AI_ENRICHMENT_GROK_MODEL` — optional override for the fallback Gateway model id  
+- [ ] `AI_ENRICHMENT_DAILY_LIMIT_DEFAULT` — optional integer override for the per-user default daily enrichment quota (defaults to `AI_ENRICHMENT_DEFAULT_DAILY_LIMIT` in `src/lib/services/ai-enrichment-policy.ts`)  
 
 Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` — see [`BREVO_SDK.md`](BREVO_SDK.md)) or rely on per-user SMTP settings in the app database only if you use those features.
 
@@ -32,7 +33,7 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 | Install command | `pnpm install` (enable pnpm in project settings) |
 | Build command | `pnpm build` |
 | Output | `.next` (default) |
-| Node.js | **22.x** (aligned with CI in `.github/workflows/ci.yml`) |
+| Node.js | **22.x** — aligned with CI in `.github/workflows/ci.yml` (Vercel's platform default is **24 LTS**; pin to 22 to match CI) |
 | pnpm | **10.x** (CI uses `pnpm/action-setup` with `version: 10`) |
 
 ---
@@ -76,4 +77,4 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 
 ---
 
-Last reviewed: April 2026
+Last reviewed: April 20, 2026

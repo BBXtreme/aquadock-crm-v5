@@ -57,13 +57,18 @@ describe("timelineSchema", () => {
     expect(() => timelineSchema.parse({ title: longTitle, activity_type: "note" })).toThrow();
   });
 
-  test.each(["note", "call", "email", "meeting", "reminder", "other"] as const)(
+  test.each(["note", "call", "email", "meeting", "other"] as const)(
     "accepts activity_type %s",
     (activity_type) => {
       const parsed = timelineSchema.parse({ title: "Genügend lang", activity_type });
       expect(parsed.activity_type).toBe(activity_type);
     },
   );
+
+  it("rejects legacy 'reminder' activity_type (now removed — reminders live on a dedicated page)", () => {
+    const result = timelineSchema.safeParse({ title: "Follow up call", activity_type: "reminder" });
+    expect(result.success).toBe(false);
+  });
 
   it("rejects invalid activity_type enum values", () => {
     const result = timelineSchema.safeParse({ title: "Valid length title", activity_type: "visit" });
@@ -140,7 +145,7 @@ describe("toTimelineInsert", () => {
   it("maps nullables to null for Supabase insert", () => {
     const values = timelineSchema.parse({
       title: "Log entry",
-      activity_type: "reminder",
+      activity_type: "other",
       content: null,
       company_id: COMPANY_UUID,
       contact_id: null,
@@ -148,7 +153,7 @@ describe("toTimelineInsert", () => {
     });
     const row = toTimelineInsert(values);
     expect(row.title).toBe("Log entry");
-    expect(row.activity_type).toBe("reminder");
+    expect(row.activity_type).toBe("other");
     expect(row.content).toBeNull();
     expect(row.company_id).toBe(COMPANY_UUID);
     expect(row.contact_id).toBeNull();

@@ -62,7 +62,7 @@ Optional / server-only:
 
 - `SUPABASE_SERVICE_ROLE_KEY` — **Never** expose to the client. Use only in trusted server code where RLS bypass is intentional.
 - `SITE_URL` / `NEXT_PUBLIC_SITE_URL` — Canonical site origin for password recovery and similar flows; see [`docs/vercel-production.md`](docs/vercel-production.md).
-- **AI enrichment (optional):** `AI_GATEWAY_API_KEY`; optional `AI_ENRICHMENT_XAI_API_KEY` (xAI BYOK via gateway) and `AI_ENRICHMENT_GROK_MODEL` (fallback model id override). Documented in the deployment guides.
+- **AI enrichment (optional):** `AI_GATEWAY_API_KEY`; optional `AI_ENRICHMENT_XAI_API_KEY` (xAI BYOK via gateway), `AI_ENRICHMENT_GROK_MODEL` (fallback model id override), and `AI_ENRICHMENT_DAILY_LIMIT_DEFAULT` (per-user default daily quota). Documented in the deployment guides.
 
 ### 3. Storage (profile photos)
 
@@ -93,8 +93,10 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 | [production-deploy.md](docs/production-deploy.md) | DevOps / leads | Production checklist (Vercel + Supabase) |
 | [vercel-production.md](docs/vercel-production.md) | DevOps | Shorter Vercel-focused checklist |
 | [BREVO_SDK.md](docs/BREVO_SDK.md) | Developers | How this repo uses Brevo’s Node SDK |
+| [AIDER-RULES.md](docs/AIDER-RULES.md) | All contributors | Coding-agent rules and non-negotiable quality gate |
+| [aider.conventions.md](docs/aider.conventions.md) | All contributors | Short conventions companion to `AIDER-RULES.md` |
 
-**Coding standards:** Enforced with Biome and TypeScript; optional AI/editor guidance lives under [`.cursor/rules/`](.cursor/rules/) (e.g. architecture, Supabase, Zod forms).
+**Coding standards:** Enforced with Biome and TypeScript; see [`docs/AIDER-RULES.md`](docs/AIDER-RULES.md) for the full quality-gate rules. Optional AI/editor guidance lives under [`.cursor/rules/`](.cursor/rules/) (e.g. architecture, Supabase, Zod forms).
 
 ---
 

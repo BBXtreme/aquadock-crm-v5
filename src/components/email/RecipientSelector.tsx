@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useT } from "@/lib/i18n/use-translations";
 
 type Recipient = {
   id: string;
@@ -41,6 +42,7 @@ export default function RecipientSelector({
   isLoading,
   handleSelectAll,
 }: RecipientSelectorProps) {
+  const t = useT("massEmail");
   const handleClearSelection = () => {
     setSelectedRecipientIds([]);
   };
@@ -48,7 +50,7 @@ export default function RecipientSelector({
   return (
     <Card className="h-full">
       <CardHeader className="pb-1">
-        <CardTitle>Empfänger</CardTitle>
+        <CardTitle>{t("recipientCardTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-6">
         <div className="flex gap-3">
@@ -57,19 +59,19 @@ export default function RecipientSelector({
             onClick={() => setMode("contacts")}
             className="flex-1"
           >
-            Kontakte
+            {t("recipientModeContacts")}
           </Button>
           <Button
             variant={mode === "companies" ? "default" : "outline"}
             onClick={() => setMode("companies")}
             className="flex-1"
           >
-            Firmen
+            {t("recipientModeCompanies")}
           </Button>
         </div>
 
         <Input
-          placeholder="Name, E-Mail oder Firma suchen..."
+          placeholder={t("recipientSearchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -77,24 +79,24 @@ export default function RecipientSelector({
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleSelectAll} size="sm">
-              {selectedRecipientIds.length === recipients.length ? "Auswahl aufheben" : "Alle auswählen"}
+              {selectedRecipientIds.length === recipients.length ? t("recipientClearSelection") : t("recipientSelectAll")}
             </Button>
             {selectedRecipientIds.length > 0 && (
               <Button variant="outline" onClick={handleClearSelection} size="sm">
-                Auswahl löschen
+                {t("recipientRemoveSelection")}
               </Button>
             )}
           </div>
-          <span className="text-sm text-muted-foreground">{recipients.length} gefunden</span>
+          <span className="text-sm text-muted-foreground">{t("recipientFoundCount", { count: recipients.length })}</span>
         </div>
 
         <ScrollArea className="h-96 border rounded-xl">
           {isLoading ? (
-            <div className="p-8 text-center">Lade Empfänger...</div>
+            <div className="p-8 text-center">{t("recipientLoading")}</div>
           ) : recipients.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">Keine Empfänger gefunden</p>
-              <p className="text-sm text-muted-foreground">Versuchen Sie eine andere Suche oder wechseln Sie den Modus.</p>
+              <p className="text-muted-foreground mb-4">{t("recipientEmpty")}</p>
+              <p className="text-sm text-muted-foreground">{t("recipientEmptyHint")}</p>
             </div>
           ) : (
             recipients.map((rec) => (

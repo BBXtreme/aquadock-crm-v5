@@ -20,7 +20,6 @@ import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageShell } from "@/components/ui/page-shell";
-import { fetchAllCompanyIdsForListNavigation } from "@/lib/companies/companies-list-supabase";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import {
@@ -146,7 +145,22 @@ function CompanyDetailShell({
   const { data: orderedNavIds = [], isPending: listNavIdsPending } = useQuery({
     queryKey: ["company-detail-nav-ids", companiesListStateKey(listStateForNav)],
     enabled: hasListNavContext,
-    queryFn: async () => fetchAllCompanyIdsForListNavigation(createClient(), listStateForNav),
+    // Hit the server Route Handler — embedding/semantic env vars live there.
+    queryFn: async ({ signal }) => {
+      const res = await fetch("/api/companies/nav-ids", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ searchParams: companiesListSearchParams }),
+        signal,
+      });
+      if (!res.ok) {
+        throw new Error(`Nav ids fetch failed (${res.status})`);
+      }
+      const json = (await res.json()) as { ids?: unknown };
+      return Array.isArray(json.ids)
+        ? json.ids.filter((v): v is string => typeof v === "string")
+        : [];
+    },
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });

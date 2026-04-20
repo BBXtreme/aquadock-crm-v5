@@ -1,32 +1,46 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockEmbed = vi.hoisted(() => vi.fn());
+const mockGatewayModel = vi.hoisted(() => vi.fn((id: string) => ({ provider: "gateway", id })));
+const mockCreateGateway = vi.hoisted(() =>
+  vi.fn(() => ({
+    embeddingModel: mockGatewayModel,
+  })),
+);
+
+vi.mock("ai", () => ({
+  embed: (...args: unknown[]) => mockEmbed(...args),
+}));
+
+vi.mock("@ai-sdk/gateway", () => ({
+  createGateway: () => mockCreateGateway(),
+}));
+
 import {
   buildCompanySemanticDocument,
   COMPANY_SEARCH_EMBEDDING_DIMENSION,
-  createXaiEmbedding,
+  createCompanySearchEmbedding,
   generateAndStoreCompanyEmbedding,
   hybridCompanySearch,
+  resolveSemanticSearchSettings,
 } from "./semantic-search";
 
 const VECTOR = Array.from({ length: COMPANY_SEARCH_EMBEDDING_DIMENSION }, (_, i) => i / 1000);
 
 describe("semantic-search service", () => {
-  const originalApiKey = process.env.XAI_API_KEY;
-  const originalEmbApiKey = process.env.XAI_EMBEDDING_API_KEY;
-  const originalEmbUrl = process.env.XAI_EMBEDDINGS_URL;
-
   beforeEach(() => {
-    process.env.XAI_API_KEY = "test-key";
-    delete process.env.XAI_EMBEDDING_API_KEY;
-    delete process.env.XAI_EMBEDDINGS_URL;
+    process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    vi.unstubAllGlobals();
-    process.env.XAI_API_KEY = originalApiKey;
-    process.env.XAI_EMBEDDING_API_KEY = originalEmbApiKey;
-    process.env.XAI_EMBEDDINGS_URL = originalEmbUrl;
+    mockEmbed.mockReset();
+    mockGatewayModel.mockClear();
+    mockCreateGateway.mockClear();
+    delete process.env.EMBEDDING_PROVIDER;
+    delete process.env.EMBEDDING_MODEL;
+    delete process.env.AI_GATEWAY_API_KEY;
   });
 
   it("buildCompanySemanticDocument includes non-empty labeled fields only", () => {
@@ -45,42 +59,97 @@ describe("semantic-search service", () => {
     expect(doc).not.toContain("Email:");
   });
 
-  it("createXaiEmbedding rejects empty text", async () => {
-    await expect(createXaiEmbedding({ text: "   " })).rejects.toThrow("Cannot generate embedding for empty text.");
+  it("createCompanySearchEmbedding rejects empty text", async () => {
+    await expect(createCompanySearchEmbedding({ text: "   " })).rejects.toThrow(
+      "Cannot generate embedding for empty text.",
+    );
   });
 
-  it("createXaiEmbedding parses a valid xAI response", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [{ embedding: VECTOR }] }),
+  it("createCompanySearchEmbedding uses SDK and validates dimensions", async () => {
+    mockEmbed.mockResolvedValue({ embedding: VECTOR });
+    const embedding = await createCompanySearchEmbedding({
+      text: "find marina hotels",
     });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const embedding = await createXaiEmbedding({ text: "find marina hotels" });
 
     expect(embedding).toHaveLength(COMPANY_SEARCH_EMBEDDING_DIMENSION);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockGatewayModel).toHaveBeenCalledWith("openai/text-embedding-3-small");
+    expect(mockEmbed).toHaveBeenCalledTimes(1);
   });
 
-  it("createXaiEmbedding throws on non-200 response", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 404,
-      text: async () => "model not found",
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(createXaiEmbedding({ text: "query" })).rejects.toThrow("xAI embeddings request failed (404)");
+  it("createCompanySearchEmbedding routes xai provider through gateway model ids", async () => {
+    mockEmbed.mockResolvedValue({ embedding: VECTOR });
+    await expect(
+      createCompanySearchEmbedding(
+        { text: "query" },
+        {
+          embeddingProvider: "xai",
+          embeddingModel: "grok-embedding-small",
+          semanticSearchEnabled: true,
+          autoBackfillEmbeddings: true,
+          showSemanticBadge: true,
+        },
+      ),
+    ).resolves.toHaveLength(COMPANY_SEARCH_EMBEDDING_DIMENSION);
+    expect(mockGatewayModel).toHaveBeenCalledWith("xai/grok-embedding-small");
   });
 
-  it("createXaiEmbedding throws on wrong embedding dimension", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [{ embedding: [1, 2, 3] }] }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
+  it("createCompanySearchEmbedding throws on wrong embedding dimension", async () => {
+    mockEmbed.mockResolvedValue({ embedding: [1, 2, 3] });
+    await expect(createCompanySearchEmbedding({ text: "query" })).rejects.toThrow("Embedding dimension mismatch");
+  });
 
-    await expect(createXaiEmbedding({ text: "query" })).rejects.toThrow("xAI embedding dimension mismatch");
+  it("createCompanySearchEmbedding throws when gateway key is missing", async () => {
+    delete process.env.AI_GATEWAY_API_KEY;
+    await expect(createCompanySearchEmbedding({ text: "query" })).rejects.toThrow(
+      'Missing credentials for embedding provider "gateway".',
+    );
+  });
+
+  it("resolveSemanticSearchSettings uses defaults when user has no rows", async () => {
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
+    } as unknown as SupabaseClient;
+
+    const settings = await resolveSemanticSearchSettings(supabase);
+    expect(settings.semanticSearchEnabled).toBe(true);
+    expect(settings.autoBackfillEmbeddings).toBe(true);
+    expect(settings.showSemanticBadge).toBe(true);
+    expect(settings.embeddingProvider).toBe("gateway");
+    expect(settings.embeddingModel).toBe("text-embedding-3-small");
+  });
+
+  it("resolveSemanticSearchSettings applies user rows over defaults", async () => {
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({
+          data: [
+            { key: "embedding_provider", value: "xai" },
+            { key: "embedding_model", value: "text-embedding-3-large" },
+            { key: "semantic_search_enabled", value: false },
+            { key: "auto_backfill_embeddings", value: false },
+            { key: "show_semantic_badge", value: false },
+          ],
+          error: null,
+        }),
+      })),
+    } as unknown as SupabaseClient;
+
+    const settings = await resolveSemanticSearchSettings(supabase);
+    expect(settings).toEqual({
+      embeddingProvider: "xai",
+      embeddingModel: "text-embedding-3-large",
+      semanticSearchEnabled: false,
+      autoBackfillEmbeddings: false,
+      showSemanticBadge: false,
+    });
   });
 
   it("hybridCompanySearch validates embedding dimensions", async () => {
@@ -137,11 +206,13 @@ describe("semantic-search service", () => {
   });
 
   it("generateAndStoreCompanyEmbedding skips too-short semantic documents", async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
     const supabase = {
-      from: vi.fn(),
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
     } as unknown as SupabaseClient;
 
     await generateAndStoreCompanyEmbedding(
@@ -153,22 +224,43 @@ describe("semantic-search service", () => {
       undefined,
     );
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockEmbed).not.toHaveBeenCalled();
+  });
+
+  it("generateAndStoreCompanyEmbedding respects auto_backfill_embeddings=false", async () => {
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({
+          data: [{ key: "auto_backfill_embeddings", value: false }],
+          error: null,
+        }),
+      })),
+    } as unknown as SupabaseClient;
+
+    await generateAndStoreCompanyEmbedding(supabase, "company-id", { firmenname: "AquaDock" });
+    expect(mockEmbed).not.toHaveBeenCalled();
   });
 
   it("generateAndStoreCompanyEmbedding swallows update errors (best effort)", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [{ embedding: VECTOR }] }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
+    mockEmbed.mockResolvedValue({ embedding: VECTOR });
 
     const eq = vi.fn().mockResolvedValue({ error: { message: "write failed" } });
     const update = vi.fn(() => ({ eq }));
-    const from = vi.fn(() => ({ update }));
+    const from = vi
+      .fn()
+      .mockImplementationOnce(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }))
+      .mockImplementationOnce(() => ({ update }));
 
     const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
       from,
     } as unknown as SupabaseClient;
 

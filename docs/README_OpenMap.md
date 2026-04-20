@@ -1,6 +1,6 @@
 # OpenMap — interactive map (AquaDock CRM v5)
 
-**Last updated:** April 2026  
+**Last updated:** April 20, 2026  
 
 **In one sentence:** OpenMap shows your **CRM companies** on a map and, when zoomed in enough, nearby **OpenStreetMap (OSM) points of interest**; you can **import** an OSM place as a new company (typically as a **lead**).
 

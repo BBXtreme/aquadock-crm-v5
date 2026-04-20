@@ -4,6 +4,7 @@ import { flexRender, type Table } from "@tanstack/react-table";
 
 import { BREVO_RECIPIENT_COLUMN_COUNT } from "@/components/features/brevo/brevo-recipient-columns";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { useT } from "@/lib/i18n/use-translations";
 import type { BrevoContactWithCompany } from "@/types/brevo";
 
 type BrevoRecipientDataRowsProps = {
@@ -11,6 +12,7 @@ type BrevoRecipientDataRowsProps = {
 };
 
 export function BrevoRecipientDataRows({ table }: BrevoRecipientDataRowsProps) {
+  const t = useT("brevo");
   const rows = table.getRowModel().rows;
 
   if (!rows.length) {
@@ -18,7 +20,7 @@ export function BrevoRecipientDataRows({ table }: BrevoRecipientDataRowsProps) {
       <TableBody>
         <TableRow>
           <TableCell colSpan={BREVO_RECIPIENT_COLUMN_COUNT} className="h-24 text-center">
-            No results.
+            {t("recipientEmpty")}
           </TableCell>
         </TableRow>
       </TableBody>

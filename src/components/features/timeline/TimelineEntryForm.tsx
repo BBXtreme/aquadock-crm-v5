@@ -20,7 +20,7 @@ import type { TimelineEntry } from "@/types/database.types";
 export type TimelineEntryFormValues = {
   title: string;
   content?: string | undefined;
-  activity_type: "note" | "call" | "email" | "meeting" | "reminder" | "other";
+  activity_type: "note" | "call" | "email" | "meeting" | "other";
   company_id?: string | null;
   contact_id?: string | null;
 };
@@ -61,7 +61,7 @@ export default function TimelineEntryForm({
       z.object({
         title: z.string().min(1, t("formTitleRequired")),
         content: z.string().optional(),
-        activity_type: z.enum(["note", "call", "email", "meeting", "reminder", "other"]),
+        activity_type: z.enum(["note", "call", "email", "meeting", "other"]),
         company_id: z
           .union([z.literal("none"), z.string().uuid(), z.null()])
           .transform((val) => (val === "none" || val === null ? null : val))
@@ -207,7 +207,6 @@ export default function TimelineEntryForm({
                   <SelectItem value="call">{t("activityCall")}</SelectItem>
                   <SelectItem value="email">{t("activityEmail")}</SelectItem>
                   <SelectItem value="meeting">{t("activityMeeting")}</SelectItem>
-                  <SelectItem value="reminder">{t("activityReminder")}</SelectItem>
                   <SelectItem value="other">{t("activityOther")}</SelectItem>
                 </SelectContent>
               </Select>

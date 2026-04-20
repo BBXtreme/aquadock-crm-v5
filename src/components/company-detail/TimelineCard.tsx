@@ -1,7 +1,7 @@
 // src/components/company-detail/TimelineCard.tsx
 "use client";
 import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { Bell, Calendar, Edit, FileSpreadsheet, FileText, Mail, MoreHorizontal, Phone, Plus, Sparkles, Trash } from "lucide-react";
+import { Calendar, Edit, FileSpreadsheet, FileText, Mail, MoreHorizontal, Phone, Plus, Sparkles, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
@@ -71,8 +71,6 @@ export default function TimelineCard({ companyId }: Props) {
         return t("activityEmail");
       case "meeting":
         return t("activityMeeting");
-      case "reminder":
-        return t("activityReminder");
       case "csv_import":
         return "CSV Import";
       case "deleted":
@@ -95,7 +93,6 @@ export default function TimelineCard({ companyId }: Props) {
       case "call": return <Phone className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
       case "meeting": return <Calendar className="h-4 w-4" />;
-      case "reminder": return <Bell className="h-4 w-4" />;
       case "csv_import": return <FileSpreadsheet className="h-4 w-4" />;
       case "deleted": return <Trash className="h-4 w-4" />;
       case "ai_enrichment": return <Sparkles className="h-4 w-4" />;
@@ -109,7 +106,6 @@ export default function TimelineCard({ companyId }: Props) {
       case "call": return "secondary";
       case "email": return "outline";
       case "meeting": return "destructive";
-      case "reminder": return "secondary";
       case "csv_import": return "default";
       case "deleted": return "destructive";
       case "ai_enrichment": return "default";
