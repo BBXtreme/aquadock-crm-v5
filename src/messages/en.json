@@ -1263,6 +1263,8 @@
     "trashTabComments": "Notes",
     "trashColName": "Name / title",
     "trashColCommentBody": "Note",
+    "trashCommentExpandHint": "Tap to show full note (Markdown)",
+    "trashCommentReplyContext": "Reply to: {preview}",
     "trashColCompany": "Company",
     "trashColDeleted": "Deleted at",
     "trashColDeletedBy": "Deleted by",

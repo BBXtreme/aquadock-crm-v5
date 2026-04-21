@@ -919,6 +919,9 @@ export type AdminTrashedComment = {
   companyName: string | null;
   deleted_at: string | null;
   deleted_by: string | null;
+  parent_id: string | null;
+  /** First-line preview of parent note when this row is a reply (for admin trash context). */
+  parent_note_preview: string | null;
 };
 
 export type AdminTrashListPayload = {
@@ -962,7 +965,7 @@ export async function listAdminTrashRows(): Promise<AdminTrashListPayload> {
       .order("deleted_at", { ascending: false }),
     supabase
       .from("comments")
-      .select("id, body_markdown, entity_id, deleted_at, deleted_by")
+      .select("id, body_markdown, entity_id, deleted_at, deleted_by, parent_id")
       .eq("entity_type", "company")
       .not("deleted_at", "is", null)
       .order("deleted_at", { ascending: false }),
@@ -999,14 +1002,49 @@ export async function listAdminTrashRows(): Promise<AdminTrashListPayload> {
       }
     }
   }
-  const comments: AdminTrashedComment[] = commentRows.map((row) => ({
-    id: row.id,
-    body_markdown: String(row.body_markdown ?? ""),
-    entity_id: row.entity_id,
-    companyName: companyNameById[row.entity_id] ?? null,
-    deleted_at: row.deleted_at,
-    deleted_by: row.deleted_by,
-  }));
+  const PARENT_PREVIEW_MAX = 140;
+  const parentLinePreview = (body: string): string => {
+    const firstLine = body.split(/\r?\n/).find((line) => line.trim().length > 0) ?? body;
+    const trimmed = firstLine.trim();
+    if (trimmed.length <= PARENT_PREVIEW_MAX) {
+      return trimmed;
+    }
+    return `${trimmed.slice(0, PARENT_PREVIEW_MAX - 1)}…`;
+  };
+
+  const parentIds = Array.from(
+    new Set(
+      commentRows
+        .map((row) => row.parent_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  const parentPreviewById: Record<string, string> = {};
+  if (parentIds.length > 0) {
+    const { data: parents, error: pe } = await supabase
+      .from("comments")
+      .select("id, body_markdown")
+      .in("id", parentIds);
+    if (pe) throw handleSupabaseError(pe, "listAdminTrashRows:commentParents");
+    for (const p of parents ?? []) {
+      parentPreviewById[p.id] = parentLinePreview(String(p.body_markdown ?? ""));
+    }
+  }
+
+  const comments: AdminTrashedComment[] = commentRows.map((row) => {
+    const pid = row.parent_id;
+    const parentKey = typeof pid === "string" && pid.length > 0 ? pid : null;
+    return {
+      id: row.id,
+      body_markdown: String(row.body_markdown ?? ""),
+      entity_id: row.entity_id,
+      companyName: companyNameById[row.entity_id] ?? null,
+      deleted_at: row.deleted_at,
+      deleted_by: row.deleted_by,
+      parent_id: parentKey,
+      parent_note_preview: parentKey ? parentPreviewById[parentKey] ?? null : null,
+    };
+  });
 
   const deleterIds = new Set<string>();
   for (const row of [...companies, ...contacts, ...reminders, ...timeline, ...comments]) {

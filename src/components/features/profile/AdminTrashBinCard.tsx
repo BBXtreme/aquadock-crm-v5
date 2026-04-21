@@ -12,6 +12,8 @@ import {
 import { ArchiveRestore, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+
+import { CommentMarkdownPreview } from "@/components/features/comments/CommentMarkdownPreview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +74,34 @@ function commentPreview(body: string): string {
     return trimmed;
   }
   return `${trimmed.slice(0, COMMENT_PREVIEW_MAX - 1)}…`;
+}
+
+function TrashedCommentNoteCell({
+  row,
+  expandHint,
+  replyContextLabel,
+}: {
+  row: TrashedComment;
+  expandHint: string;
+  replyContextLabel: string | null;
+}) {
+  const previewText = commentPreview(row.body_markdown);
+  return (
+    <details className="max-w-xl rounded-md border border-transparent open:border-border open:bg-muted/15">
+      <summary className="cursor-pointer list-none rounded-md px-1 py-0.5 outline-none hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+        <span className="block text-foreground/90 line-clamp-2 whitespace-pre-wrap break-words">
+          {previewText.trim() === "" ? "—" : previewText}
+        </span>
+        <span className="mt-0.5 block text-[11px] text-muted-foreground">{expandHint}</span>
+      </summary>
+      <div className="space-y-2 border-t border-border px-2 py-2">
+        {replyContextLabel ? (
+          <p className="border-l-2 border-primary/25 pl-2 text-muted-foreground text-xs">{replyContextLabel}</p>
+        ) : null}
+        <CommentMarkdownPreview markdown={row.body_markdown} className="text-sm" />
+      </div>
+    </details>
+  );
 }
 
 function formatDateTimeLocale(iso: string | null | undefined, localeTag: string): string {
@@ -399,11 +429,20 @@ export default function AdminTrashBinCard() {
         {
           id: "body",
           header: t("trashColCommentBody"),
-          cell: ({ row }) => (
-            <span className="text-foreground/90 line-clamp-2 whitespace-pre-wrap break-words">
-              {safeDisplay(commentPreview(row.original.body_markdown))}
-            </span>
-          ),
+          cell: ({ row }) => {
+            const prev = row.original.parent_note_preview;
+            const replyContextLabel =
+              typeof prev === "string" && prev.trim() !== ""
+                ? t("trashCommentReplyContext", { preview: prev })
+                : null;
+            return (
+              <TrashedCommentNoteCell
+                row={row.original}
+                expandHint={t("trashCommentExpandHint")}
+                replyContextLabel={replyContextLabel}
+              />
+            );
+          },
         },
         {
           id: "company",

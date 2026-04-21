@@ -1263,6 +1263,8 @@
     "trashTabComments": "Notizen",
     "trashColName": "Name / Titel",
     "trashColCommentBody": "Notiz",
+    "trashCommentExpandHint": "Antippen für vollständige Notiz (Markdown)",
+    "trashCommentReplyContext": "Antwort auf: {preview}",
     "trashColCompany": "Unternehmen",
     "trashColDeleted": "Gelöscht am",
     "trashColDeletedBy": "Gelöscht von",

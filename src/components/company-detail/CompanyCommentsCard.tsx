@@ -21,6 +21,7 @@ import {
 } from "@/lib/actions/comments";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { cn } from "@/lib/utils";
 import type { CommentWithAuthor } from "@/types/database.types";
 
 const MAX_COMMENT_DEPTH = 32;
@@ -47,6 +48,8 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasProcessedDeepLink = useRef(false);
+  /** Tracks last hydrated company so we load localStorage draft on id change without clobbering another company's key. */
+  const draftCompanyRef = useRef<string | null>(null);
 
   const queryKey = useMemo(() => ["comments", "company", companyId] as const, [companyId]);
 
@@ -63,6 +66,8 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
   } = useQuery({
     queryKey,
     queryFn: () => listCompanyComments(companyId),
+    /** Feed must update immediately after create; avoid app-wide 60s stale window blocking refetch. */
+    staleTime: 0,
   });
 
   const anonymousUserLabel = t("anonymousUser");
@@ -115,6 +120,31 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
       }
     };
   }, []);
+
+  /** Per-company draft persistence (item 9): hydrate on company change, persist on draft edits. */
+  useEffect(() => {
+    if (draftCompanyRef.current !== companyId) {
+      draftCompanyRef.current = companyId;
+      setReplyParent(null);
+      try {
+        const raw = localStorage.getItem(`comment-draft:company:${companyId}`);
+        setDraft(typeof raw === "string" ? raw : "");
+      } catch {
+        setDraft("");
+      }
+      return;
+    }
+    try {
+      const key = `comment-draft:company:${companyId}`;
+      if (draft.trim()) {
+        localStorage.setItem(key, draft);
+      } else {
+        localStorage.removeItem(key);
+      }
+    } catch {
+      /* quota / private mode */
+    }
+  }, [companyId, draft]);
 
   const scheduleHighlight = useCallback((id: string) => {
     setHighlightId(id);
@@ -184,13 +214,26 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     onSuccess: (created) => {
       setDraft("");
       setReplyParent(null);
+      /** Ensure list + title count update even if refetch is delayed or optimistic row was skipped. */
+      queryClient.setQueryData<CommentWithAuthor[]>(queryKey, (old) => {
+        const list = old ?? [];
+        const withoutTemp = list.filter((c) => !String(c.id).startsWith("optimistic-"));
+        const deduped = withoutTemp.filter((c) => c.id !== created.id);
+        const merged = [...deduped, created];
+        merged.sort((a, b) => {
+          const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return ta - tb;
+        });
+        return merged;
+      });
       if (created?.id) {
         scheduleHighlight(created.id);
       }
       toast.success(t("toastCreated"));
     },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey });
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey });
     },
   });
 
@@ -306,6 +349,9 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     setDraft("");
     requestAnimationFrame(() => {
       composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      requestAnimationFrame(() => {
+        composerTextareaRef.current?.focus();
+      });
     });
   }, []);
 
@@ -376,6 +422,27 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     },
   ];
 
+  const suggestionChipsList = (listClassName?: string) => (
+    <ul
+      className={cn("flex flex-wrap justify-center gap-1.5", listClassName)}
+      aria-label={t("suggestionsLabel")}
+    >
+      {suggestionChips.map(({ key, label, template, Icon }) => (
+        <li key={key}>
+          <button
+            type="button"
+            onClick={() => handleChipTemplate(template)}
+            disabled={!currentUser}
+            className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Icon className="h-3 w-3" aria-hidden />
+            {label}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -401,6 +468,12 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
           />
         </div>
 
+        {!isPending && !isError && ordered.length > 0 ? (
+          <div className="rounded-md border border-border/50 bg-muted/15 px-3 py-2.5">
+            {suggestionChipsList()}
+          </div>
+        ) : null}
+
         {isPending ? (
           <LoadingState count={3} />
         ) : isError ? (
@@ -412,24 +485,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             <MessageSquare className="mx-auto h-6 w-6 text-muted-foreground/70" aria-hidden />
             <h3 className="mt-2 text-sm font-semibold text-foreground">{t("emptyHeading")}</h3>
             <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground sm:text-sm">{t("emptyPrompt")}</p>
-            <ul
-              className="mt-3 flex flex-wrap justify-center gap-1.5"
-              aria-label={t("suggestionsLabel")}
-            >
-              {suggestionChips.map(({ key, label, template, Icon }) => (
-                <li key={key}>
-                  <button
-                    type="button"
-                    onClick={() => handleChipTemplate(template)}
-                    disabled={!currentUser}
-                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <Icon className="h-3 w-3" aria-hidden />
-                    {label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {suggestionChipsList("mt-3")}
           </div>
         ) : (
           <div className="space-y-2.5">

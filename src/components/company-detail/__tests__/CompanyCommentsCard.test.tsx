@@ -46,6 +46,7 @@ function wrapper(ui: ReactElement) {
 
 describe("CompanyCommentsCard", () => {
   beforeEach(() => {
+    localStorage.clear();
     listCompanyComments.mockReset();
     createCompanyComment.mockReset();
     getCurrentUserClient.mockReset();

@@ -1263,6 +1263,8 @@
     "trashTabComments": "Bilješke",
     "trashColName": "Naziv / naslov",
     "trashColCommentBody": "Bilješka",
+    "trashCommentExpandHint": "Dodirnite za cijelu bilješku (Markdown)",
+    "trashCommentReplyContext": "Odgovor na: {preview}",
     "trashColCompany": "Tvrtka",
     "trashColDeleted": "Obrisano",
     "trashColDeletedBy": "Obrisao/la",

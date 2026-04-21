@@ -184,26 +184,30 @@ export function CommentComposer({
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-          <span className="truncate">{t("markdownSupported")}</span>
-          <div className="flex items-center gap-1">
-            {hasContent ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setShowPreview((v) => !v)}
-                aria-pressed={showPreview}
-              >
-                {t("tabPreview")}
-              </Button>
-            ) : null}
-            <Button type="submit" size="sm" disabled={!canSubmit} className="h-8">
-              {isSubmitting ? t("submitting") : submitLabel}
-            </Button>
+        {isExpanded ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+            <span className="min-w-0 flex-1 truncate">{t("markdownSupported")}</span>
+            <div className="flex shrink-0 items-center gap-1">
+              {hasContent ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPreview((v) => !v)}
+                  aria-pressed={showPreview}
+                >
+                  {t("tabPreview")}
+                </Button>
+              ) : null}
+              {hasContent ? (
+                <Button type="submit" size="sm" disabled={!canSubmit} className="h-8">
+                  {isSubmitting ? t("submitting") : submitLabel}
+                </Button>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </form>
   );
