@@ -284,7 +284,7 @@ async function createCsvImportTimelineEntries(
     const rows: TimelineEntryInsert[] = companyIds.map((companyId) => ({
       title: "CSV Import: Unternehmen importiert",
       content: null,
-      activity_type: "csv_import",
+      activity_type: "import",
       company_id: companyId,
       contact_id: null,
       user_id: user.id,

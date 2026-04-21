@@ -20,7 +20,7 @@ import type { TimelineEntry } from "@/types/database.types";
 export type TimelineEntryFormValues = {
   title: string;
   content?: string | undefined;
-  activity_type: "call" | "email" | "meeting" | "other";
+  activity_type: "call" | "email" | "meeting" | "other" | "import";
   company_id?: string | null;
   contact_id?: string | null;
 };
@@ -61,7 +61,7 @@ export default function TimelineEntryForm({
       z.object({
         title: z.string().min(1, t("formTitleRequired")),
         content: z.string().optional(),
-        activity_type: z.enum(["call", "email", "meeting", "other"]),
+        activity_type: z.enum(["call", "email", "meeting", "other", "import"]),
         company_id: z
           .union([z.literal("none"), z.string().uuid(), z.null()])
           .transform((val) => (val === "none" || val === null ? null : val))
@@ -84,8 +84,11 @@ export default function TimelineEntryForm({
 
   const activityTypeForForm = useCallback((raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
     const v = raw ?? "";
-    if (v === "call" || v === "email" || v === "meeting" || v === "other") {
+    if (v === "call" || v === "email" || v === "meeting" || v === "other" || v === "import") {
       return v;
+    }
+    if (v === "csv_import") {
+      return "import";
     }
     return "other";
   }, []);
@@ -211,6 +214,7 @@ export default function TimelineEntryForm({
                   <SelectItem value="call">{t("activityCall")}</SelectItem>
                   <SelectItem value="email">{t("activityEmail")}</SelectItem>
                   <SelectItem value="meeting">{t("activityMeeting")}</SelectItem>
+                  <SelectItem value="import">{t("activityImport")}</SelectItem>
                   <SelectItem value="other">{t("activityOther")}</SelectItem>
                 </SelectContent>
               </Select>

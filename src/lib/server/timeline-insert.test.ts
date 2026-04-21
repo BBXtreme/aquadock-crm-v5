@@ -73,6 +73,27 @@ describe("createAuthenticatedTimelineEntry", () => {
     );
   });
 
+  it("sets activity_type import when title implies CSV import but type is other", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u3" } }, error: null }),
+      },
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "e3" });
+
+    await createAuthenticatedTimelineEntry({
+      title: "CSV import batch 1",
+      activity_type: "other",
+    });
+
+    expect(mockCreateTimelineEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activity_type: "import",
+      }),
+      expect.anything(),
+    );
+  });
+
   it("defaults activity_type to other when empty string and maps optional fields", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {

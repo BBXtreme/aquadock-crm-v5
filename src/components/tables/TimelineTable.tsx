@@ -26,9 +26,12 @@ import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } f
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
+import { timelineActivityBadgeClassName } from "@/lib/constants/timeline-activity-badge";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
+import { normalizeTimelineBadgeActivityType } from "@/lib/validations/timeline";
 
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
@@ -42,7 +45,7 @@ function activityIcon(t: string) {
       return <Mail className="h-4 w-4" />;
     case "meeting":
       return <Calendar className="h-4 w-4" />;
-    case "csv_import":
+    case "import":
       return <FileSpreadsheet className="h-4 w-4" />;
     case "deleted":
       return <Trash2 className="h-4 w-4" />;
@@ -50,25 +53,6 @@ function activityIcon(t: string) {
       return <Sparkles className="h-4 w-4" />;
     default:
       return <MoreHorizontal className="h-4 w-4" />;
-  }
-}
-
-function activityVariant(t: string) {
-  switch (t) {
-    case "call":
-      return "secondary";
-    case "email":
-      return "outline";
-    case "meeting":
-      return "destructive";
-    case "csv_import":
-      return "default";
-    case "deleted":
-      return "destructive";
-    case "ai_enrichment":
-      return "default";
-    default:
-      return "outline";
   }
 }
 
@@ -86,14 +70,16 @@ function isAiEnrichmentAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_
   return /^ai enrichment applied\b/i.test(entry.title ?? "");
 }
 
-function resolveDisplayActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+function resolveDisplayActivityType(
+  entry: Pick<TimelineEntryWithJoins, "activity_type" | "title" | "content">,
+): string {
   if (isDeletionAuditEntry(entry)) {
     return "deleted";
   }
   if (isAiEnrichmentAuditEntry(entry)) {
     return "ai_enrichment";
   }
-  return entry.activity_type;
+  return normalizeTimelineBadgeActivityType(entry.activity_type, entry.title, entry.content);
 }
 
 /** Legacy `note` rows are shown like Sonstiges/Other after the type was removed from the picker. */
@@ -282,8 +268,8 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                 ? t("activityEmail")
                 : type === "meeting"
                   ? t("activityMeeting")
-                  : type === "csv_import"
-                    ? "CSV Import"
+                  : type === "import"
+                    ? t("activityImport")
                     : type === "deleted"
                       ? t("activityDeleted")
                       : type === "ai_enrichment"
@@ -292,7 +278,10 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                           ? t("activityOther")
                           : type;
           return (
-            <Badge variant={activityVariant(type)} className="flex items-center gap-1">
+            <Badge
+              variant="outline"
+              className={cn("flex items-center gap-1 rounded-full", timelineActivityBadgeClassName(type))}
+            >
               {activityIcon(type)}
               {label}
             </Badge>

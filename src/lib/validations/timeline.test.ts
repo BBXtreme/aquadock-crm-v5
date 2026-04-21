@@ -4,7 +4,13 @@
  */
 
 import { describe, expect, it, test } from "vitest";
-import { coerceActivityTypeForInsert, timelineSchema, toTimelineInsert } from "@/lib/validations/timeline";
+import {
+  coerceActivityTypeForInsert,
+  matchesImportActivityText,
+  resolveActivityTypeForTimelinePersist,
+  timelineSchema,
+  toTimelineInsert,
+} from "@/lib/validations/timeline";
 
 const COMPANY_UUID = "550e8400-e29b-41d4-a716-446655440000";
 const CONTACT_UUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -57,7 +63,7 @@ describe("timelineSchema", () => {
     expect(() => timelineSchema.parse({ title: longTitle, activity_type: "other" })).toThrow();
   });
 
-  test.each(["call", "email", "meeting", "other"] as const)("accepts activity_type %s", (activity_type) => {
+  test.each(["call", "email", "meeting", "other", "import"] as const)("accepts activity_type %s", (activity_type) => {
     const parsed = timelineSchema.parse({ title: "Genügend lang", activity_type });
     expect(parsed.activity_type).toBe(activity_type);
   });
@@ -197,5 +203,37 @@ describe("coerceActivityTypeForInsert", () => {
     expect(coerceActivityTypeForInsert("email")).toBe("email");
     expect(coerceActivityTypeForInsert("meeting")).toBe("meeting");
     expect(coerceActivityTypeForInsert("other")).toBe("other");
+    expect(coerceActivityTypeForInsert("import")).toBe("import");
+  });
+
+  it("maps legacy csv_import to import", () => {
+    expect(coerceActivityTypeForInsert("csv_import")).toBe("import");
+  });
+});
+
+describe("matchesImportActivityText", () => {
+  it("detects CSV import phrasing", () => {
+    expect(matchesImportActivityText("CSV Import abgeschlossen", null)).toBe(true);
+    expect(matchesImportActivityText("Log", "Daten per CSV importiert")).toBe(true);
+  });
+
+  it("detects OpenMap / OSM import phrasing", () => {
+    expect(matchesImportActivityText("OpenMap import", "")).toBe(true);
+    expect(matchesImportActivityText("Notiz", "Aus OpenStreetMap importiert")).toBe(true);
+  });
+
+  it("returns false without import context", () => {
+    expect(matchesImportActivityText("CSV-Datei prüfen", null)).toBe(false);
+    expect(matchesImportActivityText("Meeting", "Karte anzeigen")).toBe(false);
+  });
+});
+
+describe("resolveActivityTypeForTimelinePersist", () => {
+  it("upgrades other to import when text matches", () => {
+    expect(resolveActivityTypeForTimelinePersist("other", "CSV import done", null)).toBe("import");
+  });
+
+  it("leaves other when no import cues", () => {
+    expect(resolveActivityTypeForTimelinePersist("other", "Follow-up call", null)).toBe("other");
   });
 });

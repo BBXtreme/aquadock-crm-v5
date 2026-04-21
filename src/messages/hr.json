@@ -1140,6 +1140,7 @@
     "activityCall": "Poziv",
     "activityEmail": "E-pošta",
     "activityMeeting": "Sastanak",
+    "activityImport": "Uvoz",
     "activityDeleted": "Obrisano",
     "activityAiEnrichment": "AI obogaćivanje",
     "activityOther": "Ostalo",

@@ -1,6 +1,6 @@
 import { createTimelineEntry } from "@/lib/services/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { coerceActivityTypeForInsert } from "@/lib/validations/timeline";
+import { resolveActivityTypeForTimelinePersist } from "@/lib/validations/timeline";
 
 export type AuthenticatedTimelineCreateInput = {
   title: string;
@@ -25,7 +25,7 @@ export async function createAuthenticatedTimelineEntry(input: AuthenticatedTimel
     {
       title: input.title,
       content: input.content ?? null,
-      activity_type: coerceActivityTypeForInsert(input.activity_type),
+      activity_type: resolveActivityTypeForTimelinePersist(input.activity_type, input.title, input.content ?? null),
       company_id: input.company_id ?? null,
       contact_id: input.contact_id ?? null,
       user_id: user.id,

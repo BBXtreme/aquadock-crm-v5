@@ -1140,6 +1140,7 @@
     "activityCall": "Call",
     "activityEmail": "Email",
     "activityMeeting": "Meeting",
+    "activityImport": "Import",
     "activityDeleted": "Deleted",
     "activityAiEnrichment": "AI enrichment",
     "activityOther": "Other",
