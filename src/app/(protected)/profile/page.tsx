@@ -5,7 +5,6 @@
 import { Settings2, User } from "lucide-react";
 import { redirect } from "next/navigation";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
-import ProfileForm from "@/components/features/profile/ProfileForm";
 import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
 import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
@@ -19,7 +18,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/page-shell";
-import { Separator } from "@/components/ui/separator";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -255,28 +253,8 @@ return (
           </CardHeader>
 
           <CardContent className="px-6 pb-8 pt-6">
-            <section
-              aria-labelledby="profile-display-heading"
-              className="space-y-6"
-            >
-              <div className="space-y-1">
-                <h3
-                  id="profile-display-heading"
-                  className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
-                >
-                  Profil &amp; Anzeigename
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  So erscheint Ihr Name in AquaDock CRM.
-                </p>
-              </div>
-              <ProfileForm profile={profileRow} />
-            </section>
-
-            <Separator className="my-10" decorative />
-
-            <section className="pt-0" aria-label="Sicherheit">
-              <ProfileSecuritySection currentEmail={email} />
+            <section aria-label="Profil bearbeiten">
+              <ProfileSecuritySection currentEmail={email} profile={profileRow} />
             </section>
           </CardContent>
         </Card>

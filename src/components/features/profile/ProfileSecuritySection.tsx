@@ -1,5 +1,5 @@
 // src/components/features/profile/ProfileSecuritySection.tsx
-// Self-service password and email change (server actions + RHF + Zod + TanStack Mutation).
+// Display name, password, and email change (tabs; server actions + RHF + Zod + TanStack Mutation).
 
 "use client";
 
@@ -13,6 +13,7 @@ import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import ProfileForm from "@/components/features/profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -31,9 +32,11 @@ import {
   changeEmailSchema,
   changePasswordSchema,
 } from "@/lib/validations/profile";
+import type { Profile } from "@/types/database.types";
 
 type ProfileSecuritySectionProps = {
   currentEmail: string;
+  profile: Profile;
 };
 
 /** Genug Zeit für `router.refresh()`, damit das Panel wie auf `/login` wirkt, dann zurück zum Formular. */
@@ -92,6 +95,7 @@ function PasswordFieldWithToggle({
 
 export default function ProfileSecuritySection({
   currentEmail,
+  profile,
 }: ProfileSecuritySectionProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -198,8 +202,11 @@ export default function ProfileSecuritySection({
 
   return (
     <div className="w-full">
-      <Tabs defaultValue="password" className="w-full">
-        <TabsList variant="line" className="mb-1 w-full justify-start gap-1">
+      <Tabs defaultValue="display" className="w-full">
+        <TabsList variant="line" className="mb-1 w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="display" className="px-4">
+            Anzeigename
+          </TabsTrigger>
           <TabsTrigger value="password" className="px-4">
             Passwort ändern
           </TabsTrigger>
@@ -207,6 +214,20 @@ export default function ProfileSecuritySection({
             E-Mail ändern
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="display" className="space-y-6 pt-4">
+          <div className="space-y-1">
+            <h3
+              id="profile-display-heading"
+              className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
+            >
+              Profil &amp; Anzeigename
+            </h3>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              So erscheint Ihr Name in AquaDock CRM.
+            </p>
+          </div>
+          <ProfileForm profile={profile} />
+        </TabsContent>
         <TabsContent value="password" className="space-y-6 pt-4">
           {passwordSaved ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
