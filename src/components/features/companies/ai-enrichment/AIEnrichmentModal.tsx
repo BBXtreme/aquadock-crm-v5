@@ -227,9 +227,9 @@ function resolveCompanyAiEnrichmentErrorMessage(
   const limitPayload = parseDailyAiEnrichmentRateLimitError(raw);
   if (limitPayload) {
     const { usedToday, dailyLimit, requested } = limitPayload;
-    const hint =
-      requested > 1 ? t("aiEnrich.errorDailyLimitBulkHint", { count: requested }) : "";
-    return t("aiEnrich.errorDailyLimitDetail", {
+    const translate = t as (key: string, values?: Record<string, number | string>) => string;
+    const hint = requested > 1 ? translate("aiEnrich.errorDailyLimitBulkHint", { count: requested }) : "";
+    return translate("aiEnrich.errorDailyLimitDetail", {
       used: usedToday,
       limit: dailyLimit,
       hint,

@@ -412,6 +412,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          page_url: string | null
+          screenshot_path: string | null
+          screenshot_url: string | null
+          sentiment: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          sentiment: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          sentiment?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pending_users: {
         Row: {
           auth_user_id: string

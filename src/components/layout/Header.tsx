@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import FeedbackButton from "@/components/features/feedback/FeedbackButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -264,6 +265,8 @@ export default function Header({ user }: HeaderProps) {
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <FeedbackButton userId={user.id} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

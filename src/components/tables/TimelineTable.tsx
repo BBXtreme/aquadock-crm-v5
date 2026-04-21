@@ -83,7 +83,7 @@ function resolveDisplayActivityType(
 }
 
 /** Legacy `note` rows are shown like Sonstiges/Other after the type was removed from the picker. */
-function badgeActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+function badgeActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title" | "content">): string {
   const t = resolveDisplayActivityType(entry);
   return t === "note" ? "other" : t;
 }

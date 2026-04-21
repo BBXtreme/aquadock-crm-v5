@@ -4,6 +4,7 @@
 
 import { Settings2, User } from "lucide-react";
 import { redirect } from "next/navigation";
+import FeedbackInboxCard from "@/components/features/feedback/FeedbackInboxCard";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
 import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
 import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
@@ -268,6 +269,7 @@ return (
         </h2>
         <UserManagementCard allUsers={allUsers} pendingUsers={pendingUsers} />
         <AdminTrashBinCard />
+        <FeedbackInboxCard />
       </section>
     ) : null}
   </PageShell>

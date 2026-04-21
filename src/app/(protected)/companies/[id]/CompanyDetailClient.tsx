@@ -23,7 +23,6 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { PageShell } from "@/components/ui/page-shell";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
-import { resolveActivityTypeForTimelinePersist } from "@/lib/validations/timeline";
 import {
   companiesListStateKey,
   extractCompaniesListSearchParamsString,
@@ -31,6 +30,7 @@ import {
   parseCompaniesListState,
 } from "@/lib/utils/company-filters-url-state";
 import type { CompanyForm } from "@/lib/validations/company";
+import { resolveActivityTypeForTimelinePersist } from "@/lib/validations/timeline";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
