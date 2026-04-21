@@ -1,6 +1,8 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { createInAppNotification } from "@/lib/services/in-app-notifications";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -9,7 +11,7 @@ import {
   restoreOwnCommentSchema,
   updateCommentSchema,
 } from "@/lib/validations/comment";
-import type { CommentWithAuthor } from "@/types/database.types";
+import type { CommentWithAuthor, Database } from "@/types/database.types";
 
 /** Shared select-projection so list/create/update return the same joined shape. */
 const COMMENT_SELECT = "*, profiles!comments_created_by_fkey(display_name, avatar_url)" as const;
@@ -71,7 +73,63 @@ export async function createCompanyComment(input: unknown): Promise<CommentWithA
   if (error) {
     throw handleSupabaseError(error, "createCompanyComment");
   }
-  return data as CommentWithAuthor;
+
+  const row = data as CommentWithAuthor;
+  if (parentId != null) {
+    await maybeNotifyParentCommentAuthorOnReply(supabase, {
+      companyId,
+      parentCommentId: parentId,
+      newCommentId: row.id,
+      actorUserId: userId,
+    });
+  }
+
+  return row;
+}
+
+async function maybeNotifyParentCommentAuthorOnReply(
+  supabase: SupabaseClient<Database>,
+  args: {
+    companyId: string;
+    parentCommentId: string;
+    newCommentId: string;
+    actorUserId: string;
+  },
+) {
+  const { data: parent, error: parentError } = await supabase
+    .from("comments")
+    .select("created_by")
+    .eq("id", args.parentCommentId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (parentError) {
+    console.error("[createCompanyComment] parent comment lookup failed", parentError);
+    return;
+  }
+
+  const parentAuthor = parent?.created_by;
+  if (parentAuthor == null || parentAuthor === args.actorUserId) {
+    return;
+  }
+
+  try {
+    await createInAppNotification({
+      type: "comment_reply",
+      userId: parentAuthor,
+      title: "Neue Antwort auf Ihren Kommentar",
+      body: null,
+      payload: {
+        companyId: args.companyId,
+        commentId: args.newCommentId,
+        parentCommentId: args.parentCommentId,
+      },
+      actorUserId: args.actorUserId,
+      dedupeKey: `comment_reply:${args.newCommentId}`,
+    });
+  } catch (err) {
+    console.error("[createCompanyComment] in-app notification failed", err);
+  }
 }
 
 export async function updateComment(input: unknown): Promise<CommentWithAuthor> {

@@ -3,6 +3,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockCreateServer = vi.hoisted(() => vi.fn());
 const mockCreateTimelineEntry = vi.hoisted(() => vi.fn());
 
+vi.mock("@/lib/services/in-app-notifications", () => ({
+  createInAppNotification: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: () => mockCreateServer(),
 }));
@@ -10,6 +14,26 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/services/timeline", () => ({
   createTimelineEntry: (...args: unknown[]) => mockCreateTimelineEntry(...args),
 }));
+
+function supabaseWithAuth(userId: string) {
+  const companiesChain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+  };
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: { id: userId } }, error: null }),
+    },
+    from: vi.fn((table: string) => {
+      if (table === "companies") {
+        return companiesChain;
+      }
+      return {};
+    }),
+  };
+}
 
 import { createAuthenticatedTimelineEntry } from "./timeline-insert";
 
@@ -42,12 +66,8 @@ describe("createAuthenticatedTimelineEntry", () => {
   });
 
   it("creates entry for authenticated user", async () => {
-    mockCreateServer.mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
-      },
-    });
-    mockCreateTimelineEntry.mockResolvedValue({ id: "e1" });
+    mockCreateServer.mockResolvedValue(supabaseWithAuth("u1"));
+    mockCreateTimelineEntry.mockResolvedValue({ id: "e1", company_id: "c1" });
 
     const result = await createAuthenticatedTimelineEntry({
       title: "Hello",
@@ -57,7 +77,7 @@ describe("createAuthenticatedTimelineEntry", () => {
       contact_id: null,
     });
 
-    expect(result).toEqual({ id: "e1" });
+    expect(result).toEqual({ id: "e1", company_id: "c1" });
     expect(mockCreateTimelineEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         title: "Hello",
@@ -74,12 +94,8 @@ describe("createAuthenticatedTimelineEntry", () => {
   });
 
   it("sets activity_type import when title implies CSV import but type is other", async () => {
-    mockCreateServer.mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u3" } }, error: null }),
-      },
-    });
-    mockCreateTimelineEntry.mockResolvedValue({ id: "e3" });
+    mockCreateServer.mockResolvedValue(supabaseWithAuth("u3"));
+    mockCreateTimelineEntry.mockResolvedValue({ id: "e3", company_id: null });
 
     await createAuthenticatedTimelineEntry({
       title: "CSV import batch 1",
@@ -95,12 +111,8 @@ describe("createAuthenticatedTimelineEntry", () => {
   });
 
   it("defaults activity_type to other when empty string and maps optional fields", async () => {
-    mockCreateServer.mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u2" } }, error: null }),
-      },
-    });
-    mockCreateTimelineEntry.mockResolvedValue({ id: "e2" });
+    mockCreateServer.mockResolvedValue(supabaseWithAuth("u2"));
+    mockCreateTimelineEntry.mockResolvedValue({ id: "e2", company_id: null });
 
     await createAuthenticatedTimelineEntry({
       title: "Only title",

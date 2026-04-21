@@ -1317,11 +1317,38 @@
     "inboxDeleteSuccess": "Povratna informacija je izbrisana.",
     "inboxDeleteError": "Povratnu informaciju nije moguće izbrisati"
   },
+  "inAppNotifications": {
+    "pageTitle": "Obavijesti",
+    "pageDescription": "Aktivnost i zadatke za vaš račun.",
+    "colDate": "Datum",
+    "colTitle": "Naslov",
+    "colType": "Vrsta",
+    "colActions": "Radnje",
+    "types": {
+      "reminder_assigned": "Dodijeljen zadatak",
+      "timeline_on_company": "Nova aktivnost",
+      "comment_reply": "Odgovor na bilješku"
+    },
+    "typeUnknown": "Događaj",
+    "markAllRead": "Označi sve kao pročitano",
+    "markAllReadPending": "Oznaka…",
+    "allMarkedToast": "Sve obavijesti su označene kao pročitane",
+    "openLink": "Otvori",
+    "openLinkAria": "Otvori poveznicu",
+    "markRead": "Pročitano",
+    "empty": "Nema obavijesti.",
+    "loadError": "Nije moguće učitati obavijesti.",
+    "loading": "Učitavanje…",
+    "notSignedIn": "Prijavite se."
+  },
   "layout": {
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",
     "searchAriaLabel": "Pretraga",
+    "notificationsLinkAria": "Obavijesti",
+    "reminderOverdueLinkAria": "Prikaži prekoračene podsjetnike",
+    "reminderThisWeekLinkAria": "Prikaži otvorene podsjetnike ovog tjedna",
     "signOut": "Odjava",
     "userMenuProfile": "Profil",
     "userMenuSettings": "Postavke",

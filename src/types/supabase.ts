@@ -670,6 +670,45 @@ export type Database = {
           },
         ]
       }
+      user_notifications: {
+        Row: {
+          actor_user_id: string | null
+          body: string | null
+          created_at: string
+          dedupe_key: string | null
+          id: string
+          payload: Json
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          body?: string | null
+          created_at?: string
+          dedupe_key?: string | null
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string | null

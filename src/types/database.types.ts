@@ -22,6 +22,7 @@ export type PendingUser = Database["public"]["Tables"]["pending_users"]["Row"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
+export type UserNotification = Database["public"]["Tables"]["user_notifications"]["Row"];
 
 // =============================================================================
 // Insert & Update Types (Critical for forms and Server Actions)
@@ -56,6 +57,9 @@ export type TimelineEntryUpdate = Database["public"]["Tables"]["timeline"]["Upda
 
 export type UserSettingInsert = Database["public"]["Tables"]["user_settings"]["Insert"];
 export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["Update"];
+
+export type UserNotificationInsert = Database["public"]["Tables"]["user_notifications"]["Insert"];
+export type UserNotificationUpdate = Database["public"]["Tables"]["user_notifications"]["Update"];
 
 // =============================================================================
 // App-specific Extended / Joined Types

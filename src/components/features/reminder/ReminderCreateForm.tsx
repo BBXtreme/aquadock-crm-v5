@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createReminder } from "@/lib/actions/reminders";
+import { createReminderAction } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -43,10 +43,12 @@ const STATUS_LABEL_KEYS = {
   closed: "statusClosed",
 } as const;
 
-export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, user }: {
+export default function ReminderCreateForm({
+  onSuccess,
+  preselectedCompanyId,
+}: {
   onSuccess?: () => void;
   preselectedCompanyId?: string;
-  user?: { id: string } | null;
 }) {
   const t = useT("reminders");
   const queryClient = useQueryClient();
@@ -91,7 +93,7 @@ export default function ReminderCreateForm({ onSuccess, preselectedCompanyId, us
   }, [preselectedCompanyId, form]);
 
   const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
-    mutationFn: (data: ReminderFormValues) => createReminder({ ...data, user_id: user?.id }, createClient()),
+    mutationFn: (data: ReminderFormValues) => createReminderAction(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success(t("toastCreated"));

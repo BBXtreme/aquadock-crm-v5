@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createReminder, getReminderById, getReminders, updateReminder } from "./reminders";
+import { createReminder, getReminderById, getReminders, updateReminder } from "@/lib/services/reminders";
 
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);

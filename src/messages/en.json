@@ -1317,11 +1317,38 @@
     "inboxDeleteSuccess": "Feedback deleted.",
     "inboxDeleteError": "Could not delete feedback"
   },
+  "inAppNotifications": {
+    "pageTitle": "Notifications",
+    "pageDescription": "Activity and assignments for your account.",
+    "colDate": "Date",
+    "colTitle": "Title",
+    "colType": "Type",
+    "colActions": "Actions",
+    "types": {
+      "reminder_assigned": "Task assigned",
+      "timeline_on_company": "New activity",
+      "comment_reply": "Reply to note"
+    },
+    "typeUnknown": "Event",
+    "markAllRead": "Mark all as read",
+    "markAllReadPending": "Marking…",
+    "allMarkedToast": "All notifications marked as read",
+    "openLink": "View",
+    "openLinkAria": "Open target",
+    "markRead": "Mark read",
+    "empty": "No notifications yet.",
+    "loadError": "Could not load notifications.",
+    "loading": "Loading…",
+    "notSignedIn": "Please sign in."
+  },
   "layout": {
     "globalSearchTitle": "Global search",
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
     "globalSearchGotIt": "Got it",
     "searchAriaLabel": "Search",
+    "notificationsLinkAria": "Notifications",
+    "reminderOverdueLinkAria": "View overdue reminders",
+    "reminderThisWeekLinkAria": "View open reminders due this week",
     "signOut": "Sign out",
     "userMenuProfile": "Profile",
     "userMenuSettings": "Settings",

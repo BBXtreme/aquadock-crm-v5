@@ -19,6 +19,7 @@
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
+| user_notifications | In-app notification inbox | —  | uuid | user_id, actor_user_id    | Yes  | user_id, created_at, unread partial |
 | profiles        | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
 
 ## 2. Core Tables – Column Overview
@@ -200,6 +201,29 @@ Optional attachment rows per comment (schema and RLS exist; product UI may follo
 
 **Known `key` values (EAV)**: `notification_preferences` (JSON object), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
 
+### user_notifications
+
+In-app **notification feed** (bell / notifications page). One row per delivered notification for a recipient. **`type` values** are app-defined (e.g. `reminder_assigned`, `timeline_on_company`, `comment_reply`); `payload` is a JSON object with stable IDs for deep links (`companyId`, `reminderId`, `commentId`, …).
+
+| Column         | Type        | Nullable | Default           | Business Meaning            | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | --------------------------- | ------------- |
+| id             | uuid        | false    | gen_random_uuid() | Primary key                 | PK            |
+| user_id        | uuid        | false    | —                 | Recipient (auth user)        | FK → auth.users, indexed    |
+| type           | text        | false    | —                 | Machine event key           | —             |
+| title          | text        | false    | —                 | Short list title            | —             |
+| body           | text        | true     | —                 | Optional detail            | —             |
+| payload        | jsonb       | false    | `'{}'`            | Deep-link / context ids     | —             |
+| actor_user_id  | uuid        | true     | —                 | User who caused the event   | FK → auth.users (SET NULL)  |
+| read_at        | timestamptz | true     | —                 | When marked read; null = unread | Partial index unread |
+| dedupe_key     | text        | true     | —                 | Optional idempotency key   | UNIQUE when not null        |
+| created_at     | timestamptz | false    | now()              | —                           | Indexed (with user_id)     |
+
+**RLS:** `SELECT` and `UPDATE` for `auth.uid() = user_id` only. **No** `INSERT` / `DELETE` for `authenticated` — new rows are written from trusted **server** code with the **service role** (bypasses RLS; see `createAdminClient` in `src/lib/supabase/admin.ts`). This avoids clients forging notifications to arbitrary recipients.
+
+**Realtime:** The table is added to the `supabase_realtime` publication ([`src/sql/user_notifications.sql`](../src/sql/user_notifications.sql)) so the browser client can subscribe to `INSERT` with filter `user_id=eq.<uid>`.
+
+**Zod / validation:** See `src/lib/validations/notification.ts` (in-app v1) for strict payload shapes per `type`.
+
 ### profiles
 
 | Column       | Type        | Nullable | Default | Business Meaning         | Notes / Index    |
@@ -239,6 +263,10 @@ OR (company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
 
 The **service role** key bypasses RLS when used from trusted server code; it must never ship to the browser.
 
+**Live RLS audit (in-app notifications prerequisite, 2026-04-21, hosted project):** On the current database, `public.reminders` and `public.timeline` report `relrowsecurity = false` (no policies in `pg_policies` for those names). `comments` is owner-scoped via `companies.user_id = auth.uid()`. **Implication:** assignees and cross-tenant “activity on my company” behaviour depend on whether you enable RLS on `reminders` / `timeline` in production. When you turn RLS on for `reminders`, add a **minimal** `SELECT` policy so an assignee can read a row if `assigned_to` matches the user (store `auth.users` id as `text` in `assigned_to` and compare to `auth.uid()::text`, or cast consistently). The repo’s older [`src/sql/rls-setup.sql`](../src/sql/rls-setup.sql) is not necessarily applied verbatim on the live project — verify with `pg_policies` and `pg_class.relrowsecurity` after migrations.
+
+**`user_notifications`:** RLS as in the [table section](#user_notifications) above; inserts from server using service role only.
+
 **`comments` and `comment_attachments`:** Policies tie access to **company ownership** (`companies.user_id = auth.uid()`), same idea as core CRM tables. After [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql): **SELECT** includes soft-deleted comments for the company owner (so trash / restore flows work under RLS). **INSERT** still requires `created_by = auth.uid()` and an active (non-deleted) company. **UPDATE** / **DELETE** are allowed for the **company owner** on any comment on that company (restore and hard-delete); the app still restricts **markdown edits** to the original author in server actions (`@/lib/actions/comments.ts`). **Attachments:** SELECT/INSERT mirror comment + company access; there is no UPDATE/DELETE policy yet—extend if you add attachment management.
 
 **Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, `timeline`, and **`comments`** support optional soft deletion. On restore, `deleted_at` and `deleted_by` are cleared; hard deletes drop the row. **`deleted_by` FK differs by table:** on `companies`, `contacts`, `reminders`, and `timeline` it references **`auth.users(id)`** ([`deleted-by-audit.sql`](../src/sql/deleted-by-audit.sql)); on **`comments`** it references **`profiles(id)`** ([`comments-tables.sql`](../src/sql/comments-tables.sql)). Active reads typically filter `deleted_at IS NULL`; trashed rows appear in admin tooling or company-owner flows. For the core four tables, RLS was not extended solely for soft-delete—rely on server actions and query filters where documented.
@@ -254,6 +282,7 @@ The **service role** key bypasses RLS when used from trusted server code; it mus
 - reminders: `company_id`, `due_date`, `status`, `user_id`
 - timeline: `company_id`, `user_id`
 - user_settings: `user_id`, `key`
+- user_notifications: `(user_id, created_at DESC)`; partial `(user_id) WHERE read_at IS NULL` for unread lists — see [`user_notifications.sql`](../src/sql/user_notifications.sql)
 - Soft-delete: composite `(user_id, deleted_at, deleted_by)` (replaces former two-column index) and partial “trashed” `(user_id) WHERE deleted_at IS NOT NULL` on `companies`, `contacts`, `reminders`, `timeline` — run `src/sql/soft-delete-trash.sql` then `src/sql/deleted-by-audit.sql`
 - comments: `(entity_type, entity_id, created_at DESC) WHERE deleted_at IS NULL`; partial on `parent_id` for non-null parents among non-deleted rows — see `src/sql/comments-tables.sql`
 - comment_attachments: `comment_id` — see `src/sql/comments-tables.sql`
@@ -303,6 +332,7 @@ Key Zod schemas include:
 - `emailTemplateSchema` (`email-template.ts`): Email template name, subject, body
 - `profileDisplayNameSchema`, `profileAvatarSchema`, `parseProfileAvatarFile` (`profile.ts`): Display name and avatar URL / upload validation
 - `notificationPreferencesSchema`, `trashBinPreferenceSchema` (`settings.ts`): User settings keys aligned with `user_settings`
+- In-app `user_notifications` payload types (`notification.ts`): per-`type` JSON shapes for `payload` column
 - `createCompanyCommentSchema`, `updateCommentSchema`, `deleteCommentSchema`, `restoreOwnCommentSchema` (`comment.ts`): Company comment create/update/delete/restore payloads for server actions (markdown length, UUIDs; maps to `comments` columns)
 
 All schemas use `.strict()`, trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
@@ -362,3 +392,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-12 Doc sync: full `companies.status` set (`kunde`, `partner`, `inaktiv`); timeline `updated_by` clarified (no `updated_at` on `timeline`); RLS summary no longer uses non-standard `auth.role()` pseudocode; Admin Papierkorb component path made explicit; audit stamp refreshed.
 
 2026-04-21 Documented **`comments`** and **`comment_attachments`** (columns, indexes, triggers, FKs to `companies` / `profiles`), RLS behaviour before/after **`comments-trash-alignment.sql`**, Zod **`comment.ts`**, and `deleted_by` FK difference vs core tables. Linked SQL apply order for new environments.
+
+2026-04-21 Added **`user_notifications`** (columns, RLS, Realtime, indexes), live RLS audit note for `reminders` / `timeline`, and SQL [`user_notifications.sql`](../src/sql/user_notifications.sql). Types via `pnpm supabase:types`.

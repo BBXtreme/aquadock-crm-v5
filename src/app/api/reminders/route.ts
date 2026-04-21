@@ -5,7 +5,7 @@
 // Both handlers include error handling to log any issues and return appropriate error responses if something goes wrong during database operations.
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createReminder, getReminders } from "@/lib/actions/reminders";
+import { createReminderAction, getReminders } from "@/lib/actions/reminders";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -22,8 +22,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const supabase = await createServerSupabaseClient();
-    const reminder = await createReminder(body, supabase);
+    const reminder = await createReminderAction(body);
     return NextResponse.json(reminder, { status: 201 });
   } catch (error) {
     console.error("Error creating reminder:", error);

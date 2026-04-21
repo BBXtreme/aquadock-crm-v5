@@ -15,11 +15,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { updateReminder } from "@/lib/actions/reminders";
+import { createReminderAction, updateReminder } from "@/lib/actions/reminders";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
-import { reminderSchema, toReminderInsert, toReminderUpdate } from "@/lib/validations/reminder";
+import { reminderSchema, toReminderUpdate } from "@/lib/validations/reminder";
 import type { Database, } from "@/types/database.types";
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
@@ -54,11 +54,7 @@ export default function ReminderEditForm({
       if (reminder) {
         return updateReminder(reminder.id, { ...toReminderUpdate(data), user_id: user?.id ?? null }, createClient());
       }
-      // create
-      const supabase = createClient();
-      const { data: newData, error } = await supabase.from("reminders").insert({ ...toReminderInsert(data), user_id: user?.id ?? null }).select().single();
-      if (error) throw error;
-      return newData;
+      return createReminderAction(data);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["reminders"] });

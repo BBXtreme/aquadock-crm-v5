@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import { Bell, CalendarDays, Clock, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -35,6 +35,7 @@ import {
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { useT } from "@/lib/i18n/use-translations";
+import { getUnreadCount } from "@/lib/services/in-app-notifications";
 import { saveAppearanceTheme } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -137,6 +138,12 @@ export default function Header({ user }: HeaderProps) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: inAppUnreadCount = 0 } = useQuery({
+    queryKey: ["in-app-notifications-unread", user.id],
+    queryFn: () => getUnreadCount(createClient(), user.id),
+    staleTime: 60_000,
+  });
+
   const { data: overdueRemindersCount = 0 } = useQuery({
     queryKey: ["reminders-count-overdue"],
     queryFn: async () => {
@@ -151,6 +158,29 @@ export default function Header({ user }: HeaderProps) {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`in_app_notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["in-app-notifications", user.id] });
+          void queryClient.invalidateQueries({ queryKey: ["in-app-notifications-unread", user.id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [user.id, queryClient]);
 
   // Radix DropdownMenuItem uses pointer handlers that block native <form> submit on
   // the slotted button. Sign out via the browser Supabase client, then hard-navigate
@@ -195,10 +225,24 @@ export default function Header({ user }: HeaderProps) {
           </Button>
         </Link>
 
+        <Link href="/notifications">
+          <Button type="button" variant="ghost" className="relative" aria-label={t("notificationsLinkAria")}>
+            <Bell className="h-4 w-4" />
+            {inAppUnreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 min-w-4 rounded-full px-0.5 text-xs tabular-nums"
+              >
+                {inAppUnreadCount > 99 ? "99+" : inAppUnreadCount}
+              </Badge>
+            )}
+          </Button>
+        </Link>
+
         {overdueRemindersCount > 0 && (
           <Link href="/reminders?status=overdue">
-            <Button variant="ghost" className="relative">
-              <Bell className="h-4 w-4" />
+            <Button type="button" variant="ghost" className="relative" aria-label={t("reminderOverdueLinkAria")}>
+              <Clock className="h-4 w-4" />
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs"
@@ -211,8 +255,8 @@ export default function Header({ user }: HeaderProps) {
 
         {openRemindersCount > 0 && (
           <Link href="/reminders?status=open">
-            <Button variant="ghost" className="relative">
-              <Bell className="h-4 w-4" />
+            <Button type="button" variant="ghost" className="relative" aria-label={t("reminderThisWeekLinkAria")}>
+              <CalendarDays className="h-4 w-4" />
               <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
                 {openRemindersCount}
               </Badge>
