@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { resolveAuthRecoveryRedirectUrl } from "@/lib/utils/auth-recovery-redirect";
+import { resolveAuthRedirectUrl } from "@/lib/utils/auth-recovery-redirect";
 
 // Server Action - Update Display Name (for current user)
 export async function updateDisplayName(formData: FormData) {
@@ -146,7 +146,7 @@ export async function triggerPasswordReset(
     throw new Error("User or email not found");
   }
 
-  const redirectTo = await resolveAuthRecoveryRedirectUrl();
+  const redirectTo = await resolveAuthRedirectUrl("/login");
 
   const { error } = await adminClient.auth.resetPasswordForEmail(email, {
     redirectTo,
@@ -268,7 +268,7 @@ export async function createUser(formData: FormData) {
   // Step 3: Send password reset email (redirect must match Supabase allow list + env site URL)
   const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(
     email,
-    { redirectTo: await resolveAuthRecoveryRedirectUrl() },
+    { redirectTo: await resolveAuthRedirectUrl("/set-password") },
   );
   if (resetError) {
     console.error("Failed to send reset email:", resetError);

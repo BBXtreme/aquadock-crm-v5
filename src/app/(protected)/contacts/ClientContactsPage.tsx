@@ -279,6 +279,7 @@ function ClientContactsPage() {
         <CardContent>
           <ContactsTable
             contacts={contacts}
+            totalFilteredCount={total}
             globalFilter={globalFilter}
             onGlobalFilterChange={setGlobalFilter}
             onEdit={handleEdit}

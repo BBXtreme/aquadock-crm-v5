@@ -62,15 +62,10 @@ describe("DataTable", () => {
 
     render(<DataTable data={[{ id: "1", name: 'Say "hi"' }]} columns={columns} />);
 
-    const csvButtons = screen.getAllByRole("button", { name: /CSV/i });
-    const csvBtn = csvButtons[0];
-    const jsonButtons = screen.getAllByRole("button", { name: /JSON/i });
-    const jsonBtn = jsonButtons[0];
-    if (csvBtn === undefined || jsonBtn === undefined) {
-      throw new Error("expected export buttons");
-    }
-    await user.click(csvBtn);
-    await user.click(jsonBtn);
+    await user.click(screen.getByRole("button", { name: "Export data" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Export CSV" }));
+    await user.click(screen.getByRole("button", { name: "Export data" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Export JSON" }));
 
     expect(createObjectURL).toHaveBeenCalled();
     expect(clickSpy).toHaveBeenCalled();
@@ -85,15 +80,9 @@ describe("DataTable", () => {
     const user = userEvent.setup();
     render(<DataTable data={[{ id: "1", name: "A" }]} columns={columns} />);
 
-    const trigger = screen
-      .getAllByRole("button")
-      .find((el) => el.getAttribute("data-slot") === "dropdown-menu-trigger");
-    if (trigger === undefined) {
-      throw new Error("dropdown trigger not found");
-    }
-    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: "Toggle columns" }));
 
-    const menuItems = await screen.findAllByRole("menuitem");
+    const menuItems = await screen.findAllByRole("menuitemcheckbox");
     expect(menuItems.length).toBeGreaterThan(0);
   });
 

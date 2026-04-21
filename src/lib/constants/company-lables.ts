@@ -22,7 +22,7 @@ export const kundentypLabels: Record<string, string> = {
 export const statusLabels: Record<string, string> = {
   gewonnen: "✅ Gewonnen",
   verloren: "❌ Verloren",
-  lead: "🔍 Lead",
+  lead: "🔍 Neu",
   interessant: "👀 Interessant",
   qualifiziert: "⭐ Qualifiziert",
   akquise: "🎯 Akquise",

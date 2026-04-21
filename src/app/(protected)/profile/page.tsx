@@ -3,8 +3,9 @@
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
 import { Settings2, User } from "lucide-react";
+import { redirect } from "next/navigation";
+import FeedbackInboxCard from "@/components/features/feedback/FeedbackInboxCard";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
-import ProfileForm from "@/components/features/profile/ProfileForm";
 import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
 import { ProfileSignOutButton } from "@/components/features/profile/ProfileSignOutButton";
 import UserManagementCard from "@/components/features/profile/UserManagementCard";
@@ -18,12 +19,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/page-shell";
-import { Separator } from "@/components/ui/separator";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { safeDisplay } from "@/lib/utils/data-format";
-import type { Profile } from "@/types/database.types";
+import type { PendingUser, Profile } from "@/types/database.types";
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -41,6 +41,25 @@ export default async function ProfilePage() {
   }
 
   if (profileData === null) {
+    const adminForPending = createAdminClient();
+    const { data: pend } = await adminForPending
+      .from("pending_users")
+      .select("status, chosen_role")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (pend !== null && pend.status !== "accepted") {
+      redirect("/access-pending");
+    }
+
+    const insertRole: "user" | "admin" =
+      pend !== null &&
+      pend.status === "accepted" &&
+      pend.chosen_role !== null &&
+      pend.chosen_role !== ""
+        ? (pend.chosen_role === "admin" ? "admin" : "user")
+        : "user";
+
     const metaName = user.display_name;
     const insertDisplayName =
       metaName === undefined || metaName === null || metaName === ""
@@ -51,7 +70,7 @@ export default async function ProfilePage() {
       .from("profiles")
       .insert({
         id: user.id,
-        role: "user",
+        role: insertRole,
         display_name: insertDisplayName,
       })
       .select()
@@ -90,8 +109,15 @@ export default async function ProfilePage() {
     updated_at: string | null;
     last_sign_in_at: string | null;
   }[] = [];
+  let pendingUsers: PendingUser[] = [];
   if (role === "admin") {
     const adminSupabase = createAdminClient();
+    const { data: pendingRows } = await adminSupabase
+      .from("pending_users")
+      .select("*")
+      .in("status", ["pending_email_confirmation", "pending_review"])
+      .order("requested_at", { ascending: false });
+    pendingUsers = pendingRows ?? [];
     const { data: authUsers } = await adminSupabase.auth.admin.listUsers();
     const { data: profiles } = await adminSupabase.from("profiles").select("*");
     const profilesArray = profiles === null || profiles === undefined ? [] : profiles;
@@ -228,28 +254,8 @@ return (
           </CardHeader>
 
           <CardContent className="px-6 pb-8 pt-6">
-            <section
-              aria-labelledby="profile-display-heading"
-              className="space-y-6"
-            >
-              <div className="space-y-1">
-                <h3
-                  id="profile-display-heading"
-                  className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
-                >
-                  Profil &amp; Anzeigename
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  So erscheint Ihr Name in AquaDock CRM.
-                </p>
-              </div>
-              <ProfileForm profile={profileRow} />
-            </section>
-
-            <Separator className="my-10" decorative />
-
-            <section className="pt-0" aria-label="Sicherheit">
-              <ProfileSecuritySection currentEmail={email} />
+            <section aria-label="Profil bearbeiten">
+              <ProfileSecuritySection currentEmail={email} profile={profileRow} />
             </section>
           </CardContent>
         </Card>
@@ -261,8 +267,9 @@ return (
         <h2 id="profile-admin-heading" className="sr-only">
           Administration
         </h2>
-        <UserManagementCard allUsers={allUsers} />
+        <UserManagementCard allUsers={allUsers} pendingUsers={pendingUsers} />
         <AdminTrashBinCard />
+        <FeedbackInboxCard />
       </section>
     ) : null}
   </PageShell>

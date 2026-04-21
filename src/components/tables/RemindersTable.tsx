@@ -5,6 +5,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -26,6 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getTablePageRange } from "@/lib/utils/table-page-range";
 import type { Reminder } from "@/types/database.types";
 
 type ReminderWithCompany = Reminder & { companies?: { firmenname: string } | null };
@@ -162,6 +165,8 @@ export default function RemindersTable({
   handleView,
   handleDelete,
 }: RemindersTableProps) {
+  const t = useT("reminders");
+  const localeTag = useNumberLocaleTag();
   const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState({});
 
@@ -171,6 +176,7 @@ export default function RemindersTable({
     data: reminders,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     initialState: {
@@ -199,7 +205,10 @@ export default function RemindersTable({
           />
           {table.getFilteredSelectedRowModel().rows.length > 0 && (
             <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} selected
+              {t("tableRowsSelectedSummary", {
+                selected: table.getFilteredSelectedRowModel().rows.length,
+                total: table.getFilteredRowModel().rows.length,
+              })}
             </span>
           )}
         </div>
@@ -296,9 +305,36 @@ export default function RemindersTable({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-muted-foreground text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-sm">
+          <span>
+            {t("tableRowsSelectedSummary", {
+              selected: table.getFilteredSelectedRowModel().rows.length,
+              total: table.getFilteredRowModel().rows.length,
+            })}
+          </span>
+          <span className="ml-auto flex flex-wrap items-center gap-x-2">
+            <span className="select-none text-muted-foreground/45" aria-hidden>
+              ·
+            </span>
+            <span>
+              {(() => {
+                const { pageIndex, pageSize } = table.getState().pagination;
+                const pr = getTablePageRange({
+                  pageIndex,
+                  pageSize,
+                  rowCountOnPage: table.getRowModel().rows.length,
+                  totalFiltered: table.getFilteredRowModel().rows.length,
+                });
+                return pr.total <= 0
+                  ? t("tablePageRangeEmpty")
+                  : t("tablePageRangeSummary", {
+                      from: pr.from.toLocaleString(localeTag),
+                      to: pr.to.toLocaleString(localeTag),
+                      total: pr.total.toLocaleString(localeTag),
+                    });
+              })()}
+            </span>
+          </span>
         </div>
         <div className="space-x-2">
           <Button
@@ -308,7 +344,7 @@ export default function RemindersTable({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t("tablePrevious")}
           </Button>
           <Button
             variant="outline"
@@ -317,7 +353,7 @@ export default function RemindersTable({
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            {t("tableNext")}
           </Button>
         </div>
       </div>

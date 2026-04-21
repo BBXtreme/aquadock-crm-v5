@@ -30,6 +30,7 @@ import {
   parseCompaniesListState,
 } from "@/lib/utils/company-filters-url-state";
 import type { CompanyForm } from "@/lib/validations/company";
+import { resolveActivityTypeForTimelinePersist } from "@/lib/validations/timeline";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -254,7 +255,12 @@ function CompanyDetailShell({
           <TimelineEntryForm
             onSubmit={async (values) => {
               const supabase = createClient();
-              await supabase.from("timeline").insert({ ...values, company_id: id });
+              const activity_type = resolveActivityTypeForTimelinePersist(
+                values.activity_type,
+                values.title,
+                values.content ?? null,
+              );
+              await supabase.from("timeline").insert({ ...values, activity_type, company_id: id });
               queryClient.invalidateQueries({ queryKey: ["timeline", id] });
               setAddTimelineDialogOpen(false);
             }}

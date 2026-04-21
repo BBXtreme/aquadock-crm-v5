@@ -81,15 +81,13 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
           )}
         />
 
-        <div className="pb-11">
-          <Button
-            type="submit"
-            className="h-11 w-full"
-            disabled={isPending}
-          >
-            {isPending ? t("updateProfilePending") : t("updateProfileButton")}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          className="h-11 w-full"
+          disabled={isPending}
+        >
+          {isPending ? t("updateProfilePending") : t("updateProfileButton")}
+        </Button>
       </form>
     </Form>
   );

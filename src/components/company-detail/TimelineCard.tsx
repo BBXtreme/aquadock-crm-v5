@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tansta
 import { Calendar, Edit, FileSpreadsheet, FileText, Mail, MoreHorizontal, Phone, Plus, Sparkles, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
-import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import TimelineEntryForm, { type TimelineEntryFormValues } from "@/components/features/timeline/TimelineEntryForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +23,15 @@ import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
+import { timelineActivityBadgeClassName } from "@/lib/constants/timeline-activity-badge";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
+import {
+  normalizeTimelineBadgeActivityType,
+  resolveActivityTypeForTimelinePersist,
+} from "@/lib/validations/timeline";
 import type { TimelineEntryWithJoins } from "@/types/database.types";
 
 interface Props {
@@ -46,14 +52,16 @@ function isAiEnrichmentAuditEntry(entry: Pick<TimelineEntryWithJoins, "activity_
   return /^ai enrichment applied\b/i.test(entry.title ?? "");
 }
 
-function resolveDisplayActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+function resolveDisplayActivityType(
+  entry: Pick<TimelineEntryWithJoins, "activity_type" | "title" | "content">,
+): string {
   if (isDeletionAuditEntry(entry)) {
     return "deleted";
   }
   if (isAiEnrichmentAuditEntry(entry)) {
     return "ai_enrichment";
   }
-  return entry.activity_type;
+  return normalizeTimelineBadgeActivityType(entry.activity_type, entry.title, entry.content);
 }
 
 export default function TimelineCard({ companyId }: Props) {
@@ -71,8 +79,8 @@ export default function TimelineCard({ companyId }: Props) {
         return t("activityEmail");
       case "meeting":
         return t("activityMeeting");
-      case "csv_import":
-        return "CSV Import";
+      case "import":
+        return t("activityImport");
       case "deleted":
         return t("activityDeleted");
       case "ai_enrichment":
@@ -93,23 +101,10 @@ export default function TimelineCard({ companyId }: Props) {
       case "call": return <Phone className="h-4 w-4" />;
       case "email": return <Mail className="h-4 w-4" />;
       case "meeting": return <Calendar className="h-4 w-4" />;
-      case "csv_import": return <FileSpreadsheet className="h-4 w-4" />;
+      case "import": return <FileSpreadsheet className="h-4 w-4" />;
       case "deleted": return <Trash className="h-4 w-4" />;
       case "ai_enrichment": return <Sparkles className="h-4 w-4" />;
       default: return <MoreHorizontal className="h-4 w-4" />;
-    }
-  };
-
-  const getVariant = (activityType: string) => {
-    switch (activityType) {
-      case "note": return "default";
-      case "call": return "secondary";
-      case "email": return "outline";
-      case "meeting": return "destructive";
-      case "csv_import": return "default";
-      case "deleted": return "destructive";
-      case "ai_enrichment": return "default";
-      default: return "outline";
     }
   };
 
@@ -210,10 +205,25 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
+    mutationFn: async (data: TimelineEntryFormValues) => {
       if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").update({ ...data, updated_by: user.id }).eq("id", editEntry?.id);
+      const activity_type = resolveActivityTypeForTimelinePersist(
+        data.activity_type,
+        data.title,
+        data.content ?? null,
+      );
+      const { error } = await supabase
+        .from("timeline")
+        .update({
+          title: data.title,
+          content: data.content ?? null,
+          activity_type,
+          company_id: data.company_id ?? null,
+          contact_id: data.contact_id ?? null,
+          updated_by: user.id,
+        })
+        .eq("id", editEntry?.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -229,10 +239,23 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const createTimelineMutation = useMutation({
-    mutationFn: async (data: Partial<TimelineEntryWithJoins>) => {
+    mutationFn: async (data: TimelineEntryFormValues) => {
       if (!user) throw new Error("User not authenticated");
       const supabase = createClient();
-      const { error } = await supabase.from("timeline").insert({ ...data, created_by: user.id, user_id: user.id });
+      const activity_type = resolveActivityTypeForTimelinePersist(
+        data.activity_type,
+        data.title,
+        data.content ?? null,
+      );
+      const { error } = await supabase.from("timeline").insert({
+        title: data.title,
+        content: data.content ?? null,
+        activity_type,
+        company_id: data.company_id ?? null,
+        contact_id: data.contact_id ?? null,
+        created_by: user.id,
+        user_id: user.id,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -262,11 +285,11 @@ export default function TimelineCard({ companyId }: Props) {
     setEntryToDelete(null);
   };
 
-  const handleUpdate = async (values: Partial<TimelineEntryWithJoins>) => {
+  const handleUpdate = async (values: TimelineEntryFormValues) => {
     await updateMutation.mutateAsync(values);
   };
 
-  const handleTimelineSubmit = async (values: Partial<TimelineEntryWithJoins>) => {
+  const handleTimelineSubmit = async (values: TimelineEntryFormValues) => {
     setIsSubmitting(true);
     try {
       await createTimelineMutation.mutateAsync(values);
@@ -323,8 +346,11 @@ export default function TimelineCard({ companyId }: Props) {
                         </td>
                         <td>
                           <Badge
-                            variant={getVariant(displayType)}
-                            className="flex items-center gap-1"
+                            variant="outline"
+                            className={cn(
+                              "flex items-center gap-1 rounded-full",
+                              timelineActivityBadgeClassName(displayType),
+                            )}
                           >
                             {getIcon(displayType)}
                             {activityLabel(displayType)}

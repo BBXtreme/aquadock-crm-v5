@@ -412,6 +412,95 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          page_url: string | null
+          screenshot_path: string | null
+          screenshot_url: string | null
+          sentiment: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          sentiment: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          page_url?: string | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          sentiment?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pending_users: {
+        Row: {
+          auth_user_id: string
+          chosen_role: string | null
+          decline_reason: string | null
+          display_name: string | null
+          email: string
+          email_confirmed_at: string | null
+          id: string
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          chosen_role?: string | null
+          decline_reason?: string | null
+          display_name?: string | null
+          email: string
+          email_confirmed_at?: string | null
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          chosen_role?: string | null
+          decline_reason?: string | null
+          display_name?: string | null
+          email?: string
+          email_confirmed_at?: string | null
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_users_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

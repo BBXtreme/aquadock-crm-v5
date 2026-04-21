@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const timelineEntry = await createAuthenticatedTimelineEntry({
       title: body.title,
       content: typeof body.content === "string" ? body.content : null,
-      activity_type: body.activity_type || "note",
+      activity_type: typeof body.activity_type === "string" ? body.activity_type : "",
       company_id: typeof body.company_id === "string" ? body.company_id : null,
       contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
     });

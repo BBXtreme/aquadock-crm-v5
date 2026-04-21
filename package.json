@@ -66,6 +66,7 @@
     "dompurify": "^3.3.3",
     "geist": "^1.7.0",
     "html-react-parser": "^5.2.17",
+    "html2canvas-pro": "^2.0.2",
     "isomorphic-dompurify": "^3.7.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",

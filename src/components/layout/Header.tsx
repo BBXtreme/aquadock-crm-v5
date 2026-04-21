@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import FeedbackButton from "@/components/features/feedback/FeedbackButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -265,6 +266,8 @@ export default function Header({ user }: HeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <FeedbackButton userId={user.id} />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -278,13 +281,13 @@ export default function Header({ user }: HeaderProps) {
             <DropdownMenuItem asChild>
               <Link href="/profile">
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {t("userMenuProfile")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings">
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t("userMenuSettings")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -296,7 +299,7 @@ export default function Header({ user }: HeaderProps) {
               }}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {t("signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

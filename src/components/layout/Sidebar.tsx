@@ -90,11 +90,11 @@ interface SidebarProps {
 
 const salesNavigation = [
   { messageKey: "dashboard", href: "/dashboard", icon: BarChart3 },
+  { messageKey: "openmap", href: "/openmap", icon: MapPin },
   { messageKey: "reminders", href: "/reminders", icon: Bell },
   { messageKey: "companies", href: "/companies", icon: Target },
   { messageKey: "contacts", href: "/contacts", icon: Users },
   { messageKey: "timeline", href: "/timeline", icon: History },
-  { messageKey: "openmap", href: "/openmap", icon: MapPin },
 ] as const;
 
 const marketingNavigation = [

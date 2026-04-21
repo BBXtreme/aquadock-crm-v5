@@ -33,7 +33,7 @@ describe("getKundentypLabel", () => {
 
 describe("getStatusLabel", () => {
   it("maps known status", () => {
-    expect(getStatusLabel("LEAD")).toBe("🔍 Lead");
+    expect(getStatusLabel("LEAD")).toBe("🔍 Neu");
   });
 
   it("returns raw when unknown", () => {

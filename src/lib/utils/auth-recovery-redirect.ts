@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
-import { normalizeSiteUrlOrigin } from "@/lib/utils/site-url";
+import {
+  normalizeSiteUrlOrigin,
+  PRODUCTION_CANONICAL_ORIGIN,
+} from "@/lib/utils/site-url";
 
 /**
  * Builds origin from proxy headers (Vercel, etc.). Not a secret — used for password-reset redirect_to.
@@ -20,23 +23,28 @@ export function originFromForwardedHeaders(
   return `${proto}://${h}`.replace(/\/$/, "");
 }
 
+export type AuthRedirectPath =
+  | "/login"
+  | "/set-password"
+  | "/access-pending"
+  | "/access-denied";
+
 /**
- * `redirectTo` for Supabase `resetPasswordForEmail`.
+ * Resolves the site origin for Auth redirects (confirmation, recovery, set-password).
  *
- * Order: **`SITE_URL`** → **`NEXT_PUBLIC_SITE_URL`** → **request Host** (so
- * `https://crm.aquadock.de` works on Vercel without duplicating it in env) →
- * **`VERCEL_URL`** → production canonical host (when `VERCEL_ENV=production`) →
+ * Order: **`SITE_URL`** → **`NEXT_PUBLIC_SITE_URL`** → **request Host** (custom domain on Vercel) →
+ * **`VERCEL_URL`** (preview + production deploy URLs) → **`VERCEL_ENV=production`** fallback →
  * localhost.
  */
-export async function resolveAuthRecoveryRedirectUrl(): Promise<string> {
+export async function resolveSiteOrigin(): Promise<string> {
   const siteUrlServer = process.env.SITE_URL?.trim();
   if (siteUrlServer) {
-    return `${normalizeSiteUrlOrigin(siteUrlServer)}/login`;
+    return normalizeSiteUrlOrigin(siteUrlServer);
   }
 
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (fromEnv) {
-    return `${normalizeSiteUrlOrigin(fromEnv)}/login`;
+    return normalizeSiteUrlOrigin(fromEnv);
   }
 
   const h = await headers();
@@ -46,18 +54,37 @@ export async function resolveAuthRecoveryRedirectUrl(): Promise<string> {
     h.get("x-forwarded-proto"),
   );
   if (origin) {
-    return `${origin}/login`;
+    return origin;
   }
 
   const vercel = process.env.VERCEL_URL?.trim();
   if (vercel) {
     const vo = vercel.includes("://") ? vercel : `https://${vercel}`;
-    return `${vo.replace(/\/$/, "")}/login`;
+    return vo.replace(/\/$/, "");
   }
 
   if (process.env.VERCEL_ENV === "production") {
-    return "https://aquadock-crm-glqn.vercel.app/login";
+    return PRODUCTION_CANONICAL_ORIGIN;
   }
 
-  return "http://localhost:3000/login";
+  return "http://localhost:3000";
+}
+
+/**
+ * Full `redirect_to` URL for Supabase Auth (must match Dashboard → Authentication → Redirect URLs).
+ * Use `"/login"` for standard recovery; `"/set-password"` for onboarding grant + admin-created users.
+ */
+export async function resolveAuthRedirectUrl(
+  path: AuthRedirectPath = "/login",
+): Promise<string> {
+  const origin = await resolveSiteOrigin();
+  return `${origin}${path}`;
+}
+
+/**
+ * @deprecated Prefer `resolveAuthRedirectUrl("/login")` for clarity.
+ * `redirectTo` for Supabase `resetPasswordForEmail` (legacy admin recovery → `/login`).
+ */
+export async function resolveAuthRecoveryRedirectUrl(): Promise<string> {
+  return resolveAuthRedirectUrl("/login");
 }

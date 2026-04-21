@@ -81,7 +81,7 @@ export async function createOsmImportTimelineForCompany(input: {
     {
       title,
       content,
-      activity_type: "other",
+      activity_type: "import",
       company_id: input.companyId,
       contact_id: null,
       user_id: input.userId,

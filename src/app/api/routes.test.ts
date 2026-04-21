@@ -189,7 +189,7 @@ describe("POST /api/timeline", () => {
     expect(mockCreateTimelineEntry).toHaveBeenCalledWith({
       title: "T",
       content: null,
-      activity_type: "note",
+      activity_type: "",
       company_id: "550e8400-e29b-41d4-a716-446655440000",
       contact_id: null,
     });
@@ -478,7 +478,7 @@ describe("POST /api/companies", () => {
     expect(mockServiceCreateTimelineEntry.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         company_id: "c-osm",
-        activity_type: "other",
+        activity_type: "import",
         user_id: "user-1",
         content: expect.stringContaining("https://www.openstreetmap.org/node/123"),
       }),

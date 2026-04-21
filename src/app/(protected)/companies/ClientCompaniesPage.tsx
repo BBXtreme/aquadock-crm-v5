@@ -1054,6 +1054,7 @@ function ClientCompaniesPage() {
 
             <CompaniesTable
               companies={companies}
+              totalFilteredCount={total}
               isInitialLoading={companiesInitialLoading}
               isFetching={companiesIsFetching}
               showSemanticBadge={showSemanticBadge}

@@ -28,7 +28,7 @@ export const KUNDENTYP_ALLOWED_VALUES = kundentypOptions.map((o) => o.value) as 
 export const FIRMENTYP_ALLOWED_VALUES = firmentypOptions.map((o) => o.value) as [string, ...string[]];
 
 export const statusOptions = [
-  { value: "lead", label: "Lead" },
+  { value: "lead", label: "Neu" },
   { value: "interessant", label: "Interessant" },
   { value: "qualifiziert", label: "Qualifiziert" },
   { value: "akquise", label: "Akquise" },

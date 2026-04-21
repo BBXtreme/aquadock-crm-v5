@@ -230,7 +230,7 @@ describe("CommentItem", () => {
       wrapper(
         <CommentItem
           comment={baseComment({
-            created_at: null,
+            created_at: undefined,
             updated_at: new Date().toISOString(),
           })}
           currentUserId={otherId}
