@@ -454,7 +454,7 @@
     "detailCrmToastSaved": "CRM podaci spremljeni",
     "detailCrmToastSaveFailed": "CRM podatke nije bilo moguće spremiti",
     "detailCrmStatus": {
-      "lead": "Lead",
+      "lead": "Novi",
       "interessant": "Zanimljivo",
       "qualifiziert": "Kvalificirano",
       "akquise": "Akvizicija",
@@ -753,7 +753,7 @@
     "googleSessionErrorNetwork": "Provjerite mrežu i pokušajte ponovno.",
     "googleSessionErrorHttp": "HTTP greška: provjerite ključ, naplatu i Map Tiles API u Google projektu.",
     "googleSessionErrorUnexpected": "Neočekivani odgovor od Googlea — sesija se nije mogla pročitati.",
-    "status_lead": "Lead",
+    "status_lead": "Novi",
     "status_interessant": "Zanimljivo",
     "status_qualifiziert": "Kvalificirani",
     "status_akquise": "Akvizicija",

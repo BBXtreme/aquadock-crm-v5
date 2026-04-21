@@ -8,11 +8,14 @@
  *
  * **Resolution order** (see `resolveAuthRecoveryRedirectUrl` in `auth-recovery-redirect.ts`):
  * `SITE_URL` → `NEXT_PUBLIC_SITE_URL` → **request Host** (custom domain on Vercel) →
- * `VERCEL_URL` → `http://localhost:3000`.
+ * `VERCEL_URL` (preview deploys, e.g. `*.vercel.app`) → production canonical (when `VERCEL_ENV=production`) →
+ * localhost.
  *
- * **Supabase dashboard:** **Authentication → URL configuration** — set **Site URL** to
- * `https://crm.aquadock.de` and add **Redirect URLs** `https://crm.aquadock.de/login`.
+ * **Supabase dashboard:** add **Redirect URLs** for production, `http://localhost:3000/**`, and preview wildcard
+ * `https://*.vercel.app/**` so confirmation and recovery links work on Vercel previews.
  */
+export const PRODUCTION_CANONICAL_ORIGIN = "https://aquadock-crm-glqn.vercel.app";
+
 export function normalizeSiteUrlOrigin(raw: string): string {
   const trimmed = raw.trim().replace(/\/$/, "");
   if (!trimmed) {
@@ -39,6 +42,10 @@ export function getPublicSiteUrl(): string {
   if (vercel) {
     const origin = vercel.includes("://") ? vercel : `https://${vercel}`;
     return origin.replace(/\/$/, "");
+  }
+
+  if (process.env.VERCEL_ENV === "production") {
+    return PRODUCTION_CANONICAL_ORIGIN;
   }
 
   return "http://localhost:3000";

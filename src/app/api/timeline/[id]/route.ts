@@ -2,11 +2,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { deleteTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { updateTimelineEntry } from "@/lib/services/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { coerceActivityTypeForInsert } from "@/lib/validations/timeline";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -14,7 +15,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const bodyWithUser = { ...body, updated_by: user.id };
+    const bodyWithUser = {
+      ...body,
+      updated_by: user.id,
+      ...(typeof body.activity_type === "string"
+        ? { activity_type: coerceActivityTypeForInsert(body.activity_type) }
+        : {}),
+    };
     const updatedEntry = await updateTimelineEntry(id, bodyWithUser, supabase);
     return NextResponse.json(updatedEntry);
   } catch (error) {

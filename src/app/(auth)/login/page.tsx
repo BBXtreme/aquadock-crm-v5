@@ -5,12 +5,10 @@
 
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -24,11 +22,9 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Control } from "react-hook-form";
-import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";
 import {
   Card,
   CardContent,
@@ -37,22 +33,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { PW_RECOVERY_SESSION_STORAGE_KEY } from "@/lib/constants/auth-recovery";
+  accessTokenIndicatesRecovery,
+  consumePasswordRecoveryBootstrapFlag,
+  isPasswordRecoveryFromUrl,
+  RECOVERY_SESSION_READY_TIMEOUT_MS,
+  tryHydrateRecoverySessionFromHash,
+  urlMayCarryRecoveryTokens,
+} from "@/lib/auth/password-recovery-browser";
 import { useT } from "@/lib/i18n/use-translations";
-import { createClient } from "@/lib/supabase/browser";
-import {
-  type PasswordRecoverySetFormValues,
-  passwordRecoverySetSchema,
-} from "@/lib/validations/profile";
-
+import { getAuthBrowserSingletonClient } from "@/lib/supabase/auth-browser-singleton";
 /** Supabase Auth UI theme tokens — use CSS variables so light/dark follow `html.dark` (ThemeSupa defaults hard-code `inputText: black`). */
 const loginAuthAppearanceVariables = {
   colors: {
@@ -93,26 +82,6 @@ const loginAuthAppearanceVariables = {
   },
 } as const;
 
-/**
- * Single browser client for `/login`. React 18 Strict Mode (dev + some prod paths)
- * mounts twice; a second `createClient()` can run after the recovery hash was already
- * consumed → no session → `updateUser` throws "Auth session missing!".
- */
-let loginPageBrowserSupabase: SupabaseClient | null = null;
-
-function getLoginPageSupabaseClient(): SupabaseClient {
-  const isTestRuntime =
-    typeof process !== "undefined" &&
-    (process.env.VITEST === "true" || process.env.NODE_ENV === "test");
-  if (isTestRuntime) {
-    return createClient();
-  }
-  if (loginPageBrowserSupabase === null) {
-    loginPageBrowserSupabase = createClient();
-  }
-  return loginPageBrowserSupabase;
-}
-
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
 
 type LoginAuthErrorBoundaryProps = {
@@ -152,326 +121,6 @@ class LoginAuthErrorBoundary extends Component<
     }
     return this.props.children;
   }
-}
-
-export function isPasswordRecoveryFromUrl(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const hash = window.location.hash.replace(/^#/, "");
-  if (hash) {
-    const fromHash = new URLSearchParams(hash).get("type");
-    if (fromHash === "recovery") {
-      return true;
-    }
-  }
-  return (
-    new URLSearchParams(window.location.search).get("type") === "recovery"
-  );
-}
-
-/** True when the URL may still carry tokens the browser client must exchange or parse. */
-function urlMayCarryRecoveryTokens(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  if (isPasswordRecoveryFromUrl()) {
-    return true;
-  }
-  const hash = window.location.hash.replace(/^#/, "");
-  if (hash) {
-    const hp = new URLSearchParams(hash);
-    if (hp.has("access_token") && hp.has("refresh_token")) {
-      return true;
-    }
-  }
-  const sp = new URLSearchParams(window.location.search);
-  return sp.has("code");
-}
-
-/**
- * When implicit recovery tokens are still in the hash but auto-detect did not persist them,
- * establish the session explicitly (production/Vercel).
- */
-async function tryHydrateRecoverySessionFromHash(
-  supabase: SupabaseClient,
-): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const raw = window.location.hash.replace(/^#/, "");
-  if (!raw) {
-    return false;
-  }
-  const params = new URLSearchParams(raw);
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
-  if (!access_token || !refresh_token) {
-    return false;
-  }
-  const { error } = await supabase.auth.setSession({
-    access_token,
-    refresh_token,
-  });
-  if (error) {
-    return false;
-  }
-  const url = new URL(window.location.href);
-  url.hash = "";
-  window.history.replaceState(null, "", `${url.pathname}${url.search}`);
-  return true;
-}
-
-const RECOVERY_SESSION_READY_TIMEOUT_MS = 10_000;
-
-function amrIndicatesRecovery(amr: unknown): boolean {
-  let list: unknown = amr;
-  if (typeof list === "string") {
-    try {
-      list = JSON.parse(list) as unknown;
-    } catch {
-      return false;
-    }
-  }
-  if (!Array.isArray(list)) {
-    return false;
-  }
-  return list.some((entry) => {
-    if (entry === "recovery") {
-      return true;
-    }
-    if (typeof entry === "object" && entry !== null && "method" in entry) {
-      return (entry as { method?: string }).method === "recovery";
-    }
-    return false;
-  });
-}
-
-/** GoTrue recovery sessions include `amr` with method recovery (see Supabase JWT docs). */
-function accessTokenIndicatesRecovery(accessToken: string): boolean {
-  try {
-    const parts = accessToken.split(".");
-    if (parts.length < 2) {
-      return false;
-    }
-    const payloadPart = parts[1];
-    if (payloadPart === undefined) {
-      return false;
-    }
-    let base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-    const pad = base64.length % 4;
-    if (pad) {
-      base64 += "=".repeat(4 - pad);
-    }
-    const json = atob(base64);
-    const payload = JSON.parse(json) as { amr?: unknown };
-    return amrIndicatesRecovery(payload.amr);
-  } catch {
-    return false;
-  }
-}
-
-/** Set by root `beforeInteractive` script when hash had `type=recovery` (hash may be stripped before React runs). */
-export function consumePasswordRecoveryBootstrapFlag(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  try {
-    const v = sessionStorage.getItem(PW_RECOVERY_SESSION_STORAGE_KEY);
-    if (v === "1") {
-      sessionStorage.removeItem(PW_RECOVERY_SESSION_STORAGE_KEY);
-      return true;
-    }
-  } catch {
-    // sessionStorage blocked or quota
-  }
-  return false;
-}
-
-export function PasswordRecoveryUpdatePanel({
-  supabase,
-  recoverySaved,
-  onRecoverySuccess,
-}: {
-  supabase: SupabaseClient;
-  recoverySaved: boolean;
-  onRecoverySuccess: () => void;
-}) {
-  const t = useT("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const toggleShowPassword = useCallback(() => {
-    setShowPassword((prev) => !prev);
-  }, []);
-
-  const toggleShowConfirmPassword = useCallback(() => {
-    setShowConfirmPassword((prev) => !prev);
-  }, []);
-
-  const form = useForm<PasswordRecoverySetFormValues>({
-    resolver: zodResolver(passwordRecoverySetSchema),
-    defaultValues: {
-      password: "",
-      confirm_password: "",
-    },
-  });
-
-  const updatePassword = useMutation({
-    mutationFn: async (values: PasswordRecoverySetFormValues) => {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: values.password,
-      });
-      if (updateError) {
-        throw updateError;
-      }
-    },
-    onSuccess: () => {
-      onRecoverySuccess();
-    },
-    onError: (err: unknown) => {
-      const description =
-        err instanceof Error
-          ? err.message
-          : typeof err === "object" &&
-              err !== null &&
-              "message" in err &&
-              typeof (err as { message: unknown }).message === "string"
-            ? (err as { message: string }).message
-            : "Unknown error";
-      toast.error(t("recoveryErrorToast"), {
-        description,
-      });
-    },
-  });
-
-  const onSubmit = form.handleSubmit((values) => {
-    updatePassword.mutate(values);
-  });
-
-  if (recoverySaved) {
-    return (
-      <div className="flex flex-col items-center gap-8 py-2 text-center">
-        <div
-          className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success"
-          aria-hidden
-        >
-          <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
-        </div>
-        <p className="font-medium text-foreground text-lg tracking-tight">
-          {t("recoverySuccess")}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <FormField
-          control={form.control as Control<PasswordRecoverySetFormValues>}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-base">
-                {t("recoveryNewPasswordLabel")}
-              </FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    key={showPassword ? "pw-visible" : "pw-hidden"}
-                    {...field}
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    className="h-11 border-border bg-card pr-11 text-base text-foreground"
-                  />
-                </FormControl>
-                <Button
-                  key={showPassword ? "pw-toggle-show" : "pw-toggle-hide"}
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleShowPassword();
-                  }}
-                  aria-label={
-                    showPassword ? t("hidePassword") : t("showPassword")
-                  }
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control as Control<PasswordRecoverySetFormValues>}
-          name="confirm_password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-base">
-                {t("recoveryConfirmPasswordLabel")}
-              </FormLabel>
-              <div className="relative">
-                <FormControl>
-                  <Input
-                    key={showConfirmPassword ? "pwc-visible" : "pwc-hidden"}
-                    {...field}
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    className="h-11 border-border bg-card pr-11 text-base text-foreground"
-                  />
-                </FormControl>
-                <Button
-                  key={
-                    showConfirmPassword ? "pwc-toggle-show" : "pwc-toggle-hide"
-                  }
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0 h-11 w-11 text-muted-foreground hover:text-foreground"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleShowConfirmPassword();
-                  }}
-                  aria-label={
-                    showConfirmPassword
-                      ? t("hideConfirmPassword")
-                      : t("showConfirmPassword")
-                  }
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button
-          type="submit"
-          className="h-11 w-full text-base"
-          disabled={updatePassword.isPending}
-        >
-          {updatePassword.isPending
-            ? t("recoverySaving")
-            : t("recoverySaveButton")}
-        </Button>
-      </form>
-    </Form>
-  );
 }
 
 export default function LoginPage() {
@@ -518,7 +167,7 @@ export default function LoginPage() {
 
   // 2) One shared browser client after latch (singleton avoids Strict Mode double-init).
   useLayoutEffect(() => {
-    setSupabase(getLoginPageSupabaseClient());
+    setSupabase(getAuthBrowserSingletonClient());
   }, []);
 
   useEffect(() => {
@@ -859,3 +508,9 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export {
+  consumePasswordRecoveryBootstrapFlag,
+  isPasswordRecoveryFromUrl,
+} from "@/lib/auth/password-recovery-browser";
+export { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";

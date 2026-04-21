@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it, test } from "vitest";
-import { timelineSchema, toTimelineInsert } from "@/lib/validations/timeline";
+import { coerceActivityTypeForInsert, timelineSchema, toTimelineInsert } from "@/lib/validations/timeline";
 
 const COMPANY_UUID = "550e8400-e29b-41d4-a716-446655440000";
 const CONTACT_UUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8";
@@ -44,26 +44,28 @@ describe("timelineSchema", () => {
   });
 
   it("rejects title shorter than 3 characters after trim", () => {
-    expect(() => timelineSchema.parse({ title: "ab", activity_type: "note" })).toThrow();
+    expect(() => timelineSchema.parse({ title: "ab", activity_type: "other" })).toThrow();
   });
 
   it("allows whitespace-only title when raw length meets min(3) before trim (schema order: min then trim)", () => {
-    const parsed = timelineSchema.parse({ title: "   ", activity_type: "note" });
+    const parsed = timelineSchema.parse({ title: "   ", activity_type: "other" });
     expect(parsed.title).toBe("");
   });
 
   it("rejects title longer than 200 characters", () => {
     const longTitle = "x".repeat(201);
-    expect(() => timelineSchema.parse({ title: longTitle, activity_type: "note" })).toThrow();
+    expect(() => timelineSchema.parse({ title: longTitle, activity_type: "other" })).toThrow();
   });
 
-  test.each(["note", "call", "email", "meeting", "other"] as const)(
-    "accepts activity_type %s",
-    (activity_type) => {
-      const parsed = timelineSchema.parse({ title: "Genügend lang", activity_type });
-      expect(parsed.activity_type).toBe(activity_type);
-    },
-  );
+  test.each(["call", "email", "meeting", "other"] as const)("accepts activity_type %s", (activity_type) => {
+    const parsed = timelineSchema.parse({ title: "Genügend lang", activity_type });
+    expect(parsed.activity_type).toBe(activity_type);
+  });
+
+  it("rejects legacy 'note' activity_type (removed from manual entry — use company comments or other types)", () => {
+    const result = timelineSchema.safeParse({ title: "Follow up call", activity_type: "note" });
+    expect(result.success).toBe(false);
+  });
 
   it("rejects legacy 'reminder' activity_type (now removed — reminders live on a dedicated page)", () => {
     const result = timelineSchema.safeParse({ title: "Follow up call", activity_type: "reminder" });
@@ -87,7 +89,7 @@ describe("timelineSchema", () => {
     expect(() =>
       timelineSchema.parse({
         title: "OK title here",
-        activity_type: "note",
+        activity_type: "other",
         content: "y".repeat(2001),
       }),
     ).toThrow();
@@ -163,7 +165,7 @@ describe("toTimelineInsert", () => {
   it("maps omitted company_id and contact_id to null in insert shape", () => {
     const values = timelineSchema.parse({
       title: "Internal note",
-      activity_type: "note",
+      activity_type: "other",
     });
     const row = toTimelineInsert(values);
     expect(row.company_id).toBeNull();
@@ -179,5 +181,21 @@ describe("toTimelineInsert", () => {
     });
     const row = toTimelineInsert(values);
     expect(row.content).toBe("Betreff: Angebot");
+  });
+});
+
+describe("coerceActivityTypeForInsert", () => {
+  it("maps note and empty values to other", () => {
+    expect(coerceActivityTypeForInsert("note")).toBe("other");
+    expect(coerceActivityTypeForInsert("")).toBe("other");
+    expect(coerceActivityTypeForInsert(undefined)).toBe("other");
+    expect(coerceActivityTypeForInsert(null)).toBe("other");
+  });
+
+  it("preserves valid manual types", () => {
+    expect(coerceActivityTypeForInsert("call")).toBe("call");
+    expect(coerceActivityTypeForInsert("email")).toBe("email");
+    expect(coerceActivityTypeForInsert("meeting")).toBe("meeting");
+    expect(coerceActivityTypeForInsert("other")).toBe("other");
   });
 });

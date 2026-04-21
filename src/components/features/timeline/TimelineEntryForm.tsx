@@ -20,7 +20,7 @@ import type { TimelineEntry } from "@/types/database.types";
 export type TimelineEntryFormValues = {
   title: string;
   content?: string | undefined;
-  activity_type: "note" | "call" | "email" | "meeting" | "other";
+  activity_type: "call" | "email" | "meeting" | "other";
   company_id?: string | null;
   contact_id?: string | null;
 };
@@ -61,7 +61,7 @@ export default function TimelineEntryForm({
       z.object({
         title: z.string().min(1, t("formTitleRequired")),
         content: z.string().optional(),
-        activity_type: z.enum(["note", "call", "email", "meeting", "other"]),
+        activity_type: z.enum(["call", "email", "meeting", "other"]),
         company_id: z
           .union([z.literal("none"), z.string().uuid(), z.null()])
           .transform((val) => (val === "none" || val === null ? null : val))
@@ -82,15 +82,20 @@ export default function TimelineEntryForm({
     contact_id?: string | null;
   };
 
+  const activityTypeForForm = (raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
+    const v = raw ?? "";
+    if (v === "call" || v === "email" || v === "meeting" || v === "other") {
+      return v;
+    }
+    return "other";
+  };
+
   const form = useForm<TimelineFormFields>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: editEntry?.title || defaultValues?.title || "",
       content: editEntry?.content || defaultValues?.content || "",
-      activity_type:
-        (editEntry?.activity_type as TimelineEntryFormValues["activity_type"]) ||
-        defaultValues?.activity_type ||
-        "note",
+      activity_type: activityTypeForForm(editEntry?.activity_type ?? defaultValues?.activity_type),
       company_id: editEntry?.company_id || preselectedCompanyId || "none",
       contact_id: editEntry?.contact_id || defaultValues?.contact_id || "none",
     },
@@ -148,7 +153,7 @@ export default function TimelineEntryForm({
       form.reset({
         title: editEntry.title || "",
         content: editEntry.content || "",
-        activity_type: (editEntry.activity_type as TimelineEntryFormValues["activity_type"]) || "note",
+        activity_type: activityTypeForForm(editEntry.activity_type),
         company_id: editEntry.company_id || "none",
         contact_id: editEntry.contact_id || "none",
       });
@@ -203,7 +208,6 @@ export default function TimelineEntryForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="note">{t("activityNote")}</SelectItem>
                   <SelectItem value="call">{t("activityCall")}</SelectItem>
                   <SelectItem value="email">{t("activityEmail")}</SelectItem>
                   <SelectItem value="meeting">{t("activityMeeting")}</SelectItem>

@@ -18,7 +18,7 @@ export const statusColors: Record<string, string> = {
 };
 
 export const statusLabels: Record<string, string> = {
-  lead: "Lead",
+  lead: "Neu",
   interessant: "Interessant",
   qualifiziert: "Qualifiziert",
   akquise: "Akquise",

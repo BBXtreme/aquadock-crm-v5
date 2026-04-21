@@ -412,6 +412,51 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_users: {
+        Row: {
+          auth_user_id: string
+          chosen_role: string | null
+          decline_reason: string | null
+          display_name: string | null
+          email: string
+          email_confirmed_at: string | null
+          id: string
+          requested_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          chosen_role?: string | null
+          decline_reason?: string | null
+          display_name?: string | null
+          email: string
+          email_confirmed_at?: string | null
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          chosen_role?: string | null
+          decline_reason?: string | null
+          display_name?: string | null
+          email?: string
+          email_confirmed_at?: string | null
+          id?: string
+          requested_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

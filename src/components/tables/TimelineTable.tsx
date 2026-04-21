@@ -1,13 +1,13 @@
 // src/components/tables/TimelineTable.tsx
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
-import { Calendar, FileSpreadsheet, FileText, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
+import { Calendar, FileSpreadsheet, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
+import TimelineEntryForm, { type TimelineEntryFormValues } from "@/components/features/timeline/TimelineEntryForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { deleteTimelineEntryWithTrash, restoreTimelineEntryWithTrash } from "@/lib/actions/crm-trash";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
@@ -35,8 +36,6 @@ const columnHelper = createColumnHelper<TimelineEntryWithJoins>();
 
 function activityIcon(t: string) {
   switch (t) {
-    case "note":
-      return <FileText className="h-4 w-4" />;
     case "call":
       return <Phone className="h-4 w-4" />;
     case "email":
@@ -56,8 +55,6 @@ function activityIcon(t: string) {
 
 function activityVariant(t: string) {
   switch (t) {
-    case "note":
-      return "default";
     case "call":
       return "secondary";
     case "email":
@@ -97,6 +94,12 @@ function resolveDisplayActivityType(entry: Pick<TimelineEntryWithJoins, "activit
     return "ai_enrichment";
   }
   return entry.activity_type;
+}
+
+/** Legacy `note` rows are shown like Sonstiges/Other after the type was removed from the picker. */
+function badgeActivityType(entry: Pick<TimelineEntryWithJoins, "activity_type" | "title">): string {
+  const t = resolveDisplayActivityType(entry);
+  return t === "note" ? "other" : t;
 }
 
 function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
@@ -166,21 +169,25 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
     }
   };
 
-  const handleEditSubmit = async (values: unknown) => {
-    try {
+  const updateMutation = useMutation({
+    mutationFn: async (values: TimelineEntryFormValues) => {
       const res = await fetch(`/api/timeline/${entry.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
       if (!res.ok) throw new Error("Failed to update");
+      return res.json();
+    },
+    onSuccess: () => {
       toast.success(t("toastUpdated"));
       setEditDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["timeline"] });
-    } catch {
+    },
+    onError: () => {
       toast.error(t("toastUpdateFailed"));
-    }
-  };
+    },
+  });
 
   return (
     <div className="flex gap-2">
@@ -190,19 +197,22 @@ function ActionCell({ entry }: { entry: TimelineEntryWithJoins }) {
             <Pencil className="h-4 w-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <WideDialogContent size="xl">
           <DialogHeader>
             <DialogTitle>{t("editDialogTitle")}</DialogTitle>
             <DialogDescription>{t("editDialogDescription")}</DialogDescription>
           </DialogHeader>
           <TimelineEntryForm
             editEntry={entry}
-            isSubmitting={false}
+            isSubmitting={updateMutation.isPending}
             companies={companies}
             contacts={contacts}
-            onSubmit={handleEditSubmit}
+            onSubmit={async (values) => {
+              await updateMutation.mutateAsync(values);
+            }}
+            onCancel={() => setEditDialogOpen(false)}
           />
-        </DialogContent>
+        </WideDialogContent>
       </Dialog>
 
       <AlertDialog>
@@ -264,25 +274,23 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
         header: t("colActivity"),
         enableSorting: true,
         cell: (info) => {
-          const type = resolveDisplayActivityType(info.row.original);
+          const type = badgeActivityType(info.row.original);
           const label =
-            type === "note"
-              ? t("activityNote")
-              : type === "call"
-                ? t("activityCall")
-                : type === "email"
-                  ? t("activityEmail")
-                  : type === "meeting"
-                    ? t("activityMeeting")
-                    : type === "csv_import"
-                      ? "CSV Import"
-                      : type === "deleted"
-                        ? t("activityDeleted")
-                        : type === "ai_enrichment"
-                          ? t("activityAiEnrichment")
-                          : type === "other"
-                            ? t("activityOther")
-                            : type;
+            type === "call"
+              ? t("activityCall")
+              : type === "email"
+                ? t("activityEmail")
+                : type === "meeting"
+                  ? t("activityMeeting")
+                  : type === "csv_import"
+                    ? "CSV Import"
+                    : type === "deleted"
+                      ? t("activityDeleted")
+                      : type === "ai_enrichment"
+                        ? t("activityAiEnrichment")
+                        : type === "other"
+                          ? t("activityOther")
+                          : type;
           return (
             <Badge variant={activityVariant(type)} className="flex items-center gap-1">
               {activityIcon(type)}

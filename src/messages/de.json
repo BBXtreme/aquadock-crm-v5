@@ -454,7 +454,7 @@
     "detailCrmToastSaved": "CRM-Daten gespeichert",
     "detailCrmToastSaveFailed": "CRM-Daten konnten nicht gespeichert werden",
     "detailCrmStatus": {
-      "lead": "Lead",
+      "lead": "Neu",
       "interessant": "Interessant",
       "qualifiziert": "Qualifiziert",
       "akquise": "Akquise",
@@ -753,7 +753,7 @@
     "googleSessionErrorNetwork": "Netzwerk prüfen und erneut versuchen.",
     "googleSessionErrorHttp": "HTTP-Fehler: Schlüssel, Abrechnung und „Map Tiles API“ im Google-Projekt prüfen.",
     "googleSessionErrorUnexpected": "Unerwartete Antwort von Google — Session konnte nicht gelesen werden.",
-    "status_lead": "Lead",
+    "status_lead": "Neu",
     "status_interessant": "Interessant",
     "status_qualifiziert": "Qualifiziert",
     "status_akquise": "Akquise",

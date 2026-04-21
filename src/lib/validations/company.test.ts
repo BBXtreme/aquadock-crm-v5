@@ -419,12 +419,12 @@ describe("timelineSchema", () => {
   it("trims title", () => {
     const parsed = timelineSchema.parse({
       title: "  padded title  ",
-      activity_type: "note",
+      activity_type: "other",
     });
     expect(parsed.title).toBe("padded title");
   });
 
-  test.each(["note", "call", "email", "meeting", "other"] as const)("accepts activity_type %s", (activity_type) => {
+  test.each(["call", "email", "meeting", "other"] as const)("accepts activity_type %s", (activity_type) => {
     const parsed = timelineSchema.parse({ title: "Titel lang genug", activity_type });
     expect(parsed.activity_type).toBe(activity_type);
   });
@@ -438,7 +438,7 @@ describe("timelineSchema", () => {
   });
 
   it("rejects title shorter than 3 chars", () => {
-    expect(() => timelineSchema.parse({ title: "ab", activity_type: "note" })).toThrow();
+    expect(() => timelineSchema.parse({ title: "ab", activity_type: "other" })).toThrow();
   });
 
   it("rejects invalid optional company_id", () => {

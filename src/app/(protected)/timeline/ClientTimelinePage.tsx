@@ -80,7 +80,7 @@ function ClientTimelinePage() {
       return createTimelineEntryAction({
         title: values.title.trim() || t("defaultEntryTitle"),
         content: values.content?.trim() || null,
-        activity_type: values.activity_type || "note",
+        activity_type: values.activity_type || "other",
         company_id: values.company_id || null,
         contact_id: values.contact_id ?? null,
       });

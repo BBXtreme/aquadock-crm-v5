@@ -73,7 +73,7 @@ describe("createAuthenticatedTimelineEntry", () => {
     );
   });
 
-  it("defaults activity_type to note when empty string and maps optional fields", async () => {
+  it("defaults activity_type to other when empty string and maps optional fields", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u2" } }, error: null }),
@@ -89,7 +89,7 @@ describe("createAuthenticatedTimelineEntry", () => {
     expect(mockCreateTimelineEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         content: null,
-        activity_type: "note",
+        activity_type: "other",
         company_id: null,
         contact_id: null,
       }),
