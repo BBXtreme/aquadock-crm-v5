@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-import { registerPendingUserAfterSignup } from "@/lib/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,8 +22,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { submitAccessRequest } from "@/lib/actions/onboarding";
 import { useT } from "@/lib/i18n/use-translations";
-import { createClient } from "@/lib/supabase/browser";
 import { accessRequestSchema } from "@/lib/validations/access-request";
 
 export default function ApplyPage() {
@@ -45,36 +43,11 @@ export default function ApplyPage() {
   });
 
   const onSubmit = form.handleSubmit(async (raw) => {
-    const parsed = accessRequestSchema.safeParse(raw);
-    if (!parsed.success) {
-      toast.error(parsed.error.errors[0]?.message ?? "Invalid");
-      return;
-    }
     setSubmitting(true);
     try {
-      const supabase = createClient();
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
-      const emailRedirectTo = `${origin}/access-pending`;
-      const { error: signErr } = await supabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo,
-          data: {
-            display_name: parsed.data.display_name,
-          },
-        },
-      });
-      if (signErr !== null) {
-        toast.error(t("toastSignUpFailed"), { description: signErr.message });
-        return;
-      }
-      try {
-        await registerPendingUserAfterSignup(parsed.data.display_name);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        toast.error(t("toastRegisterFailed"), { description: msg });
+      const result = await submitAccessRequest(raw);
+      if (!result.ok) {
+        toast.error(t("toastSignUpFailed"), { description: result.message });
         return;
       }
       setDone(true);

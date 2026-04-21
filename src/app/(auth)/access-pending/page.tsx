@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-
-import { syncPendingEmailConfirmationIfNeeded } from "@/lib/actions/onboarding";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { syncPendingEmailConfirmationIfNeeded } from "@/lib/actions/onboarding";
 
 export default async function AccessPendingPage() {
   await syncPendingEmailConfirmationIfNeeded();
