@@ -1,12 +1,17 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { requireUser } from "@/lib/auth/require-user";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { logTrashAuditEvent } from "@/lib/server/delete-audit";
 import { fetchTrashBinPreference } from "@/lib/services/user-settings";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database.types";
+
+type DbClient = SupabaseClient<Database>;
 
 export type TrashDeleteMode = "soft" | "hard";
 
@@ -26,7 +31,7 @@ async function loadCompanyRowMetaForTrash(
 }
 
 async function hardDeleteCompanyCascade(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  supabase: DbClient,
   companyId: string,
 ): Promise<void> {
   const { data: contactRows, error: cErr } = await supabase.from("contacts").select("id").eq("company_id", companyId);
@@ -166,7 +171,7 @@ export async function restoreCompanyWithTrash(id: string): Promise<void> {
 
 export async function permanentlyDeleteCompany(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fetchErr } = await supabase
     .from("companies")
@@ -198,7 +203,7 @@ export async function permanentlyDeleteCompany(id: string): Promise<void> {
 /** Admin-only: restore any trashed company and its cascaded contacts/reminders. */
 export async function adminRestoreCompany(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fetchErr } = await supabase
     .from("companies")
@@ -352,7 +357,7 @@ export async function restoreContactWithTrash(id: string): Promise<void> {
 
 export async function permanentlyDeleteContact(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("contacts")
@@ -386,7 +391,7 @@ export async function permanentlyDeleteContact(id: string): Promise<void> {
 
 export async function adminRestoreContact(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("contacts")
@@ -520,7 +525,7 @@ export async function restoreReminderWithTrash(id: string): Promise<void> {
 
 export async function permanentlyDeleteReminder(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("reminders")
@@ -549,7 +554,7 @@ export async function permanentlyDeleteReminder(id: string): Promise<void> {
 
 export async function adminRestoreReminder(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("reminders")
@@ -678,7 +683,7 @@ export async function restoreTimelineEntryWithTrash(id: string): Promise<void> {
 
 export async function permanentlyDeleteTimelineEntry(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("timeline")
@@ -707,7 +712,7 @@ export async function permanentlyDeleteTimelineEntry(id: string): Promise<void> 
 
 export async function adminRestoreTimelineEntry(id: string): Promise<void> {
   const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
+  const supabase = createAdminClient();
 
   const { data: row, error: fe } = await supabase
     .from("timeline")
@@ -790,9 +795,286 @@ export async function bulkHardDeleteTimelineEntries(ids: string[]): Promise<void
   }
 }
 
+/** Admin-only: restore a soft-deleted comment. */
+export async function adminRestoreComment(id: string): Promise<void> {
+  const user = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: row, error: fe } = await supabase
+    .from("comments")
+    .select("id, body_markdown, entity_id, deleted_at")
+    .eq("id", id)
+    .not("deleted_at", "is", null)
+    .maybeSingle();
+
+  if (fe) throw handleSupabaseError(fe, "adminRestoreComment");
+  if (!row) throw new Error("Notiz nicht im Papierkorb");
+
+  const { error } = await supabase
+    .from("comments")
+    .update({ deleted_at: null, deleted_by: null })
+    .eq("id", id);
+  if (error) throw handleSupabaseError(error, "adminRestoreComment:update");
+
+  await logTrashAuditEvent(supabase, {
+    entity: "comment",
+    operation: "restore",
+    entityId: id,
+    label: row.body_markdown,
+    companyId: row.entity_id,
+    contactId: null,
+    userId: user.id,
+    profileId: user.id,
+  });
+}
+
+/** Admin-only: hard delete a soft-deleted comment (cascades to attachments + replies). */
+export async function permanentlyDeleteComment(id: string): Promise<void> {
+  const user = await requireAdmin();
+  const supabase = createAdminClient();
+
+  const { data: row, error: fe } = await supabase
+    .from("comments")
+    .select("id, body_markdown, entity_id")
+    .eq("id", id)
+    .not("deleted_at", "is", null)
+    .maybeSingle();
+
+  if (fe) throw handleSupabaseError(fe, "permanentlyDeleteComment");
+  if (!row) throw new Error("Notiz nicht im Papierkorb");
+
+  const { error: del } = await supabase.from("comments").delete().eq("id", id);
+  if (del) throw handleSupabaseError(del, "permanentlyDeleteComment:delete");
+
+  await logTrashAuditEvent(supabase, {
+    entity: "comment",
+    operation: "hard_delete",
+    entityId: id,
+    label: row.body_markdown,
+    companyId: row.entity_id,
+    contactId: null,
+    userId: user.id,
+    profileId: user.id,
+  });
+}
+
+export async function bulkRestoreComments(ids: string[]): Promise<void> {
+  await requireAdmin();
+  for (const id of ids) {
+    await adminRestoreComment(id);
+  }
+}
+
+export async function bulkHardDeleteComments(ids: string[]): Promise<void> {
+  await requireAdmin();
+  for (const id of ids) {
+    await permanentlyDeleteComment(id);
+  }
+}
+
 export async function bulkDeleteCompaniesWithTrash(ids: string[]): Promise<void> {
   await requireUser();
   for (const id of ids) {
     await deleteCompanyWithTrash(id);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Admin trash list
+// ---------------------------------------------------------------------------
+
+export type AdminTrashedCompany = {
+  id: string;
+  firmenname: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
+};
+
+export type AdminTrashedContact = {
+  id: string;
+  vorname: string;
+  nachname: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
+};
+
+export type AdminTrashedReminder = {
+  id: string;
+  title: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
+};
+
+export type AdminTrashedTimeline = {
+  id: string;
+  title: string;
+  deleted_at: string | null;
+  deleted_by: string | null;
+};
+
+export type AdminTrashedComment = {
+  id: string;
+  body_markdown: string;
+  entity_id: string;
+  companyName: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
+  parent_id: string | null;
+  /** First-line preview of parent note when this row is a reply (for admin trash context). */
+  parent_note_preview: string | null;
+};
+
+export type AdminTrashListPayload = {
+  profileDisplayByUserId: Record<string, string>;
+  companies: AdminTrashedCompany[];
+  contacts: AdminTrashedContact[];
+  reminders: AdminTrashedReminder[];
+  timeline: AdminTrashedTimeline[];
+  comments: AdminTrashedComment[];
+};
+
+/**
+ * Admin-only: lists every soft-deleted row across all owners. Uses the
+ * service-role client to bypass owner-scoped RLS so admins can moderate
+ * the full workspace trash bin.
+ */
+export async function listAdminTrashRows(): Promise<AdminTrashListPayload> {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const [c, co, r, tl, cm] = await Promise.all([
+    supabase
+      .from("companies")
+      .select("id, firmenname, deleted_at, deleted_by")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("contacts")
+      .select("id, vorname, nachname, deleted_at, deleted_by")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("reminders")
+      .select("id, title, deleted_at, deleted_by")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("timeline")
+      .select("id, title, deleted_at, deleted_by")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+    supabase
+      .from("comments")
+      .select("id, body_markdown, entity_id, deleted_at, deleted_by, parent_id")
+      .eq("entity_type", "company")
+      .not("deleted_at", "is", null)
+      .order("deleted_at", { ascending: false }),
+  ]);
+  if (c.error) throw handleSupabaseError(c.error, "listAdminTrashRows:companies");
+  if (co.error) throw handleSupabaseError(co.error, "listAdminTrashRows:contacts");
+  if (r.error) throw handleSupabaseError(r.error, "listAdminTrashRows:reminders");
+  if (tl.error) throw handleSupabaseError(tl.error, "listAdminTrashRows:timeline");
+  if (cm.error) throw handleSupabaseError(cm.error, "listAdminTrashRows:comments");
+
+  const companies = (c.data ?? []) as AdminTrashedCompany[];
+  const contacts = (co.data ?? []) as AdminTrashedContact[];
+  const reminders = (r.data ?? []) as AdminTrashedReminder[];
+  const timeline = (tl.data ?? []) as AdminTrashedTimeline[];
+  const commentRows = cm.data ?? [];
+
+  const commentCompanyIds = Array.from(
+    new Set(
+      commentRows
+        .map((row) => row.entity_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  const companyNameById: Record<string, string> = {};
+  if (commentCompanyIds.length > 0) {
+    const { data: cos, error: coe } = await supabase
+      .from("companies")
+      .select("id, firmenname")
+      .in("id", commentCompanyIds);
+    if (coe) throw handleSupabaseError(coe, "listAdminTrashRows:commentCompanies");
+    for (const row of cos ?? []) {
+      if (row.firmenname !== null && row.firmenname !== undefined) {
+        companyNameById[row.id] = String(row.firmenname);
+      }
+    }
+  }
+  const PARENT_PREVIEW_MAX = 140;
+  const parentLinePreview = (body: string): string => {
+    const firstLine = body.split(/\r?\n/).find((line) => line.trim().length > 0) ?? body;
+    const trimmed = firstLine.trim();
+    if (trimmed.length <= PARENT_PREVIEW_MAX) {
+      return trimmed;
+    }
+    return `${trimmed.slice(0, PARENT_PREVIEW_MAX - 1)}…`;
+  };
+
+  const parentIds = Array.from(
+    new Set(
+      commentRows
+        .map((row) => row.parent_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  );
+  const parentPreviewById: Record<string, string> = {};
+  if (parentIds.length > 0) {
+    const { data: parents, error: pe } = await supabase
+      .from("comments")
+      .select("id, body_markdown")
+      .in("id", parentIds);
+    if (pe) throw handleSupabaseError(pe, "listAdminTrashRows:commentParents");
+    for (const p of parents ?? []) {
+      parentPreviewById[p.id] = parentLinePreview(String(p.body_markdown ?? ""));
+    }
+  }
+
+  const comments: AdminTrashedComment[] = commentRows.map((row) => {
+    const pid = row.parent_id;
+    const parentKey = typeof pid === "string" && pid.length > 0 ? pid : null;
+    return {
+      id: row.id,
+      body_markdown: String(row.body_markdown ?? ""),
+      entity_id: row.entity_id,
+      companyName: companyNameById[row.entity_id] ?? null,
+      deleted_at: row.deleted_at,
+      deleted_by: row.deleted_by,
+      parent_id: parentKey,
+      parent_note_preview: parentKey ? parentPreviewById[parentKey] ?? null : null,
+    };
+  });
+
+  const deleterIds = new Set<string>();
+  for (const row of [...companies, ...contacts, ...reminders, ...timeline, ...comments]) {
+    if (row.deleted_by !== null && row.deleted_by !== undefined && row.deleted_by !== "") {
+      deleterIds.add(row.deleted_by);
+    }
+  }
+
+  const profileDisplayByUserId: Record<string, string> = {};
+  const idList = Array.from(deleterIds);
+  if (idList.length > 0) {
+    const { data: profs, error: pe } = await supabase
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", idList);
+    if (pe) throw handleSupabaseError(pe, "listAdminTrashRows:profiles");
+    for (const p of profs ?? []) {
+      const dn = p.display_name;
+      if (dn !== null && dn !== undefined && String(dn).trim() !== "") {
+        profileDisplayByUserId[p.id] = String(dn);
+      }
+    }
+  }
+
+  return {
+    profileDisplayByUserId,
+    companies,
+    contacts,
+    reminders,
+    timeline,
+    comments,
+  };
 }

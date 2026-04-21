@@ -1,5 +1,15 @@
 import "@testing-library/jest-dom/vitest";
-import { vi } from "vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
+
+afterEach(() => {
+  cleanup();
+});
+
+/** JSDOM may omit or stub `scrollIntoView`; company comments / highlights rely on it. */
+if (typeof Element !== "undefined") {
+  Element.prototype.scrollIntoView = vi.fn() as unknown as typeof Element.prototype.scrollIntoView;
+}
 
 if (typeof globalThis.ResizeObserver === "undefined") {
   class ResizeObserverMock {

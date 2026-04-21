@@ -31,7 +31,7 @@
 | Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
 | i18n | next-intl | Message catalogs in `src/messages/` (`de`, `en`, `hr`) |
 | Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
-| Tests | Vitest, Testing Library | `pnpm test:run`; CI runs `pnpm test:ci` |
+| Tests | Vitest, Testing Library | `pnpm test:run`; CI runs `pnpm test:ci` (shared setup in `src/test/setup.ts`; see **Testing** in `docs/architecture.md`) |
 
 ---
 
@@ -86,8 +86,8 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 
 | Document | Audience | Content |
 | --- | --- | --- |
-| [architecture.md](docs/architecture.md) | Developers | Layers, validation, data flow, layout |
-| [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables, RLS overview, Storage, type generation |
+| [architecture.md](docs/architecture.md) | Developers | Layers, validation, data flow, layout, Vitest/RTL testing |
+| [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables (incl. `comments` / attachments), RLS overview, Storage, type generation |
 | [README_OpenMap.md](docs/README_OpenMap.md) | Developers | Map and OSM POI behavior |
 | [react-table-v8-ts-tricks.md](docs/react-table-v8-ts-tricks.md) | Developers | TypeScript patterns for tables |
 | [production-deploy.md](docs/production-deploy.md) | DevOps / leads | Production checklist (Vercel + Supabase) |
@@ -116,6 +116,8 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 | `pnpm test:ci` | Coverage + verbose reporter (matches CI) |
 | `pnpm messages:validate` | Ensures `de` / `en` / `hr` message keys stay in sync (run after editing `src/messages/*.json`) |
 | `pnpm supabase:types` | Regenerate `src/types/supabase.ts` (edit `--project-id` in `package.json` if you fork the DB) |
+
+Vitest loads `src/test/setup.ts` for every test (global mocks, JSDOM stubs, and RTL `cleanup()` after each test so `render()` does not accumulate trees). Details: [`docs/architecture.md`](docs/architecture.md#testing-vitest).
 
 ---
 

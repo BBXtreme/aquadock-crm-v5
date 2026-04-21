@@ -86,6 +86,7 @@ function mockCompany(overrides: Partial<Company> = {}): Company {
     updated_by: null,
     import_batch: null,
     search_vector: null,
+    search_embedding: null,
     deleted_at: null,
     deleted_by: null,
     ...overrides,

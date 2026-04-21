@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      comment_attachments: {
+        Row: {
+          byte_size: number | null
+          comment_id: string
+          content_type: string | null
+          created_at: string
+          created_by: string
+          file_name: string
+          id: string
+          storage_object_path: string
+        }
+        Insert: {
+          byte_size?: number | null
+          comment_id: string
+          content_type?: string | null
+          created_at?: string
+          created_by: string
+          file_name: string
+          id?: string
+          storage_object_path: string
+        }
+        Update: {
+          byte_size?: number | null
+          comment_id?: string
+          content_type?: string | null
+          created_at?: string
+          created_by?: string
+          file_name?: string
+          id?: string
+          storage_object_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_attachments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          body_markdown: string
+          created_at: string
+          created_by: string
+          deleted_at: string | null
+          deleted_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          parent_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_markdown: string
+          created_at?: string
+          created_by: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          entity_id: string
+          entity_type?: string
+          id?: string
+          parent_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_markdown?: string
+          created_at?: string
+          created_by?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          parent_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           bundesland: string | null
@@ -34,6 +160,7 @@ export type Database = {
           osm: string | null
           plz: string | null
           rechtsform: string | null
+          search_embedding: string | null
           search_vector: unknown
           stadt: string | null
           status: string
@@ -66,6 +193,7 @@ export type Database = {
           osm?: string | null
           plz?: string | null
           rechtsform?: string | null
+          search_embedding?: string | null
           search_vector?: unknown
           stadt?: string | null
           status?: string
@@ -98,6 +226,7 @@ export type Database = {
           osm?: string | null
           plz?: string | null
           rechtsform?: string | null
+          search_embedding?: string | null
           search_vector?: unknown
           stadt?: string | null
           status?: string
@@ -484,7 +613,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      hybrid_company_search: {
+        Args: {
+          p_fts_weight?: number
+          p_match_count?: number
+          p_max_vector_distance?: number
+          p_query: string
+          p_query_embedding: string
+          p_rrf_k?: number
+          p_vector_weight?: number
+        }
+        Returns: {
+          company_id: string
+          fts_rank: number
+          rrf_score: number
+          vector_rank: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

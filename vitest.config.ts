@@ -40,7 +40,6 @@ export default defineConfig({
         "src/types/supabase.ts",
         "src/types/database.types.ts",
         "src/types/brevo.ts",
-        "src/types/database.types_bak copy.ts",
         "src/**/login/page.tsx",
         "src/components/tables/TimelineTable.tsx",
         "src/components/features/timeline/TimelineEntryForm.tsx",
