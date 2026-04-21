@@ -49,6 +49,8 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 
 - [ ] **`avatars`** bucket and SQL policies applied: [`src/sql/storage-avatars-bucket.sql`](../src/sql/storage-avatars-bucket.sql)  
 
+**Company comments:** If the feature is enabled in your fork, apply the three SQL files in order and regenerate types — see **Company comments** under Supabase in [`production-deploy.md`](production-deploy.md).
+
 ---
 
 ## Git integration

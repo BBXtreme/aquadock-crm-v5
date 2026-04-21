@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-12  
+**Last audited**: 2026-04-21  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
@@ -14,6 +14,8 @@
 | contacts        | Persons / decision makers | 1 200 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
 | reminders       | Tasks & follow-ups        | 320   | uuid | → companies.id (required) | Yes  | company_id, due_date, status |
 | timeline        | Activity log              | 2 800 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
+| comments        | Threaded notes on companies | —   | uuid | → companies, self (parent), profiles | Yes | entity list, parent thread |
+| comment_attachments | File metadata for a comment (future UI) | — | uuid | → comments, profiles | Yes | comment_id |
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
@@ -118,6 +120,43 @@
 | deleted_by | uuid        | true     | —                 | User who soft-deleted    | FK → auth.users |
 | created_at | timestamptz | true     | now()             | —                        | —             |
 
+### comments
+
+Company-scoped threaded comments. **Phase 1:** `entity_type` is constrained to `'company'` and `entity_id` references `companies.id` (CASCADE on company delete). **Authoring keys** (`created_by`, `updated_by`, `deleted_by`) reference **`profiles.id`** (not `auth.users` directly), consistent with generated types.
+
+| Column         | Type        | Nullable | Default           | Business Meaning                    | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | ----------------------------------- | ------------- |
+| id             | uuid        | false    | gen_random_uuid() | Primary key                         | PK            |
+| entity_type    | text        | false    | 'company'         | Target entity kind                  | CHECK = `'company'` only (Phase 1) |
+| entity_id      | uuid        | false    | —                 | Target row (`companies.id`)         | FK → companies, indexed list pattern |
+| parent_id      | uuid        | true     | —                 | Parent comment for threading        | FK → comments (CASCADE); same entity enforced by trigger |
+| body_markdown  | text        | false    | —                 | Markdown body                     | —             |
+| created_at     | timestamptz | false    | now()             | —                                   | —             |
+| updated_at     | timestamptz | false    | now()             | Last edit (maintained by trigger)   | —             |
+| created_by     | uuid        | false    | —                 | Author (`profiles.id`)              | FK → profiles |
+| updated_by     | uuid        | true     | —                 | Last editor (`profiles.id`)         | FK → profiles |
+| deleted_at     | timestamptz | true     | —                 | Soft delete (Papierkorb)            | Partial indexes exclude deleted rows where noted in SQL |
+| deleted_by     | uuid        | true     | —                 | Actor who soft-deleted              | FK → profiles |
+
+**Triggers:** `trg_comments_set_updated_at` sets `updated_at` on UPDATE; `trg_comments_validate_parent` ensures `parent_id` (if set) points to a non-deleted comment on the same `entity_type` / `entity_id`.
+
+**Source SQL (apply in order on a new project):** [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql), then [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql), then [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) (extends RLS so the company owner can SELECT soft-deleted comments, UPDATE for restore, and DELETE for hard delete — see §4).
+
+### comment_attachments
+
+Optional attachment rows per comment (schema and RLS exist; product UI may follow later).
+
+| Column               | Type        | Nullable | Default           | Business Meaning     | Notes / Index |
+| -------------------- | ----------- | -------- | ----------------- | -------------------- | ------------- |
+| id                   | uuid        | false    | gen_random_uuid() | Primary key          | PK            |
+| comment_id           | uuid        | false    | —                 | Parent comment       | FK → comments (CASCADE), indexed |
+| file_name            | text        | false    | —                 | Original file name   | —             |
+| content_type         | text        | true     | —                 | MIME type            | —             |
+| byte_size            | bigint      | true     | —                 | Size in bytes        | —             |
+| storage_object_path  | text        | false    | —                 | Path in Storage (TBD) | —             |
+| created_at           | timestamptz | false    | now()             | —                    | —             |
+| created_by           | uuid        | false    | —                 | Uploader (`profiles.id`) | FK → profiles |
+
 ### email_log
 
 | Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
@@ -181,6 +220,7 @@ Holds the **public** Storage URL of the user’s avatar, or `null` if none. The 
 
 ## 3. Important Enums & Constraints
 
+- `comments.entity_type`: currently only `'company'` (CHECK on table); reserved for future entity kinds.
 - `companies.status` (Zod + UI): `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren' | 'kunde' | 'partner' | 'inaktiv'` — canonical labels in `src/lib/constants/company-options.ts` (`statusOptions`).
 - `reminders.priority`: `'hoch' | 'normal' | 'niedrig'`
 - `reminders.status`: `'open' | 'closed'`
@@ -199,7 +239,9 @@ OR (company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
 
 The **service role** key bypasses RLS when used from trusted server code; it must never ship to the browser.
 
-**Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, and `timeline` support optional soft deletion. On soft delete the app sets `deleted_by` to the acting `auth.users` id; on restore both `deleted_at` and `deleted_by` are cleared. Hard deletes remove rows and do not use `deleted_by`. Active reads use `.is("deleted_at", null)`; trashed rows are listed only in admin tooling. RLS was **not** extended for these columns in this iteration—rely on server actions and query filters.
+**`comments` and `comment_attachments`:** Policies tie access to **company ownership** (`companies.user_id = auth.uid()`), same idea as core CRM tables. After [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql): **SELECT** includes soft-deleted comments for the company owner (so trash / restore flows work under RLS). **INSERT** still requires `created_by = auth.uid()` and an active (non-deleted) company. **UPDATE** / **DELETE** are allowed for the **company owner** on any comment on that company (restore and hard-delete); the app still restricts **markdown edits** to the original author in server actions (`@/lib/actions/comments.ts`). **Attachments:** SELECT/INSERT mirror comment + company access; there is no UPDATE/DELETE policy yet—extend if you add attachment management.
+
+**Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, `timeline`, and **`comments`** support optional soft deletion. On restore, `deleted_at` and `deleted_by` are cleared; hard deletes drop the row. **`deleted_by` FK differs by table:** on `companies`, `contacts`, `reminders`, and `timeline` it references **`auth.users(id)`** ([`deleted-by-audit.sql`](../src/sql/deleted-by-audit.sql)); on **`comments`** it references **`profiles(id)`** ([`comments-tables.sql`](../src/sql/comments-tables.sql)). Active reads typically filter `deleted_at IS NULL`; trashed rows appear in admin tooling or company-owner flows. For the core four tables, RLS was not extended solely for soft-delete—rely on server actions and query filters where documented.
 
 **Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`src/components/features/profile/AdminTrashBinCard.tsx`, `safeDisplay`).
 
@@ -213,6 +255,8 @@ The **service role** key bypasses RLS when used from trusted server code; it mus
 - timeline: `company_id`, `user_id`
 - user_settings: `user_id`, `key`
 - Soft-delete: composite `(user_id, deleted_at, deleted_by)` (replaces former two-column index) and partial “trashed” `(user_id) WHERE deleted_at IS NOT NULL` on `companies`, `contacts`, `reminders`, `timeline` — run `src/sql/soft-delete-trash.sql` then `src/sql/deleted-by-audit.sql`
+- comments: `(entity_type, entity_id, created_at DESC) WHERE deleted_at IS NULL`; partial on `parent_id` for non-null parents among non-deleted rows — see `src/sql/comments-tables.sql`
+- comment_attachments: `comment_id` — see `src/sql/comments-tables.sql`
 
 ## 6. Maintenance & Type Safety
 
@@ -259,6 +303,7 @@ Key Zod schemas include:
 - `emailTemplateSchema` (`email-template.ts`): Email template name, subject, body
 - `profileDisplayNameSchema`, `profileAvatarSchema`, `parseProfileAvatarFile` (`profile.ts`): Display name and avatar URL / upload validation
 - `notificationPreferencesSchema`, `trashBinPreferenceSchema` (`settings.ts`): User settings keys aligned with `user_settings`
+- `createCompanyCommentSchema`, `updateCommentSchema`, `deleteCommentSchema`, `restoreOwnCommentSchema` (`comment.ts`): Company comment create/update/delete/restore payloads for server actions (markdown length, UUIDs; maps to `comments` columns)
 
 All schemas use `.strict()`, trimming, length limits, and enum constraints matching the database schema. Forms use `z.infer<typeof schema>` for TypeScript integration.
 
@@ -315,3 +360,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-10 Doc sync: `profiles.last_sign_in_at`; `contacts.is_primary` nullability vs generated types; Zod section aligned with `companySchema`, `timelineSchema`, `profileDisplayNameSchema`, and related modules under `@/lib/validations/`.
 
 2026-04-12 Doc sync: full `companies.status` set (`kunde`, `partner`, `inaktiv`); timeline `updated_by` clarified (no `updated_at` on `timeline`); RLS summary no longer uses non-standard `auth.role()` pseudocode; Admin Papierkorb component path made explicit; audit stamp refreshed.
+
+2026-04-21 Documented **`comments`** and **`comment_attachments`** (columns, indexes, triggers, FKs to `companies` / `profiles`), RLS behaviour before/after **`comments-trash-alignment.sql`**, Zod **`comment.ts`**, and `deleted_by` FK difference vs core tables. Linked SQL apply order for new environments.

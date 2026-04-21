@@ -41,9 +41,19 @@ Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `
 
 ### Row Level Security (RLS)
 
-- [ ] RLS enabled on application tables (`companies`, `contacts`, `reminders`, `timeline`, email tables, `profiles`, `user_settings`, etc.).  
+- [ ] RLS enabled on application tables (`companies`, `contacts`, `reminders`, `timeline`, email tables, `profiles`, `user_settings`, `comments`, `comment_attachments`, etc.).  
 - [ ] Policies match your org’s rules (per-user data, admin paths).  
 - [ ] Service role key used only in server code, never in client bundles.
+
+### Company comments (optional feature)
+
+If you use company comments, apply these **in order** in the Supabase SQL Editor (or your migration pipeline); see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §2 and §4.
+
+- [ ] [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql) — tables, indexes, triggers  
+- [ ] [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) — initial RLS  
+- [ ] [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) — owner SELECT/UPDATE/DELETE for trash and restore  
+
+Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live schema.
 
 ### Operations
 

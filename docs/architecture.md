@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 20, 2026  
+**Last updated:** April 21, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -67,6 +67,14 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 ## Geo and OpenMap
 
 Companies with coordinates are loaded for the map via the service layer. OSM POIs and water-distance helpers run in the browser. See [`README_OpenMap.md`](README_OpenMap.md).
+
+---
+
+## Testing (Vitest)
+
+- Tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter).
+- **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
+- Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).
 
 ---
 
