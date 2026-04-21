@@ -218,11 +218,23 @@ function UserManagementCard({
         <CardContent>
           <Tabs defaultValue="users" className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="users" type="button">
-                {t("userManagement.usersTab")}
+              <TabsTrigger value="users" type="button" className="gap-1.5">
+                <span>{t("userManagement.usersTab")}</span>
+                <Badge
+                  variant="secondary"
+                  className="min-w-5 justify-center px-1.5 py-0 font-normal text-xs tabular-nums"
+                >
+                  {allUsers.length}
+                </Badge>
               </TabsTrigger>
-              <TabsTrigger value="pending" type="button">
-                {t("userManagement.pendingTab")}
+              <TabsTrigger value="pending" type="button" className="gap-1.5">
+                <span>{t("userManagement.pendingTab")}</span>
+                <Badge
+                  variant="secondary"
+                  className="min-w-5 justify-center px-1.5 py-0 font-normal text-xs tabular-nums"
+                >
+                  {pendingUsers.length}
+                </Badge>
               </TabsTrigger>
             </TabsList>
             <TabsContent value="pending" className="mt-0">
