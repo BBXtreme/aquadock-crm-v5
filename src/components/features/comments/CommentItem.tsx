@@ -44,6 +44,7 @@ type CommentItemProps = {
   currentUserId: string | null;
   localeTag: string;
   depth?: number;
+  isHighlighted?: boolean;
   onReply: (comment: CommentWithAuthor) => void;
   onUpdate: (commentId: string, bodyMarkdown: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
@@ -54,6 +55,7 @@ export function CommentItem({
   currentUserId,
   localeTag,
   depth = 0,
+  isHighlighted = false,
   onReply,
   onUpdate,
   onDelete,
@@ -103,32 +105,33 @@ export function CommentItem({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card/50 p-4",
-        depth > 0 && "ml-6 border-l-2 border-l-primary/30 pl-4",
+        "group rounded-lg border border-border bg-card/50 p-3 transition-colors",
+        depth > 0 && "ml-5 border-l-2 border-l-primary/30 pl-3 sm:ml-6",
+        isHighlighted && "border-primary/40 bg-primary/5 ring-1 ring-primary/20",
       )}
     >
-      <div className="flex gap-3">
+      <div className="flex gap-2.5">
         <Avatar size="sm" className="mt-0.5">
           {comment.profiles?.avatar_url ? (
             <AvatarImage src={comment.profiles.avatar_url} alt="" />
           ) : null}
           <AvatarFallback className="text-xs">{displayInitials(authorName, comment.created_by)}</AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div className="min-w-0">
+            <div className="min-w-0 text-sm">
               <span className="font-medium text-foreground">{authorName}</span>
               <span className="text-muted-foreground text-xs"> · {created}</span>
               {isLikelyEdited(comment) ? (
                 <span className="text-muted-foreground text-xs"> · {t("edited")}</span>
               ) : null}
             </div>
-            <div className="flex shrink-0 gap-1">
+            <div className="flex shrink-0 items-center gap-0.5 opacity-80 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 onClick={() => onReply(comment)}
               >
                 <Reply className="mr-1 h-3.5 w-3.5" aria-hidden />
@@ -140,7 +143,7 @@ export function CommentItem({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
                     onClick={() => {
                       setEditBody(comment.body_markdown);
                       setEditing(true);
@@ -153,7 +156,7 @@ export function CommentItem({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
                     onClick={() => setDeleteOpen(true)}
                     aria-label={t("delete")}
                   >

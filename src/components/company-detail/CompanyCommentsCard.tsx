@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { MessageSquare, Phone, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { CommentComposer } from "@/components/features/comments/CommentComposer";
@@ -21,10 +22,13 @@ import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { CommentWithAuthor } from "@/types/database.types";
 
 const MAX_COMMENT_DEPTH = 32;
+const HIGHLIGHT_DURATION_MS = 2500;
 
 type CompanyCommentsCardProps = {
   companyId: string;
 };
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardProps) {
   const t = useT("comments");
@@ -32,7 +36,9 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
   const [replyParent, setReplyParent] = useState<CommentWithAuthor | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryKey = useMemo(() => ["comments", "company", companyId] as const, [companyId]);
 
@@ -65,6 +71,24 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     }
     return { ordered: flat, depthById: depth };
   }, [comments]);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const scheduleHighlight = useCallback((id: string) => {
+    setHighlightId(id);
+    if (highlightTimeoutRef.current) {
+      clearTimeout(highlightTimeoutRef.current);
+    }
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightId((current) => (current === id ? null : current));
+    }, HIGHLIGHT_DURATION_MS);
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -106,9 +130,12 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
       const message = err instanceof Error ? err.message : t("unknownError");
       toast.error(t("toastCreateFailed"), { description: message });
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
       setDraft("");
       setReplyParent(null);
+      if (created?.id) {
+        scheduleHighlight(created.id);
+      }
       toast.success(t("toastCreated"));
     },
     onSettled: () => {
@@ -201,15 +228,23 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
       ? t("replyingTo", { name: replyParent.profiles?.display_name?.trim() || t("anonymousUser") })
       : null;
 
+  const suggestionChips: { key: string; label: string; Icon: IconComponent }[] = [
+    { key: "call", label: t("chipCallSummary"), Icon: Phone },
+    { key: "next", label: t("chipNextSteps"), Icon: Sparkles },
+    { key: "objection", label: t("chipObjection"), Icon: ShieldAlert },
+    { key: "decision", label: t("chipDecisionMaker"), Icon: UserCheck },
+  ];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" aria-hidden />
           {t("cardTitle", { count: comments.length })}
         </CardTitle>
+        <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{t("cardSubtitle")}</p>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-5">
         <div ref={composerRef}>
           <CommentComposer
             title={t("addTitle")}
@@ -220,6 +255,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             replyBanner={replyBanner}
             onCancelReply={() => setReplyParent(null)}
             onSubmit={handleSubmit}
+            isReplying={replyParent !== null}
           />
         </div>
 
@@ -230,9 +266,27 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             {t("loadError", { message: error instanceof Error ? error.message : String(error) })}
           </p>
         ) : ordered.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("empty")}</p>
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-6 text-center">
+            <MessageSquare className="mx-auto h-6 w-6 text-muted-foreground/70" aria-hidden />
+            <h3 className="mt-2 text-sm font-semibold text-foreground">{t("emptyHeading")}</h3>
+            <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground sm:text-sm">{t("emptyPrompt")}</p>
+            <ul
+              className="mt-3 flex flex-wrap justify-center gap-1.5"
+              aria-label={t("suggestionsLabel")}
+            >
+              {suggestionChips.map(({ key, label, Icon }) => (
+                <li
+                  key={key}
+                  className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground"
+                >
+                  <Icon className="h-3 w-3" aria-hidden />
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
         ) : (
-          <ul className="space-y-3">
+          <ul className="space-y-2.5">
             {ordered.map((c) => (
               <li key={c.id}>
                 <CommentItem
@@ -240,6 +294,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
                   currentUserId={currentUser?.id ?? null}
                   localeTag={localeTag}
                   depth={depthById.get(c.id) ?? 0}
+                  isHighlighted={highlightId === c.id}
                   onReply={handleReply}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}

@@ -3,7 +3,6 @@
 import {
   Bold,
   Heading2,
-  ImageIcon,
   Italic,
   Link2,
   List,
@@ -17,7 +16,6 @@ import { useRef, useState } from "react";
 import { CommentMarkdownPreview } from "@/components/features/comments/CommentMarkdownPreview";
 import { applyMarkdownSnippet } from "@/components/features/comments/comment-composer-markdown";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
@@ -33,6 +31,7 @@ type CommentComposerProps = {
   title?: string;
   replyBanner?: string | null;
   onCancelReply?: () => void;
+  isReplying?: boolean;
 };
 
 export function CommentComposer({
@@ -44,10 +43,17 @@ export function CommentComposer({
   title,
   replyBanner,
   onCancelReply,
+  isReplying = false,
 }: CommentComposerProps) {
   const t = useT("comments");
   const ta = useRef<HTMLTextAreaElement>(null);
-  const [tab, setTab] = useState<"write" | "preview">("write");
+  const [isFocused, setIsFocused] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const hasContent = value.trim().length > 0;
+  const isExpanded = isFocused || hasContent;
+  const canSubmit = hasContent && !isSubmitting && !disabled;
+  const submitLabel = isReplying ? t("submitReply") : t("submit");
 
   const applySnippet = (snippet: Snippet) => {
     const el = ta.current;
@@ -63,8 +69,6 @@ export function CommentComposer({
       el.setSelectionRange(focusStart, focusEnd);
     });
   };
-
-  const canSubmit = value.trim().length > 0 && !isSubmitting && !disabled;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,99 +86,107 @@ export function CommentComposer({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      {title ? <h3 className="text-sm font-semibold text-foreground">{title}</h3> : null}
+    <form onSubmit={handleSubmit} className="space-y-2">
       {replyBanner ? (
-        <div className="flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
-          <span className="text-muted-foreground">{replyBanner}</span>
+        <div className="flex items-center justify-between gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+          <span className="text-foreground/80">{replyBanner}</span>
           {onCancelReply ? (
-            <Button type="button" variant="ghost" size="sm" onClick={onCancelReply}>
+            <Button type="button" variant="ghost" size="sm" onClick={onCancelReply} className="h-7">
               {t("cancelReply")}
             </Button>
           ) : null}
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-border bg-card shadow-sm">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "write" | "preview")} className="gap-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-2 py-1.5">
-            <TabsList variant="line" className="h-auto gap-0 bg-transparent p-0">
-              <TabsTrigger value="write" className="text-xs sm:text-sm">
-                {t("tabWrite")}
-              </TabsTrigger>
-              <TabsTrigger value="preview" className="text-xs sm:text-sm">
-                {t("tabPreview")}
-              </TabsTrigger>
-            </TabsList>
-            {tab === "write" ? (
-              <div className="flex flex-wrap items-center gap-0.5">
-                <ToolbarIconButton label={t("toolHeading")} onClick={() => applySnippet("h2")}>
-                  <Heading2 className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolBold")} onClick={() => applySnippet("bold")}>
-                  <Bold className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolItalic")} onClick={() => applySnippet("italic")}>
-                  <Italic className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolCode")} onClick={() => applySnippet("code")}>
-                  <SquareCode className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolLink")} onClick={() => applySnippet("link")}>
-                  <Link2 className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolBullet")} onClick={() => applySnippet("bullet")}>
-                  <List className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolOrdered")} onClick={() => applySnippet("ordered")}>
-                  <ListOrdered className="h-4 w-4" />
-                </ToolbarIconButton>
-                <ToolbarIconButton label={t("toolTask")} onClick={() => applySnippet("task")}>
-                  <ListTodo className="h-4 w-4" />
-                </ToolbarIconButton>
-              </div>
-            ) : null}
-          </div>
-
-          {/* One editor instance only (Radix keeps inactive TabsContent in DOM). */}
-          {tab === "write" ? (
-            <div className="px-3 pb-2 pt-2">
-              <Textarea
-                ref={ta}
-                data-testid="company-comment-composer-body"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={t("placeholder")}
-                disabled={disabled || isSubmitting}
-                rows={8}
-                aria-label={title ?? t("addTitle")}
-                className={cn(
-                  "min-h-[180px] resize-y border-0 bg-transparent px-0 shadow-none focus-visible:ring-0",
-                  "text-sm",
-                )}
-              />
-            </div>
-          ) : (
-            <div className="min-h-[180px] px-3 pb-3 pt-2">
-              <CommentMarkdownPreview markdown={value} />
-            </div>
+      <div
+        className={cn(
+          "rounded-lg border bg-card shadow-sm transition-colors",
+          isExpanded ? "border-ring/60 shadow" : "border-border",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center justify-end gap-0.5 border-b px-2 transition-all",
+            isExpanded ? "border-border py-1.5 opacity-100" : "h-0 border-transparent py-0 opacity-0",
+            "overflow-hidden",
           )}
-        </Tabs>
-
-        <div className="flex flex-col gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>{t("markdownSupported")}</span>
-          <span className="inline-flex items-center gap-1.5 opacity-80">
-            <ImageIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {t("filesHintLater")}
-          </span>
+          aria-hidden={!isExpanded}
+        >
+          <ToolbarIconButton label={t("toolHeading")} onClick={() => applySnippet("h2")} tabIndex={isExpanded ? 0 : -1}>
+            <Heading2 className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolBold")} onClick={() => applySnippet("bold")} tabIndex={isExpanded ? 0 : -1}>
+            <Bold className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolItalic")} onClick={() => applySnippet("italic")} tabIndex={isExpanded ? 0 : -1}>
+            <Italic className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolCode")} onClick={() => applySnippet("code")} tabIndex={isExpanded ? 0 : -1}>
+            <SquareCode className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolLink")} onClick={() => applySnippet("link")} tabIndex={isExpanded ? 0 : -1}>
+            <Link2 className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolBullet")} onClick={() => applySnippet("bullet")} tabIndex={isExpanded ? 0 : -1}>
+            <List className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolOrdered")} onClick={() => applySnippet("ordered")} tabIndex={isExpanded ? 0 : -1}>
+            <ListOrdered className="h-4 w-4" />
+          </ToolbarIconButton>
+          <ToolbarIconButton label={t("toolTask")} onClick={() => applySnippet("task")} tabIndex={isExpanded ? 0 : -1}>
+            <ListTodo className="h-4 w-4" />
+          </ToolbarIconButton>
         </div>
-      </div>
 
-      <div className="flex justify-end">
-        <Button type="submit" disabled={!canSubmit}>
-          {isSubmitting ? t("submitting") : t("submit")}
-        </Button>
+        <div className="px-3 py-2">
+          <Textarea
+            ref={ta}
+            data-testid="company-comment-composer-body"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={t("placeholder")}
+            disabled={disabled || isSubmitting}
+            rows={isExpanded ? 5 : 2}
+            aria-label={title ?? t("addTitle")}
+            className={cn(
+              "resize-y border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0",
+              isExpanded ? "min-h-[120px]" : "min-h-[56px]",
+            )}
+          />
+        </div>
+
+        {hasContent && showPreview ? (
+          <div className="border-t border-dashed border-border bg-muted/30 px-3 py-2">
+            <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              {t("tabPreview")}
+            </div>
+            <CommentMarkdownPreview markdown={value} />
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+          <span className="truncate">{t("markdownSupported")}</span>
+          <div className="flex items-center gap-1">
+            {hasContent ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPreview((v) => !v)}
+                aria-pressed={showPreview}
+              >
+                {t("tabPreview")}
+              </Button>
+            ) : null}
+            <Button type="submit" size="sm" disabled={!canSubmit} className="h-8">
+              {isSubmitting ? t("submitting") : submitLabel}
+            </Button>
+          </div>
+        </div>
       </div>
     </form>
   );
@@ -183,10 +195,12 @@ export function CommentComposer({
 function ToolbarIconButton({
   label,
   onClick,
+  tabIndex,
   children,
 }: {
   label: string;
   onClick: () => void;
+  tabIndex?: number;
   children: React.ReactNode;
 }) {
   return (
@@ -194,10 +208,11 @@ function ToolbarIconButton({
       type="button"
       variant="ghost"
       size="icon"
-      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+      className="h-7 w-7 text-muted-foreground hover:text-foreground"
       onClick={onClick}
       aria-label={label}
       title={label}
+      tabIndex={tabIndex}
     >
       {children}
     </Button>

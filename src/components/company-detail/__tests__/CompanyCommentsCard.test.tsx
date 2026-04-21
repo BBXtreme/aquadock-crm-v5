@@ -67,7 +67,7 @@ describe("CompanyCommentsCard", () => {
     listCompanyComments.mockResolvedValue([]);
     render(wrapper(<CompanyCommentsCard companyId="00000000-0000-4000-8000-000000000001" />));
     await waitFor(() => {
-      expect(screen.getByText(/Noch keine Kommentare/i)).toBeInTheDocument();
+      expect(screen.getByText(/Starte die Konversation/i)).toBeInTheDocument();
     });
   });
 
