@@ -1,7 +1,8 @@
 "use client";
 
 import { Pencil, Reply, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CommentMarkdownPreview } from "@/components/features/comments/CommentMarkdownPreview";
 import {
@@ -66,6 +67,7 @@ export function CommentItem({
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!editing) {
@@ -73,14 +75,23 @@ export function CommentItem({
     }
   }, [comment.body_markdown, editing]);
 
+  useEffect(() => {
+    if (!isHighlighted) {
+      return;
+    }
+    rootRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [isHighlighted]);
+
   const isOwner = currentUserId !== null && comment.created_by === currentUserId;
   const authorName = comment.profiles?.display_name?.trim() || t("anonymousUser");
   const created = comment.created_at
     ? new Date(comment.created_at).toLocaleString(localeTag, { dateStyle: "medium", timeStyle: "short" })
     : "";
 
-  const handleSaveEdit = async () => {
-    if (!editBody.trim()) {
+  const canSaveEdit = editBody.trim().length > 0 && !saving;
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!canSaveEdit) {
       return;
     }
     setSaving(true);
@@ -89,6 +100,23 @@ export function CommentItem({
       setEditing(false);
     } finally {
       setSaving(false);
+    }
+  }, [canSaveEdit, comment.id, editBody, onUpdate]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditing(false);
+    setEditBody(comment.body_markdown);
+  }, [comment.body_markdown]);
+
+  const handleEditKeyDown = (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && canSaveEdit) {
+      e.preventDefault();
+      void handleSaveEdit();
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleCancelEdit();
     }
   };
 
@@ -104,8 +132,9 @@ export function CommentItem({
 
   return (
     <div
+      ref={rootRef}
       className={cn(
-        "group rounded-lg border border-border bg-card/50 p-3 transition-colors",
+        "group rounded-lg border border-border bg-card/50 p-3 transition-colors duration-500",
         depth > 0 && "ml-5 border-l-2 border-l-primary/30 pl-3 sm:ml-6",
         isHighlighted && "border-primary/40 bg-primary/5 ring-1 ring-primary/20",
       )}
@@ -169,21 +198,19 @@ export function CommentItem({
 
           {editing ? (
             <div className="space-y-2">
-              <Textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={6} className="text-sm" />
+              <Textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                rows={6}
+                className="text-sm"
+                aria-label={t("edit")}
+              />
               <div className="flex gap-2">
-                <Button type="button" size="sm" onClick={handleSaveEdit} disabled={saving || !editBody.trim()}>
+                <Button type="button" size="sm" onClick={() => void handleSaveEdit()} disabled={!canSaveEdit}>
                   {saving ? t("saving") : t("save")}
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(false);
-                    setEditBody(comment.body_markdown);
-                  }}
-                  disabled={saving}
-                >
+                <Button type="button" size="sm" variant="outline" onClick={handleCancelEdit} disabled={saving}>
                   {t("cancel")}
                 </Button>
               </div>

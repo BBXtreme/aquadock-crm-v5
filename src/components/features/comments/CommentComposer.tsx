@@ -82,6 +82,11 @@ export function CommentComposer({
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && canSubmit) {
       e.preventDefault();
       void onSubmit();
+      return;
+    }
+    if (e.key === "Escape" && isReplying && onCancelReply) {
+      e.preventDefault();
+      onCancelReply();
     }
   };
 

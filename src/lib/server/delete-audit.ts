@@ -3,7 +3,7 @@ import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 import type { Database } from "@/types/database.types";
 
-export type TrashAuditEntity = "company" | "contact" | "reminder" | "timeline_row";
+export type TrashAuditEntity = "company" | "contact" | "reminder" | "timeline_row" | "comment";
 
 export type TrashAuditOperation = "soft_delete" | "hard_delete" | "restore";
 
@@ -28,6 +28,7 @@ function entityLabel(entity: TrashAuditEntity): string {
   if (entity === "company") return "Unternehmen";
   if (entity === "contact") return "Kontakt";
   if (entity === "reminder") return "Erinnerung";
+  if (entity === "comment") return "Notiz";
   return "Aktivität";
 }
 
@@ -67,6 +68,9 @@ function buildAuditTitle(
     }
     if (entity === "reminder") {
       return `Erinnerung in Papierkorb verschoben von ${actorDisplay}`;
+    }
+    if (entity === "comment") {
+      return `Notiz in Papierkorb verschoben von ${actorDisplay}`;
     }
     return `Aktivität in Papierkorb verschoben von ${actorDisplay}`;
   }

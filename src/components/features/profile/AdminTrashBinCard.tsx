@@ -30,14 +30,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  type AdminTrashedComment,
+  type AdminTrashedCompany,
+  type AdminTrashedContact,
+  type AdminTrashedReminder,
+  type AdminTrashedTimeline,
+  bulkHardDeleteComments,
   bulkHardDeleteCompanies,
   bulkHardDeleteContacts,
   bulkHardDeleteReminders,
   bulkHardDeleteTimelineEntries,
+  bulkRestoreComments,
   bulkRestoreCompanies,
   bulkRestoreContacts,
   bulkRestoreReminders,
   bulkRestoreTimelineEntries,
+  listAdminTrashRows,
 } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { fetchTrashBinPreference, TRASH_BIN_DEFAULT_ENABLED } from "@/lib/services/user-settings";
@@ -47,31 +55,24 @@ import { safeDisplay } from "@/lib/utils/data-format";
 /** Stable fallback so column useMemo does not see a new `{}` every render while trashRows is loading. */
 const EMPTY_TRASH_PROFILE_NAMES: Record<string, string> = {};
 
-type TrashedCompany = {
-  id: string;
-  firmenname: string;
-  deleted_at: string | null;
-  deleted_by: string | null;
-};
-type TrashedContact = {
-  id: string;
-  vorname: string;
-  nachname: string;
-  deleted_at: string | null;
-  deleted_by: string | null;
-};
-type TrashedReminder = { id: string; title: string; deleted_at: string | null; deleted_by: string | null };
-type TrashedTimeline = { id: string; title: string; deleted_at: string | null; deleted_by: string | null };
+type TrashedCompany = AdminTrashedCompany;
+type TrashedContact = AdminTrashedContact;
+type TrashedReminder = AdminTrashedReminder;
+type TrashedTimeline = AdminTrashedTimeline;
+type TrashedComment = AdminTrashedComment;
 
-type TrashRowsPayload = {
-  profileDisplayByUserId: Record<string, string>;
-  companies: TrashedCompany[];
-  contacts: TrashedContact[];
-  reminders: TrashedReminder[];
-  timeline: TrashedTimeline[];
-};
+type TrashTab = "companies" | "contacts" | "reminders" | "timeline" | "comments";
 
-type TrashTab = "companies" | "contacts" | "reminders" | "timeline";
+const COMMENT_PREVIEW_MAX = 96;
+
+function commentPreview(body: string): string {
+  const firstLine = body.split(/\r?\n/).find((line) => line.trim().length > 0) ?? body;
+  const trimmed = firstLine.trim();
+  if (trimmed.length <= COMMENT_PREVIEW_MAX) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, COMMENT_PREVIEW_MAX - 1)}…`;
+}
 
 function formatDateTimeLocale(iso: string | null | undefined, localeTag: string): string {
   if (iso === null || iso === undefined || iso === "") {
@@ -110,68 +111,7 @@ export default function AdminTrashBinCard() {
   const { data: trashRows, isLoading: rowsLoading } = useQuery({
     queryKey: ["admin-trash-rows"],
     enabled: trashEnabled,
-    queryFn: async (): Promise<TrashRowsPayload> => {
-      const supabase = createClient();
-      const [c, co, r, tl] = await Promise.all([
-        supabase
-          .from("companies")
-          .select("id, firmenname, deleted_at, deleted_by")
-          .not("deleted_at", "is", null)
-          .order("deleted_at", { ascending: false }),
-        supabase
-          .from("contacts")
-          .select("id, vorname, nachname, deleted_at, deleted_by")
-          .not("deleted_at", "is", null)
-          .order("deleted_at", { ascending: false }),
-        supabase
-          .from("reminders")
-          .select("id, title, deleted_at, deleted_by")
-          .not("deleted_at", "is", null)
-          .order("deleted_at", { ascending: false }),
-        supabase
-          .from("timeline")
-          .select("id, title, deleted_at, deleted_by")
-          .not("deleted_at", "is", null)
-          .order("deleted_at", { ascending: false }),
-      ]);
-      if (c.error) throw c.error;
-      if (co.error) throw co.error;
-      if (r.error) throw r.error;
-      if (tl.error) throw tl.error;
-
-      const companies = (c.data ?? []) as TrashedCompany[];
-      const contacts = (co.data ?? []) as TrashedContact[];
-      const reminders = (r.data ?? []) as TrashedReminder[];
-      const timeline = (tl.data ?? []) as TrashedTimeline[];
-
-      const deleterIds = new Set<string>();
-      for (const row of [...companies, ...contacts, ...reminders, ...timeline]) {
-        if (row.deleted_by !== null && row.deleted_by !== undefined && row.deleted_by !== "") {
-          deleterIds.add(row.deleted_by);
-        }
-      }
-
-      const profileDisplayByUserId: Record<string, string> = {};
-      const idList = Array.from(deleterIds);
-      if (idList.length > 0) {
-        const { data: profs, error: pe } = await supabase.from("profiles").select("id, display_name").in("id", idList);
-        if (pe) throw pe;
-        for (const p of profs ?? []) {
-          const dn = p.display_name;
-          if (dn !== null && dn !== undefined && String(dn).trim() !== "") {
-            profileDisplayByUserId[p.id] = String(dn);
-          }
-        }
-      }
-
-      return {
-        profileDisplayByUserId,
-        companies,
-        contacts,
-        reminders,
-        timeline,
-      };
-    },
+    queryFn: () => listAdminTrashRows(),
   });
 
   const invalidateTrash = useCallback(() => {
@@ -180,6 +120,7 @@ export default function AdminTrashBinCard() {
     void queryClient.invalidateQueries({ queryKey: ["contacts"] });
     void queryClient.invalidateQueries({ queryKey: ["reminders"] });
     void queryClient.invalidateQueries({ queryKey: ["timeline"] });
+    void queryClient.invalidateQueries({ queryKey: ["comments"] });
   }, [queryClient]);
 
   const restoreMutation = useMutation({
@@ -189,7 +130,8 @@ export default function AdminTrashBinCard() {
       if (kind === "companies") await bulkRestoreCompanies(ids);
       else if (kind === "contacts") await bulkRestoreContacts(ids);
       else if (kind === "reminders") await bulkRestoreReminders(ids);
-      else await bulkRestoreTimelineEntries(ids);
+      else if (kind === "timeline") await bulkRestoreTimelineEntries(ids);
+      else await bulkRestoreComments(ids);
     },
     onSuccess: () => {
       invalidateTrash();
@@ -209,7 +151,8 @@ export default function AdminTrashBinCard() {
       if (kind === "companies") await bulkHardDeleteCompanies(ids);
       else if (kind === "contacts") await bulkHardDeleteContacts(ids);
       else if (kind === "reminders") await bulkHardDeleteReminders(ids);
-      else await bulkHardDeleteTimelineEntries(ids);
+      else if (kind === "timeline") await bulkHardDeleteTimelineEntries(ids);
+      else await bulkHardDeleteComments(ids);
     },
     onSuccess: () => {
       invalidateTrash();
@@ -226,6 +169,7 @@ export default function AdminTrashBinCard() {
   const contacts = trashRows?.contacts ?? [];
   const reminders = trashRows?.reminders ?? [];
   const timelineRows = trashRows?.timeline ?? [];
+  const comments = trashRows?.comments ?? [];
   const profileDisplayByUserId = trashRows?.profileDisplayByUserId ?? EMPTY_TRASH_PROFILE_NAMES;
 
   const companyColumns = useMemo(
@@ -432,6 +376,69 @@ export default function AdminTrashBinCard() {
     [t, profileDisplayByUserId, localeTag],
   );
 
+  const commentColumns = useMemo(
+    () =>
+      [
+        {
+          id: "select",
+          header: ({ table }) => (
+            <Checkbox
+              checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+              onCheckedChange={(v) => table.toggleAllPageRowsSelected(v === true)}
+              aria-label="Alle auswählen"
+            />
+          ),
+          cell: ({ row }) => (
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(v) => row.toggleSelected(v === true)}
+              aria-label="Zeile auswählen"
+            />
+          ),
+        },
+        {
+          id: "body",
+          header: t("trashColCommentBody"),
+          cell: ({ row }) => (
+            <span className="text-foreground/90 line-clamp-2 whitespace-pre-wrap break-words">
+              {safeDisplay(commentPreview(row.original.body_markdown))}
+            </span>
+          ),
+        },
+        {
+          id: "company",
+          header: t("trashColCompany"),
+          cell: ({ row }) => safeDisplay(row.original.companyName, t("trashDeleterUnknown")),
+        },
+        {
+          accessorKey: "deleted_at",
+          header: t("trashColDeleted"),
+          cell: (info) => (
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateTimeLocale(info.getValue() as string | null, localeTag)}
+            </span>
+          ),
+        },
+        {
+          id: "deleted_by",
+          header: t("trashColDeletedBy"),
+          cell: ({ row }) => {
+            const deletedBy = row.original.deleted_by;
+            const unknownLabel = t("trashDeleterUnknown");
+            if (deletedBy === null || deletedBy === undefined || deletedBy === "") {
+              return safeDisplay(null, unknownLabel);
+            }
+            const raw = profileDisplayByUserId[deletedBy];
+            if (raw === undefined || raw.trim() === "") {
+              return safeDisplay(null, unknownLabel);
+            }
+            return safeDisplay(raw);
+          },
+        },
+      ] satisfies ColumnDef<TrashedComment>[],
+    [t, profileDisplayByUserId, localeTag],
+  );
+
   const tableCompanies = useReactTable({
     data: companies,
     columns: companyColumns,
@@ -472,6 +479,16 @@ export default function AdminTrashBinCard() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const tableComments = useReactTable({
+    data: comments,
+    columns: commentColumns,
+    getRowId: (row) => row.id,
+    state: { rowSelection },
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
   const activeTable =
     tab === "companies"
       ? tableCompanies
@@ -479,7 +496,9 @@ export default function AdminTrashBinCard() {
         ? tableContacts
         : tab === "reminders"
           ? tableReminders
-          : tableTimeline;
+          : tab === "timeline"
+            ? tableTimeline
+            : tableComments;
 
   const selectedIds = activeTable.getFilteredSelectedRowModel().rows.map((r) => r.original.id);
   const selectedCount = selectedIds.length;
@@ -524,6 +543,9 @@ export default function AdminTrashBinCard() {
               </TabsTrigger>
               <TabsTrigger value="timeline" type="button">
                 {t("trashTabTimeline")} ({timelineRows.length})
+              </TabsTrigger>
+              <TabsTrigger value="comments" type="button">
+                {t("trashTabComments")} ({comments.length})
               </TabsTrigger>
             </TabsList>
 
@@ -575,6 +597,9 @@ export default function AdminTrashBinCard() {
             </TabsContent>
             <TabsContent value="timeline" className="mt-0 w-full min-w-0">
               <TrashTableBody table={tableTimeline} emptyLabel={t("trashEmpty")} />
+            </TabsContent>
+            <TabsContent value="comments" className="mt-0 w-full min-w-0">
+              <TrashTableBody table={tableComments} emptyLabel={t("trashEmpty")} />
             </TabsContent>
           </Tabs>
         ) : null}

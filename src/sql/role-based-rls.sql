@@ -41,4 +41,4 @@ FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can access their own timeline" ON timeline
 FOR ALL USING (auth.uid() = user_id);
 
--- Company comments (separate migration): apply `comments-tables.sql` then `comments-rls.sql` from the same directory.
+-- Company comments (separate migration): apply `comments-tables.sql`, then `comments-rls.sql`, then `comments-trash-alignment.sql` from the same directory.
