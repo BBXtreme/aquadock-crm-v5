@@ -69,6 +69,7 @@ import { kundentypOptions } from "@/lib/constants/company-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import { getTablePageRange } from "@/lib/utils/table-page-range";
 
 const KUNDENTYP_LABEL_MAP: Record<string, string> = Object.fromEntries(
   kundentypOptions.map((o) => [o.value, o.label]),
@@ -96,6 +97,8 @@ interface CompaniesTableProps {
   /** Optional controlled VisibilityState for persisted column toggles */
   columnVisibility?: VisibilityState;
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
+  /** Total rows matching the current list filters (server); used for footer “rows x–y of z”. */
+  totalFilteredCount: number;
   /** List-only query string (no `?`) to preserve /companies filters when opening detail/contact links */
   companiesListSearchParams?: string;
   /** True while the first page of results is being fetched (no data yet). */
@@ -139,6 +142,7 @@ export default function CompaniesTable({
   selectionActions,
   columnVisibility: propColumnVisibility,
   onColumnVisibilityChange: propOnColumnVisibilityChange,
+  totalFilteredCount,
   isInitialLoading = false,
   isFetching = false,
   showSemanticBadge = true,
@@ -716,11 +720,35 @@ export default function CompaniesTable({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-muted-foreground text-sm">
-          {t("tableRowsSelectedSummary", {
-            selected: table.getSelectedRowModel().rows.length,
-            total: table.getRowModel().rows.length,
-          })}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-sm">
+          <span>
+            {t("tableRowsSelectedSummary", {
+              selected: table.getSelectedRowModel().rows.length,
+              total: table.getRowModel().rows.length,
+            })}
+          </span>
+          <span className="ml-auto flex flex-wrap items-center gap-x-2">
+            <span className="select-none text-muted-foreground/45" aria-hidden>
+              ·
+            </span>
+            <span>
+              {(() => {
+                const pr = getTablePageRange({
+                  pageIndex: pagination.pageIndex,
+                  pageSize: pagination.pageSize,
+                  rowCountOnPage: table.getRowModel().rows.length,
+                  totalFiltered: totalFilteredCount,
+                });
+                return pr.total <= 0
+                  ? t("tablePageRangeEmpty")
+                  : t("tablePageRangeSummary", {
+                      from: pr.from.toLocaleString(localeTag),
+                      to: pr.to.toLocaleString(localeTag),
+                      total: pr.total.toLocaleString(localeTag),
+                    });
+              })()}
+            </span>
+          </span>
         </div>
         <div className="space-x-2">
           <Button

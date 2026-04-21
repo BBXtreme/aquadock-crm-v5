@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, createColumnHelper, type PaginationState } from "@tanstack/react-table";
 import { Calendar, FileSpreadsheet, Mail, MoreHorizontal, Pencil, Phone, Sparkles, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import TimelineEntryForm, { type TimelineEntryFormValues } from "@/components/features/timeline/TimelineEntryForm";
 import {
@@ -232,6 +232,46 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
   const t = useT("timeline");
   const localeTag = useNumberLocaleTag();
 
+  const columnMenuLabel = useCallback(
+    (id: string) => {
+      const map: Record<string, string> = {
+        created_at: t("colDateTime"),
+        activity_type: t("colActivity"),
+        profile: t("colUser"),
+        company: t("colCompany"),
+        contact: t("colContact"),
+        title_content: t("colTitleBody"),
+        actions: t("colActions"),
+      };
+      return map[id] ?? id;
+    },
+    [t],
+  );
+
+  const dataTableLabels = useMemo(
+    () => ({
+      exportCsv: t("tableExportCsv"),
+      exportJson: t("tableExportJson"),
+      rowsPerPage: t("tableRowsPerPage"),
+      previous: t("tablePrevious"),
+      next: t("tableNext"),
+      empty: t("tableEmpty"),
+      columnsTriggerAria: t("tableColumnsAria"),
+      exportTriggerAria: t("tableExportAria"),
+      rowSelectionSummary: (selected: number, total: number) =>
+        t("tableRowsSelectedSummary", { selected, total }),
+      pageRangeSummary: (from: number, to: number, total: number) =>
+        total <= 0
+          ? t("tablePageRangeEmpty")
+          : t("tablePageRangeSummary", {
+              from: from.toLocaleString(localeTag),
+              to: to.toLocaleString(localeTag),
+              total: total.toLocaleString(localeTag),
+            }),
+    }),
+    [t, localeTag],
+  );
+
   const columns = useMemo<ColumnDef<TimelineEntryWithJoins>[]>(
     () => [
       columnHelper.accessor("created_at", {
@@ -398,6 +438,8 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
       data={finalData}
       loading={finalIsLoading}
       searchPlaceholder={t("searchPlaceholder")}
+      columnMenuLabel={columnMenuLabel}
+      labels={dataTableLabels}
     />
   );
 }

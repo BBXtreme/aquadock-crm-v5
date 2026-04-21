@@ -50,7 +50,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useT } from "@/lib/i18n/use-translations";
+import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getTablePageRange } from "@/lib/utils/table-page-range";
 import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
@@ -67,6 +68,8 @@ interface ContactsTableProps {
   onSortingChange: (sorting: { id: string; desc: boolean }[]) => void;
   columnVisibility?: VisibilityState;
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
+  /** Total contacts for the current filters (server); used for footer “rows x–y of z”. */
+  totalFilteredCount: number;
 }
 
 const columnHelper = createColumnHelper<ContactWithCompany>();
@@ -83,8 +86,10 @@ export default function ContactsTable({
   onSortingChange,
   columnVisibility: propColumnVisibility,
   onColumnVisibilityChange: propOnColumnVisibilityChange,
+  totalFilteredCount,
 }: ContactsTableProps) {
   const t = useT("contacts");
+  const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({ anrede: false });
   const [rowSelection, setRowSelection] = useState({});
@@ -482,11 +487,35 @@ export default function ContactsTable({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-muted-foreground text-sm">
-          {t("tableRowsSelectedSummary", {
-            selected: table.getFilteredSelectedRowModel().rows.length,
-            total: table.getFilteredRowModel().rows.length,
-          })}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-sm">
+          <span>
+            {t("tableRowsSelectedSummary", {
+              selected: table.getFilteredSelectedRowModel().rows.length,
+              total: table.getFilteredRowModel().rows.length,
+            })}
+          </span>
+          <span className="ml-auto flex flex-wrap items-center gap-x-2">
+            <span className="select-none text-muted-foreground/45" aria-hidden>
+              ·
+            </span>
+            <span>
+              {(() => {
+                const pr = getTablePageRange({
+                  pageIndex: pagination.pageIndex,
+                  pageSize: pagination.pageSize,
+                  rowCountOnPage: table.getRowModel().rows.length,
+                  totalFiltered: totalFilteredCount,
+                });
+                return pr.total <= 0
+                  ? t("tablePageRangeEmpty")
+                  : t("tablePageRangeSummary", {
+                      from: pr.from.toLocaleString(localeTag),
+                      to: pr.to.toLocaleString(localeTag),
+                      total: pr.total.toLocaleString(localeTag),
+                    });
+              })()}
+            </span>
+          </span>
         </div>
         <div className="space-x-2">
           <Button
