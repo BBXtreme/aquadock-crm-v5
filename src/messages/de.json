@@ -1247,6 +1247,9 @@
     "globalSearchDescription": "Die globale Suche ist noch nicht fertig — hier kommt später die richtige Suche hin. Bis dahin nutzen Sie die Seitenleiste oder die Listen.",
     "globalSearchGotIt": "Verstanden",
     "searchAriaLabel": "Suche",
+    "signOut": "Abmelden",
+    "userMenuProfile": "Profil",
+    "userMenuSettings": "Einstellungen",
     "sidebar": {
       "groupSales": "Vertrieb",
       "groupMarketing": "Marketing",

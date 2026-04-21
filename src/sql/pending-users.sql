@@ -74,4 +74,4 @@ DROP TRIGGER IF EXISTS trg_pending_users_updated_at ON public.pending_users;
 CREATE TRIGGER trg_pending_users_updated_at
 BEFORE UPDATE ON public.pending_users
 FOR EACH ROW
-EXECUTE PROCEDURE public.set_pending_users_updated_at();
+EXECUTE FUNCTION public.set_pending_users_updated_at();

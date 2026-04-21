@@ -50,6 +50,10 @@ vi.mock("@/lib/supabase/browser", () => ({
   createClient: hoisted.createClientMock,
 }));
 
+vi.mock("@/lib/supabase/auth-browser-singleton", () => ({
+  getAuthBrowserSingletonClient: () => hoisted.createClientMock(),
+}));
+
 vi.mock("@supabase/auth-ui-react", () => ({
   Auth: () => <div data-testid="auth-ui">Auth</div>,
 }));

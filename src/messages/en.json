@@ -1247,6 +1247,9 @@
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
     "globalSearchGotIt": "Got it",
     "searchAriaLabel": "Search",
+    "signOut": "Sign out",
+    "userMenuProfile": "Profile",
+    "userMenuSettings": "Settings",
     "sidebar": {
       "groupSales": "Sales",
       "groupMarketing": "Marketing",

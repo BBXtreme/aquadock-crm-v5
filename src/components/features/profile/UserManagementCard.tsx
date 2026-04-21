@@ -17,14 +17,18 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { acceptPendingUser, declinePendingUser } from "@/lib/actions/onboarding";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/services/profile";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
+import type { PendingUser } from "@/types/database.types";
 
 // Client Component for User Management
 function UserManagementCard({
   allUsers,
+  pendingUsers,
 }: {
   allUsers: {
     id: string;
@@ -35,6 +39,7 @@ function UserManagementCard({
     updated_at: string | null;
     last_sign_in_at: string | null;
   }[];
+  pendingUsers: PendingUser[];
 }) {
   const t = useT("settings");
   const localeTag = useNumberLocaleTag();
@@ -50,8 +55,17 @@ function UserManagementCard({
   const [createEmail, setCreateEmail] = useState('');
   const [createDisplayName, setCreateDisplayName] = useState('');
   const [createRole, setCreateRole] = useState<'user' | 'admin'>('user');
+  const [pendingRoleById, setPendingRoleById] = useState<
+    Record<string, "user" | "admin">
+  >({});
+  const [loadingPendingAction, setLoadingPendingAction] = useState<
+    string | null
+  >(null);
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const roleForPending = (id: string): "user" | "admin" =>
+    pendingRoleById[id] ?? "user";
 
   const handleChangeRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'user' : 'admin';
@@ -75,7 +89,7 @@ function UserManagementCard({
     setLoadingReset(userId);
     try {
       await triggerPasswordReset(userId);
-      toast.success("Reset link sent");
+      toast.success(t("userManagement.toastResetEmailSent"));
       queryClient.invalidateQueries();
       router.refresh();
     } catch (error) {
@@ -134,6 +148,39 @@ function UserManagementCard({
     }
   };
 
+  const handleAcceptPending = async (pendingId: string) => {
+    setLoadingPendingAction(`accept-${pendingId}`);
+    try {
+      const formData = new FormData();
+      formData.append("pendingId", pendingId);
+      formData.append("chosenRole", roleForPending(pendingId));
+      await acceptPendingUser(formData);
+      toast.success(t("userManagement.toastAcceptOk"));
+      queryClient.invalidateQueries();
+      router.refresh();
+    } catch (_error) {
+      toast.error(t("userManagement.toastAcceptFail"));
+    } finally {
+      setLoadingPendingAction(null);
+    }
+  };
+
+  const handleDeclinePending = async (pendingId: string) => {
+    setLoadingPendingAction(`decline-${pendingId}`);
+    try {
+      const formData = new FormData();
+      formData.append("pendingId", pendingId);
+      await declinePendingUser(formData);
+      toast.success(t("userManagement.toastDeclineOk"));
+      queryClient.invalidateQueries();
+      router.refresh();
+    } catch (_error) {
+      toast.error(t("userManagement.toastDeclineFail"));
+    } finally {
+      setLoadingPendingAction(null);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (deleteUserId === null) return;
     setLoadingDelete(deleteUserId);
@@ -155,7 +202,7 @@ function UserManagementCard({
   return (
     <>
       <Card className="shadow-sm">
-        <CardHeader className="flex justify-between items-center pb-6">
+        <CardHeader className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center text-xl">
             <Users className="mr-3 h-6 w-6 text-primary" />
             {t("userManagement.cardTitle")}
@@ -169,6 +216,118 @@ function UserManagementCard({
           </Button>
         </CardHeader>
         <CardContent>
+          <Tabs defaultValue="users" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="users" type="button">
+                {t("userManagement.usersTab")}
+              </TabsTrigger>
+              <TabsTrigger value="pending" type="button">
+                {t("userManagement.pendingTab")}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="pending" className="mt-0">
+              <TooltipProvider>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("userManagement.pendingColEmail")}</TableHead>
+                        <TableHead>{t("userManagement.pendingColName")}</TableHead>
+                        <TableHead>{t("userManagement.pendingColStatus")}</TableHead>
+                        <TableHead>{t("userManagement.pendingColRequested")}</TableHead>
+                        <TableHead>{t("userManagement.roleOnAccept")}</TableHead>
+                        <TableHead>{t("userManagement.colActions")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pendingUsers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            {t("userManagement.pendingEmpty")}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        pendingUsers.map((p) => (
+                          <TableRow key={p.id}>
+                            <TableCell>{p.email}</TableCell>
+                            <TableCell>
+                              {p.display_name === null || p.display_name === ""
+                                ? t("userManagement.noDisplayName")
+                                : safeDisplay(p.display_name)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="capitalize">
+                                {p.status.replace(/_/g, " ")}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {p.requested_at
+                                ? new Date(p.requested_at).toLocaleString(localeTag)
+                                : t("userManagement.notAvailable")}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={roleForPending(p.id)}
+                                onValueChange={(value: "user" | "admin") => {
+                                  setPendingRoleById((prev) => ({
+                                    ...prev,
+                                    [p.id]: value,
+                                  }));
+                                }}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="user">{t("userManagement.roleUser")}</SelectItem>
+                                  <SelectItem value="admin">{t("userManagement.roleAdmin")}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  type="button"
+                                  disabled={
+                                    p.status !== "pending_review" ||
+                                    loadingPendingAction !== null
+                                  }
+                                  onClick={() => void handleAcceptPending(p.id)}
+                                >
+                                  {loadingPendingAction === `accept-${p.id}` ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    t("userManagement.accept")
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  type="button"
+                                  variant="destructive"
+                                  disabled={
+                                    p.status !== "pending_review" ||
+                                    loadingPendingAction !== null
+                                  }
+                                  onClick={() => void handleDeclinePending(p.id)}
+                                >
+                                  {loadingPendingAction === `decline-${p.id}` ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    t("userManagement.decline")
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TooltipProvider>
+            </TabsContent>
+            <TabsContent value="users" className="mt-0">
           <TooltipProvider>
             <div className="overflow-x-auto">
               <Table>
@@ -270,6 +429,8 @@ function UserManagementCard({
               </Table>
             </div>
           </TooltipProvider>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 

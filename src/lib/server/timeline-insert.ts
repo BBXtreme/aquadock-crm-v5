@@ -1,6 +1,6 @@
 import { createTimelineEntry } from "@/lib/services/timeline";
-import { coerceActivityTypeForInsert } from "@/lib/validations/timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { coerceActivityTypeForInsert } from "@/lib/validations/timeline";
 
 export type AuthenticatedTimelineCreateInput = {
   title: string;

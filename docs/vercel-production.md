@@ -40,7 +40,41 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 
 ## Auth and routes
 
-- [ ] **Supabase Auth** — **Site URL** = `https://crm.aquadock.de` (not localhost); **Redirect URLs** includes `https://crm.aquadock.de/login` (and previews if used).  
+### Supabase Auth — Site URL and Redirect URLs
+
+In **Supabase → Authentication → URL Configuration**:
+
+- [ ] **Site URL** — your primary app origin, e.g. production: `https://crm.aquadock.de` or a Vercel production URL such as `https://aquadock-crm-glqn.vercel.app`.
+
+- [ ] **Redirect URLs** — add every origin the app may use, then allow the onboarding and auth paths. Supabase matches the **full URL** (wildcards allowed). Minimum set:
+
+| Redirect URL | Notes |
+| --- | --- |
+| `http://localhost:3000/**` | Local dev (covers `/login`, `/apply`, `/set-password`, `/access-pending`, `/access-denied`, etc.) |
+| `https://*.vercel.app/**` | **Preview deployments** — required so email confirmation and password-recovery links resolve on Vercel preview hosts |
+| `https://<your-production-host>/**` | Production — one wildcard covers all routes below |
+
+**Onboarding and recovery paths** that must be reachable via those wildcards (or listed explicitly if you do not use `/**` on production):
+
+- `/login`
+- `/apply`
+- `/set-password` — password recovery and first-time password for approved users
+- `/access-pending` — gate after email confirmation while awaiting admin review
+- `/access-denied` — soft-declined applicants
+
+Example explicit production entries (only if you prefer path-level entries instead of `https://<your-production-host>/**`):
+
+- `https://<your-production-host>/login`
+- `https://<your-production-host>/login/**`
+- `https://<your-production-host>/apply`
+- `https://<your-production-host>/apply/**`
+- `https://<your-production-host>/set-password`
+- `https://<your-production-host>/set-password/**`
+- `https://<your-production-host>/access-pending`
+- `https://<your-production-host>/access-pending/**`
+- `https://<your-production-host>/access-denied`
+- `https://<your-production-host>/access-denied/**`
+
 - [ ] Unauthenticated users cannot access protected routes (`/dashboard`, `/companies`, `/contacts`, `/reminders`, `/timeline`, `/mass-email`, `/openmap`, `/settings`, `/profile`, `/brevo`, etc.).  
 
 ---

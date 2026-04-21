@@ -278,13 +278,13 @@ export default function Header({ user }: HeaderProps) {
             <DropdownMenuItem asChild>
               <Link href="/profile">
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {t("userMenuProfile")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link href="/settings">
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t("userMenuSettings")}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -296,7 +296,7 @@ export default function Header({ user }: HeaderProps) {
               }}
             >
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {t("signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

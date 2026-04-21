@@ -1247,6 +1247,9 @@
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",
     "searchAriaLabel": "Pretraga",
+    "signOut": "Odjava",
+    "userMenuProfile": "Profil",
+    "userMenuSettings": "Postavke",
     "sidebar": {
       "groupSales": "Prodaja",
       "groupMarketing": "Marketing",

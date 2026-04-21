@@ -4,7 +4,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -82,13 +82,13 @@ export default function TimelineEntryForm({
     contact_id?: string | null;
   };
 
-  const activityTypeForForm = (raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
+  const activityTypeForForm = useCallback((raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
     const v = raw ?? "";
     if (v === "call" || v === "email" || v === "meeting" || v === "other") {
       return v;
     }
     return "other";
-  };
+  }, []);
 
   const form = useForm<TimelineFormFields>({
     resolver: zodResolver(formSchema),
@@ -158,7 +158,7 @@ export default function TimelineEntryForm({
         contact_id: editEntry.contact_id || "none",
       });
     }
-  }, [editEntry, form]);
+  }, [editEntry, form, activityTypeForForm]);
 
   if (!companies) {
     return null;

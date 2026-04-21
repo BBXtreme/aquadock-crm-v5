@@ -3,6 +3,7 @@
 // If the user has an admin role, it also displays a user management section where they can view all users, change roles, trigger password resets, and delete users.
 
 import { Settings2, User } from "lucide-react";
+import { redirect } from "next/navigation";
 import AdminTrashBinCard from "@/components/features/profile/AdminTrashBinCard";
 import ProfileForm from "@/components/features/profile/ProfileForm";
 import ProfileSecuritySection from "@/components/features/profile/ProfileSecuritySection";
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/page-shell";
 import { Separator } from "@/components/ui/separator";
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";

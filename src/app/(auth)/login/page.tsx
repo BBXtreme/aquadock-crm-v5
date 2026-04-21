@@ -10,6 +10,7 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Component,
@@ -42,6 +43,7 @@ import {
 } from "@/lib/auth/password-recovery-browser";
 import { useT } from "@/lib/i18n/use-translations";
 import { getAuthBrowserSingletonClient } from "@/lib/supabase/auth-browser-singleton";
+
 /** Supabase Auth UI theme tokens — use CSS variables so light/dark follow `html.dark` (ThemeSupa defaults hard-code `inputText: black`). */
 const loginAuthAppearanceVariables = {
   colors: {
@@ -501,6 +503,17 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
+        {view !== "update_password" ? (
+          <p className="mt-4 text-center text-sm">
+            <Link
+              href="/apply"
+              className="text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              {t("applyForAccess")}
+            </Link>
+          </p>
+        ) : null}
+
         <p className="mt-6 text-center text-xs text-muted-foreground lg:hidden">
           {t("trustStatement")}
         </p>
@@ -509,8 +522,8 @@ export default function LoginPage() {
   );
 }
 
+export { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";
 export {
   consumePasswordRecoveryBootstrapFlag,
   isPasswordRecoveryFromUrl,
 } from "@/lib/auth/password-recovery-browser";
-export { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";

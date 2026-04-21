@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
+import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 
 type ProfileSignOutButtonProps = {
@@ -12,6 +13,7 @@ type ProfileSignOutButtonProps = {
 
 export function ProfileSignOutButton({ className }: ProfileSignOutButtonProps) {
   const [pending, setPending] = useState(false);
+  const t = useT("layout");
 
   return (
     <Button
@@ -30,7 +32,7 @@ export function ProfileSignOutButton({ className }: ProfileSignOutButtonProps) {
       }}
     >
       <LogOut className="mr-2 h-5 w-5" />
-      Sign Out
+      {t("signOut")}
     </Button>
   );
 }

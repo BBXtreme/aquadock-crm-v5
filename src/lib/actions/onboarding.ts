@@ -2,15 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import {
+  sendNotificationHtmlEmail,
+} from "@/lib/services/smtp";
+import { createTimelineEntry } from "@/lib/services/timeline";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { createTimelineEntry } from "@/lib/services/timeline";
-import {
-  getAdminNotificationEmailsFromEnv,
-  sendSystemHtmlEmail,
-} from "@/lib/services/system-smtp";
 import { resolveAuthRedirectUrl, resolveSiteOrigin } from "@/lib/utils/auth-recovery-redirect";
 import { safeDisplay } from "@/lib/utils/data-format";
+import { accessRequestSchema } from "@/lib/validations/access-request";
 
 const acceptSchema = z
   .object({
@@ -25,6 +25,39 @@ const declineSchema = z
     declineReason: z.string().trim().max(2000).nullable().optional(),
   })
   .strict();
+
+function escapeHtmlTextForEmail(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function getAdminNotificationRecipientEmails(): Promise<string[]> {
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("role", "admin");
+  if (error !== null || rows === null || rows.length === 0) {
+    return [];
+  }
+  const emails: string[] = [];
+  for (const row of rows) {
+    const { data: authData, error: authErr } = await admin.auth.admin.getUserById(
+      row.id,
+    );
+    if (authErr !== null || authData.user === undefined) {
+      continue;
+    }
+    const em = authData.user.email;
+    if (typeof em === "string" && em.length > 0) {
+      emails.push(em);
+    }
+  }
+  return [...new Set(emails)];
+}
 
 async function requireAdmin() {
   const supabase = await createServerSupabaseClient();
@@ -45,46 +78,61 @@ async function requireAdmin() {
   return { supabase, user, adminDisplayName: profile.display_name };
 }
 
-/** After browser `signUp`, persist pending row + audit + notify admins. */
-export async function registerPendingUserAfterSignup(
-  displayName: string | null,
-): Promise<void> {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (user === null || user.email === undefined || user.email === "") {
-    throw new Error("Not authenticated");
+/**
+ * Public apply: create auth user (Supabase sends confirmation email) + `pending_users` row.
+ * Uses service role so it works when `signUp` would not establish a session until confirm.
+ */
+export async function submitAccessRequest(
+  raw: unknown,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const parsed = accessRequestSchema.safeParse(raw);
+  if (!parsed.success) {
+    const first = parsed.error.flatten().fieldErrors;
+    const msg =
+      first.email?.[0] ??
+      first.password?.[0] ??
+      first.confirm_password?.[0] ??
+      "Invalid input";
+    return { ok: false, message: msg };
   }
-  const email = user.email.toLowerCase();
+  const input = parsed.data;
   const admin = createAdminClient();
 
-  const { data: existing } = await admin
-    .from("pending_users")
-    .select("id")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
+  const { data: created, error: createErr } =
+    await admin.auth.admin.createUser({
+      email: input.email,
+      password: input.password,
+      user_metadata:
+        input.display_name === null
+          ? {}
+          : { display_name: input.display_name },
+      email_confirm: false,
+    });
 
-  if (existing !== null) {
-    return;
+  if (createErr !== null) {
+    return { ok: false, message: createErr.message };
+  }
+  if (created.user === undefined) {
+    return { ok: false, message: "Failed to create user" };
   }
 
-  const { error } = await admin.from("pending_users").insert({
-    email,
-    display_name: displayName,
-    auth_user_id: user.id,
+  const uid = created.user.id;
+  const { error: pendErr } = await admin.from("pending_users").insert({
+    email: input.email,
+    display_name: input.display_name,
+    auth_user_id: uid,
     status: "pending_email_confirmation",
   });
 
-  if (error !== null) {
-    throw new Error(error.message);
+  if (pendErr !== null) {
+    return { ok: false, message: pendErr.message };
   }
 
-  const title = `[Onboarding] Access requested by ${email}`;
+  const title = `[Onboarding] Access requested by ${input.email}`;
   const dn =
-    displayName === null || displayName === ""
+    input.display_name === null || input.display_name === ""
       ? ""
-      : safeDisplay(displayName, "");
+      : safeDisplay(input.display_name, "");
   await createTimelineEntry(
     {
       title,
@@ -95,7 +143,7 @@ export async function registerPendingUserAfterSignup(
           : `Requested display name: ${dn}.`,
       company_id: null,
       contact_id: null,
-      user_id: user.id,
+      user_id: uid,
       created_by: null,
       updated_by: null,
       user_name: dn === "" ? null : dn,
@@ -103,14 +151,15 @@ export async function registerPendingUserAfterSignup(
     admin,
   );
 
-  const recipients = getAdminNotificationEmailsFromEnv();
+  const recipients = await getAdminNotificationRecipientEmails();
   if (recipients.length > 0) {
     try {
       const origin = await resolveSiteOrigin();
-      await sendSystemHtmlEmail({
+      const reqEmailHtml = escapeHtmlTextForEmail(input.email);
+      await sendNotificationHtmlEmail({
         to: recipients,
-        subject: `[AquaDock CRM] New access request: ${email}`,
-        html: `<p>A new user requested access: <strong>${email}</strong>.</p><p><a href="${origin}/profile">Review in User Management</a></p>`,
+        subject: `[AquaDock CRM] New access request: ${input.email}`,
+        html: `<p>A new user requested access: <strong>${reqEmailHtml}</strong>.</p><p><a href="${origin}/profile">Review in User Management</a></p>`,
       });
     } catch (e) {
       console.error("[onboarding] admin notify email failed:", e);
@@ -118,6 +167,7 @@ export async function registerPendingUserAfterSignup(
   }
 
   revalidatePath("/profile");
+  return { ok: true };
 }
 
 /** Call from `/access-pending` to move to pending_review after Supabase confirms email. */
@@ -241,6 +291,11 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
   }
 
   const email = pending.email;
+  const applicantNameHtml = escapeHtmlTextForEmail(
+    safeDisplay(displayName, email),
+  );
+  const actorNameHtml = escapeHtmlTextForEmail(actorName);
+  const emailHtml = escapeHtmlTextForEmail(email);
   const redirectTo = await resolveAuthRedirectUrl("/set-password");
   const { error: resetErr } = await admin.auth.resetPasswordForEmail(email, {
     redirectTo,
@@ -258,15 +313,41 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
       console.error("[onboarding] recovery email failed:", resetErr, linkErr);
     } else {
       try {
-        await sendSystemHtmlEmail({
+        await sendNotificationHtmlEmail({
+          actingAdminUserId: user.id,
           to: [email],
-          subject: "[AquaDock CRM] Set your password",
-          html: `<p>Your access was approved. <a href="${actionLink}">Set your password</a> to continue.</p>`,
+          subject: "[AquaDock CRM] Access granted — set your password",
+          html: `<p>Hello ${applicantNameHtml},</p><p>Your access was approved by ${actorNameHtml}. <a href="${actionLink}">Set your password</a> to continue.</p>`,
         });
       } catch (e) {
         console.error("[onboarding] fallback recovery mail failed:", e);
       }
     }
+  } else {
+    try {
+      await sendNotificationHtmlEmail({
+        actingAdminUserId: user.id,
+        to: [email],
+        subject: "[AquaDock CRM] Access granted",
+        html: `<p>Hello ${applicantNameHtml},</p><p>Your access was approved by ${actorNameHtml}. Check your inbox for a link to set your password.</p>`,
+      });
+    } catch (e) {
+      console.error("[onboarding] applicant access granted email failed:", e);
+    }
+  }
+
+  try {
+    const admins = await getAdminNotificationRecipientEmails();
+    if (admins.length > 0) {
+      await sendNotificationHtmlEmail({
+        actingAdminUserId: user.id,
+        to: admins,
+        subject: `[AquaDock CRM] Access accepted: ${email}`,
+        html: `<p>${applicantNameHtml} (<strong>${emailHtml}</strong>) was approved by ${actorNameHtml} with role <strong>${chosenRole}</strong>.</p>`,
+      });
+    }
+  } catch (e) {
+    console.error("[onboarding] admin notify (accept) failed:", e);
   }
 
   await createTimelineEntry(
@@ -332,6 +413,27 @@ export async function declinePendingUser(formData: FormData): Promise<void> {
 
   if (updErr !== null) {
     throw new Error(updErr.message);
+  }
+
+  try {
+    const admins = await getAdminNotificationRecipientEmails();
+    if (admins.length > 0) {
+      const reasonHtml =
+        declineReason === null ||
+        declineReason === undefined ||
+        declineReason === ""
+          ? ""
+          : `<p>Reason: ${escapeHtmlTextForEmail(declineReason)}</p>`;
+      const declinedEmailHtml = escapeHtmlTextForEmail(pending.email);
+      await sendNotificationHtmlEmail({
+        actingAdminUserId: user.id,
+        to: admins,
+        subject: `[AquaDock CRM] Access declined: ${pending.email}`,
+        html: `<p><strong>${declinedEmailHtml}</strong> was declined by ${escapeHtmlTextForEmail(actorName)}.</p>${reasonHtml}`,
+      });
+    }
+  } catch (e) {
+    console.error("[onboarding] admin notify (decline) failed:", e);
   }
 
   await createTimelineEntry(

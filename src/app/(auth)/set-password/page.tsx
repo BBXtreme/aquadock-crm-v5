@@ -79,7 +79,6 @@ class LoginAuthErrorBoundary extends Component<
 export default function SetPasswordPage() {
   const t = useT("login");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
-  const [recoverySaved, setRecoverySaved] = useState(false);
   const [recoverySessionReady, setRecoverySessionReady] = useState(false);
   const [recoverySessionTimedOut, setRecoverySessionTimedOut] = useState(false);
   const isRecoveryFlowRef = useRef(false);
@@ -98,7 +97,7 @@ export default function SetPasswordPage() {
   }, []);
 
   useEffect(() => {
-    if (recoverySaved || recoverySessionReady) {
+    if (recoverySessionReady) {
       return;
     }
     const id = window.setTimeout(() => {
@@ -111,7 +110,7 @@ export default function SetPasswordPage() {
       }
     }, RECOVERY_SESSION_READY_TIMEOUT_MS);
     return () => window.clearTimeout(id);
-  }, [recoverySaved, recoverySessionReady, t]);
+  }, [recoverySessionReady, t]);
 
   const redirectToDashboard = useCallback(() => {
     startTransition(() => {
@@ -215,7 +214,7 @@ export default function SetPasswordPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 sm:p-8">
       <Card className="w-full max-w-lg py-6 shadow-sm">
         <CardHeader className="space-y-1.5 pb-2 text-center sm:pb-4">
-          {recoverySaved ? null : recoverySessionTimedOut && !recoverySessionReady ? (
+          {recoverySessionTimedOut && !recoverySessionReady ? (
             <>
               <CardTitle className="text-2xl font-semibold tracking-tight">
                 {t("recoveryLinkExpiredTitle")}
@@ -251,14 +250,14 @@ export default function SetPasswordPage() {
               errorToast={t("errorBoundaryToast")}
               reloadMessage={t("errorBoundaryReload")}
             >
-              {recoverySessionTimedOut && !recoverySessionReady && !recoverySaved ? (
+              {recoverySessionTimedOut && !recoverySessionReady ? (
                 <p className="text-center text-sm text-muted-foreground">
                   {t("recoveryPersistentError")}
                 </p>
-              ) : recoverySaved || recoverySessionReady ? (
+              ) : recoverySessionReady ? (
                 <PasswordRecoveryUpdatePanel
                   supabase={supabase}
-                  recoverySaved={recoverySaved}
+                  recoverySaved={false}
                   onRecoverySuccess={() => {
                     isRecoveryFlowRef.current = false;
                     startTransition(() => {
