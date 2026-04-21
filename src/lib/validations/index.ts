@@ -1,4 +1,5 @@
 // Zod schemas – single source of truth (DTO migration completed April 2026)
+export * from "./comment";
 export * from "./company";
 export * from "./company-enrichment";
 export * from "./contact";

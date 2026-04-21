@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import AquaDockCard from "@/components/company-detail/AquaDockCard";
+import CompanyCommentsCard from "@/components/company-detail/CompanyCommentsCard";
 import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
 import CompanyHeader from "@/components/company-detail/CompanyHeader";
 import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
@@ -216,6 +217,7 @@ function CompanyDetailShell({
       </div>
       <LinkedContactsCard companyId={id} />
       <RemindersCard companyId={id} />
+      <CompanyCommentsCard companyId={id} />
       <TimelineCard companyId={id} />
 
       <AIEnrichmentModal

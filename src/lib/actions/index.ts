@@ -2,6 +2,7 @@
 
 export * from "./auth";
 export * from "./brevo";
+export * from "./comments";
 export * from "./companies";
 export * from "./contacts";
 export * from "./mass-email";

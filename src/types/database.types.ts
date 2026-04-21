@@ -10,6 +10,8 @@ export type Database = SupabaseDatabase;
 // =============================================================================
 // Core Table Row Types (Clean aliases)
 // =============================================================================
+export type Comment = Database["public"]["Tables"]["comments"]["Row"];
+export type CommentAttachment = Database["public"]["Tables"]["comment_attachments"]["Row"];
 export type Company = Database["public"]["Tables"]["companies"]["Row"];
 export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
@@ -24,6 +26,11 @@ export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
 // =============================================================================
 export type CompanyInsert = Database["public"]["Tables"]["companies"]["Insert"];
 export type CompanyUpdate = Database["public"]["Tables"]["companies"]["Update"];
+
+export type CommentInsert = Database["public"]["Tables"]["comments"]["Insert"];
+export type CommentUpdate = Database["public"]["Tables"]["comments"]["Update"];
+export type CommentAttachmentInsert = Database["public"]["Tables"]["comment_attachments"]["Insert"];
+export type CommentAttachmentUpdate = Database["public"]["Tables"]["comment_attachments"]["Update"];
 
 export type ContactInsert = Database["public"]["Tables"]["contacts"]["Insert"];
 export type ContactUpdate = Database["public"]["Tables"]["contacts"]["Update"];
@@ -50,6 +57,11 @@ export type TimelineEntryWithJoins = TimelineEntry & {
   companies?: Pick<Company, "id" | "firmenname" | "status" | "kundentyp"> | null;
   contacts?: Pick<Contact, "id" | "vorname" | "nachname" | "position" | "email"> | null;
   profiles?: Pick<Profile, "display_name"> | null;
+};
+
+/** Comment row with author fields for list UI (Supabase join on profiles). */
+export type CommentWithAuthor = Comment & {
+  profiles?: Pick<Profile, "display_name" | "avatar_url"> | null;
 };
 
 export type CompanyWithPrimaryContact = Company & {
