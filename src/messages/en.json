@@ -269,7 +269,21 @@
       "toastUserCreated": "User created",
       "toastUserCreateFailed": "Could not create user",
       "toastUserDeleted": "User deleted",
-      "toastUserDeleteFailed": "Could not delete user"
+      "toastUserDeleteFailed": "Could not delete user",
+      "pendingTab": "Pending requests",
+      "usersTab": "Users",
+      "pendingColEmail": "Email",
+      "pendingColName": "Display name",
+      "pendingColStatus": "Status",
+      "pendingColRequested": "Requested",
+      "pendingEmpty": "No pending requests.",
+      "accept": "Accept",
+      "decline": "Decline",
+      "roleOnAccept": "Role on accept",
+      "toastAcceptOk": "Access granted",
+      "toastAcceptFail": "Could not accept request",
+      "toastDeclineOk": "Request declined",
+      "toastDeclineFail": "Could not decline request"
     },
     "smtp": {
       "cardTitle": "SMTP configuration",
@@ -1516,6 +1530,26 @@
     "recoveryTimeoutToastDescription": "Please request a new reset link and open it again.",
     "recoveryErrorToast": "Password could not be saved.",
     "errorBoundaryToast": "An unexpected error occurred.",
-    "errorBoundaryReload": "Please reload the page."
+    "errorBoundaryReload": "Please reload the page.",
+    "applyForAccess": "Apply for access"
+  },
+  "onboarding": {
+    "applyTitle": "Request access",
+    "applyDescription": "Submit your work email. You will confirm it via link before an admin reviews your request.",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm password",
+    "displayNameLabel": "Display name (optional)",
+    "submit": "Submit request",
+    "submitting": "Submitting…",
+    "successTitle": "Check your email",
+    "successDescription": "We sent a confirmation link. After you confirm, an admin will review your access request.",
+    "toastSignUpFailed": "Could not create account",
+    "toastRegisterFailed": "Could not complete registration",
+    "accessPendingTitle": "Access pending approval",
+    "accessPendingDescription": "Your email is confirmed. An administrator will review your request shortly.",
+    "accessDeniedTitle": "Access declined",
+    "accessDeniedDescription": "Your access request was not approved. You can still sign out and contact your administrator if you need help.",
+    "signOut": "Sign out"
   }
 }

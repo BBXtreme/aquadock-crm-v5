@@ -269,7 +269,21 @@
       "toastUserCreated": "Korisnik stvoren",
       "toastUserCreateFailed": "Korisnik nije mogao biti stvoren",
       "toastUserDeleted": "Korisnik obrisan",
-      "toastUserDeleteFailed": "Korisnik nije mogao biti obrisan"
+      "toastUserDeleteFailed": "Korisnik nije mogao biti obrisan",
+      "pendingTab": "Zahtjevi na čekanju",
+      "usersTab": "Korisnici",
+      "pendingColEmail": "E-pošta",
+      "pendingColName": "Prikazano ime",
+      "pendingColStatus": "Status",
+      "pendingColRequested": "Zatraženo",
+      "pendingEmpty": "Nema zahtjeva na čekanju.",
+      "accept": "Prihvati",
+      "decline": "Odbij",
+      "roleOnAccept": "Uloga pri prihvatu",
+      "toastAcceptOk": "Pristup odobren",
+      "toastAcceptFail": "Zahtjev nije moguće prihvatiti",
+      "toastDeclineOk": "Zahtjev odbijen",
+      "toastDeclineFail": "Zahtjev nije moguće odbiti"
     },
     "smtp": {
       "cardTitle": "SMTP konfiguracija",
@@ -1516,6 +1530,26 @@
     "recoveryTimeoutToastDescription": "Zatražite novu poveznicu za resetiranje i pokušajte ponovno.",
     "recoveryErrorToast": "Lozinka se nije mogla spremiti.",
     "errorBoundaryToast": "Došlo je do neočekivane pogreške.",
-    "errorBoundaryReload": "Molimo ponovno učitajte stranicu."
+    "errorBoundaryReload": "Molimo ponovno učitajte stranicu.",
+    "applyForAccess": "Zatraži pristup"
+  },
+  "onboarding": {
+    "applyTitle": "Zatraži pristup",
+    "applyDescription": "Unesite poslovnu e-poštu. Potvrdit ćete je putem poveznice prije nego administrator pregleda zahtjev.",
+    "emailLabel": "E-pošta",
+    "passwordLabel": "Lozinka",
+    "confirmPasswordLabel": "Potvrdi lozinku",
+    "displayNameLabel": "Prikazano ime (neobavezno)",
+    "submit": "Pošalji zahtjev",
+    "submitting": "Slanje…",
+    "successTitle": "Provjerite e-poštu",
+    "successDescription": "Poslali smo poveznicu za potvrdu. Nakon potvrde administrator će pregledati vaš zahtjev.",
+    "toastSignUpFailed": "Račun nije moguće stvoriti",
+    "toastRegisterFailed": "Registracija nije dovršena",
+    "accessPendingTitle": "Pristup na čekanju",
+    "accessPendingDescription": "E-pošta je potvrđena. Administrator će uskoro pregledati vaš zahtjev.",
+    "accessDeniedTitle": "Pristup odbijen",
+    "accessDeniedDescription": "Vaš zahtjev za pristup nije odobren. Možete se odjaviti i po potrebi kontaktirati administratora.",
+    "signOut": "Odjava"
   }
 }

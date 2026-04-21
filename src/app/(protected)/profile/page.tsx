@@ -19,11 +19,12 @@ import {
 } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/page-shell";
 import { Separator } from "@/components/ui/separator";
+import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth/require-user";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { safeDisplay } from "@/lib/utils/data-format";
-import type { Profile } from "@/types/database.types";
+import type { PendingUser, Profile } from "@/types/database.types";
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -41,6 +42,25 @@ export default async function ProfilePage() {
   }
 
   if (profileData === null) {
+    const adminForPending = createAdminClient();
+    const { data: pend } = await adminForPending
+      .from("pending_users")
+      .select("status, chosen_role")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (pend !== null && pend.status !== "accepted") {
+      redirect("/access-pending");
+    }
+
+    const insertRole: "user" | "admin" =
+      pend !== null &&
+      pend.status === "accepted" &&
+      pend.chosen_role !== null &&
+      pend.chosen_role !== ""
+        ? (pend.chosen_role === "admin" ? "admin" : "user")
+        : "user";
+
     const metaName = user.display_name;
     const insertDisplayName =
       metaName === undefined || metaName === null || metaName === ""
@@ -51,7 +71,7 @@ export default async function ProfilePage() {
       .from("profiles")
       .insert({
         id: user.id,
-        role: "user",
+        role: insertRole,
         display_name: insertDisplayName,
       })
       .select()
@@ -90,8 +110,15 @@ export default async function ProfilePage() {
     updated_at: string | null;
     last_sign_in_at: string | null;
   }[] = [];
+  let pendingUsers: PendingUser[] = [];
   if (role === "admin") {
     const adminSupabase = createAdminClient();
+    const { data: pendingRows } = await adminSupabase
+      .from("pending_users")
+      .select("*")
+      .in("status", ["pending_email_confirmation", "pending_review"])
+      .order("requested_at", { ascending: false });
+    pendingUsers = pendingRows ?? [];
     const { data: authUsers } = await adminSupabase.auth.admin.listUsers();
     const { data: profiles } = await adminSupabase.from("profiles").select("*");
     const profilesArray = profiles === null || profiles === undefined ? [] : profiles;
@@ -261,7 +288,7 @@ return (
         <h2 id="profile-admin-heading" className="sr-only">
           Administration
         </h2>
-        <UserManagementCard allUsers={allUsers} />
+        <UserManagementCard allUsers={allUsers} pendingUsers={pendingUsers} />
         <AdminTrashBinCard />
       </section>
     ) : null}
