@@ -1211,8 +1211,22 @@
     "chipNextSteps": "Sljedeći koraci",
     "chipObjection": "Primjedba zabilježena",
     "chipDecisionMaker": "Donositelj odluke",
+    "chipCallSummaryTemplate": "## Sažetak poziva\n- Datum: \n- Sugovornik: \n- Tema: \n- Ishod: \n- Sljedeći korak: ",
+    "chipNextStepsTemplate": "## Sljedeći koraci\n- [ ] \n- [ ] \n- [ ] ",
+    "chipObjectionTemplate": "## Primjedba\n- Primjedba: \n- Naš odgovor: \n- Daljnja akcija: ",
+    "chipDecisionMakerTemplate": "## Donositelj odluke\n- Ime: \n- Uloga: \n- Utjecaj: \n- Sljedeći kontakt: ",
     "anonymousUser": "Član tima",
-    "unknownError": "Nepoznata greška"
+    "unknownError": "Nepoznata greška",
+    "timeJustNow": "upravo sada",
+    "editedTooltip": "Zadnje uređeno {time}",
+    "replyToInline": "Odgovor korisniku {name}",
+    "copyLink": "Kopiraj poveznicu bilješke",
+    "copyLinkCopied": "Poveznica kopirana",
+    "copyLinkFailed": "Poveznica nije kopirana",
+    "showOlder": "Prikaži starije bilješke ({count})",
+    "toastDeletedUndo": "Poništi",
+    "toastRestored": "Bilješka vraćena",
+    "toastRestoreFailed": "Vraćanje bilješke nije uspjelo"
   },
   "layout": {
     "globalSearchTitle": "Globalna pretraga",

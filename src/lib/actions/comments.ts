@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   createCompanyCommentSchema,
   deleteCommentSchema,
+  restoreOwnCommentSchema,
   updateCommentSchema,
 } from "@/lib/validations/comment";
 import type { CommentWithAuthor } from "@/types/database.types";
@@ -131,4 +132,39 @@ export async function deleteComment(input: unknown): Promise<{ id: string }> {
     throw handleSupabaseError(error, "deleteComment");
   }
   return { id: data.id };
+}
+
+/**
+ * Restore a soft-deleted comment that the current user authored (undo of their own delete).
+ * Defense-in-depth: `.eq("created_by", userId)` ensures only the author can restore,
+ * independent of RLS. Requires the comment to currently be soft-deleted.
+ */
+export async function restoreOwnComment(input: unknown): Promise<CommentWithAuthor> {
+  const userId = await requireAuthenticatedUserId();
+
+  const parsed = restoreOwnCommentSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(firstZodMessage(parsed.error));
+  }
+
+  const { commentId } = parsed.data;
+  const supabase = await createServerSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("comments")
+    .update({
+      deleted_at: null,
+      deleted_by: null,
+      updated_by: userId,
+    })
+    .eq("id", commentId)
+    .eq("created_by", userId)
+    .not("deleted_at", "is", null)
+    .select(COMMENT_SELECT)
+    .single();
+
+  if (error) {
+    throw handleSupabaseError(error, "restoreOwnComment");
+  }
+  return data as CommentWithAuthor;
 }

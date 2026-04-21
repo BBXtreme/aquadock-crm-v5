@@ -10,7 +10,7 @@ import {
   ListTodo,
   SquareCode,
 } from "lucide-react";
-import type { FormEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent as ReactKeyboardEvent, Ref } from "react";
 import { useRef, useState } from "react";
 
 import { CommentMarkdownPreview } from "@/components/features/comments/CommentMarkdownPreview";
@@ -32,6 +32,8 @@ type CommentComposerProps = {
   replyBanner?: string | null;
   onCancelReply?: () => void;
   isReplying?: boolean;
+  /** Optional external ref to the textarea; useful for programmatic focus (e.g. template chips). */
+  textareaRef?: Ref<HTMLTextAreaElement>;
 };
 
 export function CommentComposer({
@@ -44,9 +46,19 @@ export function CommentComposer({
   replyBanner,
   onCancelReply,
   isReplying = false,
+  textareaRef,
 }: CommentComposerProps) {
   const t = useT("comments");
   const ta = useRef<HTMLTextAreaElement>(null);
+
+  const setRefs = (el: HTMLTextAreaElement | null) => {
+    ta.current = el;
+    if (typeof textareaRef === "function") {
+      textareaRef(el);
+    } else if (textareaRef) {
+      (textareaRef as { current: HTMLTextAreaElement | null }).current = el;
+    }
+  };
   const [isFocused, setIsFocused] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -145,7 +157,7 @@ export function CommentComposer({
 
         <div className="px-3 py-2">
           <Textarea
-            ref={ta}
+            ref={setRefs}
             data-testid="company-comment-composer-body"
             value={value}
             onChange={(e) => onChange(e.target.value)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Phone, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
+import { ChevronUp, MessageSquare, Phone, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -9,12 +9,14 @@ import { toast } from "sonner";
 import { CommentComposer } from "@/components/features/comments/CommentComposer";
 import { CommentItem } from "@/components/features/comments/CommentItem";
 import { flattenCommentThread } from "@/components/features/comments/flatten-comment-thread";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import {
   createCompanyComment,
   deleteComment,
   listCompanyComments,
+  restoreOwnComment,
   updateComment,
 } from "@/lib/actions/comments";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
@@ -22,7 +24,9 @@ import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { CommentWithAuthor } from "@/types/database.types";
 
 const MAX_COMMENT_DEPTH = 32;
+const MAX_VISUAL_DEPTH = 2;
 const HIGHLIGHT_DURATION_MS = 2500;
+const VISIBLE_ROOT_LIMIT = 5;
 
 type CompanyCommentsCardProps = {
   companyId: string;
@@ -37,8 +41,12 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
   const [draft, setDraft] = useState("");
   const [replyParent, setReplyParent] = useState<CommentWithAuthor | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const [targetCommentId, setTargetCommentId] = useState<string | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
+  const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasProcessedDeepLink = useRef(false);
 
   const queryKey = useMemo(() => ["comments", "company", companyId] as const, [companyId]);
 
@@ -57,10 +65,14 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     queryFn: () => listCompanyComments(companyId),
   });
 
-  const { ordered, depthById } = useMemo(() => {
+  const anonymousUserLabel = t("anonymousUser");
+
+  const { ordered, depthById, nameById } = useMemo(() => {
     const flat = flattenCommentThread(comments);
     const depth = new Map<string, number>();
+    const name = new Map<string, string>();
     for (const c of flat) {
+      name.set(c.id, c.profiles?.display_name?.trim() || anonymousUserLabel);
       if (!c.parent_id) {
         depth.set(c.id, 0);
         continue;
@@ -69,8 +81,32 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
       const next = parentDepth === undefined ? 0 : Math.min(parentDepth + 1, MAX_COMMENT_DEPTH);
       depth.set(c.id, next);
     }
-    return { ordered: flat, depthById: depth };
-  }, [comments]);
+    return { ordered: flat, depthById: depth, nameById: name };
+  }, [comments, anonymousUserLabel]);
+
+  /**
+   * Overflow: when there are more than VISIBLE_ROOT_LIMIT root comments, collapse
+   * the older ones behind a "show older notes" button. Clipping happens at root
+   * boundaries so reply threads always stay intact.
+   */
+  const { visibleOrdered, hiddenRootsCount } = useMemo(() => {
+    const rootIds: string[] = [];
+    for (const c of ordered) {
+      if (!c.parent_id) rootIds.push(c.id);
+    }
+    const hidden = Math.max(0, rootIds.length - VISIBLE_ROOT_LIMIT);
+    if (showAll || hidden === 0) {
+      return { visibleOrdered: ordered, hiddenRootsCount: 0 };
+    }
+    const firstVisibleRootId = rootIds[hidden];
+    const startIdx = firstVisibleRootId
+      ? ordered.findIndex((c) => c.id === firstVisibleRootId)
+      : -1;
+    return {
+      visibleOrdered: startIdx >= 0 ? ordered.slice(startIdx) : ordered,
+      hiddenRootsCount: hidden,
+    };
+  }, [ordered, showAll]);
 
   useEffect(() => {
     return () => {
@@ -89,6 +125,21 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
       setHighlightId((current) => (current === id ? null : current));
     }, HIGHLIGHT_DURATION_MS);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setTargetCommentId(params.get("commentId"));
+  }, []);
+
+  useEffect(() => {
+    if (!targetCommentId) return;
+    if (hasProcessedDeepLink.current) return;
+    if (!ordered.some((c) => c.id === targetCommentId)) return;
+    hasProcessedDeepLink.current = true;
+    setShowAll(true);
+    scheduleHighlight(targetCommentId);
+  }, [targetCommentId, ordered, scheduleHighlight]);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -172,25 +223,78 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     },
   });
 
-  const deleteMutation = useMutation({
+  const restoreMutation = useMutation<
+    CommentWithAuthor,
+    Error,
+    { commentId: string; snapshot: CommentWithAuthor },
+    { previous: CommentWithAuthor[] | undefined }
+  >({
+    mutationFn: ({ commentId }) => restoreOwnComment({ commentId }),
+    onMutate: async ({ snapshot }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<CommentWithAuthor[]>(queryKey);
+      queryClient.setQueryData<CommentWithAuthor[]>(queryKey, (old) => {
+        const existing = old ?? [];
+        const withoutDup = existing.filter((c) => c.id !== snapshot.id);
+        return [...withoutDup, { ...snapshot, deleted_at: null, deleted_by: null }];
+      });
+      return { previous };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.previous) {
+        queryClient.setQueryData(queryKey, ctx.previous);
+      }
+      const message = err instanceof Error ? err.message : t("unknownError");
+      toast.error(t("toastRestoreFailed"), { description: message });
+    },
+    onSuccess: (restored) => {
+      if (restored?.id) {
+        scheduleHighlight(restored.id);
+      }
+      toast.success(t("toastRestored"));
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+    },
+  });
+
+  const deleteMutation = useMutation<
+    { id: string },
+    Error,
+    string,
+    { previous: CommentWithAuthor[] | undefined; deletedComment: CommentWithAuthor | null }
+  >({
     mutationFn: (commentId: string) => deleteComment({ commentId }),
     onMutate: async (commentId) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<CommentWithAuthor[]>(queryKey);
+      const deletedComment = previous?.find((c) => c.id === commentId) ?? null;
       queryClient.setQueryData<CommentWithAuthor[]>(queryKey, (old) =>
         (old ?? []).filter((c) => c.id !== commentId),
       );
-      return { previous };
+      return { previous, deletedComment };
     },
-    onError: (err: unknown, _id, ctx) => {
+    onError: (err, _id, ctx) => {
       if (ctx?.previous) {
         queryClient.setQueryData(queryKey, ctx.previous);
       }
       const message = err instanceof Error ? err.message : t("unknownError");
       toast.error(t("toastDeleteFailed"), { description: message });
     },
-    onSuccess: () => {
-      toast.success(t("toastDeleted"));
+    onSuccess: (_data, commentId, ctx) => {
+      const snapshot = ctx?.deletedComment ?? null;
+      if (snapshot && snapshot.created_by === currentUser?.id) {
+        toast.success(t("toastDeleted"), {
+          action: {
+            label: t("toastDeletedUndo"),
+            onClick: () => {
+              restoreMutation.mutate({ commentId, snapshot });
+            },
+          },
+        });
+      } else {
+        toast.success(t("toastDeleted"));
+      }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey });
@@ -223,16 +327,53 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     await createMutation.mutateAsync();
   }, [createMutation]);
 
+  const handleChipTemplate = useCallback((template: string) => {
+    setDraft(template);
+    setReplyParent(null);
+    requestAnimationFrame(() => {
+      const el = composerTextareaRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(template.length, template.length);
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, []);
+
   const replyBanner =
     replyParent != null
       ? t("replyingTo", { name: replyParent.profiles?.display_name?.trim() || t("anonymousUser") })
       : null;
 
-  const suggestionChips: { key: string; label: string; Icon: IconComponent }[] = [
-    { key: "call", label: t("chipCallSummary"), Icon: Phone },
-    { key: "next", label: t("chipNextSteps"), Icon: Sparkles },
-    { key: "objection", label: t("chipObjection"), Icon: ShieldAlert },
-    { key: "decision", label: t("chipDecisionMaker"), Icon: UserCheck },
+  const suggestionChips: {
+    key: string;
+    label: string;
+    template: string;
+    Icon: IconComponent;
+  }[] = [
+    {
+      key: "call",
+      label: t("chipCallSummary"),
+      template: t("chipCallSummaryTemplate"),
+      Icon: Phone,
+    },
+    {
+      key: "next",
+      label: t("chipNextSteps"),
+      template: t("chipNextStepsTemplate"),
+      Icon: Sparkles,
+    },
+    {
+      key: "objection",
+      label: t("chipObjection"),
+      template: t("chipObjectionTemplate"),
+      Icon: ShieldAlert,
+    },
+    {
+      key: "decision",
+      label: t("chipDecisionMaker"),
+      template: t("chipDecisionMakerTemplate"),
+      Icon: UserCheck,
+    },
   ];
 
   return (
@@ -256,6 +397,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             onCancelReply={() => setReplyParent(null)}
             onSubmit={handleSubmit}
             isReplying={replyParent !== null}
+            textareaRef={composerTextareaRef}
           />
         </div>
 
@@ -274,34 +416,58 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
               className="mt-3 flex flex-wrap justify-center gap-1.5"
               aria-label={t("suggestionsLabel")}
             >
-              {suggestionChips.map(({ key, label, Icon }) => (
-                <li
-                  key={key}
-                  className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground"
-                >
-                  <Icon className="h-3 w-3" aria-hidden />
-                  {label}
+              {suggestionChips.map(({ key, label, template, Icon }) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => handleChipTemplate(template)}
+                    disabled={!currentUser}
+                    className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Icon className="h-3 w-3" aria-hidden />
+                    {label}
+                  </button>
                 </li>
               ))}
             </ul>
           </div>
         ) : (
-          <ul className="space-y-2.5">
-            {ordered.map((c) => (
-              <li key={c.id}>
-                <CommentItem
-                  comment={c}
-                  currentUserId={currentUser?.id ?? null}
-                  localeTag={localeTag}
-                  depth={depthById.get(c.id) ?? 0}
-                  isHighlighted={highlightId === c.id}
-                  onReply={handleReply}
-                  onUpdate={handleUpdate}
-                  onDelete={handleDelete}
-                />
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-2.5">
+            {hiddenRootsCount > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAll(true)}
+                className="w-full justify-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <ChevronUp className="h-3.5 w-3.5" aria-hidden />
+                {t("showOlder", { count: hiddenRootsCount })}
+              </Button>
+            ) : null}
+            <ul className="space-y-2.5">
+              {visibleOrdered.map((c) => {
+                const rawDepth = depthById.get(c.id) ?? 0;
+                const visualDepth = Math.min(rawDepth, MAX_VISUAL_DEPTH);
+                const parentName = c.parent_id ? nameById.get(c.parent_id) ?? null : null;
+                return (
+                  <li key={c.id}>
+                    <CommentItem
+                      comment={c}
+                      currentUserId={currentUser?.id ?? null}
+                      localeTag={localeTag}
+                      depth={visualDepth}
+                      parentAuthorName={parentName}
+                      isHighlighted={highlightId === c.id}
+                      onReply={handleReply}
+                      onUpdate={handleUpdate}
+                      onDelete={handleDelete}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </CardContent>
     </Card>

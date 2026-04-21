@@ -1211,8 +1211,22 @@
     "chipNextSteps": "Nächste Schritte",
     "chipObjection": "Einwand notiert",
     "chipDecisionMaker": "Entscheider",
+    "chipCallSummaryTemplate": "## Gesprächsnotiz\n- Datum: \n- Gesprächspartner: \n- Thema: \n- Ergebnis: \n- Nächster Schritt: ",
+    "chipNextStepsTemplate": "## Nächste Schritte\n- [ ] \n- [ ] \n- [ ] ",
+    "chipObjectionTemplate": "## Einwand\n- Einwand: \n- Unsere Antwort: \n- Folgeaktion: ",
+    "chipDecisionMakerTemplate": "## Entscheider\n- Name: \n- Rolle: \n- Einfluss: \n- Nächster Kontakt: ",
     "anonymousUser": "Teammitglied",
-    "unknownError": "Unbekannter Fehler"
+    "unknownError": "Unbekannter Fehler",
+    "timeJustNow": "gerade eben",
+    "editedTooltip": "Zuletzt bearbeitet am {time}",
+    "replyToInline": "Antwort an {name}",
+    "copyLink": "Link zur Notiz kopieren",
+    "copyLinkCopied": "Link kopiert",
+    "copyLinkFailed": "Link konnte nicht kopiert werden",
+    "showOlder": "Ältere Notizen anzeigen ({count})",
+    "toastDeletedUndo": "Rückgängig",
+    "toastRestored": "Notiz wiederhergestellt",
+    "toastRestoreFailed": "Wiederherstellen fehlgeschlagen"
   },
   "layout": {
     "globalSearchTitle": "Globale Suche",

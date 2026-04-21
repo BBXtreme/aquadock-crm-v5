@@ -23,6 +23,13 @@ export const deleteCommentSchema = z
   })
   .strict();
 
+export const restoreOwnCommentSchema = z
+  .object({
+    commentId: z.string().uuid(),
+  })
+  .strict();
+
 export type CreateCompanyCommentInput = z.infer<typeof createCompanyCommentSchema>;
 export type UpdateCommentInput = z.infer<typeof updateCommentSchema>;
 export type DeleteCommentInput = z.infer<typeof deleteCommentSchema>;
+export type RestoreOwnCommentInput = z.infer<typeof restoreOwnCommentSchema>;

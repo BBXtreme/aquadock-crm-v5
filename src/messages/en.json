@@ -1211,8 +1211,22 @@
     "chipNextSteps": "Next steps",
     "chipObjection": "Objection noted",
     "chipDecisionMaker": "Decision maker",
+    "chipCallSummaryTemplate": "## Call summary\n- Date: \n- Contact: \n- Topic: \n- Outcome: \n- Next step: ",
+    "chipNextStepsTemplate": "## Next steps\n- [ ] \n- [ ] \n- [ ] ",
+    "chipObjectionTemplate": "## Objection\n- Objection: \n- Our response: \n- Follow-up: ",
+    "chipDecisionMakerTemplate": "## Decision maker\n- Name: \n- Role: \n- Influence: \n- Next contact: ",
     "anonymousUser": "Team member",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "timeJustNow": "just now",
+    "editedTooltip": "Last edited on {time}",
+    "replyToInline": "Replying to {name}",
+    "copyLink": "Copy link to note",
+    "copyLinkCopied": "Link copied",
+    "copyLinkFailed": "Could not copy link",
+    "showOlder": "Show older notes ({count})",
+    "toastDeletedUndo": "Undo",
+    "toastRestored": "Note restored",
+    "toastRestoreFailed": "Could not restore note"
   },
   "layout": {
     "globalSearchTitle": "Global search",
