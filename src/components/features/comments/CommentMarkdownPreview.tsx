@@ -12,7 +12,8 @@ type CommentMarkdownPreviewProps = {
 
 const SAFE_URL_SCHEMES = ["http:", "https:", "mailto:", "tel:"] as const;
 
-function safeUrl(url: string): string {
+/** Exported for unit tests (urlTransform + clipboard-style URL guards). */
+export function safeUrl(url: string): string {
   try {
     const parsed = new URL(url, "http://localhost");
     return SAFE_URL_SCHEMES.includes(parsed.protocol as (typeof SAFE_URL_SCHEMES)[number]) ? url : "";

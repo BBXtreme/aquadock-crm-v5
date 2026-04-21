@@ -370,7 +370,11 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
   );
 
   const handleSubmit = useCallback(async () => {
-    await createMutation.mutateAsync();
+    try {
+      await createMutation.mutateAsync();
+    } catch {
+      // Errors are surfaced via createMutation.onError (toast + rollback).
+    }
   }, [createMutation]);
 
   const handleChipTemplate = useCallback((template: string) => {

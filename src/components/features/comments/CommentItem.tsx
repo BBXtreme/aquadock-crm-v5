@@ -153,6 +153,8 @@ export function CommentItem({
     try {
       await onUpdate(comment.id, editBody.trim());
       setEditing(false);
+    } catch {
+      // Parent mutation onError shows toast; keep editor open for retry.
     } finally {
       setSaving(false);
     }
@@ -180,6 +182,8 @@ export function CommentItem({
     try {
       await onDelete(comment.id);
       setDeleteOpen(false);
+    } catch {
+      // Parent mutation onError shows toast.
     } finally {
       setDeleting(false);
     }
