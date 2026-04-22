@@ -1356,10 +1356,15 @@
     "notSignedIn": "Please sign in."
   },
   "layout": {
+    "commandPaletteTitle": "Go to",
+    "commandPaletteDescription": "Search or open a page in the app.",
+    "commandPalettePlaceholder": "Search pages…",
+    "commandPaletteEmpty": "No matches.",
+    "commandPaletteAccountGroup": "Account",
     "globalSearchTitle": "Global search",
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
     "globalSearchGotIt": "Got it",
-    "searchAriaLabel": "Search",
+    "searchAriaLabel": "Open quick navigation (⌘K)",
     "notificationsLinkAria": "Notifications",
     "reminderOverdueLinkAria": "View overdue reminders",
     "reminderThisWeekLinkAria": "View open reminders due this week",

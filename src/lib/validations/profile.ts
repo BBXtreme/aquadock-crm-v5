@@ -115,6 +115,55 @@ export const profileDisplayNameSchema = z
 
 export type ProfileDisplayNameForm = z.infer<typeof profileDisplayNameSchema>;
 
+/** Admin: update another user's display name (Server Action from FormData). */
+export const adminUpdateUserDisplayNameSchema = z
+  .object({
+    userId: z.string().uuid(),
+    display_name: z
+      .string()
+      .trim()
+      .min(1, "Anzeigename ist erforderlich.")
+      .max(50, "Maximal 50 Zeichen."),
+  })
+  .strict();
+
+export type AdminUpdateUserDisplayNameInput = z.infer<typeof adminUpdateUserDisplayNameSchema>;
+
+export const adminChangeUserRoleSchema = z
+  .object({
+    userId: z.string().uuid(),
+    newRole: z.enum(["user", "admin"]),
+  })
+  .strict();
+
+export type AdminChangeUserRoleInput = z.infer<typeof adminChangeUserRoleSchema>;
+
+export const adminDeleteUserSchema = z
+  .object({
+    userId: z.string().uuid(),
+  })
+  .strict();
+
+/** Admin-created user (FormData: email, display_name, role). */
+export const adminCreateUserSchema = z
+  .object({
+    email: z.string().trim().min(1, "E-Mail ist erforderlich.").email("Ungültige E-Mail-Adresse."),
+    display_name: z
+      .string()
+      .transform((s) => {
+        const t = s.trim();
+        return t === "" ? null : t;
+      })
+      .pipe(z.union([z.null(), z.string().min(1).max(200)])),
+    role: z.preprocess(
+      (v) => (v === null || v === undefined || v === "" ? "user" : v),
+      z.enum(["user", "admin"]),
+    ),
+  })
+  .strict();
+
+export type AdminCreateUserInput = z.infer<typeof adminCreateUserSchema>;
+
 const profileAvatarFileSchema = z
   .custom<File>((val): val is File => val instanceof File)
   .superRefine((file, ctx) => {

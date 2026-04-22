@@ -1,5 +1,5 @@
 // src/components/layout/Header.tsx
-// This component implements the header of the application, including the logo, search (placeholder dialog), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
+// This component implements the header of the application, including the logo, quick navigation (⌘K), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
 
 "use client";
 
@@ -11,16 +11,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import FeedbackButton from "@/components/features/feedback/FeedbackButton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AppCommandMenu } from "@/components/layout/AppCommandMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +69,7 @@ export default function Header({ user }: HeaderProps) {
   const queryClient = useQueryClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -241,22 +233,17 @@ export default function Header({ user }: HeaderProps) {
           </Link>
         )}
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" aria-label={t("searchAriaLabel")}>
-              <Search className="h-4 w-4" aria-hidden />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("globalSearchTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("globalSearchDescription")}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction>{t("globalSearchGotIt")}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={t("searchAriaLabel")}
+          aria-keyshortcuts="Control+K Meta+K"
+          onClick={() => setCommandOpen(true)}
+        >
+          <Search className="h-4 w-4" aria-hidden />
+        </Button>
+        <AppCommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

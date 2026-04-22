@@ -1356,6 +1356,11 @@
     "notSignedIn": "Bitte melden Sie sich an."
   },
   "layout": {
+    "commandPaletteTitle": "Gehe zu",
+    "commandPaletteDescription": "Suchen oder eine Seite öffnen.",
+    "commandPalettePlaceholder": "Seiten suchen…",
+    "commandPaletteEmpty": "Keine Treffer.",
+    "commandPaletteAccountGroup": "Konto",
     "globalSearchTitle": "Globale Suche",
     "globalSearchDescription": "Die globale Suche ist noch nicht fertig — hier kommt später die richtige Suche hin. Bis dahin nutzen Sie die Seitenleiste oder die Listen.",
     "globalSearchGotIt": "Verstanden",

@@ -1356,6 +1356,11 @@
     "notSignedIn": "Prijavite se."
   },
   "layout": {
+    "commandPaletteTitle": "Idi na",
+    "commandPaletteDescription": "Pretražite ili otvorite stranicu.",
+    "commandPalettePlaceholder": "Pretraži stranice…",
+    "commandPaletteEmpty": "Nema podudaranja.",
+    "commandPaletteAccountGroup": "Račun",
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",

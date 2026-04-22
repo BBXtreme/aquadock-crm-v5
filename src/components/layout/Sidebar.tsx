@@ -1,24 +1,18 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
-import {
-  BarChart3,
-  Bell,
-  ChevronDown,
-  History,
-  Mail,
-  MapPin,
-  PanelLeft,
-  PanelRight,
-  Target,
-  Users,
-} from "lucide-react";
+import { ChevronDown, type LucideIcon, PanelLeft, PanelRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  type AppShellNavMessageKey,
+  appShellMarketingNav,
+  appShellSalesNav,
+} from "@/lib/constants/app-shell-navigation";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import packageJson from "../../../package.json";
@@ -88,29 +82,11 @@ interface SidebarProps {
   user: { role: string; display_name?: string | null };
 }
 
-const salesNavigation = [
-  { messageKey: "dashboard", href: "/dashboard", icon: BarChart3 },
-  { messageKey: "openmap", href: "/openmap", icon: MapPin },
-  { messageKey: "reminders", href: "/reminders", icon: Bell },
-  { messageKey: "companies", href: "/companies", icon: Target },
-  { messageKey: "contacts", href: "/contacts", icon: Users },
-  { messageKey: "timeline", href: "/timeline", icon: History },
-] as const;
-
-const marketingNavigation = [
-  { messageKey: "massEmail", href: "/mass-email", icon: Mail },
-  { messageKey: "brevoCampaigns", href: "/brevo", icon: Mail },
-] as const;
-
-type SidebarNavMessageKey =
-  | (typeof salesNavigation)[number]["messageKey"]
-  | (typeof marketingNavigation)[number]["messageKey"];
-
 function renderNavItems(
-  items: readonly { messageKey: SidebarNavMessageKey; href: string; icon: typeof BarChart3 }[],
+  items: readonly { messageKey: AppShellNavMessageKey; href: string; icon: LucideIcon }[],
   pathname: string,
   isCollapsed: boolean,
-  label: (key: SidebarNavMessageKey) => string,
+  label: (key: AppShellNavMessageKey) => string,
 ) {
   return items.map((item) => {
     const isActive = pathname === item.href;
@@ -167,7 +143,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
           {!isCollapsed ? <SidebarGroupLabel>{t("groupSales")}</SidebarGroupLabel> : null}
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderNavItems(salesNavigation, pathname, isCollapsed, t)}
+              {renderNavItems(appShellSalesNav, pathname, isCollapsed, t)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -175,7 +151,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
           {!isCollapsed ? <SidebarGroupLabel>{t("groupMarketing")}</SidebarGroupLabel> : null}
           <SidebarGroupContent>
             <SidebarMenu>
-              {renderNavItems(marketingNavigation, pathname, isCollapsed, t)}
+              {renderNavItems(appShellMarketingNav, pathname, isCollapsed, t)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
