@@ -75,9 +75,12 @@ const KUNDENTYP_LABEL_MAP: Record<string, string> = Object.fromEntries(
   kundentypOptions.map((o) => [o.value, o.label]),
 );
 
-import type { Company, Contact } from "@/types/database.types";
+import type { Company, Contact, Profile } from "@/types/database.types";
 
-type CompanyWithContacts = Company & { contacts?: Contact[] };
+type CompanyWithContacts = Company & {
+  contacts?: Contact[];
+  owner_profile?: Pick<Profile, "display_name"> | null;
+};
 
 interface CompaniesTableProps {
   companies: CompanyWithContacts[];
@@ -153,7 +156,9 @@ export default function CompaniesTable({
   const t = useT("companies");
   const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({});
+  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({
+    verantwortlich: false,
+  });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<CompanyWithContacts | null>(null);
@@ -328,6 +333,14 @@ export default function CompaniesTable({
             const d =
               v === null || v === undefined ? v : typeof v === "string" ? v : undefined;
             return formatDateDistance(d);
+          },
+        }),
+        columnHelper.display({
+          id: "verantwortlich",
+          header: t("responsibleLabel"),
+          cell: (info) => {
+            const name = info.row.original.owner_profile?.display_name;
+            return <span>{safeDisplay(name)}</span>;
           },
         }),
         columnHelper.display({
@@ -645,9 +658,11 @@ export default function CompaniesTable({
                                       ? t("tableColWassertyp")
                                       : id === "created_at"
                                         ? t("tableColCreated")
-                                        : id === "actions"
-                                          ? t("tableColActions")
-                                          : id;
+                                        : id === "verantwortlich"
+                                          ? t("responsibleLabel")
+                                          : id === "actions"
+                                            ? t("tableColActions")
+                                            : id;
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}

@@ -29,6 +29,8 @@ export const COMPANIES_LIST_PARAM_KEYS = [
   "wassertyp",
   "water",
   "cols",
+  /** When `1`, the optional “Verantwortlich” table column is visible (hidden by default). */
+  "ow",
   "sort",
   "dir",
   "page",
@@ -65,7 +67,7 @@ export function defaultCompaniesListUrlState(): CompaniesListUrlState {
       land: [],
       wassertyp: [],
     },
-    columnVisibility: {},
+    columnVisibility: { verantwortlich: false },
     waterFilter: null,
     globalFilter: "",
   };
@@ -154,6 +156,8 @@ function parseColumnVisibility(raw: string | null): Record<string, boolean> {
 export function parseCompaniesListState(searchParams: CompaniesListSearchParamsRead): CompaniesListUrlState {
   const sortId = parseSortId(searchParams.get("sort"));
   const desc = parseDesc(searchParams.get("dir"));
+  const fromCols = parseColumnVisibility(searchParams.get("cols"));
+  const verantwortlichVisible = searchParams.get("ow") === "1";
   return {
     pagination: {
       pageIndex: parsePageIndexOneBased(searchParams.get("page")),
@@ -167,7 +171,10 @@ export function parseCompaniesListState(searchParams: CompaniesListSearchParamsR
       land: splitCommaList(searchParams.get("land")),
       wassertyp: splitCommaList(searchParams.get("wassertyp")),
     },
-    columnVisibility: parseColumnVisibility(searchParams.get("cols")),
+    columnVisibility: {
+      ...fromCols,
+      verantwortlich: verantwortlichVisible,
+    },
     waterFilter: parseWater(searchParams.get("water")),
     globalFilter: searchParams.get("q") ?? "",
   };
@@ -226,7 +233,10 @@ export function serializeCompaniesListToSearchParamsString(state: CompaniesListU
   setCsv("betriebstyp", state.activeFilters.betriebstyp);
   setCsv("land", state.activeFilters.land);
   setCsv("wassertyp", state.activeFilters.wassertyp);
-  const hiddenColumns = hiddenColumnIds(state.columnVisibility);
+  if (state.columnVisibility.verantwortlich === true) {
+    next.set("ow", "1");
+  }
+  const hiddenColumns = hiddenColumnIds(state.columnVisibility).filter((id) => id !== "verantwortlich");
   if (hiddenColumns.length > 0) {
     next.set("cols", hiddenColumns.join(","));
   }

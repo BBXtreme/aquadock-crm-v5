@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import { listNotificationsForUser, markAllRead, markAsRead } from "@/lib/services/in-app-notifications";
 import { createClient } from "@/lib/supabase/browser";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -40,16 +41,10 @@ function getInAppNotificationHref(n: UserNotification): string {
   if (payload == null) {
     return "/dashboard";
   }
-  if ("reminderId" in payload) {
-    return `/companies/${payload.companyId}`;
+  if ("contactId" in payload) {
+    return `/contacts/${payload.contactId}`;
   }
-  if ("timelineId" in payload) {
-    return `/companies/${payload.companyId}`;
-  }
-  if ("commentId" in payload) {
-    return `/companies/${payload.companyId}`;
-  }
-  return "/dashboard";
+  return `/companies/${payload.companyId}`;
 }
 
 function InAppNotificationsTable({ userId }: { userId: string }) {
@@ -57,6 +52,8 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
   const localeTag = useNumberLocaleTag();
   const queryClient = useQueryClient();
   const supabase = useMemo(() => createClient(), []);
+
+  useInAppNotificationsRealtime(userId, queryClient);
 
   const { data: rows = [] } = useSuspenseQuery({
     queryKey: ["in-app-notifications", userId],
@@ -119,6 +116,10 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
                 return t("types.timeline_on_company");
               case "comment_reply":
                 return t("types.comment_reply");
+              case "company_owner_assigned":
+                return t("types.company_owner_assigned");
+              case "contact_assigned":
+                return t("types.contact_assigned");
               default:
                 return t("typeUnknown");
             }

@@ -41,7 +41,15 @@ describe("parseCompaniesListState", () => {
     const sp = new URLSearchParams();
     sp.set("cols", "status,wassertyp");
     const s = parseCompaniesListState(sp);
-    expect(s.columnVisibility).toEqual({ status: false, wassertyp: false });
+    expect(s.columnVisibility).toEqual({ status: false, wassertyp: false, verantwortlich: false });
+  });
+
+  it("parses ow=1 as Verantwortlich column visible", () => {
+    const sp = new URLSearchParams();
+    sp.set("cols", "status");
+    sp.set("ow", "1");
+    const s = parseCompaniesListState(sp);
+    expect(s.columnVisibility).toEqual({ status: false, verantwortlich: true });
   });
 
   it("parses water preset when valid", () => {
@@ -108,6 +116,18 @@ describe("serializeCompaniesListToSearchParamsString", () => {
     const parsed = parseCompaniesListState(sp);
     const again = parseCompaniesListState(new URLSearchParams(serializeCompaniesListToSearchParamsString(parsed)));
     expect(companiesListStatesEqual(parsed, again)).toBe(true);
+  });
+
+  it("round-trips Verantwortlich visible via ow=1", () => {
+    const base = defaultCompaniesListUrlState();
+    const state: CompaniesListUrlState = {
+      ...base,
+      columnVisibility: { ...base.columnVisibility, verantwortlich: true, status: false },
+    };
+    const qs = serializeCompaniesListToSearchParamsString(state);
+    const again = parseCompaniesListState(new URLSearchParams(qs));
+    expect(companiesListStatesEqual(state, again)).toBe(true);
+    expect(again.columnVisibility.verantwortlich).toBe(true);
   });
 });
 

@@ -1,10 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { getCurrentUser } from "@/lib/auth/get-current-user";
 import { createInAppNotification } from "@/lib/services/in-app-notifications";
 import { createReminder } from "@/lib/services/reminders";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Reminder, ReminderInsert } from "@/types/database.types";
 
 const createReminderActionInputSchema = z
@@ -51,6 +49,10 @@ function mapToReminderInsert(
  * Create a reminder for the current user; notifies assignee when `assigned_to` is another user.
  */
 export async function createReminderAction(input: unknown): Promise<Reminder> {
+  const [{ getCurrentUser }, { createServerSupabaseClient }] = await Promise.all([
+    import("@/lib/auth/get-current-user"),
+    import("@/lib/supabase/server"),
+  ]);
   const user = await getCurrentUser();
   if (user == null) {
     throw new Error("Unauthorized");

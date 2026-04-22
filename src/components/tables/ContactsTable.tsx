@@ -52,9 +52,12 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { getTablePageRange } from "@/lib/utils/table-page-range";
-import type { Contact } from "@/types/database.types";
+import type { Contact, Profile } from "@/types/database.types";
 
-type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
+type ContactWithCompany = Contact & {
+  companies?: { firmenname: string } | null;
+  owner_profile?: Pick<Profile, "display_name"> | null;
+};
 
 interface ContactsTableProps {
   contacts: ContactWithCompany[];
@@ -91,7 +94,10 @@ export default function ContactsTable({
   const t = useT("contacts");
   const localeTag = useNumberLocaleTag();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
-  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({ anrede: false });
+  const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({
+    anrede: false,
+    verantwortlich: false,
+  });
   const [rowSelection, setRowSelection] = useState({});
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -201,6 +207,11 @@ export default function ContactsTable({
         id: "notes",
         header: t("tableColNotes"),
         cell: (info) => <DisplayOrDash value={info.getValue()} />,
+      }) as ColumnDef<ContactWithCompany>,
+      columnHelper.display({
+        id: "verantwortlich",
+        header: t("tableColResponsible"),
+        cell: (info) => <DisplayOrDash value={info.row.original.owner_profile?.display_name} />,
       }) as ColumnDef<ContactWithCompany>,
       columnHelper.display({
         id: "actions",
@@ -350,6 +361,7 @@ export default function ContactsTable({
       if (id === "mobil") return t("tableColMobile");
       if (id === "durchwahl") return t("tableColExtension");
       if (id === "notes") return t("tableColNotes");
+      if (id === "verantwortlich") return t("tableColResponsible");
       if (id === "actions") return t("tableColActions");
       return id;
     },

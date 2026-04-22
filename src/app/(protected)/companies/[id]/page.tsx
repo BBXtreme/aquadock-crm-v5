@@ -6,8 +6,10 @@
 
 import { notFound, redirect } from "next/navigation";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
+import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { companiesListSearchStringFromPageSearchParams } from "@/lib/utils/company-filters-url-state";
+import { safeDisplay } from "@/lib/utils/data-format";
 import CompanyDetailClient from "./CompanyDetailClient";
 
 export default async function CompanyDetailPage({
@@ -34,9 +36,23 @@ export default async function CompanyDetailPage({
   const initialAiEnrichOpen = sp?.aiEnrich === "1";
   const initialCompaniesListSearch = companiesListSearchStringFromPageSearchParams(sp);
 
+  const messages = getMessagesForLocale(resolveAppLocale(undefined));
+  const responsibleLabel = messages.companies.responsibleLabel;
+  let ownerDisplayLine: string | null = null;
+  const uid = resolved.company.user_id;
+  if (uid != null && uid !== "") {
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", uid)
+      .maybeSingle();
+    ownerDisplayLine = `${responsibleLabel}: ${safeDisplay(ownerProfile?.display_name)}`;
+  }
+
   return (
     <CompanyDetailClient
       company={resolved.company}
+      ownerDisplayLine={ownerDisplayLine}
       initialAiEnrichOpen={initialAiEnrichOpen}
       initialCompaniesListSearch={initialCompaniesListSearch}
     />

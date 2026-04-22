@@ -13,6 +13,7 @@ const reminderId = "20000000-0000-4000-8000-000000000002";
 const timelineId = "20000000-0000-4000-8000-000000000003";
 const commentId = "20000000-0000-4000-8000-000000000004";
 const parentCommentId = "20000000-0000-4000-8000-000000000005";
+const contactId = "20000000-0000-4000-8000-000000000006";
 
 describe("createInAppNotificationInputSchema", () => {
   it("accepts reminder_assigned with required fields", () => {
@@ -49,13 +50,37 @@ describe("createInAppNotificationInputSchema", () => {
         expect(out.type).toBe("timeline_on_company");
         continue;
       }
-      const out = createInAppNotificationInputSchema.parse({
-        type: "comment_reply",
-        userId,
-        title: "T",
-        payload: { companyId, commentId, parentCommentId },
-      });
-      expect(out.type).toBe("comment_reply");
+      if (type === "comment_reply") {
+        const out = createInAppNotificationInputSchema.parse({
+          type: "comment_reply",
+          userId,
+          title: "T",
+          payload: { companyId, commentId, parentCommentId },
+        });
+        expect(out.type).toBe("comment_reply");
+        continue;
+      }
+      if (type === "company_owner_assigned") {
+        const out = createInAppNotificationInputSchema.parse({
+          type: "company_owner_assigned",
+          userId,
+          title: "T",
+          payload: { companyId },
+        });
+        expect(out.type).toBe("company_owner_assigned");
+        continue;
+      }
+      if (type === "contact_assigned") {
+        const out = createInAppNotificationInputSchema.parse({
+          type: "contact_assigned",
+          userId,
+          title: "T",
+          payload: { contactId },
+        });
+        expect(out.type).toBe("contact_assigned");
+        continue;
+      }
+      throw new Error(`unhandled notification type: ${String(type)}`);
     }
   });
 
@@ -106,6 +131,12 @@ describe("parseInAppNotificationPayload", () => {
         parentCommentId,
       }),
     ).toEqual({ companyId, commentId, parentCommentId });
+    expect(parseInAppNotificationPayload("company_owner_assigned", { companyId })).toEqual({ companyId });
+    expect(parseInAppNotificationPayload("contact_assigned", { contactId })).toEqual({ contactId });
+    expect(parseInAppNotificationPayload("contact_assigned", { contactId, companyId })).toEqual({
+      contactId,
+      companyId,
+    });
   });
 
   it("returns null for invalid payload or unknown type", () => {

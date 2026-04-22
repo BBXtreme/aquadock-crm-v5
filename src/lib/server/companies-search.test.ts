@@ -100,6 +100,7 @@ describe("searchCompaniesList", () => {
         id: "c1",
         firmenname: "AquaDock Marina Hotel",
         contacts: [{ id: "ct1", deleted_at: null }],
+        owner_profile: null,
       },
     ]);
   });

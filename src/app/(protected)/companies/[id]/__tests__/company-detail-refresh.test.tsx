@@ -12,7 +12,8 @@ import { Suspense, useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CompanyDetailClient from "@/app/(protected)/companies/[id]/CompanyDetailClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { updateCompany } from "@/lib/actions/companies";
+import { updateCompany, updateCompanyWithOwner } from "@/lib/actions/companies";
+import type { UpdateCompanyWithOwnerInput } from "@/lib/validations/company-owner";
 import deMessages from "@/messages/de.json";
 import type { Company } from "@/types/database.types";
 
@@ -85,6 +86,7 @@ vi.mock("@/components/features/companies/ai-enrichment/AIEnrichmentModal", () =>
 
 vi.mock("@/lib/actions/companies", () => ({
   updateCompany: vi.fn(),
+  updateCompanyWithOwner: vi.fn(),
   deleteCompany: vi.fn(),
 }));
 
@@ -104,6 +106,7 @@ vi.mock("sonner", () => ({
 }));
 
 const mockedUpdateCompany = vi.mocked(updateCompany);
+const mockedUpdateCompanyWithOwner = vi.mocked(updateCompanyWithOwner);
 
 function mockCompanyRow(overrides: Partial<Company> = {}): Company {
   return {
@@ -206,6 +209,12 @@ describe("CompanyDetailClient refresh after inline edits", () => {
     mockedUpdateCompany.mockImplementation(async (_id: string, updates: Partial<Company>) => {
       testCtx.lastPartial.current = { ...updates };
       return { ...mockCompanyRow(), ...updates } as Company;
+    });
+    mockedUpdateCompanyWithOwner.mockImplementation(async (raw: unknown) => {
+      const input = raw as UpdateCompanyWithOwnerInput;
+      const patch = { ...input.company, user_id: input.user_id };
+      testCtx.lastPartial.current = patch;
+      return { ...mockCompanyRow(), ...patch } as Company;
     });
   });
 

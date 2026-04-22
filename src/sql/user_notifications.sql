@@ -46,6 +46,9 @@ CREATE POLICY "user_notifications_update_own"
 COMMENT ON TABLE public.user_notifications IS
   'In-app notification inbox; rows inserted only via service role from trusted server code.';
 
+-- Realtime (postgres_changes): helps filtered UPDATE subscriptions; safe on this small table.
+ALTER TABLE public.user_notifications REPLICA IDENTITY FULL;
+
 -- Realtime: clients subscribe with filter user_id=eq.<uid>
 DO $$
 BEGIN

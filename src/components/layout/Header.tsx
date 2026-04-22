@@ -35,6 +35,7 @@ import {
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { useT } from "@/lib/i18n/use-translations";
+import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import { getUnreadCount } from "@/lib/services/in-app-notifications";
 import { saveAppearanceTheme } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
@@ -159,28 +160,7 @@ export default function Header({ user }: HeaderProps) {
     staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`in_app_notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "user_notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          void queryClient.invalidateQueries({ queryKey: ["in-app-notifications", user.id] });
-          void queryClient.invalidateQueries({ queryKey: ["in-app-notifications-unread", user.id] });
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [user.id, queryClient]);
+  useInAppNotificationsRealtime(user.id, queryClient);
 
   // Radix DropdownMenuItem uses pointer handlers that block native <form> submit on
   // the slotted button. Sign out via the browser Supabase client, then hard-navigate

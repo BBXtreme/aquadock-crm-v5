@@ -41,7 +41,10 @@ function ClientContactsPage() {
   const localeTag = useNumberLocaleTag();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ anrede: false });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    anrede: false,
+    verantwortlich: false,
+  });
   const [rowSelection, setRowSelection] = useState({});
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });

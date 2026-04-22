@@ -33,6 +33,8 @@ interface Props {
   prevCompanyId?: string | null;
   nextCompanyId?: string | null;
   listNavIdsLoading?: boolean;
+  /** Pre-rendered responsible-person line from RSC (i18n + safeDisplay) */
+  ownerDisplayLine?: string | null;
   onAddTimeline: () => void;
   onEdit: () => void;
   onAiEnrich?: () => void;
@@ -47,6 +49,7 @@ export default function CompanyHeader({
   prevCompanyId = null,
   nextCompanyId = null,
   listNavIdsLoading = false,
+  ownerDisplayLine = null,
   onAddTimeline,
   onEdit,
   onAiEnrich,
@@ -93,6 +96,9 @@ export default function CompanyHeader({
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">{company.firmenname}</h1>
             {company.rechtsform && <p className="mt-1 text-muted-foreground">{company.rechtsform}</p>}
+            {ownerDisplayLine != null && ownerDisplayLine !== "" && (
+              <p className="mt-1 text-sm text-muted-foreground">{ownerDisplayLine}</p>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

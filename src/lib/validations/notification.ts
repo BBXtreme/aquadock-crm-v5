@@ -10,6 +10,8 @@ export const IN_APP_NOTIFICATION_TYPES = [
   "reminder_assigned",
   "timeline_on_company",
   "comment_reply",
+  "company_owner_assigned",
+  "contact_assigned",
 ] as const;
 
 export type InAppNotificationType = (typeof IN_APP_NOTIFICATION_TYPES)[number];
@@ -38,11 +40,31 @@ const payloadCommentReplySchema = z
   })
   .strict();
 
+const payloadCompanyOwnerAssignedSchema = z
+  .object({
+    companyId: z.string().uuid(),
+  })
+  .strict();
+
+const payloadContactAssignedSchema = z
+  .object({
+    contactId: z.string().uuid(),
+    companyId: z.string().uuid().optional(),
+  })
+  .strict();
+
 export type PayloadReminderAssigned = z.infer<typeof payloadReminderAssignedSchema>;
 export type PayloadTimelineOnCompany = z.infer<typeof payloadTimelineOnCompanySchema>;
 export type PayloadCommentReply = z.infer<typeof payloadCommentReplySchema>;
+export type PayloadCompanyOwnerAssigned = z.infer<typeof payloadCompanyOwnerAssignedSchema>;
+export type PayloadContactAssigned = z.infer<typeof payloadContactAssignedSchema>;
 
-export type InAppNotificationPayload = PayloadReminderAssigned | PayloadTimelineOnCompany | PayloadCommentReply;
+export type InAppNotificationPayload =
+  | PayloadReminderAssigned
+  | PayloadTimelineOnCompany
+  | PayloadCommentReply
+  | PayloadCompanyOwnerAssigned
+  | PayloadContactAssigned;
 
 const optionalActor = z.preprocess(
   emptyStringToNull,
@@ -93,6 +115,28 @@ export const createInAppNotificationInputSchema = z.discriminatedUnion("type", [
       dedupeKey: optionalDedupe,
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("company_owner_assigned"),
+      userId: z.string().uuid(),
+      title: z.string().trim().min(1).max(500),
+      body: optionalBody,
+      payload: payloadCompanyOwnerAssignedSchema,
+      actorUserId: optionalActor,
+      dedupeKey: optionalDedupe,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("contact_assigned"),
+      userId: z.string().uuid(),
+      title: z.string().trim().min(1).max(500),
+      body: optionalBody,
+      payload: payloadContactAssignedSchema,
+      actorUserId: optionalActor,
+      dedupeKey: optionalDedupe,
+    })
+    .strict(),
 ]);
 
 export type CreateInAppNotificationInput = z.infer<typeof createInAppNotificationInputSchema>;
@@ -115,6 +159,14 @@ export function parseInAppNotificationPayload(
   }
   if (type === "comment_reply") {
     const r = payloadCommentReplySchema.safeParse(payload);
+    return r.success ? r.data : null;
+  }
+  if (type === "company_owner_assigned") {
+    const r = payloadCompanyOwnerAssignedSchema.safeParse(payload);
+    return r.success ? r.data : null;
+  }
+  if (type === "contact_assigned") {
+    const r = payloadContactAssignedSchema.safeParse(payload);
     return r.success ? r.data : null;
   }
   return null;

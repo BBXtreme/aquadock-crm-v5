@@ -21,9 +21,12 @@ import {
   buildCompanySemanticDocument,
   COMPANY_SEARCH_EMBEDDING_DIMENSION,
   createCompanySearchEmbedding,
+  createXaiEmbedding,
+  DEFAULT_SEMANTIC_SETTINGS,
   generateAndStoreCompanyEmbedding,
   hybridCompanySearch,
   resolveSemanticSearchSettings,
+  testEmbeddingConnection,
 } from "./semantic-search";
 
 const VECTOR = Array.from({ length: COMPANY_SEARCH_EMBEDDING_DIMENSION }, (_, i) => i / 1000);
@@ -57,6 +60,28 @@ describe("semantic-search service", () => {
     expect(doc).toContain("Notes: Near marina");
     expect(doc).not.toContain("Website:");
     expect(doc).not.toContain("Email:");
+  });
+
+  it("buildCompanySemanticDocument includes optional fields when present", () => {
+    const doc = buildCompanySemanticDocument({
+      firmenname: "X",
+      kundentyp: "B2B",
+      firmentyp: "GmbH",
+      rechtsform: "AG",
+      strasse: "Hafen 1",
+      plz: "18055",
+      bundesland: "MV",
+      land: "DE",
+      status: "lead",
+      wassertyp: "See",
+      website: "https://x.test",
+      email: "a@b.c",
+      telefon: "+1",
+    });
+    expect(doc).toContain("CustomerType: B2B");
+    expect(doc).toContain("LegalForm: AG");
+    expect(doc).toContain("WaterType: See");
+    expect(doc).toContain("Phone: +1");
   });
 
   it("createCompanySearchEmbedding rejects empty text", async () => {
@@ -105,6 +130,76 @@ describe("semantic-search service", () => {
     );
   });
 
+  it("createCompanySearchEmbedding throws when semantic search is disabled", async () => {
+    await expect(
+      createCompanySearchEmbedding(
+        { text: "hello" },
+        { ...DEFAULT_SEMANTIC_SETTINGS, semanticSearchEnabled: false },
+      ),
+    ).rejects.toThrow("Semantic search is disabled for this user.");
+  });
+
+  it("createXaiEmbedding uses default model when model omitted", async () => {
+    mockEmbed.mockResolvedValue({ embedding: VECTOR });
+    await expect(createXaiEmbedding({ text: "hello" })).resolves.toHaveLength(COMPANY_SEARCH_EMBEDDING_DIMENSION);
+    expect(mockGatewayModel).toHaveBeenCalledWith("xai/grok-embedding-small");
+  });
+
+  it("testEmbeddingConnection reports disabled semantic search", async () => {
+    await expect(
+      testEmbeddingConnection({
+        embeddingProvider: "gateway",
+        embeddingModel: "text-embedding-3-small",
+        semanticSearchEnabled: false,
+      }),
+    ).resolves.toEqual({ ok: false, reason: "disabled" });
+  });
+
+  it("testEmbeddingConnection reports missing credentials", async () => {
+    delete process.env.AI_GATEWAY_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    await expect(
+      testEmbeddingConnection({
+        embeddingProvider: "openai",
+        embeddingModel: "text-embedding-3-small",
+        semanticSearchEnabled: true,
+      }),
+    ).resolves.toEqual({ ok: false, reason: "not_configured" });
+  });
+
+  it("resolveSemanticSearchSettings returns env-based defaults without supabase", async () => {
+    process.env.EMBEDDING_PROVIDER = "openai";
+    process.env.EMBEDDING_MODEL = "text-embedding-3-large";
+    const settings = await resolveSemanticSearchSettings();
+    expect(settings.embeddingProvider).toBe("openai");
+    expect(settings.embeddingModel).toBe("text-embedding-3-large");
+  });
+
+  it("resolveSemanticSearchSettings falls back when auth returns no user", async () => {
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
+      from: vi.fn(),
+    } as unknown as SupabaseClient;
+
+    const settings = await resolveSemanticSearchSettings(supabase);
+    expect(settings.embeddingProvider).toBe("gateway");
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("resolveSemanticSearchSettings falls back when settings query errors", async () => {
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({ data: null, error: { message: "query failed" } }),
+      })),
+    } as unknown as SupabaseClient;
+
+    const settings = await resolveSemanticSearchSettings(supabase);
+    expect(settings.semanticSearchEnabled).toBe(true);
+  });
+
   it("resolveSemanticSearchSettings uses defaults when user has no rows", async () => {
     const supabase = {
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
@@ -150,6 +245,30 @@ describe("semantic-search service", () => {
       autoBackfillEmbeddings: false,
       showSemanticBadge: false,
     });
+  });
+
+  it("hybridCompanySearch returns empty array for blank query", async () => {
+    const supabase = { rpc: vi.fn() } as unknown as SupabaseClient;
+    await expect(
+      hybridCompanySearch(supabase, {
+        query: "  ",
+        queryEmbedding: VECTOR,
+      }),
+    ).resolves.toEqual([]);
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it("hybridCompanySearch propagates RPC errors", async () => {
+    const supabase = {
+      rpc: vi.fn().mockResolvedValue({ data: null, error: new Error("rpc down") }),
+    } as unknown as SupabaseClient;
+
+    await expect(
+      hybridCompanySearch(supabase, {
+        query: "x",
+        queryEmbedding: VECTOR,
+      }),
+    ).rejects.toThrow("rpc down");
   });
 
   it("hybridCompanySearch validates embedding dimensions", async () => {

@@ -7,6 +7,7 @@
 
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import {
   buildCompaniesFilterApplier,
@@ -17,7 +18,7 @@ import {
   type CompaniesFilterGroup,
   companiesSortIdForQuery,
 } from "@/lib/utils/company-filters-url-state";
-import type { Company, Contact } from "@/types/database.types";
+import type { Company, Contact, Database, Profile } from "@/types/database.types";
 
 export type CompaniesListWaterPreset = "at" | "le100" | "le500" | "le1km" | "gt1km";
 
@@ -37,7 +38,10 @@ export type SearchCompaniesListInput = {
   sortExplicit?: boolean;
 };
 
-export type CompanyWithContacts = Company & { contacts?: Contact[] };
+export type CompanyWithContacts = Company & {
+  contacts?: Contact[];
+  owner_profile?: Pick<Profile, "display_name"> | null;
+};
 
 export type SearchCompaniesListResult = {
   companies: CompanyWithContacts[];
@@ -84,6 +88,31 @@ function stripDeletedContacts(rows: CompanyWithContacts[]): CompanyWithContacts[
     contacts: (row.contacts ?? []).filter(
       (ct: { deleted_at?: string | null }) => ct.deleted_at == null,
     ),
+  }));
+}
+
+async function attachOwnerProfiles(
+  supabase: SupabaseClient<Database>,
+  rows: CompanyWithContacts[],
+): Promise<CompanyWithContacts[]> {
+  const ids = [
+    ...new Set(
+      rows
+        .map((r) => r.user_id)
+        .filter((id): id is string => id !== null && id !== undefined && id.length > 0),
+    ),
+  ];
+  if (ids.length === 0) {
+    return rows.map((row) => ({ ...row, owner_profile: null }));
+  }
+  const { data, error } = await supabase.from("profiles").select("id, display_name").in("id", ids);
+  if (error) {
+    throw error;
+  }
+  const map = new Map((data ?? []).map((p) => [p.id, p]));
+  return rows.map((row) => ({
+    ...row,
+    owner_profile: row.user_id ? (map.get(row.user_id) ?? null) : null,
   }));
 }
 
@@ -153,8 +182,9 @@ export async function searchCompaniesList(
     const from = input.pagination.pageIndex * input.pagination.pageSize;
     const to = from + input.pagination.pageSize;
     const pageRows = orderedRows.slice(from, to);
+    const stripped = stripDeletedContacts(pageRows);
     return {
-      companies: stripDeletedContacts(pageRows),
+      companies: await attachOwnerProfiles(supabase, stripped),
       totalCount: orderedRows.length,
       globalSearchStrategy,
     };
@@ -182,8 +212,9 @@ export async function searchCompaniesList(
     throw error;
   }
   const rows = (data ?? []) as CompanyWithContacts[];
+  const stripped = stripDeletedContacts(rows);
   return {
-    companies: stripDeletedContacts(rows),
+    companies: await attachOwnerProfiles(supabase, stripped),
     totalCount: count ?? 0,
     globalSearchStrategy,
   };

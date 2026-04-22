@@ -83,6 +83,10 @@
 | deleted_at  | timestamptz | true     | —                 | Soft delete timestamp         | —             |
 | deleted_by  | uuid        | true     | —                 | User who soft-deleted         | FK → auth.users |
 
+**Bulk owner sync:** When `companies.user_id` changes from the company edit UI with “apply to contacts”, `syncContactUserIdsForCompany` in `src/lib/companies/sync-contact-user-ids.ts` updates `contacts.user_id` (and `updated_by`) for all non-deleted rows with the same `company_id`.
+
+**Ownership audit (timeline):** Whenever `updateCompany` receives a `user_id` patch and the value actually changes (including clearing to `null`), `maybeAppendCompanyOwnershipTimelineAudit` in `src/lib/actions/companies.ts` inserts a `timeline` row on that company (`activity_type: other`, localized title `companies.timelineOwnershipChangedTitle` with profile display names or “unassigned” / “unknown”).
+
 ### reminders
 
 | Column     | Type        | Nullable | Default           | Business Meaning         | Notes / Index |
@@ -220,7 +224,7 @@ In-app **notification feed** (bell / notifications page). One row per delivered 
 
 **RLS:** `SELECT` and `UPDATE` for `auth.uid() = user_id` only. **No** `INSERT` / `DELETE` for `authenticated` — new rows are written from trusted **server** code with the **service role** (bypasses RLS; see `createAdminClient` in `src/lib/supabase/admin.ts`). This avoids clients forging notifications to arbitrary recipients.
 
-**Realtime:** The table is added to the `supabase_realtime` publication ([`src/sql/user_notifications.sql`](../src/sql/user_notifications.sql)) so the browser client can subscribe to `INSERT` with filter `user_id=eq.<uid>`.
+**Realtime:** The table is added to the `supabase_realtime` publication ([`src/sql/user_notifications.sql`](../src/sql/user_notifications.sql)) with `REPLICA IDENTITY FULL` so the browser can subscribe to **`INSERT` and `UPDATE`** with filter `user_id=eq.<uid>` (header badge + notifications list invalidate via `useInAppNotificationsRealtime` in `@/lib/realtime/in-app-notifications-realtime`). **Already-deployed** databases that predate this line: run [`user-notifications-replica-identity.sql`](../src/sql/user-notifications-replica-identity.sql) once.
 
 **Zod / validation:** See `src/lib/validations/notification.ts` (in-app v1) for strict payload shapes per `type`.
 
@@ -288,6 +292,25 @@ The **service role** key bypasses RLS when used from trusted server code; it mus
 - comment_attachments: `comment_id` — see `src/sql/comments-tables.sql`
 
 ## 6. Maintenance & Type Safety
+
+### Maintenance
+
+**Backfill `user_id` from `created_by` (one-time)**  
+Historical imports or older app versions may leave `companies.user_id` / `contacts.user_id` null while `created_by` is set. The owner column in list UIs and RLS both expect `user_id` to match the responsible auth user (`profiles.id` / `auth.users.id`).
+
+- **SQL (recommended for production):** run in the Supabase SQL Editor inside a maintenance window. Transaction wraps both tables:
+
+  [`src/sql/backfill-user-id-from-created-by.sql`](../src/sql/backfill-user-id-from-created-by.sql)
+
+- **Node (same logic, chunked updates):** requires `SUPABASE_SERVICE_ROLE_KEY` and `NEXT_PUBLIC_SUPABASE_URL` or `SUPABASE_URL`:
+
+  ```bash
+  pnpm backfill:user-id
+  ```
+
+Both paths are **idempotent** (only rows with `deleted_at IS NULL`, `user_id IS NULL`, and `created_by IS NOT NULL` are updated). Rows with **both** `user_id` and `created_by` null stay unchanged—assign manually if needed. Afterward, use the commented verification `SELECT` in the SQL file to confirm zero “still orphaned” rows.
+
+---
 
 Regenerate types after any **public** schema change:
 
@@ -394,3 +417,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-21 Documented **`comments`** and **`comment_attachments`** (columns, indexes, triggers, FKs to `companies` / `profiles`), RLS behaviour before/after **`comments-trash-alignment.sql`**, Zod **`comment.ts`**, and `deleted_by` FK difference vs core tables. Linked SQL apply order for new environments.
 
 2026-04-21 Added **`user_notifications`** (columns, RLS, Realtime, indexes), live RLS audit note for `reminders` / `timeline`, and SQL [`user_notifications.sql`](../src/sql/user_notifications.sql). Types via `pnpm supabase:types`.
+
+2026-04-22 Documented **Maintenance** backfill for `user_id` from `created_by` (SQL + `pnpm backfill:user-id`): [`backfill-user-id-from-created-by.sql`](../src/sql/backfill-user-id-from-created-by.sql).
