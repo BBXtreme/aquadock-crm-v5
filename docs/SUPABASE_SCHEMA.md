@@ -6,6 +6,8 @@
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
 
+**Tenancy:** RLS and `user_id` on records model **per-user** ownership (and admin override where policies allow), not **multi-tenant org / workspace** objects. A future “org” or deal-pipeline layer would be additive schema on top of this v5 design.
+
 ## 1. Database Overview
 
 | Table           | Purpose                   | ~Rows | PK   | Main Relations            | RLS  | Key Indexes                  |

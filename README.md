@@ -2,6 +2,8 @@
 
 **What it is:** A web-based CRM for marinas, hotels, restaurants, and water-sports businesses. Teams sign in, manage companies and contacts, plan reminders, send email campaigns, and view records on an interactive map. Data lives in **Supabase** (PostgreSQL) with **Row Level Security** so each user only sees their own records (admins have broader access where the schema allows).
 
+**Product scope:** This is a **vertical, operations-focused** CRM (territory, accounts, comms, map). It is **not** a full enterprise “revenue platform” (no first-class deal pipeline, CPQ, or org/workspace tenancy in the data model as of v5). Roadmap and positioning details live in `docs/architecture.md` and `docs/SUPABASE_SCHEMA.md`.
+
 **How it is built:** **Next.js 16** (App Router), **React 19**, **Supabase**, **Tailwind CSS v4**, **shadcn/ui**, **next-intl** (locales: German, English, Croatian), **pnpm**.
 
 ---

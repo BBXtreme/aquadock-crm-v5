@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 21, 2026  
+**Last updated:** April 22, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -56,6 +56,19 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 
 ---
 
+## Mutations: Server Actions vs Route Handlers
+
+| Use | Path | When |
+| --- | --- | --- |
+| **Default** | Server Actions in `src/lib/actions/` and `src/lib/services/` (`"use server"`) | New writes/updates from the app: forms, buttons, and anything that should run with the user’s session, `revalidatePath`, and Zod re-validation. |
+| **API route** | `src/app/api/**/route.ts` | Legitimate **HTTP** surface: `fetch` from a client that expects JSON, public/internal endpoints, or patterns that are awkward as actions (e.g. some `GET` list proxies). Reuse the same service helpers and RLS-scoped `createServerSupabaseClient()`; never trust the client for authorization. |
+
+**Rule of thumb:** add **Server Actions** first. Add a **Route Handler** only if you need a stable URL contract, `GET`+JSON, or a non-React caller (e.g. external tool calling your API on purpose).
+
+**Existing routes** (companies, contacts, reminders, timeline, `send-test-email`, auth user) are historical or JSON-oriented; new features should not sprawl duplicate mutation paths without a reason noted in a PR.
+
+---
+
 ## Route groups and layout
 
 - **`(auth)`** — Public routes (e.g. login); no full app chrome.  
@@ -70,9 +83,10 @@ Companies with coordinates are loaded for the map via the service layer. OSM POI
 
 ---
 
-## Testing (Vitest)
+## Testing (Vitest + Playwright)
 
-- Tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter).
+- **Vitest:** tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter). Large or branch-heavy files may be listed in `vitest` `coverage.exclude` and are still covered in spirit by E2E where noted.
+- **E2E:** Playwright tests under `tests/e2e/` (`pnpm e2e` locally; `pnpm e2e:ci` in CI). Requires a running production build; CI runs the **e2e** job after **quality** (see `.github/workflows/ci.yml`). For authenticated flows, set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` in repo secrets; smoke tests run without them.
 - **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
 - Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).
 
@@ -88,7 +102,7 @@ pnpm typecheck && pnpm check:fix
 
 Add tests when behavior is non-trivial (`pnpm test:run`). If you change translation keys under `src/messages/`, run `pnpm messages:validate` so `de`, `en`, and `hr` stay aligned.
 
-CI on `main` / PRs runs typecheck, Biome, tests with coverage, and a production build (see `.github/workflows/ci.yml`; **Node 22**, **pnpm 10**).
+CI on `main` / PRs runs typecheck, Biome, tests with coverage, a production build, and the Playwright E2E job (see `.github/workflows/ci.yml`; **Node 22**, **pnpm 10**).
 
 ---
 

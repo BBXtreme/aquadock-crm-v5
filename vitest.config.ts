@@ -26,6 +26,7 @@ export default defineConfig({
       "**/dist/**",
       "supabase/**",
       "**/coverage/**",
+      "**/tests/e2e/**",
     ],
     coverage: {
       provider: "v8",
@@ -50,7 +51,6 @@ export default defineConfig({
         "src/components/ui/data-table.tsx",
         "src/components/ui/select.tsx",
         "src/components/ui/form.tsx",
-        "src/components/ui/skeleton.tsx",
         "src/components/ui/badge.tsx",
         "src/components/features/companies/CompanyCreateForm.tsx",
         // Large / branch-heavy client UI and helpers — covered indirectly or by manual/E2E flows; kept out of the global coverage gate.
