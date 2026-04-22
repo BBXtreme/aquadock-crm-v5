@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CalendarDays, Clock, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -219,19 +219,16 @@ export default function Header({ user }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-4">
-        <Link href="/timeline?create=true">
-          <Button variant="ghost" size="icon" aria-label="Create new timeline entry">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </Link>
-
         <Link href="/notifications">
           <Button type="button" variant="ghost" className="relative" aria-label={t("notificationsLinkAria")}>
-            <Bell className="h-4 w-4" />
+            <Inbox className="h-4 w-4" />
             {inAppUnreadCount > 0 && (
               <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 min-w-4 rounded-full px-0.5 text-xs tabular-nums"
+                variant="outline"
+                className={cn(
+                  "absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-border/60 bg-background/75 p-0 px-0.5 text-xs font-semibold leading-none tabular-nums text-foreground shadow-sm backdrop-blur-md",
+                  "dark:border-border/50 dark:bg-background/55",
+                )}
               >
                 {inAppUnreadCount > 99 ? "99+" : inAppUnreadCount}
               </Badge>
