@@ -1,6 +1,6 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.39",
+  "version": "0.5.40",
   "private": true,
   "scripts": {
     "supabase:types": "npx --yes supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
@@ -17,6 +17,7 @@
     "check:quick": "biome check --write --max-diagnostics=50",
     "typecheck": "tsc --noEmit --pretty",
     "messages:validate": "node scripts/validate-message-keys.mjs",
+    "backfill:user-id": "node scripts/backfill-user-id-from-created-by.mjs",
     "prepare": "husky",
     "test": "vitest",
     "test:run": "vitest run",

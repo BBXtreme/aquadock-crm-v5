@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, LogOut, Monitor, Moon, Plus, Search, Settings, Sun, User } from "lucide-react";
+import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Search, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -35,6 +35,8 @@ import {
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
 import { useT } from "@/lib/i18n/use-translations";
+import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
+import { getUnreadCount } from "@/lib/services/in-app-notifications";
 import { saveAppearanceTheme } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
@@ -137,6 +139,12 @@ export default function Header({ user }: HeaderProps) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: inAppUnreadCount = 0 } = useQuery({
+    queryKey: ["in-app-notifications-unread", user.id],
+    queryFn: () => getUnreadCount(createClient(), user.id),
+    staleTime: 60_000,
+  });
+
   const { data: overdueRemindersCount = 0 } = useQuery({
     queryKey: ["reminders-count-overdue"],
     queryFn: async () => {
@@ -151,6 +159,8 @@ export default function Header({ user }: HeaderProps) {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  useInAppNotificationsRealtime(user.id, queryClient);
 
   // Radix DropdownMenuItem uses pointer handlers that block native <form> submit on
   // the slotted button. Sign out via the browser Supabase client, then hard-navigate
@@ -189,16 +199,27 @@ export default function Header({ user }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-4">
-        <Link href="/timeline?create=true">
-          <Button variant="ghost" size="icon" aria-label="Create new timeline entry">
-            <Plus className="h-4 w-4" />
+        <Link href="/notifications">
+          <Button type="button" variant="ghost" className="relative" aria-label={t("notificationsLinkAria")}>
+            <Inbox className="h-4 w-4" />
+            {inAppUnreadCount > 0 && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-border/60 bg-background/75 p-0 px-0.5 text-xs font-semibold leading-none tabular-nums text-foreground shadow-sm backdrop-blur-md",
+                  "dark:border-border/50 dark:bg-background/55",
+                )}
+              >
+                {inAppUnreadCount > 99 ? "99+" : inAppUnreadCount}
+              </Badge>
+            )}
           </Button>
         </Link>
 
         {overdueRemindersCount > 0 && (
           <Link href="/reminders?status=overdue">
-            <Button variant="ghost" className="relative">
-              <Bell className="h-4 w-4" />
+            <Button type="button" variant="ghost" className="relative" aria-label={t("reminderOverdueLinkAria")}>
+              <Clock className="h-4 w-4" />
               <Badge
                 variant="destructive"
                 className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs"
@@ -211,8 +232,8 @@ export default function Header({ user }: HeaderProps) {
 
         {openRemindersCount > 0 && (
           <Link href="/reminders?status=open">
-            <Button variant="ghost" className="relative">
-              <Bell className="h-4 w-4" />
+            <Button type="button" variant="ghost" className="relative" aria-label={t("reminderThisWeekLinkAria")}>
+              <CalendarDays className="h-4 w-4" />
               <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs">
                 {openRemindersCount}
               </Badge>

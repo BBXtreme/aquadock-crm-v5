@@ -10,7 +10,36 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/browser";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
-import type { Contact, ContactInsert } from "@/types/database.types";
+import type { Contact, ContactInsert, Profile } from "@/types/database.types";
+
+export type ContactListRow = Contact & {
+  companies?: { firmenname: string } | null;
+  owner_profile?: Pick<Profile, "display_name"> | null;
+};
+
+async function resolveContactOwnerUserId(
+  supabase: SupabaseClient,
+  companyId: string | null | undefined,
+  currentUserId: string,
+): Promise<string> {
+  if (companyId == null || companyId === "") {
+    return currentUserId;
+  }
+  const { data, error } = await supabase
+    .from("companies")
+    .select("user_id")
+    .eq("id", companyId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (error) throw handleSupabaseError(error, "resolveContactOwnerUserId");
+
+  const ownerId = data?.user_id;
+  if (ownerId != null && ownerId !== "") {
+    return ownerId;
+  }
+  return currentUserId;
+}
 
 /**
  * Get all contacts with joined company data
@@ -18,7 +47,7 @@ import type { Contact, ContactInsert } from "@/types/database.types";
 export async function getContacts(
   client: SupabaseClient,
   options?: { page?: number; pageSize?: number; sortBy?: string; sortDesc?: boolean },
-): Promise<{ data: Contact[]; total: number }> {
+): Promise<{ data: ContactListRow[]; total: number }> {
   let query = client
     .from("contacts")
     .select("*, companies!company_id(firmenname)", { count: "exact" })
@@ -39,7 +68,30 @@ export async function getContacts(
 
   if (error) throw handleSupabaseError(error, "getContacts");
 
-  return { data: (data ?? []) as Contact[], total: count || 0 };
+  const rows = (data ?? []) as ContactListRow[];
+  const ownerIds = [
+    ...new Set(
+      rows
+        .map((r) => r.user_id)
+        .filter((id): id is string => id !== null && id !== undefined && id.length > 0),
+    ),
+  ];
+  if (ownerIds.length === 0) {
+    return { data: rows.map((r) => ({ ...r, owner_profile: null })), total: count || 0 };
+  }
+  const { data: profiles, error: profilesError } = await client
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", ownerIds);
+  if (profilesError) throw handleSupabaseError(profilesError, "getContacts.profiles");
+  const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+  return {
+    data: rows.map((row) => ({
+      ...row,
+      owner_profile: row.user_id ? (map.get(row.user_id) ?? null) : null,
+    })),
+    total: count || 0,
+  };
 }
 
 /**
@@ -57,7 +109,7 @@ export async function resolveContactDetail(
   const { data, error } = await client
     .from("contacts")
     .select(
-      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, deleted_at",
+      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, deleted_at, user_id",
     )
     .eq("id", id)
     .maybeSingle();
@@ -82,7 +134,7 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
   const { data, error } = await client
     .from("contacts")
     .select(
-      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at",
+      "id, vorname, nachname, anrede, position, email, telefon, mobil, durchwahl, notes, company_id, is_primary, created_at, updated_at, user_id",
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -93,26 +145,48 @@ export async function getContactById(id: string, client: SupabaseClient): Promis
 }
 
 /**
- * Create a new contact
+ * Create a new contact (browser client; prefer {@link createContactAction} from forms).
  */
 export async function createContact(contact: ContactInsert, client?: SupabaseClient): Promise<Contact> {
   const supabaseClient = client || createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseClient.auth.getUser();
+  if (authError || user == null) {
+    throw new Error("Unauthorized");
+  }
+  const ownerUserId = await resolveContactOwnerUserId(supabaseClient, contact.company_id ?? null, user.id);
+  const row: ContactInsert = {
+    ...contact,
+    user_id: ownerUserId,
+    created_by: user.id,
+    updated_by: user.id,
+  };
 
-  // Temporary fallback until auth is implemented
-  contact.user_id = null;
-
-  const { data, error } = await supabaseClient.from("contacts").insert(contact).select().single();
+  const { data, error } = await supabaseClient.from("contacts").insert(row).select().single();
   if (error) throw handleSupabaseError(error, "createContact");
   return data as Contact;
 }
 
 /**
- * Update a contact
+ * Update a contact (browser client; prefer {@link updateContactAction} from forms).
  */
 export async function updateContact(id: string, updates: Partial<Contact>, client?: SupabaseClient): Promise<Contact> {
   const supabaseClient = client || createClient();
-  const { data, error } = await supabaseClient.from("contacts").update(updates).eq("id", id).select().single();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseClient.auth.getUser();
+  if (authError || user == null) {
+    throw new Error("Unauthorized");
+  }
+  const patch: Partial<Contact> = { ...updates };
+  if (Object.hasOwn(updates, "company_id")) {
+    patch.user_id = await resolveContactOwnerUserId(supabaseClient, updates.company_id ?? null, user.id);
+    patch.updated_by = user.id;
+  }
+  const { data, error } = await supabaseClient.from("contacts").update(patch).eq("id", id).select().single();
   if (error) throw handleSupabaseError(error, "updateContact");
   return data as Contact;
 }
-

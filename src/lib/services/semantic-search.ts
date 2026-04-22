@@ -90,35 +90,6 @@ type HybridCompanySearchRpcRow = {
   vector_rank: unknown;
 };
 
-function emitDebugLog(payload: {
-  runId: string;
-  hypothesisId: string;
-  location: string;
-  message: string;
-  data?: Record<string, unknown>;
-}) {
-  // #region agent log
-  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc0d67",
-    },
-    body: JSON.stringify({
-      sessionId: "cc0d67",
-      runId: payload.runId,
-      hypothesisId: payload.hypothesisId,
-      location: payload.location,
-      message: payload.message,
-      data: payload.data ?? {},
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {
-    // debug logging is best-effort
-  });
-  // #endregion
-}
-
 function normalizeText(value: SemanticNullableText): string | null {
   if (typeof value !== "string") {
     return null;
@@ -448,39 +419,11 @@ export async function createCompanySearchEmbedding(
   settingsOverride?: SemanticSearchSettings,
 ): Promise<number[]> {
   const text = input.text.trim();
-  // #region agent log
-  emitDebugLog({
-    runId: "pre-fix",
-    hypothesisId: "H1",
-    location: "semantic-search.ts:createCompanySearchEmbedding:entry",
-    message: "Embedding call started",
-    data: {
-      textLength: text.length,
-      hasSupabase: Boolean(input.supabase),
-      hasSignal: Boolean(input.signal),
-    },
-  });
-  // #endregion
   if (text.length === 0) {
     throw new Error("Cannot generate embedding for empty text.");
   }
 
   const settings = settingsOverride ?? (await resolveSemanticSearchSettings(input.supabase));
-  // #region agent log
-  emitDebugLog({
-    runId: "pre-fix",
-    hypothesisId: "H2",
-    location: "semantic-search.ts:createCompanySearchEmbedding:settings",
-    message: "Resolved embedding settings",
-    data: {
-      provider: settings.embeddingProvider,
-      model: settings.embeddingModel,
-      semanticSearchEnabled: settings.semanticSearchEnabled,
-      hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
-      hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY?.trim()),
-    },
-  });
-  // #endregion
   if (!settings.semanticSearchEnabled) {
     // Skip embedding generation entirely when semantic search is turned off.
     throw new Error("Semantic search is disabled for this user.");
@@ -497,55 +440,13 @@ export async function createCompanySearchEmbedding(
 
   try {
     const attempt = buildSelectedProviderAttempt(settings);
-    // #region agent log
-    emitDebugLog({
-      runId: "post-fix",
-      hypothesisId: "H12",
-      location: "semantic-search.ts:createCompanySearchEmbedding:selected-provider-attempt",
-      message: "Calling selected provider only",
-      data: {
-        provider: settings.embeddingProvider,
-        model: attempt.modelId,
-      },
-    });
-    // #endregion
     const result = await embed({
       model: attempt.model,
       value: text,
       abortSignal: controller.signal,
     });
-    // #region agent log
-    emitDebugLog({
-      runId: "post-fix",
-      hypothesisId: "H12",
-      location: "semantic-search.ts:createCompanySearchEmbedding:selected-provider-result",
-      message: "Selected provider call completed",
-      data: {
-        provider: settings.embeddingProvider,
-        embeddingLength: Array.isArray(result.embedding) ? result.embedding.length : -1,
-      },
-    });
-    // #endregion
     return parseEmbedding(result.embedding);
   } catch (err) {
-    const errMeta =
-      typeof err === "object" && err !== null
-        ? (err as { message?: unknown; statusCode?: unknown; cause?: unknown; data?: unknown })
-        : undefined;
-    // #region agent log
-    emitDebugLog({
-      runId: "pre-fix",
-      hypothesisId: "H1",
-      location: "semantic-search.ts:createCompanySearchEmbedding:embed-error",
-      message: "Embed call failed",
-      data: {
-        message: typeof errMeta?.message === "string" ? errMeta.message : String(err),
-        statusCode: typeof errMeta?.statusCode === "number" ? errMeta.statusCode : null,
-        hasCause: Boolean(errMeta?.cause),
-        hasData: Boolean(errMeta?.data),
-      },
-    });
-    // #endregion
     console.warn("[semantic-search] Embedding generation failed for selected provider. Falling back to lexical search.", err);
     throw err;
   } finally {
@@ -578,37 +479,11 @@ export async function createXaiEmbedding(input: {
 export async function testEmbeddingConnection(
   settings: Pick<SemanticSearchSettings, "embeddingProvider" | "embeddingModel" | "semanticSearchEnabled">,
 ): Promise<EmbeddingConnectionTestResult> {
-  // #region agent log
-  emitDebugLog({
-    runId: "pre-fix",
-    hypothesisId: "H5",
-    location: "semantic-search.ts:testEmbeddingConnection:start",
-    message: "Connection test started",
-    data: {
-      provider: settings.embeddingProvider,
-      model: settings.embeddingModel,
-      semanticSearchEnabled: settings.semanticSearchEnabled,
-    },
-  });
-  // #endregion
   if (!settings.semanticSearchEnabled) {
     return { ok: false, reason: "disabled" };
   }
 
   if (!hasProviderCredentials(settings.embeddingProvider)) {
-    // #region agent log
-    emitDebugLog({
-      runId: "pre-fix",
-      hypothesisId: "H2",
-      location: "semantic-search.ts:testEmbeddingConnection:not-configured",
-      message: "No embedding credentials detected",
-      data: {
-        provider: settings.embeddingProvider,
-        hasOpenAiKey: Boolean(process.env.OPENAI_API_KEY?.trim()),
-        hasGatewayKey: Boolean(process.env.AI_GATEWAY_API_KEY?.trim()),
-      },
-    });
-    // #endregion
     return { ok: false, reason: "not_configured" };
   }
 
@@ -624,62 +499,11 @@ export async function testEmbeddingConnection(
         semanticSearchEnabled: settings.semanticSearchEnabled,
       },
     );
-    // #region agent log
-    emitDebugLog({
-      runId: "pre-fix",
-      hypothesisId: "H4",
-      location: "semantic-search.ts:testEmbeddingConnection:connected",
-      message: "Connection test succeeded",
-      data: {
-        provider: settings.embeddingProvider,
-      },
-    });
-    // #endregion
     return { ok: true, reason: "connected" };
   } catch (err) {
-    // #region agent log
-    emitDebugLog({
-      runId: "post-fix",
-      hypothesisId: "H6",
-      location: "semantic-search.ts:testEmbeddingConnection:classification-eval",
-      message: "Credential error classifier evaluated catch error",
-      data: {
-        isCredentialError: isCredentialConfigurationError(err),
-        hasStatusCode: typeof (err as { statusCode?: unknown })?.statusCode === "number",
-        hasCause: Boolean((err as { cause?: unknown })?.cause),
-        hasData: Boolean((err as { data?: unknown })?.data),
-        message: err instanceof Error ? err.message : String(err),
-      },
-    });
-    // #endregion
     if (isCredentialConfigurationError(err)) {
-      // #region agent log
-      emitDebugLog({
-        runId: "post-fix",
-        hypothesisId: "H6",
-        location: "semantic-search.ts:testEmbeddingConnection:credential-error",
-        message: "Connection test classified as not_configured due to credential error",
-        data: {
-          statusCode:
-            typeof (err as { statusCode?: unknown })?.statusCode === "number"
-              ? (err as { statusCode: number }).statusCode
-              : null,
-        },
-      });
-      // #endregion
       return { ok: false, reason: "not_configured" };
     }
-    // #region agent log
-    emitDebugLog({
-      runId: "pre-fix",
-      hypothesisId: "H1",
-      location: "semantic-search.ts:testEmbeddingConnection:failed",
-      message: "Connection test failed",
-      data: {
-        error: err instanceof Error ? err.message : String(err),
-      },
-    });
-    // #endregion
     console.warn("[semantic-search] Embedding connection test failed.", err);
     return { ok: false, reason: "failed" };
   }

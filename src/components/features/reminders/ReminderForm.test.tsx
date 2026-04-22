@@ -19,10 +19,27 @@ import {
 import enMessages from "@/messages/en.json";
 import ReminderEditForm from "../reminder/ReminderEditForm";
 
-const { mockCreateClient, lastReminderInsert, COMPANY_ID } = vi.hoisted(() => {
+const { mockCreateClient, lastReminderInsert, COMPANY_ID, mockCreateReminderAction } = vi.hoisted(() => {
   const id = "550e8400-e29b-41d4-a716-446655440000";
   const lastReminderInsert: { payload: Record<string, unknown> | null } = { payload: null };
   const companiesRow = [{ id, firmenname: "Fixture GmbH" }];
+
+  const mockCreateReminderAction = vi.fn((input: unknown) => {
+    const row = input as Record<string, unknown>;
+    lastReminderInsert.payload = { ...row, user_id: "user-1" };
+    return Promise.resolve({
+      id: "11111111-1111-1111-1111-111111111111",
+      title: row.title,
+      company_id: row.company_id,
+      due_date:
+        typeof row.due_date === "string" ? new Date(row.due_date).toISOString() : String(row.due_date),
+      priority: row.priority,
+      status: row.status,
+      assigned_to: row.assigned_to ?? null,
+      description: row.description ?? null,
+      user_id: "user-1",
+    });
+  });
 
   const mockCreateClient = vi.fn(() => ({
     auth: {
@@ -82,12 +99,23 @@ const { mockCreateClient, lastReminderInsert, COMPANY_ID } = vi.hoisted(() => {
     }),
   }));
 
-  return { mockCreateClient, lastReminderInsert, COMPANY_ID: id };
+  return { mockCreateClient, lastReminderInsert, COMPANY_ID: id, mockCreateReminderAction };
 });
 
 vi.mock("@/lib/supabase/browser", () => ({
   createClient: () => mockCreateClient(),
 }));
+
+vi.mock("@/lib/actions/reminders", async () => {
+  const svc = await import("@/lib/services/reminders");
+  return {
+    getReminders: svc.getReminders,
+    getReminderById: svc.getReminderById,
+    createReminder: svc.createReminder,
+    updateReminder: svc.updateReminder,
+    createReminderAction: mockCreateReminderAction,
+  };
+});
 
 vi.mock("sonner", () => ({
   toast: {

@@ -37,6 +37,8 @@ type Company = Database["public"]["Tables"]["companies"]["Row"];
 
 export interface CompanyDetailClientProps {
   company: Company;
+  /** Pre-rendered „Verantwortlich: …“ from RSC; null/omit when no owner */
+  ownerDisplayLine?: string | null;
   initialAiEnrichOpen?: boolean;
   /** List-only query string from the server (no `?`); mirrors URL when opened from /companies */
   initialCompaniesListSearch?: string;
@@ -44,6 +46,7 @@ export interface CompanyDetailClientProps {
 
 function CompanyDetailShell({
   company,
+  ownerDisplayLine = null,
   initialAiEnrichOpen = false,
   initialCompaniesListSearch = "",
 }: CompanyDetailClientProps) {
@@ -206,6 +209,7 @@ function CompanyDetailShell({
         prevCompanyId={prevCompanyId}
         nextCompanyId={nextCompanyId}
         listNavIdsLoading={hasListNavContext && listNavIdsPending}
+        ownerDisplayLine={ownerDisplayLine}
         onAddTimeline={() => setAddTimelineDialogOpen(true)}
         onEdit={() => setEditCompanyDialogOpen(true)}
         onAiEnrich={() => setAiModalOpen(true)}

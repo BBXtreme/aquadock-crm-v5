@@ -14,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createContact } from "@/lib/actions/contacts";
 import { anredeOptions } from "@/lib/constants/contact-options";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -52,23 +51,22 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
   });
 
   const mutation = useMutation({
-    mutationFn: (contact: ContactForm) =>
-      createContact(
-        {
-          vorname: contact.vorname,
-          nachname: contact.nachname,
-          anrede: contact.anrede ?? undefined,
-          position: contact.position ?? undefined,
-          email: contact.email ?? undefined,
-          telefon: contact.telefon ?? undefined,
-          mobil: contact.mobil ?? undefined,
-          durchwahl: contact.durchwahl ?? undefined,
-          notes: contact.notes ?? undefined,
-          company_id: contact.company_id ?? undefined,
-          is_primary: contact.is_primary,
-        },
-        createClient(),
-      ),
+    mutationFn: async (contact: ContactForm) => {
+      const { createContactAction } = await import("@/lib/actions/contact-server-actions");
+      return createContactAction({
+        vorname: contact.vorname,
+        nachname: contact.nachname,
+        anrede: contact.anrede ?? undefined,
+        position: contact.position ?? undefined,
+        email: contact.email ?? undefined,
+        telefon: contact.telefon ?? undefined,
+        mobil: contact.mobil ?? undefined,
+        durchwahl: contact.durchwahl ?? undefined,
+        notes: contact.notes ?? undefined,
+        company_id: contact.company_id ?? undefined,
+        is_primary: contact.is_primary,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       if (companyId) {

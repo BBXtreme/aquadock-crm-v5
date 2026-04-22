@@ -7,7 +7,10 @@ export type ContactsColumnVisibilityState = Record<string, boolean>;
 export const CONTACTS_COLUMNS_SESSION_STORAGE_KEY = "contacts:list:cols:v1";
 export const CONTACTS_COLUMNS_PARAM_KEY = "cols";
 
-const DEFAULT_CONTACTS_COLUMN_VISIBILITY: ContactsColumnVisibilityState = { anrede: false };
+const DEFAULT_CONTACTS_COLUMN_VISIBILITY: ContactsColumnVisibilityState = {
+  anrede: false,
+  verantwortlich: false,
+};
 
 export function defaultContactsColumnVisibility(): ContactsColumnVisibilityState {
   return { ...DEFAULT_CONTACTS_COLUMN_VISIBILITY };
@@ -43,7 +46,10 @@ export function parseContactsColumnVisibility(
     const [key, visible] = parsed;
     next[key] = visible;
   }
-  return Object.keys(next).length === 0 ? defaultContactsColumnVisibility() : next;
+  if (Object.keys(next).length === 0) {
+    return defaultContactsColumnVisibility();
+  }
+  return { ...defaultContactsColumnVisibility(), ...next };
 }
 
 export function serializeContactsColumnVisibility(state: ContactsColumnVisibilityState): string {

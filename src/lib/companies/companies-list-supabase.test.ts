@@ -98,6 +98,20 @@ describe("companies-list-supabase hybrid applier", () => {
     expect(query.or).toHaveBeenCalledWith(lexicalOrClause("marina"));
   });
 
+  it.each([
+    ["at", "eq", ["wasserdistanz", 0]] as const,
+    ["le100", "lte", ["wasserdistanz", 100]] as const,
+    ["le500", "lte", ["wasserdistanz", 500]] as const,
+    ["le1km", "lte", ["wasserdistanz", 1000]] as const,
+    ["gt1km", "gt", ["wasserdistanz", 1000]] as const,
+  ])("applyCompaniesListFiltersToCompaniesQuery applies water preset %s", (preset, method, args) => {
+    const query = makeQueryBuilder();
+    const filters = { ...makeFilterSlice(), waterFilter: preset };
+    applyCompaniesListFiltersToCompaniesQuery(query, filters);
+    const spy = query[method as keyof typeof query] as ReturnType<typeof vi.fn>;
+    expect(spy).toHaveBeenCalledWith(...args);
+  });
+
   it("buildCompaniesFilterApplier uses fast non-global path when search is empty", async () => {
     const filters = {
       ...makeFilterSlice("   "),

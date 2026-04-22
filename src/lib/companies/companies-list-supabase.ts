@@ -163,28 +163,6 @@ export async function buildCompaniesFilterApplier(
   filters: CompaniesListFilterSlice,
 ): Promise<BuildCompaniesFilterApplierResult> {
   const trimmed = filters.globalFilter.trim();
-  // #region agent log
-  fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Debug-Session-Id": "cc0d67",
-    },
-    body: JSON.stringify({
-      sessionId: "cc0d67",
-      runId: "pre-fix",
-      hypothesisId: "H3",
-      location: "companies-list-supabase.ts:buildCompaniesFilterApplier:start",
-      message: "Build companies filter applier invoked",
-      data: {
-        globalFilterLength: trimmed.length,
-      },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {
-    // debug logging is best-effort
-  });
-  // #endregion
   if (trimmed.length === 0) {
     return {
       applyFilters: (query) => applyNonGlobalCompaniesFilters(query, filters),
@@ -194,28 +172,6 @@ export async function buildCompaniesFilterApplier(
 
   const semanticSettings = await resolveSemanticSearchSettings(supabase);
   if (!semanticSettings.semanticSearchEnabled) {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "cc0d67",
-      },
-      body: JSON.stringify({
-        sessionId: "cc0d67",
-        runId: "pre-fix",
-        hypothesisId: "H3",
-        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:semantic-disabled",
-        message: "Semantic disabled, lexical fallback selected",
-        data: {
-          semanticSearchEnabled: semanticSettings.semanticSearchEnabled,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      // debug logging is best-effort
-    });
-    // #endregion
     return {
       applyFilters: (query) =>
         applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(query, filters), trimmed),
@@ -233,28 +189,6 @@ export async function buildCompaniesFilterApplier(
       queryEmbedding: embedding,
       matchCount: HYBRID_MATCH_COUNT,
     });
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "cc0d67",
-      },
-      body: JSON.stringify({
-        sessionId: "cc0d67",
-        runId: "pre-fix",
-        hypothesisId: "H4",
-        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:hybrid-success",
-        message: "Hybrid company search executed",
-        data: {
-          rankedCount: ranked.length,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      // debug logging is best-effort
-    });
-    // #endregion
     const rankedIds = ranked.map((row) => row.companyId);
     return {
       applyFilters: (query) => {
@@ -268,28 +202,6 @@ export async function buildCompaniesFilterApplier(
       rankedIds,
     };
   } catch (err) {
-    // #region agent log
-    fetch("http://127.0.0.1:7811/ingest/4f661c1b-aa49-4778-8f27-b8a02ff82f19", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Debug-Session-Id": "cc0d67",
-      },
-      body: JSON.stringify({
-        sessionId: "cc0d67",
-        runId: "pre-fix",
-        hypothesisId: "H3",
-        location: "companies-list-supabase.ts:buildCompaniesFilterApplier:catch",
-        message: "Hybrid search failed, lexical fallback selected",
-        data: {
-          error: err instanceof Error ? err.message : String(err),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {
-      // debug logging is best-effort
-    });
-    // #endregion
     console.warn("[companies-list-supabase] Semantic search failed, falling back to lexical search.", err);
     return {
       applyFilters: (query) =>

@@ -4,24 +4,30 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AIEnrichButton } from "@/components/features/companies/ai-enrichment/AIEnrichButton";
 import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { updateCompany } from "@/lib/actions/companies";
+import { updateCompanyWithOwner } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import { useT } from "@/lib/i18n/use-translations";
+import { createClient } from "@/lib/supabase/browser";
 import { type CompanyForm, companySchema } from "@/lib/validations/company";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
+
+const RESPONSIBLE_NONE = "__none__" as const;
 
 type CompanyEditFormProps = {
   company: Company | null;
@@ -40,6 +46,7 @@ export default function CompanyEditForm({
   onRequestAiEnrich,
 }: CompanyEditFormProps) {
   const queryClient = useQueryClient();
+  const tCompanies = useT("companies");
 
   const form = useForm<CompanyForm>({
     resolver: zodResolver(companySchema),
@@ -68,8 +75,9 @@ export default function CompanyEditForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: CompanyForm) => {
+    mutationFn: (payload: { form: CompanyForm; userId: string | null; syncContacts: boolean }) => {
       if (!company) throw new Error("Company is null");
+      const data = payload.form;
       const mappedData = {
         firmenname: data.firmenname,
         rechtsform: data.rechtsform ?? null,
@@ -92,7 +100,12 @@ export default function CompanyEditForm({
         value: data.value ?? null,
         notes: data.notes ?? null,
       };
-      return updateCompany(company.id, mappedData);
+      return updateCompanyWithOwner({
+        id: company.id,
+        company: mappedData,
+        user_id: payload.userId,
+        sync_contact_owners: payload.syncContacts,
+      });
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["companies"] });
@@ -101,17 +114,20 @@ export default function CompanyEditForm({
       }
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
-      toast.success("Company updated, awesome!");
+      toast.success(tCompanies("toastUpdated"));
       onSuccess?.();
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to update company", { description: message });
+      toast.error(tCompanies("toastUpdateFailed"), { description: message });
     },
   });
 
   const [localAiModalOpen, setLocalAiModalOpen] = useState(false);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(() => company?.user_id ?? null);
+  const [syncContactOwners, setSyncContactOwners] = useState(false);
   const aiEnrichViaParent = onRequestAiEnrich !== undefined;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: One-shot merge when parent bumps `aiPrefill.version` only.
@@ -124,11 +140,35 @@ export default function CompanyEditForm({
     onAiPrefillConsumed?.();
   }, [aiPrefill?.version, company?.id]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset owner picker when server `user_id` or row changes.
+  useEffect(() => {
+    setSelectedOwnerId(company?.user_id ?? null);
+    setSyncContactOwners(false);
+  }, [company?.id, company?.user_id]);
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["profiles"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .order("display_name", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: company != null,
+  });
+
   // Early return AFTER all hooks
   if (!company) return null;
 
   const onSubmit = form.handleSubmit((data) => {
-    updateMutation.mutate(data as CompanyForm);
+    updateMutation.mutate({
+      form: data as CompanyForm,
+      userId: selectedOwnerId,
+      syncContacts: syncContactOwners,
+    });
   });
 
   return (
@@ -146,6 +186,44 @@ export default function CompanyEditForm({
       ) : null}
       <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-6">
+        <div className="space-y-3 rounded-md border border-border/60 bg-muted/30 px-3 py-3">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">{tCompanies("responsibleLabel")}</Label>
+            <Select
+              value={selectedOwnerId ?? RESPONSIBLE_NONE}
+              onValueChange={(v) => {
+                setSelectedOwnerId(v === RESPONSIBLE_NONE ? null : v);
+              }}
+            >
+              <SelectTrigger className="bg-background">
+                <SelectValue placeholder={tCompanies("responsibleSelectPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={RESPONSIBLE_NONE}>{tCompanies("responsibleUnassigned")}</SelectItem>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.display_name?.trim() || p.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="sync-contacts-owner"
+              checked={syncContactOwners}
+              onCheckedChange={(c) => setSyncContactOwners(c === true)}
+              disabled={selectedOwnerId == null || selectedOwnerId === ""}
+              className="mt-0.5"
+            />
+            <div className="grid gap-1">
+              <Label htmlFor="sync-contacts-owner" className="cursor-pointer text-sm font-medium leading-none">
+                {tCompanies("syncContactsOwnerLabel")}
+              </Label>
+              <p className="text-xs text-muted-foreground">{tCompanies("syncContactsOwnerHint")}</p>
+            </div>
+          </div>
+        </div>
         <div className="flex justify-end">
           <AIEnrichButton
             onClick={() => {

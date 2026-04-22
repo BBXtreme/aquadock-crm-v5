@@ -54,6 +54,7 @@ import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { getKundentypLabel } from "@/lib/utils";
+import { safeDisplay } from "@/lib/utils/data-format";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 import type { Contact } from "@/types/database.types";
 
@@ -104,6 +105,27 @@ export default function ContactDetailClient({ contact: initialContact, companies
     },
     enabled: !!contact?.company_id,
   });
+
+  const responsibleUserId = contact?.user_id;
+  const { data: responsibleProfile } = useQuery({
+    queryKey: ["profiles", "by-id", responsibleUserId ?? ""],
+    queryFn: async () => {
+      const uid = responsibleUserId;
+      if (uid == null || uid === "") {
+        return null;
+      }
+      const supabase = createClient();
+      const { data, error } = await supabase.from("profiles").select("display_name").eq("id", uid).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: contact != null && responsibleUserId != null && responsibleUserId !== "",
+  });
+
+  const responsibleLine =
+    contact != null && responsibleUserId != null && responsibleUserId !== ""
+      ? `${tCompanies("responsibleLabel")}: ${safeDisplay(responsibleProfile?.display_name)}`
+      : null;
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -239,6 +261,9 @@ export default function ContactDetailClient({ contact: initialContact, companies
               {contact.vorname} {contact.nachname}
             </h1>
             {contact.position && <p className="mt-1 text-muted-foreground">{contact.position}</p>}
+            {responsibleLine != null ? (
+              <p className="mt-1 text-sm text-muted-foreground">{responsibleLine}</p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

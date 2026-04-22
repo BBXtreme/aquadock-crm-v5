@@ -128,7 +128,8 @@ export default function TimelineCard({ companyId }: Props) {
         .from("timeline")
         .select("*, companies!company_id(firmenname), contacts!contact_id(vorname,nachname,position), profiles!created_by(display_name)")
         .eq("company_id", companyId)
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as TimelineEntryWithJoins[];
     },

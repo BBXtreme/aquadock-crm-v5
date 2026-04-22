@@ -52,7 +52,7 @@ vi.mock("@/lib/actions/crm-trash", () => ({
 
 vi.mock("@/lib/actions/reminders", () => ({
   getReminders: (client: unknown) => mockGetReminders(client),
-  createReminder: (body: unknown, client: unknown) => mockCreateReminder(body, client),
+  createReminderAction: (body: unknown) => mockCreateReminder(body),
 }));
 
 vi.mock("@/lib/services/user-settings", () => ({
@@ -358,7 +358,7 @@ describe("/api/reminders", () => {
     expect(res.status).toBe(500);
   });
 
-  it("POST returns 500 when createReminder throws", async () => {
+  it("POST returns 500 when createReminderAction throws", async () => {
     mockCreateServer.mockResolvedValue({});
     mockCreateReminder.mockRejectedValue(new Error("insert failed"));
     const res = await postRemindersRoute(jsonRequest({ title: "R" }));

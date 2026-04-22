@@ -1,7 +1,7 @@
 /**
  * Integration tests for {@link ./ContactCreateForm.tsx}: `useForm` + `zodResolver(contactSchema)` and mapping aligned with `toContactInsert`.
  *
- * Mocks: per-file `@/lib/supabase/browser` for companies query, `createContact`, `sonner`. `next/navigation` is mocked in {@link ../../../test/setup.ts}.
+ * Mocks: per-file `@/lib/supabase/browser` for companies query, `createContactAction`, `sonner`. `next/navigation` is mocked in {@link ../../../test/setup.ts}.
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,14 +10,14 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createContact } from "@/lib/actions/contacts";
-import { contactSchema, toContactInsert } from "@/lib/validations/contact";
+import { createContactAction } from "@/lib/actions/contact-server-actions";
+import { type ContactForm, contactSchema, toContactInsert } from "@/lib/validations/contact";
 import enMessages from "@/messages/en.json";
 import type { Contact } from "@/types/database.types";
 import ContactCreateForm from "./ContactCreateForm";
 
-vi.mock("@/lib/actions/contacts", () => ({
-  createContact: vi.fn(),
+vi.mock("@/lib/actions/contact-server-actions", () => ({
+  createContactAction: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -66,7 +66,7 @@ vi.mock("@/lib/supabase/browser", () => ({
   createClient: () => mockCreateClient(),
 }));
 
-const mockedCreateContact = vi.mocked(createContact);
+const mockedCreateContactAction = vi.mocked(createContactAction);
 
 function createQueryWrapper() {
   const client = new QueryClient({
@@ -133,7 +133,7 @@ describe("ContactCreateForm + contactSchema", () => {
       deleted_at: null,
       deleted_by: null,
     };
-    mockedCreateContact.mockResolvedValue(createdRow);
+    mockedCreateContactAction.mockResolvedValue(createdRow);
   });
 
   it("renders core field labels and Create contact submit", () => {
@@ -144,7 +144,7 @@ describe("ContactCreateForm + contactSchema", () => {
     expect(view.getByRole("button", { name: /Create contact/i })).toBeInTheDocument();
   });
 
-  it("submits valid data and calls createContact with values compatible with toContactInsert", async () => {
+  it("submits valid data and calls createContactAction with values compatible with toContactInsert", async () => {
     const user = userEvent.setup();
     const { container } = renderContactForm(<ContactCreateForm />);
     const form = container.querySelector("form");
@@ -171,14 +171,14 @@ describe("ContactCreateForm + contactSchema", () => {
     await user.click(view.getByRole("button", { name: /Create contact/i }));
 
     await waitFor(() => {
-      expect(mockedCreateContact).toHaveBeenCalledTimes(1);
+      expect(mockedCreateContactAction).toHaveBeenCalledTimes(1);
     });
 
-    const firstCall = mockedCreateContact.mock.calls[0];
+    const firstCall = mockedCreateContactAction.mock.calls[0];
     if (firstCall === undefined) {
-      throw new Error("expected createContact to have been called");
+      throw new Error("expected createContactAction to have been called");
     }
-    const submitted = firstCall[0];
+    const submitted = firstCall[0] as ContactForm;
 
     const parsed = contactSchema.parse({
       vorname: submitted.vorname,
@@ -212,7 +212,7 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(view.getByText("Vorname ist erforderlich")).toBeInTheDocument();
     });
-    expect(mockedCreateContact).not.toHaveBeenCalled();
+    expect(mockedCreateContactAction).not.toHaveBeenCalled();
   });
 
   it("blocks submit when Last name is empty", async () => {
@@ -226,7 +226,7 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(view.getByText("Nachname ist erforderlich")).toBeInTheDocument();
     });
-    expect(mockedCreateContact).not.toHaveBeenCalled();
+    expect(mockedCreateContactAction).not.toHaveBeenCalled();
   });
 
   it("blocks submit when Email is present but invalid", async () => {
@@ -260,7 +260,7 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(view.getByText("Ungültige E-Mail-Adresse")).toBeInTheDocument();
     });
-    expect(mockedCreateContact).not.toHaveBeenCalled();
+    expect(mockedCreateContactAction).not.toHaveBeenCalled();
   });
 
   it("maps optional empty position to nullish insert output when omitted from submit payload", async () => {
@@ -290,14 +290,14 @@ describe("ContactCreateForm + contactSchema", () => {
     await user.click(view.getByRole("button", { name: /Create contact/i }));
 
     await waitFor(() => {
-      expect(mockedCreateContact).toHaveBeenCalledTimes(1);
+      expect(mockedCreateContactAction).toHaveBeenCalledTimes(1);
     });
 
-    const firstCall = mockedCreateContact.mock.calls[0];
+    const firstCall = mockedCreateContactAction.mock.calls[0];
     if (firstCall === undefined) {
-      throw new Error("expected createContact to have been called");
+      throw new Error("expected createContactAction to have been called");
     }
-    const raw = firstCall[0];
+    const raw = firstCall[0] as ContactForm;
     const parsed = contactSchema.parse({
       vorname: raw.vorname,
       nachname: raw.nachname,

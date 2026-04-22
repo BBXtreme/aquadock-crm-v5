@@ -7,17 +7,24 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
+import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { syncContactUserIdsForCompany } from "@/lib/companies/sync-contact-user-ids";
+import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
+import { createInAppNotification } from "@/lib/services/in-app-notifications";
 import { generateAndStoreCompanyEmbedding } from "@/lib/services/semantic-search";
+import { createTimelineEntry } from "@/lib/services/timeline";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { type ParsedCompanyRow, parseCoordinate } from "@/lib/utils/csv-import";
+import { safeDisplay } from "@/lib/utils/data-format";
 import {
   type GeocodeAddressResult,
   type GeocodeConfidence,
   type GeocodeFailureReason,
   geocodeAddress,
 } from "@/lib/utils/geocode-nominatim";
-import { type CompanyFormValues, companySchema, toCompanyInsert } from "@/lib/validations/company";
+import { type CompanyFormValues, companySchema, toCompanyInsert, toCompanyUpdate } from "@/lib/validations/company";
+import { updateCompanyWithOwnerInputSchema } from "@/lib/validations/company-owner";
 import type {
   Company,
   CompanyInsert,
@@ -72,6 +79,152 @@ function toCompanySemanticInput(company: Company) {
 function shouldRegenerateCompanyEmbedding(updates: CompanyUpdate): boolean {
   const keys = Object.keys(updates) as (keyof CompanyUpdate)[];
   return keys.some((key) => COMPANY_SEMANTIC_UPDATE_FIELDS.has(key));
+}
+
+/** Placeholder for future transactional email when company ownership changes. */
+async function placeholderNotifyCompanyOwnerEmail(_args: {
+  newOwnerUserId: string;
+  companyId: string;
+  companyName: string;
+}): Promise<void> {
+  // TODO(email): company owner assignment (e.g. Brevo / SMTP)
+}
+
+/** Best-effort audit row on company detail timeline; does not throw (update already persisted). */
+async function maybeAppendCompanyOwnershipTimelineAudit(params: {
+  supabase: SupabaseClient;
+  companyId: string;
+  priorUserId: string | null;
+  nextUserId: string | null;
+  actorUserId: string;
+}): Promise<void> {
+  const { supabase, companyId, priorUserId, nextUserId, actorUserId } = params;
+  if (priorUserId === nextUserId) {
+    return;
+  }
+
+  const { companies: companiesMessages } = getMessagesForLocale(resolveAppLocale(undefined));
+  const unassigned = companiesMessages.responsibleUnassigned;
+  const unknownUser = companiesMessages.timelineOwnershipUnknownUser;
+
+  const ids = [...new Set([priorUserId, nextUserId].filter((id): id is string => id != null && id !== ""))];
+  const displayById = new Map<string, string | null>();
+  if (ids.length > 0) {
+    const { data: profiles, error } = await supabase.from("profiles").select("id, display_name").in("id", ids);
+    if (error) {
+      console.error("[maybeAppendCompanyOwnershipTimelineAudit] profiles lookup failed", error);
+    } else {
+      for (const row of profiles ?? []) {
+        displayById.set(row.id, row.display_name);
+      }
+    }
+  }
+
+  const labelFor = (userId: string | null) => {
+    if (userId == null || userId === "") {
+      return unassigned;
+    }
+    const dn = displayById.get(userId);
+    const name = dn != null && dn.trim() !== "" ? dn.trim() : null;
+    return name ?? safeDisplay(null, unknownUser);
+  };
+
+  const fromLabel = labelFor(priorUserId);
+  const toLabel = labelFor(nextUserId);
+  const title = companiesMessages.timelineOwnershipChangedTitle.replace("{from}", fromLabel).replace("{to}", toLabel);
+
+  try {
+    await createTimelineEntry(
+      {
+        title,
+        content: null,
+        activity_type: "other",
+        company_id: companyId,
+        contact_id: null,
+        user_id: actorUserId,
+        created_by: actorUserId,
+        updated_by: actorUserId,
+      },
+      supabase,
+    );
+  } catch (err) {
+    console.error("[maybeAppendCompanyOwnershipTimelineAudit] timeline insert failed", err);
+  }
+}
+
+async function maybeNotifyNewCompanyOwner(params: {
+  companyId: string;
+  companyName: string;
+  priorUserId: string | null;
+  newUserId: string;
+  actorUserId: string;
+}): Promise<void> {
+  const { companyId, companyName, priorUserId, newUserId, actorUserId } = params;
+  if (newUserId === priorUserId) {
+    return;
+  }
+  const { companies: companiesMessages } = getMessagesForLocale(resolveAppLocale(undefined));
+  const title = companiesMessages.notificationNewOwnerTitle.replace("{companyName}", companyName);
+  const body = companiesMessages.notificationNewOwnerBody;
+  await createInAppNotification({
+    type: "company_owner_assigned",
+    userId: newUserId,
+    title,
+    body,
+    payload: { companyId },
+    actorUserId,
+    dedupeKey: `company_owner_assigned:${companyId}:${newUserId}:${priorUserId ?? "none"}`,
+  });
+  await placeholderNotifyCompanyOwnerEmail({
+    newOwnerUserId: newUserId,
+    companyId,
+    companyName,
+  });
+}
+
+/** Placeholder for future transactional email when contact assignment changes. */
+async function placeholderNotifyContactAssignedEmail(_args: {
+  assigneeUserId: string;
+  contactId: string;
+  contactName: string;
+}): Promise<void> {
+  // TODO(email): contact assignment (e.g. Brevo / SMTP)
+}
+
+export async function maybeNotifyContactAssignment(params: {
+  contactId: string;
+  companyId: string | null;
+  contactName: string;
+  priorUserId: string | null;
+  newUserId: string;
+  actorUserId: string;
+}): Promise<void> {
+  const { contactId, companyId, contactName, priorUserId, newUserId, actorUserId } = params;
+  if (newUserId === priorUserId || newUserId === "") {
+    return;
+  }
+  if (actorUserId === newUserId) {
+    return;
+  }
+  const { contacts: contactsMessages } = getMessagesForLocale(resolveAppLocale(undefined));
+  const title = contactsMessages.notificationAssignedTitle.replace("{contactName}", contactName);
+  const body = contactsMessages.notificationAssignedBody;
+  const payload =
+    companyId != null && companyId !== "" ? { contactId, companyId } : { contactId };
+  await createInAppNotification({
+    type: "contact_assigned",
+    userId: newUserId,
+    title,
+    body,
+    payload,
+    actorUserId,
+    dedupeKey: `contact_assigned:${contactId}:${newUserId}:${priorUserId ?? "none"}`,
+  });
+  await placeholderNotifyContactAssignedEmail({
+    assigneeUserId: newUserId,
+    contactId,
+    contactName,
+  });
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -164,7 +317,7 @@ export async function resolveCompanyDetail(
       strasse, plz, stadt, bundesland, land, telefon, email, website,
       notes,
       lat, lon, osm, wasserdistanz, wassertyp, created_at, updated_at,
-      deleted_at
+      deleted_at, user_id
     `)
     .eq("id", id)
     .maybeSingle();
@@ -191,11 +344,17 @@ export async function createCompany(values: CompanyFormValues, supabase?: Supaba
     throw new Error("Validierungsfehler beim Erstellen des Unternehmens");
   }
 
+  const user = await getCurrentUser();
+  if (user == null) {
+    throw new Error("Unauthorized");
+  }
+
   const client = supabase ?? await createServerSupabaseClient();
   const insertData = toCompanyInsert(validated.data);
 
-  // Temporary fallback until full auth is implemented
-  insertData.user_id = null;
+  insertData.user_id = user.id;
+  insertData.created_by = user.id;
+  insertData.updated_by = user.id;
 
   const { data, error } = await client.from("companies").insert(insertData).select().single();
 
@@ -213,15 +372,80 @@ export async function updateCompany(
   updates: CompanyUpdate,
 ): Promise<Company> {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.from("companies").update(updates).eq("id", id).select().single();
+
+  const { data: priorRow, error: priorError } = await supabase
+    .from("companies")
+    .select("user_id, firmenname")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (priorError) throw handleSupabaseError(priorError, "updateCompany");
+
+  if (priorRow === null) {
+    throw new Error("Company not found");
+  }
+
+  const actor = await getCurrentUser();
+  const patch: CompanyUpdate =
+    actor != null ? { ...updates, updated_by: actor.id } : { ...updates };
+
+  const { data, error } = await supabase.from("companies").update(patch).eq("id", id).select().single();
 
   if (error) throw handleSupabaseError(error, "updateCompany");
   const company = data as Company;
   if (shouldRegenerateCompanyEmbedding(updates)) {
     void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));
   }
+
+  if ("user_id" in updates && actor != null) {
+    const nextUserId = updates.user_id ?? null;
+    await maybeAppendCompanyOwnershipTimelineAudit({
+      supabase,
+      companyId: id,
+      priorUserId: priorRow.user_id,
+      nextUserId,
+      actorUserId: actor.id,
+    });
+  }
+
+  const newUserId = updates.user_id;
+  if (newUserId !== undefined && newUserId !== null && priorRow != null && actor != null) {
+    await maybeNotifyNewCompanyOwner({
+      companyId: id,
+      companyName: company.firmenname,
+      priorUserId: priorRow.user_id,
+      newUserId,
+      actorUserId: actor.id,
+    });
+  }
+
   revalidatePath("/companies");
   revalidatePath(`/companies/${id}`, "page");
+  return company;
+}
+
+/**
+ * Validates company form fields plus `user_id` and optional bulk contact owner sync.
+ */
+export async function updateCompanyWithOwner(raw: unknown): Promise<Company> {
+  const input = updateCompanyWithOwnerInputSchema.parse(raw);
+  const actor = await getCurrentUser();
+  if (actor == null) {
+    throw new Error("Unauthorized");
+  }
+
+  const updates: CompanyUpdate = {
+    ...toCompanyUpdate(input.company),
+    user_id: input.user_id,
+  };
+  const company = await updateCompany(input.id, updates);
+
+  if (input.sync_contact_owners && input.user_id != null && input.user_id !== "") {
+    const supabase = await createServerSupabaseClient();
+    await syncContactUserIdsForCompany(supabase, input.id, input.user_id, actor.id);
+    revalidatePath("/contacts");
+  }
+
   return company;
 }
 
@@ -317,6 +541,17 @@ export async function importCompaniesFromCSV(
   const supabase = await createServerSupabaseClient();
   const importBatch = new Date().toISOString();
 
+  const user = await getCurrentUser();
+  if (user == null) {
+    return {
+      imported: 0,
+      importedWithCoordinates: 0,
+      errors: ["Unauthorized"],
+      importBatch,
+      companyIds: [],
+    };
+  }
+
   try {
     const companiesToInsert: CompanyInsert[] = rows.map((row) => ({
       firmenname: row.firmenname,
@@ -335,7 +570,9 @@ export async function importCompaniesFromCSV(
       wasserdistanz: row.wasser_distanz ?? null,
       wassertyp: row.wassertyp ?? null,
       status: "lead",
-      user_id: null,
+      user_id: user.id,
+      created_by: user.id,
+      updated_by: user.id,
       rechtsform: null,
       firmentyp: null,
       value: null,
