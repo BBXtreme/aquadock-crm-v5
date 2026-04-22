@@ -116,10 +116,14 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 | `pnpm test` | Vitest (watch) |
 | `pnpm test:run` | Vitest once |
 | `pnpm test:ci` | Coverage + verbose reporter (matches CI) |
+| `pnpm e2e` | Playwright E2E (starts production server from `playwright.config.ts` unless one is already running) |
+| `pnpm e2e:ui` | Playwright with UI mode |
 | `pnpm messages:validate` | Ensures `de` / `en` / `hr` message keys stay in sync (run after editing `src/messages/*.json`) |
 | `pnpm supabase:types` | Regenerate `src/types/supabase.ts` (edit `--project-id` in `package.json` if you fork the DB) |
 
-Vitest loads `src/test/setup.ts` for every test (global mocks, JSDOM stubs, and RTL `cleanup()` after each test so `render()` does not accumulate trees). Details: [`docs/architecture.md`](docs/architecture.md#testing-vitest).
+Vitest loads `src/test/setup.ts` for every test (global mocks, JSDOM stubs, and RTL `cleanup()` after each test so `render()` does not accumulate trees). Details: [`docs/architecture.md`](docs/architecture.md#testing-vitest--playwright).
+
+**E2E:** Set optional `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` in `.env.local` (see [`.env.example`](.env.example)) to run the authenticated CRM tests in `tests/e2e/`; `pnpm build` is required first. On GitHub, add the same values as **repository secrets** for the CI e2e job. Smoke tests (login page, redirects) do not need credentials.
 
 ---
 

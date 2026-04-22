@@ -30,6 +30,14 @@ Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `
 
 **Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (**22.x** — see `.github/workflows/ci.yml`). Vercel's current default Node runtime is **24 LTS**; pinning to **22.x** in the project settings keeps CI and production aligned. **Package manager:** CI pins **pnpm 10** via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
 
+### GitHub Actions: CI and Playwright
+
+The workflow in **`.github/workflows/ci.yml`** runs `pnpm typecheck`, Biome, `pnpm test:ci`, and `pnpm build` on each PR, then a **e2e** job that runs Playwright against `http://127.0.0.1:3000`. Configure the same **`NEXT_PUBLIC_SUPABASE_*` values** as [GitHub Actions variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) so the app can start in CI.
+
+- **Repository secrets (optional but recommended for full coverage):** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` — a non-production test user that can sign in and access the protected CRM. Without them, authenticated smoke tests in `tests/e2e/` are skipped, but the job still runs public smoke tests.
+
+Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) and `playwright.config.ts`.
+
 ---
 
 ## 2. Supabase
