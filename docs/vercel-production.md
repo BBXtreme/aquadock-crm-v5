@@ -38,6 +38,12 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 
 ---
 
+## GitHub Actions and E2E (CI)
+
+PR checks run on **GitHub Actions** (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), not on Vercel. Configure **Actions variables** for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and optional **repository secrets** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` so the Playwright job can run authenticated tests. Step-by-step: [`production-deploy.md`](production-deploy.md) (section *GitHub Actions: CI and Playwright*). Local E2E: [`.env.example`](../.env.example) and `pnpm e2e` after `pnpm build`.
+
+---
+
 ## Auth and routes
 
 ### Supabase Auth — Site URL and Redirect URLs
@@ -113,4 +119,4 @@ Example explicit production entries (only if you prefer path-level entries inste
 
 ---
 
-Last reviewed: April 20, 2026
+Last reviewed: April 22, 2026
