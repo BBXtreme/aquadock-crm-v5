@@ -2,6 +2,10 @@
   "name": "aquadock-crm-v5",
   "version": "0.5.40",
   "private": true,
+  "engines": {
+    "node": ">=22 <23",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "supabase:types": "npx --yes supabase gen types typescript --project-id bqsdrmlyctqxxflhhqbr --schema public > src/types/supabase.ts",
     "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" next dev",

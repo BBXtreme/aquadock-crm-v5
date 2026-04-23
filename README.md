@@ -47,6 +47,8 @@ cd aquadock-crm-v5
 pnpm install
 ```
 
+Use **Node 22** and **pnpm 10+** (see [`.nvmrc`](.nvmrc) and `engines` in [`package.json`](package.json)) so your machine matches **CI** and the [Vercel runbook](docs/vercel-production.md#project-settings).
+
 ### 2. Environment
 
 ```bash
