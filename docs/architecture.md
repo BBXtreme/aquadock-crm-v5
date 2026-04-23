@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 22, 2026  
+**Last updated:** April 23, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -13,7 +13,7 @@ This document explains how the application is structured so developers (and tech
 3. **Interactive pieces** (forms, maps, tables with client sorting) are **Client Components** (`"use client"`) and stay as small as possible.  
 4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete).  
 5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.  
-6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireUser()` in `src/app/(protected)/layout.tsx`.
+6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireCrmAccess()` in `src/app/(protected)/layout.tsx`.
 
 ---
 
@@ -67,13 +67,23 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 
 **Existing routes** (companies, contacts, reminders, timeline, `send-test-email`, auth user) are historical or JSON-oriented; new features should not sprawl duplicate mutation paths without a reason noted in a PR.
 
+### API route review checklist (for `src/app/api/**/route.ts`)
+
+When adding or changing a handler, confirm:
+
+1. **Session** — `createServerSupabaseClient()` and `getUser()` (or equivalent) before mutating; return `401` if unauthenticated unless the route is intentionally public.  
+2. **RLS** — Prefer the user-scoped Supabase client; do not use the **service role** in route handlers except for a documented, audited exception.  
+3. **Input** — Validate JSON/body with Zod (or the same rules as a matching Server Action), not ad hoc checks only.  
+4. **Data shape** — Do not return raw service-role or internal error blobs to the client.  
+5. **Duplication** — If the same write exists as a Server Action, keep behavior aligned or consolidate.
+
 ---
 
 ## Route groups and layout
 
 - **`(auth)`** — Public routes (e.g. login); no full app chrome.  
 - **`(protected)`** — Authenticated CRM: sidebar, header, and pages under routes like `/dashboard`, `/companies`, `/openmap`.  
-- The **`(protected)/layout.tsx`** layout calls `requireUser()` once per segment tree so nested pages do not pay duplicate auth work; admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
+- The **`(protected)/layout.tsx`** layout calls `requireCrmAccess()` once per segment tree (session + pending-user gates); individual pages use `requireUser()` or stricter checks as needed. Admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
 
 ---
 
@@ -89,6 +99,14 @@ Companies with coordinates are loaded for the map via the service layer. OSM POI
 - **E2E:** Playwright tests under `tests/e2e/` (`pnpm e2e` locally; `pnpm e2e:ci` in CI). Requires a running production build; CI runs the **e2e** job after **quality** (see `.github/workflows/ci.yml`). For authenticated flows, set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` in repo secrets; smoke tests run without them.
 - **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
 - Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).
+
+---
+
+## Accessibility (a11y)
+
+- Prefer **semantic HTML**, **visible focus** styles (Radix/shadcn defaults), and **keyboard** paths for primary flows (nav, dialogs, data tables).  
+- **Command palette** (`⌘K` / `Ctrl+K`): search field and list are keyboard operable; keep new commands labeled and in logical groups.  
+- When adding custom widgets, test with **keyboard-only** and a screen reader (VoiceOver / NVDA) on at least one browser. Deeper WCAG work can be ticketed as follow-up.
 
 ---
 
