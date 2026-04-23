@@ -1,4 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+
+// Playwright does not read `.env.local` by default; Next.js does. Load repo env so
+// E2E_USER_EMAIL / E2E_USER_PASSWORD / E2E_BASE_URL work when running `pnpm e2e` locally.
+loadEnvConfig(process.cwd());
 
 const baseURL = process.env.E2E_BASE_URL ?? "http://127.0.0.1:3000";
 const inCi = process.env.CI === "true";

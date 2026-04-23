@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 const hasCredentials = Boolean(
@@ -7,11 +8,54 @@ const hasCredentials = Boolean(
 const authDescribe = hasCredentials ? test.describe : test.describe.skip;
 
 /**
+ * After password sign-in, wait for a post-login route or fail if Supabase shows an error.
+ * Avoids the default 30s test timeout while waitForURL was 45s; fails fast on invalid credentials.
+ */
+async function expectSignedInOrFail(page: Page) {
+  const postLogin = /\/(dashboard|companies|access-pending)/;
+  const result = await page
+    .waitForFunction(
+      () => {
+        const path = document.location.pathname;
+        if (path === "/access-pending" || path === "/dashboard" || path.startsWith("/companies")) {
+          return "ok" as const;
+        }
+        const text = document.body?.innerText ?? "";
+        if (
+          /Invalid login credentials|invalid.*credential|Invalid email or password|wrong password|Anmeldefehler|fehlgeschlagen|ungültig|ungültige Anmeldeinformationen|Netočn/i.test(
+            text,
+          )
+        ) {
+          return "err" as const;
+        }
+        return null;
+      },
+      { timeout: 60_000 },
+    )
+    .then((h) => h.jsonValue<"ok" | "err" | null>());
+
+  if (result === "err") {
+    throw new Error(
+      "Supabase rejected sign-in. Set E2E_USER_EMAIL and E2E_USER_PASSWORD to match a real Supabase Auth user (update the password in the Supabase dashboard if needed).",
+    );
+  }
+  if (result !== "ok") {
+    throw new Error(
+      "Timed out after sign-in. Expected redirect to /dashboard, /companies, or /access-pending. Last URL: " +
+        (await page.url()),
+    );
+  }
+  await expect(page).toHaveURL(postLogin);
+}
+
+/**
  * Exercises the protected shell, companies + detail (VItest-excluded client bundles), contacts,
  * and mass email — the same “CRM surface” called out in vitest `coverage.exclude`.
  * Requires `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` in CI secrets (or `.env.local` locally).
  */
 authDescribe("authenticated CRM smoke", () => {
+  test.describe.configure({ timeout: 90_000 });
+
   test("login → companies → first company detail → mass email", async ({ page }) => {
     const email = process.env.E2E_USER_EMAIL;
     const password = process.env.E2E_USER_PASSWORD;
@@ -25,11 +69,10 @@ authDescribe("authenticated CRM smoke", () => {
     const passwordField = page.locator('input[type="password"]');
     await expect(passwordField).toBeVisible();
     await passwordField.fill(password);
-    const submit = page
-      .getByRole("button", { name: /sign|anmeld|jetzt|magic|e-mail|send|continue|weiter|prijav/i })
-      .first();
-    await submit.click();
-    await page.waitForURL(/\/(dashboard|companies|access-pending)/, { timeout: 45_000 });
+    const signIn = page
+      .getByRole("button", { name: /^(Sign in|Anmelden|Prijavi se|Continue)$/i });
+    await signIn.click();
+    await expectSignedInOrFail(page);
     if (page.url().includes("access-pending")) {
       test.skip();
       return;
@@ -62,11 +105,8 @@ authDescribe("authenticated CRM smoke", () => {
     await page.goto("/login");
     await page.getByLabel(/email|e-mail|mail/i).fill(email);
     await page.locator('input[type="password"]').fill(password);
-    await page
-      .getByRole("button", { name: /sign|anmeld|jetzt|magic|e-mail|send|continue|weiter|prijav/i })
-      .first()
-      .click();
-    await page.waitForURL(/\/(dashboard|companies|access-pending)/, { timeout: 45_000 });
+    await page.getByRole("button", { name: /^(Sign in|Anmelden|Prijavi se|Continue)$/i }).click();
+    await expectSignedInOrFail(page);
     if (page.url().includes("access-pending")) {
       test.skip();
     }

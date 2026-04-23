@@ -17,8 +17,7 @@ export async function POST(request: Request) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    // DEVELOPMENT ONLY: Allow inserts with user_id: null for testing OSM POI import
-    // TODO: Remove this when auth is fully implemented
+    // DEVELOPMENT ONLY: allow unauthenticated POST for local map / OSM POI import (user_id may be null). Production always requires a session.
     const isDevelopment = process.env.NODE_ENV === "development";
     if (!isDevelopment && (authError || !user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

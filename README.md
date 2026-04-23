@@ -47,7 +47,7 @@ cd aquadock-crm-v5
 pnpm install
 ```
 
-Use **Node 22** and **pnpm 10+** (see [`.nvmrc`](.nvmrc) and `engines` in [`package.json`](package.json)) so your machine matches **CI** and the [Vercel runbook](docs/vercel-production.md#project-settings).
+Use **Node 22** and **pnpm 10+** (see [`.nvmrc`](.nvmrc) and `engines` in [`package.json`](package.json)) so your machine matches **CI** and the [Vercel runbook](docs/vercel-production.md#project-settings). The repo pins `pnpm` via the `packageManager` field; with [Corepack](https://nodejs.org/api/corepack.html) enabled (`corepack enable`), the correct version is selected automatically.
 
 ### 2. Environment
 

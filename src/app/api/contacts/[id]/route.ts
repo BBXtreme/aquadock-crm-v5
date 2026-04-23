@@ -10,11 +10,14 @@ import { deleteContactWithTrash } from "@/lib/actions/crm-trash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id } = await params;
   const { data, error } = await supabase
     .from("contacts")
@@ -31,11 +34,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id } = await params;
   const body = await request.json();
   const { data, error } = await supabase.from("contacts").update(body).eq("id", id).select().single();

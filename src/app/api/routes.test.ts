@@ -88,6 +88,17 @@ function jsonRequest(body: unknown): NextRequest {
   }) as unknown as NextRequest;
 }
 
+const mockAuthedUser = { id: "u1" } as const;
+
+function mockServerClientWithUser(client: { auth?: unknown; from: () => unknown }) {
+  return {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({ data: { user: mockAuthedUser }, error: null }),
+    },
+    ...client,
+  };
+}
+
 describe("GET /api/auth/me", () => {
   beforeEach(() => {
     mockGetCurrentUser.mockReset();
@@ -704,17 +715,19 @@ describe("/api/contacts/[id]", () => {
   });
 
   it("GET returns contact", async () => {
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: { id: "c1", vorname: "A" },
-          error: null,
-        }),
-      })),
-    });
+    mockCreateServer.mockResolvedValue(
+      mockServerClientWithUser({
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { id: "c1", vorname: "A" },
+            error: null,
+          }),
+        })),
+      }),
+    );
     const res = await getContact({} as Request, { params: Promise.resolve({ id: "c1" }) });
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -722,14 +735,16 @@ describe("/api/contacts/[id]", () => {
   });
 
   it("PUT updates contact", async () => {
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: { id: "c1" }, error: null }),
-      })),
-    });
+    mockCreateServer.mockResolvedValue(
+      mockServerClientWithUser({
+        from: vi.fn(() => ({
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: { id: "c1" }, error: null }),
+        })),
+      }),
+    );
     const res = await putContact(jsonRequest({ vorname: "B" }), {
       params: Promise.resolve({ id: "c1" }),
     });
@@ -743,34 +758,60 @@ describe("/api/contacts/[id]", () => {
   });
 
   it("GET returns 500 on query error", async () => {
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        is: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: { message: "not found" },
-        }),
-      })),
-    });
+    mockCreateServer.mockResolvedValue(
+      mockServerClientWithUser({
+        from: vi.fn(() => ({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: "not found" },
+          }),
+        })),
+      }),
+    );
     const res = await getContact({} as Request, { params: Promise.resolve({ id: "c1" }) });
     expect(res.status).toBe(500);
   });
 
   it("PUT returns 500 on update error", async () => {
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({ data: null, error: { message: "conflict" } }),
-      })),
-    });
+    mockCreateServer.mockResolvedValue(
+      mockServerClientWithUser({
+        from: vi.fn(() => ({
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: "conflict" } }),
+        })),
+      }),
+    );
     const res = await putContact(jsonRequest({ vorname: "B" }), {
       params: Promise.resolve({ id: "c1" }),
     });
     expect(res.status).toBe(500);
+  });
+
+  it("GET returns 401 without user", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
+    });
+    const res = await getContact({} as Request, { params: Promise.resolve({ id: "c1" }) });
+    expect(res.status).toBe(401);
+  });
+
+  it("PUT returns 401 without user", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
+    });
+    const res = await putContact(jsonRequest({ vorname: "B" }), {
+      params: Promise.resolve({ id: "c1" }),
+    });
+    expect(res.status).toBe(401);
   });
 
   it("DELETE returns 500 when trash action throws", async () => {
