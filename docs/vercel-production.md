@@ -40,7 +40,9 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 
 ## GitHub Actions and E2E (CI)
 
-PR checks run on **GitHub Actions** (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), not on Vercel. Configure **Actions variables** for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and optional **repository secrets** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` so the Playwright job can run authenticated tests. Step-by-step: [`production-deploy.md`](production-deploy.md) (section *GitHub Actions: CI and Playwright*). Local E2E: [`.env.example`](../.env.example) and `pnpm e2e` after `pnpm build`.
+PR checks run on **GitHub Actions** (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), not on Vercel. Configure **Actions variables** for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. For authenticated Playwright tests, add **repository secrets** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` (the workflow uses `secrets.E2E_*` — not Variables). Full runbook: [`production-deploy.md`](production-deploy.md) (section *GitHub Actions: CI and Playwright*).
+
+**Local E2E:** `pnpm build` then `pnpm e2e`. Store `E2E_*` in **`.env.local`**; `playwright.config.ts` calls `loadEnvConfig` from `@next/env` so the Playwright process loads them without manual `export`. See [`.env.example`](../.env.example).
 
 ---
 
@@ -119,4 +121,4 @@ Example explicit production entries (only if you prefer path-level entries inste
 
 ---
 
-Last reviewed: April 22, 2026
+Last reviewed: April 23, 2026

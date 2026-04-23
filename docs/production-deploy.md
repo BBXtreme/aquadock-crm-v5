@@ -32,11 +32,13 @@ Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `
 
 ### GitHub Actions: CI and Playwright
 
-The workflow in **`.github/workflows/ci.yml`** runs `pnpm typecheck`, Biome, `pnpm test:ci`, and `pnpm build` on each PR, then a **e2e** job that runs Playwright against `http://127.0.0.1:3000`. Configure the same **`NEXT_PUBLIC_SUPABASE_*` values** as [GitHub Actions variables](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) so the app can start in CI.
+The workflow in **`.github/workflows/ci.yml`** runs `pnpm typecheck`, Biome, `pnpm test:ci`, and `pnpm build` on each PR, then an **e2e** job that runs Playwright against `http://127.0.0.1:3000`. The e2e job’s `next start` uses the fresh build output (no long-lived dev server in CI). Configure the same **`NEXT_PUBLIC_SUPABASE_*`** values the app needs at runtime as [GitHub Actions **variables**](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) so the client bundle in CI can reach your Supabase project.
 
-- **Repository secrets (optional but recommended for full coverage):** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` — a non-production test user that can sign in and access the protected CRM. Without them, authenticated smoke tests in `tests/e2e/` are skipped, but the job still runs public smoke tests.
+- **Repository secrets (optional; required for full authenticated coverage):** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` — a **dedicated** non-production test user in Supabase Auth, password set via the **Supabase dashboard** (or Admin API), able to open the protected CRM and **not** stuck on `/access-pending` onboarding. The workflow reads `secrets.E2E_USER_EMAIL` and `secrets.E2E_USER_PASSWORD` (use **secrets**, not Variables). Without them, authenticated tests in `tests/e2e/` are skipped; public smoke tests still run.
 
-Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) and `playwright.config.ts`.
+**Local E2E:** `pnpm build` then `pnpm e2e`. Put `E2E_*` in **`.env.local`** — `playwright.config.ts` uses `loadEnvConfig` from `@next/env` so the Playwright Node process loads them automatically. See [`.env.example`](../.env.example).
+
+Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) and [`playwright.config.ts`](../playwright.config.ts).
 
 ---
 
@@ -91,7 +93,7 @@ Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live s
 
 - Enable **Vercel Analytics** (and optional Speed Insights) if you want real-user metrics.  
 - Use **Supabase** dashboards for slow queries and API usage.  
-- Optional: Sentry or similar for client/server errors — not required by the repo but common for production.
+- Optional: client/server **error monitoring** (a third-party service) — not required by the repo but common for production.
 
 ---
 
@@ -129,4 +131,4 @@ Replace placeholders with your team’s contacts:
 
 ---
 
-Last reviewed: April 20, 2026
+Last reviewed: April 23, 2026

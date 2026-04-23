@@ -63,9 +63,7 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 | **Default** | Server Actions in `src/lib/actions/` and `src/lib/services/` (`"use server"`) | New writes/updates from the app: forms, buttons, and anything that should run with the user’s session, `revalidatePath`, and Zod re-validation. |
 | **API route** | `src/app/api/**/route.ts` | Legitimate **HTTP** surface: `fetch` from a client that expects JSON, public/internal endpoints, or patterns that are awkward as actions (e.g. some `GET` list proxies). Reuse the same service helpers and RLS-scoped `createServerSupabaseClient()`; never trust the client for authorization. |
 
-**Rule of thumb:** add **Server Actions** first. Add a **Route Handler** only if you need a stable URL contract, `GET`+JSON, or a non-React caller (e.g. external tool calling your API on purpose).
-
-**Existing routes** (companies, contacts, reminders, timeline, `send-test-email`, auth user) are historical or JSON-oriented; new features should not sprawl duplicate mutation paths without a reason noted in a PR.
+**Rule of thumb:** add **Server Actions** first. Add a **Route Handler** only if you need a stable URL contract, `GET`+JSON, or a non-React caller (e.g. external tool calling your API on purpose). New features should not sprawl duplicate mutation paths without a reason noted in a PR.
 
 ### API route review checklist (for `src/app/api/**/route.ts`)
 
@@ -76,6 +74,26 @@ When adding or changing a handler, confirm:
 3. **Input** — Validate JSON/body with Zod (or the same rules as a matching Server Action), not ad hoc checks only.  
 4. **Data shape** — Do not return raw service-role or internal error blobs to the client.  
 5. **Duplication** — If the same write exists as a Server Action, keep behavior aligned or consolidate.
+
+### HTTP API inventory (`src/app/api/**`)
+
+Hand-maintained; update when you add or remove a `route.ts`. All handlers use the user-scoped server Supabase client unless noted. Prefer **not** duplicating the same write as a Server Action without aligning validation and error shapes.
+
+| Path | Methods | Role |
+| --- | --- | --- |
+| `/api/auth/me` | GET | Current user (`getCurrentUser()`); `401` if missing |
+| `/api/auth/user` | GET | Minimal auth check (`getUser`); `401` if unauthenticated |
+| `/api/companies` | POST | Create company: Zod + `toCompanyInsert`; `user_id` from session |
+| `/api/companies/search` | POST | Company search (semantic / lexical) |
+| `/api/companies/nav-ids` | POST | Resolve company ids for map/navigation |
+| `/api/contacts/[id]` | GET, PUT, DELETE | Company-scoped contact row; PUT uses `contactSchema.partial().strict()` |
+| `/api/reminders` | GET, POST | **Auth required**; POST delegates to reminder server action |
+| `/api/timeline` | POST | New timeline entry; Zod body (`postTimelineBodySchema`) |
+| `/api/timeline/[id]` | PUT, DELETE | Update or delete a timeline entry |
+| `/api/send-test-email` | POST | Send test email (authenticated flows) |
+| `/api/test-smtp` | POST | Test SMTP user settings; `401` if session/auth error |
+
+**Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
 
 ---
 
@@ -96,7 +114,7 @@ Companies with coordinates are loaded for the map via the service layer. OSM POI
 ## Testing (Vitest + Playwright)
 
 - **Vitest:** tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter). Large or branch-heavy files may be listed in `vitest` `coverage.exclude` and are still covered in spirit by E2E where noted.
-- **E2E:** Playwright tests under `tests/e2e/` (`pnpm e2e` locally; `pnpm e2e:ci` in CI). Requires a running production build; CI runs the **e2e** job after **quality** (see `.github/workflows/ci.yml`). For authenticated flows, set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` in repo secrets; smoke tests run without them.
+- **E2E:** Playwright under `tests/e2e/` — `pnpm e2e` locally, `pnpm e2e:ci` in GitHub Actions. Expect a **production build** (`pnpm build`); the config may start `next start` on `127.0.0.1:3000` when no server is already listening. **`playwright.config.ts`** calls `loadEnvConfig` from `@next/env`, so `E2E_BASE_URL`, `E2E_USER_EMAIL`, and `E2E_USER_PASSWORD` in **`.env.local`** are available to the Playwright process without shell `export`. **CI:** set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as **Actions variables**; set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` as **repository secrets** (`secrets.E2E_*` in the workflow). Use a real Supabase user who can password-sign in and is **not** blocked on `/access-pending`, or skip authenticated cases. **Smoke** tests (no login) run without E2E secrets. Artifacts under `test-results/` are gitignored.
 - **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
 - Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).
 

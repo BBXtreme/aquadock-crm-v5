@@ -8,6 +8,9 @@ import { NextResponse } from "next/server";
 
 import { deleteContactWithTrash } from "@/lib/actions/crm-trash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { contactSchema } from "@/lib/validations/contact";
+
+const contactUpdateBodySchema = contactSchema.partial().strict();
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
@@ -43,8 +46,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { id } = await params;
-  const body = await request.json();
-  const { data, error } = await supabase.from("contacts").update(body).eq("id", id).select().single();
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const parsed = contactUpdateBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const { data, error } = await supabase.from("contacts").update(parsed.data).eq("id", id).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

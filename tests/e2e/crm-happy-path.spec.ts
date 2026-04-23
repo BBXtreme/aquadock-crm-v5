@@ -13,26 +13,25 @@ const authDescribe = hasCredentials ? test.describe : test.describe.skip;
  */
 async function expectSignedInOrFail(page: Page) {
   const postLogin = /\/(dashboard|companies|access-pending)/;
-  const result = await page
-    .waitForFunction(
-      () => {
-        const path = document.location.pathname;
-        if (path === "/access-pending" || path === "/dashboard" || path.startsWith("/companies")) {
-          return "ok" as const;
-        }
-        const text = document.body?.innerText ?? "";
-        if (
-          /Invalid login credentials|invalid.*credential|Invalid email or password|wrong password|Anmeldefehler|fehlgeschlagen|ungültig|ungültige Anmeldeinformationen|Netočn/i.test(
-            text,
-          )
-        ) {
-          return "err" as const;
-        }
-        return null;
-      },
-      { timeout: 60_000 },
-    )
-    .then((h) => h.jsonValue<"ok" | "err" | null>());
+  const handle = await page.waitForFunction(
+    () => {
+      const path = document.location.pathname;
+      if (path === "/access-pending" || path === "/dashboard" || path.startsWith("/companies")) {
+        return "ok" as const;
+      }
+      const text = document.body?.innerText ?? "";
+      if (
+        /Invalid login credentials|invalid.*credential|Invalid email or password|wrong password|Anmeldefehler|fehlgeschlagen|ungültig|ungültige Anmeldeinformationen|Netočn/i.test(
+          text,
+        )
+      ) {
+        return "err" as const;
+      }
+      return null;
+    },
+    { timeout: 60_000 },
+  );
+  const result = (await handle.jsonValue()) as "ok" | "err" | null;
 
   if (result === "err") {
     throw new Error(

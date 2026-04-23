@@ -11,6 +11,13 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const reminders = await getReminders(supabase);
     return NextResponse.json(reminders);
   } catch (error) {
@@ -26,6 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(reminder, { status: 201 });
   } catch (error) {
     console.error("Error creating reminder:", error);
+    if (error instanceof Error && error.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.json({ error: "Failed to create reminder" }, { status: 500 });
   }
 }

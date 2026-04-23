@@ -1,15 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { createAuthenticatedTimelineEntry } from "@/lib/server/timeline-insert";
 
-function isValidTimelineEntry(body: unknown): body is {
-  title: string;
-  content?: string;
-  activity_type?: string;
-  company_id?: string | null;
-  contact_id?: string | null;
-} {
-  return typeof body === "object" && body !== null && "title" in body && typeof (body as Record<string, unknown>).title === "string";
-}
+const postTimelineBodySchema = z
+  .object({
+    title: z.string().min(1).max(200),
+    content: z.string().max(2000).nullable().optional(),
+    activity_type: z.string().optional(),
+    company_id: z.string().uuid().nullable().optional(),
+    contact_id: z.string().uuid().nullable().optional(),
+  })
+  .strict();
 
 export async function POST(request: NextRequest) {
   let body: unknown = null;
@@ -21,16 +22,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
-    if (!isValidTimelineEntry(body)) {
-      return NextResponse.json({ error: "Invalid timeline entry data" }, { status: 400 });
+    const parsed = postTimelineBodySchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid timeline entry data", issues: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
 
     const timelineEntry = await createAuthenticatedTimelineEntry({
-      title: body.title,
-      content: typeof body.content === "string" ? body.content : null,
-      activity_type: typeof body.activity_type === "string" ? body.activity_type : "",
-      company_id: typeof body.company_id === "string" ? body.company_id : null,
-      contact_id: typeof body.contact_id === "string" ? body.contact_id : null,
+      title: parsed.data.title,
+      content: parsed.data.content ?? null,
+      activity_type: parsed.data.activity_type ?? "",
+      company_id: parsed.data.company_id ?? null,
+      contact_id: parsed.data.contact_id ?? null,
     });
     return NextResponse.json(timelineEntry, { status: 201 });
   } catch (error: unknown) {

@@ -70,8 +70,6 @@ vi.mock("nodemailer", () => ({
 
 import { GET as getAuthMe } from "./auth/me/route";
 import { GET as getAuthUser } from "./auth/user/route";
-import { POST as postCompaniesId } from "./companies/[id]/route";
-import { POST as postCompaniesCreate } from "./companies/create/route";
 import { POST as postCompanies } from "./companies/route";
 import { DELETE as deleteContact, GET as getContact, PUT as putContact } from "./contacts/[id]/route";
 import { GET as getRemindersRoute, POST as postRemindersRoute } from "./reminders/route";
@@ -186,8 +184,7 @@ describe("POST /api/timeline", () => {
     expect(res.status).toBe(201);
   });
 
-  it("maps body fields for createAuthenticatedTimelineEntry (content, ids, default activity)", async () => {
-    mockCreateTimelineEntry.mockResolvedValue({ id: "t2" });
+  it("returns 400 when content or contact_id types are invalid", async () => {
     const res = await postTimeline(
       jsonRequest({
         title: "T",
@@ -196,14 +193,8 @@ describe("POST /api/timeline", () => {
         contact_id: 99,
       }),
     );
-    expect(res.status).toBe(201);
-    expect(mockCreateTimelineEntry).toHaveBeenCalledWith({
-      title: "T",
-      content: null,
-      activity_type: "",
-      company_id: "550e8400-e29b-41d4-a716-446655440000",
-      contact_id: null,
-    });
+    expect(res.status).toBe(400);
+    expect(mockCreateTimelineEntry).not.toHaveBeenCalled();
   });
 
   it("maps string content, activity_type, and string contact_id", async () => {
@@ -348,11 +339,25 @@ describe("/api/reminders", () => {
   });
 
   it("GET returns json", async () => {
-    mockCreateServer.mockResolvedValue({});
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      },
+    });
     mockGetReminders.mockResolvedValue([{ id: "r1" }]);
     const res = await getRemindersRoute();
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([{ id: "r1" }]);
+  });
+
+  it("GET returns 401 without user", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      },
+    });
+    const res = await getRemindersRoute();
+    expect(res.status).toBe(401);
   });
 
   it("POST creates reminder", async () => {
@@ -363,17 +368,36 @@ describe("/api/reminders", () => {
   });
 
   it("GET returns 500 when getReminders throws", async () => {
-    mockCreateServer.mockResolvedValue({});
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      },
+    });
     mockGetReminders.mockRejectedValue(new Error("db error"));
     const res = await getRemindersRoute();
     expect(res.status).toBe(500);
   });
 
   it("POST returns 500 when createReminderAction throws", async () => {
-    mockCreateServer.mockResolvedValue({});
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      },
+    });
     mockCreateReminder.mockRejectedValue(new Error("insert failed"));
     const res = await postRemindersRoute(jsonRequest({ title: "R" }));
     expect(res.status).toBe(500);
+  });
+
+  it("POST returns 401 when createReminderAction is unauthorized", async () => {
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }),
+      },
+    });
+    mockCreateReminder.mockRejectedValue(new Error("Unauthorized"));
+    const res = await postRemindersRoute(jsonRequest({ title: "R" }));
+    expect(res.status).toBe(401);
   });
 });
 
@@ -405,7 +429,7 @@ describe("POST /api/companies", () => {
         })),
       })),
     });
-    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina", status: "lead" }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -419,7 +443,7 @@ describe("POST /api/companies", () => {
         getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: new Error("no") }),
       },
     });
-    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina", status: "lead" }));
     expect(res.status).toBe(401);
   });
 
@@ -444,7 +468,7 @@ describe("POST /api/companies", () => {
         })),
       })),
     });
-    const res = await postCompanies(jsonRequest({ firmenname: "Y", kundentyp: "hotel" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "Y", kundentyp: "hotel", status: "lead" }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);
@@ -481,7 +505,12 @@ describe("POST /api/companies", () => {
         [COMPANY_IMPORT_SOURCE_HEADER]: COMPANY_IMPORT_SOURCE_OSM_POI,
         "accept-language": "en-US,en;q=0.9",
       },
-      body: JSON.stringify({ firmenname: "Marina", kundentyp: "marina", osm: "node/123" }),
+      body: JSON.stringify({
+        firmenname: "Marina",
+        kundentyp: "marina",
+        status: "lead",
+        osm: "node/123",
+      }),
     }) as unknown as NextRequest;
     const res = await postCompanies(req);
     expect(res.status).toBe(200);
@@ -524,7 +553,12 @@ describe("POST /api/companies", () => {
         "Content-Type": "application/json",
         [COMPANY_IMPORT_SOURCE_HEADER]: COMPANY_IMPORT_SOURCE_OSM_POI,
       },
-      body: JSON.stringify({ firmenname: "Dock", kundentyp: "marina", osm: "way/9" }),
+      body: JSON.stringify({
+        firmenname: "Dock",
+        kundentyp: "marina",
+        status: "lead",
+        osm: "way/9",
+      }),
     }) as unknown as NextRequest;
     const res = await postCompanies(req);
     expect(res.status).toBe(200);
@@ -549,7 +583,7 @@ describe("POST /api/companies", () => {
         })),
       })),
     });
-    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina", status: "lead" }));
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.success).toBe(false);
@@ -572,11 +606,11 @@ describe("POST /api/companies", () => {
         })),
       })),
     });
-    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina", status: "lead" }));
     expect(res.status).toBe(500);
   });
 
-  it("returns 500 when request body is invalid JSON", async () => {
+  it("returns 400 when request body is invalid JSON", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
@@ -588,121 +622,12 @@ describe("POST /api/companies", () => {
       body: "not-json{",
     });
     const res = await postCompanies(bad);
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(400);
   });
 
   it("returns 500 with generic German message when client factory rejects non-Error", async () => {
     mockCreateServer.mockRejectedValue("offline");
-    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina" }));
-    expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe("Interner Serverfehler");
-  });
-});
-
-describe("POST /api/companies/create", () => {
-  beforeEach(() => {
-    mockCreateServer.mockReset();
-  });
-
-  it("returns data on success", async () => {
-    const single = vi.fn().mockResolvedValue({ data: { id: "n" }, error: null });
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single,
-          })),
-        })),
-      })),
-    });
-    const res = await postCompaniesCreate(jsonRequest({ firmenname: "Y" }));
-    expect(res.status).toBe(200);
-    expect((await res.json()).id).toBe("n");
-  });
-
-  it("returns 500 when insert fails", async () => {
-    const single = vi.fn().mockResolvedValue({ data: null, error: { message: "fail" } });
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single,
-          })),
-        })),
-      })),
-    });
-    const res = await postCompaniesCreate(jsonRequest({ firmenname: "Y" }));
-    expect(res.status).toBe(500);
-  });
-});
-
-describe("POST /api/companies/[id]", () => {
-  beforeEach(() => {
-    mockCreateServer.mockReset();
-  });
-
-  it("returns success payload", async () => {
-    const single = vi.fn().mockResolvedValue({ data: { id: "p1" }, error: null });
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single,
-          })),
-        })),
-      })),
-    });
-    const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
-    expect(res.status).toBe(200);
-    expect((await res.json()).success).toBe(true);
-  });
-
-  it("returns 400 on Supabase error", async () => {
-    const single = vi.fn().mockResolvedValue({ data: null, error: { message: "bad row" } });
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single,
-          })),
-        })),
-      })),
-    });
-    const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 500 when no id in response", async () => {
-    const single = vi.fn().mockResolvedValue({ data: { firmenname: "Z" }, error: null });
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(() => ({
-        insert: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single,
-          })),
-        })),
-      })),
-    });
-    const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
-    expect(res.status).toBe(500);
-  });
-
-  it("returns 500 when request.json fails", async () => {
-    mockCreateServer.mockResolvedValue({
-      from: vi.fn(),
-    });
-    const req = {
-      json: () => Promise.reject(new SyntaxError("invalid json")),
-    } as unknown as Request;
-    const res = await postCompaniesId(req);
-    expect(res.status).toBe(500);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toContain("invalid");
-  });
-
-  it("returns 500 with generic message when thrown value is not an Error", async () => {
-    mockCreateServer.mockRejectedValue("boom");
-    const res = await postCompaniesId(jsonRequest({ firmenname: "Z" }));
+    const res = await postCompanies(jsonRequest({ firmenname: "X", kundentyp: "marina", status: "lead" }));
     expect(res.status).toBe(500);
     expect((await res.json()).error).toBe("Interner Serverfehler");
   });
