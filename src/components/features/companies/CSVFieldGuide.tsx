@@ -30,6 +30,18 @@ export const csvImportFullscreenDialogContentClassName = cn(
   "data-open:zoom-in-100 data-closed:zoom-out-100",
 );
 
+/** Matches CSV import dialog header/tabs horizontal padding (px-6). */
+export const csvImportTabPanelClassName =
+  "flex min-h-0 flex-1 flex-col gap-3 overflow-hidden px-6 py-3";
+
+/** Scrollable tab body (e.g. field reference). */
+export const csvImportTabPanelScrollClassName =
+  "flex min-h-0 flex-1 flex-col gap-3 overflow-auto px-6 py-3";
+
+/** Sticky shadcn-style header cells for scrollable import tables. */
+export const csvImportStickyTableHeadClassName =
+  "sticky top-0 z-10 border-b border-border/60 bg-muted/95 backdrop-blur-sm";
+
 export interface CSVFieldGuideProps {
   /** Larger typography and spacing when the guide uses the full viewport. */
   spacious?: boolean;
@@ -81,12 +93,28 @@ function GuideTableSection({
         <Table className={cn("min-w-[720px]", spacious ? "text-base" : "text-sm")}>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[140px] whitespace-nowrap">{t("tableField")}</TableHead>
-              <TableHead className="w-[130px] whitespace-nowrap">{t("tableRecommendedHeader")}</TableHead>
-              <TableHead>{t("tableAcceptedVariants")}</TableHead>
-              <TableHead className="w-[100px] whitespace-nowrap">{t("tableExample")}</TableHead>
-              <TableHead className="w-[70px] whitespace-nowrap">{t("tableRequired")}</TableHead>
-              <TableHead>{t("tableNotes")}</TableHead>
+              <TableHead
+                className={cn("w-[140px] whitespace-nowrap", spacious && csvImportStickyTableHeadClassName)}
+              >
+                {t("tableField")}
+              </TableHead>
+              <TableHead
+                className={cn("w-[130px] whitespace-nowrap", spacious && csvImportStickyTableHeadClassName)}
+              >
+                {t("tableRecommendedHeader")}
+              </TableHead>
+              <TableHead className={cn(spacious && csvImportStickyTableHeadClassName)}>{t("tableAcceptedVariants")}</TableHead>
+              <TableHead
+                className={cn("w-[100px] whitespace-nowrap", spacious && csvImportStickyTableHeadClassName)}
+              >
+                {t("tableExample")}
+              </TableHead>
+              <TableHead
+                className={cn("w-[70px] whitespace-nowrap", spacious && csvImportStickyTableHeadClassName)}
+              >
+                {t("tableRequired")}
+              </TableHead>
+              <TableHead className={cn(spacious && csvImportStickyTableHeadClassName)}>{t("tableNotes")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -95,7 +123,9 @@ function GuideTableSection({
                 <TableCell className="align-top font-medium">{row.label}</TableCell>
                 <TableCell className="align-top">
                   <div className="flex items-center gap-1">
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{row.recommendedHeader}</code>
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-sans text-xs font-medium tracking-tight">
+                      {row.recommendedHeader}
+                    </code>
                     <Button
                       type="button"
                       variant="ghost"

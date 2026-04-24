@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dialog";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { importCompaniesFromCSV } from "@/lib/actions/companies";
-import { bulkResearchCompanyEnrichment } from "@/lib/actions/company-enrichment";
 import { useT } from "@/lib/i18n/use-translations";
 import { type ParsedCompanyRow, parseCSVFile } from "@/lib/utils/csv-import";
 import { parsedCompanyRowsSchema } from "@/lib/validations/csv-import";
@@ -62,7 +61,6 @@ function importSuccessCopy(
 
 export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDialogProps) {
   const t = useT("csvImport");
-  const tCompanies = useT("companies");
   const locale = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedCompanyRow[]>([]);
@@ -71,14 +69,12 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
   const [isImporting, setIsImporting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [aiEnrichNewCompanies, setAiEnrichNewCompanies] = useState(false);
   const guideOpenRef = useRef(guideOpen);
   guideOpenRef.current = guideOpen;
 
   useEffect(() => {
     if (!open) {
       setGuideOpen(false);
-      setAiEnrichNewCompanies(false);
       return;
     }
     setPreviewOpen(false);
@@ -142,7 +138,67 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
     onOpenChange(true);
   };
 
-  const handleImport = async (rowsToImport: ParsedCompanyRow[]) => {
+  const runImportAfterReview = useCallback(
+    async (
+      validatedRows: ParsedCompanyRow[],
+      opts: { forceImportRowIndices: number[]; excludeImportRowIndices: number[] },
+    ) => {
+      setIsImporting(true);
+      try {
+        const result = await importCompaniesFromCSV(validatedRows, {
+          forceImportRowIndices: opts.forceImportRowIndices,
+          excludeImportRowIndices: opts.excludeImportRowIndices,
+        });
+        if (result.errors.length > 0) {
+          toast.error(t("toastImportFailedTitle"), {
+            description: result.errors.join("; "),
+          });
+          return;
+        }
+
+        if (result.imported === 0 && result.skippedDuplicates > 0) {
+          toast.message(t("toastImportSkippedOnly", { skipped: result.skippedDuplicates }));
+          return;
+        }
+
+        if (result.imported === 0) {
+          toast.error(t("toastImportFailedTitle"), {
+            description: t("toastNoRowsImported"),
+          });
+          return;
+        }
+
+        onSuccess?.({ imported: result.imported, errors: [] });
+
+        const { title: successTitle, description: baseDescription } = importSuccessCopy(
+          locale,
+          result.imported,
+          result.importedWithCoordinates,
+        );
+        const successDescription =
+          result.skippedDuplicates > 0
+            ? t("toastImportSuccessWithSkipped", {
+                imported: result.imported,
+                coords: result.importedWithCoordinates,
+                skipped: result.skippedDuplicates,
+              })
+            : baseDescription;
+        toast.success(successTitle, { description: successDescription });
+
+        setPreviewOpen(false);
+        setParsedRows([]);
+        setFile(null);
+      } finally {
+        setIsImporting(false);
+      }
+    },
+    [locale, onSuccess, t],
+  );
+
+  const handleImport = async (
+    rowsToImport: ParsedCompanyRow[],
+    options?: { forceImportRowIndices?: number[]; excludeImportRowIndices?: number[] },
+  ) => {
     if (rowsToImport.length === 0) {
       return;
     }
@@ -154,60 +210,10 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
       return;
     }
 
-    setIsImporting(true);
-    try {
-      const result = await importCompaniesFromCSV(validated.data);
-      if (result.errors.length > 0 || result.imported === 0) {
-        toast.error(t("toastImportFailedTitle"), {
-          description:
-            result.errors.length > 0 ? result.errors.join("; ") : t("toastNoRowsImported"),
-        });
-        return;
-      }
-      onSuccess?.({ imported: result.imported, errors: [] });
-
-      const { title: successTitle, description: successDescription } = importSuccessCopy(
-        locale,
-        result.imported,
-        result.importedWithCoordinates,
-      );
-      toast.success(successTitle, { description: successDescription });
-
-      if (aiEnrichNewCompanies && result.companyIds.length > 0) {
-        const loadingId = toast.loading(
-          tCompanies("aiEnrich.bulkProgressImport", { total: result.companyIds.length }),
-        );
-        const bulk = await bulkResearchCompanyEnrichment({
-          companyIds: result.companyIds,
-        });
-        toast.dismiss(loadingId);
-        if (!bulk.ok) {
-          if (bulk.error === "NOT_AUTHENTICATED") {
-            toast.error(tCompanies("aiEnrich.errorNotAuthenticated"));
-          } else if (bulk.error === "AI_ENRICHMENT_DISABLED") {
-            toast.error(tCompanies("aiEnrich.errorDisabled"));
-          } else if (bulk.error === "AI_ENRICHMENT_RATE_LIMIT") {
-            toast.error(tCompanies("aiEnrich.errorRateLimit"));
-          } else if (bulk.error === "AI_GATEWAY_MISSING") {
-            toast.error(tCompanies("aiEnrich.errorNoGateway"));
-          } else if (bulk.error === "INVALID_INPUT") {
-            toast.error(tCompanies("aiEnrich.errorGeneric"));
-          } else {
-            toast.error(tCompanies("aiEnrich.errorGeneric"));
-          }
-        } else {
-          const ok = bulk.results.filter((r) => r.ok).length;
-          const fail = bulk.results.length - ok;
-          toast.success(tCompanies("aiEnrich.bulkDoneImport", { ok, total: bulk.results.length, fail }));
-        }
-      }
-
-      setPreviewOpen(false);
-      setParsedRows([]);
-      setFile(null);
-    } finally {
-      setIsImporting(false);
-    }
+    await runImportAfterReview(validated.data, {
+      forceImportRowIndices: options?.forceImportRowIndices ?? [],
+      excludeImportRowIndices: options?.excludeImportRowIndices ?? [],
+    });
   };
 
   const handleSmallOpenChange = (next: boolean) => {
@@ -306,8 +312,6 @@ export function CSVImportDialog({ open, onOpenChange, onSuccess }: CSVImportDial
         rows={parsedRows}
         fileName={file?.name ?? ""}
         isImporting={isImporting}
-        aiEnrichNewCompanies={aiEnrichNewCompanies}
-        onAiEnrichNewCompaniesChange={setAiEnrichNewCompanies}
         onImportRows={handleImport}
         onBackToEdit={handleBackToEdit}
         onCancel={handlePreviewCancel}

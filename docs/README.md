@@ -4,6 +4,7 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 
 | File | Use when you need… |
 | --- | --- |
+| [testing-strategy.md](testing-strategy.md) | **When to use Vitest vs Playwright**, coverage exclusions, cheat sheet |
 | [architecture.md](architecture.md) | How the app is layered, **HTTP API table**, Zod, testing, a11y |
 | [AIDER-RULES.md](AIDER-RULES.md) | PR quality gate (all contributors) |
 | [aider.conventions.md](aider.conventions.md) | One-page convention table |
@@ -14,4 +15,4 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [README_OpenMap.md](README_OpenMap.md) | OpenMap, OSM, Overpass |
 | [react-table-v8-ts-tricks.md](react-table-v8-ts-tricks.md) | TanStack Table TypeScript patterns |
 
-**Last updated:** April 23, 2026  
+**Last updated:** April 24, 2026  

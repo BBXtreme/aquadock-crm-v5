@@ -28,6 +28,7 @@ export default defineConfig({
       "**/coverage/**",
       "**/tests/e2e/**",
     ],
+    // Coverage policy and when to add Vitest vs E2E: docs/testing-strategy.md
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "json-summary"],
@@ -67,6 +68,10 @@ export default defineConfig({
         "src/components/features/companies/CompanyEditForm.tsx",
         "src/components/features/contacts/ContactEditForm.tsx",
         "src/components/features/reminder/ReminderCreateForm.tsx",
+        // TanStack column factory + cell renderers: hundreds of branches; list behavior covered via E2E and API tests.
+        "src/components/tables/CompaniesTable.tsx",
+        // Static CSV documentation grid (no business logic); not worth a dedicated unit harness for coverage.
+        "src/components/features/companies/CSVFieldGuide.tsx",
         "src/lib/actions/contacts.ts",
         // Large server-only trash flows and audit logging: covered by integration/E2E; hundreds of branches with no unit harness.
         "src/lib/actions/crm-trash.ts",
@@ -79,10 +84,10 @@ export default defineConfig({
         "src/lib/supabase/admin.ts",
       ],
       thresholds: {
-        statements: 80,
+        statements: 90,
         branches: 80,
         functions: 80,
-        lines: 80,
+        lines: 90,
       },
     },
     testTimeout: 10000,
