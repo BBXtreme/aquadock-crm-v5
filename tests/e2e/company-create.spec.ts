@@ -51,8 +51,14 @@ authDescribe("company create", () => {
     await search.fill(uniqueName);
     await expect(page.getByText(uniqueName, { exact: true }).first()).toBeVisible({ timeout: 25_000 });
 
-    await page.getByRole("link", { name: uniqueName }).first().click();
-    await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i);
+    // List index URLs are `/companies?q=...`; row links to detail are `/companies/{uuid}...`.
+    // Scope to main + list detail href so we do not match another link with the same visible name.
+    const companyDetailLink = page
+      .getByRole("main")
+      .locator('a[href^="/companies/"]')
+      .getByText(uniqueName, { exact: true });
+    await companyDetailLink.click();
+    await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i, { timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 1, name: uniqueName })).toBeVisible({ timeout: 20_000 });
   });
 });

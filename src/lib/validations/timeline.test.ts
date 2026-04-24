@@ -7,6 +7,7 @@ import { describe, expect, it, test } from "vitest";
 import {
   coerceActivityTypeForInsert,
   matchesImportActivityText,
+  normalizeTimelineBadgeActivityType,
   resolveActivityTypeForTimelinePersist,
   timelineSchema,
   toTimelineInsert,
@@ -188,6 +189,15 @@ describe("toTimelineInsert", () => {
     const row = toTimelineInsert(values);
     expect(row.content).toBe("Betreff: Angebot");
   });
+
+  it("maps empty string content to null", () => {
+    const values = timelineSchema.parse({
+      title: "Enough length for schema",
+      activity_type: "other",
+      content: "",
+    });
+    expect(toTimelineInsert(values).content).toBeNull();
+  });
 });
 
 describe("coerceActivityTypeForInsert", () => {
@@ -235,5 +245,29 @@ describe("resolveActivityTypeForTimelinePersist", () => {
 
   it("leaves other when no import cues", () => {
     expect(resolveActivityTypeForTimelinePersist("other", "Follow-up call", null)).toBe("other");
+  });
+});
+
+describe("normalizeTimelineBadgeActivityType", () => {
+  it("maps csv_import and import to import", () => {
+    expect(normalizeTimelineBadgeActivityType("csv_import", "", null)).toBe("import");
+    expect(normalizeTimelineBadgeActivityType("import", "x", null)).toBe("import");
+  });
+
+  it("maps other with import-like text to import", () => {
+    expect(normalizeTimelineBadgeActivityType("other", "CSV import", null)).toBe("import");
+  });
+
+  it("returns other and call unchanged when not import-like", () => {
+    expect(normalizeTimelineBadgeActivityType("other", "Meeting notes", null)).toBe("other");
+    expect(normalizeTimelineBadgeActivityType("call", "x", null)).toBe("call");
+  });
+
+  it("does not upgrade non-other types even when title looks like import", () => {
+    expect(normalizeTimelineBadgeActivityType("meeting", "CSV import notes", null)).toBe("meeting");
+  });
+
+  it("treats undefined title like empty string for import detection", () => {
+    expect(normalizeTimelineBadgeActivityType("other", undefined, "OpenMap import")).toBe("import");
   });
 });
