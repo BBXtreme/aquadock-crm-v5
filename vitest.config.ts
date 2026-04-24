@@ -45,7 +45,6 @@ export default defineConfig({
         "src/components/tables/TimelineTable.tsx",
         "src/components/features/timeline/TimelineEntryForm.tsx",
         "src/components/features/reminder/ReminderEditForm.tsx",
-        "src/components/features/companies/CompaniesTable.tsx",
         "src/components/ui/dialog.tsx",
         "src/components/ui/dropdown-menu.tsx",
         "src/components/ui/data-table.tsx",

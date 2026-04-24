@@ -1,4 +1,19 @@
 {
+  // macOS: load login profile so nvm/Volta from ~/.zprofile applies (fixes Node 22 vs .nvmrc 24 in pnpm).
+  "terminal.integrated.profiles.osx": {
+    "zsh (login)": {
+      "path": "/bin/zsh",
+      "args": ["-l"],
+      "icon": "terminal"
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "zsh (login)",
+  // Cursor often inherits a PATH with Homebrew Node before zsh/nvm run; prepending nvm fixes `pnpm` engine checks.
+  // After `nvm install 24`, update the folder if the patch version changes (e.g. v24.15.0 → v24.16.0).
+  "terminal.integrated.env.osx": {
+    "PATH": "${env:HOME}/.nvm/versions/node/v24.15.0/bin:${env:PATH}"
+  },
+
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
