@@ -194,23 +194,6 @@ export default function Header({ user }: HeaderProps) {
       </div>
 
       <div className="flex items-center space-x-4">
-        <Link href="/notifications">
-          <Button type="button" variant="ghost" className="relative" aria-label={t("notificationsLinkAria")}>
-            <Inbox className="h-4 w-4" />
-            {inAppUnreadCount > 0 && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-border/60 bg-background/75 p-0 px-0.5 text-xs font-semibold leading-none tabular-nums text-foreground shadow-sm backdrop-blur-md",
-                  "dark:border-border/50 dark:bg-background/55",
-                )}
-              >
-                {inAppUnreadCount > 99 ? "99+" : inAppUnreadCount}
-              </Badge>
-            )}
-          </Button>
-        </Link>
-
         {overdueRemindersCount > 0 && (
           <Link href="/reminders?status=overdue">
             <Button type="button" variant="ghost" className="relative" aria-label={t("reminderOverdueLinkAria")}>
@@ -255,72 +238,91 @@ export default function Header({ user }: HeaderProps) {
         </Tooltip>
         <AppCommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={ts("appearance.themeLabel")}
-              suppressHydrationWarning={true}
-            >
-              <ThemeTriggerIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-32">
-            <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
-              <DropdownMenuRadioItem value="light" className="gap-2">
-                <Sun className="h-4 w-4 shrink-0" />
-                {ts("appearance.themeLight")}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="dark" className="gap-2">
-                <Moon className="h-4 w-4 shrink-0" />
-                {ts("appearance.themeDark")}
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem value="system" className="gap-2">
-                <Monitor className="h-4 w-4 shrink-0" />
-                {ts("appearance.themeSystem")}
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <FeedbackButton userId={user.id} />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarSrc} alt={avatarAlt} />
-                <AvatarFallback className="text-xs font-medium">{avatarFallback}</AvatarFallback>
-              </Avatar>
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Link href="/notifications">
+            <Button type="button" variant="ghost" className="relative" aria-label={t("notificationsLinkAria")}>
+              <Inbox className="h-4 w-4" />
+              {inAppUnreadCount > 0 && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full border-border/60 bg-background/75 p-0 px-0.5 text-xs font-semibold leading-none tabular-nums text-foreground shadow-sm backdrop-blur-md",
+                    "dark:border-border/50 dark:bg-background/55",
+                  )}
+                >
+                  {inAppUnreadCount > 99 ? "99+" : inAppUnreadCount}
+                </Badge>
+              )}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link href="/profile">
-                <User className="mr-2 h-4 w-4" />
-                {t("userMenuProfile")}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                {t("userMenuSettings")}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant="destructive"
-              className="cursor-pointer"
-              onSelect={(e) => {
-                e.preventDefault();
-                handleHeaderSignOut();
-              }}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("signOut")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </Link>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={ts("appearance.themeLabel")}
+                suppressHydrationWarning={true}
+              >
+                <ThemeTriggerIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-32">
+              <DropdownMenuRadioGroup value={theme} onValueChange={handleThemeChange}>
+                <DropdownMenuRadioItem value="light" className="gap-2">
+                  <Sun className="h-4 w-4 shrink-0" />
+                  {ts("appearance.themeLight")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark" className="gap-2">
+                  <Moon className="h-4 w-4 shrink-0" />
+                  {ts("appearance.themeDark")}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="system" className="gap-2">
+                  <Monitor className="h-4 w-4 shrink-0" />
+                  {ts("appearance.themeSystem")}
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarSrc} alt={avatarAlt} />
+                  <AvatarFallback className="text-xs font-medium">{avatarFallback}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  {t("userMenuProfile")}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t("userMenuSettings")}
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                className="cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleHeaderSignOut();
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                {t("signOut")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </header>
   );
