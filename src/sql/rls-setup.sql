@@ -89,4 +89,4 @@ FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own timeline" ON timeline
 FOR DELETE USING (auth.uid() = user_id);
 
--- Company comments (separate migration): apply `comments-tables.sql`, then `comments-rls.sql`, then `comments-trash-alignment.sql` from the same directory.
+-- Company comments (separate migration): ensure `profiles-table.sql` ran first, then `comments-tables.sql`, `comments-rls.sql`, `comments-trash-alignment.sql`.
