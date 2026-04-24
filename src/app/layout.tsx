@@ -2,6 +2,7 @@
 // This is the root layout for the entire application. It wraps all pages and components, providing a consistent structure and styling across the application.
 
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
@@ -67,6 +68,7 @@ export default function RootLayout({
           </ErrorBoundary>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
