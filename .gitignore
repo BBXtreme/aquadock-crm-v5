@@ -55,6 +55,7 @@ next-env.d.ts
 .aider.conf.yml
 .aider*
 aider*.md
-# Tracked contributor doc (filename can match aider*.md on case-insensitive volumes).
+# Tracked contributor docs (names can match aider*.md on case-insensitive volumes).
 !docs/AIDER-RULES.md
+!docs/aider.conventions.md
 .env*.local
