@@ -15,3 +15,4 @@ alwaysApply: true
 - Keep components small, composable, and focused.
 - All database operations go through the service layer or Server Actions.
 - Zod schemas must be `.strict()`, use `emptyStringToNull` for nullable fields, and align with `supabase.ts` types.
+- **Tests:** Follow `docs/testing-strategy.md` — Vitest for logic and mocked server paths; Playwright for auth, RLS, and critical UI; `vitest.config.ts` `coverage.exclude` entries need a rationale comment and usually E2E or extracted unit tests for risk.

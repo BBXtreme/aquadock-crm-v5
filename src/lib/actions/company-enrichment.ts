@@ -10,8 +10,13 @@ import {
 } from "@/lib/ai/company-enrichment-gateway";
 import { buildAiEnrichmentFailureDiagnostic, mapAiEnrichmentGatewayPipelineError } from "@/lib/ai/enrichment-gateway-pipeline";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
+import {
+  buildEnrichmentContextFromParsedRow,
+  type CompanyEnrichmentBusinessContext,
+} from "@/lib/companies/company-enrichment-business-context";
 import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES, fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
 import type { AppearanceLocale } from "@/lib/validations/appearance";
 import {
   type BulkResearchCompanyEnrichmentInput,
@@ -19,6 +24,7 @@ import {
   type CompanyEnrichmentResult,
   type EnrichmentFieldKey,
 } from "@/lib/validations/company-enrichment";
+import { parsedCompanyRowsAiPreviewSchema } from "@/lib/validations/csv-import";
 import type { Database } from "@/types/database.types";
 
 /** JSON shape for `diagnostic` on failed runs — matches `EnrichmentGatewayFailureDiagnostic` in enrichment-gateway-failure-types. */
@@ -40,6 +46,14 @@ export type BulkCompanyEnrichmentItemResult =
 
 export type BulkResearchCompanyEnrichmentResponse =
   | { ok: true; results: BulkCompanyEnrichmentItemResult[] }
+  | { ok: false; error: string };
+
+export type CsvImportAiPreviewRowResult =
+  | { rowIndex: number; ok: true; data: CompanyEnrichmentResult; modelUsed: string }
+  | { rowIndex: number; ok: false; error: string; diagnostic?: CompanyEnrichmentFailureDiagnosticPayload };
+
+export type CsvImportAiPreviewResponse =
+  | { ok: true; results: CsvImportAiPreviewRowResult[] }
   | { ok: false; error: string };
 
 export type LogAiEnrichmentTimelineInput = {
@@ -113,9 +127,8 @@ function isEnrichmentAbortLike(err: unknown): boolean {
   return err instanceof Error && err.name === "AbortError";
 }
 
-async function runCompanyEnrichmentForActiveRow(
-  supabase: SupabaseClient<Database>,
-  companyId: string,
+async function runCompanyEnrichmentFromBusinessContext(
+  context: CompanyEnrichmentBusinessContext,
   run: {
     addressFocusPrioritize: boolean;
     gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
@@ -127,33 +140,6 @@ async function runCompanyEnrichmentForActiveRow(
   },
 ): Promise<ResearchCompanyEnrichmentResponse> {
   try {
-    const resolved = await resolveCompanyDetail(companyId, supabase);
-    if (resolved.kind !== "active") {
-      return { ok: false, error: "COMPANY_NOT_FOUND" };
-    }
-
-    const c = resolved.company;
-    const context = {
-      firmenname: c.firmenname,
-      rechtsform: c.rechtsform,
-      kundentyp: c.kundentyp,
-      firmentyp: c.firmentyp,
-      website: c.website,
-      email: c.email,
-      telefon: c.telefon,
-      strasse: c.strasse,
-      plz: c.plz,
-      stadt: c.stadt,
-      bundesland: c.bundesland,
-      land: c.land,
-      notes: c.notes,
-      wasserdistanz: c.wasserdistanz,
-      wassertyp: c.wassertyp,
-      osm: c.osm,
-      lat: c.lat,
-      lon: c.lon,
-    };
-
     const webRecencyLine =
       run.perplexityFastRecency === "month"
         ? "Recency-Filter „month“ (Schwerpunkt letzte Monate)."
@@ -201,6 +187,61 @@ ${buildCompanyEnrichmentClosedEnumPromptBlock()}`;
     });
 
     return { ok: true, data: result, modelUsed };
+  } catch (err) {
+    if (isEnrichmentAbortLike(err)) {
+      return { ok: false, error: "ENRICHMENT_ABORTED" };
+    }
+    const error = mapAiEnrichmentGatewayPipelineError(err);
+    return {
+      ok: false,
+      error,
+      diagnostic: buildAiEnrichmentFailureDiagnostic(err, error),
+    };
+  }
+}
+
+async function runCompanyEnrichmentForActiveRow(
+  supabase: SupabaseClient<Database>,
+  companyId: string,
+  run: {
+    addressFocusPrioritize: boolean;
+    gatewayModelOverride?: { primary?: GatewayModelId; secondary?: GatewayModelId };
+    webSearchMode: CompanyEnrichmentWebSearchMode;
+    crmSearchLocale: AppearanceLocale;
+    perplexityFastMaxResults: number;
+    perplexityFastRecency: "month" | "year";
+    signal?: AbortSignal;
+  },
+): Promise<ResearchCompanyEnrichmentResponse> {
+  try {
+    const resolved = await resolveCompanyDetail(companyId, supabase);
+    if (resolved.kind !== "active") {
+      return { ok: false, error: "COMPANY_NOT_FOUND" };
+    }
+
+    const c = resolved.company;
+    const context: CompanyEnrichmentBusinessContext = {
+      firmenname: c.firmenname,
+      rechtsform: c.rechtsform,
+      kundentyp: c.kundentyp,
+      firmentyp: c.firmentyp,
+      website: c.website,
+      email: c.email,
+      telefon: c.telefon,
+      strasse: c.strasse,
+      plz: c.plz,
+      stadt: c.stadt,
+      bundesland: c.bundesland,
+      land: c.land,
+      notes: c.notes,
+      wasserdistanz: c.wasserdistanz,
+      wassertyp: c.wassertyp,
+      osm: c.osm,
+      lat: c.lat,
+      lon: c.lon,
+    };
+
+    return runCompanyEnrichmentFromBusinessContext(context, run);
   } catch (err) {
     if (isEnrichmentAbortLike(err)) {
       return { ok: false, error: "ENRICHMENT_ABORTED" };
@@ -342,6 +383,95 @@ export async function bulkResearchCompanyEnrichment(
           failureSlots += 1;
           results.push({
             companyId,
+            ok: false,
+            error: r.error,
+            ...(r.diagnostic !== undefined ? { diagnostic: r.diagnostic } : {}),
+          });
+        }
+      }
+
+      if (failureSlots > 0) {
+        await refundEnrichmentSlots(supabase, user.id, failureSlots);
+      }
+
+      return { ok: true, results };
+    } catch {
+      await refundEnrichmentSlots(supabase, user.id, slots);
+      return { ok: false, error: "ENRICHMENT_FAILED" };
+    }
+  } catch {
+    return { ok: false, error: "ENRICHMENT_FAILED" };
+  }
+}
+
+export async function previewCsvImportAiEnrichment(
+  rows: ParsedCompanyRow[],
+): Promise<CsvImportAiPreviewResponse> {
+  const parsed = parsedCompanyRowsAiPreviewSchema.safeParse(rows);
+  if (!parsed.success) {
+    return { ok: false, error: "INVALID_INPUT" };
+  }
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, error: "NOT_AUTHENTICATED" };
+    }
+
+    const policy = await fetchAiEnrichmentPolicy(supabase, user.id);
+    if (!policy.enabled) {
+      return { ok: false, error: "AI_ENRICHMENT_DISABLED" };
+    }
+
+    const batch = parsed.data;
+    const slots = batch.length;
+
+    if (!(await tryCommitEnrichmentSlots(supabase, user.id, slots, policy.dailyLimit))) {
+      return { ok: false, error: "AI_ENRICHMENT_RATE_LIMIT" };
+    }
+
+    try {
+      const settled = await Promise.allSettled(
+        batch.map(async (row, rowIndex) => {
+          const context = buildEnrichmentContextFromParsedRow(row);
+          const r = await runCompanyEnrichmentFromBusinessContext(context, {
+            addressFocusPrioritize: policy.addressFocusPrioritize,
+            webSearchMode: "full",
+            crmSearchLocale: policy.crmSearchLocale,
+            perplexityFastMaxResults: policy.perplexityFastMaxResults,
+            perplexityFastRecency: policy.perplexityFastRecency,
+          });
+          return { rowIndex, r } as const;
+        }),
+      );
+
+      const results: CsvImportAiPreviewRowResult[] = [];
+      let failureSlots = 0;
+
+      for (let i = 0; i < settled.length; i++) {
+        const entry = settled[i];
+        const rowIndex = i;
+        if (!entry) {
+          failureSlots += 1;
+          results.push({ rowIndex, ok: false, error: "ENRICHMENT_FAILED" });
+          continue;
+        }
+        if (entry.status === "rejected") {
+          failureSlots += 1;
+          results.push({ rowIndex, ok: false, error: "ENRICHMENT_FAILED" });
+          continue;
+        }
+        const { r } = entry.value;
+        if (r.ok) {
+          results.push({ rowIndex, ok: true, data: r.data, modelUsed: r.modelUsed });
+        } else {
+          failureSlots += 1;
+          results.push({
+            rowIndex,
             ok: false,
             error: r.error,
             ...(r.diagnostic !== undefined ? { diagnostic: r.diagnostic } : {}),

@@ -34,7 +34,7 @@
 | Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
 | i18n | next-intl | Message catalogs in `src/messages/` (`de`, `en`, `hr`) |
 | Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
-| Tests | Vitest, Testing Library, Playwright | Unit/integration: `pnpm test:run` / `pnpm test:ci` (`src/test/setup.ts`). E2E: `tests/e2e/`, `pnpm e2e` after `pnpm build` — see `docs/architecture.md` **Testing** |
+| Tests | Vitest, Testing Library, Playwright | **Strategy:** [`docs/testing-strategy.md`](docs/testing-strategy.md). Unit: `pnpm test:run` / `pnpm test:ci` (`src/test/setup.ts`). E2E: `tests/e2e/`, `pnpm e2e` — setup in `docs/architecture.md` **Testing** |
 
 ---
 
@@ -93,6 +93,7 @@ Quick index: [`docs/README.md`](docs/README.md).
 
 | Document | Audience | Content |
 | --- | --- | --- |
+| [testing-strategy.md](docs/testing-strategy.md) | Developers | **Vitest vs Playwright**, coverage exclusions, when to add which tests |
 | [architecture.md](docs/architecture.md) | Developers | Stack principles, Server Actions vs API routes, **HTTP route inventory**, validation, testing, a11y |
 | [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables, RLS, Storage `avatars`, Realtime, type generation, maintenance SQL |
 | [README_OpenMap.md](docs/README_OpenMap.md) | Developers / product | OpenMap: CRM markers, OSM POIs, Overpass, import flow |

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockCreateServer = vi.hoisted(() => vi.fn());
 const mockCreateTimelineEntry = vi.hoisted(() => vi.fn());
+const mockNotify = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 
 vi.mock("@/lib/services/in-app-notifications", () => ({
-  createInAppNotification: vi.fn().mockResolvedValue(null),
+  createInAppNotification: (...args: unknown[]) => mockNotify(...args),
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -41,6 +42,8 @@ describe("createAuthenticatedTimelineEntry", () => {
   beforeEach(() => {
     mockCreateServer.mockReset();
     mockCreateTimelineEntry.mockReset();
+    mockNotify.mockReset();
+    mockNotify.mockResolvedValue(null);
   });
 
   it("throws when unauthenticated (auth error)", async () => {
@@ -128,5 +131,121 @@ describe("createAuthenticatedTimelineEntry", () => {
       }),
       expect.anything(),
     );
+  });
+
+  it("notifies company owner when entry is tied to a company they do not own", async () => {
+    const companiesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { user_id: "owner-99", firmenname: "Harbor GmbH" },
+        error: null,
+      }),
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "actor-1" } }, error: null }),
+      },
+      from: vi.fn((table: string) => (table === "companies" ? companiesChain : {})),
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "tl-1", company_id: "co-1" });
+
+    await createAuthenticatedTimelineEntry({ title: "Note", company_id: "co-1" });
+
+    expect(mockNotify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "timeline_on_company",
+        userId: "owner-99",
+        dedupeKey: "timeline_on_company:tl-1",
+        payload: { companyId: "co-1", timelineId: "tl-1" },
+      }),
+    );
+  });
+
+  it("does not notify when the actor is the company owner", async () => {
+    const companiesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { user_id: "actor-1", firmenname: "Mine" },
+        error: null,
+      }),
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "actor-1" } }, error: null }),
+      },
+      from: vi.fn((table: string) => (table === "companies" ? companiesChain : {})),
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "tl-2", company_id: "co-2" });
+
+    await createAuthenticatedTimelineEntry({ title: "Self note", company_id: "co-2" });
+
+    expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  it("does not notify when company lookup returns an error", async () => {
+    const companiesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "nope" } }),
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "actor-1" } }, error: null }),
+      },
+      from: vi.fn((table: string) => (table === "companies" ? companiesChain : {})),
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "tl-3", company_id: "co-3" });
+
+    await createAuthenticatedTimelineEntry({ title: "Note", company_id: "co-3" });
+
+    expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  it("does not notify when company row is missing", async () => {
+    const companiesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "actor-1" } }, error: null }),
+      },
+      from: vi.fn((table: string) => (table === "companies" ? companiesChain : {})),
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "tl-4", company_id: "co-4" });
+
+    await createAuthenticatedTimelineEntry({ title: "Note", company_id: "co-4" });
+
+    expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  it("does not notify when company has no responsible user", async () => {
+    const companiesChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      is: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: { user_id: null, firmenname: "Orphan" },
+        error: null,
+      }),
+    };
+    mockCreateServer.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "actor-1" } }, error: null }),
+      },
+      from: vi.fn((table: string) => (table === "companies" ? companiesChain : {})),
+    });
+    mockCreateTimelineEntry.mockResolvedValue({ id: "tl-5", company_id: "co-5" });
+
+    await createAuthenticatedTimelineEntry({ title: "Note", company_id: "co-5" });
+
+    expect(mockNotify).not.toHaveBeenCalled();
   });
 });

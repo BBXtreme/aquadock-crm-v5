@@ -1,5 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CompaniesListUrlState } from "@/lib/utils/company-filters-url-state";
+import type { Database } from "@/types/database.types";
 import type { CompaniesListFilterSlice } from "./companies-list-supabase";
 import {
   applyCompaniesListFiltersToCompaniesQuery,
@@ -47,6 +49,24 @@ function makeQueryBuilder() {
   query.gt.mockReturnValue(query);
   query.or.mockReturnValue(query);
   return query;
+}
+
+/** Supabase stub for `buildCompaniesFilterApplier` lexical merge (`from().select('id').…limit()`). */
+function makeSupabaseForHybridLexicalMerge(lexicalRows: { id: string }[] = []) {
+  const q = {
+    is: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockResolvedValue({ data: lexicalRows, error: null }),
+  };
+  return {
+    from: vi.fn(() => ({
+      select: vi.fn(() => q),
+    })),
+  } as unknown as SupabaseClient<Database>;
 }
 
 function lexicalOrClause(g: string): string {
@@ -140,12 +160,13 @@ describe("companies-list-supabase hybrid applier", () => {
   it("buildCompaniesFilterApplier applies ranked id filter on hybrid success", async () => {
     const filters = makeFilterSlice(" marina ");
     const query = makeQueryBuilder();
+    const supabase = makeSupabaseForHybridLexicalMerge([]);
 
     mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
     mockHybridCompanySearch.mockResolvedValue([{ companyId: "id-1" }, { companyId: "id-2" }]);
 
     const { applyFilters, globalSearchStrategy, rankedIds } = await buildCompaniesFilterApplier(
-      {} as never,
+      supabase,
       filters,
     );
     expect(globalSearchStrategy).toBe("hybrid");
@@ -156,6 +177,82 @@ describe("companies-list-supabase hybrid applier", () => {
     expect(mockHybridCompanySearch).toHaveBeenCalled();
     expect(query.in).toHaveBeenCalledWith("id", ["id-1", "id-2"]);
     expect(query.or).not.toHaveBeenCalled();
+  });
+
+  it("buildCompaniesFilterApplier warns and uses hybrid-only ranked ids when lexical merge query fails", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const filters = makeFilterSlice("lex-error");
+    const query = makeQueryBuilder();
+    const q = {
+      is: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: null, error: { message: "lexical query failed" } }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => q),
+      })),
+    } as unknown as SupabaseClient<Database>;
+
+    mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
+    mockHybridCompanySearch.mockResolvedValue([{ companyId: "hyb-only" }]);
+
+    const { applyFilters, rankedIds } = await buildCompaniesFilterApplier(supabase, filters);
+    expect(rankedIds).toEqual(["hyb-only"]);
+    applyFilters(query);
+    expect(query.in).toHaveBeenCalledWith("id", ["hyb-only"]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[companies-list-supabase] Lexical merge query failed:",
+      "lexical query failed",
+    );
+  });
+
+  it("buildCompaniesFilterApplier caps merged hybrid + lexical ranked ids at 1500", async () => {
+    const filters = makeFilterSlice("cap-test");
+    const query = makeQueryBuilder();
+    const hybridHits = Array.from({ length: 1000 }, (_, i) => ({ companyId: `h-${i}` }));
+    const lexicalRows = Array.from({ length: 600 }, (_, i) => ({ id: `l-${i}` }));
+    const supabase = makeSupabaseForHybridLexicalMerge(lexicalRows);
+
+    mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
+    mockHybridCompanySearch.mockResolvedValue(hybridHits);
+
+    const { applyFilters, rankedIds } = await buildCompaniesFilterApplier(supabase, filters);
+    expect(rankedIds).toHaveLength(1500);
+    expect(rankedIds?.[999]).toBe("h-999");
+    expect(rankedIds?.[1000]).toBe("l-0");
+    expect(rankedIds?.[1499]).toBe("l-499");
+    expect(rankedIds).not.toContain("l-500");
+
+    applyFilters(query);
+    expect(query.in).toHaveBeenCalledWith(
+      "id",
+      expect.arrayContaining(["h-0", "h-999", "l-0", "l-499"]),
+    );
+    const idCall = query.in.mock.calls.find((c) => c[0] === "id");
+    expect(idCall?.[1]).toHaveLength(1500);
+  });
+
+  it("buildCompaniesFilterApplier appends lexical-only ids when hybrid misses a row", async () => {
+    const filters = makeFilterSlice("neu import");
+    const query = makeQueryBuilder();
+    const supabase = makeSupabaseForHybridLexicalMerge([{ id: "id-lex" }]);
+
+    mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
+    mockHybridCompanySearch.mockResolvedValue([{ companyId: "id-1" }]);
+
+    const { applyFilters, globalSearchStrategy, rankedIds } = await buildCompaniesFilterApplier(
+      supabase,
+      filters,
+    );
+    expect(globalSearchStrategy).toBe("hybrid");
+    expect(rankedIds).toEqual(["id-1", "id-lex"]);
+    applyFilters(query);
+    expect(query.in).toHaveBeenCalledWith("id", ["id-1", "id-lex"]);
   });
 
   it("buildCompaniesFilterApplier leaves rankedIds undefined on non-hybrid strategies", async () => {
@@ -170,14 +267,15 @@ describe("companies-list-supabase hybrid applier", () => {
     expect(rankedIds).toBeUndefined();
   });
 
-  it("buildCompaniesFilterApplier uses empty-result sentinel when hybrid returns no ids", async () => {
+  it("buildCompaniesFilterApplier uses empty-result sentinel when hybrid and lexical return no ids", async () => {
     const filters = makeFilterSlice("harbor");
     const query = makeQueryBuilder();
+    const supabase = makeSupabaseForHybridLexicalMerge([]);
 
     mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
     mockHybridCompanySearch.mockResolvedValue([]);
 
-    const { applyFilters, globalSearchStrategy } = await buildCompaniesFilterApplier({} as never, filters);
+    const { applyFilters, globalSearchStrategy } = await buildCompaniesFilterApplier(supabase, filters);
     expect(globalSearchStrategy).toBe("hybrid");
     applyFilters(query);
 
@@ -285,14 +383,27 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     // Only id-1 and id-3 survive the non-global filter intersection.
     const survivors = [{ id: "id-3" }, { id: "id-1" }];
 
+    const lexicalChain = {
+      is: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
     const queryChain = {
       is: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       range: vi.fn().mockResolvedValue({ data: survivors, error: null }),
     };
+    let fromCalls = 0;
     const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(queryChain) })),
+      from: vi.fn(() => {
+        fromCalls += 1;
+        if (fromCalls === 1) {
+          return { select: vi.fn().mockReturnValue(lexicalChain) };
+        }
+        return { select: vi.fn().mockReturnValue(queryChain) };
+      }),
     } as never;
 
     const ids = await fetchAllCompanyIdsForListNavigation(
@@ -306,11 +417,17 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     expect(queryChain.in).toHaveBeenCalledWith("id", ["id-1", "id-2", "id-3", "id-4"]);
   });
 
-  it("hybrid path short-circuits when rankedIds is empty", async () => {
+  it("hybrid path short-circuits when hybrid and lexical both return no ids", async () => {
     mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2]);
     mockHybridCompanySearch.mockResolvedValue([]);
 
-    const from = vi.fn();
+    const lexicalChain = {
+      is: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    const from = vi.fn(() => ({ select: vi.fn().mockReturnValue(lexicalChain) }));
     const supabase = { from } as never;
 
     const ids = await fetchAllCompanyIdsForListNavigation(
@@ -319,7 +436,7 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     );
 
     expect(ids).toEqual([]);
-    expect(from).not.toHaveBeenCalled();
+    expect(from).toHaveBeenCalled();
   });
 
   it("propagates Supabase errors from chunked reads", async () => {

@@ -233,6 +233,343 @@ describe("searchCompaniesList", () => {
     });
   });
 
+  it("hybrid path throws when limit returns an error", async () => {
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: null, error: new Error("limit failed") }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c1"],
+    });
+
+    await expect(searchCompaniesList(makeInput())).rejects.toThrow("limit failed");
+  });
+
+  it("hybrid RRF order skips ranked ids missing from the fetched row set", async () => {
+    const rows = [
+      { id: "c2", firmenname: "B", contacts: [] },
+      { id: "c1", firmenname: "A", contacts: [] },
+    ];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["ghost", "c1", "c2"],
+    });
+
+    const result = await searchCompaniesList(
+      makeInput({ sorting: [{ id: "firmenname", desc: false }], pagination: { pageIndex: 0, pageSize: 10 } }),
+    );
+
+    expect(result.companies.map((c) => c.id)).toEqual(["c1", "c2"]);
+  });
+
+  it("hybrid explicit sort uses numeric comparison for wasserdistanz", async () => {
+    const rows = [
+      { id: "c-high", firmenname: "High", wasserdistanz: 300, contacts: [] },
+      { id: "c-low", firmenname: "Low", wasserdistanz: 100, contacts: [] },
+      { id: "c-mid", firmenname: "Mid", wasserdistanz: 200, contacts: [] },
+    ];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c-high", "c-low", "c-mid"],
+    });
+
+    const result = await searchCompaniesList(
+      makeInput({
+        sorting: [{ id: "wasserdistanz", desc: false }],
+        sortExplicit: true,
+        pagination: { pageIndex: 0, pageSize: 10 },
+      }),
+    );
+
+    expect(result.companies.map((c) => c.id)).toEqual(["c-low", "c-mid", "c-high"]);
+  });
+
+  it("hybrid explicit sort places null wasserdistanz after numeric values ascending", async () => {
+    const rows = [
+      { id: "c-null", firmenname: "Null dist", wasserdistanz: null, contacts: [] },
+      { id: "c-num", firmenname: "Has dist", wasserdistanz: 50, contacts: [] },
+    ];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c-null", "c-num"],
+    });
+
+    const result = await searchCompaniesList(
+      makeInput({
+        sorting: [{ id: "wasserdistanz", desc: false }],
+        sortExplicit: true,
+        pagination: { pageIndex: 0, pageSize: 10 },
+      }),
+    );
+
+    expect(result.companies.map((c) => c.id)).toEqual(["c-num", "c-null"]);
+  });
+
+  it("attaches owner_profile when rows include user_id", async () => {
+    const rows = [
+      {
+        id: "c1",
+        firmenname: "Owned",
+        user_id: "user-1",
+        contacts: [],
+      },
+    ];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [{ id: "user-1", display_name: "Pat Owner" }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn().mockReturnValue(filteredQuery) };
+      }),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c1"],
+    });
+
+    const result = await searchCompaniesList(makeInput({ pagination: { pageIndex: 0, pageSize: 10 } }));
+
+    expect(result.companies[0]?.owner_profile).toMatchObject({ display_name: "Pat Owner" });
+  });
+
+  it("throws when profiles lookup returns an error", async () => {
+    const rows = [{ id: "c1", firmenname: "Owned", user_id: "user-1", contacts: [] }];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: null,
+                error: new Error("profiles failed"),
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn().mockReturnValue(filteredQuery) };
+      }),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c1"],
+    });
+
+    await expect(searchCompaniesList(makeInput({ pagination: { pageIndex: 0, pageSize: 10 } }))).rejects.toThrow(
+      "profiles failed",
+    );
+  });
+
+  it("non-hybrid path skips order when sorting is empty", async () => {
+    const query = {
+      order: vi.fn(),
+      range: vi.fn(),
+    };
+    query.order.mockReturnValue(query);
+    query.range.mockResolvedValue({
+      data: [{ id: "c1", firmenname: "Solo", contacts: [] }],
+      error: null,
+      count: 1,
+    });
+
+    const supabase = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnValue(query),
+      })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "none",
+    });
+
+    const result = await searchCompaniesList(makeInput({ sorting: [] }));
+
+    expect(query.order).not.toHaveBeenCalled();
+    expect(result.totalCount).toBe(1);
+  });
+
+  it("non-hybrid path uses totalCount 0 when Supabase returns null count", async () => {
+    const query = {
+      order: vi.fn(),
+      range: vi.fn(),
+    };
+    query.order.mockReturnValue(query);
+    query.range.mockResolvedValue({
+      data: [],
+      error: null,
+      count: null,
+    });
+
+    const supabase = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnValue(query),
+      })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "none",
+    });
+
+    const result = await searchCompaniesList(makeInput());
+
+    expect(result.totalCount).toBe(0);
+    expect(result.companies).toEqual([]);
+  });
+
+  it("non-hybrid path attaches owner_profile when user_id is set", async () => {
+    const query = {
+      order: vi.fn(),
+      range: vi.fn(),
+    };
+    query.order.mockReturnValue(query);
+    query.range.mockResolvedValue({
+      data: [{ id: "c1", firmenname: "Listed", user_id: "u-nh", contacts: [] }],
+      error: null,
+      count: 1,
+    });
+
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [{ id: "u-nh", display_name: "List Owner" }],
+                error: null,
+              }),
+            }),
+          };
+        }
+        return { select: vi.fn().mockReturnValue(query) };
+      }),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "none",
+    });
+
+    const result = await searchCompaniesList(makeInput());
+
+    expect(result.companies[0]?.owner_profile).toMatchObject({ display_name: "List Owner" });
+  });
+
+  it("hybrid explicit sort orders firmenname descending using string comparison", async () => {
+    const rows = [
+      { id: "c1", firmenname: "Alpha", contacts: [] },
+      { id: "c2", firmenname: "Bravo", contacts: [] },
+    ];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c1", "c2"],
+    });
+
+    const result = await searchCompaniesList(
+      makeInput({
+        sorting: [{ id: "firmenname", desc: true }],
+        sortExplicit: true,
+        pagination: { pageIndex: 0, pageSize: 10 },
+      }),
+    );
+
+    expect(result.companies.map((c) => c.firmenname)).toEqual(["Bravo", "Alpha"]);
+  });
+
+  it("hybrid path sets owner_profile null when no profile matches user_id", async () => {
+    const rows = [{ id: "c1", firmenname: "Orphan", user_id: "u-missing", contacts: [] }];
+    const filteredQuery = {
+      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+    };
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          };
+        }
+        return { select: vi.fn().mockReturnValue(filteredQuery) };
+      }),
+    };
+
+    mockCreateServerSupabaseClient.mockResolvedValue(supabase);
+    mockBuildCompaniesFilterApplier.mockResolvedValue({
+      applyFilters: (q: unknown) => q,
+      globalSearchStrategy: "hybrid",
+      rankedIds: ["c1"],
+    });
+
+    const result = await searchCompaniesList(makeInput({ pagination: { pageIndex: 0, pageSize: 10 } }));
+
+    expect(result.companies[0]?.owner_profile).toBeNull();
+  });
+
   it("throws when Supabase query returns an error", async () => {
     const query = {
       order: vi.fn(),

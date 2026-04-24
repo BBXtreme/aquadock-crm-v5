@@ -1,5 +1,5 @@
 // src/components/features/TimelineEntryForm.tsx
-// This component renders a form for creating or editing timeline entries (activities) related to companies and contacts. It uses react-hook-form with zod for validation, and supports selecting associated companies and contacts from dropdowns. It also handles form state and submission.
+// This component renders a form for creating or editing timeline entries (activities) related to companies and contacts. It uses react-hook-form with zod for validation, and supports selecting associated companies and contacts from searchable comboboxes. It also handles form state and submission.
 
 "use client";
 
@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { TimelineLinkCombobox } from "@/components/features/timeline/TimelineLinkCombobox";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,8 @@ import type { TimelineEntry } from "@/types/database.types";
 export type TimelineEntryFormValues = {
   title: string;
   content?: string | undefined;
-  activity_type: "call" | "email" | "meeting" | "other" | "import";
+  /** User-selectable types only; `import` / `csv_import` are set by imports and `resolveActivityTypeForTimelinePersist`, not the form. */
+  activity_type: "call" | "email" | "meeting" | "other";
   company_id?: string | null;
   contact_id?: string | null;
 };
@@ -53,7 +55,6 @@ export default function TimelineEntryForm({
   preselectedCompanyId,
   defaultValues,
 }: Props) {
-  const [localCompanies, setLocalCompanies] = useState<{ id: string; firmenname: string; kundentyp?: string }[]>([]);
   const t = useT("timeline");
 
   const formSchema = useMemo(
@@ -61,15 +62,9 @@ export default function TimelineEntryForm({
       z.object({
         title: z.string().min(1, t("formTitleRequired")),
         content: z.string().optional(),
-        activity_type: z.enum(["call", "email", "meeting", "other", "import"]),
-        company_id: z
-          .union([z.literal("none"), z.string().uuid(), z.null()])
-          .transform((val) => (val === "none" || val === null ? null : val))
-          .optional(),
-        contact_id: z
-          .union([z.literal("none"), z.string().uuid(), z.null()])
-          .transform((val) => (val === "none" || val === null ? null : val))
-          .optional(),
+        activity_type: z.enum(["call", "email", "meeting", "other"]),
+        company_id: z.string().uuid().nullable().optional(),
+        contact_id: z.string().uuid().nullable().optional(),
       }),
     [t],
   );
@@ -82,68 +77,109 @@ export default function TimelineEntryForm({
     contact_id?: string | null;
   };
 
-  const activityTypeForForm = useCallback((raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
+  const activityTypeForUserForm = useCallback((raw: string | null | undefined): TimelineEntryFormValues["activity_type"] => {
     const v = raw ?? "";
-    if (v === "call" || v === "email" || v === "meeting" || v === "other" || v === "import") {
+    if (v === "call" || v === "email" || v === "meeting" || v === "other") {
       return v;
-    }
-    if (v === "csv_import") {
-      return "import";
     }
     return "other";
   }, []);
+
+  const [extraCompany, setExtraCompany] = useState<{ id: string; firmenname: string; kundentyp?: string } | null>(null);
+
+  useEffect(() => {
+    if (!preselectedCompanyId) {
+      setExtraCompany(null);
+      return;
+    }
+    if (companies.some((c) => c.id === preselectedCompanyId)) {
+      setExtraCompany(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("companies")
+        .select("id, firmenname, kundentyp")
+        .eq("id", preselectedCompanyId)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (!cancelled && data) {
+        setExtraCompany({
+          id: data.id,
+          firmenname: data.firmenname,
+          kundentyp: data.kundentyp ?? undefined,
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [preselectedCompanyId, companies]);
+
+  const mergedCompanyRows = useMemo(() => {
+    const byId = new Map<string, { id: string; firmenname: string; kundentyp?: string }>();
+    for (const c of companies) {
+      byId.set(c.id, c);
+    }
+    if (extraCompany) {
+      byId.set(extraCompany.id, extraCompany);
+    }
+    return [...byId.values()].sort((a, b) => a.firmenname.localeCompare(b.firmenname));
+  }, [companies, extraCompany]);
+
+  const companyItems = useMemo(
+    () =>
+      mergedCompanyRows.map((c) => ({
+        id: c.id,
+        label: `${c.firmenname}${c.kundentyp ? ` (${c.kundentyp})` : ""}`,
+        keywords: [c.firmenname, c.kundentyp].filter((x): x is string => Boolean(x)),
+      })),
+    [mergedCompanyRows],
+  );
+
+  const sortedContacts = useMemo(() => {
+    return [...contacts].sort((a, b) => {
+      const ln = a.nachname.localeCompare(b.nachname);
+      if (ln !== 0) {
+        return ln;
+      }
+      return a.vorname.localeCompare(b.vorname);
+    });
+  }, [contacts]);
+
+  const contactItems = useMemo(
+    () =>
+      sortedContacts.map((c) => {
+        const label = `${c.vorname} ${c.nachname}${c.position ? ` (${c.position})` : ""}${c.email ? ` – ${c.email}` : ""}`;
+        const keywords = [c.vorname, c.nachname, c.email, c.position].filter((x): x is string => Boolean(x));
+        return { id: c.id, label, keywords };
+      }),
+    [sortedContacts],
+  );
 
   const form = useForm<TimelineFormFields>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: editEntry?.title || defaultValues?.title || "",
       content: editEntry?.content || defaultValues?.content || "",
-      activity_type: activityTypeForForm(editEntry?.activity_type ?? defaultValues?.activity_type),
-      company_id: editEntry?.company_id || preselectedCompanyId || "none",
-      contact_id: editEntry?.contact_id || defaultValues?.contact_id || "none",
+      activity_type: activityTypeForUserForm(editEntry?.activity_type ?? defaultValues?.activity_type),
+      company_id: editEntry?.company_id ?? preselectedCompanyId ?? defaultValues?.company_id ?? null,
+      contact_id: editEntry?.contact_id ?? defaultValues?.contact_id ?? null,
     },
   });
 
   useEffect(() => {
-    setLocalCompanies((prev) => {
-      const newCompanies = [...prev];
-      companies.forEach((c) => {
-        if (!newCompanies.find((nc) => nc.id === c.id)) {
-          newCompanies.push(c);
-        }
-      });
-      return newCompanies;
-    });
-  }, [companies]);
-
-  useEffect(() => {
-    if (preselectedCompanyId && !localCompanies.find((c) => c.id === preselectedCompanyId)) {
-      const fetchCompany = async () => {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from("companies")
-          .select("*")
-          .eq("id", preselectedCompanyId)
-          .is("deleted_at", null)
-          .single();
-        if (data) {
-          setLocalCompanies((prev) => {
-            if (!prev.find((c) => c.id === data.id)) {
-              return [...prev, { id: data.id, firmenname: data.firmenname, kundentyp: data.kundentyp }];
-            }
-            return prev;
-          });
-        }
-      };
-      fetchCompany();
-    }
-  }, [preselectedCompanyId, localCompanies.find]);
-
-  useEffect(() => {
     if (defaultValues) {
-      form.reset(defaultValues);
+      form.reset({
+        ...defaultValues,
+        ...(defaultValues.activity_type !== undefined
+          ? { activity_type: activityTypeForUserForm(defaultValues.activity_type) }
+          : {}),
+      });
     }
-  }, [defaultValues, form]);
+  }, [defaultValues, form, activityTypeForUserForm]);
 
   useEffect(() => {
     if (preselectedCompanyId) {
@@ -156,16 +192,12 @@ export default function TimelineEntryForm({
       form.reset({
         title: editEntry.title || "",
         content: editEntry.content || "",
-        activity_type: activityTypeForForm(editEntry.activity_type),
-        company_id: editEntry.company_id || "none",
-        contact_id: editEntry.contact_id || "none",
+        activity_type: activityTypeForUserForm(editEntry.activity_type),
+        company_id: editEntry.company_id ?? null,
+        contact_id: editEntry.contact_id ?? null,
       });
     }
-  }, [editEntry, form, activityTypeForForm]);
-
-  if (!companies) {
-    return null;
-  }
+  }, [editEntry, form, activityTypeForUserForm]);
 
   return (
     <Form {...form}>
@@ -214,7 +246,6 @@ export default function TimelineEntryForm({
                   <SelectItem value="call">{t("activityCall")}</SelectItem>
                   <SelectItem value="email">{t("activityEmail")}</SelectItem>
                   <SelectItem value="meeting">{t("activityMeeting")}</SelectItem>
-                  <SelectItem value="import">{t("activityImport")}</SelectItem>
                   <SelectItem value="other">{t("activityOther")}</SelectItem>
                 </SelectContent>
               </Select>
@@ -229,27 +260,18 @@ export default function TimelineEntryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formCompanyLabel")}</FormLabel>
-              <Select
-                onValueChange={(val) => field.onChange(val === "none" ? null : val)}
-                value={field.value ?? "none"}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("formCompanyPlaceholder")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">{t("formCompanyNone")}</SelectItem>
-                  {localCompanies
-                    .filter((company, index, self) => self.findIndex((c) => c.id === company.id) === index)
-                    .map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.firmenname}
-                        {company.kundentyp ? ` (${company.kundentyp})` : ""}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <TimelineLinkCombobox
+                  value={field.value ?? ""}
+                  onValueChange={(id) => field.onChange(id === "" ? null : id)}
+                  items={companyItems}
+                  disabled={isSubmitting}
+                  placeholder={t("formCompanyPlaceholder")}
+                  searchPlaceholder={t("formCompanySearchPlaceholder")}
+                  emptyMessage={t("formCompanyEmpty")}
+                  clearLabel={t("formCompanyClear")}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -261,26 +283,18 @@ export default function TimelineEntryForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formContactLabel")}</FormLabel>
-              <Select
-                onValueChange={(val) => field.onChange(val === "none" ? null : val)}
-                value={field.value ?? "none"}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("formContactPlaceholder")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="none">{t("formContactNone")}</SelectItem>
-                  {contacts.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.vorname} {c.nachname}
-                      {c.position ? ` (${c.position})` : ""}
-                      {c.email ? ` – ${c.email}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <TimelineLinkCombobox
+                  value={field.value ?? ""}
+                  onValueChange={(id) => field.onChange(id === "" ? null : id)}
+                  items={contactItems}
+                  disabled={isSubmitting}
+                  placeholder={t("formContactPlaceholder")}
+                  searchPlaceholder={t("formContactSearchPlaceholder")}
+                  emptyMessage={t("formContactEmpty")}
+                  clearLabel={t("formContactClear")}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

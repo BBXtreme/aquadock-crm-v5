@@ -8,6 +8,17 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import {
+  analyzeInternalDuplicates,
+  buildFirmennameOrFilter,
+  buildWebsiteOrFilter,
+  type CsvImportDbMatchResult,
+  type CsvImportDuplicateExisting,
+  type CsvImportDuplicateRowAnalysis,
+  collectDedupeQueryBuckets,
+  findDbDuplicateForRow,
+  mergeDuplicateAnalyses,
+} from "@/lib/companies/csv-import-dedupe";
 import { syncContactUserIdsForCompany } from "@/lib/companies/sync-contact-user-ids";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import { createInAppNotification } from "@/lib/services/in-app-notifications";
@@ -25,6 +36,7 @@ import {
 } from "@/lib/utils/geocode-nominatim";
 import { type CompanyFormValues, companySchema, toCompanyInsert, toCompanyUpdate } from "@/lib/validations/company";
 import { updateCompanyWithOwnerInputSchema } from "@/lib/validations/company-owner";
+import { parsedCompanyRowsSchema } from "@/lib/validations/csv-import";
 import type {
   Company,
   CompanyInsert,
@@ -486,6 +498,140 @@ function validCoordOrNull(value: number | null | undefined, min: number, max: nu
   return value;
 }
 
+const CSV_IMPORT_DEDUPE_SELECT = "id,firmenname,stadt,plz,website,osm";
+
+async function loadCsvImportDedupeCandidates(
+  supabase: SupabaseClient,
+  rows: ParsedCompanyRow[],
+): Promise<CsvImportDuplicateExisting[]> {
+  const buckets = collectDedupeQueryBuckets(rows);
+  const byId = new Map<string, CsvImportDuplicateExisting>();
+
+  const ingest = (data: CsvImportDuplicateExisting[] | null) => {
+    for (const c of data ?? []) {
+      byId.set(c.id, c);
+    }
+  };
+
+  if (buckets.osms.length > 0) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(CSV_IMPORT_DEDUPE_SELECT)
+      .is("deleted_at", null)
+      .in("osm", buckets.osms);
+    if (error) throw handleSupabaseError(error, "loadCsvImportDedupeCandidates:osm");
+    ingest(data as CsvImportDuplicateExisting[]);
+  }
+
+  if (buckets.plzs.length > 0) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(CSV_IMPORT_DEDUPE_SELECT)
+      .is("deleted_at", null)
+      .in("plz", buckets.plzs);
+    if (error) throw handleSupabaseError(error, "loadCsvImportDedupeCandidates:plz");
+    ingest(data as CsvImportDuplicateExisting[]);
+  }
+
+  const websiteOr = buildWebsiteOrFilter(buckets.hosts);
+  if (websiteOr !== null) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(CSV_IMPORT_DEDUPE_SELECT)
+      .is("deleted_at", null)
+      .or(websiteOr);
+    if (error) throw handleSupabaseError(error, "loadCsvImportDedupeCandidates:website");
+    ingest(data as CsvImportDuplicateExisting[]);
+  }
+
+  const nameOr = buildFirmennameOrFilter(buckets.nameOnlyNormalizedNames);
+  if (nameOr !== null) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select(CSV_IMPORT_DEDUPE_SELECT)
+      .is("deleted_at", null)
+      .or(nameOr);
+    if (error) throw handleSupabaseError(error, "loadCsvImportDedupeCandidates:name");
+    ingest(data as CsvImportDuplicateExisting[]);
+  }
+
+  return [...byId.values()];
+}
+
+export type PreviewCsvImportDuplicatesResult =
+  | { ok: true; analyses: CsvImportDuplicateRowAnalysis[] }
+  | { ok: false; error: string };
+
+export async function previewCsvImportDuplicates(
+  rows: ParsedCompanyRow[],
+): Promise<PreviewCsvImportDuplicatesResult> {
+  const parsed = parsedCompanyRowsSchema.safeParse(rows);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+
+  const user = await getCurrentUser();
+  if (user == null) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  try {
+    const candidates = await loadCsvImportDedupeCandidates(supabase, parsed.data);
+    const dbMatches = new Map<number, CsvImportDbMatchResult>();
+    parsed.data.forEach((row, index) => {
+      dbMatches.set(index, findDbDuplicateForRow(row, candidates));
+    });
+    const internalMap = analyzeInternalDuplicates(parsed.data);
+    const analyses = mergeDuplicateAnalyses(parsed.data.length, dbMatches, internalMap);
+    return { ok: true, analyses };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Duplicate check failed",
+    };
+  }
+}
+
+export type ImportCompaniesFromCsvOptions = {
+  forceImportRowIndices?: number[];
+  /** Row indices to skip even when otherwise eligible (preview user choice). */
+  excludeImportRowIndices?: number[];
+};
+
+function mapParsedRowToCompanyInsert(
+  row: ParsedCompanyRow,
+  userId: string,
+  importBatch: string,
+): CompanyInsert {
+  return {
+    firmenname: row.firmenname,
+    kundentyp: row.kundentyp,
+    strasse: row.strasse ?? null,
+    plz: row.plz ?? null,
+    stadt: row.ort ?? null,
+    bundesland: row.bundesland ?? null,
+    land: row.land ?? null,
+    telefon: row.telefon ?? null,
+    website: row.website ?? null,
+    email: row.email ?? null,
+    lat: validCoordOrNull(row.lat, -90, 90),
+    lon: validCoordOrNull(row.lon, -180, 180),
+    osm: row.osm ?? null,
+    wasserdistanz: row.wasser_distanz ?? null,
+    wassertyp: row.wassertyp ?? null,
+    status: "lead",
+    user_id: userId,
+    created_by: userId,
+    updated_by: userId,
+    rechtsform: null,
+    firmentyp: null,
+    value: null,
+    notes: null,
+    import_batch: importBatch,
+  };
+}
+
 /** Best-effort: does not throw; import success must not depend on timeline writes. */
 async function createCsvImportTimelineEntries(
   supabase: SupabaseClient,
@@ -530,10 +676,13 @@ async function createCsvImportTimelineEntries(
 }
 
 export async function importCompaniesFromCSV(
-  rows: ParsedCompanyRow[]
+  rows: ParsedCompanyRow[],
+  options?: ImportCompaniesFromCsvOptions,
 ): Promise<{
   imported: number;
   importedWithCoordinates: number;
+  skippedDuplicates: number;
+  skippedUserExcluded: number;
   errors: string[];
   importBatch: string;
   companyIds: string[];
@@ -546,48 +695,78 @@ export async function importCompaniesFromCSV(
     return {
       imported: 0,
       importedWithCoordinates: 0,
+      skippedDuplicates: 0,
+      skippedUserExcluded: 0,
       errors: ["Unauthorized"],
       importBatch,
       companyIds: [],
     };
   }
 
+  const validated = parsedCompanyRowsSchema.safeParse(rows);
+  if (!validated.success) {
+    return {
+      imported: 0,
+      importedWithCoordinates: 0,
+      skippedDuplicates: 0,
+      skippedUserExcluded: 0,
+      errors: validated.error.issues.map((i) => i.message),
+      importBatch,
+      companyIds: [],
+    };
+  }
+
+  const forceRaw = options?.forceImportRowIndices ?? [];
+  const forceSet = new Set(forceRaw.filter((i) => Number.isInteger(i) && i >= 0));
+  const excludeRaw = options?.excludeImportRowIndices ?? [];
+  const excludeSet = new Set(excludeRaw.filter((i) => Number.isInteger(i) && i >= 0));
+
   try {
-    const companiesToInsert: CompanyInsert[] = rows.map((row) => ({
-      firmenname: row.firmenname,
-      kundentyp: row.kundentyp,
-      strasse: row.strasse ?? null,
-      plz: row.plz ?? null,
-      stadt: row.ort ?? null,
-      bundesland: row.bundesland ?? null,
-      land: row.land ?? null,
-      telefon: row.telefon ?? null,
-      website: row.website ?? null,
-      email: row.email ?? null,
-      lat: validCoordOrNull(row.lat, -90, 90),
-      lon: validCoordOrNull(row.lon, -180, 180),
-      osm: row.osm ?? null,
-      wasserdistanz: row.wasser_distanz ?? null,
-      wassertyp: row.wassertyp ?? null,
-      status: "lead",
-      user_id: user.id,
-      created_by: user.id,
-      updated_by: user.id,
-      rechtsform: null,
-      firmentyp: null,
-      value: null,
-      notes: null,
-      import_batch: importBatch,
-    }));
+    const dataRows = validated.data;
+    const candidates = await loadCsvImportDedupeCandidates(supabase, dataRows);
+    const internalMap = analyzeInternalDuplicates(dataRows);
+
+    const companiesToInsert: CompanyInsert[] = [];
+    let skippedDuplicates = 0;
+    let skippedUserExcluded = 0;
+
+    for (let i = 0; i < dataRows.length; i += 1) {
+      const row = dataRows[i];
+      if (row === undefined) continue;
+      const dbMatch = findDbDuplicateForRow(row, candidates);
+      const internalDup = internalMap.get(i) ?? null;
+      const needsReview = dbMatch !== null || internalDup !== null;
+
+      if (excludeSet.has(i)) {
+        skippedUserExcluded += 1;
+        continue;
+      }
+
+      if (needsReview && !forceSet.has(i)) {
+        skippedDuplicates += 1;
+        continue;
+      }
+
+      companiesToInsert.push(mapParsedRowToCompanyInsert(row, user.id, importBatch));
+    }
 
     const importedWithCoordinates = companiesToInsert.filter(
       (row) => row.lat !== null && row.lon !== null,
     ).length;
 
-    const { data, error } = await supabase
-      .from("companies")
-      .insert(companiesToInsert)
-      .select();
+    if (companiesToInsert.length === 0) {
+      return {
+        imported: 0,
+        importedWithCoordinates: 0,
+        skippedDuplicates,
+        skippedUserExcluded,
+        errors: [],
+        importBatch,
+        companyIds: [],
+      };
+    }
+
+    const { data, error } = await supabase.from("companies").insert(companiesToInsert).select();
 
     if (error) throw handleSupabaseError(error, "importCompaniesFromCSV");
 
@@ -603,6 +782,8 @@ export async function importCompaniesFromCSV(
     return {
       imported: data?.length || 0,
       importedWithCoordinates,
+      skippedDuplicates,
+      skippedUserExcluded,
       errors: [],
       importBatch,
       companyIds,
@@ -611,6 +792,8 @@ export async function importCompaniesFromCSV(
     return {
       imported: 0,
       importedWithCoordinates: 0,
+      skippedDuplicates: 0,
+      skippedUserExcluded: 0,
       errors: [error instanceof Error ? error.message : "Unbekannter Importfehler"],
       importBatch,
       companyIds: [],

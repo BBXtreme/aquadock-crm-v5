@@ -261,6 +261,47 @@ describe("/api/timeline/[id]", () => {
     expect(res.status).toBe(200);
   });
 
+  it("PUT merges body.content as provided (null, string, or other JSON) into update payload", async () => {
+    mockCreateServer.mockResolvedValue(authedServer());
+    mockUpdateTimelineEntry.mockResolvedValue({ id: "t1" });
+
+    await putTimelineId(jsonRequest({ title: "a", content: null }), {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    await putTimelineId(jsonRequest({ title: "b", content: "body text" }), {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    await putTimelineId(jsonRequest({ title: "c", content: 123 }), {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    expect(mockUpdateTimelineEntry).toHaveBeenCalledTimes(3);
+    const payloads = mockUpdateTimelineEntry.mock.calls.map((c) => c[1] as Record<string, unknown>);
+    expect(payloads[0]?.content).toBeNull();
+    expect(payloads[1]?.content).toBe("body text");
+    expect(payloads[2]?.content).toBe(123);
+  });
+
+  it("PUT resolves string activity_type via resolveActivityTypeForTimelinePersist", async () => {
+    mockCreateServer.mockResolvedValue(authedServer());
+    mockUpdateTimelineEntry.mockResolvedValue({ id: "t1" });
+    await putTimelineId(
+      jsonRequest({ title: "CSV import batch", content: null, activity_type: "other" }),
+      { params: Promise.resolve({ id: "t1" }) },
+    );
+    const payload = mockUpdateTimelineEntry.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(payload.activity_type).toBe("import");
+  });
+
+  it("PUT does not override activity_type when body.activity_type is not a string", async () => {
+    mockCreateServer.mockResolvedValue(authedServer());
+    mockUpdateTimelineEntry.mockResolvedValue({ id: "t1" });
+    await putTimelineId(jsonRequest({ title: "x", activity_type: 99 }), {
+      params: Promise.resolve({ id: "t1" }),
+    });
+    const payload = mockUpdateTimelineEntry.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(payload.activity_type).toBe(99);
+  });
+
   it("PUT returns 401 without user", async () => {
     mockCreateServer.mockResolvedValue({
       auth: {

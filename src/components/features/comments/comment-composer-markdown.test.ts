@@ -48,8 +48,16 @@ describe("applyMarkdownSnippet", () => {
     const o0 = applyMarkdownSnippet("z", 0, 0, "ordered");
     expect(o0.next).toBe("1. \nz");
 
+    const o1 = applyMarkdownSnippet("z", 0, 1, "ordered");
+    expect(o1.next).toBe("1. z\n");
+    expect(o1.focusEnd).toBeGreaterThan(o1.focusStart);
+
     const t0 = applyMarkdownSnippet("z", 0, 0, "task");
     expect(t0.next).toBe("- [ ] \nz");
+
+    const t1 = applyMarkdownSnippet("z", 0, 1, "task");
+    expect(t1.next).toBe("- [ ] z\n");
+    expect(t1.focusEnd).toBeGreaterThan(t1.focusStart);
   });
 
   it("falls back to unchanged value for unknown snippet keys", () => {

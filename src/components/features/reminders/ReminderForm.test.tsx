@@ -6,7 +6,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
@@ -54,12 +54,14 @@ const { mockCreateClient, lastReminderInsert, COMPANY_ID, mockCreateReminderActi
       if (table === "companies") {
         return {
           select: vi.fn(() => ({
-            is: vi.fn(() =>
-              Promise.resolve({
-                data: companiesRow,
-                error: null,
-              }),
-            ),
+            is: vi.fn(() => ({
+              order: vi.fn(() =>
+                Promise.resolve({
+                  data: companiesRow,
+                  error: null,
+                }),
+              ),
+            })),
           })),
         };
       }
@@ -153,11 +155,17 @@ function withinReminderForm(container: HTMLElement) {
   return within(form);
 }
 
-async function waitForCompanyOption(form: HTMLFormElement, companyId: string) {
+async function waitForCompanyComboboxReady(view: ReturnType<typeof within>) {
   await waitFor(() => {
-    const opt = form.querySelector(`select[aria-hidden="true"] option[value="${companyId}"]`);
-    expect(opt).toBeTruthy();
+    expect(view.getByRole("button", { name: /Select company/i })).toBeInTheDocument();
   });
+}
+
+/** Opens reminder company combobox (portal) and selects an option by visible label. */
+async function selectCompanyByName(user: ReturnType<typeof userEvent.setup>, companyLabel: string) {
+  await user.click(screen.getByRole("button", { name: /Select company/i }));
+  await screen.findByPlaceholderText(/Search companies/i);
+  await user.click(screen.getByRole("option", { name: companyLabel }));
 }
 
 afterEach(() => {
@@ -188,19 +196,11 @@ describe("ReminderEditForm + reminderSchema", () => {
     }
     const view = within(form);
 
-    await waitFor(() => {
-      expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
-    });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /Title/i }), "Quarterly check-in");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[0];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     await user.click(view.getByRole("button", { name: /Create Reminder/i }));
 
@@ -248,17 +248,9 @@ describe("ReminderEditForm + reminderSchema", () => {
     }
     const view = within(form);
 
-    await waitFor(() => {
-      expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
-    });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[0];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     await user.click(view.getByRole("button", { name: /Create Reminder/i }));
 
@@ -273,7 +265,32 @@ describe("ReminderEditForm + reminderSchema", () => {
     const { container } = renderReminderForm(<ReminderEditForm user={{ id: "user-1" }} />);
     const view = withinReminderForm(container);
 
+    await waitForCompanyComboboxReady(view);
+
     await user.type(view.getByRole("textbox", { name: /Title/i }), "Needs a company");
+    await user.click(view.getByRole("button", { name: /Create Reminder/i }));
+
+    await waitFor(() => {
+      expect(view.getByText("Company is required")).toBeInTheDocument();
+    });
+    expect(lastReminderInsert.payload).toBeNull();
+  });
+
+  it("clears linked company when clear is pressed", async () => {
+    const user = userEvent.setup();
+    const { container } = renderReminderForm(<ReminderEditForm user={{ id: "user-1" }} />);
+    const view = withinReminderForm(container);
+
+    await waitForCompanyComboboxReady(view);
+    await user.type(view.getByRole("textbox", { name: /Title/i }), "After clear");
+    await selectCompanyByName(user, "Fixture GmbH");
+
+    await user.click(screen.getByRole("button", { name: /Clear company selection/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Select company/i })).toBeInTheDocument();
+    });
+
     await user.click(view.getByRole("button", { name: /Create Reminder/i }));
 
     await waitFor(() => {
@@ -291,19 +308,11 @@ describe("ReminderEditForm + reminderSchema", () => {
     }
     const view = within(form);
 
-    await waitFor(() => {
-      expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
-    });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /Title/i }), "Past due task");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[0];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     const due = view.getByLabelText(/Due Date/i);
     await user.clear(due);
@@ -326,19 +335,11 @@ describe("ReminderEditForm + reminderSchema", () => {
     }
     const view = within(form);
 
-    await waitFor(() => {
-      expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
-    });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /Title/i }), "No description");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[0];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     const desc = view.getByRole("textbox", { name: /Description/i });
     await user.clear(desc);

@@ -36,4 +36,11 @@ describe("flattenCommentThread", () => {
     const out = flattenCommentThread(list).map((x) => x.id);
     expect(out).toEqual(["r1", "ch1", "r2"]);
   });
+
+  it("sorts siblings with falsy created_at as 0", () => {
+    const early = c("a", null, "a", "2025-01-01T10:00:00Z");
+    const noDate: CommentWithAuthor = { ...c("b", null, "b", "2025-01-01T12:00:00Z"), created_at: "" };
+    const out = flattenCommentThread([noDate, early]).map((x) => x.id);
+    expect(out).toEqual(["b", "a"]);
+  });
 });

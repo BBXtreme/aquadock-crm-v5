@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,11 @@ export default function ReminderCreateForm({
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname").is("deleted_at", null);
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname")
+        .is("deleted_at", null)
+        .order("firmenname", { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -127,20 +132,17 @@ export default function ReminderCreateForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formLabelCompany")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("formPlaceholderCompany")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.firmenname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FormControl>
+                <ReminderCompanyCombobox
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  companies={companies}
+                  placeholder={t("formPlaceholderCompany")}
+                  searchPlaceholder={t("formCompanySearchPlaceholder")}
+                  emptyMessage={t("formCompanyEmpty")}
+                  clearLabel={t("formCompanyClear")}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

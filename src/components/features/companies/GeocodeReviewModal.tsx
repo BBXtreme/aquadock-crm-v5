@@ -55,7 +55,7 @@ function CoordinateDiff({ row }: { row: GeocodeBatchPreviewRow }) {
 
   if (!hasCurrent && hasSuggested) {
     return (
-      <div className="flex items-center gap-1 whitespace-nowrap font-mono text-xs">
+      <div className="flex items-center gap-1 whitespace-nowrap tabular-nums text-xs">
         <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
         <span className="font-semibold">{formatCoordPair(row.suggestedLat, row.suggestedLon)}</span>
       </div>
@@ -64,14 +64,14 @@ function CoordinateDiff({ row }: { row: GeocodeBatchPreviewRow }) {
 
   if (hasCurrent && !hasSuggested) {
     return (
-      <span className="whitespace-nowrap font-mono text-muted-foreground text-xs">
+      <span className="whitespace-nowrap tabular-nums text-muted-foreground text-xs">
         {formatCoordPair(row.currentLat, row.currentLon)}
       </span>
     );
   }
 
   return (
-    <div className="flex flex-col gap-0.5 whitespace-nowrap font-mono text-xs leading-tight">
+    <div className="flex flex-col gap-0.5 whitespace-nowrap tabular-nums text-xs leading-tight">
       <span className="text-muted-foreground">
         {formatCoordPair(row.currentLat, row.currentLon)}
       </span>

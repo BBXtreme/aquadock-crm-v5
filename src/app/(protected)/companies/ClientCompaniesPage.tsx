@@ -669,7 +669,6 @@ function ClientCompaniesPage() {
   const handleImportSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["companies"] });
     window.dispatchEvent(new CustomEvent("company-imported"));
-    toast.success(t("toastImportSuccess"));
   };
 
   // Live count used by the bulk geocode tooltip so the user knows how many

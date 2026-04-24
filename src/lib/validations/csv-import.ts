@@ -25,3 +25,12 @@ export const parsedCompanyRowSchema = z
 export type ParsedCompanyRowForm = z.infer<typeof parsedCompanyRowSchema>;
 
 export const parsedCompanyRowsSchema = z.array(parsedCompanyRowSchema);
+
+/** Max rows per CSV preview AI enrichment batch (must match server action). */
+export const CSV_IMPORT_AI_PREVIEW_MAX_ROWS = 50;
+
+/** CSV import preview: AI enrichment batch (same row shape, bounded size). */
+export const parsedCompanyRowsAiPreviewSchema = z
+  .array(parsedCompanyRowSchema)
+  .min(1)
+  .max(CSV_IMPORT_AI_PREVIEW_MAX_ROWS);

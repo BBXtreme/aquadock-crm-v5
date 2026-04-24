@@ -24,6 +24,8 @@ export type CompaniesGlobalSearchStrategy =
 
 const CHUNK = 1000;
 const HYBRID_MATCH_COUNT = 1000;
+/** Cap merged hybrid + lexical id lists (PostgREST `.in()` size + client work). */
+const HYBRID_LEXICAL_MERGED_ID_CAP = 1500;
 const HYBRID_EMPTY_RESULT_SENTINEL = "00000000-0000-0000-0000-000000000000";
 
 function applyLexicalGlobalFilter(
@@ -103,6 +105,54 @@ function applyNonGlobalCompaniesFilters(
 }
 
 /**
+ * Same `ilike` OR as the non-hybrid list path, but returns matching ids only.
+ * Merged into hybrid results so rows missing from FTS/vector (e.g. just inserted,
+ * embedding not stored yet, or `search_vector` not updated) still match firmenname.
+ */
+async function fetchLexicalCompanyIdsForMerge(
+  supabase: SupabaseClient<Database>,
+  filters: CompaniesListFilterSlice,
+  trimmedGlobal: string,
+): Promise<string[]> {
+  if (trimmedGlobal.length === 0) {
+    return [];
+  }
+  let q = supabase.from("companies").select("id");
+  q = applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(q, filters), trimmedGlobal);
+  const { data, error } = await q.limit(HYBRID_LEXICAL_MERGED_ID_CAP);
+  if (error) {
+    console.warn("[companies-list-supabase] Lexical merge query failed:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.id);
+}
+
+/** Hybrid RRF order first, then lexical-only rows; capped for `.in()` size. */
+function mergeHybridAndLexicalRankedIds(hybridRanked: string[], lexicalIds: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const id of hybridRanked) {
+    if (out.length >= HYBRID_LEXICAL_MERGED_ID_CAP) {
+      break;
+    }
+    if (!seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  for (const id of lexicalIds) {
+    if (out.length >= HYBRID_LEXICAL_MERGED_ID_CAP) {
+      break;
+    }
+    if (!seen.has(id)) {
+      seen.add(id);
+      out.push(id);
+    }
+  }
+  return out;
+}
+
+/**
  * Applies list filters to a `companies` select query (same rules as the list page).
  *
  * Synchronous lexical path — preserved as-is for backward compatibility:
@@ -137,7 +187,8 @@ export type CompaniesFilterApplier = (query: any) => any;
  *   1. Applies all non-global filters (status, kategorie, betriebstyp, land,
  *      wassertyp, waterFilter, deleted_at).
  *   2. For a non-empty `globalFilter`, generates an embedding and calls
- *      `hybrid_company_search`, constraining with `.in("id", rankedIds)`.
+ *      `hybrid_company_search`, then unions the same lexical `ilike` id set
+ *      (so new imports still match firmenname before FTS/embedding catch up).
  *   3. Any failure (embedding API, RPC, network) silently falls back to the
  *      lexical `ilike` path.
  *
@@ -148,12 +199,9 @@ export type BuildCompaniesFilterApplierResult = {
   applyFilters: CompaniesFilterApplier;
   globalSearchStrategy: CompaniesGlobalSearchStrategy;
   /**
-   * Company ids returned by `hybrid_company_search`, in RRF-descending order.
-   * Only populated for the `"hybrid"` strategy — callers can use it to sort
-   * the visible page by semantic relevance (the applier's `.in("id", ...)`
-   * filter alone does not preserve order). Still subject to the caller's
-   * non-global filters (status/kategorie/etc.), so the visible set is the
-   * intersection of `rankedIds` and those filters.
+   * Company ids for the hybrid strategy: RRF order from `hybrid_company_search`,
+   * then lexical-only matches (same fields as list `ilike` search). Only
+   * populated for `"hybrid"` — use for relevance ordering on the list/detail nav.
    */
   rankedIds?: string[];
 };
@@ -189,7 +237,9 @@ export async function buildCompaniesFilterApplier(
       queryEmbedding: embedding,
       matchCount: HYBRID_MATCH_COUNT,
     });
-    const rankedIds = ranked.map((row) => row.companyId);
+    const hybridIds = ranked.map((row) => row.companyId);
+    const lexicalIds = await fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed);
+    const rankedIds = mergeHybridAndLexicalRankedIds(hybridIds, lexicalIds);
     return {
       applyFilters: (query) => {
         const base = applyNonGlobalCompaniesFilters(query, filters);

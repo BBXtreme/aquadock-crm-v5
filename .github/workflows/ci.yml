@@ -61,7 +61,7 @@ jobs:
           const t = data.total;
           console.log("--- Coverage totals ---");
           console.log(
-            `statements ${t.statements.pct}% (min 80%) | branches ${t.branches.pct}% (min 80%) | lines ${t.lines.pct}% (min 80%) | functions ${t.functions.pct}% (min 80%)`
+            `statements ${t.statements.pct}% (vitest min 90%) | lines ${t.lines.pct}% (vitest min 90%) | branches ${t.branches.pct}% (vitest min 80%) | functions ${t.functions.pct}% (vitest min 80%)`
           );
           NODE
 
@@ -86,7 +86,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-      E2E_BASE_URL: "http://127.0.0.1:3000"
+      E2E_BASE_URL: "http://localhost:3000"
 
     steps:
       - name: Checkout
