@@ -782,6 +782,7 @@
     "titleClearCacheReload": "Isprazni predmemoriju i ponovno učitaj POI",
     "titleRefreshVisibleArea": "Osvježi vidljivo područje",
     "legendTitle": "Legenda statusa",
+    "legendCloseAria": "Zatvori legendu",
     "googleNoApiKeyTitle": "Google karte: nema API ključa",
     "googleNoApiKeyDescription": "U postavkama dodajte ključ s uključenom Map Tiles API.",
     "googleSessionFailedTitle": "Google karte: sesija nije uspjela",
@@ -1356,10 +1357,18 @@
     "notSignedIn": "Prijavite se."
   },
   "layout": {
+    "commandPaletteTitle": "Idi na",
+    "commandPaletteDescription": "Otvorite stranicu ili dodajte tvrtku, kontakt, podsjetnik ili zapis.",
+    "commandPalettePlaceholder": "Pretražite stranice i brze radnje…",
+    "commandPaletteEmpty": "Nema podudaranja.",
+    "commandPaletteQuickCreateGroup": "Novo",
+    "commandPaletteFooterHint": "Strelice · Enter otvara · Esc zatvara",
+    "commandPaletteSearchButtonTooltip": "Brza navigacija: otvorite stranicu ili dodajte zapis. Prečac: Ctrl+K ili ⌘K.",
+    "commandPaletteAccountGroup": "Račun",
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",
-    "searchAriaLabel": "Pretraga",
+    "commandPaletteTriggerAria": "Otvori izbornik naredbi (stranica ili brza radnja)",
     "notificationsLinkAria": "Obavijesti",
     "reminderOverdueLinkAria": "Prikaži prekoračene podsjetnike",
     "reminderThisWeekLinkAria": "Prikaži otvorene podsjetnike ovog tjedna",
@@ -1650,6 +1659,8 @@
     "recoveryErrorToast": "Lozinka se nije mogla spremiti.",
     "errorBoundaryToast": "Došlo je do neočekivane pogreške.",
     "errorBoundaryReload": "Molimo ponovno učitajte stranicu.",
+    "supabaseClientInitTitle": "Prijava nije dostupna",
+    "supabaseClientInitHint": "U ovom buildu nedostaju Supabase URL ili anon ključ. Lokalno: koristite pnpm dev ili ponovno izgradite s NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY (npr. u .env.local) prije next start.",
     "applyForAccess": "Zatraži pristup"
   },
   "onboarding": {

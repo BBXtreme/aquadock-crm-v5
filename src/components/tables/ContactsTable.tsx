@@ -274,7 +274,6 @@ export default function ContactsTable({
     [t, onEdit, onDelete, deleteDialogOpen, contactToDelete],
   );
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
     data: contacts,
     columns,
@@ -460,15 +459,16 @@ export default function ContactsTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id} className="text-left">
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <button
+                      <Button
                         type="button"
-                        className="flex items-center justify-start gap-2 w-full h-full p-4 text-left font-medium"
+                        variant="ghost"
+                        className="h-auto min-h-0 w-full justify-start gap-2 rounded-none px-4 py-4 font-medium hover:bg-muted/50"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
-                      </button>
+                      </Button>
                     ) : (
                       <div className="flex items-center justify-start! gap-2 w-full h-full p-4 text-left font-medium">
                         {flexRender(header.column.columnDef.header, header.getContext())}

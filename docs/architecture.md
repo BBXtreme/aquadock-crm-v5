@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 21, 2026  
+**Last updated:** April 23, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -13,7 +13,7 @@ This document explains how the application is structured so developers (and tech
 3. **Interactive pieces** (forms, maps, tables with client sorting) are **Client Components** (`"use client"`) and stay as small as possible.  
 4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete).  
 5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.  
-6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireUser()` in `src/app/(protected)/layout.tsx`.
+6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireCrmAccess()` in `src/app/(protected)/layout.tsx`.
 
 ---
 
@@ -56,11 +56,52 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 
 ---
 
+## Mutations: Server Actions vs Route Handlers
+
+| Use | Path | When |
+| --- | --- | --- |
+| **Default** | Server Actions in `src/lib/actions/` and `src/lib/services/` (`"use server"`) | New writes/updates from the app: forms, buttons, and anything that should run with the user’s session, `revalidatePath`, and Zod re-validation. |
+| **API route** | `src/app/api/**/route.ts` | Legitimate **HTTP** surface: `fetch` from a client that expects JSON, public/internal endpoints, or patterns that are awkward as actions (e.g. some `GET` list proxies). Reuse the same service helpers and RLS-scoped `createServerSupabaseClient()`; never trust the client for authorization. |
+
+**Rule of thumb:** add **Server Actions** first. Add a **Route Handler** only if you need a stable URL contract, `GET`+JSON, or a non-React caller (e.g. external tool calling your API on purpose). New features should not sprawl duplicate mutation paths without a reason noted in a PR.
+
+### API route review checklist (for `src/app/api/**/route.ts`)
+
+When adding or changing a handler, confirm:
+
+1. **Session** — `createServerSupabaseClient()` and `getUser()` (or equivalent) before mutating; return `401` if unauthenticated unless the route is intentionally public.  
+2. **RLS** — Prefer the user-scoped Supabase client; do not use the **service role** in route handlers except for a documented, audited exception.  
+3. **Input** — Validate JSON/body with Zod (or the same rules as a matching Server Action), not ad hoc checks only.  
+4. **Data shape** — Do not return raw service-role or internal error blobs to the client.  
+5. **Duplication** — If the same write exists as a Server Action, keep behavior aligned or consolidate.
+
+### HTTP API inventory (`src/app/api/**`)
+
+Hand-maintained; update when you add or remove a `route.ts`. All handlers use the user-scoped server Supabase client unless noted. Prefer **not** duplicating the same write as a Server Action without aligning validation and error shapes.
+
+| Path | Methods | Role |
+| --- | --- | --- |
+| `/api/auth/me` | GET | Current user (`getCurrentUser()`); `401` if missing |
+| `/api/auth/user` | GET | Minimal auth check (`getUser`); `401` if unauthenticated |
+| `/api/companies` | POST | Create company: Zod + `toCompanyInsert`; `user_id` from session |
+| `/api/companies/search` | POST | Company search (semantic / lexical) |
+| `/api/companies/nav-ids` | POST | Resolve company ids for map/navigation |
+| `/api/contacts/[id]` | GET, PUT, DELETE | Company-scoped contact row; PUT uses `contactSchema.partial().strict()` |
+| `/api/reminders` | GET, POST | **Auth required**; POST delegates to reminder server action |
+| `/api/timeline` | POST | New timeline entry; Zod body (`postTimelineBodySchema`) |
+| `/api/timeline/[id]` | PUT, DELETE | Update or delete a timeline entry |
+| `/api/send-test-email` | POST | Send test email (authenticated flows) |
+| `/api/test-smtp` | POST | Test SMTP user settings; `401` if session/auth error |
+
+**Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
+
+---
+
 ## Route groups and layout
 
 - **`(auth)`** — Public routes (e.g. login); no full app chrome.  
 - **`(protected)`** — Authenticated CRM: sidebar, header, and pages under routes like `/dashboard`, `/companies`, `/openmap`.  
-- The **`(protected)/layout.tsx`** layout calls `requireUser()` once per segment tree so nested pages do not pay duplicate auth work; admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
+- The **`(protected)/layout.tsx`** layout calls `requireCrmAccess()` once per segment tree (session + pending-user gates); individual pages use `requireUser()` or stricter checks as needed. Admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
 
 ---
 
@@ -70,11 +111,20 @@ Companies with coordinates are loaded for the map via the service layer. OSM POI
 
 ---
 
-## Testing (Vitest)
+## Testing (Vitest + Playwright)
 
-- Tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter).
+- **Vitest:** tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter). Large or branch-heavy files may be listed in `vitest` `coverage.exclude` and are still covered in spirit by E2E where noted. Examples: `src/lib/actions/companies-create.test.ts` exercises `createCompany` (the implementation in `companies.ts` is excluded from the global coverage gate); `src/lib/actions/mass-email.test.ts` covers early guard rails for `sendMassEmailAction` while `mass-email.ts` itself is excluded (nodemailer/DNS batch branches).
+- **E2E:** Playwright under `tests/e2e/` — `pnpm e2e` locally, `pnpm e2e:ci` in GitHub Actions. Expect a **production build** (`pnpm build`); the config may start `next start` on `127.0.0.1:3000` when no server is already listening. **`playwright.config.ts`** calls `loadEnvConfig` from `@next/env`, so `E2E_BASE_URL`, `E2E_USER_EMAIL`, and `E2E_USER_PASSWORD` in **`.env.local`** are available to the Playwright process without shell `export`. **CI:** set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as **Actions variables**; set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` as **repository secrets** (`secrets.E2E_*` in the workflow). Use a real Supabase user who can password-sign in, is **not** blocked on `/access-pending`, and can **create companies** under RLS, or authenticated cases are skipped. **Helpers:** `tests/e2e/helpers/auth.ts` (login + signed-in wait) and `tests/e2e/helpers/locale.ts` set `localStorage` `aquadock_appearance_locale` to `en` before navigation so copy matches English assertions. **Specs:** `smoke.spec.ts` (public), `auth-edge.spec.ts` (invalid login), `crm-happy-path.spec.ts` (authenticated navigation smoke), `company-create.spec.ts` (create company + table search), `mass-email-ui.spec.ts` (mass email page UI, no send), `contacts-smoke.spec.ts` (open create-contact dialog). **Smoke** tests (no login) run without E2E secrets. Artifacts under `test-results/` are gitignored.
 - **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
 - Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).
+
+---
+
+## Accessibility (a11y)
+
+- Prefer **semantic HTML**, **visible focus** styles (Radix/shadcn defaults), and **keyboard** paths for primary flows (nav, dialogs, data tables).  
+- **Command palette** (`⌘K` / `Ctrl+K`): search field and list are keyboard operable; keep new commands labeled and in logical groups.  
+- When adding custom widgets, test with **keyboard-only** and a screen reader (VoiceOver / NVDA) on at least one browser. Deeper WCAG work can be ticketed as follow-up.
 
 ---
 
@@ -88,7 +138,7 @@ pnpm typecheck && pnpm check:fix
 
 Add tests when behavior is non-trivial (`pnpm test:run`). If you change translation keys under `src/messages/`, run `pnpm messages:validate` so `de`, `en`, and `hr` stay aligned.
 
-CI on `main` / PRs runs typecheck, Biome, tests with coverage, and a production build (see `.github/workflows/ci.yml`; **Node 22**, **pnpm 10**).
+CI on `main` / PRs runs typecheck, Biome, tests with coverage, a production build, and the Playwright E2E job (see `.github/workflows/ci.yml`; **Node 24**, **pnpm** version from `package.json#packageManager`).
 
 ---
 

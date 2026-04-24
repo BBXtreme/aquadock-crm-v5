@@ -256,14 +256,16 @@ export default function FeedbackModal({ open, onOpenChange, userId }: FeedbackMo
                   <FormLabel className="sr-only">{t("sentimentLabel")}</FormLabel>
                   <div className="flex flex-wrap gap-1.5">
                     {FEEDBACK_SENTIMENTS.map((emo) => (
-                      <button
+                      <Button
                         key={emo}
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-lg transition-colors",
+                          "h-10 w-10 rounded-full border text-lg transition-colors",
                           field.value === emo
                             ? "border-foreground/30 bg-muted ring-2 ring-ring/40"
-                            : "bg-muted/30 hover:bg-muted/50",
+                            : "border-transparent bg-muted/30 hover:bg-muted/50",
                         )}
                         aria-pressed={field.value === emo}
                         aria-label={`${t("sentimentLabel")}: ${emo}`}
@@ -272,7 +274,7 @@ export default function FeedbackModal({ open, onOpenChange, userId }: FeedbackMo
                         }}
                       >
                         {emo}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   <FormMessage />

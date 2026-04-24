@@ -1,8 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncContactUserIdsForCompany } from "@/lib/companies/sync-contact-user-ids";
+import { silenceHandleSupabaseErrorConsole } from "@/test/silence-handle-supabase-error-console";
 
 describe("syncContactUserIdsForCompany", () => {
+  silenceHandleSupabaseErrorConsole();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("runs contacts update scoped to company_id and active rows", async () => {
     const update = vi.fn().mockReturnValue({
       eq: vi.fn().mockReturnValue({

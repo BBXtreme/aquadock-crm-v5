@@ -67,4 +67,4 @@ The SDK can throw typed errors (e.g. `BrevoError`, `UnauthorizedError`, `TooMany
 
 ---
 
-Last reviewed: April 20, 2026
+Last reviewed: April 23, 2026

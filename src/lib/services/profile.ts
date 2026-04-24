@@ -6,9 +6,17 @@
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveAuthRedirectUrl } from "@/lib/utils/auth-recovery-redirect";
+import {
+  adminChangeUserRoleSchema,
+  adminCreateUserSchema,
+  adminDeleteUserSchema,
+  adminUpdateUserDisplayNameSchema,
+  profileDisplayNameSchema,
+} from "@/lib/validations/profile";
 
 // Server Action - Update Display Name (for current user)
 export async function updateDisplayName(formData: FormData) {
@@ -16,7 +24,9 @@ export async function updateDisplayName(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  const display_name = formData.get('display_name') as string;
+  const { display_name } = profileDisplayNameSchema.parse({
+    display_name: String(formData.get("display_name") ?? ""),
+  });
 
   const { error } = await supabase
     .from("profiles")
@@ -48,8 +58,10 @@ export async function updateUserDisplayName(formData: FormData) {
     throw new Error("Only admins can update user display names");
   }
 
-  const userId = formData.get('userId') as string;
-  const display_name = formData.get('display_name') as string;
+  const { userId, display_name } = adminUpdateUserDisplayNameSchema.parse({
+    userId: formData.get("userId"),
+    display_name: String(formData.get("display_name") ?? ""),
+  });
 
   // Use service role
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -86,8 +98,10 @@ export async function changeUserRole(formData: FormData) {
     throw new Error("Only admins can change user roles");
   }
 
-  const userId = formData.get('userId') as string;
-  const newRole = formData.get('newRole') as 'user' | 'admin';
+  const { userId, newRole } = adminChangeUserRoleSchema.parse({
+    userId: formData.get("userId"),
+    newRole: formData.get("newRole"),
+  });
 
   // Use service role client to bypass RLS for admin actions
   const serviceSupabase = createAdminClient();
@@ -114,6 +128,7 @@ export type TriggerPasswordResetResult = {
 export async function triggerPasswordReset(
   userId: string,
 ): Promise<TriggerPasswordResetResult> {
+  const id = z.string().uuid().parse(userId);
   const supabase = await createServerSupabaseClient();
   const { data: { user: currentUser } } = await supabase.auth.getUser();
   if (!currentUser) throw new Error("Not authenticated");
@@ -131,7 +146,7 @@ export async function triggerPasswordReset(
   const adminClient = createAdminClient();
 
   const { data: authUser, error: fetchError } =
-    await adminClient.auth.admin.getUserById(userId);
+    await adminClient.auth.admin.getUserById(id);
 
   if (fetchError !== null) {
     throw new Error("User or email not found");
@@ -180,15 +195,15 @@ export async function deleteUser(formData: FormData) {
     throw new Error("Only admins can delete users");
   }
 
-  const userId = formData.get("userId") as string;
+  const { userId } = adminDeleteUserSchema.parse({ userId: formData.get("userId") });
 
   const serviceSupabase = createAdminClient();
 
   // Delete from profiles table first
   const { error: profileError } = await serviceSupabase
-    .from('profiles')
+    .from("profiles")
     .delete()
-    .eq('id', userId);
+    .eq("id", userId);
 
   if (profileError) throw profileError;
 
@@ -218,9 +233,11 @@ export async function createUser(formData: FormData) {
     throw new Error("Only admins can create users");
   }
 
-  const email = formData.get('email') as string;
-  const display_name = formData.get('display_name') as string;
-  const role = formData.get('role') as 'user' | 'admin';
+  const { email, display_name, role } = adminCreateUserSchema.parse({
+    email: String(formData.get("email") ?? ""),
+    display_name: String(formData.get("display_name") ?? ""),
+    role: formData.get("role"),
+  });
 
   // Generate random password
   const crypto = await import('node:crypto');
@@ -234,8 +251,8 @@ export async function createUser(formData: FormData) {
   const { data, error } = await serviceSupabase.auth.admin.createUser({
     email,
     password: randomPassword,
-    user_metadata: { display_name },
-    email_confirm: true // Automatically confirm email for smoother admin-created users
+    user_metadata: { display_name: display_name ?? "" },
+    email_confirm: true, // Automatically confirm email for smoother admin-created users
   });
 
   if (error) {
@@ -248,8 +265,8 @@ export async function createUser(formData: FormData) {
   // Step 2: Create or update the profile
   const profileData = {
     id: data.user.id,
-    role: role || 'user', // Fallback to 'user' if not provided
-    display_name: display_name || null, // Nullable field
+    role,
+    display_name,
   };
 
   console.log("Upserting profile:", profileData);

@@ -433,15 +433,17 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     >
       {suggestionChips.map(({ key, label, template, Icon }) => (
         <li key={key}>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="xs"
             onClick={() => handleChipTemplate(template)}
             disabled={!currentUser}
-            className="inline-flex items-center gap-1 rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-auto min-h-0 gap-1 rounded-full border-border/70 px-2.5 py-1 text-xs font-normal text-muted-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
           >
             <Icon className="h-3 w-3" aria-hidden />
             {label}
-          </button>
+          </Button>
         </li>
       ))}
     </ul>

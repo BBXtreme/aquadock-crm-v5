@@ -61,9 +61,14 @@ export const reminderColumns = (
   columnHelper.accessor("title", {
     header: "Title",
     cell: (info) => (
-      <button type="button" className="text-primary hover:underline" onClick={() => handleEdit(info.row.original)}>
+      <Button
+        type="button"
+        variant="link"
+        className="h-auto min-h-0 px-0 text-primary"
+        onClick={() => handleEdit(info.row.original)}
+      >
         {String(info.getValue() ?? "")}
-      </button>
+      </Button>
     ),
   }) as ColumnDef<ReminderWithCompany>,
   columnHelper.display({
@@ -266,15 +271,16 @@ export default function RemindersTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <button
+                      <Button
                         type="button"
-                        className="flex items-center gap-2 w-full h-full p-4 text-left font-medium cursor-pointer hover:bg-muted/50"
+                        variant="ghost"
+                        className="h-auto min-h-0 w-full justify-start gap-2 rounded-none px-4 py-4 font-medium hover:bg-muted/50"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
-                      </button>
+                      </Button>
                     ) : (
                       <div className="flex items-center gap-2 w-full h-full p-4 text-left font-medium">
                         {flexRender(header.column.columnDef.header, header.getContext())}

@@ -1,26 +1,17 @@
 // src/components/layout/Header.tsx
-// This component implements the header of the application, including the logo, search (placeholder dialog), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
+// This component implements the header of the application, including the logo, command menu (⌘K / Ctrl+K), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
 
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import FeedbackButton from "@/components/features/feedback/FeedbackButton";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AppCommandMenu } from "@/components/layout/AppCommandMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,8 +23,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
+import { useCommandPaletteModLabel } from "@/lib/hooks/use-command-palette-mod-label";
 import { useT } from "@/lib/i18n/use-translations";
 import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import { getUnreadCount } from "@/lib/services/in-app-notifications";
@@ -78,6 +71,8 @@ export default function Header({ user }: HeaderProps) {
   const queryClient = useQueryClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const commandPaletteModLabel = useCommandPaletteModLabel();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -241,22 +236,24 @@ export default function Header({ user }: HeaderProps) {
           </Link>
         )}
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" size="icon" aria-label={t("searchAriaLabel")}>
-              <Search className="h-4 w-4" aria-hidden />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="gap-0 px-2 font-mono text-sm leading-none tabular-nums text-muted-foreground hover:text-foreground"
+              aria-label={t("commandPaletteTriggerAria")}
+              aria-keyshortcuts="Control+K Meta+K"
+              onClick={() => setCommandOpen(true)}
+            >
+              {commandPaletteModLabel}
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("globalSearchTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("globalSearchDescription")}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction>{t("globalSearchGotIt")}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[min(20rem,calc(100vw-2rem))] text-balance" sideOffset={6}>
+            {t("commandPaletteSearchButtonTooltip")}
+          </TooltipContent>
+        </Tooltip>
+        <AppCommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

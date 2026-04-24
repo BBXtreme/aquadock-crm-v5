@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 
 import { createOsmImportTimelineForCompany, isOsmPoiCompanyImport } from "@/lib/server/osm-import-timeline";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { companySchema, toCompanyInsert } from "@/lib/validations/company";
 
 export async function POST(request: Request) {
   try {
@@ -17,19 +18,47 @@ export async function POST(request: Request) {
       error: authError,
     } = await supabase.auth.getUser();
 
-    // DEVELOPMENT ONLY: Allow inserts with user_id: null for testing OSM POI import
-    // TODO: Remove this when auth is fully implemented
+    // DEVELOPMENT ONLY: allow unauthenticated POST for local map / OSM POI import (user_id may be null). Production always requires a session.
     const isDevelopment = process.env.NODE_ENV === "development";
     if (!isDevelopment && (authError || !user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    let raw: unknown;
+    try {
+      raw = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: "Ungültiger JSON-Body" },
+        { status: 400 },
+      );
+    }
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      return NextResponse.json(
+        { success: false, error: "Ungültiger Anfragetext" },
+        { status: 400 },
+      );
+    }
+    const { user_id: _clientUserId, ...companyFields } = raw as Record<string, unknown>;
+    const parsed = companySchema.safeParse(companyFields);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Validierung fehlgeschlagen",
+          issues: parsed.error.flatten(),
+        },
+        { status: 400 },
+      );
+    }
+    const row = toCompanyInsert(parsed.data);
+    const insertPayload = { ...row, user_id: user?.id ?? null };
 
-    // Ensure user_id is set for RLS (or null in development)
-    body.user_id = user?.id || null;
-
-    const { data, error } = await supabase.from("companies").insert(body).select().single();
+    const { data, error } = await supabase
+      .from("companies")
+      .insert(insertPayload)
+      .select()
+      .single();
 
     if (error) {
       console.error("[API POST /companies] Supabase Error:", error);
@@ -37,7 +66,6 @@ export async function POST(request: Request) {
         {
           success: false,
           error: error.message,
-          details: error,
         },
         { status: 400 },
       );

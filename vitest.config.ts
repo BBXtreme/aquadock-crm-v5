@@ -26,6 +26,7 @@ export default defineConfig({
       "**/dist/**",
       "supabase/**",
       "**/coverage/**",
+      "**/tests/e2e/**",
     ],
     coverage: {
       provider: "v8",
@@ -50,7 +51,6 @@ export default defineConfig({
         "src/components/ui/data-table.tsx",
         "src/components/ui/select.tsx",
         "src/components/ui/form.tsx",
-        "src/components/ui/skeleton.tsx",
         "src/components/ui/badge.tsx",
         "src/components/features/companies/CompanyCreateForm.tsx",
         // Large / branch-heavy client UI and helpers — covered indirectly or by manual/E2E flows; kept out of the global coverage gate.
@@ -73,6 +73,8 @@ export default defineConfig({
         "src/lib/server/delete-audit.ts",
         // Server actions / service-role client: branch-heavy Supabase + auth paths; covered via integration/E2E rather than mocked unit suites.
         "src/lib/actions/companies.ts",
+        // Nodemailer + DNS + batch send: branch-heavy; `mass-email.test.ts` covers guard rails; E2E covers UI.
+        "src/lib/actions/mass-email.ts",
         "src/lib/actions/reminder-server-action.ts",
         "src/lib/supabase/admin.ts",
       ],

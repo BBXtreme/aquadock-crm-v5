@@ -1,10 +1,12 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-21  
+**Last audited**: 2026-04-23  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
+
+**Tenancy:** RLS and `user_id` on records model **per-user** ownership (and admin override where policies allow), not **multi-tenant org / workspace** objects. A future “org” or deal-pipeline layer would be additive schema on top of this v5 design.
 
 ## 1. Database Overview
 
@@ -419,3 +421,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-21 Added **`user_notifications`** (columns, RLS, Realtime, indexes), live RLS audit note for `reminders` / `timeline`, and SQL [`user_notifications.sql`](../src/sql/user_notifications.sql). Types via `pnpm supabase:types`.
 
 2026-04-22 Documented **Maintenance** backfill for `user_id` from `created_by` (SQL + `pnpm backfill:user-id`): [`backfill-user-id-from-created-by.sql`](../src/sql/backfill-user-id-from-created-by.sql).
+
+2026-04-23 Doc-only: header audit date; no schema change. Cross-refs: [`AIDER-RULES.md`](AIDER-RULES.md), [`architecture.md`](architecture.md) HTTP API inventory.

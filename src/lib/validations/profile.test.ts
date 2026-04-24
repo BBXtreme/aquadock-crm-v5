@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminChangeUserRoleSchema,
+  adminCreateUserSchema,
+  adminDeleteUserSchema,
+  adminUpdateUserDisplayNameSchema,
   allowedAvatarMimeTypes,
   changeEmailSchema,
   changePasswordSchema,
@@ -10,6 +14,8 @@ import {
   profileDisplayNameSchema,
   resolveProfileAvatarMime,
 } from "./profile";
+
+const sampleUuid = "10000000-0000-4000-8000-000000000001";
 
 describe("resolveProfileAvatarMime", () => {
   it("prefers file.type when allowed", () => {
@@ -113,6 +119,70 @@ describe("profileDisplayNameSchema", () => {
 
   it("rejects empty", () => {
     expect(() => profileDisplayNameSchema.parse({ display_name: "   " })).toThrow();
+  });
+});
+
+describe("adminUpdateUserDisplayNameSchema", () => {
+  it("accepts uuid and display name", () => {
+    const r = adminUpdateUserDisplayNameSchema.parse({
+      userId: sampleUuid,
+      display_name: "  Admin  ",
+    });
+    expect(r.userId).toBe(sampleUuid);
+    expect(r.display_name).toBe("Admin");
+  });
+
+  it("rejects bad uuid", () => {
+    expect(() =>
+      adminUpdateUserDisplayNameSchema.parse({ userId: "nope", display_name: "A" }),
+    ).toThrow();
+  });
+});
+
+describe("adminChangeUserRoleSchema", () => {
+  it("accepts user and admin role", () => {
+    expect(
+      adminChangeUserRoleSchema.parse({ userId: sampleUuid, newRole: "admin" }).newRole,
+    ).toBe("admin");
+  });
+
+  it("rejects invalid role", () => {
+    const raw: { userId: string; newRole: string } = { userId: sampleUuid, newRole: "nope" };
+    expect(() => adminChangeUserRoleSchema.parse(raw)).toThrow();
+  });
+});
+
+describe("adminDeleteUserSchema", () => {
+  it("accepts uuid", () => {
+    expect(adminDeleteUserSchema.parse({ userId: sampleUuid }).userId).toBe(sampleUuid);
+  });
+});
+
+describe("adminCreateUserSchema", () => {
+  it("maps empty display_name to null and defaults missing role to user", () => {
+    const r = adminCreateUserSchema.parse({
+      email: "new@example.com",
+      display_name: "   ",
+      role: "",
+    });
+    expect(r.display_name).toBeNull();
+    expect(r.role).toBe("user");
+  });
+
+  it("keeps non-empty display name and explicit admin role", () => {
+    const r = adminCreateUserSchema.parse({
+      email: "b@example.com",
+      display_name: "  Bernd  ",
+      role: "admin",
+    });
+    expect(r.display_name).toBe("Bernd");
+    expect(r.role).toBe("admin");
+  });
+
+  it("rejects bad email", () => {
+    expect(() =>
+      adminCreateUserSchema.parse({ email: "bad", display_name: "", role: "user" }),
+    ).toThrow();
   });
 });
 

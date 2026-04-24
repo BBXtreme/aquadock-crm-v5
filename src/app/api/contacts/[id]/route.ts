@@ -8,13 +8,19 @@ import { NextResponse } from "next/server";
 
 import { deleteContactWithTrash } from "@/lib/actions/crm-trash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { contactSchema } from "@/lib/validations/contact";
+
+const contactUpdateBodySchema = contactSchema.partial().strict();
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id } = await params;
   const { data, error } = await supabase
     .from("contacts")
@@ -31,14 +37,29 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  // TODO: Add authentication when user login is implemented
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // Add .eq("user_id", user.id) to all queries for RLS safety
   const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const { id } = await params;
-  const body = await request.json();
-  const { data, error } = await supabase.from("contacts").update(body).eq("id", id).select().single();
+  let raw: unknown;
+  try {
+    raw = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const parsed = contactUpdateBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body", issues: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+  const { data, error } = await supabase.from("contacts").update(parsed.data).eq("id", id).select().single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -409,7 +409,6 @@ export default function CompaniesTable({
   // `getFilteredRowModel` or `globalFilterFn`: re-filtering the server result set
   // with `includesString` would drop every semantic match that doesn't also
   // contain the raw query substring. `manualFiltering` keeps the table honest.
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
     data: companies,
     columns,
@@ -507,11 +506,12 @@ export default function CompaniesTable({
                 {showSemanticBadge ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         tabIndex={-1}
                         aria-label={t("tableSemanticSearchAria")}
-                        className="absolute inset-y-0 left-0 z-10 flex w-10 cursor-help items-center justify-center transition-colors"
+                        className="absolute inset-y-0 left-0 z-10 h-auto min-h-0 w-10 min-w-10 cursor-help rounded-none border-0 bg-transparent p-0 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring/35"
                       >
                         <span className="flex h-6 w-6 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary shadow-sm">
                           {isFetching ? (
@@ -520,7 +520,7 @@ export default function CompaniesTable({
                             <Sparkles className="h-4 w-4" aria-hidden />
                           )}
                         </span>
-                      </button>
+                      </Button>
                     </TooltipTrigger>
                     <TooltipContent sideOffset={8} className="max-w-[260px] text-center text-xs leading-relaxed">
                       {t("tableSemanticSearchTooltip")}
@@ -544,11 +544,12 @@ export default function CompaniesTable({
               {showModeChip && searchModeTooltip.length > 0 ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       aria-label={searchModeTooltip}
                       className={cn(
-                        "hidden shrink-0 cursor-help items-center gap-1 rounded-md border-0 bg-transparent px-1 py-0.5 text-left shadow-none outline-none sm:inline-flex",
+                        "hidden h-auto min-h-0 shrink-0 cursor-help items-center gap-1 rounded-md border-0 bg-transparent px-1 py-0.5 text-left font-medium shadow-none hover:bg-transparent sm:inline-flex",
                         "focus-visible:ring-2 focus-visible:ring-ring/35",
                       )}
                     >
@@ -564,7 +565,7 @@ export default function CompaniesTable({
                           ? t("tableSearchModeAbbrHybrid")
                           : t("tableSearchModeAbbrKeyword")}
                       </span>
-                    </button>
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="end" sideOffset={6} className="max-w-[min(18rem,calc(100vw-2rem))] text-xs leading-relaxed">
                     {searchModeTooltip}
@@ -686,15 +687,16 @@ export default function CompaniesTable({
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                      <button
+                      <Button
                         type="button"
-                        className="flex items-center gap-2 w-full h-full p-4 text-left font-medium cursor-pointer hover:bg-muted/50"
+                        variant="ghost"
+                        className="h-auto min-h-0 w-full justify-start gap-2 rounded-none px-4 py-4 font-medium hover:bg-muted/50"
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === "asc" && <ArrowUp className="h-4 w-4" />}
                         {header.column.getIsSorted() === "desc" && <ArrowDown className="h-4 w-4" />}
-                      </button>
+                      </Button>
                     ) : (
                       <div className="flex items-center gap-2 w-full h-full p-4 text-left font-medium">
                         {flexRender(header.column.columnDef.header, header.getContext())}

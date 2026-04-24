@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { silenceHandleSupabaseErrorConsole } from "@/test/silence-handle-supabase-error-console";
 import {
   createInAppNotification,
   getUnreadCount,
@@ -19,6 +20,8 @@ const companyId = "20000000-0000-4000-8000-000000000001";
 const reminderId = "20000000-0000-4000-8000-000000000002";
 
 describe("createInAppNotification", () => {
+  silenceHandleSupabaseErrorConsole();
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

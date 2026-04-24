@@ -319,7 +319,7 @@ export default function TimelineTable({ data, isLoading }: TimelineTableProps = 
                           : type;
           return (
             <Badge
-              variant="outline"
+              variant="timeline"
               className={cn("flex items-center gap-1 rounded-full", timelineActivityBadgeClassName(type))}
             >
               {activityIcon(type)}

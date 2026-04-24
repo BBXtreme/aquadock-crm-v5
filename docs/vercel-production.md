@@ -33,8 +33,16 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 | Install command | `pnpm install` (enable pnpm in project settings) |
 | Build command | `pnpm build` |
 | Output | `.next` (default) |
-| Node.js | **22.x** — aligned with CI in `.github/workflows/ci.yml` (Vercel's platform default is **24 LTS**; pin to 22 to match CI) |
-| pnpm | **10.x** (CI uses `pnpm/action-setup` with `version: 10`) |
+| Node.js | **24.x** — aligned with CI (`.github/workflows/ci.yml`), [`.nvmrc`](../.nvmrc), and `engines` in `package.json` (matches Vercel’s default **24 LTS**) |
+| pnpm | **10.33.x** (same minor as `packageManager` in `package.json`; CI uses `pnpm/action-setup` with that version) |
+
+---
+
+## GitHub Actions and E2E (CI)
+
+PR checks run on **GitHub Actions** (see [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)), not on Vercel. Configure **Actions variables** for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. For authenticated Playwright tests, add **repository secrets** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` (the workflow uses `secrets.E2E_*` — not Variables). Full runbook: [`production-deploy.md`](production-deploy.md) (section *GitHub Actions: CI and Playwright*).
+
+**Local E2E:** `pnpm build` then `pnpm e2e`. Store `E2E_*` in **`.env.local`**; `playwright.config.ts` calls `loadEnvConfig` from `@next/env` so the Playwright process loads them without manual `export`. See [`.env.example`](../.env.example).
 
 ---
 
@@ -113,4 +121,4 @@ Example explicit production entries (only if you prefer path-level entries inste
 
 ---
 
-Last reviewed: April 20, 2026
+Last reviewed: April 23, 2026

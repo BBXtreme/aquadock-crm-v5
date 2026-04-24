@@ -26,8 +26,11 @@ export const metadata: Metadata = {
  */
 const rootLangBootstrapScript = `(function(){try{var k=${JSON.stringify(LS_APPEARANCE_LOCALE)};var raw=localStorage.getItem(k);if(raw==null||raw==="")return;var t=String(raw).trim();if(t==="fr")t="de";if(t==="en"||t==="hr"||t==="de")document.documentElement.lang=t;}catch(_){}})();`;
 
-/** Runs before React / Supabase; flags recovery hash or PKCE `code` on `/login` before the client consumes the URL. */
-const pwRecoveryBootstrapScript = `(function(){try{var path=location.pathname||"";if(!/\\/login\\/?$/.test(path))return;var frag=(location.hash||"").replace(/^#/,"");var q=location.search||"";if(frag.indexOf("type=recovery")>=0||frag.indexOf("type%3Drecovery")>=0||q.indexOf("code=")>=0||q.indexOf("code%3D")>=0)sessionStorage.setItem(${JSON.stringify(PW_RECOVERY_SESSION_STORAGE_KEY)},"1");}catch(_){}})();`;
+/**
+ * Runs before React / Supabase; flags recovery hash or PKCE `code` on `/login` before the client consumes the URL.
+ * Use `URLSearchParams.has("code")` — substring `code=` matches `error_code=` and latched the page into recovery UI.
+ */
+const pwRecoveryBootstrapScript = `(function(){try{var path=location.pathname||"";if(!/\\/login\\/?$/.test(path))return;var key=${JSON.stringify(PW_RECOVERY_SESSION_STORAGE_KEY)};var frag=(location.hash||"").replace(/^#/,"");if(frag.indexOf("type=recovery")>=0||frag.indexOf("type%3Drecovery")>=0){sessionStorage.setItem(key,"1");return;}var q=location.search||"";if(q.length>1){var sp=new URLSearchParams(q.slice(1));if(sp.has("code"))sessionStorage.setItem(key,"1");}}catch(_){}})();`;
 
 export default function RootLayout({
   children,

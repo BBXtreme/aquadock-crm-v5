@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import "leaflet/dist/leaflet.css";
 import "./leaflet-popup-theme.css";
 
-import { Building, Info, Loader2, MapPin, RefreshCw } from "lucide-react";
+import { Building, Info, Loader2, MapPin, RefreshCw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
@@ -868,13 +868,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             {t("legendTitle")}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => setShowLegend(false)}
               className="text-muted-foreground hover:text-foreground"
+              aria-label={t("legendCloseAria")}
             >
-              ✕
-            </button>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
           <div className="space-y-2">
             {Object.keys(statusLabels).map((key) => (

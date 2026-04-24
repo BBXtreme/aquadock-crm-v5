@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NOTIFICATION_SETTING_KEYS, NOTIFICATION_UI } from "@/lib/constants/notifications";
+import { silenceHandleSupabaseErrorConsole } from "@/test/silence-handle-supabase-error-console";
 import type { Database } from "@/types/database.types";
 import {
   fetchNotificationPreferences,
@@ -33,6 +34,12 @@ function trashBinChain(result: { data: unknown; error: unknown }) {
 }
 
 describe("user-settings (DB helpers)", () => {
+  silenceHandleSupabaseErrorConsole();
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("fetchNotificationPreferences throws on Supabase error", async () => {
     const client = notificationPrefsChain({ data: null, error: { message: "boom" } });
     await expect(fetchNotificationPreferences(client, "u1")).rejects.toThrow("Database error");

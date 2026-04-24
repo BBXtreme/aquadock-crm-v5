@@ -2,7 +2,7 @@
 "use client";
 
 import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useT } from "@/lib/i18n/use-translations";
 
 type LivePreviewProps = {
@@ -92,6 +93,16 @@ const htmlToReact = (html: string): React.ReactNode[] => {
   return Array.from(container.childNodes).map((node, index) => convertNode(node, index));
 };
 
+/** SSR-safe fallback when {@link DOMParser} is not available (server / first paint). */
+function stripHtmlToText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function LivePreview({
   previewSubject,
   previewBody,
@@ -103,6 +114,11 @@ export default function LivePreview({
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  /** Avoid `DOMParser` during SSR / RSC pass — it is not defined in Node. */
+  const [canParseEmailHtml, setCanParseEmailHtml] = useState(false);
+  useEffect(() => {
+    setCanParseEmailHtml(true);
+  }, []);
 
   const copyToClipboard = async () => {
     const text = `${t("livePreviewClipboardSubjectPrefix")} ${previewSubject}\n\n${previewBody}`;
@@ -115,7 +131,10 @@ export default function LivePreview({
   };
 
   const sanitizedBody = useMemo(() => sanitizeHtml(previewBody), [previewBody]);
-  const bodyElements = useMemo(() => htmlToReact(sanitizedBody), [sanitizedBody]);
+  const bodyElements = useMemo(() => {
+    if (!canParseEmailHtml) return null;
+    return htmlToReact(sanitizedBody);
+  }, [canParseEmailHtml, sanitizedBody]);
 
   return (
     <Card>
@@ -123,65 +142,74 @@ export default function LivePreview({
         <CardTitle>{t("livePreviewCardTitle")}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex border-b mb-6">
-          <button
-            type="button"
-            onClick={() => setPreviewTab("preview")}
-            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
-              previewTab === "preview" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
-            }`}
-          >
-            <Eye className="inline mr-2 h-4 w-4" />
-            {t("livePreviewTabPreview")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPreviewTab("raw")}
-            className={`flex-1 pb-3 text-sm font-medium border-b-2 transition-colors ${
-              previewTab === "raw" ? "border-primary text-foreground" : "border-transparent text-muted-foreground"
-            }`}
-          >
-            <Code className="inline mr-2 h-4 w-4" />
-            {t("livePreviewTabSource")}
-          </button>
+        <Tabs
+          value={previewTab}
+          onValueChange={(v) => setPreviewTab(v as "preview" | "raw")}
+          className="mb-6 gap-0"
+        >
+          <div className="flex items-end gap-4 border-b">
+            <TabsList
+              variant="line"
+              className="h-auto min-w-0 flex-1 justify-stretch rounded-none border-0 bg-transparent p-0"
+            >
+              <TabsTrigger value="preview" className="flex-1 gap-2 pb-3">
+                <Eye className="h-4 w-4" />
+                {t("livePreviewTabPreview")}
+              </TabsTrigger>
+              <TabsTrigger value="raw" className="flex-1 gap-2 pb-3">
+                <Code className="h-4 w-4" />
+                {t("livePreviewTabSource")}
+              </TabsTrigger>
+            </TabsList>
+            <Button variant="outline" size="sm" onClick={copyToClipboard} className="mb-2 shrink-0">
+              <Copy className="h-4 w-4 mr-2" />
+              {t("livePreviewCopy")}
+            </Button>
+          </div>
 
-          <Button variant="outline" size="sm" onClick={copyToClipboard} className="ml-4">
-            <Copy className="h-4 w-4 mr-2" />
-            {t("livePreviewCopy")}
-          </Button>
-        </div>
-
-        {previewTab === "preview" ? (
-          <div className="border rounded-3xl p-8 bg-card min-h-[560px] shadow-sm">
-            <div className="max-w-2xl mx-auto space-y-8">
-              <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
-                <div>
-                  <span className="font-medium">{t("livePreviewFromLabel")}</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
+          <TabsContent value="preview" className="mt-0 outline-none">
+            <div className="border rounded-3xl p-8 bg-card min-h-[560px] shadow-sm">
+              <div className="max-w-2xl mx-auto space-y-8">
+                <div className="flex justify-between text-xs text-muted-foreground border-b pb-4">
+                  <div>
+                    <span className="font-medium">{t("livePreviewFromLabel")}</span> AquaDock CRM &lt;no-reply@aquadock.de&gt;
+                  </div>
+                  <div>
+                    <span className="font-medium">{t("livePreviewToLabel")}</span>{" "}
+                    {`${previewRecipient.name} <${previewRecipient.email}>`}
+                  </div>
                 </div>
-                <div>
-                  <span className="font-medium">{t("livePreviewToLabel")}</span>{" "}
-                  {`${previewRecipient.name} <${previewRecipient.email}>`}
+
+                <div className="font-bold text-2xl leading-tight">
+                  {previewSubject || t("livePreviewNoSubject")}
                 </div>
-              </div>
 
-              <div className="font-bold text-2xl leading-tight">
-                {previewSubject || t("livePreviewNoSubject")}
-              </div>
-
-              {/* Safe HTML rendering as React elements */}
-              <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
-                {bodyElements.length > 0 ? bodyElements : t("livePreviewNoBody")}
+                {/* Safe HTML rendering as React elements */}
+                <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
+                  {!canParseEmailHtml ? (
+                    sanitizedBody.trim() ? (
+                      <div className="whitespace-pre-wrap">{stripHtmlToText(sanitizedBody)}</div>
+                    ) : (
+                      t("livePreviewNoBody")
+                    )
+                  ) : bodyElements && bodyElements.length > 0 ? (
+                    bodyElements
+                  ) : (
+                    t("livePreviewNoBody")
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ) : (
-          <ScrollArea className="min-h-[560px] border rounded-3xl p-8 bg-muted">
-            <strong>{t("livePreviewRawSubject")}</strong> {previewSubject}
-            <br /><br />
-            <strong>{t("livePreviewRawBody")}</strong>
-            <pre className="mt-6 whitespace-pre-wrap text-sm font-mono">{previewBody}</pre>
-          </ScrollArea>
-        )}
+          </TabsContent>
+          <TabsContent value="raw" className="mt-0 outline-none">
+            <ScrollArea className="min-h-[560px] border rounded-3xl p-8 bg-muted">
+              <strong>{t("livePreviewRawSubject")}</strong> {previewSubject}
+              <br /><br />
+              <strong>{t("livePreviewRawBody")}</strong>
+              <pre className="mt-6 whitespace-pre-wrap text-sm font-mono">{previewBody}</pre>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
 
         <Separator className="my-8" />
 

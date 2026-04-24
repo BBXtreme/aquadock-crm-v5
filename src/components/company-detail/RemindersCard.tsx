@@ -188,13 +188,14 @@ export default function RemindersCard({ companyId }: Props) {
                       <tr key={reminder.id}>
                         <td className="font-medium">
                           <div>
-                            <button
+                            <Button
                               type="button"
-                              className="text-primary hover:underline cursor-pointer"
+                              variant="link"
+                              className="h-auto min-h-0 px-0 text-primary"
                               onClick={() => handleEdit(reminder)}
                             >
                               <DisplayOrDash value={reminder.title} />
-                            </button>
+                            </Button>
                             {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
                             <div className="text-xs text-muted-foreground">
                               {t("detailMetaLine", {

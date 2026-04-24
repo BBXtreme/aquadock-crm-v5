@@ -2,6 +2,8 @@
 
 **What it is:** A web-based CRM for marinas, hotels, restaurants, and water-sports businesses. Teams sign in, manage companies and contacts, plan reminders, send email campaigns, and view records on an interactive map. Data lives in **Supabase** (PostgreSQL) with **Row Level Security** so each user only sees their own records (admins have broader access where the schema allows).
 
+**Product scope:** This is a **vertical, operations-focused** CRM (territory, accounts, comms, map). It is **not** a full enterprise “revenue platform” (no first-class deal pipeline, CPQ, or org/workspace tenancy in the data model as of v5). Roadmap and positioning details live in `docs/architecture.md` and `docs/SUPABASE_SCHEMA.md`.
+
 **How it is built:** **Next.js 16** (App Router), **React 19**, **Supabase**, **Tailwind CSS v4**, **shadcn/ui**, **next-intl** (locales: German, English, Croatian), **pnpm**.
 
 ---
@@ -15,6 +17,7 @@
 - **Dashboard** — KPIs and tables (**TanStack Table**).
 - **Settings & profile** — Preferences, SMTP-related settings, display name and avatar (**Supabase Storage** bucket `avatars`).
 - **Theming** — Dark/light mode and responsive layout.
+- **Command palette** — `⌘K` / `Ctrl+K` quick navigation (`AppCommandMenu` in the header; see `docs/architecture.md` → Accessibility).
 
 ---
 
@@ -31,7 +34,7 @@
 | Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
 | i18n | next-intl | Message catalogs in `src/messages/` (`de`, `en`, `hr`) |
 | Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
-| Tests | Vitest, Testing Library | `pnpm test:run`; CI runs `pnpm test:ci` (shared setup in `src/test/setup.ts`; see **Testing** in `docs/architecture.md`) |
+| Tests | Vitest, Testing Library, Playwright | Unit/integration: `pnpm test:run` / `pnpm test:ci` (`src/test/setup.ts`). E2E: `tests/e2e/`, `pnpm e2e` after `pnpm build` — see `docs/architecture.md` **Testing** |
 
 ---
 
@@ -44,6 +47,8 @@ git clone <your-repo-url> aquadock-crm-v5
 cd aquadock-crm-v5
 pnpm install
 ```
+
+Use **Node 24** (LTS) and **pnpm 10+** (see [`.nvmrc`](.nvmrc) and `engines` in [`package.json`](package.json)) so your machine matches **CI** and the [Vercel runbook](docs/vercel-production.md#project-settings). The repo pins `pnpm` via the `packageManager` field; with [Corepack](https://nodejs.org/api/corepack.html) enabled (`corepack enable`), the correct version is selected automatically.
 
 ### 2. Environment
 
@@ -84,19 +89,21 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 
 ## Documentation (`docs/`)
 
+Quick index: [`docs/README.md`](docs/README.md).
+
 | Document | Audience | Content |
 | --- | --- | --- |
-| [architecture.md](docs/architecture.md) | Developers | Layers, validation, data flow, layout, Vitest/RTL testing |
-| [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables (incl. `comments` / attachments), RLS overview, Storage, type generation |
-| [README_OpenMap.md](docs/README_OpenMap.md) | Developers | Map and OSM POI behavior |
-| [react-table-v8-ts-tricks.md](docs/react-table-v8-ts-tricks.md) | Developers | TypeScript patterns for tables |
-| [production-deploy.md](docs/production-deploy.md) | DevOps / leads | Production checklist (Vercel + Supabase) |
-| [vercel-production.md](docs/vercel-production.md) | DevOps | Shorter Vercel-focused checklist |
-| [BREVO_SDK.md](docs/BREVO_SDK.md) | Developers | How this repo uses Brevo’s Node SDK |
-| [AIDER-RULES.md](docs/AIDER-RULES.md) | All contributors | Coding-agent rules and non-negotiable quality gate |
-| [aider.conventions.md](docs/aider.conventions.md) | All contributors | Short conventions companion to `AIDER-RULES.md` |
+| [architecture.md](docs/architecture.md) | Developers | Stack principles, Server Actions vs API routes, **HTTP route inventory**, validation, testing, a11y |
+| [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables, RLS, Storage `avatars`, Realtime, type generation, maintenance SQL |
+| [README_OpenMap.md](docs/README_OpenMap.md) | Developers / product | OpenMap: CRM markers, OSM POIs, Overpass, import flow |
+| [react-table-v8-ts-tricks.md](docs/react-table-v8-ts-tricks.md) | Developers | `ColumnDef` TypeScript patterns without `as any` |
+| [production-deploy.md](docs/production-deploy.md) | DevOps / leads | Full go-live: env, Supabase, GitHub Actions + E2E, security, domain |
+| [vercel-production.md](docs/vercel-production.md) | DevOps | Short Vercel + Supabase URL configuration checklist |
+| [BREVO_SDK.md](docs/BREVO_SDK.md) | Developers | `@getbrevo/brevo` v5, env keys, error mapping |
+| [AIDER-RULES.md](docs/AIDER-RULES.md) | All contributors | PR quality gate: TS, Zod, Biome, i18n, CI parity |
+| [aider.conventions.md](docs/aider.conventions.md) | All contributors | One-page convention table (companion to AIDER-RULES) |
 
-**Coding standards:** Enforced with Biome and TypeScript; see [`docs/AIDER-RULES.md`](docs/AIDER-RULES.md) for the full quality-gate rules. Optional AI/editor guidance lives under [`.cursor/rules/`](.cursor/rules/) (e.g. architecture, Supabase, Zod forms).
+**Coding standards:** Biome + TypeScript strict; see [`docs/AIDER-RULES.md`](docs/AIDER-RULES.md). Editor/agent hints: [`.cursor/rules/`](.cursor/rules/) (architecture, Supabase, Zod/shadcn, Biome).
 
 ---
 
@@ -114,10 +121,14 @@ Open [http://localhost:3000](http://localhost:3000). If the dev server runs out 
 | `pnpm test` | Vitest (watch) |
 | `pnpm test:run` | Vitest once |
 | `pnpm test:ci` | Coverage + verbose reporter (matches CI) |
+| `pnpm e2e` | Playwright E2E (starts production server from `playwright.config.ts` unless one is already running) |
+| `pnpm e2e:ui` | Playwright with UI mode |
 | `pnpm messages:validate` | Ensures `de` / `en` / `hr` message keys stay in sync (run after editing `src/messages/*.json`) |
 | `pnpm supabase:types` | Regenerate `src/types/supabase.ts` (edit `--project-id` in `package.json` if you fork the DB) |
 
-Vitest loads `src/test/setup.ts` for every test (global mocks, JSDOM stubs, and RTL `cleanup()` after each test so `render()` does not accumulate trees). Details: [`docs/architecture.md`](docs/architecture.md#testing-vitest).
+Vitest loads `src/test/setup.ts` for every test (global mocks, JSDOM stubs, and RTL `cleanup()` after each test so `render()` does not accumulate trees). Details: [`docs/architecture.md`](docs/architecture.md#testing-vitest--playwright).
+
+**E2E (Playwright):** The suite expects a **production build** — run `pnpm build` before `pnpm e2e` (or use `playwright.config.ts`, which can start `next start` for you). **`playwright.config.ts`** uses `loadEnvConfig` from `@next/env`, so `E2E_BASE_URL`, `E2E_USER_EMAIL`, and `E2E_USER_PASSWORD` in **`.env.local`** are picked up by the Node process (no need to `export` them in the shell). Use a **real Supabase Auth** user: set the password in the **Supabase dashboard** (or Admin API), not with ad hoc SQL against `auth.users`. The test user should **not** be stuck on `/access-pending` (onboarding) or authenticated scenarios are skipped. **GitHub Actions:** add `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` as **repository secrets** (the workflow reads `secrets.E2E_*`); set `NEXT_PUBLIC_SUPABASE_*` as **Actions variables**. **Smoke** tests (login shell, root redirect) run without E2E credentials. Traces and reports under `test-results/` are gitignored.
 
 ---
 
@@ -138,7 +149,7 @@ A more detailed tree lived in older README versions; explore `src/app/(protected
 
 ## Deployment
 
-**Recommended:** [Vercel](https://vercel.com) connected to your Git repository. Use **pnpm** as the install command and align **Node** with CI (see `.github/workflows/ci.yml`, currently Node 22).
+**Recommended:** [Vercel](https://vercel.com) connected to your Git repository. Use **pnpm** as the install command and align **Node** with CI (see `.github/workflows/ci.yml`, currently Node 24).
 
 Step-by-step checklists: [`docs/production-deploy.md`](docs/production-deploy.md) and [`docs/vercel-production.md`](docs/vercel-production.md).
 
@@ -157,7 +168,7 @@ Writes generated types to `src/types/supabase.ts`. App code should import row al
 ## Contributing
 
 - Prefer branches such as `feature/…`, `fix/…`, `chore/…`.
-- Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior). After editing translations, also run `pnpm messages:validate`.
+- Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior; after `pnpm build`, `pnpm e2e` if you change auth, login, or protected routes). After editing translations, run `pnpm messages:validate`. See [`docs/AIDER-RULES.md`](docs/AIDER-RULES.md) for the full checklist.
 - After schema changes: `pnpm supabase:types` and commit updated types if the project shares one Supabase project.
 
 ---
