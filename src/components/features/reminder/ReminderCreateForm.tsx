@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createReminderAction } from "@/lib/actions/reminders";
+import { createReminderAction } from "@/lib/actions/create-reminder-action";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";

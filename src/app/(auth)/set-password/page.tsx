@@ -6,19 +6,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  Component,
-  type ErrorInfo,
-  type ReactNode,
-  startTransition,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { AuthFormErrorBoundary } from "@/components/features/auth/AuthFormErrorBoundary";
 import { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";
 import {
   Card,
@@ -37,44 +28,6 @@ import {
 } from "@/lib/auth/password-recovery-browser";
 import { useT } from "@/lib/i18n/use-translations";
 import { getAuthBrowserSingletonClient } from "@/lib/supabase/auth-browser-singleton";
-
-type LoginAuthErrorBoundaryProps = {
-  children: ReactNode;
-  errorToast: string;
-  reloadMessage: string;
-};
-
-type LoginAuthErrorBoundaryState = { didCatch: boolean };
-
-class LoginAuthErrorBoundary extends Component<
-  LoginAuthErrorBoundaryProps,
-  LoginAuthErrorBoundaryState
-> {
-  state: LoginAuthErrorBoundaryState = { didCatch: false };
-
-  static getDerivedStateFromError(): LoginAuthErrorBoundaryState {
-    return { didCatch: true };
-  }
-
-  componentDidCatch(error: unknown, _info: ErrorInfo) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
-    toast.error(this.props.errorToast, {
-      description: message,
-    });
-  }
-
-  render() {
-    if (this.state.didCatch) {
-      return (
-        <p className="text-center text-muted-foreground text-sm">
-          {this.props.reloadMessage}
-        </p>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 export default function SetPasswordPage() {
   const t = useT("login");
@@ -246,7 +199,7 @@ export default function SetPasswordPage() {
         </CardHeader>
         <CardContent className="space-y-4 px-4 pb-6 sm:px-8">
           {supabase ? (
-            <LoginAuthErrorBoundary
+            <AuthFormErrorBoundary
               errorToast={t("errorBoundaryToast")}
               reloadMessage={t("errorBoundaryReload")}
             >
@@ -274,7 +227,7 @@ export default function SetPasswordPage() {
                   <span>{t("recoveryPleaseWait")}</span>
                 </p>
               )}
-            </LoginAuthErrorBoundary>
+            </AuthFormErrorBoundary>
           ) : (
             <p className="text-center text-sm text-muted-foreground">
               {t("loading")}

@@ -1,4 +1,4 @@
-// src/app/(protected)/brevo/ClientBrevoPage.tsx
+// src/components/features/brevo/ClientBrevoPage.tsx
 "use client";
 
 import BrevoCampaignForm from "@/components/features/brevo/BrevoCampaignForm";

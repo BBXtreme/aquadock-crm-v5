@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-
+import ReminderDetailClient from "@/components/features/reminders/ReminderDetailClient";
 import { RemindersPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { resolveReminderDetail } from "@/lib/actions/resolve-detail";
 import { requireUser } from "@/lib/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import ReminderDetailClient from "./ReminderDetailClient";
 
 export default async function ReminderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireUser();

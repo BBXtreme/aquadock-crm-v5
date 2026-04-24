@@ -684,6 +684,9 @@
     "detailAddContact": "Add contact",
     "detailEmptyLinkedCompany": "No contacts linked to this company.",
     "detailSavedToast": "Contact saved",
+    "formCompanySearchPlaceholder": "Search companies…",
+    "formCompanyEmpty": "No company found.",
+    "formCompanyClear": "Clear company link",
     "formCompanyClearAria": "Remove company link",
     "unlinkButtonAria": "Unlink from company",
     "unlinkConfirmTitle": "Unlink contact?",
@@ -774,6 +777,7 @@
   "openmap": {
     "loadErrorTitle": "Could not load map",
     "loadErrorDescription": "Please try again.",
+    "mapBoundaryReload": "Reload map",
     "errorBanner": "Error loading map",
     "appleBasemapNotice": "Note: Apple Maps currently use the same OpenStreetMap/CARTO basemap as before.",
     "loadingPois": "Loading POIs…",

@@ -23,7 +23,7 @@
 - **API route handlers** — thin JSON boundaries; assert status, Zod rejection, happy path with mocked service.
 - **Regressions** — a bug fixed in lib code deserves a unit test so it does not return.
 
-**Prefer extracting logic** from huge components into **testable helpers** rather than a 500-line `CompaniesTable` unit test. Test the helper; keep the component as wiring.
+**Prefer extracting logic** from huge components into **testable helpers** rather than a 500-line `CompaniesTable` unit test. Test the helper; keep the component as wiring. **Reference layout:** `src/components/features/companies/use-companies-list-*.ts` (queries, URL sync, delete mutation, geocode batch, bulk delete, deep links) keeps `ClientCompaniesPage` mostly composition—add Vitest against a hook or extracted pure helper when behavior is non-trivial. Example: [`use-companies-list-delete-mutation.test.tsx`](../src/components/features/companies/use-companies-list-delete-mutation.test.tsx) (optimistic cache + rollback + soft-delete toast).
 
 ---
 
@@ -73,7 +73,7 @@ Excluding files is **not** a substitute for tests if the code is **high-risk** (
 | `pnpm test:coverage` | Coverage locally (same thresholds as CI) |
 | `pnpm e2e` / `pnpm e2e:ci` | Playwright |
 
-**Global thresholds** (see `vitest.config.ts`): statements and lines **90%**; branches and functions **80%**. Only **non-excluded** files count toward those percentages.
+**Global thresholds** (see `vitest.config.ts`): statements and lines **85%**; branches and functions **80%**. Only **non-excluded** files count toward those percentages.
 
 ---
 

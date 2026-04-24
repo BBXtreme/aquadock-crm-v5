@@ -52,6 +52,9 @@ vi.mock("@/lib/actions/crm-trash", () => ({
 
 vi.mock("@/lib/actions/reminders", () => ({
   getReminders: (client: unknown) => mockGetReminders(client),
+}));
+
+vi.mock("@/lib/actions/create-reminder-action", () => ({
   createReminderAction: (body: unknown) => mockCreateReminder(body),
 }));
 

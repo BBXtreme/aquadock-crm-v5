@@ -20,8 +20,8 @@ import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { deleteCompany } from "@/lib/actions/companies";
 import { restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getCountryFlag, getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
-import { getCountryFlag, getFirmentypLabel, getKundentypLabel } from "../../lib/utils";
 
 interface Props {
   company: Company;

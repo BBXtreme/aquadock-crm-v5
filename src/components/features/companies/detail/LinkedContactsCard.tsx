@@ -22,9 +22,9 @@ import { ContactAvatar } from "@/components/ui/contact-avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { updateContact } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useT } from "@/lib/i18n/use-translations";
+import { updateContact } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 

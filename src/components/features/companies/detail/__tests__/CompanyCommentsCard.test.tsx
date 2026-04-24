@@ -5,7 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import CompanyCommentsCard from "@/components/company-detail/CompanyCommentsCard";
+import CompanyCommentsCard from "@/components/features/companies/detail/CompanyCommentsCard";
 import deMessages from "@/messages/de.json";
 
 const listCompanyComments = vi.fn();

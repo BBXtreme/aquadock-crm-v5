@@ -37,7 +37,7 @@ export default function ContactEditForm({
 
   const mutation = useMutation({
     mutationFn: async (data: ContactForm) => {
-      const { createContactAction, updateContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { createContactAction, updateContactAction } = await import("@/lib/actions/contacts");
       if (contact) {
         return updateContactAction(contact.id, data);
       }

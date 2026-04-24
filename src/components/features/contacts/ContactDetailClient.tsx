@@ -1,4 +1,4 @@
-// src/app/contacts/[id]/ContactDetailClient.tsx
+// src/components/features/contacts/ContactDetailClient.tsx
 // This file defines the client component for the Contact Detail page, handling all interactive parts.
 // It receives the contact and companies data as props and manages state for dialogs and forms.
 
@@ -14,6 +14,7 @@ import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
+import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,10 +49,10 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { getContactById, updateContact } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { anredeOptions } from "@/lib/constants/contact-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getContactById, updateContact } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import { getKundentypLabel } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
@@ -580,35 +581,38 @@ export default function ContactDetailClient({ contact: initialContact, companies
           <DialogHeader>
             <DialogTitle>{t("changeLinkedCompanyDialogTitle")}</DialogTitle>
           </DialogHeader>
-          <Select
-            onValueChange={async (value) => {
-              const supabase = createClient();
-              try {
-                await updateContact(contact.id, { company_id: value === "none" ? null : value }, supabase);
-                toast.success(t("toastCompanyLinkUpdated"));
-                await queryClient.invalidateQueries({ queryKey: ["contact", id] });
-                await queryClient.invalidateQueries({ queryKey: ["company", value === "none" ? null : value] });
-                setChangeCompanyDialog(false);
-              } catch (err) {
-                toast.error(t("toastOperationFailed"), {
-                  description: (err as Error).message,
-                });
-              }
-            }}
-            defaultValue={contact.company_id || "none"}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("formCompanyPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">{t("companyUnlinkedOption")}</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.firmenname}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <p className="text-sm font-medium leading-none">{t("formCompany")}</p>
+            <ReminderCompanyCombobox
+              value={contact.company_id ?? ""}
+              onValueChange={async (value) => {
+                const supabase = createClient();
+                const companyId = value === "" ? null : value;
+                const previousCompanyId = contact.company_id;
+                try {
+                  await updateContact(contact.id, { company_id: companyId }, supabase);
+                  toast.success(t("toastCompanyLinkUpdated"));
+                  await queryClient.invalidateQueries({ queryKey: ["contact", id] });
+                  if (companyId) {
+                    await queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+                  }
+                  if (previousCompanyId) {
+                    await queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+                  }
+                  setChangeCompanyDialog(false);
+                } catch (err) {
+                  toast.error(t("toastOperationFailed"), {
+                    description: (err as Error).message,
+                  });
+                }
+              }}
+              companies={companies}
+              placeholder={t("companyUnlinkedOption")}
+              searchPlaceholder={t("formCompanySearchPlaceholder")}
+              emptyMessage={t("formCompanyEmpty")}
+              clearLabel={t("formCompanyClear")}
+            />
+          </div>
         </WideDialogContent>
       </Dialog>
     </PageShell>

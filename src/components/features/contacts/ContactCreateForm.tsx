@@ -52,7 +52,7 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
 
   const mutation = useMutation({
     mutationFn: async (contact: ContactForm) => {
-      const { createContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { createContactAction } = await import("@/lib/actions/contacts");
       return createContactAction({
         vorname: contact.vorname,
         nachname: contact.nachname,
