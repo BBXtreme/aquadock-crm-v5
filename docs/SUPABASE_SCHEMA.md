@@ -147,7 +147,7 @@ Company-scoped threaded comments. **Phase 1:** `entity_type` is constrained to `
 
 **Triggers:** `trg_comments_set_updated_at` sets `updated_at` on UPDATE; `trg_comments_validate_parent` ensures `parent_id` (if set) points to a non-deleted comment on the same `entity_type` / `entity_id`.
 
-**Source SQL (apply in order on a new project):** [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql), then [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql), then [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) (extends RLS so the company owner can SELECT soft-deleted comments, UPDATE for restore, and DELETE for hard delete — see §4).
+**Source SQL (apply in order on a new project):** [`src/sql/profiles-table.sql`](../src/sql/profiles-table.sql) (if `public.profiles` is missing), then [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql), then [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql), then [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) (extends RLS so the company owner can SELECT soft-deleted comments, UPDATE for restore, and DELETE for hard delete — see §4).
 
 ### comment_attachments
 
@@ -231,6 +231,8 @@ In-app **notification feed** (bell / notifications page). One row per delivered 
 **Zod / validation:** See `src/lib/validations/notification.ts` (in-app v1) for strict payload shapes per `type`.
 
 ### profiles
+
+**Bootstrap SQL:** [`src/sql/profiles-table.sql`](../src/sql/profiles-table.sql) — run on any database that does not yet have `public.profiles` (required before comments / several RLS scripts).
 
 | Column       | Type        | Nullable | Default | Business Meaning         | Notes / Index    |
 | ------------ | ----------- | -------- | ------- | ------------------------ | ---------------- |
@@ -423,3 +425,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-22 Documented **Maintenance** backfill for `user_id` from `created_by` (SQL + `pnpm backfill:user-id`): [`backfill-user-id-from-created-by.sql`](../src/sql/backfill-user-id-from-created-by.sql).
 
 2026-04-23 Doc-only: header audit date; no schema change. Cross-refs: [`AIDER-RULES.md`](AIDER-RULES.md), [`architecture.md`](architecture.md) HTTP API inventory.
+
+2026-04-24 Added [`profiles-table.sql`](../src/sql/profiles-table.sql) for bootstrapping `public.profiles` on empty DBs (prerequisite for `comments` FKs); documented apply order before `comments-tables.sql`.
