@@ -1368,7 +1368,7 @@
     "globalSearchTitle": "Global search",
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
     "globalSearchGotIt": "Got it",
-    "searchAriaLabel": "Open quick navigation (⌘K)",
+    "commandPaletteTriggerAria": "Open command menu (jump to a page or quick action)",
     "notificationsLinkAria": "Notifications",
     "reminderOverdueLinkAria": "View overdue reminders",
     "reminderThisWeekLinkAria": "View open reminders due this week",

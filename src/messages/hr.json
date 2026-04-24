@@ -1368,7 +1368,7 @@
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
     "globalSearchGotIt": "Razumijem",
-    "searchAriaLabel": "Pretraga",
+    "commandPaletteTriggerAria": "Otvori izbornik naredbi (stranica ili brza radnja)",
     "notificationsLinkAria": "Obavijesti",
     "reminderOverdueLinkAria": "Prikaži prekoračene podsjetnike",
     "reminderThisWeekLinkAria": "Prikaži otvorene podsjetnike ovog tjedna",

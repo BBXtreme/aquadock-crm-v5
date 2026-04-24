@@ -1,10 +1,10 @@
 // src/components/layout/Header.tsx
-// This component implements the header of the application, including the logo, quick navigation (⌘K), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
+// This component implements the header of the application, including the logo, command menu (⌘K / Ctrl+K), theme toggle, reminders notifications, and user menu. It uses React Query to fetch reminder counts and Next.js features for routing and theming.
 
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Search, Settings, Sun, User } from "lucide-react";
+import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Settings, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -241,18 +241,12 @@ export default function Header({ user }: HeaderProps) {
             <Button
               type="button"
               variant="ghost"
-              className="h-9 min-w-9 gap-1.5 px-2 pr-1.5"
-              aria-label={t("searchAriaLabel")}
+              className="gap-0 px-2 font-mono text-sm leading-none tabular-nums text-muted-foreground hover:text-foreground"
+              aria-label={t("commandPaletteTriggerAria")}
               aria-keyshortcuts="Control+K Meta+K"
               onClick={() => setCommandOpen(true)}
             >
-              <Search className="h-4 w-4 shrink-0" aria-hidden />
-              <kbd
-                className="pointer-events-none inline-flex h-5 min-h-5 min-w-10 max-w-18 shrink-0 select-none items-center justify-center overflow-hidden text-ellipsis rounded border border-border bg-muted font-mono text-[10px] font-medium leading-none text-foreground/90"
-                aria-hidden
-              >
-                {commandPaletteModLabel}
-              </kbd>
+              {commandPaletteModLabel}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-[min(20rem,calc(100vw-2rem))] text-balance" sideOffset={6}>

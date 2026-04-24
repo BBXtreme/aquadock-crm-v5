@@ -1368,7 +1368,7 @@
     "globalSearchTitle": "Globale Suche",
     "globalSearchDescription": "Die globale Suche ist noch nicht fertig — hier kommt später die richtige Suche hin. Bis dahin nutzen Sie die Seitenleiste oder die Listen.",
     "globalSearchGotIt": "Verstanden",
-    "searchAriaLabel": "Suche",
+    "commandPaletteTriggerAria": "Befehlsmenü öffnen (Seite oder Schnellaktion)",
     "notificationsLinkAria": "Benachrichtigungen",
     "reminderOverdueLinkAria": "Überfällige Erinnerungen anzeigen",
     "reminderThisWeekLinkAria": "Offene Erinnerungen dieser Woche anzeigen",
