@@ -3,6 +3,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Align `dark:*` utilities with next-themes / `html.dark` (see `.dark { ... }` below).
+   Tailwind v4 defaults to `prefers-color-scheme`, which light UI + OS dark breaks (e.g. timeline badges). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Tailwind v4 theme mapping — AquaDock CRM design system */
 @theme inline {
   --color-background: var(--background);

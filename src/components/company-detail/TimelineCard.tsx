@@ -347,7 +347,7 @@ export default function TimelineCard({ companyId }: Props) {
                         </td>
                         <td>
                           <Badge
-                            variant="outline"
+                            variant="timeline"
                             className={cn(
                               "flex items-center gap-1 rounded-full",
                               timelineActivityBadgeClassName(displayType),

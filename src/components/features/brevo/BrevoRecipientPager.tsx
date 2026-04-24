@@ -2,6 +2,7 @@
 
 import type { Table } from "@tanstack/react-table";
 
+import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n/use-translations";
 import type { BrevoContactWithCompany } from "@/types/brevo";
 
@@ -21,22 +22,24 @@ export function BrevoRecipientPager({ table, isPending }: BrevoRecipientPagerPro
         {isPending ? "…" : t("recipientPagerSelection", { selected, total })}
       </div>
       <div className="space-x-2">
-        <button
+        <Button
           type="button"
-          className="rounded border px-2 py-1"
+          variant="outline"
+          size="sm"
           onClick={() => table.previousPage()}
           disabled={isPending || !table.getCanPreviousPage()}
         >
           {t("recipientPagerPrev")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="rounded border px-2 py-1"
+          variant="outline"
+          size="sm"
           onClick={() => table.nextPage()}
           disabled={isPending || !table.getCanNextPage()}
         >
           {t("recipientPagerNext")}
-        </button>
+        </Button>
       </div>
     </div>
   );

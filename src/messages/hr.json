@@ -782,6 +782,7 @@
     "titleClearCacheReload": "Isprazni predmemoriju i ponovno učitaj POI",
     "titleRefreshVisibleArea": "Osvježi vidljivo područje",
     "legendTitle": "Legenda statusa",
+    "legendCloseAria": "Zatvori legendu",
     "googleNoApiKeyTitle": "Google karte: nema API ključa",
     "googleNoApiKeyDescription": "U postavkama dodajte ključ s uključenom Map Tiles API.",
     "googleSessionFailedTitle": "Google karte: sesija nije uspjela",

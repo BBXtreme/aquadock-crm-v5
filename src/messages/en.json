@@ -782,6 +782,7 @@
     "titleClearCacheReload": "Clear cache and reload POIs",
     "titleRefreshVisibleArea": "Refresh visible area",
     "legendTitle": "Status legend",
+    "legendCloseAria": "Close legend",
     "googleNoApiKeyTitle": "Google Maps: no API key",
     "googleNoApiKeyDescription": "Add a key with Map Tiles API enabled under Settings.",
     "googleSessionFailedTitle": "Google Maps: session failed",
