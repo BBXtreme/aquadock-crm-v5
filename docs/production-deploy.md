@@ -59,6 +59,7 @@ Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) an
 
 If you use company comments, apply these **in order** in the Supabase SQL Editor (or your migration pipeline); see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §2 and §4.
 
+- [ ] [`src/sql/profiles-table.sql`](../src/sql/profiles-table.sql) — if `public.profiles` is missing (prerequisite for comments FKs)
 - [ ] [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql) — tables, indexes, triggers  
 - [ ] [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) — initial RLS  
 - [ ] [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) — owner SELECT/UPDATE/DELETE for trash and restore  

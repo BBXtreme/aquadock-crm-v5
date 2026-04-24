@@ -1,5 +1,21 @@
 -- Company comments (Phase 1) + optional attachments (schema only for UI later).
+-- Prerequisite: public.profiles must exist — run profiles-table.sql first (FK on created_by / updated_by / deleted_by).
 -- Apply in Supabase SQL editor or via migration pipeline. RLS: see comments-rls.sql.
+--
+-- Fails fast with a clear message if this file is applied to the wrong/empty DB (avoids opaque 42P01 on CREATE TABLE).
+
+DO $comments_prereq$
+BEGIN
+  IF to_regclass('public.profiles') IS NULL THEN
+    RAISE EXCEPTION
+      'public.profiles is missing. Apply src/sql/profiles-table.sql on THIS database (same Supabase project / connection), then run comments-tables.sql again.';
+  END IF;
+  IF to_regclass('public.companies') IS NULL THEN
+    RAISE EXCEPTION
+      'public.companies is missing. Create core CRM tables before comments-tables.sql.';
+  END IF;
+END
+$comments_prereq$;
 
 -- ---------------------------------------------------------------------------
 -- comments
