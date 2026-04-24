@@ -15,13 +15,19 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase environment variables. Check your .env.local file.");
-}
-
+/**
+ * Validates env at call time (not at module import) so the client bundle can load and
+ * React can hydrate. A top-level throw prevented `/login` from ever running effects,
+ * leaving the page stuck on the SSR "Loading" string when NEXT_PUBLIC_* were missing
+ * from the production build.
+ */
 export function createClient() {
-  return createBrowserClient(supabaseUrl as string, supabaseAnonKey as string);
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      "Missing Supabase environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (e.g. in .env.local) and rebuild when using next start.",
+    );
+  }
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

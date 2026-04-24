@@ -11,6 +11,9 @@ const inCi = process.env.CI === "true";
 /**
  * E2E — auth + company/contact/mass-email smoke (see `tests/e2e/`).
  * Deep paths excluded from Vitest coverage (company detail, crm actions) are exercised here in CI.
+ *
+ * Local runs use `next dev` so `NEXT_PUBLIC_*` from `.env.local` apply without a rebuild; CI uses
+ * `next start` after `pnpm build` with env vars from the workflow.
  */
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -25,7 +28,9 @@ export default defineConfig({
     ...devices["Desktop Chrome"],
   },
   webServer: {
-    command: "pnpm exec next start -H 127.0.0.1 -p 3000",
+    command: inCi
+      ? "pnpm exec next start -H 127.0.0.1 -p 3000"
+      : "NODE_OPTIONS=\"--max-old-space-size=8192\" pnpm exec next dev -H 127.0.0.1 -p 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !inCi,
     timeout: 120_000,

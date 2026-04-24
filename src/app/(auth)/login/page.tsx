@@ -129,6 +129,8 @@ export default function LoginPage() {
   const t = useT("login");
   const [view, setView] = useState<LoginAuthView>("sign_in");
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
+  /** Browser client failed to construct (usually missing NEXT_PUBLIC_* in the built bundle). */
+  const [supabaseClientMissing, setSupabaseClientMissing] = useState(false);
   const [recoverySaved, setRecoverySaved] = useState(false);
   /** True only when the client has a recovery-capable session (never show update form before this). */
   const [recoverySessionReady, setRecoverySessionReady] = useState(false);
@@ -169,7 +171,11 @@ export default function LoginPage() {
 
   // 2) One shared browser client after latch (singleton avoids Strict Mode double-init).
   useLayoutEffect(() => {
-    setSupabase(getAuthBrowserSingletonClient());
+    try {
+      setSupabase(getAuthBrowserSingletonClient());
+    } catch {
+      setSupabaseClientMissing(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -435,7 +441,16 @@ export default function LoginPage() {
                 : "space-y-4 px-4 pb-6 sm:px-6"
             }
           >
-            {supabase ? (
+            {supabaseClientMissing ? (
+              <p
+                role="alert"
+                className="text-center text-sm text-destructive"
+                data-testid="login-supabase-init-error"
+              >
+                <span className="font-medium">{t("supabaseClientInitTitle")}</span>
+                <span className="mt-2 block text-muted-foreground">{t("supabaseClientInitHint")}</span>
+              </p>
+            ) : supabase ? (
               <LoginAuthErrorBoundary
                 errorToast={t("errorBoundaryToast")}
                 reloadMessage={t("errorBoundaryReload")}

@@ -33,8 +33,8 @@ Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` —
 | Install command | `pnpm install` (enable pnpm in project settings) |
 | Build command | `pnpm build` |
 | Output | `.next` (default) |
-| Node.js | **22.x** — aligned with CI in `.github/workflows/ci.yml` (Vercel's platform default is **24 LTS**; pin to 22 to match CI) |
-| pnpm | **10.x** (CI uses `pnpm/action-setup` with `version: 10`) |
+| Node.js | **24.x** — aligned with CI (`.github/workflows/ci.yml`), [`.nvmrc`](../.nvmrc), and `engines` in `package.json` (matches Vercel’s default **24 LTS**) |
+| pnpm | **10.33.x** (same minor as `packageManager` in `package.json`; CI uses `pnpm/action-setup` with that version) |
 
 ---
 

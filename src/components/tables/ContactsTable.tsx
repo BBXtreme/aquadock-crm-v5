@@ -274,7 +274,6 @@ export default function ContactsTable({
     [t, onEdit, onDelete, deleteDialogOpen, contactToDelete],
   );
 
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<ContactWithCompany>({
     data: contacts,
     columns,

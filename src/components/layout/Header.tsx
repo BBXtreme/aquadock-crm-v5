@@ -23,8 +23,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { performBrowserSignOutToLogin } from "@/lib/auth/browser-sign-out";
 import type { AuthUser } from "@/lib/auth/types";
+import { useCommandPaletteModLabel } from "@/lib/hooks/use-command-palette-mod-label";
 import { useT } from "@/lib/i18n/use-translations";
 import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import { getUnreadCount } from "@/lib/services/in-app-notifications";
@@ -70,6 +72,7 @@ export default function Header({ user }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const commandPaletteModLabel = useCommandPaletteModLabel();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
@@ -233,16 +236,29 @@ export default function Header({ user }: HeaderProps) {
           </Link>
         )}
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={t("searchAriaLabel")}
-          aria-keyshortcuts="Control+K Meta+K"
-          onClick={() => setCommandOpen(true)}
-        >
-          <Search className="h-4 w-4" aria-hidden />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-9 min-w-9 gap-1.5 px-2 pr-1.5"
+              aria-label={t("searchAriaLabel")}
+              aria-keyshortcuts="Control+K Meta+K"
+              onClick={() => setCommandOpen(true)}
+            >
+              <Search className="h-4 w-4 shrink-0" aria-hidden />
+              <kbd
+                className="pointer-events-none inline-flex h-5 min-h-5 min-w-10 max-w-18 shrink-0 select-none items-center justify-center overflow-hidden text-ellipsis rounded border border-border bg-muted font-mono text-[10px] font-medium leading-none text-foreground/90"
+                aria-hidden
+              >
+                {commandPaletteModLabel}
+              </kbd>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-[min(20rem,calc(100vw-2rem))] text-balance" sideOffset={6}>
+            {t("commandPaletteSearchButtonTooltip")}
+          </TooltipContent>
+        </Tooltip>
         <AppCommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
 
         <DropdownMenu>

@@ -2,7 +2,7 @@
 "use client";
 
 import { Code, Copy, Eye, MailCheck, Send } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +92,16 @@ const htmlToReact = (html: string): React.ReactNode[] => {
   return Array.from(container.childNodes).map((node, index) => convertNode(node, index));
 };
 
+/** SSR-safe fallback when {@link DOMParser} is not available (server / first paint). */
+function stripHtmlToText(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export default function LivePreview({
   previewSubject,
   previewBody,
@@ -103,6 +113,11 @@ export default function LivePreview({
   const [previewTab, setPreviewTab] = useState<"preview" | "raw">("preview");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
+  /** Avoid `DOMParser` during SSR / RSC pass — it is not defined in Node. */
+  const [canParseEmailHtml, setCanParseEmailHtml] = useState(false);
+  useEffect(() => {
+    setCanParseEmailHtml(true);
+  }, []);
 
   const copyToClipboard = async () => {
     const text = `${t("livePreviewClipboardSubjectPrefix")} ${previewSubject}\n\n${previewBody}`;
@@ -115,7 +130,10 @@ export default function LivePreview({
   };
 
   const sanitizedBody = useMemo(() => sanitizeHtml(previewBody), [previewBody]);
-  const bodyElements = useMemo(() => htmlToReact(sanitizedBody), [sanitizedBody]);
+  const bodyElements = useMemo(() => {
+    if (!canParseEmailHtml) return null;
+    return htmlToReact(sanitizedBody);
+  }, [canParseEmailHtml, sanitizedBody]);
 
   return (
     <Card>
@@ -170,7 +188,17 @@ export default function LivePreview({
 
               {/* Safe HTML rendering as React elements */}
               <div className="prose dark:prose-invert text-[15.5px] leading-relaxed">
-                {bodyElements.length > 0 ? bodyElements : t("livePreviewNoBody")}
+                {!canParseEmailHtml ? (
+                  sanitizedBody.trim() ? (
+                    <div className="whitespace-pre-wrap">{stripHtmlToText(sanitizedBody)}</div>
+                  ) : (
+                    t("livePreviewNoBody")
+                  )
+                ) : bodyElements && bodyElements.length > 0 ? (
+                  bodyElements
+                ) : (
+                  t("livePreviewNoBody")
+                )}
               </div>
             </div>
           </div>

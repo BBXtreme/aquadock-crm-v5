@@ -409,7 +409,6 @@ export default function CompaniesTable({
   // `getFilteredRowModel` or `globalFilterFn`: re-filtering the server result set
   // with `includesString` would drop every semantic match that doesn't also
   // contain the raw query substring. `manualFiltering` keeps the table honest.
-  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<CompanyWithContacts>({
     data: companies,
     columns,

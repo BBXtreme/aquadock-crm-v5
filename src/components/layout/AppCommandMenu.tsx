@@ -14,7 +14,11 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { appShellMarketingNav, appShellSalesNav } from "@/lib/constants/app-shell-navigation";
+import {
+  appShellMarketingNav,
+  appShellQuickCreate,
+  appShellSalesNav,
+} from "@/lib/constants/app-shell-navigation";
 import { useT } from "@/lib/i18n/use-translations";
 
 type AppCommandMenuProps = {
@@ -90,6 +94,25 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
               );
             })}
           </CommandGroup>
+          <CommandGroup heading={t("commandPaletteQuickCreateGroup")}>
+            {appShellQuickCreate.map((item) => {
+              const Icon = item.icon;
+              const label = ts(item.messageKey);
+              return (
+                <CommandItem
+                  key={item.href}
+                  value={`${label} ${item.href} ${item.cmdkKeywords}`}
+                  keywords={item.cmdkKeywords.split(/\s+/).filter(Boolean)}
+                  onSelect={() => {
+                    run(item.href);
+                  }}
+                >
+                  <Icon className="text-muted-foreground" aria-hidden />
+                  {label}
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
           <CommandGroup heading={ts("groupMarketing")}>
             {appShellMarketingNav.map((item) => {
               const Icon = item.icon;
@@ -139,6 +162,9 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
             </CommandItem>
           </CommandGroup>
         </CommandList>
+        <p className="border-t border-border px-3 py-2 text-center text-xs text-muted-foreground">
+          {t("commandPaletteFooterHint")}
+        </p>
       </Command>
     </CommandDialog>
   );

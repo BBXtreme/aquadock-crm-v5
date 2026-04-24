@@ -1357,9 +1357,12 @@
   },
   "layout": {
     "commandPaletteTitle": "Idi na",
-    "commandPaletteDescription": "Pretražite ili otvorite stranicu.",
-    "commandPalettePlaceholder": "Pretraži stranice…",
+    "commandPaletteDescription": "Otvorite stranicu ili dodajte tvrtku, kontakt, podsjetnik ili zapis.",
+    "commandPalettePlaceholder": "Pretražite stranice i brze radnje…",
     "commandPaletteEmpty": "Nema podudaranja.",
+    "commandPaletteQuickCreateGroup": "Novo",
+    "commandPaletteFooterHint": "Strelice · Enter otvara · Esc zatvara",
+    "commandPaletteSearchButtonTooltip": "Brza navigacija: otvorite stranicu ili dodajte zapis. Prečac: Ctrl+K ili ⌘K.",
     "commandPaletteAccountGroup": "Račun",
     "globalSearchTitle": "Globalna pretraga",
     "globalSearchDescription": "Globalna pretraga još nije dostupna — ovdje će kasnije biti prava pretraga. Do tada koristite bočnu traku ili stranice s popisima.",
@@ -1655,6 +1658,8 @@
     "recoveryErrorToast": "Lozinka se nije mogla spremiti.",
     "errorBoundaryToast": "Došlo je do neočekivane pogreške.",
     "errorBoundaryReload": "Molimo ponovno učitajte stranicu.",
+    "supabaseClientInitTitle": "Prijava nije dostupna",
+    "supabaseClientInitHint": "U ovom buildu nedostaju Supabase URL ili anon ključ. Lokalno: koristite pnpm dev ili ponovno izgradite s NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY (npr. u .env.local) prije next start.",
     "applyForAccess": "Zatraži pristup"
   },
   "onboarding": {

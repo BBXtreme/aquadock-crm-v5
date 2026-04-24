@@ -28,15 +28,15 @@ A committed template with placeholders lives at **`.env.example`** in the reposi
 
 Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` (see [`BREVO_SDK.md`](BREVO_SDK.md)).
 
-**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** Match your CI (**22.x** — see `.github/workflows/ci.yml`). Vercel's current default Node runtime is **24 LTS**; pinning to **22.x** in the project settings keeps CI and production aligned. **Package manager:** CI pins **pnpm 10** via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
+**Install / build:** Use **pnpm** (`pnpm install`, `pnpm build`). **Node:** **24.x** LTS — match CI (see `.github/workflows/ci.yml`) and [`.nvmrc`](../.nvmrc). On Vercel, use **24.x** in project settings (platform default) so local, CI, and production match. **Package manager:** CI uses the same **pnpm** minor as `package.json#packageManager` via `pnpm/action-setup`. Framework preset: **Next.js**; output directory **`.next`**.
 
 ### GitHub Actions: CI and Playwright
 
 The workflow in **`.github/workflows/ci.yml`** runs `pnpm typecheck`, Biome, `pnpm test:ci`, and `pnpm build` on each PR, then an **e2e** job that runs Playwright against `http://127.0.0.1:3000`. The e2e job’s `next start` uses the fresh build output (no long-lived dev server in CI). Configure the same **`NEXT_PUBLIC_SUPABASE_*`** values the app needs at runtime as [GitHub Actions **variables**](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/variables) so the client bundle in CI can reach your Supabase project.
 
-- **Repository secrets (optional; required for full authenticated coverage):** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` — a **dedicated** non-production test user in Supabase Auth, password set via the **Supabase dashboard** (or Admin API), able to open the protected CRM and **not** stuck on `/access-pending` onboarding. The workflow reads `secrets.E2E_USER_EMAIL` and `secrets.E2E_USER_PASSWORD` (use **secrets**, not Variables). Without them, authenticated tests in `tests/e2e/` are skipped; public smoke tests still run.
+- **Repository secrets (optional; required for full authenticated coverage):** `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` — a **dedicated** non-production test user in Supabase Auth, password set via the **Supabase dashboard** (or Admin API), able to open the protected CRM and **not** stuck on `/access-pending` onboarding. The user must be allowed by RLS to **insert `companies` rows** (same as a normal sales user), because `company-create.spec.ts` creates a timestamped test company and searches for it. The workflow reads `secrets.E2E_USER_EMAIL` and `secrets.E2E_USER_PASSWORD` (use **secrets**, not Variables). Without them, authenticated tests in `tests/e2e/` are skipped; public smoke tests still run.
 
-**Local E2E:** `pnpm build` then `pnpm e2e`. Put `E2E_*` in **`.env.local`** — `playwright.config.ts` uses `loadEnvConfig` from `@next/env` so the Playwright Node process loads them automatically. See [`.env.example`](../.env.example).
+**Local E2E:** `pnpm build` then `pnpm e2e`. Put `E2E_*` in **`.env.local`** — `playwright.config.ts` uses `loadEnvConfig` from `@next/env` so the Playwright Node process loads them automatically. Authenticated specs pin UI locale to English via `tests/e2e/helpers/locale.ts` (`aquadock_appearance_locale` in `localStorage`). See [`.env.example`](../.env.example).
 
 Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) and [`playwright.config.ts`](../playwright.config.ts).
 

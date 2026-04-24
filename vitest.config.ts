@@ -73,6 +73,8 @@ export default defineConfig({
         "src/lib/server/delete-audit.ts",
         // Server actions / service-role client: branch-heavy Supabase + auth paths; covered via integration/E2E rather than mocked unit suites.
         "src/lib/actions/companies.ts",
+        // Nodemailer + DNS + batch send: branch-heavy; `mass-email.test.ts` covers guard rails; E2E covers UI.
+        "src/lib/actions/mass-email.ts",
         "src/lib/actions/reminder-server-action.ts",
         "src/lib/supabase/admin.ts",
       ],

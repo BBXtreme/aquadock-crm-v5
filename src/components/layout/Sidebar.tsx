@@ -11,6 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import {
   type AppShellNavMessageKey,
   appShellMarketingNav,
+  appShellQuickCreate,
   appShellSalesNav,
 } from "@/lib/constants/app-shell-navigation";
 import { useT } from "@/lib/i18n/use-translations";
@@ -169,26 +170,17 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-1 pt-2">
-              <Link href="/companies?create=true">
-                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  {t("newCompany")}
-                </Button>
-              </Link>
-              <Link href="/contacts?create=true">
-                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  {t("newContact")}
-                </Button>
-              </Link>
-              <Link href="/reminders?create=true">
-                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  {t("newReminder")}
-                </Button>
-              </Link>
-              <Link href="/timeline?create=true">
-                <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
-                  {t("newTimeline")}
-                </Button>
-              </Link>
+              {appShellQuickCreate.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <Button variant="ghost" size="sm" className="w-full justify-start h-8 px-3">
+                      <Icon className="h-4 w-4 mr-2 shrink-0 text-foreground/75" aria-hidden />
+                      {t(item.messageKey)}
+                    </Button>
+                  </Link>
+                );
+              })}
             </CollapsibleContent>
           </Collapsible>
         </div>

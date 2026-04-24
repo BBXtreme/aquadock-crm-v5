@@ -1357,9 +1357,12 @@
   },
   "layout": {
     "commandPaletteTitle": "Go to",
-    "commandPaletteDescription": "Search or open a page in the app.",
-    "commandPalettePlaceholder": "Search pages…",
+    "commandPaletteDescription": "Open a page or create a company, contact, reminder, or activity.",
+    "commandPalettePlaceholder": "Search pages and quick actions…",
     "commandPaletteEmpty": "No matches.",
+    "commandPaletteQuickCreateGroup": "Create",
+    "commandPaletteFooterHint": "Arrow keys to move · Enter to open · Esc to close",
+    "commandPaletteSearchButtonTooltip": "Quick navigation: open a page or create a company, contact, reminder, or activity. Shortcut: Ctrl+K or ⌘K.",
     "commandPaletteAccountGroup": "Account",
     "globalSearchTitle": "Global search",
     "globalSearchDescription": "This isn't built yet — we'll add a proper global search here when it's ready. Until then, jump in via the sidebar or the list pages.",
@@ -1655,6 +1658,8 @@
     "recoveryErrorToast": "Password could not be saved.",
     "errorBoundaryToast": "An unexpected error occurred.",
     "errorBoundaryReload": "Please reload the page.",
+    "supabaseClientInitTitle": "Sign-in is unavailable",
+    "supabaseClientInitHint": "Supabase URL or anon key is missing in this build. For local runs, use pnpm dev or rebuild with NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY set (e.g. in .env.local) before pnpm build when using next start.",
     "applyForAccess": "Apply for access"
   },
   "onboarding": {
