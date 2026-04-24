@@ -289,8 +289,8 @@ export default function Header({ user }: HeaderProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
+              <Button type="button" variant="ghost" size="icon" className="shrink-0 rounded-full">
+                <Avatar>
                   <AvatarImage src={avatarSrc} alt={avatarAlt} />
                   <AvatarFallback className="text-xs font-medium">{avatarFallback}</AvatarFallback>
                 </Avatar>
