@@ -73,7 +73,7 @@ describe("useCompaniesListDeleteMutation", () => {
     );
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    vi.spyOn(queryClient, "refetchQueries").mockResolvedValue([]);
+    vi.spyOn(queryClient, "refetchQueries").mockImplementation(() => Promise.resolve());
 
     const initial = listFixture();
     const key = listQueryKey(emptyFilters);
@@ -111,7 +111,7 @@ describe("useCompaniesListDeleteMutation", () => {
     deleteCompany.mockRejectedValueOnce(new Error("network"));
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    vi.spyOn(queryClient, "refetchQueries").mockResolvedValue([]);
+    vi.spyOn(queryClient, "refetchQueries").mockImplementation(() => Promise.resolve());
 
     const initial = listFixture();
     const key = listQueryKey(emptyFilters);
@@ -145,7 +145,7 @@ describe("useCompaniesListDeleteMutation", () => {
     deleteCompany.mockResolvedValueOnce("soft");
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const refetchSpy = vi.spyOn(queryClient, "refetchQueries").mockResolvedValue([]);
+    const refetchSpy = vi.spyOn(queryClient, "refetchQueries").mockImplementation(() => Promise.resolve());
 
     const initial = listFixture();
     const key = listQueryKey(emptyFilters);
