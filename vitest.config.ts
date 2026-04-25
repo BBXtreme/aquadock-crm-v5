@@ -30,8 +30,7 @@ export default defineConfig({
     ],
     // Coverage policy and when to add Vitest vs E2E: docs/testing-strategy.md
     coverage: {
-      // Default reportOnFailure is false: Vitest deletes coverage/.tmp on first failure while other
-      // thread workers still write there → ENOENT on coverage-*.json (see BaseCoverageProvider.onTestFailure).
+      // Avoid mid-run removal of coverage/.tmp when a test fails (thread pool + default reportOnFailure: false).
       reportOnFailure: true,
       provider: "v8",
       reporter: ["text", "json", "html", "json-summary"],
