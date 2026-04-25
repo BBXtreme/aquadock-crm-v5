@@ -12,19 +12,10 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Component,
-  type ErrorInfo,
-  type ReactNode,
-  startTransition,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { startTransition, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { AuthFormErrorBoundary } from "@/components/features/auth/AuthFormErrorBoundary";
 import { PasswordRecoveryUpdatePanel } from "@/components/features/auth/PasswordRecoveryUpdatePanel";
 import {
   Card,
@@ -85,45 +76,6 @@ const loginAuthAppearanceVariables = {
 } as const;
 
 type LoginAuthView = "sign_in" | "sign_up" | "update_password";
-
-type LoginAuthErrorBoundaryProps = {
-  children: ReactNode;
-  errorToast: string;
-  reloadMessage: string;
-};
-
-type LoginAuthErrorBoundaryState = { didCatch: boolean };
-
-/** React error boundaries must be a class; function components cannot implement `getDerivedStateFromError`. */
-class LoginAuthErrorBoundary extends Component<
-  LoginAuthErrorBoundaryProps,
-  LoginAuthErrorBoundaryState
-> {
-  state: LoginAuthErrorBoundaryState = { didCatch: false };
-
-  static getDerivedStateFromError(): LoginAuthErrorBoundaryState {
-    return { didCatch: true };
-  }
-
-  componentDidCatch(error: unknown, _info: ErrorInfo) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
-    toast.error(this.props.errorToast, {
-      description: message,
-    });
-  }
-
-  render() {
-    if (this.state.didCatch) {
-      return (
-        <p className="text-center text-muted-foreground text-sm">
-          {this.props.reloadMessage}
-        </p>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 export default function LoginPage() {
   const t = useT("login");
@@ -451,7 +403,7 @@ export default function LoginPage() {
                 <span className="mt-2 block text-muted-foreground">{t("supabaseClientInitHint")}</span>
               </p>
             ) : supabase ? (
-              <LoginAuthErrorBoundary
+              <AuthFormErrorBoundary
                 errorToast={t("errorBoundaryToast")}
                 reloadMessage={t("errorBoundaryReload")}
               >
@@ -509,7 +461,7 @@ export default function LoginPage() {
                     />
                   </div>
                 )}
-              </LoginAuthErrorBoundary>
+              </AuthFormErrorBoundary>
             ) : (
               <p className="text-center text-sm text-muted-foreground">
                 {t("loading")}

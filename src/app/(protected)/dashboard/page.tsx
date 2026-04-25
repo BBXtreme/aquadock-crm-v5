@@ -5,10 +5,10 @@
 // Protected dashboard with real KPI calculations and beautiful visualizations.
 
 import { Suspense } from "react";
+import DashboardClient from "@/components/features/dashboard/DashboardClient";
 import { DashboardContentSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import DashboardClient from "./DashboardClient";
 import { DashboardPageHeader } from "./DashboardPageHeader";
 
 export default async function DashboardPage() {

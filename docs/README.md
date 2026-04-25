@@ -5,6 +5,7 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | File | Use when you need… |
 | --- | --- |
 | [testing-strategy.md](testing-strategy.md) | **When to use Vitest vs Playwright**, coverage exclusions, cheat sheet |
+| [folder-conventions.md](folder-conventions.md) | **Where to put new code** — `app/` vs `features/`, actions vs services, large list hooks |
 | [architecture.md](architecture.md) | How the app is layered, **HTTP API table**, Zod, testing, a11y |
 | [AIDER-RULES.md](AIDER-RULES.md) | PR quality gate (all contributors) |
 | [aider.conventions.md](aider.conventions.md) | One-page convention table |

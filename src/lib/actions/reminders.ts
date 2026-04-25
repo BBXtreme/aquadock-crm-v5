@@ -1,2 +1,8 @@
-export { createReminder, getReminderById, getReminders, updateReminder } from "@/lib/services/reminders";
-export { createReminderAction } from "./reminder-server-action";
+import {
+  createReminder,
+  getReminderById,
+  getReminders,
+  updateReminder,
+} from "@/lib/services/reminders";
+
+export { createReminder, getReminderById, getReminders, updateReminder };

@@ -16,9 +16,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { createReminderAction, updateReminder } from "@/lib/actions/reminders";
+import { createReminderAction } from "@/lib/actions/create-reminder-action";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { useT } from "@/lib/i18n/use-translations";
+import { updateReminder } from "@/lib/services/reminders";
 import { createClient } from "@/lib/supabase/browser";
 import { reminderSchema, toReminderUpdate } from "@/lib/validations/reminder";
 import type { Database, } from "@/types/database.types";

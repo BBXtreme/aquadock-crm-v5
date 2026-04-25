@@ -1,4 +1,4 @@
-// src/app/(protected)/dashboard/DashboardClient.tsx
+// src/components/features/dashboard/DashboardClient.tsx
 // This file defines the DashboardClient component, which is responsible for fetching and displaying the dashboard statistics and visualizations.
 // It uses React Query's useSuspenseQuery to fetch data from Supabase, including total companies, contacts, activities, and sales funnel data.
 // The component renders KPI overview cards for total companies, active leads, won deals, and total pipeline value, as well as visualizations for the sales funnel and status distribution.

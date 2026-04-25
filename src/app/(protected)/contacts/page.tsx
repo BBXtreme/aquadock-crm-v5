@@ -6,10 +6,10 @@
 // The page also handles loading and error states, providing feedback to the user accordingly.
 
 import { Suspense } from "react";
+import ClientContactsPage from "@/components/features/contacts/ClientContactsPage";
 import { ContactsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import ClientContactsPage from "./ClientContactsPage";
 
 export default async function ContactsPage() {
   const _user = await requireUser();

@@ -5,7 +5,7 @@
 
 **Last updated:** April 24, 2026  
 
-For a shorter checklist, see [`aider.conventions.md`](aider.conventions.md). Deeper product and stack context: [`architecture.md`](architecture.md), [`../README.md`](../README.md).
+For a shorter checklist, see [`aider.conventions.md`](aider.conventions.md). Deeper product and stack context: [`architecture.md`](architecture.md), [`folder-conventions.md`](folder-conventions.md) (where to put components, types, actions), [`../README.md`](../README.md).
 
 ---
 
@@ -36,7 +36,7 @@ CI on PRs (see `.github/workflows/ci.yml`): TypeScript, Biome, Vitest with cover
 
 ## 3. Data and validation
 
-- **Zod** schemas in `src/lib/validations/` are the **single source of truth** for shapes sent to the server. Use `.strict()`, sensible `.trim()` / `emptyStringToNull`, and enums aligned with `src/types/supabase.ts`.  
+- **Zod** schemas in `src/lib/validations/` are the **single source of truth** for shapes sent to the server. Use `.strict()`, sensible `.trim()` / `emptyStringToNull`, and enums aligned with generated DB types (`pnpm supabase:types` → `src/types/supabase.ts`; Row/Insert aliases from `src/types/database.types.ts` in app code — see [`folder-conventions.md`](folder-conventions.md)).  
 - **Server Actions** (`src/lib/actions/`) stay thin: re-parse with Zod, then call `src/lib/services/`.  
 - **Route Handlers** (`src/app/api/**/route.ts`): use the same validation rules as the corresponding action where behavior overlaps; see the checklist in [`architecture.md` — *Mutations: Server Actions vs Route Handlers*](architecture.md#mutations-server-actions-vs-route-handlers).  
 - **Database access:** RLS-scoped `createServerSupabaseClient()` for normal work; service role only in audited server paths (never in client bundles).
