@@ -25,7 +25,7 @@ importers:
         version: 5.0.3
       '@hookform/resolvers':
         specifier: ^3.10.0
-        version: 3.10.0(react-hook-form@7.73.1(react@19.2.4))
+        version: 3.10.0(react-hook-form@7.73.1(react@19.2.5))
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
@@ -82,7 +82,7 @@ importers:
         version: 2.104.1
       '@tanstack/react-query':
         specifier: ^5.100.1
-        version: 5.100.1(react@19.2.4)
+        version: 5.100.1(react@19.2.5)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
@@ -160,7 +160,7 @@ importers:
         version: 15.0.0(react@19.2.5)
       react-hook-form:
         specifier: ^7.73.1
-        version: 7.73.1(react@19.2.4)
+        version: 7.73.1(react@19.2.5)
       react-leaflet:
         specifier: ^5.0.0
         version: 5.0.0(leaflet@1.9.4)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
@@ -215,7 +215,7 @@ importers:
         version: 4.2.2
       '@tanstack/react-query-devtools':
         specifier: ^5.96.1
-        version: 5.96.1(@tanstack/react-query@5.100.1(react@19.2.4))(react@19.2.4)
+        version: 5.96.1(@tanstack/react-query@5.100.1(react@19.2.5))(react@19.2.5)
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
@@ -5769,9 +5769,9 @@ snapshots:
     dependencies:
       hono: 4.12.15
 
-  '@hookform/resolvers@3.10.0(react-hook-form@7.73.1(react@19.2.4))':
+  '@hookform/resolvers@3.10.0(react-hook-form@7.73.1(react@19.2.5))':
     dependencies:
-      react-hook-form: 7.73.1(react@19.2.4)
+      react-hook-form: 7.73.1(react@19.2.5)
 
   '@img/colour@1.1.0':
     optional: true
@@ -7186,16 +7186,16 @@ snapshots:
 
   '@tanstack/query-devtools@5.96.1': {}
 
-  '@tanstack/react-query-devtools@5.96.1(@tanstack/react-query@5.100.1(react@19.2.4))(react@19.2.4)':
+  '@tanstack/react-query-devtools@5.96.1(@tanstack/react-query@5.100.1(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@tanstack/query-devtools': 5.96.1
-      '@tanstack/react-query': 5.100.1(react@19.2.4)
-      react: 19.2.4
+      '@tanstack/react-query': 5.100.1(react@19.2.5)
+      react: 19.2.5
 
-  '@tanstack/react-query@5.100.1(react@19.2.4)':
+  '@tanstack/react-query@5.100.1(react@19.2.5)':
     dependencies:
       '@tanstack/query-core': 5.100.1
-      react: 19.2.4
+      react: 19.2.5
 
   '@tanstack/react-table@8.21.3(react-dom@19.2.4(react@19.2.5))(react@19.2.5)':
     dependencies:
@@ -9391,7 +9391,7 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.5
 
-  react-hook-form@7.73.1(react@19.2.4):
+  react-hook-form@7.73.1(react@19.2.5):
     dependencies:
       react: 19.2.5
 
