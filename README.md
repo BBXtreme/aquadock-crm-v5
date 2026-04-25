@@ -33,7 +33,7 @@
 | Backend | Supabase | PostgreSQL, Auth, RLS, Storage |
 | Forms | react-hook-form, Zod | Schemas in `src/lib/validations/` |
 | i18n | next-intl | Message catalogs in `src/messages/` (`de`, `en`, `hr`) |
-| Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck` |
+| Quality | Biome, TypeScript strict | Run `pnpm check` / `pnpm typecheck`. Repo layout for new code: [`docs/folder-conventions.md`](docs/folder-conventions.md) |
 | Tests | Vitest, Testing Library, Playwright | **Strategy:** [`docs/testing-strategy.md`](docs/testing-strategy.md). Unit: `pnpm test:run` / `pnpm test:ci` (`src/test/setup.ts`). E2E: `tests/e2e/`, `pnpm e2e` — setup in `docs/architecture.md` **Testing** |
 
 ---

@@ -5,7 +5,8 @@
 // Both handlers include error handling to log any issues and return appropriate error responses if something goes wrong during database operations.
 
 import { type NextRequest, NextResponse } from "next/server";
-import { createReminderAction, getReminders } from "@/lib/actions/reminders";
+import { createReminderAction } from "@/lib/actions/create-reminder-action";
+import { getReminders } from "@/lib/actions/reminders";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {

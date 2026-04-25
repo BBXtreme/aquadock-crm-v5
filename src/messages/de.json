@@ -684,6 +684,9 @@
     "detailAddContact": "Kontakt hinzufügen",
     "detailEmptyLinkedCompany": "Keine Kontakte mit dieser Firma verknüpft.",
     "detailSavedToast": "Kontakt gespeichert",
+    "formCompanySearchPlaceholder": "Unternehmen suchen …",
+    "formCompanyEmpty": "Kein Unternehmen gefunden.",
+    "formCompanyClear": "Unternehmensverknüpfung entfernen",
     "formCompanyClearAria": "Unternehmensverknüpfung entfernen",
     "unlinkButtonAria": "Vom Unternehmen trennen",
     "unlinkConfirmTitle": "Verknüpfung aufheben?",
@@ -774,6 +777,7 @@
   "openmap": {
     "loadErrorTitle": "Karte konnte nicht geladen werden",
     "loadErrorDescription": "Bitte versuchen Sie es erneut.",
+    "mapBoundaryReload": "Karte neu laden",
     "errorBanner": "Fehler beim Laden der Karte",
     "appleBasemapNotice": "Hinweis: Apple-Karten nutzen vorerst dieselbe OpenStreetMap/CARTO-Basiskarte wie zuvor.",
     "loadingPois": "POIs werden geladen…",

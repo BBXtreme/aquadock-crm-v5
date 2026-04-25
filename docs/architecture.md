@@ -25,12 +25,12 @@ This document explains how the application is structured so developers (and tech
 | Interactivity | `"use client"` only where needed |
 | Data access | Server: `createServerSupabaseClient()` from `@/lib/supabase/server`; browser: `createClient()` from `@/lib/supabase/browser` for allowed cases (e.g. avatar upload) |
 | Auth gates | `requireUser()` and `requireAdmin()` in `@/lib/auth/require-user` and `@/lib/auth/require-admin`; profile-aware shell uses `getCurrentUser()` (`@/lib/auth/get-current-user.ts`, request-cached) |
-| Types | Generated `Database` types from Supabase + Zod-inferred form types |
+| Types | Generated types in `src/types/supabase.ts`; app code prefers aliases in `src/types/database.types.ts` (see [`folder-conventions.md`](folder-conventions.md)) |
 | Validation | `src/lib/validations/` — `.strict()`, `.trim()`, enums from constants, UUIDs, `emptyStringToNull` for nullable columns |
 | Business logic | `src/lib/services/` — reusable operations; Server Actions stay thin |
 | Mutations | Server Actions in `src/lib/actions/` — re-validate with Zod before persisting |
 | UI | shadcn/ui + Tailwind CSS v4 |
-| Client state | TanStack Query where remote state needs caching/refetch |
+| Client state | TanStack Query where remote state needs caching/refetch; **large list pages** colocate hooks + sections under `src/components/features/<domain>/` (see [`folder-conventions.md`](folder-conventions.md)) |
 | Quality | Biome + `tsc --noEmit`; no non-null assertions (`!`); use `safeDisplay` and helpers from `@/lib/utils/data-format` for empty/null UI |
 
 ---
@@ -65,6 +65,26 @@ User → Form (Client) → Server Action → Zod.parse → service layer → Sup
 
 **Rule of thumb:** add **Server Actions** first. Add a **Route Handler** only if you need a stable URL contract, `GET`+JSON, or a non-React caller (e.g. external tool calling your API on purpose). New features should not sprawl duplicate mutation paths without a reason noted in a PR.
 
+### Server Action errors and user-facing feedback
+
+When adding or changing mutations, keep failure behavior predictable and safe:
+
+1. **Validation** — Re-parse payloads with the shared Zod schema in the action (`.strict()`). Surface field or summary messages in **German** for CRM users, or reuse keys from `src/messages/` where the UI already translates.
+2. **Auth** — Use `requireUser()`, `requireAdmin()`, or equivalent; do not branch on raw JWT or session cookies in actions. Missing auth should redirect or fail with a consistent, non-leaky message—not internal IDs or stack traces in toasts.
+3. **Supabase / RLS** — Prefer `handleSupabaseError()` from `@/lib/supabase/db-error-utils` for database failures. Do not forward Postgres `hint`, internal codes, or full error objects to the client in production; the app’s error boundary and logging can retain detail in development.
+4. **Domain “not found” / empty RLS** — When a query legitimately returns no row for the user, throw or return a clear German message (e.g. entity missing or already moved to trash), distinct from generic “Something went wrong” where it helps support.
+
+Apply this pattern **incrementally** when touching a domain’s actions; avoid repo-wide string replacement in a single change.
+
+### Server Action modules and `"use server"` placement (Next.js)
+
+Next.js (v16+) rejects **per-function** `"use server"` inside files that end up in the **client component import graph** (the compiler treats that as defining inline server actions in a client context). In this repo:
+
+- Put **`"use server"` at the top of the file** for modules that export only server actions consumed from the client (e.g. `src/lib/actions/contacts.ts`).
+- **Split** action-only code into a dedicated file when the same domain also needs **client-importable** helpers (e.g. `create-reminder-action.ts` for `createReminderAction`, while `reminders.ts` re-exports service-layer functions usable with the browser Supabase client).
+
+Run **`pnpm build`** after changing action boundaries; typecheck alone does not catch this.
+
 ### API route review checklist (for `src/app/api/**/route.ts`)
 
 When adding or changing a handler, confirm:
@@ -97,6 +117,12 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 
 ---
 
+## Folder layout (components, types, actions)
+
+For **where to place new files** (thin `app/` routes, `features/` vs legacy folders, types imports, actions naming), see **[`folder-conventions.md`](folder-conventions.md)**.
+
+---
+
 ## Route groups and layout
 
 - **`(auth)`** — Public routes (e.g. login); no full app chrome.  
@@ -115,7 +141,7 @@ Companies with coordinates are loaded for the map via the service layer. OSM POI
 
 **Strategy (what to test where):** see **[`testing-strategy.md`](testing-strategy.md)** — Vitest for logic and mocked server paths; Playwright for real auth, RLS, and critical UI; how `coverage.exclude` relates to E2E.
 
-- **Vitest:** tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter). Global thresholds: **90%** statements and lines, **80%** branches and functions, on **included** files only. Large or branch-heavy modules may appear in `coverage.exclude` with an inline reason; pair with E2E or targeted tests where noted. Examples: `src/lib/actions/companies-create.test.ts` exercises `createCompany` while `companies.ts` is excluded from the coverage gate; `src/lib/actions/mass-email.test.ts` covers guard rails while `mass-email.ts` is excluded (nodemailer/DNS batch branches).
+- **Vitest:** tests live next to code as `*.test.ts` / `*.test.tsx` or under `**/__tests__/**` (see `vitest.config.ts`). Run once with `pnpm test:run`, or watch with `pnpm test`; CI uses `pnpm test:ci` (coverage + verbose reporter). Global thresholds: **85%** statements and lines, **80%** branches and functions, on **included** files only. Large or branch-heavy modules may appear in `coverage.exclude` with an inline reason; pair with E2E or targeted tests where noted. Examples: `src/lib/actions/companies-create.test.ts` exercises `createCompany` while `companies.ts` is excluded from the coverage gate; `src/lib/actions/mass-email.test.ts` covers guard rails while `mass-email.ts` is excluded (nodemailer/DNS batch branches).
 - **E2E:** Playwright under `tests/e2e/` — `pnpm e2e` locally, `pnpm e2e:ci` in GitHub Actions. Expect a **production build** (`pnpm build`); the config may start `next start` on `localhost:3000` when no server is already listening. **`playwright.config.ts`** calls `loadEnvConfig` from `@next/env`, so `E2E_BASE_URL`, `E2E_USER_EMAIL`, and `E2E_USER_PASSWORD` in **`.env.local`** are available to the Playwright process without shell `export`. **CI:** set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as **Actions variables**; set `E2E_USER_EMAIL` and `E2E_USER_PASSWORD` as **repository secrets** (`secrets.E2E_*` in the workflow). Use a real Supabase user who can password-sign in, is **not** blocked on `/access-pending`, and can **create companies** under RLS, or authenticated cases are skipped. **Helpers:** `tests/e2e/helpers/auth.ts` (login + signed-in wait) and `tests/e2e/helpers/locale.ts` set `localStorage` `aquadock_appearance_locale` to `en` before navigation so copy matches English assertions. **Specs:** `smoke.spec.ts` (public), `auth-edge.spec.ts` (invalid login), `crm-happy-path.spec.ts` (authenticated navigation smoke), `company-create.spec.ts` (create company + table search), `mass-email-ui.spec.ts` (mass email page UI, no send), `contacts-smoke.spec.ts` (open create-contact dialog). **Smoke** tests (no login) run without E2E secrets. Artifacts under `test-results/` are gitignored.
 - **`src/test/setup.ts`** runs for every file: JSDOM-friendly stubs where needed (e.g. `scrollIntoView`, `ResizeObserver`) and **`afterEach(() => cleanup())`** from **Testing Library** so each test tears down the last `render()` tree. Without that, repeated `render()` calls in one file can leave multiple roots in `document.body` and make queries like `getAllByRole(...)[0]` point at a stale instance.
 - Prefer colocating `vi.mock(...)` for a feature with its tests; keep only cross-cutting mocks in `src/test/setup.ts` (today: `next/navigation`, browser Supabase client).

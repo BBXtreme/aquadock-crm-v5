@@ -1,4 +1,4 @@
-// src/lib/constants/label-maps.ts
+// src/lib/constants/company-labels.ts
 // Centralized label and emoji mappings for consistent display across the app.
 // These records map internal values to user-friendly labels with emojis for better UX.
 // Used in utility functions for rendering status, types, and other categorical data.

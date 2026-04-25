@@ -108,16 +108,9 @@ vi.mock("@/lib/supabase/browser", () => ({
   createClient: () => mockCreateClient(),
 }));
 
-vi.mock("@/lib/actions/reminders", async () => {
-  const svc = await import("@/lib/services/reminders");
-  return {
-    getReminders: svc.getReminders,
-    getReminderById: svc.getReminderById,
-    createReminder: svc.createReminder,
-    updateReminder: svc.updateReminder,
-    createReminderAction: mockCreateReminderAction,
-  };
-});
+vi.mock("@/lib/actions/create-reminder-action", () => ({
+  createReminderAction: mockCreateReminderAction,
+}));
 
 vi.mock("sonner", () => ({
   toast: {

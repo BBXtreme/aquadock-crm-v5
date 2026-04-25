@@ -684,6 +684,9 @@
     "detailAddContact": "Dodaj kontakt",
     "detailEmptyLinkedCompany": "Nema kontakata povezanih s ovom tvrtkom.",
     "detailSavedToast": "Kontakt spremljen",
+    "formCompanySearchPlaceholder": "Pretražite tvrtke…",
+    "formCompanyEmpty": "Nema pronađene tvrtke.",
+    "formCompanyClear": "Ukloni poveznicu na tvrtku",
     "formCompanyClearAria": "Ukloni poveznicu s tvrtkom",
     "unlinkButtonAria": "Odvoji od tvrtke",
     "unlinkConfirmTitle": "Odvojiti kontakt?",
@@ -774,6 +777,7 @@
   "openmap": {
     "loadErrorTitle": "Kartu nije bilo moguće učitati",
     "loadErrorDescription": "Pokušajte ponovno.",
+    "mapBoundaryReload": "Ponovno učitaj kartu",
     "errorBanner": "Greška pri učitavanju karte",
     "appleBasemapNotice": "Napomena: Apple karte trenutačno koriste istu OpenStreetMap/CARTO osnovnu kartu kao i prije.",
     "loadingPois": "Učitavanje POI…",

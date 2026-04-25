@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-
+import TimelineDetailClient from "@/components/features/timeline/TimelineDetailClient";
 import { TimelinePageSkeleton } from "@/components/ui/page-list-skeleton";
 import { resolveTimelineDetail } from "@/lib/actions/resolve-detail";
 import { requireUser } from "@/lib/auth/require-user";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import TimelineDetailClient from "./TimelineDetailClient";
 
 export default async function TimelineEntryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireUser();

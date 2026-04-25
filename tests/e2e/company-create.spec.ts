@@ -32,7 +32,7 @@ authDescribe("company create", () => {
     await page.goto("/companies");
     await expect(
       page.getByRole("heading", { name: /^(Companies|Unternehmen|Tvrtke)$/, level: 1 }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 25_000 });
 
     await page
       .getByRole("main")
@@ -60,5 +60,34 @@ authDescribe("company create", () => {
     await companyDetailLink.click();
     await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i, { timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 1, name: uniqueName })).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("opens create company dialog when ?create=true", async ({ page }) => {
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+    if (email === undefined || email === "" || password === undefined) {
+      test.skip();
+      return;
+    }
+
+    await loginWithPassword(page, email, password);
+    if (page.url().includes("access-pending")) {
+      test.skip();
+      return;
+    }
+
+    await page.goto("/companies?create=true", { waitUntil: "domcontentloaded" });
+    // RSC Suspense + KPI `useSuspenseQuery` can leave `CompaniesPageSkeleton` up past `domcontentloaded`
+    // (no real `h1` yet). Parallel E2E needs a longer wait. `locator("main h1")` is stable if the create
+    // dialog opens and Radix adjusts the a11y tree before this assertion runs.
+    const listPageH1 = page.locator("main h1").first();
+    await expect(listPageH1).toBeVisible({ timeout: 25_000 });
+    await expect(listPageH1).toHaveText(/^(Companies|Unternehmen|Tvrtke)$/);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(
+      dialog.getByRole("heading", { name: /^(Create new company|Neues Unternehmen erstellen|Stvori novu tvrtku)$/ }),
+    ).toBeVisible();
   });
 });

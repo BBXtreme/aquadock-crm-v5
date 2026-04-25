@@ -15,9 +15,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
-import { getContacts } from "@/lib/actions/contacts";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getContacts } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import {
   contactsColumnVisibilityEqual,

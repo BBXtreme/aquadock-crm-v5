@@ -1,4 +1,4 @@
-// src/app/(protected)/mass-email/log/ClientEmailLogPage.tsx
+// src/components/features/mass-email/ClientEmailLogPage.tsx
 // This file defines the ClientEmailLogPage component, which displays a log of all sent emails in the application. It allows users to filter by status (sent or error) and search by recipient email or subject.
 
 "use client";

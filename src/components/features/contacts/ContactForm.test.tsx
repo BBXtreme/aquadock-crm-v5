@@ -10,13 +10,13 @@ import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createContactAction } from "@/lib/actions/contact-server-actions";
+import { createContactAction } from "@/lib/actions/contacts";
 import { type ContactForm, contactSchema, toContactInsert } from "@/lib/validations/contact";
 import enMessages from "@/messages/en.json";
 import type { Contact } from "@/types/database.types";
 import ContactCreateForm from "./ContactCreateForm";
 
-vi.mock("@/lib/actions/contact-server-actions", () => ({
+vi.mock("@/lib/actions/contacts", () => ({
   createContactAction: vi.fn(),
 }));
 

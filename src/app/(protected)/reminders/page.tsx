@@ -6,10 +6,10 @@
 // The page also handles loading and error states, providing feedback to the user accordingly.
 
 import { Suspense } from "react";
+import ClientRemindersPage from "@/components/features/reminders/ClientRemindersPage";
 import { RemindersPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import ClientRemindersPage from "./ClientRemindersPage";
 
 export default async function RemindersPage() {
   const _user = await requireUser();

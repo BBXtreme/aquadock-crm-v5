@@ -8,8 +8,10 @@ import React, { type ErrorInfo, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type ErrorBoundaryProps = {
+export type ErrorBoundaryProps = {
   children: ReactNode;
+  /** When set, replaces the default full-screen error card (e.g. embedded map). */
+  fallback?: ReactNode;
 };
 
 type ErrorBoundaryState = {
@@ -60,6 +62,9 @@ class ErrorBoundaryClass extends React.Component<ErrorBoundaryProps, ErrorBounda
   override render(): ReactNode {
     const { error, hasError } = this.state;
     if (hasError && error) {
+      if (this.props.fallback !== undefined) {
+        return this.props.fallback;
+      }
       return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
           <Card className="w-full max-w-md">
@@ -100,6 +105,6 @@ class ErrorBoundaryClass extends React.Component<ErrorBoundaryProps, ErrorBounda
   }
 }
 
-export default function ErrorBoundary({ children }: ErrorBoundaryProps) {
-  return <ErrorBoundaryClass>{children}</ErrorBoundaryClass>;
+export default function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
+  return <ErrorBoundaryClass fallback={fallback}>{children}</ErrorBoundaryClass>;
 }

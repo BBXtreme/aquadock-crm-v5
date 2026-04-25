@@ -9,10 +9,10 @@
 // sorting, and filtering applied based on the user's interactions with the UI. The page also displays key metrics about the companies
 
 import { Suspense } from "react";
+import ClientCompaniesPage from "@/components/features/companies/ClientCompaniesPage";
 import { CompaniesPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import ClientCompaniesPage from "./ClientCompaniesPage";
 
 export default async function CompaniesPage() {
   const _user = await requireUser();
