@@ -2,11 +2,11 @@
 
 import type { GatewayModelId } from "@ai-sdk/gateway";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveContactDetail } from "@/lib/actions/contacts";
 import { runContactEnrichmentGeneration } from "@/lib/ai/company-enrichment-gateway";
 import { buildAiEnrichmentFailureDiagnostic, mapAiEnrichmentGatewayPipelineError } from "@/lib/ai/enrichment-gateway-pipeline";
 import { refundEnrichmentSlots, tryCommitEnrichmentSlots } from "@/lib/ai/enrichment-rate-limit";
 import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES, fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
+import { resolveContactDetail } from "@/lib/services/contacts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type BulkResearchContactEnrichmentInput,

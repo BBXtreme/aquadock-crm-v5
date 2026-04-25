@@ -1,4 +1,4 @@
-// src/app/(protected)/companies/[id]/CompanyDetailClient.tsx
+// src/components/features/companies/CompanyDetailClient.tsx
 // Client wrapper for Company Detail page, handling interactive parts and sub-queries.
 
 "use client";
@@ -6,17 +6,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import AquaDockCard from "@/components/company-detail/AquaDockCard";
-import CompanyCommentsCard from "@/components/company-detail/CompanyCommentsCard";
-import CompanyDetailsCard from "@/components/company-detail/CompanyDetailsCard";
-import CompanyHeader from "@/components/company-detail/CompanyHeader";
-import CompanyKpiCards from "@/components/company-detail/CompanyKpiCards";
-import CrmCard from "@/components/company-detail/CrmCard";
-import LinkedContactsCard from "@/components/company-detail/LinkedContactsCard";
-import RemindersCard from "@/components/company-detail/RemindersCard";
-import TimelineCard from "@/components/company-detail/TimelineCard";
 import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
+import AquaDockCard from "@/components/features/companies/detail/AquaDockCard";
+import CompanyCommentsCard from "@/components/features/companies/detail/CompanyCommentsCard";
+import CompanyDetailsCard from "@/components/features/companies/detail/CompanyDetailsCard";
+import CompanyHeader from "@/components/features/companies/detail/CompanyHeader";
+import CompanyKpiCards from "@/components/features/companies/detail/CompanyKpiCards";
+import CrmCard from "@/components/features/companies/detail/CrmCard";
+import LinkedContactsCard from "@/components/features/companies/detail/LinkedContactsCard";
+import RemindersCard from "@/components/features/companies/detail/RemindersCard";
+import TimelineCard from "@/components/features/companies/detail/TimelineCard";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingState } from "@/components/ui/LoadingState";

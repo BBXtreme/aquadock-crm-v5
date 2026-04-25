@@ -6,12 +6,11 @@
 
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-
+import ContactDetailClient from "@/components/features/contacts/ContactDetailClient";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { resolveContactDetail } from "@/lib/actions/contacts";
 import { requireUser } from "@/lib/auth/require-user";
+import { resolveContactDetail } from "@/lib/services/contacts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import ContactDetailClient from "./ContactDetailClient";
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

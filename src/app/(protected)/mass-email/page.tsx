@@ -6,10 +6,10 @@
 // The contact list and email templates are currently hardcoded as empty arrays, but in a real application, they would be fetched from the server.
 
 import { Suspense } from "react";
+import ClientMassEmailPage from "@/components/features/mass-email/ClientMassEmailPage";
 import { MassEmailPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import ClientMassEmailPage from "./ClientMassEmailPage";
 
 export default async function MassEmailPage() {
   await requireUser();

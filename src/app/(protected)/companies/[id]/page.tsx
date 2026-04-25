@@ -5,12 +5,12 @@
 // Server component for Company Detail page, fetching company data and handling redirection if not found.
 
 import { notFound, redirect } from "next/navigation";
+import CompanyDetailClient from "@/components/features/companies/CompanyDetailClient";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { companiesListSearchStringFromPageSearchParams } from "@/lib/utils/company-filters-url-state";
 import { safeDisplay } from "@/lib/utils/data-format";
-import CompanyDetailClient from "./CompanyDetailClient";
 
 export default async function CompanyDetailPage({
   params,

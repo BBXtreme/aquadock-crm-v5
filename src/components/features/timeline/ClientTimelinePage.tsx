@@ -1,4 +1,4 @@
-// src/app/(protected)/timeline/ClientTimelinePage.tsx
+// src/components/features/timeline/ClientTimelinePage.tsx
 
 "use client";
 

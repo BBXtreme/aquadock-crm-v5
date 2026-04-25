@@ -1,8 +1,8 @@
 import { Suspense } from "react";
+import ClientNotificationsPage from "@/components/features/notifications/ClientNotificationsPage";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
-import ClientNotificationsPage from "./ClientNotificationsPage";
 
 export default async function NotificationsPage() {
   await requireUser();

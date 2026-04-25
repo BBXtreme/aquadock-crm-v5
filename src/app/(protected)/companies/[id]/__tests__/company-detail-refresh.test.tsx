@@ -10,7 +10,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
 import { Suspense, useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import CompanyDetailClient from "@/app/(protected)/companies/[id]/CompanyDetailClient";
+import CompanyDetailClient from "@/components/features/companies/CompanyDetailClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { updateCompany, updateCompanyWithOwner } from "@/lib/actions/companies";
 import type { UpdateCompanyWithOwnerInput } from "@/lib/validations/company-owner";
@@ -64,19 +64,19 @@ vi.mock("@/lib/actions/crm-trash", () => ({
   deleteCompanyWithTrash: vi.fn(),
 }));
 
-vi.mock("@/components/company-detail/LinkedContactsCard", () => ({
+vi.mock("@/components/features/companies/detail/LinkedContactsCard", () => ({
   default: () => null,
 }));
 
-vi.mock("@/components/company-detail/RemindersCard", () => ({
+vi.mock("@/components/features/companies/detail/RemindersCard", () => ({
   default: () => null,
 }));
 
-vi.mock("@/components/company-detail/TimelineCard", () => ({
+vi.mock("@/components/features/companies/detail/TimelineCard", () => ({
   default: () => null,
 }));
 
-vi.mock("@/components/company-detail/CompanyCommentsCard", () => ({
+vi.mock("@/components/features/companies/detail/CompanyCommentsCard", () => ({
   default: () => null,
 }));
 

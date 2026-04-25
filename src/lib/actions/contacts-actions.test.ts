@@ -40,7 +40,7 @@ function companySelectChain(companyUserId: string | null) {
   };
 }
 
-describe("contact-server-actions", () => {
+describe("contacts server actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createInAppNotification.mockResolvedValue({ id: "n1" } as never);
@@ -79,7 +79,7 @@ describe("contact-server-actions", () => {
         }),
       } as never);
 
-      const { createContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { createContactAction } = await import("@/lib/actions/contacts");
       const row = await createContactAction(minimalContactForm);
 
       expect(row.user_id).toBe(COMPANY_OWNER);
@@ -113,7 +113,7 @@ describe("contact-server-actions", () => {
         }),
       } as never);
 
-      const { createContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { createContactAction } = await import("@/lib/actions/contacts");
       const row = await createContactAction(minimalContactForm);
 
       expect(row.user_id).toBe(ACTOR);
@@ -168,7 +168,7 @@ describe("contact-server-actions", () => {
 
       getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
 
-      const { updateContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { updateContactAction } = await import("@/lib/actions/contacts");
       await updateContactAction(CONTACT_ID, minimalContactForm);
 
       expect(createInAppNotification).toHaveBeenCalledTimes(1);
@@ -227,7 +227,7 @@ describe("contact-server-actions", () => {
         }),
       } as never);
 
-      const { updateContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { updateContactAction } = await import("@/lib/actions/contacts");
       await updateContactAction(CONTACT_ID, minimalContactForm);
 
       expect(createInAppNotification).not.toHaveBeenCalled();
@@ -279,7 +279,7 @@ describe("contact-server-actions", () => {
 
       getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
 
-      const { updateContactAction } = await import("@/lib/actions/contact-server-actions");
+      const { updateContactAction } = await import("@/lib/actions/contacts");
       await updateContactAction(CONTACT_ID, { ...minimalContactForm, company_id: null });
 
       expect(createInAppNotification).not.toHaveBeenCalled();

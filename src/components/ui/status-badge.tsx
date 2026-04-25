@@ -9,7 +9,7 @@
 
 import type { ComponentProps } from "react";
 import { Badge } from "@/components/ui/badge";
-import { statusLabels as emojiStatusLabels } from "@/lib/constants/company-lables";
+import { statusLabels as emojiStatusLabels } from "@/lib/constants/company-labels";
 import { statusLabels as plainStatusLabels, statusColors } from "@/lib/constants/map-status-colors";
 import { cn } from "@/lib/utils";
 

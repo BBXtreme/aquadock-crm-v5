@@ -3,12 +3,12 @@
 // to notifications, appearance, OpenMap integration, and SMTP email configuration.
 
 import { Suspense } from "react";
+import ClientSettingsPage from "@/components/features/settings/ClientSettingsPage";
 import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import ClientSettingsPage from "./ClientSettingsPage";
 import { SettingsPageHeader } from "./SettingsPageHeader";
 
 export default async function SettingsPage() {

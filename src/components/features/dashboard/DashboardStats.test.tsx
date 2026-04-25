@@ -1,5 +1,5 @@
 /**
- * Dashboard KPI / statistics: {@link ../../../app/(protected)/dashboard/DashboardClient.tsx} (StatCard row + period filter).
+ * Dashboard KPI / statistics: {@link ./DashboardClient.tsx} (StatCard row + period filter).
  * The CRM dashboard shows companies, active leads, won deals, and pipeline value (€ + locale). Contacts/timeline feed the query but are not separate KPI tiles yet.
  * Extended patterns for reminders / overdue use {@link ../../../components/ui/StatCard.tsx} with {@link ../../../lib/utils/data-format.ts}.
  */
@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { Building } from "lucide-react";
 import { Suspense } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import DashboardClient from "@/app/(protected)/dashboard/DashboardClient";
+import DashboardClient from "@/components/features/dashboard/DashboardClient";
 import { StatCard } from "@/components/ui/StatCard";
 import { createClient } from "@/lib/supabase/browser";
 import { formatCurrency, safeDisplay } from "@/lib/utils/data-format";
