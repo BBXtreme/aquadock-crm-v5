@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 24, 2026  
+**Last updated:** April 28, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -32,6 +32,7 @@ This document explains how the application is structured so developers (and tech
 | UI | shadcn/ui + Tailwind CSS v4 |
 | Client state | TanStack Query where remote state needs caching/refetch; **large list pages** colocate hooks + sections under `src/components/features/<domain>/` (see [`folder-conventions.md`](folder-conventions.md)) |
 | Quality | Biome + `tsc --noEmit`; no non-null assertions (`!`); use `safeDisplay` and helpers from `@/lib/utils/data-format` for empty/null UI |
+| CRM in-app + email | Bell feed + `/notifications` read `user_notifications` (RLS); server inserts with service role from `src/lib/services/in-app-notifications.ts`. Optional **transactional** email to `auth.users.email` uses `src/lib/services/smtp-delivery.ts` and `src/lib/email/build-notification-email.ts` when `notification_email_enabled` and SMTP are configured — same event as in-app, no extra tables. **Details:** [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) (`user_notifications`, `user_settings`). |
 
 ---
 

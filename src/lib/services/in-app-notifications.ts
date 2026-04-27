@@ -6,6 +6,9 @@ import {
   formatAdminInAppMirrorRecipientLine,
   NOTIFICATION_SETTING_KEYS,
 } from "@/lib/constants/notifications";
+import { buildNotificationEmailContent } from "@/lib/email/build-notification-email";
+import { sendNotificationHtmlEmail } from "@/lib/services/smtp-delivery";
+import { fetchNotificationPreferences } from "@/lib/services/user-settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import {
@@ -46,6 +49,41 @@ function buildMirrorBody(recipientLine: string, originalBody: string | null): st
     return recipientLine;
   }
   return `${recipientLine}\n${originalBody}`;
+}
+
+/**
+ * Sends CRM notification email when preferences + SMTP allow. Never throws.
+ */
+async function maybeSendInAppEmailForNotificationRow(
+  row: UserNotification,
+  options: { actingUserId: string | null; isAdminMirror: boolean },
+): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    const { emailEnabled } = await fetchNotificationPreferences(admin, row.user_id);
+    if (!emailEnabled) {
+      return;
+    }
+    const { data: authData, error: authErr } = await admin.auth.admin.getUserById(row.user_id);
+    if (authErr != null) {
+      console.error("[maybeSendInAppEmailForNotificationRow] getUserById failed", authErr);
+      return;
+    }
+    const email = authData.user?.email;
+    if (email == null || email === "") {
+      return;
+    }
+    const { subject, html, text } = buildNotificationEmailContent(row, options.isAdminMirror);
+    await sendNotificationHtmlEmail({
+      actingAdminUserId: options.actingUserId,
+      to: [email],
+      subject,
+      html,
+      text,
+    });
+  } catch (err) {
+    console.error("[maybeSendInAppEmailForNotificationRow] failed", err);
+  }
 }
 
 async function mirrorInAppNotificationToAdmins(primary: UserNotification): Promise<void> {
@@ -181,6 +219,11 @@ export async function createInAppNotification(
     throw new Error("createInAppNotification: no row returned");
   }
 
+  await maybeSendInAppEmailForNotificationRow(data, {
+    actingUserId: parsed.actorUserId ?? null,
+    isAdminMirror: mirrorInsert,
+  });
+
   if (mirrorToAdmins) {
     try {
       await mirrorInAppNotificationToAdmins(data);
@@ -309,4 +352,5 @@ export async function markAllRead(client: SupabaseClient<Database>, userId: stri
   }
 }
 
+export { getInAppNotificationActionPath } from "@/lib/notifications/in-app-action-path";
 export type { CreateInAppNotificationInput };

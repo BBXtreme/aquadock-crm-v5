@@ -21,6 +21,7 @@ import {
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { ADMIN_IN_APP_MIRROR_TITLE_PREFIX } from "@/lib/constants/notifications";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getInAppNotificationActionPath } from "@/lib/notifications/in-app-action-path";
 import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import {
   IN_APP_NOTIFICATIONS_PAGE_SIZE,
@@ -31,7 +32,6 @@ import {
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { parseInAppNotificationPayload } from "@/lib/validations/notification";
 import type { UserNotification } from "@/types/database.types";
 
 function formatDateAndTimeForCell(
@@ -62,17 +62,6 @@ function formatInAppTitleForDisplay(raw: string, mirrorDisplayPrefix: string): s
     return `${mirrorDisplayPrefix}${rest}`;
   }
   return title;
-}
-
-function getInAppNotificationHref(n: UserNotification): string {
-  const payload = parseInAppNotificationPayload(n.type, n.payload);
-  if (payload == null) {
-    return "/dashboard";
-  }
-  if ("contactId" in payload) {
-    return `/contacts/${payload.contactId}`;
-  }
-  return `/companies/${payload.companyId}`;
 }
 
 type InAppT = ReturnType<typeof useT<"inAppNotifications">>;
@@ -197,7 +186,7 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
           header: t("colActions"),
           cell: ({ row }) => {
             const n = row.original;
-            const href = getInAppNotificationHref(n);
+            const href = getInAppNotificationActionPath(n);
             return (
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="ghost" size="sm" asChild>
@@ -272,7 +261,7 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
               <ul className="list-none space-y-4 md:hidden">
                 {rows.map((n) => {
                   const isUnread = n.read_at == null;
-                  const href = getInAppNotificationHref(n);
+                  const href = getInAppNotificationActionPath(n);
                   const dateParts = formatDateAndTimeForCell(n.created_at, localeTag);
                   return (
                     <li

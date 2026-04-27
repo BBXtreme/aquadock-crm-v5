@@ -17,7 +17,7 @@
       "pushLabel": "Push-Benachrichtigungen",
       "pushHelp": "Sofortige Hinweise zu neuen Leads, Remindern und Statusänderungen direkt im Browser.",
       "emailLabel": "E-Mail-Benachrichtigungen",
-      "emailHelp": "Wichtige Updates, Zusammenfassungen und Statusänderungen per E-Mail.",
+      "emailHelp": "Wichtige Updates und CRM-Benachrichtigungen (z. B. Reminder, Kommentare) an Ihre Konto-E-Mail. Voraussetzung: gespeicherte SMTP-Konfiguration im Abschnitt unten. Der Versand nutzt bevorzugt den SMTP-Zugang des Benutzers, der die Aktion ausgelöst hat; andernfalls den des ersten Administrators mit hinterlegtem SMTP.",
       "saving": "Wird gespeichert…",
       "activeChannels": "{count, plural, =0 {Kein Benachrichtigungskanal aktiv} one {Ein Kanal aktiv} other {# Kanäle aktiv}}",
       "toastPushOn": "Push-Benachrichtigungen wurden aktiviert",
@@ -27,7 +27,7 @@
       "saveErrorTitle": "Benachrichtigungen konnten nicht gespeichert werden",
       "validationError": "Ungültige Benachrichtigungseinstellungen",
       "adminGlobalFeedLabel": "Globale In-App-Übersicht (Admin)",
-      "adminGlobalFeedHelp": "Wenn aktiviert, erscheinen in Ihrem Benachrichtigungsfeed Kopien aller In-App-Benachrichtigungen, die an CRM-Nutzer gehen — zum Überwachen der Aktivität. Keine E-Mail. Standard: aus.",
+      "adminGlobalFeedHelp": "Wenn aktiviert, erscheinen in Ihrem Benachrichtigungsfeed Kopien aller In-App-Benachrichtigungen, die an CRM-Nutzer gehen — zum Überwachen der Aktivität. Zusätzliche E-Mails an Sie nur, wenn „E-Mail-Benachrichtigungen“ aktiv ist und SMTP konfiguriert ist. Standard: aus.",
       "toastAdminGlobalFeedOn": "Globale In-App-Übersicht aktiviert",
       "toastAdminGlobalFeedOff": "Globale In-App-Übersicht deaktiviert"
     },
@@ -291,7 +291,7 @@
     },
     "smtp": {
       "cardTitle": "SMTP-Konfiguration",
-      "cardDescription": "Versand von E-Mails über Ihren SMTP-Server. Zugangsdaten werden pro Benutzer gespeichert.",
+      "cardDescription": "Versand von E-Mails über Ihren SMTP-Server; Zugangsdaten werden pro Benutzer gespeichert. Diese Konfiguration wird für CRM-E-Mail-Benachrichtigungen und Testmails genutzt. Der Versand verwendet bevorzugt den SMTP-Zugang des auslösenden Benutzers, sofern hinterlegt; sonst den eines Administrators mit gespeicherter SMTP-Konfiguration.",
       "hostLabel": "Host",
       "hostPlaceholder": "smtp.example.com",
       "portLabel": "Port",
