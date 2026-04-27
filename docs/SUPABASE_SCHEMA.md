@@ -435,3 +435,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-28 **Admin global in-app feed:** EAV key `notification_admin_global_in_app_feed` (per-admin opt-in, default off); server mirrors primary `user_notifications` inserts to opted-in admins via service role. Settings UI: `ClientSettingsPage` (admin only). Zod/validation unchanged; no new SQL files.
 
 2026-04-28 **Transactional email parity:** For each successful `user_notifications` insert, optional German HTML/text email to `auth.users.email` when `notification_email_enabled` and SMTP are available; `src/lib/services/smtp-delivery.ts`, `src/lib/email/build-notification-email.ts`, `src/lib/notifications/in-app-action-path.ts`. Settings + i18n copy updated. No new SQL.
+
+2026-04-28 **Vitest:** `src/lib/services/smtp-delivery.test.ts` exercises `getSystemSmtpConfigForNotifications` and `sendNotificationHtmlEmail` (mocked admin client + nodemailer) so coverage includes the delivery module; see `docs/testing-strategy.md`.
