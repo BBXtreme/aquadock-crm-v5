@@ -6,6 +6,7 @@ import {
   createInAppNotification,
   getUnreadCount,
   listNotificationsForUser,
+  listNotificationsForUserPage,
   markAllRead,
   markAsRead,
 } from "./in-app-notifications";
@@ -221,6 +222,28 @@ describe("in-app list / read helpers", () => {
     await expect(
       listNotificationsForUser(client, userId, { beforeCreatedAt: "2026-01-01T00:00:00.000Z" }),
     ).resolves.toEqual(rows);
+  });
+
+  it("listNotificationsForUserPage uses range and returns total count", async () => {
+    const rows = [{ id: "1" }] as never;
+    const range = vi.fn().mockResolvedValue({ data: rows, error: null, count: 42 });
+    const client = {
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            order: () => ({
+              range,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient;
+
+    await expect(listNotificationsForUserPage(client, userId, { page: 1, pageSize: 10 })).resolves.toEqual({
+      rows,
+      total: 42,
+    });
+    expect(range).toHaveBeenCalledWith(10, 19);
   });
 
   it("getUnreadCount returns count", async () => {
