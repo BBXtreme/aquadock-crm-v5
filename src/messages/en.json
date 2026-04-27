@@ -1089,7 +1089,7 @@
     "templateFormSubjectLabel": "Subject *",
     "templateFormSubjectPlaceholder": "e.g. Welcome to AquaDock",
     "templateFormBodyLabel": "Body",
-    "templateFormBodyPlaceholder": "Hello {{vorname}},\n\nwe are pleased to welcome you at {{firmenname}}.\n\nPlaceholders: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}",
+    "templateFormBodyPlaceholder": "Hello '{{vorname}}',\n\nwe are pleased to welcome you at '{{firmenname}}'.\n\nPlaceholders: '{{vorname}}', '{{nachname}}', '{{firmenname}}', '{{anrede}}', '{{name}}', '{{stadt}}'",
     "templateFormSave": "Save",
     "templateFormCancel": "Cancel",
     "templatePreviewTitle": "Template preview",
@@ -1145,7 +1145,7 @@
     "composerSubjectLabel": "Subject",
     "composerSubjectPlaceholder": "Email subject",
     "composerBodyLabel": "Content (HTML supported)",
-    "composerBodyPlaceholder": "Use {{vorname}}, {{firmenname}}, {{anrede}} …",
+    "composerBodyPlaceholder": "Use '{{vorname}}', '{{firmenname}}', '{{anrede}}' …",
     "composerNoTemplateError": "No template selected",
     "composerSaveSuccess": "Saved to template",
     "composerSaveError": "Failed to save"

@@ -1,6 +1,6 @@
 /**
- * Tests for {@link ./email.ts}: mass-email helpers `fillPlaceholders`, `isValidEmail`, `hasMXRecords`,
- * and `getMassEmailRecipients` (Supabase client mocked).
+ * Tests for {@link ./email.ts}: mass-email helpers `fillPlaceholders`, `isValidEmail`, and
+ * `getMassEmailRecipients` (Supabase client mocked). MX checks: {@link ./email-mx.ts}.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -16,19 +16,24 @@ import {
   getEmailTemplateById,
   getEmailTemplates,
   getMassEmailRecipients,
-  hasMXRecords,
   isValidEmail,
   updateEmailLog,
   updateEmailTemplate,
 } from "@/lib/services/email";
+import { hasMXRecords } from "@/lib/services/email-mx";
 
 const mockResolveMx = vi.hoisted(() => vi.fn());
 
-vi.mock("node:dns", () => ({
-  promises: {
+vi.mock("node:dns", () => {
+  const promises = {
     resolveMx: (...args: unknown[]) => mockResolveMx(...args),
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: { promises },
+    promises,
+  };
+});
 
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);

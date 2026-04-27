@@ -1089,7 +1089,7 @@
     "templateFormSubjectLabel": "Predmet *",
     "templateFormSubjectPlaceholder": "npr. Dobrodošli u AquaDock",
     "templateFormBodyLabel": "Sadržaj",
-    "templateFormBodyPlaceholder": "Bok {{vorname}},\n\ndrago nam je što ste s {{firmenname}}.\n\nRezervirana mjesta: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}",
+    "templateFormBodyPlaceholder": "Bok '{{vorname}}',\n\ndrago nam je što ste s '{{firmenname}}'.\n\nRezervirana mjesta: '{{vorname}}', '{{nachname}}', '{{firmenname}}', '{{anrede}}', '{{name}}', '{{stadt}}'",
     "templateFormSave": "Spremi",
     "templateFormCancel": "Odustani",
     "templatePreviewTitle": "Pregled predloška",
@@ -1145,7 +1145,7 @@
     "composerSubjectLabel": "Predmet",
     "composerSubjectPlaceholder": "Predmet e-pošte",
     "composerBodyLabel": "Sadržaj (HTML podržan)",
-    "composerBodyPlaceholder": "Koristite {{vorname}}, {{firmenname}}, {{anrede}} …",
+    "composerBodyPlaceholder": "Koristite '{{vorname}}', '{{firmenname}}', '{{anrede}}' …",
     "composerNoTemplateError": "Nije odabran predložak",
     "composerSaveSuccess": "Spremljeno u predložak",
     "composerSaveError": "Spremanje nije uspjelo"
