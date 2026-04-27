@@ -33,7 +33,10 @@ export default async function SettingsPage() {
       <SettingsPageHeader displayName={user.display_name} />
 
       <Suspense fallback={<SettingsPageSkeleton />}>
-        <ClientSettingsPage initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot} />
+        <ClientSettingsPage
+          initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot}
+          isAdmin={user.role === "admin"}
+        />
       </Suspense>
     </PageShell>
   );

@@ -14,6 +14,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDefaultAppearanceTimeZone } from "@/lib/constants/appearance-timezone-default";
 import {
+  ADMIN_GLOBAL_IN_APP_FEED_DEFAULT,
   NOTIFICATION_DEFAULTS,
   NOTIFICATION_SETTING_KEYS,
   NOTIFICATION_SETTING_KEYS_LIST,
@@ -103,6 +104,46 @@ export async function saveNotificationPreferencesFromInput(
   }
   await upsertNotificationPreferences(client, userId, parsed.data);
   return parsed.data;
+}
+
+/**
+ * Whether this user receives a copy of all in-app notifications (admin global feed). Absent row ⇒ false.
+ * Callers may pass any RLS-scoped client; for reads in Settings use the current user.
+ */
+export async function fetchAdminInAppGlobalFeedEnabled(
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await client
+    .from("user_settings")
+    .select("value")
+    .eq("user_id", userId)
+    .eq("key", NOTIFICATION_SETTING_KEYS.adminGlobalInAppFeed)
+    .maybeSingle();
+
+  if (error) throw handleSupabaseError(error, "fetchAdminInAppGlobalFeedEnabled");
+  return jsonToBoolean(data?.value, ADMIN_GLOBAL_IN_APP_FEED_DEFAULT);
+}
+
+/**
+ * Persists the admin global in-app feed toggle. **Only call from server actions that have verified `role === 'admin'`.**
+ */
+export async function upsertAdminInAppGlobalFeedEnabled(
+  client: SupabaseClient<Database>,
+  userId: string,
+  enabled: boolean,
+): Promise<void> {
+  const { error } = await client
+    .from("user_settings")
+    .upsert(
+      {
+        user_id: userId,
+        key: NOTIFICATION_SETTING_KEYS.adminGlobalInAppFeed,
+        value: enabled,
+      },
+      { onConflict: "user_id,key" },
+    );
+  if (error) throw handleSupabaseError(error, "upsertAdminInAppGlobalFeedEnabled");
 }
 
 /** `user_settings.key` — absent row means trash bin is enabled (default true). */

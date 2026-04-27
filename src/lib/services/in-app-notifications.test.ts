@@ -54,13 +54,16 @@ describe("createInAppNotification", () => {
     } as never);
 
     await expect(
-      createInAppNotification({
-        type: "reminder_assigned",
-        userId,
-        title: "Hello",
-        payload: { companyId, reminderId },
-        actorUserId: actorId,
-      }),
+      createInAppNotification(
+        {
+          type: "reminder_assigned",
+          userId,
+          title: "Hello",
+          payload: { companyId, reminderId },
+          actorUserId: actorId,
+        },
+        { mirrorToAdmins: false },
+      ),
     ).resolves.toEqual(row);
     expect(single).toHaveBeenCalled();
   });
@@ -78,14 +81,17 @@ describe("createInAppNotification", () => {
       })),
     } as never);
 
-    const result = await createInAppNotification({
-      type: "reminder_assigned",
-      userId,
-      title: "T",
-      payload: { companyId, reminderId },
-      actorUserId: actorId,
-      dedupeKey: "key-1",
-    });
+    const result = await createInAppNotification(
+      {
+        type: "reminder_assigned",
+        userId,
+        title: "T",
+        payload: { companyId, reminderId },
+        actorUserId: actorId,
+        dedupeKey: "key-1",
+      },
+      { mirrorToAdmins: false },
+    );
     expect(result).toBeNull();
   });
 
@@ -103,14 +109,76 @@ describe("createInAppNotification", () => {
     } as never);
 
     await expect(
-      createInAppNotification({
+      createInAppNotification(
+        {
+          type: "reminder_assigned",
+          userId,
+          title: "T",
+          payload: { companyId, reminderId },
+          actorUserId: actorId,
+        },
+        { mirrorToAdmins: false },
+      ),
+    ).rejects.toMatchObject({ message: /Database error/ });
+  });
+
+  it("only queries user_notifications once when mirrorToAdmins is false", async () => {
+    const row = {
+      id: "n1",
+      user_id: userId,
+      type: "reminder_assigned",
+      title: "Hello",
+      body: null,
+      payload: { companyId, reminderId },
+      actor_user_id: actorId,
+    } as const;
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const from = vi.fn(() => ({
+      insert: vi.fn(() => ({
+        select: vi.fn(() => ({ single })),
+      })),
+    }));
+    vi.mocked(createAdminClient).mockReturnValue({ from } as never);
+
+    await createInAppNotification(
+      {
         type: "reminder_assigned",
         userId,
-        title: "T",
+        title: "Hello",
         payload: { companyId, reminderId },
         actorUserId: actorId,
-      }),
-    ).rejects.toMatchObject({ message: /Database error/ });
+      },
+      { mirrorToAdmins: false },
+    );
+
+    expect(from).toHaveBeenCalledTimes(1);
+    expect(from).toHaveBeenCalledWith("user_notifications");
+  });
+
+  it("inserts when actor equals recipient if mirrorInsert is true (admin copy)", async () => {
+    const row = { id: "n1", user_id: userId } as never;
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    vi.mocked(createAdminClient).mockReturnValue({
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({ single })),
+        })),
+      })),
+    } as never);
+
+    await expect(
+      createInAppNotification(
+        {
+          type: "reminder_assigned",
+          userId,
+          title: "T",
+          payload: { companyId, reminderId },
+          actorUserId: userId,
+        },
+        { mirrorToAdmins: false, mirrorInsert: true },
+      ),
+    ).resolves.toEqual(row);
+    expect(single).toHaveBeenCalled();
   });
 });
 

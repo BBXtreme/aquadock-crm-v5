@@ -22,12 +22,15 @@ import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { saveNotificationPreferencesAction } from "@/lib/actions/notifications";
+import {
+  saveAdminGlobalInAppFeedAction,
+  saveNotificationPreferencesAction,
+} from "@/lib/actions/notifications";
 import { testEmbeddingConnectionAction } from "@/lib/actions/semantic-search";
 import type { AiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { saveTrashBinPreferenceAction } from "@/lib/actions/trash-settings";
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
+import { ADMIN_GLOBAL_IN_APP_FEED_DEFAULT, NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
 import {
   OPENMAP_DEFAULT_MAX_POIS,
   OPENMAP_DEFAULT_TTL_MINUTES,
@@ -39,6 +42,7 @@ import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
 import {
   DEFAULT_APPEARANCE,
+  fetchAdminInAppGlobalFeedEnabled,
   fetchNotificationPreferences,
   fetchTrashBinPreference,
   loadAppearanceSettings,
@@ -137,9 +141,10 @@ function parseEmbeddingModel(value: unknown): SemanticEmbeddingModel {
 
 type ClientSettingsPageProps = {
   initialAiEnrichmentSnapshot: AiEnrichmentSettingsSnapshot;
+  isAdmin: boolean;
 };
 
-function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageProps) {
+function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSettingsPageProps) {
   const [selectMounted, setSelectMounted] = useState(false);
 
   const defaultOverpassEndpoints = useMemo(
@@ -428,6 +433,46 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
     saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "push";
   const savingEmail =
     saveNotificationMutation.isPending && saveNotificationMutation.variables?.changed === "email";
+
+  const { data: adminGlobalFeedEnabled, isLoading: adminGlobalFeedLoading } = useQuery({
+    queryKey: ["admin-global-in-app-feed"],
+    queryFn: async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return ADMIN_GLOBAL_IN_APP_FEED_DEFAULT;
+      }
+      return fetchAdminInAppGlobalFeedEnabled(supabase, user.id);
+    },
+    enabled: isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const saveAdminGlobalFeedMutation = useMutation({
+    mutationFn: saveAdminGlobalInAppFeedAction,
+    onMutate: async (enabled: boolean) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-global-in-app-feed"] });
+      const previous = queryClient.getQueryData<boolean>(["admin-global-in-app-feed"]);
+      queryClient.setQueryData(["admin-global-in-app-feed"], enabled);
+      return { previous };
+    },
+    onError: (error, _enabled, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(["admin-global-in-app-feed"], context.previous);
+      }
+      const message = error instanceof Error ? error.message : t("common.unknownError");
+      toast.error(t("notifications.saveErrorTitle"), { description: message });
+    },
+    onSuccess: (_void, enabled) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-global-in-app-feed"] });
+      toast.success(
+        enabled ? t("notifications.toastAdminGlobalFeedOn") : t("notifications.toastAdminGlobalFeedOff"),
+      );
+    },
+  });
+
+  const savingAdminGlobalFeed = saveAdminGlobalFeedMutation.isPending;
 
   const { data: trashBinPrefs, isLoading: trashPrefsLoading } = useQuery({
     queryKey: ["trash-bin-preference"],
@@ -737,6 +782,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
   const isLoading =
     settingsLoading ||
     notificationPrefsLoading ||
+    (isAdmin && adminGlobalFeedLoading) ||
     trashPrefsLoading ||
     mapProviderLoading ||
     appearanceLoading;
@@ -759,7 +805,11 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
           </CardHeader>
           <CardContent
             className={`space-y-6 ${notificationPrefsLoading ? "animate-pulse" : ""}`}
-            aria-busy={notificationPrefsLoading || saveNotificationMutation.isPending}
+            aria-busy={
+              notificationPrefsLoading ||
+              saveNotificationMutation.isPending ||
+              (isAdmin && (adminGlobalFeedLoading || saveAdminGlobalFeedMutation.isPending))
+            }
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 space-y-1">
@@ -825,6 +875,42 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot }: ClientSettingsPageP
                 ) : null}
               </div>
             </div>
+            {isAdmin ? (
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 space-y-1">
+                  <Label htmlFor="notifications-admin-global-feed" className="text-sm font-medium">
+                    {t("notifications.adminGlobalFeedLabel")}
+                  </Label>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t("notifications.adminGlobalFeedHelp")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Switch
+                    id="notifications-admin-global-feed"
+                    className="shrink-0"
+                    checked={
+                      (adminGlobalFeedEnabled ?? ADMIN_GLOBAL_IN_APP_FEED_DEFAULT) === true
+                    }
+                    disabled={adminGlobalFeedLoading || savingAdminGlobalFeed}
+                    onCheckedChange={(checked) => {
+                      saveAdminGlobalFeedMutation.mutate(checked);
+                    }}
+                  />
+                  {savingAdminGlobalFeed ? (
+                    <>
+                      <Loader2
+                        className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                        aria-hidden
+                      />
+                      <span className="text-muted-foreground text-xs tabular-nums">
+                        {t("notifications.saving")}
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             <p className="text-muted-foreground text-xs leading-relaxed">
               {t("notifications.activeChannels", {
                 count:

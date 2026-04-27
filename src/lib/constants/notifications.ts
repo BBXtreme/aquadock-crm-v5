@@ -5,6 +5,8 @@ import type { NotificationPreferences } from "@/lib/validations/settings";
 export const NOTIFICATION_SETTING_KEYS = {
   push: "notification_push_enabled",
   email: "notification_email_enabled",
+  /** Admin-only: copy all in-app notifications into this user’s feed (default off). */
+  adminGlobalInAppFeed: "notification_admin_global_in_app_feed",
 } as const;
 
 /** All keys fetched/upserted together for the notifications card */
@@ -17,6 +19,17 @@ export const NOTIFICATION_DEFAULTS = {
   pushEnabled: true,
   emailEnabled: true,
 } as const;
+
+/** Default when no `user_settings` row exists for `notification_admin_global_in_app_feed`. */
+export const ADMIN_GLOBAL_IN_APP_FEED_DEFAULT = false;
+
+/** Prepended to mirrored admin feed copies of in-app notifications (server-side). */
+export const ADMIN_IN_APP_MIRROR_TITLE_PREFIX = "[Überblick] " as const;
+
+/** Line identifying the business recipient of the original notification. */
+export function formatAdminInAppMirrorRecipientLine(recipientDisplayName: string): string {
+  return `Empfänger: ${recipientDisplayName}`;
+}
 
 /** German UI copy for the Settings notifications card and related toasts */
 export const NOTIFICATION_UI = {
