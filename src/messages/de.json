@@ -25,7 +25,11 @@
       "toastEmailOn": "E-Mail-Benachrichtigungen wurden aktiviert",
       "toastEmailOff": "E-Mail-Benachrichtigungen wurden deaktiviert",
       "saveErrorTitle": "Benachrichtigungen konnten nicht gespeichert werden",
-      "validationError": "Ungültige Benachrichtigungseinstellungen"
+      "validationError": "Ungültige Benachrichtigungseinstellungen",
+      "adminGlobalFeedLabel": "Globale In-App-Übersicht (Admin)",
+      "adminGlobalFeedHelp": "Wenn aktiviert, erscheinen in Ihrem Benachrichtigungsfeed Kopien aller In-App-Benachrichtigungen, die an CRM-Nutzer gehen — zum Überwachen der Aktivität. Keine E-Mail. Standard: aus.",
+      "toastAdminGlobalFeedOn": "Globale In-App-Übersicht aktiviert",
+      "toastAdminGlobalFeedOff": "Globale In-App-Übersicht deaktiviert"
     },
     "trashBin": {
       "cardTitle": "Papierkorb",

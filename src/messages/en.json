@@ -25,7 +25,11 @@
       "toastEmailOn": "Email notifications enabled",
       "toastEmailOff": "Email notifications disabled",
       "saveErrorTitle": "Could not save notifications",
-      "validationError": "Invalid notification settings"
+      "validationError": "Invalid notification settings",
+      "adminGlobalFeedLabel": "Global in-app overview (admin)",
+      "adminGlobalFeedHelp": "When enabled, your notification feed will include copies of all in-app notifications sent to any CRM user — for activity oversight. No email. Default: off.",
+      "toastAdminGlobalFeedOn": "Global in-app overview enabled",
+      "toastAdminGlobalFeedOff": "Global in-app overview disabled"
     },
     "trashBin": {
       "cardTitle": "Trash bin",

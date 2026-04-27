@@ -16,4 +16,4 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [README_OpenMap.md](README_OpenMap.md) | OpenMap, OSM, Overpass |
 | [react-table-v8-ts-tricks.md](react-table-v8-ts-tricks.md) | TanStack Table TypeScript patterns |
 
-**Last updated:** April 24, 2026  
+**Last updated:** April 28, 2026  

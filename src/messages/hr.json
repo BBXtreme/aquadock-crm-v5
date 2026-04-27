@@ -25,7 +25,11 @@
       "toastEmailOn": "E-mail obavijesti su uključene",
       "toastEmailOff": "E-mail obavijesti su isključene",
       "saveErrorTitle": "Obavijesti se nisu mogle spremiti",
-      "validationError": "Neispravne postavke obavijesti"
+      "validationError": "Neispravne postavke obavijesti",
+      "adminGlobalFeedLabel": "Globalni in-app pregled (admin)",
+      "adminGlobalFeedHelp": "Kada je uključeno, vaš feed uključuje kopije svih in-app obavijesti poslanih bilo kojem CRM korisniku — za nadzor aktivnosti. Bez e-pošte. Zadano: isklj.",
+      "toastAdminGlobalFeedOn": "Globalni in-app pregled uključen",
+      "toastAdminGlobalFeedOff": "Globalni in-app pregled isključen"
     },
     "trashBin": {
       "cardTitle": "Korpa za smeće",

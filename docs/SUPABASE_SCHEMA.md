@@ -205,11 +205,13 @@ Optional attachment rows per comment (schema and RLS exist; product UI may follo
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
-**Known `key` values (EAV)**: `notification_preferences` (JSON object), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
+**Known `key` values (EAV)**: `notification_push_enabled` / `notification_email_enabled` (boolean; see `NOTIFICATION_SETTING_KEYS` in `src/lib/constants/notifications.ts`), `notification_admin_global_in_app_feed` (boolean; **admin only** — when true, the server mirrors each primary in-app `user_notifications` row to this user’s inbox; absent ⇒ false), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
 
 ### user_notifications
 
 In-app **notification feed** (bell / notifications page). One row per delivered notification for a recipient. **`type` values** are app-defined (e.g. `reminder_assigned`, `timeline_on_company`, `comment_reply`); `payload` is a JSON object with stable IDs for deep links (`companyId`, `reminderId`, `commentId`, …).
+
+**Admin global feed (optional mirrors):** Admins can enable **`notification_admin_global_in_app_feed`** in **Settings** (EAV in `user_settings`). When enabled, the server inserts **additional** rows for that admin after every **primary** in-app notification (same `type`, `payload`, `actor_user_id` as the business recipient’s row; title prefixed, body may include the original recipient’s display name for context). `dedupe_key` for these copies is `admin_feed:{primary_notification_id}:{admin_user_id}`. Only `profiles.role = 'admin'` users who opt in receive copies. Implementation: `src/lib/services/in-app-notifications.ts` (`mirrorInAppNotificationToAdmins`). No extra DB migration beyond existing `user_notifications` and `user_settings`.
 
 | Column         | Type        | Nullable | Default           | Business Meaning            | Notes / Index |
 | -------------- | ----------- | -------- | ----------------- | --------------------------- | ------------- |
@@ -427,3 +429,5 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-23 Doc-only: header audit date; no schema change. Cross-refs: [`AIDER-RULES.md`](AIDER-RULES.md), [`architecture.md`](architecture.md) HTTP API inventory.
 
 2026-04-24 Added [`profiles-table.sql`](../src/sql/profiles-table.sql) for bootstrapping `public.profiles` on empty DBs (prerequisite for `comments` FKs); documented apply order before `comments-tables.sql`.
+
+2026-04-28 **Admin global in-app feed:** EAV key `notification_admin_global_in_app_feed` (per-admin opt-in, default off); server mirrors primary `user_notifications` inserts to opted-in admins via service role. Settings UI: `ClientSettingsPage` (admin only). Zod/validation unchanged; no new SQL files.
