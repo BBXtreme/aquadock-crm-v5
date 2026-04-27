@@ -17,7 +17,7 @@
       "pushLabel": "Push obavijesti",
       "pushHelp": "Trenutne obavijesti o novim leadovima, podsjetnicima i promjenama statusa izravno u pregledniku.",
       "emailLabel": "E-mail obavijesti",
-      "emailHelp": "Važna ažuriranja, sažeci i promjene statusa putem e-pošte.",
+      "emailHelp": "Važna ažuriranja i CRM obavijesti (npr. podsjetnici, komentari) na adresu računa. Potrebna je spremljena SMTP konfiguracija u odjeljku ispod. Slanje koristi SMTP korisnika koji je pokrenuo radnju ako je postavljen; inače SMTP prvog administratora sa spremljenim postavkama.",
       "saving": "Spremanje…",
       "activeChannels": "{count, plural, =0 {Nema aktivnog kanala obavijesti} one {Jedan kanal aktivan} few {# kanala aktivna} other {# kanala aktivno}}",
       "toastPushOn": "Push obavijesti su uključene",
@@ -27,7 +27,7 @@
       "saveErrorTitle": "Obavijesti se nisu mogle spremiti",
       "validationError": "Neispravne postavke obavijesti",
       "adminGlobalFeedLabel": "Globalni in-app pregled (admin)",
-      "adminGlobalFeedHelp": "Kada je uključeno, vaš feed uključuje kopije svih in-app obavijesti poslanih bilo kojem CRM korisniku — za nadzor aktivnosti. Bez e-pošte. Zadano: isklj.",
+      "adminGlobalFeedHelp": "Kada je uključeno, vaš feed uključuje kopije svih in-app obavijesti poslanih bilo kojem CRM korisniku — za nadzor aktivnosti. Dodatna e-pošta samo ako su „E-mail obavijesti“ uključene i SMTP je konfiguriran. Zadano: isklj.",
       "toastAdminGlobalFeedOn": "Globalni in-app pregled uključen",
       "toastAdminGlobalFeedOff": "Globalni in-app pregled isključen"
     },
@@ -291,7 +291,7 @@
     },
     "smtp": {
       "cardTitle": "SMTP konfiguracija",
-      "cardDescription": "Slanje e-pošte putem vašeg SMTP poslužitelja. Pristupni podaci pohranjuju se po korisniku.",
+      "cardDescription": "Slanje e-pošte putem vašeg SMTP poslužitelja; pristupni podaci pohranjuju se po korisniku. Konfiguracija se koristi i za CRM e-mail obavijesti i testna slanja. Slanje daje prednost SMTP korisnika koji je pokrenuo radnju ako je spremljen; inače administratora sa spremljenom SMTP konfiguracijom.",
       "hostLabel": "Poslužitelj",
       "hostPlaceholder": "smtp.example.com",
       "portLabel": "Port",

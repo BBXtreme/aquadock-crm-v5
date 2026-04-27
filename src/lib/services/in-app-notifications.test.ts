@@ -2,18 +2,32 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { silenceHandleSupabaseErrorConsole } from "@/test/silence-handle-supabase-error-console";
+
+const emailTestDeps = vi.hoisted(() => ({
+  sendNotificationHtmlEmail: vi.fn().mockResolvedValue(undefined),
+  fetchNotificationPreferences: vi.fn().mockResolvedValue({ pushEnabled: true, emailEnabled: false }),
+}));
+
+vi.mock("@/lib/services/smtp-delivery", () => ({
+  sendNotificationHtmlEmail: emailTestDeps.sendNotificationHtmlEmail,
+}));
+
+vi.mock("@/lib/services/user-settings", () => ({
+  fetchNotificationPreferences: emailTestDeps.fetchNotificationPreferences,
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(),
+}));
+
+import { createInAppNotification } from "./in-app-notifications";
 import {
-  createInAppNotification,
   getUnreadCount,
   listNotificationsForUser,
   listNotificationsForUserPage,
   markAllRead,
   markAsRead,
-} from "./in-app-notifications";
-
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(),
-}));
+} from "./in-app-notifications-queries";
 
 const userId = "10000000-0000-4000-8000-000000000001";
 const actorId = "10000000-0000-4000-8000-000000000002";
@@ -25,6 +39,7 @@ describe("createInAppNotification", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    emailTestDeps.fetchNotificationPreferences.mockResolvedValue({ pushEnabled: true, emailEnabled: false });
   });
 
   afterEach(() => {
@@ -67,6 +82,79 @@ describe("createInAppNotification", () => {
       ),
     ).resolves.toEqual(row);
     expect(single).toHaveBeenCalled();
+  });
+
+  it("does not send notification email when email channel is disabled", async () => {
+    const row = { id: "n1", user_id: userId } as never;
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    vi.mocked(createAdminClient).mockReturnValue({
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({ single })),
+        })),
+      })),
+    } as never);
+
+    await createInAppNotification(
+      {
+        type: "reminder_assigned",
+        userId,
+        title: "Hello",
+        payload: { companyId, reminderId },
+        actorUserId: actorId,
+      },
+      { mirrorToAdmins: false },
+    );
+    expect(emailTestDeps.sendNotificationHtmlEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends notification email when email is enabled and recipient has an address", async () => {
+    emailTestDeps.fetchNotificationPreferences.mockResolvedValue({ pushEnabled: true, emailEnabled: true });
+    const row = {
+      id: "n1",
+      user_id: userId,
+      type: "reminder_assigned" as const,
+      title: "Hello",
+      body: null,
+      payload: { companyId, reminderId },
+      actor_user_id: actorId,
+      read_at: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      dedupe_key: null,
+    };
+    const single = vi.fn().mockResolvedValue({ data: row, error: null });
+    const getUserById = vi.fn().mockResolvedValue({
+      data: { user: { email: "user@example.com" } },
+      error: null,
+    });
+    vi.mocked(createAdminClient).mockReturnValue({
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({ single })),
+        })),
+      })),
+      auth: { admin: { getUserById } },
+    } as never);
+
+    await createInAppNotification(
+      {
+        type: "reminder_assigned",
+        userId,
+        title: "Hello",
+        payload: { companyId, reminderId },
+        actorUserId: actorId,
+      },
+      { mirrorToAdmins: false },
+    );
+
+    expect(emailTestDeps.sendNotificationHtmlEmail).toHaveBeenCalledTimes(1);
+    expect(emailTestDeps.sendNotificationHtmlEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: ["user@example.com"],
+        subject: "Hello",
+        actingAdminUserId: actorId,
+      }),
+    );
   });
 
   it("returns null on unique violation when dedupeKey is set", async () => {
@@ -152,8 +240,8 @@ describe("createInAppNotification", () => {
       { mirrorToAdmins: false },
     );
 
-    expect(from).toHaveBeenCalledTimes(1);
-    expect(from).toHaveBeenCalledWith("user_notifications");
+    const notifCalls = from.mock.calls.filter((c) => (c as unknown as [string])[0] === "user_notifications");
+    expect(notifCalls).toHaveLength(1);
   });
 
   it("inserts when actor equals recipient if mirrorInsert is true (admin copy)", async () => {

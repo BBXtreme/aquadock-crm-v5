@@ -29,7 +29,7 @@ import type { AuthUser } from "@/lib/auth/types";
 import { useCommandPaletteModLabel } from "@/lib/hooks/use-command-palette-mod-label";
 import { useT } from "@/lib/i18n/use-translations";
 import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
-import { getUnreadCount } from "@/lib/services/in-app-notifications";
+import { getUnreadCount } from "@/lib/services/in-app-notifications-queries";
 import { saveAppearanceTheme } from "@/lib/services/user-settings";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";

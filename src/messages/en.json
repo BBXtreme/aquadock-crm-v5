@@ -17,7 +17,7 @@
       "pushLabel": "Push notifications",
       "pushHelp": "Instant alerts for new leads, reminders, and status changes in the browser.",
       "emailLabel": "Email notifications",
-      "emailHelp": "Important updates, summaries, and status changes by email.",
+      "emailHelp": "Important updates and CRM notifications (e.g. reminders, comments) to your account email. Requires a saved SMTP configuration in the section below. Sending uses the triggering user’s SMTP if configured; otherwise the first administrator’s stored SMTP settings.",
       "saving": "Saving…",
       "activeChannels": "{count, plural, =0 {No notification channels active} one {One channel active} other {# channels active}}",
       "toastPushOn": "Push notifications enabled",
@@ -27,7 +27,7 @@
       "saveErrorTitle": "Could not save notifications",
       "validationError": "Invalid notification settings",
       "adminGlobalFeedLabel": "Global in-app overview (admin)",
-      "adminGlobalFeedHelp": "When enabled, your notification feed will include copies of all in-app notifications sent to any CRM user — for activity oversight. No email. Default: off.",
+      "adminGlobalFeedHelp": "When enabled, your notification feed will include copies of all in-app notifications sent to any CRM user — for activity oversight. Additional emails to you only if “Email notifications” is on and SMTP is configured. Default: off.",
       "toastAdminGlobalFeedOn": "Global in-app overview enabled",
       "toastAdminGlobalFeedOff": "Global in-app overview disabled"
     },
@@ -291,7 +291,7 @@
     },
     "smtp": {
       "cardTitle": "SMTP configuration",
-      "cardDescription": "Send emails via your SMTP server. Credentials are stored per user.",
+      "cardDescription": "Send email via your SMTP server; credentials are stored per user. This configuration is also used for CRM email notifications and test messages. Delivery prefers the triggering user’s SMTP if saved; otherwise an administrator’s stored SMTP configuration.",
       "hostLabel": "Host",
       "hostPlaceholder": "smtp.example.com",
       "portLabel": "Port",

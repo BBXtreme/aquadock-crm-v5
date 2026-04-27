@@ -1,18 +1,20 @@
 // Server-only: in-app `user_notifications` (inserts via service role; reads via user JWT + RLS)
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   ADMIN_GLOBAL_IN_APP_FEED_DEFAULT,
   ADMIN_IN_APP_MIRROR_TITLE_PREFIX,
   formatAdminInAppMirrorRecipientLine,
   NOTIFICATION_SETTING_KEYS,
 } from "@/lib/constants/notifications";
+import { buildNotificationEmailContent } from "@/lib/email/build-notification-email";
+import { sendNotificationHtmlEmail } from "@/lib/services/smtp-delivery";
+import { fetchNotificationPreferences } from "@/lib/services/user-settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import {
   type CreateInAppNotificationInput,
   createInAppNotificationInputSchema,
 } from "@/lib/validations/notification";
-import type { Database, UserNotification } from "@/types/database.types";
+import type { UserNotification } from "@/types/database.types";
 
 function isPostgresUniqueViolation(error: unknown): boolean {
   return (
@@ -46,6 +48,41 @@ function buildMirrorBody(recipientLine: string, originalBody: string | null): st
     return recipientLine;
   }
   return `${recipientLine}\n${originalBody}`;
+}
+
+/**
+ * Sends CRM notification email when preferences + SMTP allow. Never throws.
+ */
+async function maybeSendInAppEmailForNotificationRow(
+  row: UserNotification,
+  options: { actingUserId: string | null; isAdminMirror: boolean },
+): Promise<void> {
+  try {
+    const admin = createAdminClient();
+    const { emailEnabled } = await fetchNotificationPreferences(admin, row.user_id);
+    if (!emailEnabled) {
+      return;
+    }
+    const { data: authData, error: authErr } = await admin.auth.admin.getUserById(row.user_id);
+    if (authErr != null) {
+      console.error("[maybeSendInAppEmailForNotificationRow] getUserById failed", authErr);
+      return;
+    }
+    const email = authData.user?.email;
+    if (email == null || email === "") {
+      return;
+    }
+    const { subject, html, text } = buildNotificationEmailContent(row, options.isAdminMirror);
+    await sendNotificationHtmlEmail({
+      actingAdminUserId: options.actingUserId,
+      to: [email],
+      subject,
+      html,
+      text,
+    });
+  } catch (err) {
+    console.error("[maybeSendInAppEmailForNotificationRow] failed", err);
+  }
 }
 
 async function mirrorInAppNotificationToAdmins(primary: UserNotification): Promise<void> {
@@ -181,6 +218,11 @@ export async function createInAppNotification(
     throw new Error("createInAppNotification: no row returned");
   }
 
+  await maybeSendInAppEmailForNotificationRow(data, {
+    actingUserId: parsed.actorUserId ?? null,
+    isAdminMirror: mirrorInsert,
+  });
+
   if (mirrorToAdmins) {
     try {
       await mirrorInAppNotificationToAdmins(data);
@@ -192,121 +234,4 @@ export async function createInAppNotification(
   return data;
 }
 
-export type ListInAppNotificationsOptions = {
-  limit?: number;
-  beforeCreatedAt?: string;
-};
-
-/** Default page size for the Benachrichtigungen list (newest first). */
-export const IN_APP_NOTIFICATIONS_PAGE_SIZE = 10;
-
-export type ListNotificationsForUserPageOptions = {
-  page: number;
-  pageSize: number;
-};
-
-/**
- * List notifications for the given user, newest first. Caller must use a Supabase client scoped to that user.
- */
-export async function listNotificationsForUser(
-  client: SupabaseClient<Database>,
-  userId: string,
-  options: ListInAppNotificationsOptions = {},
-): Promise<UserNotification[]> {
-  const limit = options.limit ?? 50;
-  let q = client
-    .from("user_notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (options.beforeCreatedAt !== undefined) {
-    q = q.lt("created_at", options.beforeCreatedAt);
-  }
-
-  const { data, error } = await q;
-  if (error) {
-    throw handleSupabaseError(error, "listNotificationsForUser");
-  }
-  return data ?? [];
-}
-
-/**
- * Paginated list (newest first) with total count for UI pagination.
- */
-export async function listNotificationsForUserPage(
-  client: SupabaseClient<Database>,
-  userId: string,
-  options: ListNotificationsForUserPageOptions,
-): Promise<{ rows: UserNotification[]; total: number }> {
-  const pageSize = Math.min(100, Math.max(1, options.pageSize));
-  const page = Math.max(0, Math.floor(options.page));
-  const from = page * pageSize;
-  const to = from + pageSize - 1;
-
-  const { data, error, count } = await client
-    .from("user_notifications")
-    .select("*", { count: "exact" })
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .range(from, to);
-
-  if (error) {
-    throw handleSupabaseError(error, "listNotificationsForUserPage");
-  }
-
-  return {
-    rows: data ?? [],
-    total: count ?? 0,
-  };
-}
-
-export async function getUnreadCount(
-  client: SupabaseClient<Database>,
-  userId: string,
-): Promise<number> {
-  const { count, error } = await client
-    .from("user_notifications")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .is("read_at", null);
-
-  if (error) {
-    throw handleSupabaseError(error, "getUnreadCount");
-  }
-  return count ?? 0;
-}
-
-export async function markAsRead(
-  client: SupabaseClient<Database>,
-  userId: string,
-  id: string,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const { error } = await client
-    .from("user_notifications")
-    .update({ read_at: now })
-    .eq("id", id)
-    .eq("user_id", userId)
-    .is("read_at", null);
-
-  if (error) {
-    throw handleSupabaseError(error, "markAsRead");
-  }
-}
-
-export async function markAllRead(client: SupabaseClient<Database>, userId: string): Promise<void> {
-  const now = new Date().toISOString();
-  const { error } = await client
-    .from("user_notifications")
-    .update({ read_at: now })
-    .eq("user_id", userId)
-    .is("read_at", null);
-
-  if (error) {
-    throw handleSupabaseError(error, "markAllRead");
-  }
-}
-
-export type { CreateInAppNotificationInput };
+export type { CreateInAppNotificationInput } from "@/lib/validations/notification";

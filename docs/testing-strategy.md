@@ -2,7 +2,7 @@
 
 **Purpose:** Decide *where* to add tests and *how* coverage exclusions relate to E2E so new work stays consistent. The **quality gate** is `vitest.config.ts` (thresholds + `coverage.exclude`); this document explains the intent.
 
-**Last updated:** April 24, 2026
+**Last updated:** April 28, 2026
 
 ---
 
@@ -20,6 +20,7 @@
 
 - **Pure functions** — validations (`src/lib/validations/**`), URL/state encoders, ranking/merge helpers, formatters.
 - **Server modules testable with mocks** — e.g. `createServerSupabaseClient` mocked, `*.rpc` / query chains faked: search, list filters, comments actions, timeline insert, semantic search settings.
+- **SMTP delivery without loading `createServerSupabaseClient`** — `src/lib/services/smtp-delivery.ts` is covered by [`smtp-delivery.test.ts`](../src/lib/services/smtp-delivery.test.ts) (mocked `createAdminClient` + `nodemailer.createTransport`) so the global branch threshold stays honest; `in-app-notifications.test.ts` mocks this module when testing notification inserts.
 - **API route handlers** — thin JSON boundaries; assert status, Zod rejection, happy path with mocked service.
 - **Regressions** — a bug fixed in lib code deserves a unit test so it does not return.
 

@@ -21,7 +21,7 @@ Variable names mirror **`.env.example`** at the repo root (safe to commit; copy 
 - [ ] `AI_ENRICHMENT_GROK_MODEL` — optional override for the fallback Gateway model id  
 - [ ] `AI_ENRICHMENT_DAILY_LIMIT_DEFAULT` — optional integer override for the per-user default daily enrichment quota (defaults to `AI_ENRICHMENT_DEFAULT_DAILY_LIMIT` in `src/lib/services/ai-enrichment-policy.ts`)  
 
-Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` — see [`BREVO_SDK.md`](BREVO_SDK.md)) or rely on per-user SMTP settings in the app database only if you use those features.
+Add `BREVO_API_KEY` (and optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` — see [`BREVO_SDK.md`](BREVO_SDK.md)) or rely on per-user `smtp_config` in `user_settings` for **mass email**, **SMTP test mail**, and **CRM transactional** notification messages (in-app event emails). For correct **link targets** in those emails, set `SITE_URL` or `NEXT_PUBLIC_SITE_URL` to your production origin (see also `getPublicSiteUrl` in `src/lib/utils/site-url.ts`).
 
 ---
 

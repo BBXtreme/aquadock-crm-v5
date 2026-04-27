@@ -21,17 +21,17 @@ import {
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { ADMIN_IN_APP_MIRROR_TITLE_PREFIX } from "@/lib/constants/notifications";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { getInAppNotificationActionPath } from "@/lib/notifications/in-app-action-path";
 import { useInAppNotificationsRealtime } from "@/lib/realtime/in-app-notifications-realtime";
 import {
   IN_APP_NOTIFICATIONS_PAGE_SIZE,
   listNotificationsForUserPage,
   markAllRead,
   markAsRead,
-} from "@/lib/services/in-app-notifications";
+} from "@/lib/services/in-app-notifications-queries";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
-import { parseInAppNotificationPayload } from "@/lib/validations/notification";
 import type { UserNotification } from "@/types/database.types";
 
 function formatDateAndTimeForCell(
@@ -64,15 +64,23 @@ function formatInAppTitleForDisplay(raw: string, mirrorDisplayPrefix: string): s
   return title;
 }
 
-function getInAppNotificationHref(n: UserNotification): string {
-  const payload = parseInAppNotificationPayload(n.type, n.payload);
-  if (payload == null) {
-    return "/dashboard";
+type InAppT = ReturnType<typeof useT<"inAppNotifications">>;
+
+function notificationTypeLabel(kind: string, t: InAppT): string {
+  switch (kind) {
+    case "reminder_assigned":
+      return t("types.reminder_assigned");
+    case "timeline_on_company":
+      return t("types.timeline_on_company");
+    case "comment_reply":
+      return t("types.comment_reply");
+    case "company_owner_assigned":
+      return t("types.company_owner_assigned");
+    case "contact_assigned":
+      return t("types.contact_assigned");
+    default:
+      return t("typeUnknown");
   }
-  if ("contactId" in payload) {
-    return `/contacts/${payload.contactId}`;
-  }
-  return `/companies/${payload.companyId}`;
 }
 
 type InAppT = ReturnType<typeof useT<"inAppNotifications">>;
@@ -197,7 +205,7 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
           header: t("colActions"),
           cell: ({ row }) => {
             const n = row.original;
-            const href = getInAppNotificationHref(n);
+            const href = getInAppNotificationActionPath(n);
             return (
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="ghost" size="sm" asChild>
@@ -272,7 +280,7 @@ function InAppNotificationsTable({ userId }: { userId: string }) {
               <ul className="list-none space-y-4 md:hidden">
                 {rows.map((n) => {
                   const isUnread = n.read_at == null;
-                  const href = getInAppNotificationHref(n);
+                  const href = getInAppNotificationActionPath(n);
                   const dateParts = formatDateAndTimeForCell(n.created_at, localeTag);
                   return (
                     <li
