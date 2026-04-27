@@ -40,6 +40,10 @@
 
 **Local / CI:** See `playwright.config.ts` and `docs/architecture.md` (Testing) for env vars (`E2E_*`), `loadEnvConfig`, and CI secrets.
 
+**Playwright web server:** Non-CI runs start **`next dev --webpack`** when Playwright must spawn the app (port 3000 free). Turbopack’s default `next dev` can panic under parallel E2E workers; Webpack dev avoids that and still supports the app; **CI** uses **`next start`** after `pnpm build`. If you keep `pnpm dev` running on :3000, Playwright **reuses** it—prefer stopping it so the Webpack instance is used, or accept possible instability with Turbopack.
+
+**Translations in E2E-facing copy:** Mass-email and similar UIs that show literal `{{field}}` tokens in `src/messages/*.json` must use **ICU quoting** (`'{{vorname}}'` in the JSON string) so `t('key')` does not throw `INVALID_MESSAGE` / `MALFORMED_ARGUMENT`. See [next-intl escaping](https://next-intl.dev/docs/usage/messages#escaping).
+
 ---
 
 ## Coverage exclusions (what “wise” means)

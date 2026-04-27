@@ -1089,7 +1089,7 @@
     "templateFormSubjectLabel": "Betreff *",
     "templateFormSubjectPlaceholder": "z. B. Willkommen bei AquaDock",
     "templateFormBodyLabel": "Inhalt",
-    "templateFormBodyPlaceholder": "Hallo {{vorname}},\n\nwir freuen uns, Sie als {{firmenname}} begrüßen zu dürfen.\n\nVerfügbare Platzhalter: {{vorname}}, {{nachname}}, {{firmenname}}, {{anrede}}, {{name}}, {{stadt}}",
+    "templateFormBodyPlaceholder": "Hallo '{{vorname}}',\n\nwir freuen uns, Sie als '{{firmenname}}' begrüßen zu dürfen.\n\nVerfügbare Platzhalter: '{{vorname}}', '{{nachname}}', '{{firmenname}}', '{{anrede}}', '{{name}}', '{{stadt}}'",
     "templateFormSave": "Speichern",
     "templateFormCancel": "Abbrechen",
     "templatePreviewTitle": "Vorlagen-Vorschau",
@@ -1145,7 +1145,7 @@
     "composerSubjectLabel": "Betreff",
     "composerSubjectPlaceholder": "Betreff der E-Mail",
     "composerBodyLabel": "Inhalt (HTML unterstützt)",
-    "composerBodyPlaceholder": "Verwenden Sie {{vorname}}, {{firmenname}}, {{anrede}} …",
+    "composerBodyPlaceholder": "Verwenden Sie '{{vorname}}', '{{firmenname}}', '{{anrede}}' …",
     "composerNoTemplateError": "Keine Vorlage ausgewählt",
     "composerSaveSuccess": "In Vorlage gespeichert",
     "composerSaveError": "Fehler beim Speichern"

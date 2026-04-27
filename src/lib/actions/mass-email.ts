@@ -3,28 +3,19 @@
 
 "use server";
 
-import { promises as dns } from 'node:dns';
 import nodemailer from "nodemailer";
+import { hasMXRecords } from "@/lib/services/email-mx";
 import { getSmtpConfig } from "@/lib/services/smtp";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createEmailLog, fillPlaceholders, getMassEmailRecipients } from "../services/email";
 
 function isValidEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') return false;
+  if (!email || typeof email !== "string") return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) return false;
-  const domain = email.split('@')[1];
-  if (!domain || domain.includes('..') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  const domain = email.split("@")[1];
+  if (!domain || domain.includes("..") || domain.startsWith(".") || domain.endsWith(".")) return false;
   return true;
-}
-
-async function hasMXRecords(domain: string): Promise<boolean> {
-  try {
-    const mx = await dns.resolveMx(domain);
-    return mx && mx.length > 0;
-  } catch {
-    return false;
-  }
 }
 
 type SendMassEmailInput = {

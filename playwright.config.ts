@@ -13,9 +13,11 @@ const inCi = process.env.CI === "true";
  * E2E — auth + company/contact/mass-email smoke (see `tests/e2e/`).
  * Deep paths excluded from Vitest coverage (company detail, crm actions) are exercised here in CI.
  *
- * Local runs: start `pnpm dev` (or let Playwright start `next dev` when no server is listening). Use
- * the same host as this baseURL — default `http://localhost:3000` matches `next dev` on localhost.
- * CI uses `next start` after `pnpm build` with env vars from the workflow.
+ * Local runs: Playwright starts `next dev --webpack` (not Turbopack) when no server is listening.
+ * Default `next dev` in Next 16 uses Turbopack, which can panic under parallel E2E load and then
+ * navigations fail with `net::ERR_ABORTED`. `next start` in CI is already Turbopack-free.
+ * Reusing an already-running `pnpm dev` (Turbopack) is unchanged — stop it first for a stable E2E run.
+ * Use the same host as this baseURL; default is `http://localhost:3000`.
  */
 export default defineConfig({
   // Default 30s is shorter than some expect() timeouts (e.g. 60s) — the test is aborted first.
@@ -34,7 +36,7 @@ export default defineConfig({
   webServer: {
     command: inCi
       ? "pnpm exec next start -H localhost -p 3000"
-      : "NODE_OPTIONS=\"--max-old-space-size=8192\" pnpm exec next dev -H localhost -p 3000",
+      : "NODE_OPTIONS=\"--max-old-space-size=8192\" pnpm exec next dev --webpack -H localhost -p 3000",
     url: "http://localhost:3000",
     reuseExistingServer: !inCi,
     timeout: 120_000,

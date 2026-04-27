@@ -227,20 +227,10 @@ export function fillPlaceholders(
 }
 
 export function isValidEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') return false;
+  if (!email || typeof email !== "string") return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) return false;
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain || domain.includes('..') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  const domain = email.split("@")[1]?.toLowerCase();
+  if (!domain || domain.includes("..") || domain.startsWith(".") || domain.endsWith(".")) return false;
   return true;
-}
-
-export async function hasMXRecords(domain: string): Promise<boolean> {
-  try {
-    const { promises: dns } = await import('node:dns');
-    const mx = await dns.resolveMx(domain);
-    return Array.isArray(mx) && mx.length > 0;
-  } catch {
-    return false;
-  }
 }
