@@ -197,6 +197,14 @@ export type ListInAppNotificationsOptions = {
   beforeCreatedAt?: string;
 };
 
+/** Default page size for the Benachrichtigungen list (newest first). */
+export const IN_APP_NOTIFICATIONS_PAGE_SIZE = 10;
+
+export type ListNotificationsForUserPageOptions = {
+  page: number;
+  pageSize: number;
+};
+
 /**
  * List notifications for the given user, newest first. Caller must use a Supabase client scoped to that user.
  */
@@ -222,6 +230,36 @@ export async function listNotificationsForUser(
     throw handleSupabaseError(error, "listNotificationsForUser");
   }
   return data ?? [];
+}
+
+/**
+ * Paginated list (newest first) with total count for UI pagination.
+ */
+export async function listNotificationsForUserPage(
+  client: SupabaseClient<Database>,
+  userId: string,
+  options: ListNotificationsForUserPageOptions,
+): Promise<{ rows: UserNotification[]; total: number }> {
+  const pageSize = Math.min(100, Math.max(1, options.pageSize));
+  const page = Math.max(0, Math.floor(options.page));
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await client
+    .from("user_notifications")
+    .select("*", { count: "exact" })
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw handleSupabaseError(error, "listNotificationsForUserPage");
+  }
+
+  return {
+    rows: data ?? [],
+    total: count ?? 0,
+  };
 }
 
 export async function getUnreadCount(

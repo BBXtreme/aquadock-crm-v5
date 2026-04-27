@@ -1367,11 +1367,15 @@
     "allMarkedToast": "Alle Benachrichtigungen als gelesen markiert",
     "openLink": "Anzeigen",
     "openLinkAria": "Ziel öffnen",
-    "markRead": "Als gelesen",
+    "markRead": "Gelesen",
     "empty": "Keine Benachrichtigungen.",
     "loadError": "Benachrichtigungen konnten nicht geladen werden.",
     "loading": "Wird geladen…",
-    "notSignedIn": "Bitte melden Sie sich an."
+    "notSignedIn": "Bitte melden Sie sich an.",
+    "mirrorTitlePrefix": "[Admin] ",
+    "paginationPrev": "Zurück",
+    "paginationNext": "Weiter",
+    "paginationSummary": "{from}–{to} von {total}"
   },
   "layout": {
     "commandPaletteTitle": "Gehe zu",

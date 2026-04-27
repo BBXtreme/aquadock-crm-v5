@@ -1371,7 +1371,11 @@
     "empty": "No notifications yet.",
     "loadError": "Could not load notifications.",
     "loading": "Loading…",
-    "notSignedIn": "Please sign in."
+    "notSignedIn": "Please sign in.",
+    "mirrorTitlePrefix": "[Admin] ",
+    "paginationPrev": "Back",
+    "paginationNext": "Next",
+    "paginationSummary": "{from}–{to} of {total}"
   },
   "layout": {
     "commandPaletteTitle": "Go to",

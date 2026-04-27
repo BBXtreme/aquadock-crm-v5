@@ -1371,7 +1371,11 @@
     "empty": "Nema obavijesti.",
     "loadError": "Nije moguće učitati obavijesti.",
     "loading": "Učitavanje…",
-    "notSignedIn": "Prijavite se."
+    "notSignedIn": "Prijavite se.",
+    "mirrorTitlePrefix": "[Admin] ",
+    "paginationPrev": "Natrag",
+    "paginationNext": "Naprijed",
+    "paginationSummary": "{from}–{to} od {total}"
   },
   "layout": {
     "commandPaletteTitle": "Idi na",
