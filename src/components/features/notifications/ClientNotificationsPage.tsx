@@ -28,7 +28,7 @@ import {
   listNotificationsForUserPage,
   markAllRead,
   markAsRead,
-} from "@/lib/services/in-app-notifications";
+} from "@/lib/services/in-app-notifications-queries";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";

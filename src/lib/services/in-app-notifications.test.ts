@@ -20,14 +20,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(),
 }));
 
+import { createInAppNotification } from "./in-app-notifications";
 import {
-  createInAppNotification,
   getUnreadCount,
   listNotificationsForUser,
   listNotificationsForUserPage,
   markAllRead,
   markAsRead,
-} from "./in-app-notifications";
+} from "./in-app-notifications-queries";
 
 const userId = "10000000-0000-4000-8000-000000000001";
 const actorId = "10000000-0000-4000-8000-000000000002";

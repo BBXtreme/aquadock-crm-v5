@@ -1,15 +1,15 @@
 // src/lib/services/smtp.ts
 "use server";
 
-import {
-  getSystemSmtpConfigForNotifications,
-  type SmtpConfig,
-  sendNotificationHtmlEmail,
-} from "@/lib/services/smtp-delivery";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { SmtpConfig } from "./smtp-delivery";
+import {
+  getSystemSmtpConfigForNotifications,
+  sendNotificationHtmlEmail,
+} from "./smtp-delivery";
 
-export type { SmtpConfig };
+export type { SmtpConfig } from "./smtp-delivery";
 export { getSystemSmtpConfigForNotifications, sendNotificationHtmlEmail };
 
 /**
