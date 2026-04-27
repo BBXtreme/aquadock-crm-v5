@@ -83,6 +83,25 @@ function notificationTypeLabel(kind: string, t: InAppT): string {
   }
 }
 
+type InAppT = ReturnType<typeof useT<"inAppNotifications">>;
+
+function notificationTypeLabel(kind: string, t: InAppT): string {
+  switch (kind) {
+    case "reminder_assigned":
+      return t("types.reminder_assigned");
+    case "timeline_on_company":
+      return t("types.timeline_on_company");
+    case "comment_reply":
+      return t("types.comment_reply");
+    case "company_owner_assigned":
+      return t("types.company_owner_assigned");
+    case "contact_assigned":
+      return t("types.contact_assigned");
+    default:
+      return t("typeUnknown");
+  }
+}
+
 function InAppNotificationsTable({ userId }: { userId: string }) {
   const t = useT("inAppNotifications");
   const localeTag = useNumberLocaleTag();
