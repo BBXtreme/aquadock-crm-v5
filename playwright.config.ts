@@ -17,6 +17,8 @@ const inCi = process.env.CI === "true";
  * Default `next dev` in Next 16 uses Turbopack, which can panic under parallel E2E load and then
  * navigations fail with `net::ERR_ABORTED`. `next start` in CI is already Turbopack-free.
  * Reusing an already-running `pnpm dev` (Turbopack) is unchanged — stop it first for a stable E2E run.
+ * **Workers:** use `workers: 1` locally (same as CI). A single `next dev --webpack` process is easily
+ * overloaded by the default multi-worker run (`ERR_ABORTED` / `net::ERR_CONNECTION_*` on `page.goto`).
  * Use the same host as this baseURL; default is `http://localhost:3000`.
  */
 export default defineConfig({
@@ -26,7 +28,8 @@ export default defineConfig({
   fullyParallel: !inCi,
   forbidOnly: inCi,
   retries: inCi ? 1 : 0,
-  workers: inCi ? 1 : undefined,
+  // Local + CI: one worker. Parallel runs against one dev server cause flaky ERR_ABORTED (see e2e docs).
+  workers: 1,
   reporter: inCi ? [["github"], ["list"]] : "list",
   use: {
     baseURL,
