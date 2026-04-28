@@ -8,6 +8,23 @@ import { CommentItem } from "@/components/features/comments/CommentItem";
 import deMessages from "@/messages/de.json";
 import type { CommentWithAuthor } from "@/types/database.types";
 
+const companyId = "00000000-0000-4000-8000-000000000001";
+
+vi.mock("@/lib/actions/comments", () => ({
+  getCommentAttachmentSignedUrl: vi.fn(async () => ({
+    signedUrl: "https://example.com/signed",
+  })),
+  deleteCommentAttachment: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/client/open-signed-storage-url", () => ({
+  openSignedStorageUrl: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/client/upload-comment-attachments", () => ({
+  uploadCommentAttachmentsForComment: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -54,6 +71,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={ownerId}
           localeTag="de-DE"
@@ -75,6 +93,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={otherId}
           localeTag="de-DE"
@@ -95,6 +114,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={ownerId}
           localeTag="de-DE"
@@ -143,6 +163,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={ownerId}
           localeTag="de-DE"
@@ -167,6 +188,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={ownerId}
           localeTag="de-DE"
@@ -193,6 +215,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment({ id: "c-deep", parent_id: "c-parent" })}
           currentUserId={otherId}
           localeTag="de-DE"
@@ -211,6 +234,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment({
             profiles: { display_name: "Alice", avatar_url: null },
           })}
@@ -229,6 +253,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment({
             created_at: undefined,
             updated_at: new Date().toISOString(),
@@ -248,6 +273,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment({
             profiles: { display_name: "Pat Example", avatar_url: null },
           })}
@@ -266,6 +292,7 @@ describe("CommentItem", () => {
     render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment({
             updated_at: "2024-01-01T12:05:00.000Z",
           })}
@@ -284,6 +311,7 @@ describe("CommentItem", () => {
     const { rerender } = render(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={otherId}
           localeTag="de-DE"
@@ -297,6 +325,7 @@ describe("CommentItem", () => {
     rerender(
       wrapper(
         <CommentItem
+          companyId={companyId}
           comment={baseComment()}
           currentUserId={otherId}
           localeTag="de-DE"

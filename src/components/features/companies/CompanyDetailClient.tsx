@@ -9,6 +9,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } fr
 import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import AquaDockCard from "@/components/features/companies/detail/AquaDockCard";
+import CompanyCommentAttachmentsCard from "@/components/features/companies/detail/CompanyCommentAttachmentsCard";
 import CompanyCommentsCard from "@/components/features/companies/detail/CompanyCommentsCard";
 import CompanyDetailsCard from "@/components/features/companies/detail/CompanyDetailsCard";
 import CompanyHeader from "@/components/features/companies/detail/CompanyHeader";
@@ -223,6 +224,7 @@ function CompanyDetailShell({
       <LinkedContactsCard companyId={id} />
       <RemindersCard companyId={id} />
       <CompanyCommentsCard companyId={id} />
+      <CompanyCommentAttachmentsCard companyId={id} />
       <TimelineCard companyId={id} />
 
       <AIEnrichmentModal

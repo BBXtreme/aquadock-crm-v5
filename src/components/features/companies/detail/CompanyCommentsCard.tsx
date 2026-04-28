@@ -2,13 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronUp, MessageSquare, Phone, ShieldAlert, Sparkles, UserCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type { ComponentType, SVGProps } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-
 import { CommentComposer } from "@/components/features/comments/CommentComposer";
 import { CommentItem } from "@/components/features/comments/CommentItem";
 import { flattenCommentThread } from "@/components/features/comments/flatten-comment-thread";
+import { companyCommentAttachmentsQueryKey } from "@/components/features/companies/detail/CompanyCommentAttachmentsCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -20,11 +21,13 @@ import {
   updateComment,
 } from "@/lib/actions/comments";
 import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
+import { uploadCommentAttachmentsForComment } from "@/lib/client/upload-comment-attachments";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import type { CommentWithAuthor } from "@/types/database.types";
 
 const MAX_COMMENT_DEPTH = 32;
+
 const MAX_VISUAL_DEPTH = 2;
 const HIGHLIGHT_DURATION_MS = 2500;
 const VISIBLE_ROOT_LIMIT = 5;
@@ -38,20 +41,25 @@ type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardProps) {
   const t = useT("comments");
   const localeTag = useNumberLocaleTag();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [replyParent, setReplyParent] = useState<CommentWithAuthor | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [targetCommentId, setTargetCommentId] = useState<string | null>(null);
   const composerRef = useRef<HTMLDivElement>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasProcessedDeepLink = useRef(false);
   /** Tracks last hydrated company so we load localStorage draft on id change without clobbering another company's key. */
   const draftCompanyRef = useRef<string | null>(null);
 
   const queryKey = useMemo(() => ["comments", "company", companyId] as const, [companyId]);
+
+  const onCommentAttachmentsChanged = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey });
+    void queryClient.invalidateQueries({ queryKey: companyCommentAttachmentsQueryKey(companyId) });
+  }, [queryClient, queryKey, companyId]);
 
   const { data: currentUser } = useQuery({
     queryKey: ["user"],
@@ -156,28 +164,50 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     }, HIGHLIGHT_DURATION_MS);
   }, []);
 
+  /** Deep link `?commentId=` — expand thread, highlight target, scroll into view (file library + shared links). */
+  const commentFromUrl = searchParams.get("commentId");
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    setTargetCommentId(params.get("commentId"));
-  }, []);
-
-  useEffect(() => {
-    if (!targetCommentId) return;
-    if (hasProcessedDeepLink.current) return;
-    if (!ordered.some((c) => c.id === targetCommentId)) return;
-    hasProcessedDeepLink.current = true;
+    const cid = commentFromUrl;
+    if (cid === null || cid === undefined || cid.trim() === "") {
+      return;
+    }
+    if (!ordered.some((c) => c.id === cid)) {
+      return;
+    }
     setShowAll(true);
-    scheduleHighlight(targetCommentId);
-  }, [targetCommentId, ordered, scheduleHighlight]);
+    scheduleHighlight(cid);
+    requestAnimationFrame(() => {
+      document.getElementById(`comment-${cid}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }, [commentFromUrl, ordered, scheduleHighlight]);
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createCompanyComment({
+    mutationFn: async ({ files }: { files: File[] }) => {
+      const created = await createCompanyComment({
         companyId,
         bodyMarkdown: draft.trim(),
         parentId: replyParent?.id ?? null,
-      }),
+      });
+
+      if (files.length > 0) {
+        const uploadResult = await uploadCommentAttachmentsForComment({
+          companyId,
+          commentId: created.id,
+          files,
+        });
+        if (!uploadResult.ok) {
+          if (uploadResult.kind === "too_large") {
+            toast.error(t("attachmentTooLargeToast"));
+          } else if (uploadResult.kind === "upload") {
+            toast.error(t("attachmentUploadFailed"), { description: uploadResult.message });
+          } else {
+            toast.error(t("attachmentRegisterFailed"), { description: uploadResult.message });
+          }
+        }
+      }
+
+      return created;
+    },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<CommentWithAuthor[]>(queryKey);
@@ -199,6 +229,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             display_name: currentUser.display_name ?? null,
             avatar_url: currentUser.avatar_url ?? null,
           },
+          comment_attachments: [],
         };
         queryClient.setQueryData<CommentWithAuthor[]>(queryKey, (old) => [...(old ?? []), optimistic]);
       }
@@ -214,6 +245,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
     onSuccess: (created) => {
       setDraft("");
       setReplyParent(null);
+      setPendingFiles([]);
       /** Ensure list + title count update even if refetch is delayed or optimistic row was skipped. */
       queryClient.setQueryData<CommentWithAuthor[]>(queryKey, (old) => {
         const list = old ?? [];
@@ -371,15 +403,17 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
 
   const handleSubmit = useCallback(async () => {
     try {
-      await createMutation.mutateAsync();
+      const files = [...pendingFiles];
+      await createMutation.mutateAsync({ files });
     } catch {
       // Errors are surfaced via createMutation.onError (toast + rollback).
     }
-  }, [createMutation]);
+  }, [createMutation, pendingFiles]);
 
   const handleChipTemplate = useCallback((template: string) => {
     setDraft(template);
     setReplyParent(null);
+    setPendingFiles([]);
     requestAnimationFrame(() => {
       const el = composerTextareaRef.current;
       if (!el) return;
@@ -471,6 +505,9 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
             onSubmit={handleSubmit}
             isReplying={replyParent !== null}
             textareaRef={composerTextareaRef}
+            pendingFiles={pendingFiles}
+            onPendingFilesChange={setPendingFiles}
+            localeTag={localeTag}
           />
         </div>
 
@@ -516,6 +553,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
                   <li key={c.id}>
                     <CommentItem
                       comment={c}
+                      companyId={companyId}
                       currentUserId={currentUser?.id ?? null}
                       localeTag={localeTag}
                       depth={visualDepth}
@@ -524,6 +562,7 @@ export default function CompanyCommentsCard({ companyId }: CompanyCommentsCardPr
                       onReply={handleReply}
                       onUpdate={handleUpdate}
                       onDelete={handleDelete}
+                      onAttachmentsChanged={onCommentAttachmentsChanged}
                     />
                   </li>
                 );

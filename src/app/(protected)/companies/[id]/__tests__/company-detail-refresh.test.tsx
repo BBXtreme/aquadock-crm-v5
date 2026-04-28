@@ -80,6 +80,10 @@ vi.mock("@/components/features/companies/detail/CompanyCommentsCard", () => ({
   default: () => null,
 }));
 
+vi.mock("@/components/features/companies/detail/CompanyCommentAttachmentsCard", () => ({
+  default: () => null,
+}));
+
 vi.mock("@/components/features/companies/ai-enrichment/AIEnrichmentModal", () => ({
   AIEnrichmentModal: () => null,
 }));

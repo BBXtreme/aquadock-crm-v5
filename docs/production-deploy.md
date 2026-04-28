@@ -66,6 +66,9 @@ If you use company comments, apply these **in order** in the Supabase SQL Editor
 
 Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live schema.
 
+- [ ] [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — **`DELETE`** on `comment_attachments` so authors can remove attachments when editing a note (required for `deleteCommentAttachment`; apply after `comments-rls.sql` / trash alignment as needed).
+- [ ] Server env **`SUPABASE_SERVICE_ROLE_KEY`** (Vercel/server only) — required for preferred **`POST /api/comment-attachments/upload`**, admin **signed URL** generation, and robust Storage cleanup on delete (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9).
+
 ### Operations
 
 - [ ] Backups / point-in-time recovery per your Supabase plan.  

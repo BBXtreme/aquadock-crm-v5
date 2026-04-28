@@ -13,7 +13,19 @@ const createCompanyComment = vi.fn();
 const updateComment = vi.fn();
 const deleteComment = vi.fn();
 const restoreOwnComment = vi.fn();
+const registerCommentAttachment = vi.fn().mockResolvedValue({ id: "att-1" });
 const getCurrentUserClient = vi.fn();
+
+const storageUploadMock = vi.hoisted(() => vi.fn().mockResolvedValue({ data: {}, error: null }));
+const storageFromMock = vi.hoisted(() => vi.fn(() => ({ upload: storageUploadMock })));
+
+vi.mock("@/lib/supabase/browser", () => ({
+  createClient: vi.fn(() => ({
+    storage: {
+      from: storageFromMock,
+    },
+  })),
+}));
 
 vi.mock("@/lib/actions/comments", () => ({
   listCompanyComments: (...args: unknown[]) => listCompanyComments(...args),
@@ -21,6 +33,7 @@ vi.mock("@/lib/actions/comments", () => ({
   updateComment: (...args: unknown[]) => updateComment(...args),
   deleteComment: (...args: unknown[]) => deleteComment(...args),
   restoreOwnComment: (...args: unknown[]) => restoreOwnComment(...args),
+  registerCommentAttachment: (...args: unknown[]) => registerCommentAttachment(...args),
 }));
 
 vi.mock("@/lib/auth/get-current-user-client", () => ({
@@ -94,23 +107,33 @@ function mkComment(
     deleted_at: null,
     deleted_by: null,
     profiles: { display_name: "Tester", avatar_url: null },
+    comment_attachments: [],
   };
 }
 
 describe("CompanyCommentsCard", () => {
   beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+    storageUploadMock.mockReset();
+    storageUploadMock.mockResolvedValue({ data: {}, error: null });
+    storageFromMock.mockClear();
     localStorage.clear();
     listCompanyComments.mockReset();
     createCompanyComment.mockReset();
     updateComment.mockReset();
     deleteComment.mockReset();
     restoreOwnComment.mockReset();
+    registerCommentAttachment.mockReset();
+    registerCommentAttachment.mockResolvedValue({ id: "att-1" });
     getCurrentUserClient.mockReset();
     getCurrentUserClient.mockResolvedValue(mockUserRow);
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
       (cb as (t: number) => void)(0);
       return 0;
     });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(null, { status: 503, statusText: "Service Unavailable" }),
+    );
   });
 
   afterEach(() => {
@@ -125,6 +148,132 @@ describe("CompanyCommentsCard", () => {
     await waitFor(() => {
       expect(screen.getByText(/Starte die Konversation/i)).toBeInTheDocument();
     });
+  });
+
+  it("uploads pending files to storage and registers attachments after creating a comment", async () => {
+    const companyId = "00000000-0000-4000-8000-000000000001";
+    const newCommentId = "baaaaaaa-bbbb-4ccc-dddd-eeeeeeeeeeee";
+    listCompanyComments.mockResolvedValue([]);
+    const savedRow = {
+      id: newCommentId,
+      entity_type: "company" as const,
+      entity_id: companyId,
+      parent_id: null,
+      body_markdown: "With file",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: mockUserRow.id,
+      updated_by: mockUserRow.id,
+      deleted_at: null,
+      deleted_by: null,
+      profiles: { display_name: "Tester", avatar_url: null },
+      comment_attachments: [],
+    };
+    createCompanyComment.mockResolvedValue(savedRow);
+
+    const user = userEvent.setup();
+    render(wrapper(<CompanyCommentsCard companyId={companyId} />));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("company-comment-composer-body").length).toBeGreaterThanOrEqual(1);
+    });
+
+    const attachTargets = screen.getAllByLabelText(/Datei anhängen/i);
+    const fileInput = attachTargets.find((el): el is HTMLInputElement => el.tagName === "INPUT");
+    expect(fileInput).toBeTruthy();
+    const blob = new File(["crm"], "weekly.pdf", { type: "application/pdf" });
+    await user.upload(fileInput as HTMLInputElement, blob);
+
+    const composerBodies = screen.getAllByTestId("company-comment-composer-body");
+    const composerBody = composerBodies[0];
+    if (!composerBody) {
+      throw new Error("Expected comment composer textarea");
+    }
+    await user.type(composerBody, "With file");
+
+    const submitButtons = screen.getAllByRole("button", { name: /Kommentieren/i });
+    const enabledSubmit = submitButtons.find((b) => !b.hasAttribute("disabled"));
+    expect(enabledSubmit).toBeTruthy();
+    if (enabledSubmit) {
+      await user.click(enabledSubmit);
+    }
+
+    await waitFor(() => {
+      expect(storageUploadMock).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(registerCommentAttachment).toHaveBeenCalled();
+    });
+
+    const uploadPath = storageUploadMock.mock.calls[0]?.[0];
+    expect(typeof uploadPath).toBe("string");
+    expect(uploadPath).toMatch(new RegExp(`^${companyId}/${newCommentId}/`));
+
+    expect(registerCommentAttachment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        companyId,
+        commentId: newCommentId,
+        fileName: "weekly.pdf",
+        contentType: "application/pdf",
+        byteSize: blob.size,
+        storageObjectPath: uploadPath,
+      }),
+    );
+    expect(storageFromMock).toHaveBeenCalledWith("comment-files");
+  });
+
+  it("toasts upload failure when storage upload returns an error", async () => {
+    const companyId = "00000000-0000-4000-8000-0000000000f1";
+    const newCommentId = "ca333333-3333-4333-8333-333333333333";
+    listCompanyComments.mockResolvedValue([]);
+    storageUploadMock.mockResolvedValue({ data: null, error: { message: "storage denied" } });
+    createCompanyComment.mockResolvedValue({
+      id: newCommentId,
+      entity_type: "company",
+      entity_id: companyId,
+      parent_id: null,
+      body_markdown: "x",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: mockUserRow.id,
+      updated_by: mockUserRow.id,
+      deleted_at: null,
+      deleted_by: null,
+      profiles: { display_name: "Tester", avatar_url: null },
+      comment_attachments: [],
+    });
+
+    const user = userEvent.setup();
+    render(wrapper(<CompanyCommentsCard companyId={companyId} />));
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("company-comment-composer-body").length).toBeGreaterThanOrEqual(1);
+    });
+
+    const attachTargetsFail = screen.getAllByLabelText(/Datei anhängen/i);
+    const fileInputFail = attachTargetsFail.find((el): el is HTMLInputElement => el.tagName === "INPUT");
+    expect(fileInputFail).toBeTruthy();
+    await user.upload(
+      fileInputFail as HTMLInputElement,
+      new File(["a"], "bad.bin", { type: "application/octet-stream" }),
+    );
+
+    const composerBodies = screen.getAllByTestId("company-comment-composer-body");
+    const ta = composerBodies[0];
+    if (!ta) {
+      throw new Error("Expected composer");
+    }
+    await user.type(ta, "x");
+
+    const submit = screen.getAllByRole("button", { name: /Kommentieren/i }).find((b) => !b.hasAttribute("disabled"));
+    if (submit) {
+      await user.click(submit);
+    }
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+    expect(registerCommentAttachment).not.toHaveBeenCalled();
   });
 
   it("submits a new comment via server action", async () => {
@@ -142,6 +291,7 @@ describe("CompanyCommentsCard", () => {
       deleted_at: null,
       deleted_by: null,
       profiles: { display_name: "Tester", avatar_url: null },
+      comment_attachments: [],
     });
 
     const user = userEvent.setup();
@@ -284,6 +434,7 @@ describe("CompanyCommentsCard", () => {
       deleted_at: null,
       deleted_by: null,
       profiles: { display_name: "Tester", avatar_url: null },
+      comment_attachments: [],
     };
     listCompanyComments.mockImplementation(async () => {
       if (createCompanyComment.mock.calls.length === 0) {
@@ -378,6 +529,7 @@ describe("CompanyCommentsCard", () => {
       deleted_at: null,
       deleted_by: null,
       profiles: { display_name: "Tester", avatar_url: null },
+      comment_attachments: [],
     });
 
     const user = userEvent.setup();

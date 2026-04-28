@@ -1,6 +1,6 @@
 "use client";
 
-import { CornerDownRight, Link2, Pencil, Reply, Trash2 } from "lucide-react";
+import { CornerDownRight, FileText, Link2, Paperclip, Pencil, Reply, Trash2, X } from "lucide-react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -19,8 +19,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { deleteCommentAttachment, getCommentAttachmentSignedUrl } from "@/lib/actions/comments";
+import { openSignedStorageUrl } from "@/lib/client/open-signed-storage-url";
+import { uploadCommentAttachmentsForComment } from "@/lib/client/upload-comment-attachments";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
+import { formatFileSizeBytes } from "@/lib/utils/format-file-size";
 import type { CommentWithAuthor } from "@/types/database.types";
 
 function displayInitials(name: string | null | undefined, userId: string): string {
@@ -80,6 +84,7 @@ function formatRelativeTime(
 
 type CommentItemProps = {
   comment: CommentWithAuthor;
+  companyId: string;
   currentUserId: string | null;
   localeTag: string;
   /** Visual indentation depth, capped by the parent (typically 0..2). */
@@ -90,10 +95,12 @@ type CommentItemProps = {
   onReply: (comment: CommentWithAuthor) => void;
   onUpdate: (commentId: string, bodyMarkdown: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  onAttachmentsChanged?: () => void;
 };
 
 export function CommentItem({
   comment,
+  companyId,
   currentUserId,
   localeTag,
   depth = 0,
@@ -102,6 +109,7 @@ export function CommentItem({
   onReply,
   onUpdate,
   onDelete,
+  onAttachmentsChanged,
 }: CommentItemProps) {
   const t = useT("comments");
   const [editing, setEditing] = useState(false);
@@ -109,7 +117,11 @@ export function CommentItem({
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [openingAttachmentId, setOpeningAttachmentId] = useState<string | null>(null);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
+  const [editUploading, setEditUploading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!editing) {
@@ -174,6 +186,65 @@ export function CommentItem({
     if (e.key === "Escape") {
       e.preventDefault();
       handleCancelEdit();
+    }
+  };
+
+  const attachments = comment.comment_attachments ?? [];
+
+  const handleOpenAttachment = async (attachmentId: string, fileName: string) => {
+    setOpeningAttachmentId(attachmentId);
+    try {
+      const { signedUrl } = await getCommentAttachmentSignedUrl({ attachmentId });
+      await openSignedStorageUrl(signedUrl, fileName);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : t("unknownError");
+      toast.error(t("attachmentOpenFailed"), { description: message });
+    } finally {
+      setOpeningAttachmentId(null);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    setDeletingAttachmentId(attachmentId);
+    try {
+      await deleteCommentAttachment({ attachmentId });
+      onAttachmentsChanged?.();
+    } catch (e) {
+      const message = e instanceof Error ? e.message : t("unknownError");
+      toast.error(t("attachmentDeleteFailed"), { description: message });
+    } finally {
+      setDeletingAttachmentId(null);
+    }
+  };
+
+  const handleEditFilesSelected = async (list: FileList | null) => {
+    if (list === null || list.length === 0) {
+      return;
+    }
+    const files = Array.from(list);
+    if (editFileInputRef.current) {
+      editFileInputRef.current.value = "";
+    }
+    setEditUploading(true);
+    try {
+      const result = await uploadCommentAttachmentsForComment({
+        companyId,
+        commentId: comment.id,
+        files,
+      });
+      if (!result.ok) {
+        if (result.kind === "too_large") {
+          toast.error(t("attachmentTooLargeToast"));
+        } else if (result.kind === "upload") {
+          toast.error(t("attachmentUploadFailed"), { description: result.message });
+        } else {
+          toast.error(t("attachmentRegisterFailed"), { description: result.message });
+        }
+        return;
+      }
+      onAttachmentsChanged?.();
+    } finally {
+      setEditUploading(false);
     }
   };
 
@@ -306,6 +377,61 @@ export function CommentItem({
                 className="text-sm"
                 aria-label={t("edit")}
               />
+              {isOwner ? (
+                <div className="space-y-2 rounded-md border border-border/60 bg-muted/15 p-2">
+                  <p className="text-muted-foreground text-xs">{t("attachmentsLabel")}</p>
+                  {attachments.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {attachments.map((a) => (
+                        <li key={a.id} className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-auto min-h-8 min-w-0 flex-1 justify-start gap-2 px-2 py-1.5 font-normal"
+                            disabled={openingAttachmentId === a.id || deletingAttachmentId === a.id}
+                            onClick={() => void handleOpenAttachment(a.id, a.file_name)}
+                          >
+                            <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                            <span className="min-w-0 flex-1 truncate text-left text-sm">{a.file_name}</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                            disabled={deletingAttachmentId === a.id || editUploading}
+                            onClick={() => void handleDeleteAttachment(a.id)}
+                            aria-label={t("attachmentRemoveFromNote", { name: a.file_name })}
+                          >
+                            <X className="h-4 w-4" aria-hidden />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground text-xs">{t("editAttachmentsEmpty")}</p>
+                  )}
+                  <input
+                    ref={editFileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => void handleEditFilesSelected(e.target.files)}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={editUploading}
+                    onClick={() => editFileInputRef.current?.click()}
+                  >
+                    <Paperclip className="h-3.5 w-3.5" aria-hidden />
+                    {t("editAddAttachments")}
+                  </Button>
+                </div>
+              ) : null}
               <div className="flex gap-2">
                 <Button type="button" size="sm" onClick={() => void handleSaveEdit()} disabled={!canSaveEdit}>
                   {saving ? t("saving") : t("save")}
@@ -316,7 +442,37 @@ export function CommentItem({
               </div>
             </div>
           ) : (
-            <CommentMarkdownPreview markdown={comment.body_markdown} className="text-sm" />
+            <>
+              <CommentMarkdownPreview markdown={comment.body_markdown} className="text-sm" />
+              {attachments.length > 0 ? (
+                <ul
+                  className="mt-2 space-y-1.5 rounded-md border border-border/60 bg-muted/20 px-2 py-2"
+                  aria-label={t("attachmentsLabel")}
+                >
+                  {attachments.map((a) => (
+                    <li key={a.id}>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-auto w-full max-w-full justify-start gap-2 px-2 py-1.5 text-left font-normal"
+                        disabled={openingAttachmentId === a.id}
+                        onClick={() => void handleOpenAttachment(a.id, a.file_name)}
+                        aria-label={t("attachmentDownload", { name: a.file_name })}
+                      >
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="min-w-0 flex-1 truncate text-sm">{a.file_name}</span>
+                        {a.byte_size !== null && a.byte_size !== undefined ? (
+                          <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+                            {formatFileSizeBytes(a.byte_size, localeTag)}
+                          </span>
+                        ) : null}
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
           )}
         </div>
       </div>

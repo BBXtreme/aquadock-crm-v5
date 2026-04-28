@@ -73,6 +73,13 @@ export type TimelineEntryWithJoins = TimelineEntry & {
 /** Comment row with author fields for list UI (Supabase join on profiles). */
 export type CommentWithAuthor = Comment & {
   profiles?: Pick<Profile, "display_name" | "avatar_url"> | null;
+  /** Nested FK embed from `comments` → `comment_attachments` (omit when selecting without embed). */
+  comment_attachments?: CommentAttachment[] | null;
+};
+
+/** Company overview: attachment metadata plus parent comment excerpt (Supabase embed). */
+export type CompanyCommentAttachmentListItem = CommentAttachment & {
+  comments: Pick<Comment, "id" | "body_markdown" | "created_at" | "entity_id" | "entity_type" | "deleted_at"> | null;
 };
 
 export type CompanyWithPrimaryContact = Company & {

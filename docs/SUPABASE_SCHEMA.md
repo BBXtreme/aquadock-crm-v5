@@ -1,10 +1,10 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-23  
+**Last audited**: 2026-04-28  
 **Environment**: Supabase PostgreSQL 15+  
 
-**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`) and backup items in section 9 and deployment docs.
+**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`) and backup items in section 9 and deployment docs.
 
 **Tenancy:** RLS and `user_id` on records model **per-user** ownership (and admin override where policies allow), not **multi-tenant org / workspace** objects. A future “org” or deal-pipeline layer would be additive schema on top of this v5 design.
 
@@ -17,7 +17,7 @@
 | reminders       | Tasks & follow-ups        | 320   | uuid | → companies.id (required) | Yes  | company_id, due_date, status |
 | timeline        | Activity log              | 2 800 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
 | comments        | Threaded notes on companies | —   | uuid | → companies, self (parent), profiles | Yes | entity list, parent thread |
-| comment_attachments | File metadata for a comment (future UI) | — | uuid | → comments, profiles | Yes | comment_id |
+| comment_attachments | File metadata per company comment (`storage_object_path` → `comment-files` bucket) | — | uuid | → comments, profiles | Yes | comment_id |
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
@@ -151,7 +151,7 @@ Company-scoped threaded comments. **Phase 1:** `entity_type` is constrained to `
 
 ### comment_attachments
 
-Optional attachment rows per comment (schema and RLS exist; product UI may follow later).
+Attachment rows per comment; binary payload lives in **Supabase Storage** bucket `comment-files` (private). The app registers metadata after upload (see §9).
 
 | Column               | Type        | Nullable | Default           | Business Meaning     | Notes / Index |
 | -------------------- | ----------- | -------- | ----------------- | -------------------- | ------------- |
@@ -160,7 +160,7 @@ Optional attachment rows per comment (schema and RLS exist; product UI may follo
 | file_name            | text        | false    | —                 | Original file name   | —             |
 | content_type         | text        | true     | —                 | MIME type            | —             |
 | byte_size            | bigint      | true     | —                 | Size in bytes        | —             |
-| storage_object_path  | text        | false    | —                 | Path in Storage (TBD) | —             |
+| storage_object_path  | text        | false    | —                 | Path inside bucket   | Format `{company_uuid}/{comment_uuid}/{object_name}` — must match `comment-files` RLS (first path segment = `companies.id`, `companies.user_id = auth.uid()`, company not soft-deleted) |
 | created_at           | timestamptz | false    | now()             | —                    | —             |
 | created_by           | uuid        | false    | —                 | Uploader (`profiles.id`) | FK → profiles |
 
@@ -279,7 +279,7 @@ The **service role** key bypasses RLS when used from trusted server code; it mus
 
 **`user_notifications`:** RLS as in the [table section](#user_notifications) above; inserts from server using service role only.
 
-**`comments` and `comment_attachments`:** Policies tie access to **company ownership** (`companies.user_id = auth.uid()`), same idea as core CRM tables. After [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql): **SELECT** includes soft-deleted comments for the company owner (so trash / restore flows work under RLS). **INSERT** still requires `created_by = auth.uid()` and an active (non-deleted) company. **UPDATE** / **DELETE** are allowed for the **company owner** on any comment on that company (restore and hard-delete); the app still restricts **markdown edits** to the original author in server actions (`@/lib/actions/comments.ts`). **Attachments:** SELECT/INSERT mirror comment + company access; there is no UPDATE/DELETE policy yet—extend if you add attachment management.
+**`comments` and `comment_attachments`:** Policies tie access to **company ownership** (`companies.user_id = auth.uid()`), same idea as core CRM tables. After [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql): **SELECT** includes soft-deleted comments for the company owner (so trash / restore flows work under RLS). **INSERT** still requires `created_by = auth.uid()` and an active (non-deleted) company. **UPDATE** / **DELETE** are allowed for the **company owner** on any comment on that company (restore and hard-delete); the app still restricts **markdown edits** to the original author in server actions (`@/lib/actions/comments.ts`). **`comment_attachments` (Postgres):** **SELECT**/**INSERT** as in [`comments-rls.sql`](../src/sql/comments-rls.sql). **DELETE** on `comment_attachments` is granted to the **comment author** under company ownership ([`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql)) so `deleteCommentAttachment` in `@/lib/actions/comments` can remove metadata; there is **no UPDATE** policy (metadata is insert/delete only from the app). **Storage bucket `comment-files`:** separate policies on `storage.objects` (`storage-comment-files-bucket.sql`) scope **read/write/delete** blobs by first path segment = `companies.id` for the current user as company owner (see §9).
 
 **Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, `timeline`, and **`comments`** support optional soft deletion. On restore, `deleted_at` and `deleted_by` are cleared; hard deletes drop the row. **`deleted_by` FK differs by table:** on `companies`, `contacts`, `reminders`, and `timeline` it references **`auth.users(id)`** ([`deleted-by-audit.sql`](../src/sql/deleted-by-audit.sql)); on **`comments`** it references **`profiles(id)`** ([`comments-tables.sql`](../src/sql/comments-tables.sql)). Active reads typically filter `deleted_at IS NULL`; trashed rows appear in admin tooling or company-owner flows. For the core four tables, RLS was not extended solely for soft-delete—rely on server actions and query filters where documented.
 
@@ -372,7 +372,9 @@ All schemas use `.strict()`, trimming, length limits, and enum constraints match
 
 Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are `user` or `admin`, enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). Authorization does not rely on `user_metadata` for roles; `display_name` and `avatar_url` are read from `profiles` in `getCurrentUser()` for the shell (sidebar, header) and profile page. `last_sign_in_at` on `profiles` is shown in admin user management when populated by the app.
 
-## 9. Supabase Storage – `avatars` bucket
+## 9. Supabase Storage
+
+### `avatars` bucket
 
 Profile photos use **Storage**, not bytea columns in Postgres.
 
@@ -395,6 +397,30 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 - Without this bucket, the client upload API returns `StorageError: Bucket not found`.
 - Table RLS for `profiles` is unchanged; only `avatar_url` text is updated.
 - Related UI: `@/components/ui/avatar-upload.tsx` (profile card), header avatar in `@/components/layout/Header.tsx`.
+
+### `comment-files` bucket (CRM comment attachments)
+
+Private bucket for files attached to **company** comment threads. Metadata rows live in `comment_attachments.storage_object_path`; downloads use **signed URLs** from `getCommentAttachmentSignedUrl` — the server prefers **`createSignedUrl`** with the **service role** client (when `SUPABASE_SERVICE_ROLE_KEY` is set) so signing does not depend on Storage **`SELECT`** RLS visibility; session client fallback if absent. Clients must not expose the service key. **`deleteCommentAttachment`** deletes the Postgres row then removes the Storage object (**admin preferred**, browser fallback).
+
+| Item | Detail |
+|------|--------|
+| Bucket id | `comment-files` |
+| Public | No |
+| Object path | `{company_uuid}/{comment_uuid}/{object_name}` — first segment must be a `companies.id` whose `user_id = auth.uid()` and `deleted_at IS NULL` (`split_part(name, '/', 1)` in policy — do **not** use `(storage.foldername(name))[1]` for this layout: the last path segment is the file, so `foldername()` targets the **comment** folder and `[1]` mismatches `companies.id`, causing RLS denial on upload) |
+| Table link | `comment_attachments.storage_object_path` stores the path **relative to the bucket** (not the full URL) |
+
+**One-time setup**  
+Run in the Supabase SQL Editor (idempotent), in sensible order:
+
+- [`src/sql/storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql) — bucket + `storage.objects` policies  
+- [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — **`DELETE`** on `public.comment_attachments` for comment authors (required for removing attachments when editing a note)
+
+**Operational notes**
+
+- Company **owner** (CRM `companies.user_id`) can **insert/select/update/delete** objects whose first path segment matches an owned company. Comment **authors** uploading on behalf of the owner still use paths under that company id (server/client validation in app code should align paths with `comments` / `comment_attachments` rows).
+- Related UI (company detail): thread compose/upload in `@/components/features/companies/detail/CompanyCommentsCard.tsx` (with `CommentComposer` / `CommentItem`); company-wide attachment table in `@/components/features/companies/detail/CompanyCommentAttachmentsCard.tsx` (`listCompanyCommentAttachments` / signed open; “go to note” sets `?commentId=`).
+- **Post-deploy patch (Apr 2026):** If browser uploads fail with Postgres `42501` / `"new row violates row-level security policy"` on **`storage.objects`**, re-run [`storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql) (policies now use **`split_part(name::text, '/', 1)`**). Earlier drafts used `storage.foldername(name)[1]`, which does not resolve to **`companies.id`** for paths `companyId/commentId/file`.
+- Without this bucket or policies, uploads to `comment-files` fail with `Bucket not found` or RLS denial.
 
 ## 10. Change Log
 
@@ -437,3 +463,7 @@ That creates the bucket (if missing), sets it public, and adds policies so authe
 2026-04-28 **Transactional email parity:** For each successful `user_notifications` insert, optional German HTML/text email to `auth.users.email` when `notification_email_enabled` and SMTP are available; `src/lib/services/smtp-delivery.ts`, `src/lib/email/build-notification-email.ts`, `src/lib/notifications/in-app-action-path.ts`. Settings + i18n copy updated. No new SQL.
 
 2026-04-28 **Vitest:** `src/lib/services/smtp-delivery.test.ts` exercises `getSystemSmtpConfigForNotifications` and `sendNotificationHtmlEmail` (mocked admin client + nodemailer) so coverage includes the delivery module; see `docs/testing-strategy.md`.
+
+2026-04-28 **Comment attachments Phase A:** Private Storage bucket **`comment-files`** + RLS [`storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql); `comment_attachments.storage_object_path` documented (§2, §4, §9). Postgres **DELETE** policy for `comment_attachments` was added in [`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) (see **2026-04-29**).
+2026-04-28 **Storage RLS:** `comment-files` policies use **`split_part(name::text, '/', 1)`** (not `storage.foldername(name)[1]`) so the first segment matches **`companies.id`** for object keys `companyId/commentId/filename`.
+2026-04-29 **`comment_attachments` DELETE:** policy [`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) (comment author **+** company owner context). App: `POST /api/comment-attachments/upload`, `deleteCommentAttachment`, `getCommentAttachmentSignedUrl` (preferred admin signing); client **`openSignedStorageUrl`** for tab vs Blob-download open behavior — docs/sync in [`architecture.md`](architecture.md) HTTP inventory.
