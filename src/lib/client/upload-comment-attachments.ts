@@ -19,7 +19,6 @@ export async function uploadCommentAttachmentsForComment(args: {
   files: File[];
 }): Promise<{ ok: true } | UploadCommentAttachmentsFailure> {
   const { companyId, commentId, files } = args;
-  const supabase = createClient();
 
   for (const file of files) {
     if (COMMENT_ATTACHMENT_MAX_BYTES < file.size) {
@@ -48,6 +47,7 @@ export async function uploadCommentAttachmentsForComment(args: {
       return { ok: false, kind: "upload", message: msg };
     }
 
+    const supabase = createClient();
     const storageObjectPath = buildCommentAttachmentObjectPath({
       companyId,
       commentId,
