@@ -8,19 +8,47 @@ import {
   List,
   ListOrdered,
   ListTodo,
+  Paperclip,
   SquareCode,
+  X,
 } from "lucide-react";
-import type { FormEvent, KeyboardEvent as ReactKeyboardEvent, Ref } from "react";
-import { useRef, useState } from "react";
+import type {
+  ChangeEvent,
+  FormEvent,
+  DragEvent as ReactDragEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+  Ref,
+} from "react";
+import { useCallback, useId, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { CommentMarkdownPreview } from "@/components/features/comments/CommentMarkdownPreview";
 import { applyMarkdownSnippet } from "@/components/features/comments/comment-composer-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n/use-translations";
+import { COMMENT_ATTACHMENT_MAX_BYTES } from "@/lib/services/comment-attachments";
 import { cn } from "@/lib/utils";
+import { formatFileSizeBytes } from "@/lib/utils/format-file-size";
 
 type Snippet = Parameters<typeof applyMarkdownSnippet>[3];
+
+const MAX_PENDING_FILES = 10;
+
+function mergeAcceptedFiles(existing: File[], incoming: File[], onReject: () => void): File[] {
+  const next = [...existing];
+  for (const f of incoming) {
+    if (COMMENT_ATTACHMENT_MAX_BYTES < f.size) {
+      onReject();
+      continue;
+    }
+    if (MAX_PENDING_FILES <= next.length) {
+      break;
+    }
+    next.push(f);
+  }
+  return next.slice(0, MAX_PENDING_FILES);
+}
 
 type CommentComposerProps = {
   value: string;
@@ -34,6 +62,12 @@ type CommentComposerProps = {
   isReplying?: boolean;
   /** Optional external ref to the textarea; useful for programmatic focus (e.g. template chips). */
   textareaRef?: Ref<HTMLTextAreaElement>;
+  /** Controlled pending attachments (persist in parent across submit lifecycle). */
+  pendingFiles?: File[];
+  /** Update pending files after picker / drop / remove. */
+  onPendingFilesChange?: (files: File[]) => void;
+  /** BCP 47 tag for file size labels (e.g. `de-DE`). */
+  localeTag?: string;
 };
 
 export function CommentComposer({
@@ -47,9 +81,13 @@ export function CommentComposer({
   onCancelReply,
   isReplying = false,
   textareaRef,
+  pendingFiles = [],
+  onPendingFilesChange,
+  localeTag,
 }: CommentComposerProps) {
   const t = useT("comments");
   const ta = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const setRefs = (el: HTMLTextAreaElement | null) => {
     ta.current = el;
@@ -61,9 +99,16 @@ export function CommentComposer({
   };
   const [isFocused, setIsFocused] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const sizeLocale = localeTag ?? (typeof navigator !== "undefined" ? navigator.language : "de-DE");
+
+  const hasPendingFiles = pendingFiles.length > 0;
+  const setFiles = onPendingFilesChange ?? (() => undefined);
+  const fileInputId = useId();
 
   const hasContent = value.trim().length > 0;
-  const isExpanded = isFocused || hasContent;
+  const isExpanded = isFocused || hasContent || hasPendingFiles || dragOver;
   const canSubmit = hasContent && !isSubmitting && !disabled;
   const submitLabel = isReplying ? t("submitReply") : t("submit");
 
@@ -81,6 +126,56 @@ export function CommentComposer({
       el.setSelectionRange(focusStart, focusEnd);
     });
   };
+
+  const handleRejectLarge = useCallback(() => {
+    toast.error(t("attachmentTooLargeToast"));
+  }, [t]);
+
+  const handlePickFiles = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const onFileInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const list = e.target.files;
+      if (list === null || list.length === 0) {
+        return;
+      }
+      const incoming = Array.from(list);
+      setFiles(mergeAcceptedFiles(pendingFiles, incoming, handleRejectLarge));
+      e.target.value = "";
+    },
+    [pendingFiles, setFiles, handleRejectLarge],
+  );
+
+  const removeFileAt = useCallback(
+    (index: number) => {
+      setFiles(pendingFiles.filter((_, i) => i !== index));
+    },
+    [pendingFiles, setFiles],
+  );
+
+  const handleDrop = useCallback(
+    (e: ReactDragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragOver(false);
+      const dt = e.dataTransfer;
+      if (dt === undefined || dt.files === undefined || dt.files.length === 0) {
+        return;
+      }
+      const incoming = Array.from(dt.files);
+      setFiles(mergeAcceptedFiles(pendingFiles, incoming, handleRejectLarge));
+    },
+    [pendingFiles, setFiles, handleRejectLarge],
+  );
+
+  const handleDragOverInner = useCallback((e: ReactDragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(true);
+    if (e.dataTransfer !== undefined) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -115,15 +210,19 @@ export function CommentComposer({
         </div>
       ) : null}
 
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: file drop overlay for attachments */}
       <div
+        onDragOver={handleDragOverInner}
+        onDrop={handleDrop}
         className={cn(
           "rounded-lg border bg-card shadow-sm transition-colors",
+          dragOver && "border-primary ring-1 ring-primary/20",
           isExpanded ? "border-ring/60 shadow" : "border-border",
         )}
       >
         <div
           className={cn(
-            "flex items-center justify-end gap-0.5 border-b px-2 transition-all",
+            "flex flex-wrap items-center justify-end gap-0.5 border-b px-2 transition-all",
             isExpanded ? "border-border py-1.5 opacity-100" : "h-0 border-transparent py-0 opacity-0",
             "overflow-hidden",
           )}
@@ -153,6 +252,24 @@ export function CommentComposer({
           <ToolbarIconButton label={t("toolTask")} onClick={() => applySnippet("task")} tabIndex={isExpanded ? 0 : -1}>
             <ListTodo className="h-4 w-4" />
           </ToolbarIconButton>
+          <ToolbarIconButton
+            label={t("toolAttach")}
+            onClick={handlePickFiles}
+            tabIndex={isExpanded ? 0 : -1}
+            disabled={disabled || isSubmitting}
+          >
+            <Paperclip className="h-4 w-4" />
+          </ToolbarIconButton>
+          <input
+            ref={fileInputRef}
+            id={fileInputId}
+            type="file"
+            multiple
+            className="sr-only"
+            tabIndex={-1}
+            onChange={onFileInputChange}
+            aria-label={t("toolAttach")}
+          />
         </div>
 
         <div className="px-3 py-2">
@@ -175,11 +292,38 @@ export function CommentComposer({
           />
         </div>
 
+        {hasPendingFiles ? (
+          <ul className="flex flex-wrap gap-1.5 border-t border-border/60 px-3 py-2" aria-label={t("attachmentsPendingLabel")}>
+            {pendingFiles.map((file, index) => (
+              <li
+                key={`${file.name}-${String(file.size)}-${String(index)}`}
+                className="flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                <Paperclip className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+                <span className="min-w-0 truncate font-medium text-foreground" title={file.name}>
+                  {file.name}
+                </span>
+                <span className="shrink-0 tabular-nums opacity-70">
+                  {formatFileSizeBytes(file.size, sizeLocale)}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="-mr-1 h-5 w-5 text-muted-foreground hover:text-foreground"
+                  aria-label={t("attachmentRemove")}
+                  onClick={() => removeFileAt(index)}
+                >
+                  <X className="h-3 w-3" aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
         {hasContent && showPreview ? (
           <div className="border-t border-dashed border-border bg-muted/30 px-3 py-2">
-            <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-              {t("tabPreview")}
-            </div>
+            <div className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{t("tabPreview")}</div>
             <CommentMarkdownPreview markdown={value} />
           </div>
         ) : null}
@@ -217,11 +361,13 @@ function ToolbarIconButton({
   label,
   onClick,
   tabIndex,
+  disabled,
   children,
 }: {
   label: string;
   onClick: () => void;
   tabIndex?: number;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -234,6 +380,7 @@ function ToolbarIconButton({
       aria-label={label}
       title={label}
       tabIndex={tabIndex}
+      disabled={disabled ?? false}
     >
       {children}
     </Button>

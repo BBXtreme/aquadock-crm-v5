@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 28, 2026  
+**Last updated:** April 29, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -113,6 +113,7 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 | `/api/timeline/[id]` | PUT, DELETE | Update or delete a timeline entry |
 | `/api/send-test-email` | POST | Send test email (authenticated flows) |
 | `/api/test-smtp` | POST | Test SMTP user settings; `401` if session/auth error |
+| `/api/comment-attachments/upload` | POST | `multipart/form-data` (`companyId`, `commentId`, `file`): server upload to Storage (**service role**, bypasses Storage RLS quirks) + server action `registerCommentAttachment`; **`503`** if `SUPABASE_SERVICE_ROLE_KEY` is missing → UI falls back to browser Storage upload + register. **`SUPABASE_SERVICE_ROLE_KEY`** is also used server-side for preferred **signed download URLs** and **storage deletes** after attachment removal (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9). Open behavior: client **`openSignedStorageUrl`** — `window.open` for PDFs/images; **`fetch` → Blob → programmatic `<a download>`** for extensions like `.md`/Office so OS default apps receive a real file |
 
 **Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
 

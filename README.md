@@ -13,6 +13,7 @@
 - **Companies & contacts** — Full lifecycle, search, CSV import, German-oriented fields (address, customer type, status); optional **AI enrichment** when [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) is configured (server-only keys — see deployment docs).
 - **OpenMap** — Map of CRM companies plus optional **OpenStreetMap** POIs; import POIs as leads (zoom ≥ 13).
 - **Reminders & timeline** — Tasks per company and activity history; soft-delete / trash workflows where implemented.
+- **Internal notes & comment attachments** — Threaded notes on a company; optional file uploads (private Storage bucket `comment-files`, metadata in `comment_attachments`) plus a company-level attachment list on the detail page.
 - **Email** — Templates, logging, mass email; optional **Brevo** integration for campaigns/sync (see `docs/BREVO_SDK.md`).
 - **Dashboard** — KPIs and tables (**TanStack Table**).
 - **Settings & profile** — Preferences, SMTP-related settings, display name and avatar (**Supabase Storage** bucket `avatars`).
