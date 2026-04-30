@@ -20,6 +20,7 @@ import {
   mergeDuplicateAnalyses,
 } from "@/lib/companies/csv-import-dedupe";
 import { syncContactUserIdsForCompany } from "@/lib/companies/sync-contact-user-ids";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import { createInAppNotification } from "@/lib/services/in-app-notifications";
 import { generateAndStoreCompanyEmbedding } from "@/lib/services/semantic-search";
@@ -599,6 +600,15 @@ export type ImportCompaniesFromCsvOptions = {
   excludeImportRowIndices?: number[];
 };
 
+function parsedCompanyRowLandForDb(row: ParsedCompanyRow): string | null {
+  const trimmed = row.land?.trim();
+  if (trimmed === undefined || trimmed === "") {
+    return null;
+  }
+  const normalized = normalizeLandInput(trimmed);
+  return normalized.ok ? normalized.code : null;
+}
+
 function mapParsedRowToCompanyInsert(
   row: ParsedCompanyRow,
   userId: string,
@@ -611,7 +621,7 @@ function mapParsedRowToCompanyInsert(
     plz: row.plz ?? null,
     stadt: row.ort ?? null,
     bundesland: row.bundesland ?? null,
-    land: row.land ?? null,
+    land: parsedCompanyRowLandForDb(row),
     telefon: row.telefon ?? null,
     website: row.website ?? null,
     email: row.email ?? null,
@@ -725,6 +735,44 @@ export async function importCompaniesFromCSV(
     const dataRows = validated.data;
     const candidates = await loadCsvImportDedupeCandidates(supabase, dataRows);
     const internalMap = analyzeInternalDuplicates(dataRows);
+
+    const landErrors: string[] = [];
+    for (let i = 0; i < dataRows.length; i += 1) {
+      const row = dataRows[i];
+      if (row === undefined) {
+        continue;
+      }
+      const dbMatch = findDbDuplicateForRow(row, candidates);
+      const internalDup = internalMap.get(i) ?? null;
+      const needsReview = dbMatch !== null || internalDup !== null;
+      if (excludeSet.has(i)) {
+        continue;
+      }
+      if (needsReview && !forceSet.has(i)) {
+        continue;
+      }
+      const trimmedLand = row.land?.trim();
+      if (trimmedLand !== undefined && trimmedLand !== "") {
+        const normalized = normalizeLandInput(trimmedLand);
+        if (!normalized.ok) {
+          landErrors.push(
+            `Zeile ${String(i + 1)} (${row.firmenname}): Land „${trimmedLand}“ ist ungültig oder nicht unterstützt.`,
+          );
+        }
+      }
+    }
+
+    if (landErrors.length > 0) {
+      return {
+        imported: 0,
+        importedWithCoordinates: 0,
+        skippedDuplicates: 0,
+        skippedUserExcluded: 0,
+        errors: landErrors,
+        importBatch,
+        companyIds: [],
+      };
+    }
 
     const companiesToInsert: CompanyInsert[] = [];
     let skippedDuplicates = 0;

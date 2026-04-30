@@ -31,6 +31,8 @@ export const COMPANIES_LIST_PARAM_KEYS = [
   "cols",
   /** When `1`, the optional “Verantwortlich” table column is visible (hidden by default). */
   "ow",
+  /** When `1`, the optional “Country” (`land`) table column is visible (hidden by default). */
+  "cc",
   "sort",
   "dir",
   "page",
@@ -67,7 +69,7 @@ export function defaultCompaniesListUrlState(): CompaniesListUrlState {
       land: [],
       wassertyp: [],
     },
-    columnVisibility: { verantwortlich: false },
+    columnVisibility: { verantwortlich: false, country: false },
     waterFilter: null,
     globalFilter: "",
   };
@@ -158,6 +160,7 @@ export function parseCompaniesListState(searchParams: CompaniesListSearchParamsR
   const desc = parseDesc(searchParams.get("dir"));
   const fromCols = parseColumnVisibility(searchParams.get("cols"));
   const verantwortlichVisible = searchParams.get("ow") === "1";
+  const countryColumnVisible = searchParams.get("cc") === "1";
   return {
     pagination: {
       pageIndex: parsePageIndexOneBased(searchParams.get("page")),
@@ -174,6 +177,7 @@ export function parseCompaniesListState(searchParams: CompaniesListSearchParamsR
     columnVisibility: {
       ...fromCols,
       verantwortlich: verantwortlichVisible,
+      country: countryColumnVisible,
     },
     waterFilter: parseWater(searchParams.get("water")),
     globalFilter: searchParams.get("q") ?? "",
@@ -236,7 +240,12 @@ export function serializeCompaniesListToSearchParamsString(state: CompaniesListU
   if (state.columnVisibility.verantwortlich === true) {
     next.set("ow", "1");
   }
-  const hiddenColumns = hiddenColumnIds(state.columnVisibility).filter((id) => id !== "verantwortlich");
+  if (state.columnVisibility.country === true) {
+    next.set("cc", "1");
+  }
+  const hiddenColumns = hiddenColumnIds(state.columnVisibility).filter(
+    (id) => id !== "verantwortlich" && id !== "country",
+  );
   if (hiddenColumns.length > 0) {
     next.set("cols", hiddenColumns.join(","));
   }

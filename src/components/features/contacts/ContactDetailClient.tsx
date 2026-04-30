@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building, Edit, Linkedin, Trash, Unlink, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -51,6 +52,7 @@ import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { anredeOptions } from "@/lib/constants/contact-options";
+import { getLandRegionDisplayName } from "@/lib/countries/iso-land";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { getContactById, updateContact } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
@@ -69,6 +71,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
   const tCommon = useT("common");
   const tCompanies = useT("companies");
   const localeTag = useNumberLocaleTag();
+  const routingLocale = useLocale();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -484,7 +487,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   <p>
                     {linkedCompany.stadt}
                     {linkedCompany.stadt && linkedCompany.land && ", "}
-                    {linkedCompany.land}
+                    {linkedCompany.land ? getLandRegionDisplayName(linkedCompany.land, routingLocale) : null}
                   </p>
                 )}
                 {linkedCompany.osm && (

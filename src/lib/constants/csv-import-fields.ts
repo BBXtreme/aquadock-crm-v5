@@ -83,7 +83,7 @@ export const csvImportParserFieldRows: readonly CsvImportParserFieldRow[] = [
     internalKey: "land",
     recommendedHeader: "Land",
     acceptedHeaders: ["land", "country"],
-    example: "Deutschland oder DE",
+    example: "DE (ISO), Deutschland, oder HR",
     required: false,
   },
   {

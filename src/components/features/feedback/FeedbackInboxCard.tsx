@@ -42,17 +42,27 @@ import { type AdminFeedbackListRow, deleteAdminFeedbackRow, listAdminFeedbackRow
 import type { FeedbackTopicId } from "@/lib/constants/feedback-options";
 import { FEEDBACK_TOPIC_IDS } from "@/lib/constants/feedback-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { cn } from "@/lib/utils";
 import { safeDisplay } from "@/lib/utils/data-format";
 
-function formatDateTimeLocale(iso: string | null | undefined, localeTag: string): string {
+const AUTHOR_AND_SUBMITTED_COLUMN_ID = "author_and_submitted";
+const TOPIC_AND_SENTIMENT_COLUMN_ID = "topic_and_sentiment";
+
+function formatSubmittedAtParts(
+  iso: string | null | undefined,
+  localeTag: string,
+): { dateLine: string; timeLine: string } | null {
   if (iso === null || iso === undefined || iso === "") {
-    return "—";
+    return null;
   }
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) {
-    return "—";
+    return null;
   }
-  return d.toLocaleString(localeTag, { dateStyle: "medium", timeStyle: "short" });
+  return {
+    dateLine: d.toLocaleDateString(localeTag, { dateStyle: "medium" }),
+    timeLine: d.toLocaleTimeString(localeTag, { timeStyle: "short" }),
+  };
 }
 
 function confirmBodyPreview(body: string, maxChars: number): string {
@@ -96,27 +106,32 @@ export default function FeedbackInboxCard() {
     () =>
       [
         {
-          accessorKey: "created_at",
-          header: t("inboxColSubmitted"),
-          cell: (info) => (
-            <span className="tabular-nums text-muted-foreground text-xs">
-              {formatDateTimeLocale(info.getValue() as string, localeTag)}
-            </span>
-          ),
-        },
-        {
-          id: "author",
-          header: t("inboxColAuthor"),
+          id: AUTHOR_AND_SUBMITTED_COLUMN_ID,
+          header: t("inboxColAuthorAndSubmitted"),
           cell: ({ row }) => {
             const a = row.original.authorDisplay.trim();
-            return a === "" ? t("inboxAuthorUnknown") : a;
+            const authorLabel = a === "" ? t("inboxAuthorUnknown") : a;
+            const parts = formatSubmittedAtParts(row.original.created_at, localeTag);
+            return (
+              <div className="flex max-w-48 flex-col gap-1 leading-tight">
+                <span className="text-foreground text-sm">{authorLabel}</span>
+                {parts === null ? (
+                  <span className="tabular-nums text-muted-foreground text-xs">—</span>
+                ) : (
+                  <div className="flex flex-col gap-0.5 tabular-nums text-muted-foreground text-xs">
+                    <span className="whitespace-nowrap">{parts.dateLine}</span>
+                    <span className="whitespace-nowrap">{parts.timeLine}</span>
+                  </div>
+                )}
+              </div>
+            );
           },
         },
         {
-          accessorKey: "topic",
+          id: TOPIC_AND_SENTIMENT_COLUMN_ID,
           header: t("inboxColTopic"),
           cell: ({ row }) => {
-            const id = row.original.topic;
+            const topicId = row.original.topic;
             const labels: Record<FeedbackTopicId, string> = {
               general: t("topics.general"),
               bug: t("topics.bug"),
@@ -127,33 +142,27 @@ export default function FeedbackInboxCard() {
               ai: t("topics.ai"),
               other: t("topics.other"),
             };
-            const isKnown = (FEEDBACK_TOPIC_IDS as readonly string[]).includes(id);
-            if (isKnown) {
-              return labels[id as FeedbackTopicId];
-            }
-            return safeDisplay(id);
+            const isKnown = (FEEDBACK_TOPIC_IDS as readonly string[]).includes(topicId);
+            const topicLabel = isKnown ? labels[topicId as FeedbackTopicId] : safeDisplay(topicId);
+            return (
+              <div className="flex max-w-44 flex-col gap-1 leading-tight">
+                <span className="text-foreground text-sm">{topicLabel}</span>
+                <span className="text-lg leading-none">{String(row.original.sentiment)}</span>
+              </div>
+            );
           },
         },
         {
-          accessorKey: "sentiment",
-          header: t("inboxColSentiment"),
-          cell: (info) => <span className="text-lg">{String(info.getValue())}</span>,
-        },
-        {
-          accessorKey: "page_url",
-          header: t("inboxColPage"),
-          cell: (info) => (
-            <span className="max-w-[140px] truncate font-mono text-muted-foreground text-xs">
-              {safeDisplay(info.getValue() as string | null)}
-            </span>
-          ),
-        },
-        {
-          accessorKey: "body",
-          header: t("inboxColBody"),
-          cell: (info) => (
-            <div className="max-w-md max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-muted-foreground text-sm leading-relaxed">
-              {String(info.getValue())}
+          id: "page_and_body",
+          header: t("inboxColPageAndMessage"),
+          cell: ({ row }) => (
+            <div className="flex max-w-md flex-col gap-2">
+              <span className="break-all font-mono text-muted-foreground text-xs">
+                {safeDisplay(row.original.page_url)}
+              </span>
+              <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-muted-foreground text-sm leading-relaxed">
+                {String(row.original.body)}
+              </div>
             </div>
           ),
         },
@@ -257,7 +266,16 @@ export default function FeedbackInboxCard() {
                 {table.getHeaderGroups().map((hg) => (
                   <TableRow key={hg.id}>
                     {hg.headers.map((header) => (
-                      <TableHead key={header.id} className="whitespace-nowrap align-top">
+                      <TableHead
+                        key={header.id}
+                        className={cn(
+                          "align-top",
+                          header.column.id === AUTHOR_AND_SUBMITTED_COLUMN_ID ||
+                            header.column.id === TOPIC_AND_SENTIMENT_COLUMN_ID
+                            ? "w-[1%] whitespace-normal pr-2"
+                            : "whitespace-nowrap",
+                        )}
+                      >
                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
@@ -268,7 +286,15 @@ export default function FeedbackInboxCard() {
                 {table.getRowModel().rows.map((row) => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="align-top">
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "align-top",
+                          (cell.column.id === AUTHOR_AND_SUBMITTED_COLUMN_ID ||
+                            cell.column.id === TOPIC_AND_SENTIMENT_COLUMN_ID) &&
+                            "w-[1%] pr-2",
+                        )}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}

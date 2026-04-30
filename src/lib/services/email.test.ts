@@ -375,7 +375,7 @@ describe("getMassEmailRecipients", () => {
       mode: "contacts",
       status: "lead",
       kundentyp: "marina",
-      land: "Deutschland",
+      land: "DE",
     });
 
     expect(contactsBuilder.eq).toHaveBeenCalled();

@@ -6,6 +6,7 @@ import {
   normalizeKundentypForEnrichment,
   normalizeWassertypForEnrichment,
 } from "@/lib/ai/company-enrichment-closed-enums";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import { type CompanyForm, companySchema } from "@/lib/validations/company";
 
 function emptyStringToNull(val: string | null | undefined): string | null | undefined {
@@ -82,6 +83,10 @@ function closedCrmEnumSuggestionSchema(normalize: (raw: string) => string | null
 const wassertypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeWassertypForEnrichment(s));
 const kundentypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeKundentypForEnrichment(s));
 const firmentypSuggestionSchema = closedCrmEnumSuggestionSchema((s) => normalizeFirmentypForEnrichment(s));
+const landSuggestionSchema = closedCrmEnumSuggestionSchema((s) => {
+  const r = normalizeLandInput(s);
+  return r.ok ? r.code : null;
+});
 
 export const companyEnrichmentAiSchema = z
   .object({
@@ -101,7 +106,7 @@ export const companyEnrichmentAiSchema = z
         plz: stringSuggestion(10).nullable().optional(),
         stadt: stringSuggestion(100).nullable().optional(),
         bundesland: stringSuggestion(50).nullable().optional(),
-        land: stringSuggestion(50).nullable().optional(),
+        land: landSuggestionSchema.nullable().optional(),
         notes: stringSuggestion(2000).nullable().optional(),
         wasserdistanz: wasserdistanzSuggestionSchema.nullable().optional(),
         wassertyp: wassertypSuggestionSchema.nullable().optional(),

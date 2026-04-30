@@ -2,6 +2,7 @@
 "use client";
 import { ArrowLeft, ChevronLeft, ChevronRight, Edit, Plus, Sparkles, Trash } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -19,6 +20,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import { deleteCompany } from "@/lib/actions/companies";
 import { restoreCompanyWithTrash } from "@/lib/actions/crm-trash";
+import { getLandRegionDisplayName } from "@/lib/countries/iso-land";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { getCountryFlag, getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
@@ -57,6 +59,7 @@ export default function CompanyHeader({
   const t = useT("companies");
   const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
+  const routingLocale = useLocale();
   const countryFlag = getCountryFlag(company.land);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [shortcutLabel, setShortcutLabel] = useState("Ctrl+E");
@@ -205,11 +208,12 @@ export default function CompanyHeader({
         {company.kundentyp && <Badge className="bg-primary text-primary-foreground">{getKundentypLabel(company.kundentyp)}</Badge>}
         {company.firmentyp && <Badge variant="outline">{getFirmentypLabel(company.firmentyp)}</Badge>}
         <WassertypBadge wassertyp={company.wassertyp} />
-        {countryFlag && (
-          <Badge variant="outline" className="text-lg">
-            {countryFlag}
+        {company.land ? (
+          <Badge variant="outline" className="gap-1.5 text-sm font-normal">
+            {countryFlag ? <span className="text-lg leading-none">{countryFlag}</span> : null}
+            <span>{getLandRegionDisplayName(company.land, routingLocale)}</span>
           </Badge>
-        )}
+        ) : null}
         {company.created_at && (
           <span className="text-sm text-muted-foreground">
             {tCommon("metaCreated")} {new Date(company.created_at).toLocaleDateString(localeTag)}

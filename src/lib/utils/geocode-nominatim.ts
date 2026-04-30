@@ -3,6 +3,8 @@
 // Throttling is enforced by the caller (sequential delay in server actions).
 // The `cache` Map is per server-action invocation only. For cross-invocation caching, use Redis/Upstash.
 
+import { normalizeLandInput } from "@/lib/countries/iso-land";
+
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
 
 /** Exact User-Agent required by OSM Nominatim usage policy. */
@@ -121,7 +123,8 @@ export async function geocodeAddress(
   const street = trimOrEmpty(input.strasse);
   const postalcode = trimOrEmpty(input.plz);
   const city = trimOrEmpty(input.stadt);
-  const country = trimOrEmpty(input.land);
+  const trimmedLand = trimOrEmpty(input.land);
+  const landNorm = trimmedLand.length > 0 ? normalizeLandInput(trimmedLand) : null;
 
   if (street.length > 0) {
     params.set("street", street);
@@ -130,11 +133,15 @@ export async function geocodeAddress(
     params.set("postalcode", postalcode);
   }
   params.set("city", city);
-  if (country.length > 0) {
-    params.set("country", country);
-  }
 
-  params.set("countrycodes", "de");
+  if (landNorm?.ok) {
+    params.set("countrycodes", landNorm.code.toLowerCase());
+  } else {
+    params.set("countrycodes", "de");
+    if (trimmedLand.length > 0) {
+      params.set("country", trimmedLand);
+    }
+  }
   params.set("accept-language", "de");
   params.set("format", "jsonv2");
   params.set("limit", "1");

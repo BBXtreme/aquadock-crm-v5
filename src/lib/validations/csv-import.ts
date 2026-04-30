@@ -12,7 +12,8 @@ export const parsedCompanyRowSchema = z
     plz: z.string().trim().optional(),
     ort: z.string().trim().optional(),
     bundesland: z.string().trim().optional(),
-    land: z.string().trim().optional(),
+    /** Raw or normalised value from CSV parse; ISO enforcement happens in `importCompaniesFromCSV`. */
+    land: z.string().trim().max(120).optional(),
     telefon: z.string().trim().optional(),
     website: z.string().trim().optional(),
     email: z.string().trim().optional(),

@@ -5,11 +5,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useLocale } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AIEnrichButton } from "@/components/features/companies/ai-enrichment/AIEnrichButton";
 import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
+import {
+  COMPANIES_FILTER_OPTIONS_QUERY_KEY,
+  useDistinctCompanyLandCodes,
+} from "@/components/features/companies/use-companies-list-queries";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -19,7 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { updateCompanyWithOwner } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
-import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { buildCompanyLandSelectOptions, LAND_SELECT_CLEAR_SENTINEL } from "@/lib/countries/iso-land";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { type CompanyForm, companySchema } from "@/lib/validations/company";
@@ -116,6 +122,7 @@ export default function CompanyEditForm({
       queryClient.invalidateQueries({ queryKey: ["contacts", company?.id] });
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
+      queryClient.invalidateQueries({ queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY });
       toast.success(tCompanies("toastUpdated"));
       onSuccess?.();
     },
@@ -159,6 +166,18 @@ export default function CompanyEditForm({
     },
     enabled: company != null,
   });
+
+  const locale = useLocale();
+  const distinctLandCodes = useDistinctCompanyLandCodes();
+  const landSelectOptions = useMemo(
+    () =>
+      buildCompanyLandSelectOptions({
+        distinctLandCodes,
+        locale,
+        currentLandCode: company?.land ?? undefined,
+      }),
+    [company?.land, distinctLandCodes, locale],
+  );
 
   // Early return AFTER all hooks
   if (!company) return null;
@@ -408,12 +427,24 @@ export default function CompanyEditForm({
               <FormItem>
                 <FormLabel>Land</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                  <Select
+                    onValueChange={(v) =>
+                      field.onChange(v === LAND_SELECT_CLEAR_SENTINEL ? null : v)
+                    }
+                    value={
+                      field.value !== null &&
+                      field.value !== undefined &&
+                      field.value !== ""
+                        ? field.value
+                        : LAND_SELECT_CLEAR_SENTINEL
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {landOptions.map((option) => (
+                      <SelectItem value={LAND_SELECT_CLEAR_SENTINEL}>—</SelectItem>
+                      {landSelectOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>

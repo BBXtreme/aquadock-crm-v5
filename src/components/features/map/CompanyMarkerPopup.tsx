@@ -4,10 +4,12 @@
 "use client";
 
 import { Droplets, ExternalLink, Globe, Mail, MapPin, Phone, Waves } from "lucide-react";
+import { useLocale } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { badgeColors } from "@/lib/constants/map-status-colors";
+import { getLandRegionDisplayName } from "@/lib/countries/iso-land";
 import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
 import { useT } from "@/lib/i18n/use-translations";
 import { getFirmentypLabel, getKundentypLabel } from "@/lib/utils";
@@ -17,12 +19,18 @@ import type { CompanyMarkerPopupProps } from "./types";
 
 export default function CompanyMarkerPopup({ company }: CompanyMarkerPopupProps) {
   const t = useT("openmap");
+  const locale = useLocale();
   const statusKey = (company.status?.toLowerCase() || "lead") as keyof typeof badgeColors;
   const statusColor = badgeColors[statusKey] || badgeColors.lead;
   const statusLabel = t(getOpenmapStatusMsgKey(statusKey));
 
-  // Full address
-  const addressParts = [company.strasse, company.plz, company.stadt, company.land].filter(Boolean);
+  const landDisplay =
+    company.land !== null && company.land !== undefined && company.land !== ""
+      ? getLandRegionDisplayName(company.land, locale)
+      : null;
+  const addressParts = [company.strasse, company.plz, company.stadt, landDisplay].filter(
+    (part): part is string => typeof part === "string" && part.trim().length > 0,
+  );
   const fullAddress = addressParts.join(", ");
 
   const kundentypColor = badgeColors[company.kundentyp?.toLowerCase()] || badgeColors.sonstige;

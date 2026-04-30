@@ -25,6 +25,7 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import Papa from "papaparse";
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -66,6 +67,7 @@ import { WassertypBadge } from "@/components/ui/wassertyp-badge";
 import type { CompaniesGlobalSearchStrategy } from "@/lib/companies/companies-list-supabase";
 import { kategorieIcons } from "@/lib/constants/company-icons";
 import { kundentypOptions } from "@/lib/constants/company-options";
+import { getLandFlagEmoji, getLandRegionDisplayName, normalizeLandInput } from "@/lib/countries/iso-land";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
@@ -155,9 +157,11 @@ export default function CompaniesTable({
 }: CompaniesTableProps) {
   const t = useT("companies");
   const localeTag = useNumberLocaleTag();
+  const routingLocale = useLocale();
   const [localGlobalFilter, setLocalGlobalFilter] = useState<string>("");
   const [localColumnVisibility, setLocalColumnVisibility] = useState<VisibilityState>({
     verantwortlich: false,
+    country: false,
   });
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -283,14 +287,43 @@ export default function CompaniesTable({
             const strasse = row.strasse || "";
             const plz = row.plz ? `${row.plz} ` : "";
             const stadt = row.stadt || "";
-            const land = row.land || "";
+            const landRaw = row.land ?? "";
+            const landNorm = landRaw.length > 0 ? normalizeLandInput(landRaw) : null;
+            const landEmoji = landNorm?.ok === true ? getLandFlagEmoji(landNorm.code) : null;
+            const landLine =
+              landRaw.length > 0 ? getLandRegionDisplayName(landRaw, routingLocale) : "";
             return (
               <div className="flex flex-col">
                 <span>{safeDisplay(`${strasse} ${plz}${stadt}`.trim())}</span>
-                {land && <span className="text-xs text-muted-foreground">{land}</span>}
+                {landLine.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    {landEmoji !== null ? <span aria-hidden>{landEmoji}</span> : null}
+                    {landLine}
+                  </span>
+                ) : null}
               </div>
             );
           },
+        }),
+        columnHelper.accessor("land", {
+          id: "country",
+          header: t("tableColCountry"),
+          cell: (info) => {
+            const landRaw = info.getValue() ?? "";
+            if (landRaw.length === 0) {
+              return <EmptyDash />;
+            }
+            const landNorm = normalizeLandInput(landRaw);
+            const landEmoji = landNorm?.ok === true ? getLandFlagEmoji(landNorm.code) : null;
+            const landLine = getLandRegionDisplayName(landRaw, routingLocale);
+            return (
+              <span className="inline-flex items-center gap-1.5">
+                {landEmoji !== null ? <span aria-hidden>{landEmoji}</span> : null}
+                <span>{landLine}</span>
+              </span>
+            );
+          },
+          enableSorting: false,
         }),
         columnHelper.accessor("wasserdistanz", {
           id: "wasserdistanz",
@@ -401,7 +434,7 @@ export default function CompaniesTable({
           enableSorting: false,
         }),
       ] as ColumnDef<CompanyWithContacts>[],
-    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag, listQs],
+    [onEdit, onDelete, deleteDialogOpen, companyToDelete, t, localeTag, routingLocale, listQs],
   );
 
   // Server is the authority for filtering (hybrid semantic + lexical search in the
@@ -651,9 +684,11 @@ export default function CompaniesTable({
                               ? t("tableColHauptkontakt")
                               : id === "kontaktanzahl"
                                 ? t("tableColKontaktanzahl")
-                                : id === "adresse"
-                                  ? t("tableColAdresse")
-                                  : id === "wasserdistanz"
+                                  : id === "adresse"
+                                    ? t("tableColAdresse")
+                                    : id === "country"
+                                      ? t("tableColCountry")
+                                      : id === "wasserdistanz"
                                     ? t("tableColWasserdistanz")
                                     : id === "wassertyp"
                                       ? t("tableColWassertyp")

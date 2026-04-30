@@ -127,7 +127,7 @@ function mockCompanyRow(overrides: Partial<Company> = {}): Company {
     plz: "20095",
     stadt: "Hamburg",
     bundesland: null,
-    land: "Deutschland",
+    land: "DE",
     wasserdistanz: 100,
     wassertyp: "see",
     lat: null,

@@ -56,8 +56,16 @@ describe("getCountryFlag", () => {
     expect(getCountryFlag(null)).toBeNull();
   });
 
-  it("returns fallback flag for unknown code", () => {
-    expect(getCountryFlag("ZZ")).toBe("🏳️");
+  it("returns null for unknown country string", () => {
+    expect(getCountryFlag("not-a-real-country")).toBeNull();
+  });
+
+  it("returns regional-indicator emoji for ISO alpha-2", () => {
+    expect(getCountryFlag("DE")).toBe("🇩🇪");
+  });
+
+  it("normalizes legacy German label to ISO before resolving emoji", () => {
+    expect(getCountryFlag("Deutschland")).toBe("🇩🇪");
   });
 });
 

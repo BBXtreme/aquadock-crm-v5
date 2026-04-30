@@ -70,6 +70,21 @@ describe("formatAiEnrichmentSummaryForDisplay", () => {
 });
 
 describe("sanitizeEnrichmentOutput", () => {
+  it("normalizes land suggestion to ISO alpha-2", () => {
+    const parsed = companyEnrichmentAiSchema.parse({
+      suggestions: {
+        land: {
+          value: "Deutschland",
+          confidence: "high",
+          sources: [{ title: "S", url: "https://b.de" }],
+        },
+      },
+    });
+    expect(parsed.suggestions.land?.value).toBe("DE");
+    const out = sanitizeEnrichmentOutput(parsed);
+    expect(out.suggestions.land?.value).toBe("DE");
+  });
+
   it("drops email that fails companySchema refine", () => {
     const parsed = companyEnrichmentAiSchema.parse({
       suggestions: {
