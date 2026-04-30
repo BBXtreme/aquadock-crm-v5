@@ -263,27 +263,111 @@ Holds the **public** Storage URL of the user’s avatar, or `null` if none. The 
 
 ## 4. Row Level Security (RLS) – Summary
 
-Policies are **per table** in migrations; the following is **illustrative** only (do not paste as SQL):
+**Next action — staging rollout:** Apply on **staging** or a **DB branch** in the **exact order** documented below (**Apply order** and **Order summary**). After **each major batch**, run **Quick verification** SQL (Supabase SQL Editor; subsection below) **plus** the **smoke checklist** (*Staging first*). Then run full **`pnpm e2e`** and Supabase **Database → Linter** (RLS-related **ERROR**s should disappear once scripts match the DB). **Production:** repeat the **same SQL order** in a **quiet window** only after staging is green → **`rls-post-deploy-hardening.sql`** → monitor **30–60 minutes** (company lists, Realtime, reminders).
 
-```text
--- Typical ideas: row belongs to auth.uid(), or belongs to a company owned by auth.uid()
--- Admin or service-role access is expressed with your project’s JWT / custom claims — inspect live policies in Supabase.
-(auth.uid() = user_id)
-OR (company_id IN (SELECT id FROM companies WHERE user_id = auth.uid()))
--- + admin / service paths as defined in SQL migrations
+### Recommended final action (staging rollout)
+
+Do this next on your **staging project** or **DB branch**:
+
+1. Follow the **Next action — staging rollout** paragraph above **exactly** (including script batches under **Order summary**).
+2. Run **Quick verification** SQL after **each major batch** (subsection *Quick verification (staging SQL Editor)* below).
+3. Run the **full smoke checklist**: companies (list, search, detail, create/edit), reminders (**own + assigned**), timeline, comments (+ attachments), notifications bell + **Realtime**, admin flows (trash bin, profiles / user management).
+4. **`pnpm e2e`** (see [`production-deploy.md`](production-deploy.md)) and Supabase **Database → Linter** — RLS-related **ERROR**s should be resolved before you promote.
+5. **Only then** proceed to **Production**: same SQL order in a **quiet window**, **`rls-post-deploy-hardening.sql`**, **30–60 minutes** monitoring.
+
+**Phase 1 model (2026):** **Collaborative read** — authenticated users see all **active** (`deleted_at IS NULL`) `companies` / `contacts` (and related UX). **Row owners** (`user_id`) and users with **`profiles.role = 'admin'`** (via `public.is_app_admin()`) also see **trashed** rows where policies allow. **Writes** stay owner-scoped with admin override. Do **not** use JWT `auth.role() = 'admin'` in policies (normal Supabase JWT role is `authenticated`).
+
+**Apply order** (staging first; snapshot policies / `relrowsecurity` via [`src/sql/rls-rollout-backup-queries.sql`](../src/sql/rls-rollout-backup-queries.sql); run each migration script in a single transaction where `BEGIN`/`COMMIT` are included):
+
+1. [`src/sql/rls-helpers.sql`](../src/sql/rls-helpers.sql) — `public.is_app_admin()` (`SECURITY DEFINER`, fixed `search_path`; `EXECUTE` granted only to `authenticated`).
+2. [`src/sql/core-crm-rls-collaborative.sql`](../src/sql/core-crm-rls-collaborative.sql) — `companies`, `contacts`, `reminders`, `timeline`, `email_log`, `email_templates`; drops legacy `dev_allow_all_inserts` and replaces older policy names where present.
+3. [`src/sql/rls-profiles-settings-consolidate.sql`](../src/sql/rls-profiles-settings-consolidate.sql) — consolidated `profiles` / `user_settings` policies (fewer duplicate permissive policies).
+4. Comments chain: [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) → [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) → [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql).
+
+### Order summary
+
+Staging or DB branch — **same sequence on production** after staging is green:
+
+1. `rls-helpers.sql`
+2. `core-crm-rls-collaborative.sql`
+3. `rls-profiles-settings-consolidate.sql`
+4. Comments chain: `comments-rls.sql` → `comments-trash-alignment.sql` → `comments-attachments-delete-policy.sql`
+5. *(Optional but recommended)* `rls-post-deploy-hardening.sql` — see Post-deploy hardening below
+
+**Historical:** [`src/sql/rls-setup.sql`](../src/sql/rls-setup.sql) is **superseded** (owner-only prototype); production uses `core-crm-rls-collaborative.sql`.
+
+**Post-deploy hardening:** [`src/sql/rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) — revoke `EXECUTE` on internal `SECURITY DEFINER` functions from `anon`/`authenticated`; set `search_path` where missing (adjust signatures to match `pg_proc`). Run **after** the main RLS scripts succeed on an environment: optionally on **staging** first to prove `REVOKE`/`ALTER FUNCTION` statements match your catalog; **then on production** immediately after the production SQL rollout (same day), once smoke checks pass.
+
+### Staging → production rollout
+
+**Staging first**
+
+1. Apply scripts in the **exact order** above on **staging** or a **Supabase DB branch**, following [`src/sql/rls-rollout-backup-queries.sql`](../src/sql/rls-rollout-backup-queries.sql) for a pre-flight snapshot.
+2. After **each major batch**, run **Quick verification** SQL (see subsection below), then the **smoke checklist** (normal user unless noted):
+   - **`rls-helpers.sql`** — sanity only (optional quick verification SQL below).
+   - **`core-crm-rls-collaborative.sql`** — company **list** / **search** / **detail** / **create** / **edit**; **reminders** (own + assigned); **timeline**; **mass-email log**; **notifications bell** + **Realtime**; smoke **OpenMap** if you use it.
+   - **`rls-profiles-settings-consolidate.sql`** — **settings** / profile fields; **admin:** user-management touches that read `profiles`.
+   - **Comments chain** — **comments** + **attachments** (create, view, delete attachment if applicable).
+   - **Admin** (throughout): **trash bin**, **profiles** / admin-only flows.
+3. **`pnpm e2e`** against staging (`E2E_*` in `.env.local` — see [`production-deploy.md`](production-deploy.md)).
+4. Supabase **Database → Linter:** **RLS-related ERRORs** should clear once policies and `ENABLE ROW LEVEL SECURITY` match the scripts; resolve remaining ERRORs before production.
+
+**Production** — only after staging is green: repeat the **same SQL order** during a **quiet window**, then **`rls-post-deploy-hardening.sql`** once immediate smoke is green; monitor 30–60 minutes (company lists, Realtime, reminders).
+
+### Quick verification (staging SQL Editor)
+
+After applying the scripts, run in the SQL Editor (expects `public` schema):
+
+```sql
+-- Expect relrowsecurity = true for each listed table after rollout
+SELECT relname, relrowsecurity
+FROM pg_class
+WHERE relnamespace = 'public'::regnamespace
+  AND relname IN (
+    'companies',
+    'contacts',
+    'reminders',
+    'timeline',
+    'comments',
+    'comment_attachments'
+  )
+ORDER BY relname;
+
+-- Helper function exists (scope to public schema)
+SELECT p.proname, p.prosecdef AS security_definer
+FROM pg_proc AS p
+JOIN pg_namespace AS n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname = 'is_app_admin';
 ```
+
+You should see **`relrowsecurity = true`** for those tables and **one row** for `is_app_admin` with `security_definer = true`.
+
+**Monitoring after RLS**
+
+- Watch **slow query** / Postgres logs (heavy company list queries with nested `contacts` are normal hotspots).
+- Confirm **Realtime** still delivers events where the app subscribes (RLS applies to replication).
+- Schedule a follow-up window for **unused indexes** and **`unindexed_foreign_keys`** (see §5 and Supabase linter INFO).
+
+| Area | SELECT (phase 1) | Writes |
+| --- | --- | --- |
+| `companies`, `contacts` | Active rows for all `authenticated`; owner + admin see trashed rows too | Owner `user_id` or `is_app_admin()` |
+| `reminders` | Active rows for everyone; owner, assignee (`assigned_to` compared to `auth.uid()::text`), admin | Owner, assignee, or admin as defined in SQL |
+| `timeline` | Same pattern as core entities | Owner or admin |
+| `email_log`, `email_templates` | Authenticated read per mass-email / templates UX | Owner or admin where `user_id` applies (`email_templates` has shared CRUD for authenticated in phase 1) |
+| `comments` / `comment_attachments` | Threads on companies **visible like company SELECT** (active companies globally; trashed company rows for owner/admin) | **INSERT:** any authenticated user on an **active** company, `created_by = auth.uid()`. **UPDATE/DELETE:** **company record owner** (`companies.user_id`) or admin (moderation / trash); markdown edits remain author-only in [`src/lib/actions/comments.ts`](../src/lib/actions/comments.ts). **DELETE attachments:** author **or** company record owner **or** admin ([`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql)). |
 
 The **service role** key bypasses RLS when used from trusted server code; it must never ship to the browser.
 
-**Live RLS audit (in-app notifications prerequisite, 2026-04-21, hosted project):** On the current database, `public.reminders` and `public.timeline` report `relrowsecurity = false` (no policies in `pg_policies` for those names). `comments` is owner-scoped via `companies.user_id = auth.uid()`. **Implication:** assignees and cross-tenant “activity on my company” behaviour depend on whether you enable RLS on `reminders` / `timeline` in production. When you turn RLS on for `reminders`, add a **minimal** `SELECT` policy so an assignee can read a row if `assigned_to` matches the user (store `auth.users` id as `text` in `assigned_to` and compare to `auth.uid()::text`, or cast consistently). The repo’s older [`src/sql/rls-setup.sql`](../src/sql/rls-setup.sql) is not necessarily applied verbatim on the live project — verify with `pg_policies` and `pg_class.relrowsecurity` after migrations.
+**`user_notifications`:** As in the [table section](#user_notifications) above — inserts from server using **service role**; clients read/update **own** rows only ([`user_notifications.sql`](../src/sql/user_notifications.sql)).
 
-**`user_notifications`:** RLS as in the [table section](#user_notifications) above; inserts from server using service role only.
+**Storage bucket `comment-files`:** [`storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql) scopes blobs by company path (often **company record owner** for uploads). Postgres RLS now allows collaborative comments; if non-owners upload via the browser, revisit Storage policies in a follow-up migration.
 
-**`comments` and `comment_attachments`:** Policies tie access to **company ownership** (`companies.user_id = auth.uid()`), same idea as core CRM tables. After [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql): **SELECT** includes soft-deleted comments for the company owner (so trash / restore flows work under RLS). **INSERT** still requires `created_by = auth.uid()` and an active (non-deleted) company. **UPDATE** / **DELETE** are allowed for the **company owner** on any comment on that company (restore and hard-delete); the app still restricts **markdown edits** to the original author in server actions (`@/lib/actions/comments.ts`). **`comment_attachments` (Postgres):** **SELECT**/**INSERT** as in [`comments-rls.sql`](../src/sql/comments-rls.sql). **DELETE** on `comment_attachments` is granted to the **comment author** under company ownership ([`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql)) so `deleteCommentAttachment` in `@/lib/actions/comments` can remove metadata; there is **no UPDATE** policy (metadata is insert/delete only from the app). **Storage bucket `comment-files`:** separate policies on `storage.objects` (`storage-comment-files-bucket.sql`) scope **read/write/delete** blobs by first path segment = `companies.id` for the current user as company owner (see §9).
+**Performance:** After RLS is stable, address Supabase linter **`unindexed_foreign_keys`** and hot paths (see §5).
 
-**Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, `timeline`, and **`comments`** support optional soft deletion. On restore, `deleted_at` and `deleted_by` are cleared; hard deletes drop the row. **`deleted_by` FK differs by table:** on `companies`, `contacts`, `reminders`, and `timeline` it references **`auth.users(id)`** ([`deleted-by-audit.sql`](../src/sql/deleted-by-audit.sql)); on **`comments`** it references **`profiles(id)`** ([`comments-tables.sql`](../src/sql/comments-tables.sql)). Active reads typically filter `deleted_at IS NULL`; trashed rows appear in admin tooling or company-owner flows. For the core four tables, RLS was not extended solely for soft-delete—rely on server actions and query filters where documented.
+**Soft-delete (`deleted_at`, `deleted_by`)**: `companies`, `contacts`, `reminders`, `timeline`, and **`comments`** support optional soft deletion. On restore, `deleted_at` and `deleted_by` are cleared; hard deletes drop the row. **`deleted_by` FK differs by table:** on `companies`, `contacts`, `reminders`, and `timeline` it references **`auth.users(id)`** ([`deleted-by-audit.sql`](../src/sql/deleted-by-audit.sql)); on **`comments`** it references **`profiles(id)`** ([`comments-tables.sql`](../src/sql/comments-tables.sql)). Active reads typically filter `deleted_at IS NULL`; trashed rows appear in admin tooling or company-owner flows. Server actions and filters remain defense-in-depth beyond RLS.
 
-**Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`src/components/features/profile/AdminTrashBinCard.tsx`, `safeDisplay`).
+**Admin Papierkorb UI**: The profile Trash Bin table loads trashed rows with `deleted_by`, then resolves `profiles.display_name` in one batched query (`profiles` where `id IN (…)`); missing or null deleters show as “Unbekannt” in the “Gelöscht von” column (`src/components/features/profile/AdminTrashBinCard.tsx`, `safeDisplay`). Many destructive paths use **`createAdminClient`** (service role) and bypass RLS by design ([`src/lib/actions/crm-trash.ts`](../src/lib/actions/crm-trash.ts)).
 
 **Detail routes**: `src/lib/actions/resolve-detail.ts` exposes `resolveReminderDetail` and `resolveTimelineDetail` (same pattern as `resolveCompanyDetail` / `resolveContactDetail`: fetch by id, `missing` if no row, `trashed` if `deleted_at` is set, else `active` with the typed row). Used by `/reminders/[id]` and `/timeline/[id]` server pages.
 

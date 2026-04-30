@@ -1,0 +1,15 @@
+-- AquaDock CRM v5 — Run BEFORE enabling RLS (Phase 0 snapshot / rollback reference).
+-- Save query results from Supabase SQL Editor or psql.
+--
+-- 1) Policies on public schema:
+--    SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+--    FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename, policyname;
+--
+-- 2) RLS flags:
+--    SELECT c.relname, c.relrowsecurity AS rls_enabled
+--    FROM pg_class c
+--    JOIN pg_namespace n ON n.oid = c.relnamespace
+--    WHERE n.nspname = 'public' AND c.relkind = 'r'
+--    ORDER BY c.relname;
+--
+-- 3) Dashboard: Database → Backups → manual backup (recommended).

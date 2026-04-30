@@ -51,9 +51,22 @@ Details: [`docs/architecture.md`](architecture.md#testing-vitest--playwright) an
 
 ### Row Level Security (RLS)
 
-- [ ] RLS enabled on application tables (`companies`, `contacts`, `reminders`, `timeline`, email tables, `profiles`, `user_settings`, `comments`, `comment_attachments`, etc.).  
-- [ ] Policies match your org’s rules (per-user data, admin paths).  
-- [ ] Service role key used only in server code, never in client bundles.
+**Before changes:** create a manual backup and save [`pg_policies` / `relrowsecurity`](https://www.postgresql.org/docs/current/view-pg-policies.html) output — queries in [`src/sql/rls-rollout-backup-queries.sql`](../src/sql/rls-rollout-backup-queries.sql). Apply on **staging** first; smoke test, then **`pnpm e2e`** with [`E2E_*`](architecture.md#testing-vitest--playwright) secrets. **Post-rollout verification SQL** for staging is in [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 (*Quick verification*).
+
+Operator checklist: **Recommended final action (staging rollout)** and **Next action** paragraphs at the top of [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 — then script order, Quick verification SQL, smoke, **`pnpm e2e`**, Linter, production gate.
+
+Apply **in order** (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 — includes **staging → production** smoke steps and monitoring):
+
+- [ ] [`src/sql/rls-helpers.sql`](../src/sql/rls-helpers.sql) — `public.is_app_admin()`
+- [ ] [`src/sql/core-crm-rls-collaborative.sql`](../src/sql/core-crm-rls-collaborative.sql) — core CRM + email tables + ENABLE RLS (drops `dev_allow_all_inserts` where present); smoke after this batch on staging (companies, reminders, timeline, mass-email log)
+- [ ] [`src/sql/rls-profiles-settings-consolidate.sql`](../src/sql/rls-profiles-settings-consolidate.sql) — `profiles`, `user_settings`
+- [ ] Comments RLS chain (if comments feature is used): [`comments-rls.sql`](../src/sql/comments-rls.sql) → [`comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) → [`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — same order as [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 step 4; smoke comments after applying
+- [ ] **Staging:** manual smoke (normal user + admin trash/profiles), **`pnpm e2e`**, Database **Linter** — zero RLS-related ERRORs before production
+- [ ] **Production:** repeat the same script order in a low-traffic window; then [`src/sql/rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) once smoke is green (optional on staging first to validate `pg_proc` names)
+- [ ] **Post-rollout:** monitor 30–60 min (company lists, Realtime, reminders); plan follow-up for slow queries / FK indexes per linter
+
+- [ ] Supabase **Database Linter:** resolve ERROR-level findings (RLS disabled, policy duplicates, DEFINER exposure) after rollout  
+- [ ] Service role key used only in server code, never in client bundles  
 
 ### Company comments (optional feature)
 
@@ -61,12 +74,12 @@ If you use company comments, apply these **in order** in the Supabase SQL Editor
 
 - [ ] [`src/sql/profiles-table.sql`](../src/sql/profiles-table.sql) — if `public.profiles` is missing (prerequisite for comments FKs)
 - [ ] [`src/sql/comments-tables.sql`](../src/sql/comments-tables.sql) — tables, indexes, triggers  
-- [ ] [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) — initial RLS  
-- [ ] [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) — owner SELECT/UPDATE/DELETE for trash and restore  
+- [ ] [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) — collaborative SELECT/INSERT + attachments (requires `rls-helpers.sql` + core CRM policies first)  
+- [ ] [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) — moderation UPDATE/DELETE (company record owner + admin)  
 
 Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live schema.
 
-- [ ] [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — **`DELETE`** on `comment_attachments` so authors can remove attachments when editing a note (required for `deleteCommentAttachment`; apply after `comments-rls.sql` / trash alignment as needed).
+- [ ] [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — **`DELETE`** on `comment_attachments` (author or company record owner or admin)
 - [ ] Server env **`SUPABASE_SERVICE_ROLE_KEY`** (Vercel/server only) — required for preferred **`POST /api/comment-attachments/upload`**, admin **signed URL** generation, and robust Storage cleanup on delete (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9).
 
 ### Operations
