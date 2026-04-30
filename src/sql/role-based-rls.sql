@@ -1,3 +1,6 @@
+-- DEPRECATED for AquaDock CRM v5 production — superseded by core-crm-rls-collaborative.sql + rls-helpers.sql.
+-- Kept for historical reference only; do not apply on new deployments.
+
 -- Add user_id column to companies table if it doesn't exist
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid();
 

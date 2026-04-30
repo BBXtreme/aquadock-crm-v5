@@ -11,7 +11,7 @@ This document explains how the application is structured so developers (and tech
 1. **Users sign in** with Supabase Auth.  
 2. **Pages** are mostly **React Server Components**: they load data on the server using a Supabase client that sees the user’s session.  
 3. **Interactive pieces** (forms, maps, tables with client sorting) are **Client Components** (`"use client"`) and stay as small as possible.  
-4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete).  
+4. **Rules in the database (RLS)** restrict which rows each user can read or write; the app must still use the correct queries and filters (e.g. soft-delete). **Apply order and phase 1 collaborative policies:** [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 (`rls-helpers.sql` → `core-crm-rls-collaborative.sql` → …).  
 5. **Forms** are validated with **Zod** schemas that match the database types, then saved via **Server Actions**.  
 6. **Locales** are provided with **next-intl** (`src/messages/`, provider under `src/lib/i18n/`); the protected shell wraps content in `I18nProvider` after `requireCrmAccess()` in `src/app/(protected)/layout.tsx`. **ICU:** strings that must show literal `{{placeholder}}` text (e.g. mass-email hints) wrap each token in single quotes in JSON—`'{{vorname}}'`—so the message parser does not treat `{{…}}` as a malformed ICU argument (see [next-intl messages / escaping](https://next-intl.dev/docs/usage/messages#escaping)).
 
