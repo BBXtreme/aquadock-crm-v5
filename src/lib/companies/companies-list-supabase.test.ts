@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CompaniesListUrlState } from "@/lib/utils/company-filters-url-state";
+import {
+  type CompaniesListUrlState,
+  defaultCompaniesListUrlState,
+} from "@/lib/utils/company-filters-url-state";
 import type { Database } from "@/types/database.types";
 import type { CompaniesListFilterSlice } from "./companies-list-supabase";
 import {
@@ -116,6 +119,29 @@ describe("companies-list-supabase hybrid applier", () => {
     expect(out).toBe(query);
     expect(query.is).toHaveBeenCalledWith("deleted_at", null);
     expect(query.or).toHaveBeenCalledWith(lexicalOrClause("marina"));
+  });
+
+  it("applyCompaniesListFiltersToCompaniesQuery applies every facet filter column", () => {
+    const query = makeQueryBuilder();
+    const filters: CompaniesListFilterSlice = {
+      globalFilter: "x",
+      activeFilters: {
+        status: ["lead"],
+        kategorie: ["kt-a"],
+        betriebstyp: ["ft-b"],
+        land: ["DE"],
+        wassertyp: ["salt"],
+      },
+      waterFilter: null,
+    };
+
+    applyCompaniesListFiltersToCompaniesQuery(query, filters);
+
+    expect(query.in).toHaveBeenCalledWith("status", ["lead"]);
+    expect(query.in).toHaveBeenCalledWith("kundentyp", ["kt-a"]);
+    expect(query.in).toHaveBeenCalledWith("firmentyp", ["ft-b"]);
+    expect(query.in).toHaveBeenCalledWith("land", ["DE"]);
+    expect(query.in).toHaveBeenCalledWith("wassertyp", ["salt"]);
   });
 
   it.each([
@@ -318,18 +344,7 @@ describe("companies-list-supabase hybrid applier", () => {
 
 function makeListState(overrides: Partial<CompaniesListUrlState> = {}): CompaniesListUrlState {
   return {
-    globalFilter: "",
-    activeFilters: {
-      status: [],
-      kategorie: [],
-      betriebstyp: [],
-      land: [],
-      wassertyp: [],
-    },
-    waterFilter: null,
-    sorting: [{ id: "firmenname", desc: false }],
-    pagination: { pageIndex: 0, pageSize: 20 },
-    columnVisibility: {},
+    ...defaultCompaniesListUrlState(),
     ...overrides,
   };
 }
@@ -370,6 +385,22 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     expect(ids).toEqual(["a", "b", "c"]);
     expect(queryChain.order).toHaveBeenCalledWith("status", { ascending: false });
     expect(queryChain.range).toHaveBeenCalledWith(0, CHUNK - 1);
+  });
+
+  it("non-hybrid path skips order when sorting row is missing", async () => {
+    const queryChain = {
+      is: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data: [{ id: "solo" }], error: null }),
+    };
+    const supabase = {
+      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(queryChain) })),
+    } as never;
+
+    const ids = await fetchAllCompanyIdsForListNavigation(supabase, makeListState({ sorting: [] }));
+
+    expect(ids).toEqual(["solo"]);
+    expect(queryChain.order).not.toHaveBeenCalled();
   });
 
   it("hybrid path returns rankedIds filtered by surviving ids and preserves rank order", async () => {
@@ -415,6 +446,37 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     // Column sort must be ignored in hybrid so the RRF rank order survives.
     expect(queryChain.order).not.toHaveBeenCalled();
     expect(queryChain.in).toHaveBeenCalledWith("id", ["id-1", "id-2", "id-3", "id-4"]);
+  });
+
+  it("hybrid path propagates Supabase errors from intersection chunked reads", async () => {
+    mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2]);
+    mockHybridCompanySearch.mockResolvedValue([{ companyId: "id-1" }]);
+
+    const lexicalChain = {
+      is: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [{ id: "lex-1" }], error: null }),
+    };
+    const queryChain = {
+      is: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data: null, error: new Error("range failed") }),
+    };
+    let fromCalls = 0;
+    const supabase = {
+      from: vi.fn(() => {
+        fromCalls += 1;
+        if (fromCalls === 1) {
+          return { select: vi.fn().mockReturnValue(lexicalChain) };
+        }
+        return { select: vi.fn().mockReturnValue(queryChain) };
+      }),
+    } as never;
+
+    await expect(
+      fetchAllCompanyIdsForListNavigation(supabase, makeListState({ globalFilter: "query", sorting: [] })),
+    ).rejects.toThrow("range failed");
   });
 
   it("hybrid path short-circuits when hybrid and lexical both return no ids", async () => {

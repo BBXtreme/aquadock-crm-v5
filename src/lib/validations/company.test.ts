@@ -28,6 +28,32 @@ describe("companySchema", () => {
     expect(parsed.firmenname).toBe("Acme GmbH");
     expect(parsed.kundentyp).toBe("restaurant");
     expect(parsed.status).toBe("lead");
+    expect(parsed.land ?? null).toBeNull();
+  });
+
+  it("normalizes land legacy German label to ISO alpha-2", () => {
+    const parsed = companySchema.parse({
+      ...minimal,
+      land: "Deutschland",
+    });
+    expect(parsed.land).toBe("DE");
+  });
+
+  it("accepts land as uppercase ISO code", () => {
+    const parsed = companySchema.parse({
+      ...minimal,
+      land: "HR",
+    });
+    expect(parsed.land).toBe("HR");
+  });
+
+  it("rejects unknown land free text", () => {
+    expect(() =>
+      companySchema.parse({
+        ...minimal,
+        land: "Atlantis",
+      }),
+    ).toThrow();
   });
 
   it("trims firmenname", () => {

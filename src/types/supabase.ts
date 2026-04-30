@@ -741,6 +741,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_tournament_for_user: {
+        Args: { p_name: string; p_starts_on: string }
+        Returns: string
+      }
       hybrid_company_search: {
         Args: {
           p_fts_weight?: number

@@ -14,13 +14,13 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import {
-  countryFlags,
   firmentypLabels,
   kundentypLabels,
   priorityLabels,
   reminderStatusLabels,
   statusLabels,
 } from "@/lib/constants/company-labels";
+import { getLandFlagEmoji, normalizeLandInput } from "@/lib/countries/iso-land";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,8 +38,16 @@ export function getFirmentypLabel(firmentyp: string): string {
   return firmentypLabels[firmentyp.toLowerCase()] || firmentyp;
 }
 
+/** Emoji from stored `companies.land` (ISO alpha-2 or legacy synonym). Unknown values yield null. */
 export function getCountryFlag(country: string | null): string | null {
-  return country ? countryFlags[country] || "🏳️" : null;
+  if (!country) {
+    return null;
+  }
+  const normalized = normalizeLandInput(country);
+  if (!normalized.ok) {
+    return null;
+  }
+  return getLandFlagEmoji(normalized.code);
 }
 
 export function getPriorityLabel(p: string | null | undefined): string {

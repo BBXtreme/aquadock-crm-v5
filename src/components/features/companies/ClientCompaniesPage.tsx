@@ -59,7 +59,7 @@ function ClientCompaniesPage() {
     wassertyp: [],
   });
   const [waterFilter, setWaterFilter] = useState<WaterPreset | null>(null);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ verantwortlich: false });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({ verantwortlich: false, country: false });
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [csvDialogOpen, setCsvDialogOpen] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});

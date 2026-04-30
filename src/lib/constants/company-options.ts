@@ -40,6 +40,12 @@ export const statusOptions = [
   { value: "inaktiv", label: "Inaktiv" },
 ];
 
+/**
+ * @deprecated Stored `companies.land` is ISO 3166-1 alpha-2. Use
+ * {@link buildCompanyLandSelectOptions} with {@link useDistinctCompanyLandCodes} from
+ * `@/components/features/companies/use-companies-list-queries` and {@link DEFAULT_COMPANY_LAND_CODES}
+ * from `@/lib/countries/iso-land`. Kept only for rare legacy references.
+ */
 export const landOptions = [
   { value: "Deutschland", label: "Deutschland" },
   { value: "Österreich", label: "Österreich" },

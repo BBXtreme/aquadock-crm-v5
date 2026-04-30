@@ -360,7 +360,8 @@ describe("geocodeAddress - request shape", () => {
     expect(url.searchParams.get("street")).toBe("Hauptstr. 1");
     expect(url.searchParams.get("postalcode")).toBe("80331");
     expect(url.searchParams.get("city")).toBe("München");
-    expect(url.searchParams.get("country")).toBe("DE");
+    expect(url.searchParams.get("countrycodes")).toBe("de");
+    expect(url.searchParams.get("country")).toBeNull();
     expect(url.searchParams.get("format")).toBe("jsonv2");
     expect(url.searchParams.get("limit")).toBe("1");
     expect(url.searchParams.get("addressdetails")).toBe("1");
@@ -385,5 +386,21 @@ describe("geocodeAddress - request shape", () => {
     const url = new URL(rawUrl);
     expect(url.searchParams.has("street")).toBe(false);
     expect(url.searchParams.get("postalcode")).toBe("80331");
+  });
+
+  it("uses lowercase ISO countrycodes when land is an alpha-2 code", async () => {
+    fetchMock.mockResolvedValueOnce(
+      makeResponse([{ lat: "45.81", lon: "15.98", importance: 0.5, display_name: "Zagreb" }]),
+    );
+
+    await geocodeAddress(
+      { strasse: "Trg bana Jelačića 1", plz: "10000", stadt: "Zagreb", land: "HR" },
+      emptyCache(),
+    );
+
+    const [rawUrl] = fetchMock.mock.calls[0] as [string];
+    const url = new URL(rawUrl);
+    expect(url.searchParams.get("countrycodes")).toBe("hr");
+    expect(url.searchParams.get("country")).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 // src/components/company-detail/CompanyDetailsCard.tsx
 "use client";
-import { Building, Edit, } from "lucide-react";
+import { Building, Edit } from "lucide-react";
+import { useLocale } from "next-intl";
 import { useState } from "react";
 import AdresseEditForm from "@/components/features/companies/AdresseEditForm";
 import FirmendatenEditForm from "@/components/features/companies/FirmendatenEditForm";
@@ -8,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
+import { getLandFlagEmoji, getLandRegionDisplayName, normalizeLandInput } from "@/lib/countries/iso-land";
 import { useT } from "@/lib/i18n/use-translations";
-import { getCountryFlag } from "@/lib/utils";
 import type { Company } from "@/types/database.types";
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
 
 export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props) {
   const t = useT("companies");
+  const locale = useLocale();
   const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
   const [adresseEditOpen, setAdresseEditOpen] = useState(false);
 
@@ -57,7 +59,15 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
     );
   };
 
-  const countryFlag = getCountryFlag(company.land);
+  const landNorm =
+    company.land !== null && company.land !== undefined && company.land !== ""
+      ? normalizeLandInput(company.land)
+      : null;
+  const landFlag = landNorm?.ok ? getLandFlagEmoji(landNorm.code) : null;
+  const landLabel =
+    company.land !== null && company.land !== undefined && company.land !== ""
+      ? getLandRegionDisplayName(company.land, locale)
+      : null;
 
   return (
     <>
@@ -145,8 +155,8 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
             <div>
               <div className="text-sm font-medium text-muted-foreground">{t("detailLabelLand")}</div>
               <p className="text-sm text-foreground flex items-center gap-2">
-                {countryFlag && <span className="text-xl">{countryFlag}</span>}
-                {company.land || <EmptyDash />}
+                {landFlag !== null ? <span className="text-xl">{landFlag}</span> : null}
+                {landLabel !== null && landLabel !== "" ? landLabel : <EmptyDash />}
               </p>
             </div>
           </div>

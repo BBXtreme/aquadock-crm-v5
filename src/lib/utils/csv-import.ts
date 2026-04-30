@@ -11,8 +11,8 @@
 // The code includes helper functions for parsing German-style floats
 // and stripping emojis from strings, which are common issues when
 // dealing with user-generated CSV data in this context
-// The parsing function also includes a mapping for normalizing country
-// codes to full names, which can help ensure consistency in the database
+// Country (`land`) values are normalised to ISO 3166-1 alpha-2 when recognised;
+// unknown values are kept as-is for preview highlighting and server-side validation.
 // The column mapping allows for flexibility in the CSV file, so users
 // can have different column headers as long as they match the expected
 // keys (case-insensitive)
@@ -29,6 +29,7 @@
 
 import Papa from "papaparse";
 import { buildColumnMappingsFromParserFields } from "@/lib/constants/csv-import-fields";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import type { CompanyInsert } from "@/types/database.types";
 
 // Define the parsed row type from CSV
@@ -99,14 +100,6 @@ export function stripEmojis(text: string): string {
     )
     .trim();
 }
-
-// Map for normalizing land codes to full names
-const LAND_NORMALIZE_MAP: Record<string, string> = {
-  DE: "Deutschland",
-  AT: "Österreich",
-  CH: "Schweiz",
-  // Add more as needed
-};
 
 const OSM_COMPACT_ID_REGEX = /^(node|way|relation)\/(\d+)$/i;
 
@@ -220,8 +213,8 @@ export function parseCSVFile(file: File): Promise<ParsedCompanyRow[]> {
                 parsedRow.bundesland = trimmedValue;
                 break;
               case "land": {
-                const normalizedLand = LAND_NORMALIZE_MAP[trimmedValue.toUpperCase()] || trimmedValue;
-                parsedRow.land = normalizedLand;
+                const landNorm = normalizeLandInput(trimmedValue);
+                parsedRow.land = landNorm.ok ? landNorm.code : trimmedValue;
                 break;
               }
               case "telefon":

@@ -5,9 +5,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
+import {
+  COMPANIES_FILTER_OPTIONS_QUERY_KEY,
+  useDistinctCompanyLandCodes,
+} from "@/components/features/companies/use-companies-list-queries";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -15,11 +20,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
-import { firmentypOptions, kundentypOptions, landOptions, statusOptions } from "@/lib/constants/company-options";
+import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
+import { buildCompanyLandSelectOptions, DEFAULT_COMPANY_LAND_CODES } from "@/lib/countries/iso-land";
 import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
+  const locale = useLocale();
+  const distinctLandCodes = useDistinctCompanyLandCodes();
+  const landSelectOptions = useMemo(
+    () =>
+      buildCompanyLandSelectOptions({
+        distinctLandCodes,
+        locale,
+      }),
+    [distinctLandCodes, locale],
+  );
 
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companySchema),
@@ -32,7 +48,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
       plz: undefined,
       stadt: undefined,
       bundesland: undefined,
-      land: "Deutschland",
+      land: DEFAULT_COMPANY_LAND_CODES[0] ?? "DE",
       website: undefined,
       telefon: undefined,
       email: undefined,
@@ -51,6 +67,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
     mutationFn: (company: CompanyFormValues) => createCompany(company),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY });
       toast.success("Unternehmen erfolgreich angelegt");
       form.reset();
       onSuccess?.();
@@ -242,7 +259,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {landOptions.map((option) => (
+                    {landSelectOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>

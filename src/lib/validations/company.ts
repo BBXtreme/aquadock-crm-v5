@@ -2,7 +2,35 @@
 // Zod schema for Company forms – synced with Supabase types
 
 import { z } from "zod";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import type { CompanyInsert, CompanyUpdate } from "@/types/database.types";
+
+export const landFormSchema = z
+  .preprocess((val: unknown) => {
+    if (val === "" || val === undefined) {
+      return null;
+    }
+    return val;
+  }, z.union([z.null(), z.string().trim().max(80)]))
+  .superRefine((val, ctx) => {
+    if (val === null) {
+      return;
+    }
+    const normalized = normalizeLandInput(val);
+    if (!normalized.ok) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Land ungültig oder nicht erkannt (ISO-Code oder unterstützter Name).",
+      });
+    }
+  })
+  .transform((val): string | null => {
+    if (val === null) {
+      return null;
+    }
+    const normalized = normalizeLandInput(val);
+    return normalized.ok ? normalized.code : null;
+  });
 
 export const companySchema = z.object({
   firmenname: z
@@ -51,7 +79,7 @@ export const companySchema = z.object({
   plz: z.string().trim().max(10, "PLZ darf maximal 10 Zeichen lang sein").nullable().optional(),
   stadt: z.string().trim().max(100, "Stadt darf maximal 100 Zeichen lang sein").nullable().optional(),
   bundesland: z.string().trim().max(50, "Bundesland darf maximal 50 Zeichen lang sein").nullable().optional(),
-  land: z.string().trim().max(50, "Land darf maximal 50 Zeichen lang sein").nullable().optional(),
+  land: landFormSchema.nullish(),
   wasserdistanz: z.number().nullable().optional(),
   wassertyp: z.string().trim().max(50, "Wassertyp darf maximal 50 Zeichen lang sein").nullable().optional(),
   lat: z.preprocess((val) => val === "" ? null : val, z.union([z.number().min(-90, "Latitude muss zwischen -90 und 90 liegen").max(90, "Latitude muss zwischen -90 und 90 liegen"), z.null()]).optional()),

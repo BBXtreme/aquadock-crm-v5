@@ -19,6 +19,20 @@ vi.mock("@/lib/actions/companies", () => ({
   createCompany: vi.fn(),
 }));
 
+vi.mock("next-intl", () => ({
+  useLocale: () => "de",
+}));
+
+vi.mock("@/components/features/companies/use-companies-list-queries", async () => {
+  const actual = await vi.importActual<typeof import("@/components/features/companies/use-companies-list-queries")>(
+    "@/components/features/companies/use-companies-list-queries",
+  );
+  return {
+    ...actual,
+    useDistinctCompanyLandCodes: () => ["DE", "HR"],
+  };
+});
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -68,7 +82,7 @@ function mockCompanyRow(overrides: Partial<Company> = {}): Company {
     plz: null,
     stadt: null,
     bundesland: null,
-    land: "Deutschland",
+    land: "DE",
     wasserdistanz: null,
     wassertyp: null,
     lat: null,
@@ -136,7 +150,7 @@ describe("CompanyCreateForm + companySchema", () => {
     expect(insert.stadt).toBe("Helgoland");
     expect(insert.kundentyp).toBe("sonstige");
     expect(insert.status).toBe("lead");
-    expect(insert.land).toBe("Deutschland");
+    expect(insert.land).toBe("DE");
     expect(insert.website).toBeNull();
     expect(insert.email).toBeNull();
   });

@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   COMPANIES_LIST_PARAM_KEYS,
+  COMPANIES_LIST_SESSION_STORAGE_KEY,
   type CompaniesListUrlState,
   companiesListSearchStringFromPageSearchParams,
+  companiesListStateKey,
   companiesListStatesEqual,
   companiesSortIdForQuery,
   defaultCompaniesListUrlState,
@@ -11,8 +13,23 @@ import {
   mergeCompaniesListIntoPath,
   mergeSessionCompaniesListQuery,
   parseCompaniesListState,
+  readCompaniesListQueryFromSession,
   serializeCompaniesListToSearchParamsString,
+  shouldDeferEmptySessionWriteWhileRestoring,
+  writeCompaniesListQueryToSession,
 } from "./company-filters-url-state";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  if (typeof window !== "undefined" && typeof window.sessionStorage?.clear === "function") {
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      value: window.sessionStorage,
+    });
+    window.sessionStorage.clear();
+  }
+});
 
 describe("parseCompaniesListState", () => {
   it("returns defaults for empty search params", () => {
@@ -37,11 +54,22 @@ describe("parseCompaniesListState", () => {
     expect(parseCompaniesListState(sp).activeFilters.kategorie).toEqual(["a", "b"]);
   });
 
+  it("skips empty comma-separated segments", () => {
+    const sp = new URLSearchParams();
+    sp.set("status", "lead,,gewonnen,");
+    expect(parseCompaniesListState(sp).activeFilters.status).toEqual(["lead", "gewonnen"]);
+  });
+
   it("parses hidden columns into VisibilityState entries", () => {
     const sp = new URLSearchParams();
     sp.set("cols", "status,wassertyp");
     const s = parseCompaniesListState(sp);
-    expect(s.columnVisibility).toEqual({ status: false, wassertyp: false, verantwortlich: false });
+    expect(s.columnVisibility).toEqual({
+      status: false,
+      wassertyp: false,
+      verantwortlich: false,
+      country: false,
+    });
   });
 
   it("parses ow=1 as Verantwortlich column visible", () => {
@@ -49,7 +77,19 @@ describe("parseCompaniesListState", () => {
     sp.set("cols", "status");
     sp.set("ow", "1");
     const s = parseCompaniesListState(sp);
-    expect(s.columnVisibility).toEqual({ status: false, verantwortlich: true });
+    expect(s.columnVisibility).toEqual({
+      status: false,
+      verantwortlich: true,
+      country: false,
+    });
+  });
+
+  it("parses cc=1 as Country column visible", () => {
+    const sp = new URLSearchParams();
+    sp.set("cc", "1");
+    const s = parseCompaniesListState(sp);
+    expect(s.columnVisibility.country).toBe(true);
+    expect(s.columnVisibility.verantwortlich).toBe(false);
   });
 
   it("parses water preset when valid", () => {
@@ -129,6 +169,18 @@ describe("serializeCompaniesListToSearchParamsString", () => {
     expect(companiesListStatesEqual(state, again)).toBe(true);
     expect(again.columnVisibility.verantwortlich).toBe(true);
   });
+
+  it("round-trips Country column visible via cc=1", () => {
+    const base = defaultCompaniesListUrlState();
+    const state: CompaniesListUrlState = {
+      ...base,
+      columnVisibility: { ...base.columnVisibility, country: true },
+    };
+    const qs = serializeCompaniesListToSearchParamsString(state);
+    const again = parseCompaniesListState(new URLSearchParams(qs));
+    expect(companiesListStatesEqual(state, again)).toBe(true);
+    expect(again.columnVisibility.country).toBe(true);
+  });
 });
 
 describe("hasAnyCompaniesListParamKey", () => {
@@ -161,6 +213,13 @@ describe("mergeCompaniesListIntoPath", () => {
     expect(href).toContain("create=true");
     expect(href).toContain("foo=bar");
     expect(href).toContain("status=lead");
+  });
+
+  it("drops list keys when serialized state is empty", () => {
+    const cur = new URLSearchParams("status=lead&create=true");
+    const href = mergeCompaniesListIntoPath("/companies", cur, defaultCompaniesListUrlState());
+    expect(href).toContain("create=true");
+    expect(href.includes("status")).toBe(false);
   });
 });
 
@@ -203,5 +262,91 @@ describe("companiesListSearchStringFromPageSearchParams", () => {
     });
     expect(new URLSearchParams(s).get("status")).toBe("lead,gewonnen");
     expect(s.includes("aiEnrich")).toBe(false);
+  });
+
+  it("uses first string when value is string[]", () => {
+    const s = companiesListSearchStringFromPageSearchParams({
+      land: ["DE", "AT"],
+    });
+    expect(new URLSearchParams(s).get("land")).toBe("DE");
+  });
+
+  it("ignores non-positive array branch when value is empty string[]", () => {
+    expect(companiesListSearchStringFromPageSearchParams({ status: [] })).toBe("");
+  });
+
+  it("ignores array entry when first element is empty string", () => {
+    expect(companiesListSearchStringFromPageSearchParams({ land: ["", "DE"] })).toBe("");
+  });
+});
+
+describe("companiesListStateKey", () => {
+  it("uses defaults when sorting array is empty", () => {
+    const base = defaultCompaniesListUrlState();
+    const state: CompaniesListUrlState = { ...base, sorting: [] };
+    const key = companiesListStateKey(state);
+    expect(key).toContain("firmenname");
+    expect(key).toContain('"sortDesc":false');
+  });
+});
+
+describe("session list query helpers", () => {
+  it("readCompaniesListQueryFromSession returns null without window", () => {
+    vi.stubGlobal("window", undefined);
+    expect(readCompaniesListQueryFromSession()).toBeNull();
+  });
+
+  it("readCompaniesListQueryFromSession returns null when sessionStorage throws", () => {
+    const spy = vi.spyOn(sessionStorage, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(readCompaniesListQueryFromSession()).toBeNull();
+    spy.mockRestore();
+  });
+
+  it("writeCompaniesListQueryToSession no-ops without window", () => {
+    vi.stubGlobal("window", undefined);
+    expect(() => writeCompaniesListQueryToSession("status=lead")).not.toThrow();
+  });
+
+  it("writeCompaniesListQueryToSession clears storage for empty query", () => {
+    sessionStorage.setItem(COMPANIES_LIST_SESSION_STORAGE_KEY, "old=1");
+    writeCompaniesListQueryToSession("");
+    expect(sessionStorage.getItem(COMPANIES_LIST_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it("writeCompaniesListQueryToSession ignores storage errors", () => {
+    const removeSpy = vi.spyOn(sessionStorage, "removeItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    const setSpy = vi.spyOn(sessionStorage, "setItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    expect(() => writeCompaniesListQueryToSession("")).not.toThrow();
+    expect(() => writeCompaniesListQueryToSession("q=x")).not.toThrow();
+    removeSpy.mockRestore();
+    setSpy.mockRestore();
+  });
+});
+
+describe("shouldDeferEmptySessionWriteWhileRestoring", () => {
+  it("does not defer when serialized list is non-empty", () => {
+    expect(shouldDeferEmptySessionWriteWhileRestoring("status=lead", new URLSearchParams())).toBe(false);
+  });
+
+  it("does not defer when URL already has list params", () => {
+    const sp = new URLSearchParams();
+    sp.set("q", "x");
+    sessionStorage.setItem(COMPANIES_LIST_SESSION_STORAGE_KEY, "status=lead");
+    expect(shouldDeferEmptySessionWriteWhileRestoring("", sp)).toBe(false);
+  });
+
+  it("defers when URL empty, serialized empty, and session has stored query", () => {
+    sessionStorage.setItem(COMPANIES_LIST_SESSION_STORAGE_KEY, "water=le100");
+    expect(shouldDeferEmptySessionWriteWhileRestoring("", new URLSearchParams())).toBe(true);
+  });
+
+  it("does not defer when session is empty", () => {
+    expect(shouldDeferEmptySessionWriteWhileRestoring("", new URLSearchParams())).toBe(false);
   });
 });

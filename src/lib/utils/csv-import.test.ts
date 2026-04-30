@@ -152,7 +152,7 @@ describe("parseCSVFile", () => {
     }
     expect(first.firmenname).toBe("ACME GmbH");
     expect(first.kundentyp).toBe("marina");
-    expect(first.land).toBe("Deutschland");
+    expect(first.land).toBe("DE");
     expect(first.wassertyp).toBe("See");
     expect(first.lat).toBe(53.5);
     expect(first.lon).toBe(10.1);
@@ -163,7 +163,7 @@ describe("parseCSVFile", () => {
     }
     expect(second.firmenname).toBe("Alpine Co");
     expect(second.kundentyp).toBe("hotel");
-    expect(second.land).toBe("Österreich");
+    expect(second.land).toBe("AT");
   });
 
   it("rejects on parse errors", async () => {
@@ -225,7 +225,7 @@ describe("parseCSVFile", () => {
     await expect(parseCSVFile(file)).rejects.toThrow(/CSV parsing errors: first, second/);
   });
 
-  it("normalizes CH land code and keeps unmapped country text", async () => {
+  it("normalizes CH land code and recognised names to ISO alpha-2", async () => {
     vi.mocked(Papa.parse).mockImplementation((_file: unknown, options: unknown) => {
       const opts = options as {
         complete: (r: { errors: { message: string }[]; data: Record<string, string>[] }) => void;
@@ -247,8 +247,8 @@ describe("parseCSVFile", () => {
     if (first === undefined || second === undefined) {
       throw new Error("expected two rows");
     }
-    expect(first.land).toBe("Schweiz");
-    expect(second.land).toBe("Frankreich");
+    expect(first.land).toBe("CH");
+    expect(second.land).toBe("FR");
   });
 
   it("drops invalid German-style numbers for distance and coordinates", async () => {

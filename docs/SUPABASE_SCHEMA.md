@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-28  
+**Last audited**: 2026-04-30  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`) and backup items in section 9 and deployment docs.
@@ -41,7 +41,7 @@
 | plz        | text        | true     | —                 | Postal code                               | —             |
 | stadt      | text        | true     | —                 | City                                      | —             |
 | bundesland | text        | true     | —                 | State/Province                            | —             |
-| land       | text        | true     | —                 | Country                                   | —             |
+| land       | text        | true     | —                 | Country (ISO 3166-1 alpha-2)              | Stored **uppercase** (e.g. `DE`, `HR`) or **`NULL`**. Application normalization and labels: `src/lib/countries/iso-land.ts` (`normalizeLandInput`, `getLandRegionDisplayName`, `getLandFlagEmoji`). One-time legacy cleanup (German labels / synonyms → ISO): [`src/sql/normalize-companies-land-to-iso.sql`](../src/sql/normalize-companies-land-to-iso.sql). Optional Postgres **`CHECK`** on shape is documented **commented** at the bottom of that script (not enabled by default). |
 | lat / lon  | real        | true     | —                 | Geographic coordinates                    | —             |
 | osm        | text        | true     | —                 | OSM node/way/relation ID                  | —             |
 | email      | text        | true     | —                 | Email address                             | —             |
@@ -356,7 +356,8 @@ The application uses Zod schemas for client-side form validation, ensuring data 
 
 Key Zod schemas include:
 
-- `companySchema` (`company.ts`): Full company row shape for forms, with `toCompanyInsert` / `toCompanyUpdate` for Supabase
+- `companySchema` (`company.ts`): Full company row shape for forms, with `toCompanyInsert` / `toCompanyUpdate` for Supabase — **`land`** is ISO **3166-1 alpha-2** (uppercase) or **`null`**, validated with **`normalizeLandInput`** from `src/lib/countries/iso-land.ts` (preprocess / refine; `.strict()`, nullable handling per field rules)
+- `parsedCompanyRowSchema` / `parsedCompanyRowsSchema` (`csv-import.ts`): Parsed CSV rows; **`land`** aligned with the same ISO normalization where applicable
 - `contactSchema` (`contact.ts`): Contact fields with `toContactInsert` / `toContactUpdate`
 - `reminderSchema` / `reminderFormSchema` (`reminder.ts`): Reminder fields (including form-only variants where applicable)
 - `timelineSchema` (`timeline.ts`): `title`, `activity_type`, optional `content`, `company_id`, `contact_id`, `user_name` — matches the `timeline` table
@@ -466,4 +467,7 @@ Run in the Supabase SQL Editor (idempotent), in sensible order:
 
 2026-04-28 **Comment attachments Phase A:** Private Storage bucket **`comment-files`** + RLS [`storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql); `comment_attachments.storage_object_path` documented (§2, §4, §9). Postgres **DELETE** policy for `comment_attachments` was added in [`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) (see **2026-04-29**).
 2026-04-28 **Storage RLS:** `comment-files` policies use **`split_part(name::text, '/', 1)`** (not `storage.foldername(name)[1]`) so the first segment matches **`companies.id`** for object keys `companyId/commentId/filename`.
+
+2026-04-30 **`companies.land`:** Documented canonical **ISO 3166-1 alpha-2** storage (uppercase / null), app module `src/lib/countries/iso-land.ts`, and ops script [`src/sql/normalize-companies-land-to-iso.sql`](../src/sql/normalize-companies-land-to-iso.sql). Zod section updated for `companySchema` / CSV import shapes.
+2026-04-30 **Vitest:** [`iso-land.test.ts`](../src/lib/countries/iso-land.test.ts) (`normalizeLandInput`, display helpers, flags); [`company-filters-url-state.test.ts`](../src/lib/utils/company-filters-url-state.test.ts) (companies list URL + session persistence, incl. optional columns); [`companies-list-supabase.test.ts`](../src/lib/companies/companies-list-supabase.test.ts) (list filter applier + `fetchAllCompanyIdsForListNavigation`). Supports the global coverage thresholds in `vitest.config.ts`; see [`testing-strategy.md`](testing-strategy.md).
 2026-04-29 **`comment_attachments` DELETE:** policy [`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) (comment author **+** company owner context). App: `POST /api/comment-attachments/upload`, `deleteCommentAttachment`, `getCommentAttachmentSignedUrl` (preferred admin signing); client **`openSignedStorageUrl`** for tab vs Blob-download open behavior — docs/sync in [`architecture.md`](architecture.md) HTTP inventory.

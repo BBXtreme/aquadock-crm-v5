@@ -47,6 +47,7 @@ import {
   rowIsImportableWithForce,
   rowNeedsDuplicateReview,
 } from "@/lib/companies/csv-import-dedupe";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
@@ -146,6 +147,15 @@ function rowQualifiesForGeocode(row: ParsedCompanyRow): boolean {
     return false;
   }
   return getCoordinateQuality(row) !== "valid";
+}
+
+function getCsvPreviewLandStatus(row: ParsedCompanyRow): "empty" | "valid" | "invalid" {
+  const raw = row.land?.trim() ?? "";
+  if (raw === "") {
+    return "empty";
+  }
+  const normalized = normalizeLandInput(raw);
+  return normalized.ok ? "valid" : "invalid";
 }
 
 function parseCsvPreviewRowIndex(rowId: string): number | undefined {
@@ -965,6 +975,22 @@ export function CSVPreviewView({
                     title={qualityLabel}
                   />
                   <span>{n !== undefined ? n.toFixed(4) : dash}</span>
+                </span>
+              );
+            }
+            if (key === "land") {
+              const status = getCsvPreviewLandStatus(info.row.original);
+              const displayText = cellString(value as string | number | undefined, dash);
+              const badgeVariant =
+                status === "valid" ? "secondary" : status === "invalid" ? "destructive" : "outline";
+              const badgeLabel =
+                status === "valid" ? t("landBadgeValid") : status === "invalid" ? t("landBadgeInvalid") : t("landBadgeEmpty");
+              return (
+                <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                  <Badge variant={badgeVariant} className="shrink-0 text-[10px] uppercase tracking-wide">
+                    {badgeLabel}
+                  </Badge>
+                  <span>{displayText}</span>
                 </span>
               );
             }

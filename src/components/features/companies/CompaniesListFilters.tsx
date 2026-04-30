@@ -1,6 +1,7 @@
 "use client";
 
 import { Waves, X } from "lucide-react";
+import { useLocale } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 import { WATER_PRESETS, type WaterPreset } from "@/components/features/companies/client-companies-constants";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { kategorieIcons, statusIcons } from "@/lib/constants/company-icons";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { wassertypOptions } from "@/lib/constants/wassertyp";
+import { getLandFlagEmoji, getLandRegionDisplayName, normalizeLandInput } from "@/lib/countries/iso-land";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
 import type {
@@ -22,6 +24,17 @@ type DistinctFilterValues = {
   land: Set<string>;
   wassertyp: Set<string>;
 };
+
+function LandFilterFace({ code, locale }: { code: string; locale: string }) {
+  const n = normalizeLandInput(code);
+  const emoji = n.ok ? getLandFlagEmoji(n.code) : null;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {emoji !== null ? <span aria-hidden>{emoji}</span> : null}
+      <span>{getLandRegionDisplayName(code, locale)}</span>
+    </span>
+  );
+}
 
 type CompaniesListFiltersProps = {
   total: number;
@@ -55,6 +68,7 @@ export function CompaniesListFilters({
   setGlobalFilter,
 }: CompaniesListFiltersProps) {
   const t = useT("companies");
+  const locale = useLocale();
   const totalActiveFilters = Object.values(activeFilters).flat().length + (waterFilter ? 1 : 0);
   const waterPreset = waterFilter ? WATER_PRESETS.find((p) => p.value === waterFilter) : null;
 
@@ -69,7 +83,7 @@ export function CompaniesListFilters({
         {Object.entries(activeFilters).map(([group, values]) =>
           values.map((v) => (
             <Badge key={`${group}-${v}`} variant="secondary" className="flex items-center gap-1">
-              {v}
+              {group === "land" ? <LandFilterFace code={v} locale={locale} /> : v}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() => removeFilter(group as CompaniesFilterGroup, v)}
@@ -289,7 +303,7 @@ export function CompaniesListFilters({
                       }
                       onClick={() => toggleFilter("land", land)}
                     >
-                      {land}
+                      <LandFilterFace code={land} locale={locale} />
                     </Button>
                   );
                 })}

@@ -5,50 +5,56 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import {
+  COMPANIES_FILTER_OPTIONS_QUERY_KEY,
+  useDistinctCompanyLandCodes,
+} from "@/components/features/companies/use-companies-list-queries";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
-import type { Database } from "@/types/database.types";
+import { buildCompanyLandSelectOptions, LAND_SELECT_CLEAR_SENTINEL } from "@/lib/countries/iso-land";
+import { landFormSchema } from "@/lib/validations/company";
+import type { Company, CompanyUpdate } from "@/types/database.types";
 
-type Company = Database["public"]["Tables"]["companies"]["Row"];
-
-const adresseSchema = z.object({
-  strasse: z.string().optional(),
-  plz: z.string().optional(),
-  stadt: z.string().optional(),
-  bundesland: z.string().optional(),
-  land: z.string().optional(),
-});
+const adresseSchema = z
+  .object({
+    strasse: z.string().optional(),
+    plz: z.string().optional(),
+    stadt: z.string().optional(),
+    bundesland: z.string().optional(),
+    land: landFormSchema.nullish(),
+  })
+  .strict();
 
 type AdresseFormValues = z.infer<typeof adresseSchema>;
 
-const landOptions = [
-  { value: "Deutschland", label: "Deutschland" },
-  { value: "Österreich", label: "Österreich" },
-  { value: "Schweiz", label: "Schweiz" },
-  { value: "Frankreich", label: "Frankreich" },
-  { value: "Italien", label: "Italien" },
-  { value: "Spanien", label: "Spanien" },
-  { value: "Niederlande", label: "Niederlande" },
-  { value: "Belgien", label: "Belgien" },
-  { value: "Dänemark", label: "Dänemark" },
-  { value: "Schweden", label: "Schweden" },
-  { value: "Norwegen", label: "Norwegen" },
-  { value: "Polen", label: "Polen" },
-  { value: "Ungarn", label: "Ungarn" },
-  { value: "Griechenland", label: "Griechenland" },
-  { value: "Portugal", label: "Portugal" },
-  { value: "Großbritannien", label: "Großbritannien" },
-];
-
-export default function AdresseEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
+export default function AdresseEditForm({
+  company,
+  onSuccess,
+}: {
+  company: Company | null;
+  onSuccess?: () => void;
+}) {
   const queryClient = useQueryClient();
+  const locale = useLocale();
+  const distinctLandCodes = useDistinctCompanyLandCodes();
+  const landSelectOptions = useMemo(
+    () =>
+      buildCompanyLandSelectOptions({
+        distinctLandCodes,
+        locale,
+        currentLandCode: company?.land ?? undefined,
+      }),
+    [company?.land, distinctLandCodes, locale],
+  );
 
   const form = useForm<AdresseFormValues>({
     resolver: zodResolver(adresseSchema),
@@ -57,17 +63,25 @@ export default function AdresseEditForm({ company, onSuccess }: { company: Compa
       plz: company?.plz || "",
       stadt: company?.stadt || "",
       bundesland: company?.bundesland || "",
-      land: company?.land || "Deutschland",
+      land: company?.land ?? null,
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: AdresseFormValues) => {
       if (!company) throw new Error("Company is null");
-      return updateCompany(company.id, data as Partial<Company>);
+      const patch: CompanyUpdate = {
+        strasse: data.strasse,
+        plz: data.plz,
+        stadt: data.stadt,
+        bundesland: data.bundesland,
+        land: data.land ?? null,
+      };
+      return updateCompany(company.id, patch);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
+      queryClient.invalidateQueries({ queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY });
       if (company) {
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
       }
@@ -154,12 +168,24 @@ export default function AdresseEditForm({ company, onSuccess }: { company: Compa
               <FormItem className="md:col-span-2">
                 <FormLabel>Land</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={(v) =>
+                      field.onChange(v === LAND_SELECT_CLEAR_SENTINEL ? null : v)
+                    }
+                    value={
+                      field.value !== null &&
+                      field.value !== undefined &&
+                      field.value !== ""
+                        ? field.value
+                        : LAND_SELECT_CLEAR_SENTINEL
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent>
-                      {landOptions.map((option) => (
+                      <SelectItem value={LAND_SELECT_CLEAR_SENTINEL}>—</SelectItem>
+                      {landSelectOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>

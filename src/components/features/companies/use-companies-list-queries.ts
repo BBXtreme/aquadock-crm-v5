@@ -6,6 +6,46 @@ import type { SearchCompaniesListResult } from "@/lib/server/companies-search";
 import { createClient } from "@/lib/supabase/browser";
 import type { CompaniesFilterGroup } from "@/lib/utils/company-filters-url-state";
 
+export const COMPANIES_FILTER_OPTIONS_QUERY_KEY = ["companies-filter-options"] as const;
+
+type DistinctFilterBuckets = {
+  status: Set<string>;
+  kundentyp: Set<string>;
+  firmentyp: Set<string>;
+  land: Set<string>;
+  wassertyp: Set<string>;
+};
+
+async function fetchCompaniesFilterOptions(): Promise<DistinctFilterBuckets> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .select("status, kundentyp, firmentyp, land, wassertyp")
+    .is("deleted_at", null);
+  if (error) throw error;
+  const rows = data ?? [];
+  const pick = (key: "status" | "kundentyp" | "firmentyp" | "land" | "wassertyp") =>
+    new Set(rows.map((r) => r[key]).filter((v): v is string => !!v));
+  return {
+    status: pick("status"),
+    kundentyp: pick("kundentyp"),
+    firmentyp: pick("firmentyp"),
+    land: pick("land"),
+    wassertyp: pick("wassertyp"),
+  };
+}
+
+/** Distinct ISO `companies.land` codes from active rows (sorted). Shares cache with list filter chips. */
+export function useDistinctCompanyLandCodes(): readonly string[] {
+  const { data } = useQuery({
+    queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    queryFn: fetchCompaniesFilterOptions,
+  });
+  return data ? [...data.land].sort((a, b) => a.localeCompare(b)) : [];
+}
+
 type ListPagination = { pageIndex: number; pageSize: number };
 
 type ListSorting = { id: string; desc: boolean }[];
@@ -23,27 +63,10 @@ export function useCompaniesListQueries(options: {
   const { pagination, activeFilters, waterFilter, sorting, sortExplicit, debouncedGlobalFilter } = options;
 
   const { data: distinctFilterValues } = useQuery({
-    queryKey: ["companies-filter-options"],
+    queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("companies")
-        .select("status, kundentyp, firmentyp, land, wassertyp")
-        .is("deleted_at", null);
-      if (error) throw error;
-      const rows = data ?? [];
-      const pick = (key: "status" | "kundentyp" | "firmentyp" | "land" | "wassertyp") =>
-        new Set(rows.map((r) => r[key]).filter((v): v is string => !!v));
-      return {
-        status: pick("status"),
-        kundentyp: pick("kundentyp"),
-        firmentyp: pick("firmentyp"),
-        land: pick("land"),
-        wassertyp: pick("wassertyp"),
-      };
-    },
+    queryFn: fetchCompaniesFilterOptions,
   });
 
   const distinctLands = distinctFilterValues ? Array.from(distinctFilterValues.land).sort() : [];
