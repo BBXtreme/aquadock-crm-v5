@@ -156,7 +156,7 @@ async function maybeNotifyParentCommentAuthorOnReply(
     await createInAppNotification({
       type: "comment_reply",
       userId: parentAuthor,
-      title: "Neue Antwort auf Ihren Kommentar",
+      title: "Neue Antwort auf Deinen Kommentar",
       body: null,
       payload: {
         companyId: args.companyId,

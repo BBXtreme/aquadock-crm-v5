@@ -1,6 +1,19 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { safeUrl } from "./CommentMarkdownPreview";
 
+class UrlParseThrows extends URL {
+  constructor(input: string | URL, base?: string | URL) {
+    void input;
+    void base;
+    super("https://example.com/");
+    throw new Error("invalid");
+  }
+}
+
+function spyUrlThrowsOnce() {
+  return vi.spyOn(globalThis, "URL").mockImplementationOnce(UrlParseThrows as unknown as typeof URL);
+}
+
 describe("safeUrl", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -18,19 +31,13 @@ describe("safeUrl", () => {
   });
 
   it("when URL parsing throws, keeps hash and path prefixes only", () => {
-    vi.spyOn(globalThis, "URL").mockImplementationOnce(() => {
-      throw new Error("invalid");
-    });
+    spyUrlThrowsOnce();
     expect(safeUrl("#frag")).toBe("#frag");
 
-    vi.spyOn(globalThis, "URL").mockImplementationOnce(() => {
-      throw new Error("invalid");
-    });
+    spyUrlThrowsOnce();
     expect(safeUrl("/relative")).toBe("/relative");
 
-    vi.spyOn(globalThis, "URL").mockImplementationOnce(() => {
-      throw new Error("invalid");
-    });
+    spyUrlThrowsOnce();
     expect(safeUrl("nope")).toBe("");
   });
 });

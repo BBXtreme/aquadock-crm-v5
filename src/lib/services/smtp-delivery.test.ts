@@ -178,10 +178,12 @@ describe("getSystemSmtpConfigForNotifications fallback to admin", () => {
   });
 
   it("returns null when profile list errors", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.mocked(createAdminClient).mockReturnValue(
       chainProfiles({ data: null, error: { message: "e" } }, {}) as never,
     );
     expect(await getSystemSmtpConfigForNotifications(actingId)).toBeNull();
+    warn.mockRestore();
   });
 
   it("returns null when no admin has smtp_config", async () => {
@@ -235,6 +237,7 @@ describe("sendNotificationHtmlEmail", () => {
   });
 
   it("no-ops when no SMTP config", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     vi.mocked(createAdminClient).mockReturnValue(
       chainProfiles({ data: [], error: null }, {}) as never,
     );
@@ -244,6 +247,7 @@ describe("sendNotificationHtmlEmail", () => {
       html: "<p>x</p>",
     });
     expect(createTransport).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("sends html without text when text omitted", async () => {

@@ -173,6 +173,50 @@ Writes generated types to `src/types/supabase.ts`. App code should import row al
 - Before opening a PR: `pnpm check:fix` and `pnpm typecheck` (and `pnpm test:run` when you touch logic or UI behavior; after `pnpm build`, `pnpm e2e` if you change auth, login, or protected routes). After editing translations, run `pnpm messages:validate`. See [`docs/AIDER-RULES.md`](docs/AIDER-RULES.md) for the full checklist.
 - After schema changes: `pnpm supabase:types` and commit updated types if the project shares one Supabase project.
 
+### Maintaining the In-App Changelog
+
+Every version bump must include a matching entry in `src/content/changelog.ts`. This keeps our users informed and excited about every improvement.
+
+**Process (copy-paste friendly):**
+
+1. Bump the version (via Changesets or directly in `package.json`).
+2. Copy the template below into the **top** of the `changelogEntries` array (newest first).
+3. Write **from the user’s perspective** — focus on benefits for **marina, hotel, restaurant, and water-sports** teams.
+4. Run `pnpm typecheck && pnpm check:fix` — the Zod schema will catch any formatting issues.
+
+**CHANGELOG ENTRY TEMPLATE** (paste & fill):
+
+```ts
+{
+  version: "1.3.0",
+  releasedAt: "2026-05-01",
+  title: "🚀 Noch mehr Komfort & Geschwindigkeit für Deinen Alltag",
+  changes: [
+    {
+      type: "feature",
+      text: "Neuer In-App Changelog – Du siehst sofort, was sich verbessert hat und wie es Dir Zeit spart",
+    },
+    {
+      type: "improvement",
+      text: "OpenMap lädt noch schneller und zeigt klarere Cluster – perfekte Übersicht auf einen Blick",
+    },
+    {
+      type: "fix",
+      text: "Verbesserte Stabilität bei der AI-Anreicherung von Firmendaten",
+    },
+  ],
+},
+```
+
+**Tips for great entries:**
+
+- Start with an emoji in the title for visual pop (🚀 ✨ ⚡).
+- Keep bullets short, warm, and benefit-driven.
+- **German primary** (main market; informal **Du** — see [`docs/german-du-style.md`](docs/german-du-style.md)); **English** matches with direct *you*; **Croatian** with informal *ti*. English & Croatian translations can be expanded later via i18n extensions.
+- **Maximum 6 bullets per release** to keep the spotlight delightful.
+
+This template is also available as [`docs/CHANGELOG_ENTRY_TEMPLATE.md`](docs/CHANGELOG_ENTRY_TEMPLATE.md).
+
 ---
 
 Built with care for Waterfront Beach · 2026

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { POST } from "./route";
 
 const mockCreateServer = vi.hoisted(() => vi.fn());
@@ -21,9 +21,16 @@ function makeRequest(body: unknown): Request {
 }
 
 describe("POST /api/companies/nav-ids", () => {
+  let consoleErrorSpy: MockInstance<Console["error"]>;
+
   beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockCreateServer.mockReset();
     mockFetchIds.mockReset();
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it("returns 401 when unauthenticated", async () => {

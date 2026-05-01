@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox, Settings, User } from "lucide-react";
+import { Inbox, Settings, Sparkles, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -30,6 +30,7 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
   const router = useRouter();
   const t = useT("layout");
   const ts = useT("layout.sidebar");
+  const tChangelog = useT("changelog");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -159,6 +160,16 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
             >
               <Inbox className="text-muted-foreground" aria-hidden />
               {t("notificationsLinkAria")}
+            </CommandItem>
+            <CommandItem
+              value={`${tChangelog("commandPaletteLabel")} /changelog changelog neu release updates novosti`}
+              keywords={["changelog", "neu", "release", "updates", "novosti"]}
+              onSelect={() => {
+                run("/changelog");
+              }}
+            >
+              <Sparkles className="text-muted-foreground" aria-hidden />
+              {tChangelog("commandPaletteLabel")}
             </CommandItem>
           </CommandGroup>
         </CommandList>

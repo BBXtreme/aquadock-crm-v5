@@ -64,7 +64,7 @@ const importBrevoContactsBulkPayloadSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          "Bitte mindestens eine bestehende Brevo-Liste wählen oder unter „Neue Liste erstellen“ einen Listennamen angeben.",
+          "Bitte wähle mindestens eine bestehende Brevo-Liste oder gib unter „Neue Liste erstellen“ einen Listennamen an.",
         path: ["listIds"],
       });
     }
@@ -271,7 +271,7 @@ export async function createBrevoCampaign(formData: FormData) {
   const hasListIds = finalListIds.length > 0;
   if (!hasRecipients && !hasListIds) {
     throw new Error(
-      "Keine Zielgruppe: Bitte wählen Sie mindestens eine Brevo-Kontaktliste (Dropdown) oder markieren Sie mindestens einen Empfänger in der CRM-Kontakttabelle. Ohne eine dieser Angaben kann die Kampagne nicht an Brevo übermittelt werden.",
+      "Keine Zielgruppe: Bitte wähle mindestens eine Brevo-Kontaktliste (Dropdown) oder markiere mindestens einen Empfänger in der CRM-Kontakttabelle. Ohne eine dieser Angaben kann die Kampagne nicht an Brevo übermittelt werden.",
     );
   }
 

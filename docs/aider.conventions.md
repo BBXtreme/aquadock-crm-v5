@@ -12,8 +12,9 @@
 | **Data** | Server Supabase client + RLS; service role never in the browser |
 | **UI** | `Control<T>` with RHF; match existing shadcn/tailwind patterns |
 | **Large `Client*Page`** | Colocate domain hooks + sections under `components/features/<domain>/` (see [`folder-conventions.md`](folder-conventions.md)) |
-| **i18n** | `src/messages/*`; `pnpm messages:validate` after key edits |
+| **i18n** | `src/messages/*`; `pnpm messages:validate` after key edits; German UX: informal **Du**, see [`german-du-style.md`](german-du-style.md) |
 | **PR** | `typecheck` + `check:fix` + tests when logic/UI changes |
 | **Tests** | [`testing-strategy.md`](testing-strategy.md) — Vitest vs Playwright |
+| **In-app changelog** | User-facing release notes live in `src/content/changelog.ts`. When bumping the app version, add an entry (see [README — Maintaining the In-App Changelog](../README.md#maintaining-the-in-app-changelog) and [`CHANGELOG_ENTRY_TEMPLATE.md`](CHANGELOG_ENTRY_TEMPLATE.md)). |
 
 **Branch names:** `feature/…`, `fix/…`, `chore/…` (as in `README.md`).

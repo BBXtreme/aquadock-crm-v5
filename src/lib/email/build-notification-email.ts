@@ -4,7 +4,7 @@ import type { UserNotification } from "@/types/database.types";
 
 const copy = {
   cta: "In AquaDock öffnen",
-  intro: "Sie haben eine neue Benachrichtigung in AquaDock CRM.",
+  intro: "Du hast eine neue Benachrichtigung in AquaDock CRM.",
   introMirror: "Admin-Überblick: Benachrichtigung aus dem CRM-Feed.",
   bodyLabel: "Inhalt",
   linkLabel: "Link zur Ansicht in AquaDock (falls der Button nicht funktioniert):",

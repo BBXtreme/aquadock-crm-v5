@@ -251,7 +251,7 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
             "Speicher-Bucket „avatars“ fehlt. Bitte in Supabase anlegen (öffentlich) – siehe src/sql/storage-avatars-bucket.sql.",
           );
         } else {
-          toast.error("Upload fehlgeschlagen – bitte versuchen Sie es erneut");
+          toast.error("Upload fehlgeschlagen – bitte versuche es erneut");
         }
         return;
       }
@@ -268,7 +268,7 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
       resetPreview();
       router.refresh();
     } catch {
-      toast.error("Upload fehlgeschlagen – bitte versuchen Sie es erneut");
+      toast.error("Upload fehlgeschlagen – bitte versuche es erneut");
     } finally {
       setUploading(false);
     }
@@ -282,7 +282,7 @@ export function AvatarUpload({ userId, displayName, initialAvatarUrl }: AvatarUp
       toast.success("Profilbild wurde aktualisiert");
       router.refresh();
     } catch {
-      toast.error("Upload fehlgeschlagen – bitte versuchen Sie es erneut");
+      toast.error("Upload fehlgeschlagen – bitte versuche es erneut");
     } finally {
       setRemoving(false);
     }

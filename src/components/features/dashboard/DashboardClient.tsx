@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
-import { createClient } from "@/lib/supabase/browser";
+import type { DashboardKpis } from "@/lib/services/dashboard-kpis";
 
 /** Light :root chart tokens from globals.css — SSR / first paint before computed styles run. */
 const CHART_FILLS_FALLBACK = [
@@ -44,6 +44,40 @@ const CHART_FILLS_FALLBACK = [
 type FunnelStageKey = "leads" | "qualified" | "proposal" | "negotiation" | "closedWon";
 
 type FunnelRowRaw = { stageKey: FunnelStageKey; value: number };
+
+type DashboardStats = {
+  totalCompanies: number;
+  totalContacts: number;
+  totalActivities: number;
+  companiesInPeriod: number;
+  totalValue: number;
+  leads: number;
+  won: number;
+  funnelDataRaw: FunnelRowRaw[];
+};
+
+function buildFunnelDataRaw(leads: number, won: number): FunnelRowRaw[] {
+  return [
+    { stageKey: "leads", value: leads || 42 },
+    { stageKey: "qualified", value: Math.round(leads * 0.65) || 27 },
+    { stageKey: "proposal", value: Math.round(leads * 0.45) || 19 },
+    { stageKey: "negotiation", value: Math.round(leads * 0.3) || 13 },
+    { stageKey: "closedWon", value: won || 9 },
+  ];
+}
+
+function buildStatsFromKpis(k: DashboardKpis): DashboardStats {
+  return {
+    totalCompanies: k.totalCompanies,
+    totalContacts: k.totalContacts,
+    totalActivities: k.totalActivities,
+    companiesInPeriod: k.companiesInPeriod,
+    totalValue: k.totalValue,
+    leads: k.leads,
+    won: k.won,
+    funnelDataRaw: buildFunnelDataRaw(k.leads, k.won),
+  };
+}
 
 function readChartFillsFromDocument(): readonly [string, string, string, string, string] {
   if (typeof document === "undefined") {
@@ -78,62 +112,31 @@ function useChartFillsForSvg(): readonly [string, string, string, string, string
 /** Recharts 3 defaults to -1×-1 until resize; avoids console noise and layout flash. */
 const CHART_INITIAL = { width: 640, height: 320 } as const;
 
-export default function DashboardClient() {
+type DashboardClientProps = {
+  initialKpis: DashboardKpis;
+};
+
+export default function DashboardClient({ initialKpis }: DashboardClientProps) {
   const t = useT("dashboard");
   const localeTag = useNumberLocaleTag();
   const chartFills = useChartFillsForSvg();
-  const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">("30d");
+  const [selectedPeriod, setSelectedPeriod] = useState<"7d" | "30d" | "90d">(initialKpis.period);
 
   const stats = useSuspenseQuery({
-    queryKey: ["dashboard-stats", selectedPeriod],
+    queryKey: ["dashboard-kpis", selectedPeriod] as const,
     staleTime: 5 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     queryFn: async () => {
-      const supabase = createClient();
-
-      const { data: companies } = await supabase
-        .from("companies")
-        .select("status, value, created_at")
-        .is("deleted_at", null);
-
-      const { data: contacts } = await supabase.from("contacts").select("created_at").is("deleted_at", null);
-
-      const { data: timeline } = await supabase.from("timeline").select("created_at").is("deleted_at", null);
-
-      const now = new Date();
-      const periodDays = selectedPeriod === "7d" ? 7 : selectedPeriod === "30d" ? 30 : 90;
-      const periodStart = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
-
-      const companiesInPeriod =
-        companies?.filter((c) => {
-          if (!c.created_at) return false;
-          return new Date(c.created_at) >= periodStart;
-        }) || [];
-
-      const totalValue = companies?.reduce((sum, c) => sum + (c.value || 0), 0) || 0;
-      const leads = companies?.filter((c) => c.status === "lead").length || 0;
-      const won = companies?.filter((c) => c.status === "gewonnen").length || 0;
-
-      const funnelDataRaw: FunnelRowRaw[] = [
-        { stageKey: "leads", value: leads || 42 },
-        { stageKey: "qualified", value: Math.round(leads * 0.65) || 27 },
-        { stageKey: "proposal", value: Math.round(leads * 0.45) || 19 },
-        { stageKey: "negotiation", value: Math.round(leads * 0.3) || 13 },
-        { stageKey: "closedWon", value: won || 9 },
-      ];
-
-      return {
-        totalCompanies: companies?.length || 0,
-        totalContacts: contacts?.length || 0,
-        totalActivities: timeline?.length || 0,
-        companiesInPeriod: companiesInPeriod.length,
-        totalValue,
-        leads,
-        won,
-        funnelDataRaw,
-      };
+      const res = await fetch(`/api/dashboard/kpis?period=${selectedPeriod}`);
+      if (!res.ok) {
+        throw new Error(`Dashboard KPIs failed (${res.status})`);
+      }
+      const kpis: DashboardKpis = await res.json();
+      return buildStatsFromKpis(kpis);
     },
+    initialData:
+      selectedPeriod === initialKpis.period ? buildStatsFromKpis(initialKpis) : undefined,
   });
 
   const data = stats.data;

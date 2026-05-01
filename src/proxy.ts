@@ -4,41 +4,52 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "./lib/supabase/proxy";
 
+const PROTECTED_PATHS = [
+  "/dashboard",
+  "/companies",
+  "/contacts",
+  "/timeline",
+  "/reminders",
+  "/mass-email",
+  "/openmap",
+  "/brevo",
+  "/settings",
+  "/profile",
+  "/notifications",
+  "/changelog",
+] as const;
+
 export async function proxy(request: NextRequest) {
-  const { response, session } = await updateSession(request);
+  const { response, hasSession } = await updateSession(request);
 
-  const protectedPaths = [
-    "/dashboard",
-    "/companies",
-    "/contacts",
-    "/timeline",
-    "/reminders",
-    "/mass-email",
-    "/openmap",
-    "/brevo",
-    "/settings",
-    "/profile",
-  ];
-
-  const isProtectedPath = protectedPaths.some((path) =>
+  // Defense-in-depth: matcher already restricts to protected prefixes; this guard
+  // ensures a future matcher tweak cannot silently bypass auth on a public route.
+  const isProtectedPath = PROTECTED_PATHS.some((path) =>
     request.nextUrl.pathname.startsWith(path),
   );
 
-  if (isProtectedPath && !session) {
+  if (isProtectedPath && !hasSession) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
-
-  // Do not redirect /login → /dashboard when a session exists. Password recovery
-  // lands on /login with a session before the user sets a new password; the login
-  // page handles PASSWORD_RECOVERY and redirects after update.
 
   return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|logo-.*\\.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/dashboard/:path*",
+    "/companies/:path*",
+    "/contacts/:path*",
+    "/timeline/:path*",
+    "/reminders/:path*",
+    "/mass-email/:path*",
+    "/openmap/:path*",
+    "/brevo/:path*",
+    "/settings/:path*",
+    "/profile/:path*",
+    "/notifications/:path*",
+    "/changelog/:path*",
   ],
 };

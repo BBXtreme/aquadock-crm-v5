@@ -64,6 +64,15 @@ Apply **in order** (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 — inclu
 - [ ] **Staging:** manual smoke (normal user + admin trash/profiles), **`pnpm e2e`**, Database **Linter** — zero RLS-related ERRORs before production
 - [ ] **Production:** repeat the same script order in a low-traffic window; then [`src/sql/rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) once smoke is green (optional on staging first to validate `pg_proc` names)
 - [ ] **Post-rollout:** monitor 30–60 min (company lists, Realtime, reminders); plan follow-up for slow queries / FK indexes per linter
+- [ ] **Performance (after collaborative RLS is stable):** [`src/sql/rls-planner-subselect-wrap.sql`](../src/sql/rls-planner-subselect-wrap.sql) — wraps `auth.uid()` / `is_app_admin()` in scalar subqueries for planner-friendly RLS (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 step 6). May appear as several Supabase migration names in the dashboard; semantics match the single file in-repo.
+
+### Auth + dashboard RPCs (single-round-trip loader / aggregates)
+
+Apply when rolling out the CRM performance stack (staging first). Run **`pnpm supabase:types`** after each batch so [`src/types/supabase.ts`](../src/types/supabase.ts) matches.
+
+- [ ] [`src/sql/get-crm-user-context.sql`](../src/sql/get-crm-user-context.sql) — `get_crm_user_context()` for layout auth (profile + pending gate in one call)
+- [ ] [`src/sql/dashboard-kpis.sql`](../src/sql/dashboard-kpis.sql) — `get_dashboard_kpis(period_days)` server-side dashboard counts
+- [ ] [`src/sql/companies-filter-buckets.sql`](../src/sql/companies-filter-buckets.sql) — `companies_filter_buckets()` for companies list filter chips
 
 - [ ] Supabase **Database Linter:** resolve ERROR-level findings (RLS disabled, policy duplicates, DEFINER exposure) after rollout  
 - [ ] Service role key used only in server code, never in client bundles  
@@ -112,6 +121,26 @@ Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live s
 - Use **Supabase** dashboards for slow queries and API usage.  
 - Optional: client/server **error monitoring** (a third-party service) — not required by the repo but common for production.
 
+**Docs in-repo:** [`docs/perf/baseline-2026-05-01.md`](perf/baseline-2026-05-01.md) (Speed Insights anchor + re-measure cadence), [`docs/perf/hot-paths-explain.md`](perf/hot-paths-explain.md) (`EXPLAIN (ANALYZE, BUFFERS)` templates for dashboard RPCs). Advisor summaries live under [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §4 (*Database linter snapshot*).
+
+### Region alignment (TTFB)
+
+The protected shell pays a Supabase Auth round-trip on every navigation (proxy + layout). Cross-region traffic between Vercel Functions and Supabase multiplies that latency. **Verify and align both** before chasing further code-level wins:
+
+- [ ] **Supabase project region** — Supabase Dashboard → *Project Settings → General → Region*. For a Frankfurt user base, this should be **`eu-central-1`** (Frankfurt). Region change is **not** an in-place setting; it requires a new project + database migration ([Supabase docs: project regions](https://supabase.com/docs/guides/platform/regions)).
+- [ ] **Vercel Functions region** — Vercel Dashboard → *Project → Settings → Functions → Region*. For Frankfurt, set to **`fra1`** (Frankfurt). The default is `iad1` (US East) for legacy projects; new projects default to the closest region but should be confirmed.
+- [ ] Re-measure protected-route P75 TTFB in **Vercel Speed Insights** 24h after any region change.
+
+### JWT signing keys (asymmetric)
+
+The proxy uses `supabase.auth.getClaims()` first and falls back to `getUser()` when claims cannot be verified locally. With the **default symmetric (HS256) signing key** that older Supabase projects use, `getClaims()` still triggers a network verification path for the JWT (see `@supabase/auth-js` `GoTrueClient.getClaims`). To unlock the **zero Auth-server round-trip** path on every navigation:
+
+- [ ] In the Supabase Dashboard → *Project Settings → Auth → JWT Signing Keys*, **rotate to an asymmetric key** (`ES256` recommended, or `RS256`). This publishes a JWKS endpoint that `@supabase/auth-js` caches for local verification via WebCrypto.
+- [ ] After rotation, all clients re-receive a JWT signed with the new key on next sign-in / token refresh — **no app-code change required**.
+- [ ] Expect protected-route P75 TTFB to drop a further ~150–500 ms in `eu-central` once the cache is warm; verify in Speed Insights.
+
+**Roll-out safety:** asymmetric rotation is reversible in the dashboard; existing JWTs remain valid until they expire (≤ 1 hour). Plan during a low-traffic window even though no downtime is expected.
+
 ---
 
 ## 6. Before and after go-live
@@ -148,4 +177,4 @@ Replace placeholders with your team’s contacts:
 
 ---
 
-Last reviewed: April 23, 2026
+Last reviewed: May 1, 2026

@@ -23,17 +23,16 @@ describe("getDefaultAppearanceTimeZone", () => {
 
   it("returns resolved time zone when valid", () => {
     vi.spyOn(appearanceValidations, "isValidIanaTimeZone").mockReturnValue(true);
-    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(
-      () =>
-        ({
-          resolvedOptions: () => ({ timeZone: "Europe/Berlin" }),
-        }) as unknown as Intl.DateTimeFormat,
-    );
+    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function mockDateTimeFormat() {
+      return {
+        resolvedOptions: () => ({ timeZone: "Europe/Berlin" }),
+      } as Intl.DateTimeFormat;
+    });
     expect(getDefaultAppearanceTimeZone()).toBe("Europe/Berlin");
   });
 
   it("returns UTC when resolved zone is invalid", () => {
-    vi.spyOn(Intl, "DateTimeFormat").mockImplementation((...args: unknown[]) => {
+    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function mockDateTimeFormat(...args: unknown[]) {
       const options = args[1] as { timeZone?: string } | undefined;
       if (options?.timeZone != null) {
         return {
@@ -50,14 +49,13 @@ describe("getDefaultAppearanceTimeZone", () => {
   });
 
   it("returns UTC when resolvedOptions throws", () => {
-    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(
-      () =>
-        ({
-          resolvedOptions: () => {
-            throw new Error("boom");
-          },
-        }) as unknown as Intl.DateTimeFormat,
-    );
+    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function mockDateTimeFormatThrows() {
+      return {
+        resolvedOptions: () => {
+          throw new Error("boom");
+        },
+      } as unknown as Intl.DateTimeFormat;
+    });
     expect(getDefaultAppearanceTimeZone()).toBe("UTC");
   });
 });

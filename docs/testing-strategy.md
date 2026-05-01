@@ -2,7 +2,14 @@
 
 **Purpose:** Decide *where* to add tests and *how* coverage exclusions relate to E2E so new work stays consistent. The **quality gate** is `vitest.config.ts` (thresholds + `coverage.exclude`); this document explains the intent.
 
-**Last updated:** April 30, 2026
+**Last updated:** May 1, 2026
+
+---
+
+## Vitest setup and TypeScript
+
+- **`src/test/vitest-react-env.ts`** is listed **first** in `vitest.config.ts` → `test.setupFiles` so it runs **before** any file imports `react`. It sets `globalThis.IS_REACT_ACT_ENVIRONMENT = true`, which React 19 expects when tests use **Suspense** or other concurrent patterns (avoids *“The current testing environment is not configured to support act(...)”*). **`src/test/setup.ts`** follows (Testing Library `cleanup`, JSDOM stubs, shared mocks).
+- **Typing `vi.spyOn(console, "error")`:** With Vitest 4, avoid `ReturnType<typeof vi.spyOn<typeof console, "error">>` (or similar) — `tsc` can mis-infer generics and fail with **TS2344**. Prefer an explicit spy type, for example `import type { MockInstance } from "vitest"` and `let spy: MockInstance<Console["error"]>`.
 
 ---
 
@@ -94,6 +101,6 @@ The **quality** job runs Vitest with coverage; the **e2e** job runs Playwright a
 
 ## Related docs
 
-- [`architecture.md`](architecture.md) — Testing section (commands, E2E setup, `src/test/setup.ts`)
+- [`architecture.md`](architecture.md) — Testing section (commands, E2E setup, `vitest-react-env.ts` + `src/test/setup.ts`)
 - [`README.md`](../README.md) — Quick command table
 - [`production-deploy.md`](production-deploy.md) — E2E in go-live checklist

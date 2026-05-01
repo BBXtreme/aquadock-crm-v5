@@ -16,23 +16,40 @@ type DistinctFilterBuckets = {
   wassertyp: Set<string>;
 };
 
+const BUCKET_KEYS = ["status", "kundentyp", "firmentyp", "land", "wassertyp"] as const;
+
+function nonEmptyStringsFromJson(value: unknown): Set<string> {
+  if (!Array.isArray(value)) {
+    return new Set();
+  }
+  return new Set(value.filter((v): v is string => typeof v === "string" && v.length > 0));
+}
+
 async function fetchCompaniesFilterOptions(): Promise<DistinctFilterBuckets> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("companies")
-    .select("status, kundentyp, firmentyp, land, wassertyp")
-    .is("deleted_at", null);
+  const { data, error } = await supabase.rpc("companies_filter_buckets");
   if (error) throw error;
-  const rows = data ?? [];
-  const pick = (key: "status" | "kundentyp" | "firmentyp" | "land" | "wassertyp") =>
-    new Set(rows.map((r) => r[key]).filter((v): v is string => !!v));
-  return {
-    status: pick("status"),
-    kundentyp: pick("kundentyp"),
-    firmentyp: pick("firmentyp"),
-    land: pick("land"),
-    wassertyp: pick("wassertyp"),
+  const payload = data as Record<string, unknown> | null;
+  if (payload === null || typeof payload !== "object") {
+    return {
+      status: new Set(),
+      kundentyp: new Set(),
+      firmentyp: new Set(),
+      land: new Set(),
+      wassertyp: new Set(),
+    };
+  }
+  const result: DistinctFilterBuckets = {
+    status: new Set(),
+    kundentyp: new Set(),
+    firmentyp: new Set(),
+    land: new Set(),
+    wassertyp: new Set(),
   };
+  for (const key of BUCKET_KEYS) {
+    result[key] = nonEmptyStringsFromJson(payload[key]);
+  }
+  return result;
 }
 
 /** Distinct ISO `companies.land` codes from active rows (sorted). Shares cache with list filter chips. */

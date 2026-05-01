@@ -7,10 +7,10 @@
 import { usePathname } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
-
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ChangelogSpotlight } from "@/components/features/changelog/ChangelogSpotlight";
 import type { AuthUser } from "@/lib/auth/types";
-
+import packageJson from "../../../package.json";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 
@@ -47,6 +47,7 @@ export default function AppLayout({ children, user }: AppLayoutProps) {
 
   return (
     <ErrorBoundary>
+      <ChangelogSpotlight appVersion={packageJson.version} />
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar
           isCollapsed={isCollapsed}
