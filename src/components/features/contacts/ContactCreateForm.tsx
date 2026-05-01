@@ -5,10 +5,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
+import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -27,7 +29,11 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
     queryKey: ["companies"],
     queryFn: async () => {
       const supabase = createClient();
-      const { data, error } = await supabase.from("companies").select("id, firmenname").is("deleted_at", null);
+      const { data, error } = await supabase
+        .from("companies")
+        .select("id, firmenname")
+        .is("deleted_at", null)
+        .order("firmenname", { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -218,20 +224,50 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formCompany")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value ?? ""} disabled={!!companyId}>
+              {companyId ? (
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("formCompanyPlaceholder")} />
-                  </SelectTrigger>
+                  <ReminderCompanyCombobox
+                    value={field.value ?? ""}
+                    onValueChange={field.onChange}
+                    companies={companies}
+                    disabled
+                    placeholder={t("formCompanyPlaceholder")}
+                    searchPlaceholder={t("formCompanySearchPlaceholder")}
+                    emptyMessage={t("formCompanyEmpty")}
+                    clearLabel={t("formCompanyClear")}
+                  />
                 </FormControl>
-                <SelectContent>
-                  {companies.map((company) => (
-                    <SelectItem key={company.id} value={company.id}>
-                      {company.firmenname}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <FormControl>
+                      <ReminderCompanyCombobox
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        companies={companies}
+                        hideClearButton
+                        placeholder={t("formCompanyPlaceholder")}
+                        searchPlaceholder={t("formCompanySearchPlaceholder")}
+                        emptyMessage={t("formCompanyEmpty")}
+                        clearLabel={t("formCompanyClear")}
+                      />
+                    </FormControl>
+                  </div>
+                  {field.value ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("formCompanyClearAria")}
+                      title={t("formCompanyClearAria")}
+                      className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => field.onChange("")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}

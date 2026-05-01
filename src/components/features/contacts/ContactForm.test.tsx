@@ -5,7 +5,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
@@ -43,12 +43,14 @@ const { mockCreateClient, COMPANY_ID } = vi.hoisted(() => {
       if (table === "companies") {
         return {
           select: vi.fn(() => ({
-            is: vi.fn(() =>
-              Promise.resolve({
-                data: companiesRow,
-                error: null,
-              }),
-            ),
+            is: vi.fn(() => ({
+              order: vi.fn(() =>
+                Promise.resolve({
+                  data: companiesRow,
+                  error: null,
+                }),
+              ),
+            })),
           })),
         };
       }
@@ -97,13 +99,17 @@ function withinContactForm(container: HTMLElement) {
   return within(form);
 }
 
-async function waitForCompanyOption(form: HTMLFormElement, companyId: string) {
-  await waitFor(() => {
-    const opt = form.querySelector(`select[aria-hidden="true"] option[value="${companyId}"]`);
-    expect(opt).toBeTruthy();
-  });
+async function selectCompanyByName(user: ReturnType<typeof userEvent.setup>, companyLabel: string) {
+  await user.click(screen.getByRole("button", { name: /Select company/i }));
+  await screen.findByPlaceholderText(/Search companies/i);
+  await user.click(screen.getByRole("option", { name: companyLabel }));
 }
 
+async function waitForCompanyComboboxReady(view: ReturnType<typeof within>) {
+  await waitFor(() => {
+    expect(view.getByRole("button", { name: /Select company/i })).toBeInTheDocument();
+  });
+}
 afterEach(() => {
   cleanup();
 });
@@ -156,17 +162,12 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
     });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /First name/i }), "Erika");
     await user.type(view.getByRole("textbox", { name: /Last name/i }), "Musterfrau");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[1];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     await user.click(view.getByRole("button", { name: /Create contact/i }));
 
@@ -241,18 +242,13 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
     });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /First name/i }), "Valid");
     await user.type(view.getByRole("textbox", { name: /Last name/i }), "Person");
     await user.type(view.getByRole("textbox", { name: /Email/i }), "not-an-email");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[1];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     form.noValidate = true;
     await user.click(view.getByRole("button", { name: /Create contact/i }));
@@ -275,17 +271,12 @@ describe("ContactCreateForm + contactSchema", () => {
     await waitFor(() => {
       expect(form.querySelectorAll("select[aria-hidden=\"true\"]").length).toBeGreaterThan(0);
     });
-    await waitForCompanyOption(form, COMPANY_ID);
+    await waitForCompanyComboboxReady(view);
 
     await user.type(view.getByRole("textbox", { name: /First name/i }), "Pos");
     await user.type(view.getByRole("textbox", { name: /Last name/i }), "Empty");
 
-    const hiddenSelects = form.querySelectorAll("select[aria-hidden=\"true\"]");
-    const companySelect = hiddenSelects[1];
-    if (!(companySelect instanceof HTMLSelectElement)) {
-      throw new Error("expected Radix hidden select for Company");
-    }
-    await user.selectOptions(companySelect, COMPANY_ID);
+    await selectCompanyByName(user, "Fixture GmbH");
 
     await user.click(view.getByRole("button", { name: /Create contact/i }));
 

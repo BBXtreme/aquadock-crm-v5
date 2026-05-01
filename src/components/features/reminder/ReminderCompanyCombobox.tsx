@@ -20,6 +20,8 @@ export type ReminderCompanyComboboxProps = {
   onValueChange: (companyId: string) => void;
   companies: { id: string; firmenname: string }[];
   disabled?: boolean;
+  /** When true, the built-in clear (X) is not rendered (e.g. parent supplies an unlink control). */
+  hideClearButton?: boolean;
   placeholder: string;
   searchPlaceholder: string;
   emptyMessage: string;
@@ -33,6 +35,7 @@ export const ReminderCompanyCombobox = React.forwardRef<HTMLDivElement, Reminder
       onValueChange,
       companies,
       disabled = false,
+      hideClearButton = false,
       placeholder,
       searchPlaceholder,
       emptyMessage,
@@ -86,7 +89,7 @@ export const ReminderCompanyCombobox = React.forwardRef<HTMLDivElement, Reminder
             </Command>
           </PopoverContent>
         </Popover>
-        {value ? (
+        {value && !hideClearButton ? (
           <Button
             type="button"
             variant="ghost"
@@ -94,6 +97,7 @@ export const ReminderCompanyCombobox = React.forwardRef<HTMLDivElement, Reminder
             className="size-8 shrink-0"
             disabled={disabled}
             aria-label={clearLabel}
+            title={clearLabel}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
