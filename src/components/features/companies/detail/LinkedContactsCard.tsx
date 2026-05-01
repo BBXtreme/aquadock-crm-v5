@@ -300,6 +300,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
           <ContactEditForm
             key={editContact?.id}
             contact={editContact}
+            onCancel={() => setEditContact(null)}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
               toast.success(t("detailSavedToast"));
@@ -352,12 +353,13 @@ export default function LinkedContactsCard({ companyId }: Props) {
           </DialogHeader>
           <ContactEditForm
             contact={null}
+            preselectedCompanyId={companyId}
+            onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
               toast.success(t("detailSavedToast"));
               setAddDialogOpen(false);
             }}
-            preselectedCompanyId={companyId}
           />
         </DialogContent>
       </Dialog>

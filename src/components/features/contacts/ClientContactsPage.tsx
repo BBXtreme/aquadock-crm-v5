@@ -249,7 +249,7 @@ function ClientContactsPage() {
             <DialogHeader>
               <DialogTitle>{t("createDialogTitle")}</DialogTitle>
             </DialogHeader>
-            <ContactCreateForm onSuccess={() => setDialogOpen(false)} />
+            <ContactCreateForm onCancel={() => setDialogOpen(false)} onSuccess={() => setDialogOpen(false)} />
           </WideDialogContent>
         </Dialog>
       </div>
@@ -305,6 +305,7 @@ function ClientContactsPage() {
             </DialogHeader>
             <ContactEditForm
               contact={editContact}
+              onCancel={() => setEditContact(null)}
               onSuccess={() => {
                 setEditContact(null);
                 queryClient.invalidateQueries({ queryKey: ["contacts"] });

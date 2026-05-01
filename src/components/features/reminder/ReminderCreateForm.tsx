@@ -47,9 +47,11 @@ const STATUS_LABEL_KEYS = {
 export default function ReminderCreateForm({
   onSuccess,
   preselectedCompanyId,
+  onCancel,
 }: {
   onSuccess?: () => void;
   preselectedCompanyId?: string;
+  onCancel?: () => void;
 }) {
   const t = useT("reminders");
   const queryClient = useQueryClient();
@@ -252,9 +254,16 @@ export default function ReminderCreateForm({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
+          </Button>
+        </div>
       </form>
     </Form>
   );

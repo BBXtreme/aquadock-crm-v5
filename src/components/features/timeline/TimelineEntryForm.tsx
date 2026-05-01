@@ -300,15 +300,15 @@ export default function TimelineEntryForm({
           )}
         />
 
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("formSubmitting") : t("formSubmit")}
-          </Button>
-          {onCancel && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
             <Button type="button" variant="outline" onClick={onCancel}>
               {t("formCancel")}
             </Button>
-          )}
+          ) : null}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? t("formSubmitting") : t("formSubmit")}
+          </Button>
         </div>
       </form>
     </Form>

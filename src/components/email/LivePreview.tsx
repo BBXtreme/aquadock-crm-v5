@@ -246,7 +246,10 @@ export default function LivePreview({
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
               />
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
+                <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+                  {t("testEmailCancel")}
+                </Button>
                 <Button
                   onClick={() => {
                     handleSend(true, testEmail);
@@ -256,9 +259,6 @@ export default function LivePreview({
                   disabled={!testEmail}
                 >
                   {t("testEmailSend")}
-                </Button>
-                <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
-                  {t("testEmailCancel")}
                 </Button>
               </div>
             </div>

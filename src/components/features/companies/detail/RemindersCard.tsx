@@ -266,6 +266,7 @@ export default function RemindersCard({ companyId }: Props) {
           <ReminderEditForm
             key={editReminder?.id}
             reminder={editReminder}
+            onCancel={() => setEditReminder(null)}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
@@ -284,6 +285,7 @@ export default function RemindersCard({ companyId }: Props) {
           </DialogHeader>
           <ReminderCreateForm
             preselectedCompanyId={companyId}
+            onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
               queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });

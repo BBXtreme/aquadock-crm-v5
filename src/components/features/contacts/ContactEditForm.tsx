@@ -27,10 +27,12 @@ export default function ContactEditForm({
   contact,
   onSuccess,
   preselectedCompanyId,
+  onCancel,
 }: {
   contact?: Database["public"]["Tables"]["contacts"]["Row"] | null;
   onSuccess?: () => void;
   preselectedCompanyId?: string;
+  onCancel?: () => void;
 }) {
   const t = useT("contacts");
   const queryClient = useQueryClient();
@@ -291,15 +293,22 @@ export default function ContactEditForm({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending
-            ? contact
-              ? t("formSubmitUpdating")
-              : t("formSubmitCreating")
-            : contact
-              ? t("formSubmitUpdate")
-              : t("formSubmitCreate")}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending
+              ? contact
+                ? t("formSubmitUpdating")
+                : t("formSubmitCreating")
+              : contact
+                ? t("formSubmitUpdate")
+                : t("formSubmitCreate")}
+          </Button>
+        </div>
       </form>
     </Form>
   );

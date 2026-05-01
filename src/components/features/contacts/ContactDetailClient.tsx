@@ -426,10 +426,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                     value={notesValue}
                     onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotesValue(e.target.value)}
                   />
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" onClick={handleSaveNotes}>
-                      {t("detailNotesSave")}
-                    </Button>
+                  <div className="mt-2 flex flex-wrap justify-end gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -439,6 +436,9 @@ export default function ContactDetailClient({ contact: initialContact, companies
                       }}
                     >
                       {t("cancel")}
+                    </Button>
+                    <Button size="sm" onClick={handleSaveNotes}>
+                      {t("detailNotesSave")}
                     </Button>
                   </div>
                 </div>
@@ -537,6 +537,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
           </DialogHeader>
           <EditContactForm
             contact={contact}
+            onCancel={() => setEditDialog(false)}
             onSuccess={() => {
               setEditDialog(false);
               queryClient.invalidateQueries({ queryKey: ["contact", id] });
@@ -622,7 +623,15 @@ export default function ContactDetailClient({ contact: initialContact, companies
   );
 }
 
-function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: () => void }) {
+function EditContactForm({
+  contact,
+  onSuccess,
+  onCancel,
+}: {
+  contact: Contact;
+  onSuccess: () => void;
+  onCancel?: () => void;
+}) {
   const t = useT("contacts");
   const form = useForm<ContactForm>({
     resolver: zodResolver(contactSchema),
@@ -799,7 +808,14 @@ function EditContactForm({ contact, onSuccess }: { contact: Contact; onSuccess: 
             </FormItem>
           )}
         />
-        <Button type="submit">{t("formSubmitUpdate")}</Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          ) : null}
+          <Button type="submit">{t("formSubmitUpdate")}</Button>
+        </div>
       </form>
     </Form>
   );

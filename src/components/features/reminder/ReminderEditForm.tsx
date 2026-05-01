@@ -42,11 +42,13 @@ export default function ReminderEditForm({
   onSuccess,
   preselectedCompanyId,
   user,
+  onCancel,
 }: {
   reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
   preselectedCompanyId?: string;
   user?: { id: string } | null;
+  onCancel?: () => void;
 }) {
   const t = useT("reminders");
   const queryClient = useQueryClient();
@@ -274,15 +276,22 @@ export default function ReminderEditForm({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending
-            ? reminder
-              ? t("formSubmitUpdating")
-              : t("formSubmitCreating")
-            : reminder
-              ? t("formSubmitUpdate")
-              : t("formSubmitCreate")}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending
+              ? reminder
+                ? t("formSubmitUpdating")
+                : t("formSubmitCreating")
+              : reminder
+                ? t("formSubmitUpdate")
+                : t("formSubmitCreate")}
+          </Button>
+        </div>
       </form>
     </Form>
   );

@@ -299,7 +299,7 @@ export default function TemplatesClient() {
                   </FormItem>
                 )}
               />
-              <div className="flex justify-end gap-3">
+              <div className="flex flex-wrap justify-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   {t("templateFormCancel")}
                 </Button>

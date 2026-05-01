@@ -282,10 +282,10 @@ export default function FeedbackModal({ open, onOpenChange, userId }: FeedbackMo
               )}
             />
 
-            <DialogFooter className="mt-1 flex flex-row items-center justify-between gap-2 sm:justify-between">
+            <DialogFooter className="mt-1 justify-end">
               <Button
                 type="submit"
-                className="ml-auto rounded-md bg-foreground text-background hover:bg-foreground/90"
+                className="rounded-md bg-foreground text-background hover:bg-foreground/90"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? t("sending") : t("send")}

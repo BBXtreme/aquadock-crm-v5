@@ -155,7 +155,11 @@ export default function CRMForm({ company, readOnly = false, onSuccess }: Props)
             </FormItem>
           )}
         />
-        {readOnly ? null : <Button type="submit">{t("detailCrmSaveButton")}</Button>}
+        {readOnly ? null : (
+          <div className="flex justify-end">
+            <Button type="submit">{t("detailCrmSaveButton")}</Button>
+          </div>
+        )}
       </form>
     </Form>
   );

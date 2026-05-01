@@ -314,6 +314,10 @@ function ClientRemindersPage() {
           {editReminder ? (
             <ReminderEditForm
               reminder={editReminder}
+              onCancel={() => {
+                setReminderDialogOpen(false);
+                setEditReminder(null);
+              }}
               onSuccess={() => {
                 setReminderDialogOpen(false);
                 setEditReminder(null);
@@ -321,7 +325,10 @@ function ClientRemindersPage() {
               }}
             />
           ) : (
-            <ReminderCreateForm onSuccess={() => setReminderDialogOpen(false)} />
+            <ReminderCreateForm
+              onCancel={() => setReminderDialogOpen(false)}
+              onSuccess={() => setReminderDialogOpen(false)}
+            />
           )}
         </WideDialogContent>
       </Dialog>

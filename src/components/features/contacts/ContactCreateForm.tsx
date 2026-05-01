@@ -21,7 +21,15 @@ import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { type ContactForm, contactSchema } from "@/lib/validations/contact";
 
-export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?: () => void; companyId?: string }) {
+export default function ContactCreateForm({
+  onSuccess,
+  companyId,
+  onCancel,
+}: {
+  onSuccess?: () => void;
+  companyId?: string;
+  onCancel?: () => void;
+}) {
   const t = useT("contacts");
   const queryClient = useQueryClient();
 
@@ -272,9 +280,16 @@ export default function ContactCreateForm({ onSuccess, companyId }: { onSuccess?
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("cancel")}
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
+          </Button>
+        </div>
       </form>
     </Form>
   );
