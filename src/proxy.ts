@@ -16,6 +16,7 @@ const PROTECTED_PATHS = [
   "/settings",
   "/profile",
   "/notifications",
+  "/changelog",
 ] as const;
 
 export async function proxy(request: NextRequest) {
@@ -49,5 +50,6 @@ export const config = {
     "/settings/:path*",
     "/profile/:path*",
     "/notifications/:path*",
+    "/changelog/:path*",
   ],
 };

@@ -115,7 +115,7 @@ export async function sendMassEmailAction(input: SendMassEmailInput) {
           sent: 0,
           errors: 1,
           total: 1,
-          message: "Test-E-Mail wurde abgelehnt. Überprüfen Sie die Adresse.",
+          message: "Test-E-Mail wurde abgelehnt. Überprüfe die Adresse.",
         };
       }
 

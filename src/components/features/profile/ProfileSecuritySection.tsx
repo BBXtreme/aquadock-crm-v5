@@ -178,7 +178,7 @@ export default function ProfileSecuritySection({
       emailForm.reset({ new_email: "" });
       toast.success("Bestätigung angefordert", {
         description:
-          "Bitte prüfen Sie beide E-Mail-Postfächer und folgen Sie den Links in den Nachrichten.",
+          "Bitte prüfe beide E-Mail-Postfächer und folge den Links in den Nachrichten.",
       });
       queryClient.invalidateQueries();
       startTransition(() => {
@@ -223,7 +223,7 @@ export default function ProfileSecuritySection({
               Profil &amp; Anzeigename
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              So erscheint Ihr Name in AquaDock CRM.
+              So erscheint Dein Name in AquaDock CRM.
             </p>
           </div>
           <ProfileForm profile={profile} />
@@ -252,8 +252,8 @@ export default function ProfileSecuritySection({
                   Neues Passwort festlegen
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Geben Sie Ihr neues Passwort zweimal ein. Nach dem Speichern
-                  gilt es sofort; Ihre aktuelle Sitzung bleibt bestehen.
+                  Gib Dein neues Passwort zweimal ein. Nach dem Speichern
+                  gilt es sofort; Deine aktuelle Sitzung bleibt bestehen.
                 </p>
               </div>
               <Form {...passwordForm}>
@@ -338,7 +338,7 @@ export default function ProfileSecuritySection({
                 <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
               </div>
               <p className="font-medium text-foreground text-lg tracking-tight">
-                Bestätigungs-E-Mails sind unterwegs. Bitte prüfen Sie Ihre
+                Bestätigungs-E-Mails sind unterwegs. Bitte prüfe Deine
                 Postfächer...
               </p>
             </div>
@@ -349,7 +349,7 @@ export default function ProfileSecuritySection({
                 <span className="font-medium text-foreground">
                   {currentEmail}
                 </span>{" "}
-                und an Ihre neue Adresse gesendet.
+                und an Deine neue Adresse gesendet.
               </p>
               <Form {...emailForm}>
                 <form onSubmit={onEmailSubmit} className="space-y-6">

@@ -35,7 +35,7 @@ export function formatAdminInAppMirrorRecipientLine(recipientDisplayName: string
 export const NOTIFICATION_UI = {
   cardTitle: "Benachrichtigungen",
   cardDescription:
-    "Legen Sie fest, wie Sie über neue Leads, fällige Aufgaben und wichtige Änderungen informiert werden möchten.",
+    "Hier legst Du fest, wie Du über neue Leads, fällige Aufgaben und wichtige Änderungen informiert wirst.",
   pushLabel: "Push-Benachrichtigungen",
   pushHelp:
     "Sofortige Hinweise zu neuen Leads, Remindern und Statusänderungen direkt im Browser.",

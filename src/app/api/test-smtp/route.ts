@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       subject: 'SMTP Test - AquaDock CRM',
       html: `
         <h1>SMTP Test erfolgreich!</h1>
-        <p>Diese E-Mail wurde erfolgreich über Ihre SMTP-Konfiguration gesendet.</p>
+        <p>Diese E-Mail wurde erfolgreich über Deine SMTP-Konfiguration gesendet.</p>
         <p>Konfiguration:</p>
         <ul>
           <li>Host: ${host}</li>

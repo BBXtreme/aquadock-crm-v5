@@ -5,9 +5,12 @@ import { ChevronDown, type LucideIcon, PanelLeft, PanelRight } from "lucide-reac
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { CHANGELOG_LAST_SEEN_STORAGE_KEY, CHANGELOG_SEEN_EVENT } from "@/content/changelog";
+import { compareSemver } from "@/lib/changelog/compare-semver";
 import {
   type AppShellNavMessageKey,
   appShellMarketingNav,
@@ -81,6 +84,43 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
   user: { role: string; display_name?: string | null };
+}
+
+function SidebarChangelogVersionLink({ version }: { version: string }) {
+  const tChangelog = useT("changelog");
+  const [showUnread, setShowUnread] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const last = window.localStorage.getItem(CHANGELOG_LAST_SEEN_STORAGE_KEY);
+        const cmp = compareSemver(version, last ?? "");
+        setShowUnread(last === null || last === "" || cmp === null || cmp === 1);
+      } catch {
+        setShowUnread(true);
+      }
+    };
+    refresh();
+    window.addEventListener(CHANGELOG_SEEN_EVENT, refresh);
+    return () => window.removeEventListener(CHANGELOG_SEEN_EVENT, refresh);
+  }, [version]);
+
+  return (
+    <Link
+      href="/changelog"
+      className="relative inline-flex max-w-full min-w-0 items-center text-xs text-muted-foreground underline-offset-2 hover:underline"
+      aria-label={tChangelog("sidebarVersionAria")}
+      title={showUnread ? tChangelog("sidebarUnreadHint") : undefined}
+    >
+      <span className="truncate tabular-nums">{version}</span>
+      {showUnread ? (
+        <span
+          className="absolute -right-2 -top-1 size-2 shrink-0 rounded-full bg-primary"
+          aria-hidden
+        />
+      ) : null}
+    </Link>
+  );
 }
 
 function renderNavItems(
@@ -192,7 +232,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
         <Badge variant="outline" className="text-xs capitalize">
           {user.role}
         </Badge>
-        <span className="text-xs text-muted-foreground">{packageJson.version}</span>
+        <SidebarChangelogVersionLink version={packageJson.version} />
       </div>
     </div>
   );

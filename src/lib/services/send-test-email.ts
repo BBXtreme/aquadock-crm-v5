@@ -11,7 +11,7 @@ interface SmtpError extends Error {
 
 export async function sendTestEmail(toEmail: string) {
   if (!toEmail?.includes("@")) {
-    throw new Error("Bitte eine gültige E-Mail-Adresse angeben");
+    throw new Error("Bitte gib eine gültige E-Mail-Adresse ein.");
   }
 
   const smtp = await getSmtpConfig();

@@ -298,7 +298,7 @@ describe("PasswordRecoveryUpdatePanel", () => {
       screen.getByText(/Passwort erfolgreich geändert/, { exact: false }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Sie werden zur Anmeldung weitergeleitet/, {
+      screen.getByText(/Du wirst zur Anmeldung weitergeleitet/, {
         exact: false,
       }),
     ).toBeInTheDocument();
@@ -461,7 +461,7 @@ describe("LoginPage recovery redirect", () => {
       expect(mockedToast.error).toHaveBeenCalledWith(
         "Link ungültig oder abgelaufen.",
         expect.objectContaining({
-          description: expect.stringContaining("Bitte fordern"),
+          description: expect.stringContaining("neuen Link"),
         }),
       );
     } finally {
