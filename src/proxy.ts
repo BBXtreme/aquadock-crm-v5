@@ -15,6 +15,7 @@ const PROTECTED_PATHS = [
   "/brevo",
   "/settings",
   "/profile",
+  "/admin",
   "/notifications",
   "/changelog",
 ] as const;
@@ -49,6 +50,7 @@ export const config = {
     "/brevo/:path*",
     "/settings/:path*",
     "/profile/:path*",
+    "/admin/:path*",
     "/notifications/:path*",
     "/changelog/:path*",
   ],

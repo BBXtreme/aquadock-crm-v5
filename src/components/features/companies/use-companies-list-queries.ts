@@ -2,54 +2,18 @@
 
 import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { WaterPreset } from "@/components/features/companies/client-companies-constants";
+import { companiesFilterBucketsFromRpcData } from "@/lib/companies/companies-filter-buckets";
 import type { SearchCompaniesListResult } from "@/lib/server/companies-search";
 import { createClient } from "@/lib/supabase/browser";
 import type { CompaniesFilterGroup } from "@/lib/utils/company-filters-url-state";
 
 export const COMPANIES_FILTER_OPTIONS_QUERY_KEY = ["companies-filter-options"] as const;
 
-type DistinctFilterBuckets = {
-  status: Set<string>;
-  kundentyp: Set<string>;
-  firmentyp: Set<string>;
-  land: Set<string>;
-  wassertyp: Set<string>;
-};
-
-const BUCKET_KEYS = ["status", "kundentyp", "firmentyp", "land", "wassertyp"] as const;
-
-function nonEmptyStringsFromJson(value: unknown): Set<string> {
-  if (!Array.isArray(value)) {
-    return new Set();
-  }
-  return new Set(value.filter((v): v is string => typeof v === "string" && v.length > 0));
-}
-
-async function fetchCompaniesFilterOptions(): Promise<DistinctFilterBuckets> {
+async function fetchCompaniesFilterOptions() {
   const supabase = createClient();
   const { data, error } = await supabase.rpc("companies_filter_buckets");
   if (error) throw error;
-  const payload = data as Record<string, unknown> | null;
-  if (payload === null || typeof payload !== "object") {
-    return {
-      status: new Set(),
-      kundentyp: new Set(),
-      firmentyp: new Set(),
-      land: new Set(),
-      wassertyp: new Set(),
-    };
-  }
-  const result: DistinctFilterBuckets = {
-    status: new Set(),
-    kundentyp: new Set(),
-    firmentyp: new Set(),
-    land: new Set(),
-    wassertyp: new Set(),
-  };
-  for (const key of BUCKET_KEYS) {
-    result[key] = nonEmptyStringsFromJson(payload[key]);
-  }
-  return result;
+  return companiesFilterBucketsFromRpcData(data);
 }
 
 /** Distinct ISO `companies.land` codes from active rows (sorted). Shares cache with list filter chips. */

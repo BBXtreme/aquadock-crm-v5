@@ -13,6 +13,7 @@ import { CHANGELOG_LAST_SEEN_STORAGE_KEY, CHANGELOG_SEEN_EVENT } from "@/content
 import { compareSemver } from "@/lib/changelog/compare-semver";
 import {
   type AppShellNavMessageKey,
+  appShellAdminNav,
   appShellMarketingNav,
   appShellQuickCreate,
   appShellSalesNav,
@@ -158,7 +159,7 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
   const t = useT("layout.sidebar");
 
-  const _userRole = user.role;
+  const isAdmin = user.role === "admin";
 
   return (
     <div
@@ -196,6 +197,16 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {isAdmin ? (
+          <SidebarGroup className="gap-1">
+            {!isCollapsed ? <SidebarGroupLabel>{t("groupAdmin")}</SidebarGroupLabel> : null}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderNavItems(appShellAdminNav, pathname, isCollapsed, t)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </nav>
 
       <div className="border-t shrink-0" />

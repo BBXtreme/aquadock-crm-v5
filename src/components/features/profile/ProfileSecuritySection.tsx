@@ -1,4 +1,3 @@
-// src/components/features/profile/ProfileSecuritySection.tsx
 // Display name, password, and email change (tabs; server actions + RHF + Zod + TanStack Mutation).
 
 "use client";
@@ -24,8 +23,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { updateEmailAction, updatePasswordAction } from "@/lib/actions/profile";
+import { useT } from "@/lib/i18n/use-translations";
 import {
   type ChangeEmailFormValues,
   type ChangePasswordFormValues,
@@ -39,10 +40,10 @@ type ProfileSecuritySectionProps = {
   profile: Profile;
 };
 
-/** Genug Zeit für `router.refresh()`, damit das Panel wie auf `/login` wirkt, dann zurück zum Formular. */
+/** Enough time for `router.refresh()` before returning to the form panel. */
 const SUCCESS_PANEL_RESET_MS = 2800;
 
-function changeErrorDescription(err: unknown): string {
+function changeErrorDescription(err: unknown, fallback: string): string {
   if (err instanceof Error) {
     return err.message;
   }
@@ -54,7 +55,7 @@ function changeErrorDescription(err: unknown): string {
   ) {
     return (err as { message: string }).message;
   }
-  return "Unbekannter Fehler";
+  return fallback;
 }
 
 function PasswordFieldWithToggle({
@@ -97,6 +98,7 @@ export default function ProfileSecuritySection({
   currentEmail,
   profile,
 }: ProfileSecuritySectionProps) {
+  const t = useT("profile");
   const router = useRouter();
   const queryClient = useQueryClient();
   const [passwordSaved, setPasswordSaved] = useState(false);
@@ -154,15 +156,15 @@ export default function ProfileSecuritySection({
         new_password: "",
         confirm_password: "",
       });
-      toast.success("Passwort wurde erfolgreich geändert.");
+      toast.success(t("toastPasswordChanged"));
       queryClient.invalidateQueries();
       startTransition(() => {
         router.refresh();
       });
     },
     onError: (err: unknown) => {
-      toast.error("Änderung konnte nicht gespeichert werden.", {
-        description: changeErrorDescription(err),
+      toast.error(t("toastChangeSaveFailed"), {
+        description: changeErrorDescription(err, t("toastChangeErrorUnknown")),
       });
     },
   });
@@ -176,9 +178,8 @@ export default function ProfileSecuritySection({
     onSuccess: () => {
       setEmailRequestSent(true);
       emailForm.reset({ new_email: "" });
-      toast.success("Bestätigung angefordert", {
-        description:
-          "Bitte prüfe beide E-Mail-Postfächer und folge den Links in den Nachrichten.",
+      toast.success(t("toastEmailConfirmationRequested"), {
+        description: t("toastEmailConfirmationDescription"),
       });
       queryClient.invalidateQueries();
       startTransition(() => {
@@ -186,8 +187,8 @@ export default function ProfileSecuritySection({
       });
     },
     onError: (err: unknown) => {
-      toast.error("Änderung konnte nicht gespeichert werden.", {
-        description: changeErrorDescription(err),
+      toast.error(t("toastChangeSaveFailed"), {
+        description: changeErrorDescription(err, t("toastChangeErrorUnknown")),
       });
     },
   });
@@ -200,35 +201,38 @@ export default function ProfileSecuritySection({
     emailMutation.mutate(values);
   });
 
+  const labelClass = "text-sm font-medium";
+
   return (
     <div className="w-full">
       <Tabs defaultValue="display" className="w-full">
-        <TabsList variant="line" className="mb-1 w-full flex-wrap justify-start gap-1">
+        <TabsList variant="line" className="w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="display" className="px-4">
-            Anzeigename
+            {t("tabDisplayName")}
           </TabsTrigger>
           <TabsTrigger value="password" className="px-4">
-            Passwort ändern
+            {t("tabPassword")}
           </TabsTrigger>
           <TabsTrigger value="email" className="px-4">
-            E-Mail ändern
+            {t("tabEmail")}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="display" className="space-y-6 pt-4">
+        <Separator className="my-3" />
+        <TabsContent value="display" className="space-y-6 pt-1">
           <div className="space-y-1">
             <h3
               id="profile-display-heading"
               className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
             >
-              Profil &amp; Anzeigename
+              {t("securityDisplayHeading")}
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              So erscheint Dein Name in AquaDock CRM.
+              {t("securityDisplayDescription")}
             </p>
           </div>
           <ProfileForm profile={profile} />
         </TabsContent>
-        <TabsContent value="password" className="space-y-6 pt-4">
+        <TabsContent value="password" className="space-y-6 pt-1">
           {passwordSaved ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
@@ -238,8 +242,7 @@ export default function ProfileSecuritySection({
                 <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
               </div>
               <p className="font-medium text-foreground text-lg tracking-tight">
-                Passwort erfolgreich geändert. Profil wird
-                aktualisiert...
+                {t("passwordSuccessPanelMessage")}
               </p>
             </div>
           ) : (
@@ -249,11 +252,10 @@ export default function ProfileSecuritySection({
                   id="profile-password-panel-heading"
                   className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
                 >
-                  Neues Passwort festlegen
+                  {t("securityPasswordHeading")}
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Gib Dein neues Passwort zweimal ein. Nach dem Speichern
-                  gilt es sofort; Deine aktuelle Sitzung bleibt bestehen.
+                  {t("securityPasswordDescription")}
                 </p>
               </div>
               <Form {...passwordForm}>
@@ -269,8 +271,8 @@ export default function ProfileSecuritySection({
                     name="new_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base">
-                          Neues Passwort
+                        <FormLabel className={labelClass}>
+                          {t("labelNewPassword")}
                         </FormLabel>
                         <PasswordFieldWithToggle
                           field={{
@@ -281,8 +283,8 @@ export default function ProfileSecuritySection({
                           onToggle={() => {
                             setShowNewPassword((v) => !v);
                           }}
-                          hideLabel="Neues Passwort verbergen"
-                          showLabel="Neues Passwort anzeigen"
+                          hideLabel={t("ariaHideNewPassword")}
+                          showLabel={t("ariaShowNewPassword")}
                         />
                         <FormMessage />
                       </FormItem>
@@ -295,8 +297,8 @@ export default function ProfileSecuritySection({
                     name="confirm_password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base">
-                          Passwort bestätigen
+                        <FormLabel className={labelClass}>
+                          {t("labelConfirmPassword")}
                         </FormLabel>
                         <PasswordFieldWithToggle
                           field={{
@@ -307,8 +309,8 @@ export default function ProfileSecuritySection({
                           onToggle={() => {
                             setShowConfirmPassword((v) => !v);
                           }}
-                          hideLabel="Passwortbestätigung verbergen"
-                          showLabel="Passwortbestätigung anzeigen"
+                          hideLabel={t("ariaHideConfirmPassword")}
+                          showLabel={t("ariaShowConfirmPassword")}
                         />
                         <FormMessage />
                       </FormItem>
@@ -320,15 +322,15 @@ export default function ProfileSecuritySection({
                     disabled={passwordMutation.isPending}
                   >
                     {passwordMutation.isPending
-                      ? "Wird gespeichert…"
-                      : "Neues Passwort speichern"}
+                      ? t("updateProfilePending")
+                      : t("submitSavePassword")}
                   </Button>
                 </form>
               </Form>
             </>
           )}
         </TabsContent>
-        <TabsContent value="email" className="space-y-4 pt-4">
+        <TabsContent value="email" className="space-y-6 pt-1">
           {emailRequestSent ? (
             <div className="flex flex-col items-center gap-8 py-2 text-center">
               <div
@@ -338,28 +340,37 @@ export default function ProfileSecuritySection({
                 <CheckCircle2 className="h-11 w-11 shrink-0" strokeWidth={1.75} />
               </div>
               <p className="font-medium text-foreground text-lg tracking-tight">
-                Bestätigungs-E-Mails sind unterwegs. Bitte prüfe Deine
-                Postfächer...
+                {t("emailSuccessPanelMessage")}
               </p>
             </div>
           ) : (
             <>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Zur Bestätigung wird eine E-Mail an{" "}
-                <span className="font-medium text-foreground">
-                  {currentEmail}
-                </span>{" "}
-                und an Deine neue Adresse gesendet.
-              </p>
+              <div className="space-y-1">
+                <h3
+                  id="profile-email-panel-heading"
+                  className="font-heading font-semibold text-foreground text-sm tracking-tight sm:text-base"
+                >
+                  {t("securityEmailHeading")}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {t("securityEmailDescription", {
+                    currentEmail,
+                  })}
+                </p>
+              </div>
               <Form {...emailForm}>
-                <form onSubmit={onEmailSubmit} className="space-y-6">
+                <form
+                  onSubmit={onEmailSubmit}
+                  className="space-y-6"
+                  aria-labelledby="profile-email-panel-heading"
+                >
                   <FormField
                     control={emailForm.control as Control<ChangeEmailFormValues>}
                     name="new_email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-base">
-                          Neue E-Mail-Adresse
+                        <FormLabel className={labelClass}>
+                          {t("labelNewEmail")}
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -367,7 +378,7 @@ export default function ProfileSecuritySection({
                             type="email"
                             autoComplete="email"
                             className="h-11 text-base"
-                            placeholder="name@beispiel.de"
+                            placeholder={t("placeholderNewEmail")}
                           />
                         </FormControl>
                         <FormMessage />
@@ -380,8 +391,8 @@ export default function ProfileSecuritySection({
                     disabled={emailMutation.isPending}
                   >
                     {emailMutation.isPending
-                      ? "Wird gespeichert…"
-                      : "E-Mail-Änderung anfordern"}
+                      ? t("updateProfilePending")
+                      : t("submitRequestEmailChange")}
                   </Button>
                 </form>
               </Form>

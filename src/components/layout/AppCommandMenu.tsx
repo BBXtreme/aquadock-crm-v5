@@ -15,6 +15,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
+  appShellAdminNav,
   appShellMarketingNav,
   appShellQuickCreate,
   appShellSalesNav,
@@ -22,11 +23,12 @@ import {
 import { useT } from "@/lib/i18n/use-translations";
 
 type AppCommandMenuProps = {
+  isAdmin: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
+export function AppCommandMenu({ open, onOpenChange, isAdmin }: AppCommandMenuProps) {
   const router = useRouter();
   const t = useT("layout");
   const ts = useT("layout.sidebar");
@@ -132,6 +134,29 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
               );
             })}
           </CommandGroup>
+          {isAdmin ? (
+            <CommandGroup heading={ts("groupAdmin")}>
+              {appShellAdminNav.map((item) => {
+                const Icon = item.icon;
+                const label = ts(item.messageKey);
+                const adminPaletteTerms = `${ts("groupAdmin")} ${t("adminArea")}`;
+                const kw = item.cmdkKeywords.split(/\s+/).filter(Boolean);
+                return (
+                  <CommandItem
+                    key={item.href}
+                    value={`${adminPaletteTerms} ${label} ${item.href} ${item.cmdkKeywords}`}
+                    keywords={kw}
+                    onSelect={() => {
+                      run(item.href);
+                    }}
+                  >
+                    <Icon className="text-muted-foreground" aria-hidden />
+                    {label}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          ) : null}
           <CommandSeparator />
           <CommandGroup heading={t("commandPaletteAccountGroup")}>
             <CommandItem

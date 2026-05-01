@@ -34,6 +34,29 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.47",
+    releasedAt: "2026-05-01",
+    title: "✨ Verwaltung mit eigener Adresse & Profil zum Durchatmen",
+    changes: [
+      {
+        type: "feature",
+        text: "Admin-Bereich unter eigener Route: Benutzer & Zugänge, Papierkorb und Feedback-Inbox – nicht mehr im Profil versteckt, für Admins klar erreichbar über Sidebar, Avatar-Menü und Schnellwahl (⌘K / Strg+K).",
+      },
+      {
+        type: "improvement",
+        text: "Profil-Seite konzentriert sich auf Dich: Avatar, Stammdaten sowie Passwort und E-Mail – ohne lange Admin-Karten auf derselben Seite.",
+      },
+      {
+        type: "improvement",
+        text: "„Profil bearbeiten“ wirkt ruhiger und einheitlicher: durchgängige Übersetzungen (Deutsch, Englisch, Kroatisch), klarere Tab-Leiste mit Trennlinie und dieselbe Struktur bei Passwort- und E-Mail-Bereich.",
+      },
+      {
+        type: "improvement",
+        text: "Wenn jemand Zugang zum CRM anfragt, springt der Hinweis für Admins direkt in die Benutzerverwaltung – weniger Suchen, schneller entscheiden.",
+      },
+    ],
+  },
+  {
     version: "0.5.46",
     releasedAt: "2026-05-01",
     title: "🚀 SPEED & Klarheit: CRM spürbar schneller, Release Notes im Produkt, Du durchgängig",

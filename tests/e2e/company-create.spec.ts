@@ -42,7 +42,11 @@ authDescribe("company create", () => {
 
     const uniqueName = `E2E-${Date.now()}`;
     await page.getByLabel("Firmenname").fill(uniqueName);
-    await page.getByRole("button", { name: "Speichern" }).click();
+    // CompanyCreateForm uses companies.createFormSubmit — not settings "Speichern".
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^(Create company|Unternehmen erstellen|Stvori tvrtku)$/ })
+      .click();
 
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 30_000 });
     await expect(page.getByText("Unternehmen erfolgreich angelegt")).toBeVisible({ timeout: 15_000 });

@@ -1,4 +1,5 @@
 import {
+  ArchiveRestore,
   BarChart3,
   Bell,
   Building2,
@@ -6,6 +7,7 @@ import {
   ListPlus,
   Mail,
   MapPin,
+  MessageSquare,
   Target,
   UserPlus,
   Users,
@@ -27,6 +29,31 @@ export const appShellSalesNav = [
 export const appShellMarketingNav = [
   { messageKey: "massEmail", href: "/mass-email", icon: Mail },
   { messageKey: "brevoCampaigns", href: "/brevo", icon: Mail },
+] as const;
+
+/** Admin-only CRM nav — Sidebar, AdminSubNav, ⌘K. Keys: `layout.sidebar` in `src/messages/*.json`. */
+export const appShellAdminNav = [
+  {
+    messageKey: "adminUsers",
+    href: "/admin/users",
+    icon: Users,
+    cmdkKeywords:
+      "admin users benutzer verwaltung verwaltungsbereich nutzer personen zugang onboarding pending access",
+  },
+  {
+    messageKey: "adminTrash",
+    href: "/admin/trash",
+    icon: ArchiveRestore,
+    cmdkKeywords:
+      "admin trash papierkorb verwaltung verwaltungsbereich deleted restore papirkorpa otpad soft delete",
+  },
+  {
+    messageKey: "adminFeedback",
+    href: "/admin/feedback",
+    icon: MessageSquare,
+    cmdkKeywords:
+      "admin feedback inbox verwaltung verwaltungsbereich widget submissions povratne informacije",
+  },
 ] as const;
 
 /**
@@ -66,6 +93,9 @@ export const appShellQuickCreate = [
 
 export type AppShellNavMessageKey =
   | (typeof appShellSalesNav)[number]["messageKey"]
-  | (typeof appShellMarketingNav)[number]["messageKey"];
+  | (typeof appShellMarketingNav)[number]["messageKey"]
+  | (typeof appShellAdminNav)[number]["messageKey"];
+
+export type AppShellAdminNavMessageKey = (typeof appShellAdminNav)[number]["messageKey"];
 
 export type AppShellQuickCreateMessageKey = (typeof appShellQuickCreate)[number]["messageKey"];

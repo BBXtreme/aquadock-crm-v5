@@ -42,7 +42,7 @@ authDescribe("authenticated CRM smoke", () => {
     await expect(page).toHaveURL(/\/mass-email/);
   });
 
-  test("profile page loads (admin trash UI is optional)", async ({ page }) => {
+  test("profile page loads", async ({ page }) => {
     const email = process.env.E2E_USER_EMAIL;
     const password = process.env.E2E_USER_PASSWORD;
     if (email === undefined || email === "" || password === undefined) {
@@ -58,5 +58,23 @@ authDescribe("authenticated CRM smoke", () => {
 
     await page.goto("/profile");
     await expect(page).toHaveURL(/\/profile/);
+  });
+
+  test("admin root redirects for admins or denies non-admins", async ({ page }) => {
+    const email = process.env.E2E_USER_EMAIL;
+    const password = process.env.E2E_USER_PASSWORD;
+    if (email === undefined || email === "" || password === undefined) {
+      test.skip();
+      return;
+    }
+
+    await loginWithPassword(page, email, password);
+    if (page.url().includes("access-pending")) {
+      test.skip();
+      return;
+    }
+
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/users|\/unauthorized/);
   });
 });
