@@ -199,7 +199,6 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
   const supabase = createClient();
   const queryClient = useQueryClient();
   const t = useT("settings");
-  const tChangelog = useT("changelog");
   const format = useFormat();
 
   useEffect(() => {
@@ -795,20 +794,6 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
   return (
     <div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Sparkles className="mr-2 h-5 w-5" />
-              {tChangelog("settingsCardTitle")}
-            </CardTitle>
-            <CardDescription>{tChangelog("settingsCardDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/changelog">{tChangelog("settingsLink")}</Link>
-            </Button>
-          </CardContent>
-        </Card>
         {/* Notifications Card */}
         <Card className="shadow-sm">
           <CardHeader>

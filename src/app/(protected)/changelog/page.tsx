@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { type ChangelogRelease, getChangelogEntriesSorted } from "@/content/changelog";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import type { AppLocale } from "@/lib/i18n/types";
-import { cn } from "@/lib/utils";
 
 const TYPE_ICONS = {
   feature: PlusCircle,
@@ -64,62 +63,59 @@ export default function ChangelogPage() {
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-3xl space-y-2 pb-10 md:pb-12">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
+      <header className="mx-auto max-w-3xl space-y-2.5 pb-10 md:pb-12">
+        <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground md:text-[2rem] md:leading-tight">
           {c.pageTitle}
         </h1>
-        <p className="text-muted-foreground text-lg">{c.pageSubtitle}</p>
-      </div>
+        <p className="text-muted-foreground text-base leading-relaxed md:text-lg">{c.pageSubtitle}</p>
+      </header>
 
       <div className="mx-auto max-w-3xl">
         {entries.map((release, index) => (
           <section
             key={release.version}
-            className="flex items-stretch gap-5 md:gap-8"
+            className="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-5 pb-16 last:pb-0 md:grid-cols-[1.5rem_minmax(0,1fr)] md:gap-x-8 md:pb-18"
           >
-            <div className="flex w-5 shrink-0 flex-col items-center self-stretch md:w-6">
-              <div
-                className="mt-2 size-3.5 rounded-full border-2 border-background bg-primary shadow-sm ring-4 ring-primary/15 md:size-4"
-                aria-hidden
-              />
+            <div className="relative flex justify-center pt-0.5">
               {index < entries.length - 1 ? (
                 <div
-                  className="mt-5 w-px min-h-0 flex-1 bg-border"
+                  className="absolute top-3.5 bottom-0 left-1/2 w-px -translate-x-1/2 bg-linear-to-b from-border to-border/25"
                   aria-hidden
                 />
               ) : null}
+              <span
+                className="relative z-1 mt-1 size-2.5 shrink-0 rounded-full border-2 border-background bg-primary shadow-sm ring-[3px] ring-primary/15"
+                aria-hidden
+              />
             </div>
 
-            <div
-              className={cn(
-                "min-w-0 flex-1 space-y-5 md:space-y-6",
-                index < entries.length - 1 && "pb-20 md:pb-28",
-              )}
-            >
-              <div className="space-y-1.5">
-                <p className="text-muted-foreground text-sm font-medium leading-snug">
+            <div className="min-w-0">
+              <header className="space-y-2 pb-1">
+                <time
+                  dateTime={release.releasedAt}
+                  className="block text-muted-foreground text-sm font-medium leading-snug tracking-wide"
+                >
                   {c.releasedOn.replace("{date}", formatReleasedDateDisplay(release.releasedAt, locale))}
-                </p>
-                <h2 className="font-heading text-xl font-semibold leading-snug text-foreground">
+                </time>
+                <h2 className="font-heading text-xl font-semibold leading-snug tracking-tight text-foreground md:text-[1.35rem]">
                   {release.title}
                 </h2>
-                <p className="text-muted-foreground text-xs tabular-nums">v{release.version}</p>
-              </div>
+                <p className="text-muted-foreground/80 text-xs tabular-nums tracking-wide">v{release.version}</p>
+              </header>
 
-              <Card className="shadow-sm">
-                <CardContent className="space-y-4 pt-6 md:pt-7">
+              <Card className="mt-6 border-border/60 shadow-sm md:mt-7">
+                <CardContent className="space-y-0 px-4 py-5 sm:px-5 sm:py-6 md:px-6">
                   {release.changes.map((change, changeIndex) => {
                     const Icon = TYPE_ICONS[change.type];
                     return (
                       <div key={`${release.version}-${change.type}-${change.text}`}>
-                        {changeIndex > 0 ? <Separator className="mb-4" /> : null}
-                        <div className="flex gap-3">
-                          <Icon
-                            className="mt-0.5 size-5 shrink-0 text-primary"
-                            aria-hidden
-                          />
-                          <div className="min-w-0 space-y-1">
-                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                        {changeIndex > 0 ? <Separator className="my-5" /> : null}
+                        <div className="flex gap-3.5 sm:gap-4">
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <Icon className="size-4 shrink-0" aria-hidden />
+                          </div>
+                          <div className="min-w-0 space-y-1.5 pt-0.5">
+                            <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
                               {typeLabel(change.type)}
                             </p>
                             <p className="text-foreground text-sm leading-relaxed">{change.text}</p>
