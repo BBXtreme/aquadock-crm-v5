@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { type ChangelogRelease, getChangelogEntriesSorted } from "@/content/changelog";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import type { AppLocale } from "@/lib/i18n/types";
+import { cn } from "@/lib/utils";
 
 const TYPE_ICONS = {
   feature: PlusCircle,
@@ -63,7 +64,7 @@ export default function ChangelogPage() {
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-3xl space-y-2 pb-8">
+      <div className="mx-auto max-w-3xl space-y-2 pb-10 md:pb-12">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
           {c.pageTitle}
         </h1>
@@ -90,7 +91,10 @@ export default function ChangelogPage() {
             </div>
 
             <div
-              className={`min-w-0 flex-1 space-y-5 md:space-y-6 ${index < entries.length - 1 ? "pb-20 md:pb-28" : ""}`}
+              className={cn(
+                "min-w-0 flex-1 space-y-5 md:space-y-6",
+                index < entries.length - 1 && "pb-20 md:pb-28",
+              )}
             >
               <div className="space-y-1.5">
                 <p className="text-muted-foreground text-sm font-medium leading-snug">
