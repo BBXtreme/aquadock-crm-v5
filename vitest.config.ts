@@ -15,7 +15,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: false,        // We use explicit imports – keeps tsc clean
-    setupFiles: ["./src/test/setup.ts"],
+    setupFiles: ["./src/test/vitest-react-env.ts", "./src/test/setup.ts"],
     include: [
       "**/*.{test,spec}.{ts,tsx}",
       "**/__tests__/**/*.{ts,tsx}",

@@ -64,9 +64,15 @@ describe("CommentItem", () => {
   });
 
   it("toasts copy failure when building the comment URL throws", async () => {
-    const urlSpy = vi.spyOn(window, "URL").mockImplementationOnce(() => {
-      throw new Error("bad");
-    });
+    class UrlThrows extends URL {
+      constructor(input: string | URL, base?: string | URL) {
+        void input;
+        void base;
+        super("https://example.com/");
+        throw new Error("bad");
+      }
+    }
+    const urlSpy = vi.spyOn(window, "URL").mockImplementationOnce(UrlThrows as unknown as typeof URL);
     const user = userEvent.setup();
     render(
       wrapper(

@@ -266,55 +266,85 @@ describe("DashboardClient KPI statistics", () => {
   });
 
   it("shows Suspense fallback while a period refetch is in flight", async () => {
-    let releaseGate: (() => void) | undefined;
-    const gate = new Promise<void>((resolve) => {
-      releaseGate = resolve;
+    const origError = console.error;
+    const origWarn = console.warn;
+    const isReactActDevNoise = (args: unknown[]) => {
+      const text = args
+        .map((a) => (typeof a === "string" ? a : a instanceof Error ? a.message : ""))
+        .join(" ");
+      return (
+        text.includes("not configured to support act") || text.includes("wrap-tests-with-act")
+      );
+    };
+    const errSpy = vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+      if (isReactActDevNoise(args)) {
+        return;
+      }
+      origError.apply(console, args as Parameters<typeof console.error>);
+    });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
+      if (isReactActDevNoise(args)) {
+        return;
+      }
+      origWarn.apply(console, args as Parameters<typeof console.warn>);
     });
 
-    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-      if (url.includes("period=7d")) {
-        await gate;
+    try {
+      let releaseGate: (() => void) | undefined;
+      const gate = new Promise<void>((resolve) => {
+        releaseGate = resolve;
+      });
+
+      mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        if (url.includes("period=7d")) {
+          await gate;
+          return {
+            ok: true,
+            json: async () => ({ ...initialKpisFixture, period: "7d" as const, companiesInPeriod: 1 }),
+          } as Response;
+        }
         return {
           ok: true,
-          json: async () => ({ ...initialKpisFixture, period: "7d" as const, companiesInPeriod: 1 }),
+          json: async () => ({ ...initialKpisFixture, period: "30d" }),
         } as Response;
-      }
-      return {
-        ok: true,
-        json: async () => ({ ...initialKpisFixture, period: "30d" }),
-      } as Response;
-    });
+      });
 
-    const user = userEvent.setup();
-    renderDashboard();
+      const user = userEvent.setup();
+      renderDashboard();
 
-    const root = kpiRoot();
-    await waitFor(() => expect(within(root).getByText("Total companies")).toBeInTheDocument());
+      const root = kpiRoot();
+      await waitFor(() => expect(within(root).getByText("Total companies")).toBeInTheDocument());
 
-    const periodTrigger = getPeriodSelectTrigger(root);
-    await user.click(periodTrigger);
-    await waitFor(() => {
-      expect(screen.getByRole("option", { name: /Last 7 days/i })).toBeInTheDocument();
-    });
+      const periodTrigger = getPeriodSelectTrigger(root);
+      await user.click(periodTrigger);
+      await waitFor(() => {
+        expect(screen.getByRole("option", { name: /Last 7 days/i })).toBeInTheDocument();
+      });
 
-    await act(async () => {
-      await user.click(screen.getByRole("option", { name: /Last 7 days/i }));
-    });
+      await act(async () => {
+        await user.click(screen.getByRole("option", { name: /Last 7 days/i }));
+      });
 
-    expect(screen.getByTestId("dashboard-suspense-fallback")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId("dashboard-suspense-fallback")).toBeInTheDocument();
+      });
 
-    await act(async () => {
-      if (releaseGate) {
-        releaseGate();
-      }
-    });
+      await act(async () => {
+        if (releaseGate) {
+          releaseGate();
+        }
+      });
 
-    await waitFor(() => {
-      expect(screen.queryByTestId("dashboard-suspense-fallback")).not.toBeInTheDocument();
-    });
+      await waitFor(() => {
+        expect(screen.queryByTestId("dashboard-suspense-fallback")).not.toBeInTheDocument();
+      });
 
-    expect(within(kpiRoot()).getByText("Total companies")).toBeInTheDocument();
+      expect(within(kpiRoot()).getByText("Total companies")).toBeInTheDocument();
+    } finally {
+      errSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
   });
 
   it("changes the period filter via the shadcn Select", async () => {

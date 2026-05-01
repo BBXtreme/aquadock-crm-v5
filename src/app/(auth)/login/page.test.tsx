@@ -492,7 +492,9 @@ describe("LoginPage onAuthStateChange", () => {
       expect(auth.listener).not.toBeNull();
     });
 
-    auth.listener?.("PASSWORD_RECOVERY", null);
+    await act(async () => {
+      auth.listener?.("PASSWORD_RECOVERY", null);
+    });
 
     await waitFor(() => {
       expect(
@@ -500,8 +502,10 @@ describe("LoginPage onAuthStateChange", () => {
       ).toBeInTheDocument();
     });
 
-    auth.listener?.("SIGNED_IN", {
-      access_token: buildNonRecoveryAccessToken(),
+    await act(async () => {
+      auth.listener?.("SIGNED_IN", {
+        access_token: buildNonRecoveryAccessToken(),
+      });
     });
 
     await waitFor(() => {
@@ -519,8 +523,10 @@ describe("LoginPage onAuthStateChange", () => {
       expect(auth.listener).not.toBeNull();
     });
 
-    auth.listener?.("SIGNED_IN", {
-      access_token: buildRecoveryAccessToken(),
+    await act(async () => {
+      auth.listener?.("SIGNED_IN", {
+        access_token: buildRecoveryAccessToken(),
+      });
     });
 
     await waitFor(() => {

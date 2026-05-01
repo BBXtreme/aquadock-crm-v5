@@ -40,6 +40,8 @@ const VECTOR = Array.from({ length: COMPANY_SEARCH_EMBEDDING_DIMENSION }, (_, i)
 
 describe("semantic-search service", () => {
   beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";
   });
 

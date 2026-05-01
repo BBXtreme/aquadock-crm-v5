@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 
 const mockCreateServer = vi.hoisted(() => vi.fn());
 const mockCreateTimelineEntry = vi.hoisted(() => vi.fn());
@@ -39,7 +39,10 @@ function supabaseWithAuth(userId: string) {
 import { createAuthenticatedTimelineEntry } from "./timeline-insert";
 
 describe("createAuthenticatedTimelineEntry", () => {
+  let consoleErrorSpy: MockInstance<Console["error"]>;
+
   beforeEach(() => {
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockCreateServer.mockReset();
     mockCreateTimelineEntry.mockReset();
     mockNotify.mockReset();
@@ -247,5 +250,9 @@ describe("createAuthenticatedTimelineEntry", () => {
     await createAuthenticatedTimelineEntry({ title: "Note", company_id: "co-5" });
 
     expect(mockNotify).not.toHaveBeenCalled();
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 });

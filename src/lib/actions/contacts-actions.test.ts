@@ -51,6 +51,22 @@ describe("contacts server actions", () => {
     vi.unstubAllEnvs();
   });
 
+  describe("unauthorized", () => {
+    it("createContactAction throws when user is null", async () => {
+      getCurrentUser.mockResolvedValue(null);
+      const { createContactAction } = await import("@/lib/actions/contacts");
+      await expect(createContactAction(minimalContactForm)).rejects.toThrow("Unauthorized");
+      expect(createServerSupabaseClient).not.toHaveBeenCalled();
+    });
+
+    it("updateContactAction throws when user is null", async () => {
+      getCurrentUser.mockResolvedValue(null);
+      const { updateContactAction } = await import("@/lib/actions/contacts");
+      await expect(updateContactAction(CONTACT_ID, minimalContactForm)).rejects.toThrow("Unauthorized");
+      expect(createServerSupabaseClient).not.toHaveBeenCalled();
+    });
+  });
+
   describe("createContactAction (inheritance)", () => {
     it("sets user_id from company owner when company has user_id", async () => {
       const single = vi.fn().mockResolvedValue({

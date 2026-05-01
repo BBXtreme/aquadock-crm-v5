@@ -94,6 +94,7 @@ function lexicalOrClause(g: string): string {
 
 describe("companies-list-supabase hybrid applier", () => {
   beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockCreateCompanySearchEmbedding.mockReset();
     mockHybridCompanySearch.mockReset();
     mockResolveSemanticSearchSettings.mockReset();

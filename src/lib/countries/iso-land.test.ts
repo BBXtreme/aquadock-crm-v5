@@ -59,9 +59,9 @@ describe("getLandRegionDisplayName", () => {
   });
 
   it("falls back to uppercase code when DisplayNames throws", () => {
-    vi.spyOn(Intl, "DisplayNames").mockImplementation(() => {
+    vi.spyOn(Intl, "DisplayNames").mockImplementation(function displayNamesThrows() {
       throw new Error("boom");
-    });
+    } as unknown as typeof Intl.DisplayNames);
     expect(getLandRegionDisplayName("DE", "de")).toBe("DE");
   });
 
@@ -91,9 +91,9 @@ describe("isIso3166Alpha2", () => {
   });
 
   it("returns false when DisplayNames throws", () => {
-    vi.spyOn(Intl, "DisplayNames").mockImplementation(() => {
+    vi.spyOn(Intl, "DisplayNames").mockImplementation(function displayNamesThrows() {
       throw new Error("boom");
-    });
+    } as unknown as typeof Intl.DisplayNames);
     expect(isIso3166Alpha2("DE")).toBe(false);
   });
 });
