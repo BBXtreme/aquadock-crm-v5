@@ -20,7 +20,7 @@ import RemindersCard from "@/components/features/companies/detail/RemindersCard"
 import TimelineCard from "@/components/features/companies/detail/TimelineCard";
 import TimelineEntryForm from "@/components/features/timeline/TimelineEntryForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { CompanyDetailPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
@@ -310,7 +310,7 @@ function CompanyDetailShell({
 export default function CompanyDetailClient(props: CompanyDetailClientProps) {
   return (
     <PageShell>
-      <Suspense fallback={<LoadingState count={8} />}>
+      <Suspense fallback={<CompanyDetailPageSkeleton />}>
         <CompanyDetailShell {...props} />
       </Suspense>
     </PageShell>

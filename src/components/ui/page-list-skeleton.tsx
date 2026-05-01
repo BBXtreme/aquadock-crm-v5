@@ -306,6 +306,126 @@ export function ContactsPageSkeleton({ rowCount = 7 }: { rowCount?: number }) {
   );
 }
 
+const COMPANY_DETAIL_TRIPLE_KEYS = ["cd-firmendaten", "cd-aquadock", "cd-crm"] as const;
+
+function CompanyDetailFieldRowSkeleton() {
+  return (
+    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:gap-6">
+      <Skeleton className="h-4 w-28 shrink-0 sm:w-36" />
+      <Skeleton className="h-4 w-full max-w-md" />
+    </div>
+  );
+}
+
+/** Mirrors `CompanyHeader` + `CompanyKpiCards` + main grid + stacked cards on company detail */
+export function CompanyDetailPageSkeleton() {
+  return (
+    <PageSkeletonRoot label="Firma wird geladen">
+      <header
+        className={cn(
+          "flex flex-col gap-4 border-b border-border/40 pb-6 sm:flex-row sm:items-start sm:justify-between",
+        )}
+      >
+        <div className="min-w-0 space-y-3">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-3 rounded-full shrink-0" aria-hidden />
+            <Skeleton className="h-4 max-w-[60ch] w-full flex-1" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full max-w-xl" />
+            <Skeleton className="h-4 w-56 max-w-full" />
+            <Skeleton className="h-4 w-64 max-w-full" />
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-9 w-44 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-9 w-9 rounded-md" />
+        </div>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-4">
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-6 w-28 rounded-full" />
+        <Skeleton className="h-6 w-24 rounded-full" />
+        <Skeleton className="h-6 w-36 rounded-full" />
+        <Skeleton className="h-4 w-44" />
+        <Skeleton className="h-4 w-44" />
+      </div>
+
+      <SkeletonStatStrip count={4} gridClassName="md:grid-cols-2 lg:grid-cols-4" className="pb-0" />
+
+      <div className="grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        {COMPANY_DETAIL_TRIPLE_KEYS.map((key) => (
+          <Card key={key} className={skeletonCardChrome}>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {(["cd-f0", "cd-f1", "cd-f2", "cd-f3", "cd-f4"] as const).map((rowKey) => (
+                <CompanyDetailFieldRowSkeleton key={`${key}-${rowKey}`} />
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <SkeletonListCard titleWidth="w-52">
+        <div className="space-y-3">
+          <ContactDenseRowSkeleton key="cd-linked-0" />
+          <ContactDenseRowSkeleton key="cd-linked-1" />
+        </div>
+      </SkeletonListCard>
+
+      <SkeletonListCard titleWidth="w-44">
+        <div className="space-y-3">
+          <ReminderDenseRowSkeleton key="cd-rm-0" />
+          <ReminderDenseRowSkeleton key="cd-rm-1" />
+        </div>
+      </SkeletonListCard>
+
+      <SkeletonListCard titleWidth="w-48">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full max-w-xl rounded-md" />
+          <div className="space-y-3">
+            {(["cd-cmt-0", "cd-cmt-1"] as const).map((k) => (
+              <div key={k} className={cn("space-y-2", skeletonDenseRowShell)}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full max-w-[92%]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </SkeletonListCard>
+
+      <SkeletonListCard titleWidth="w-56">
+        <div className="flex flex-wrap gap-3">
+          <Skeleton className="h-10 w-32 rounded-lg" />
+          <Skeleton className="h-10 w-36 rounded-lg" />
+          <Skeleton className="h-10 w-28 rounded-lg" />
+        </div>
+      </SkeletonListCard>
+
+      <SkeletonListCard titleWidth="w-40">
+        <div className="space-y-3">
+          <TimelineFeedDenseRowSkeleton key="cd-tl-0" />
+          <TimelineFeedDenseRowSkeleton key="cd-tl-1" compact />
+          <TimelineFeedDenseRowSkeleton key="cd-tl-2" />
+        </div>
+      </SkeletonListCard>
+    </PageSkeletonRoot>
+  );
+}
+
 const timelineTableRowKeys = ROW_KEYS;
 
 export function TimelinePageSkeleton({ rowCount = 6 }: { rowCount?: number }) {
