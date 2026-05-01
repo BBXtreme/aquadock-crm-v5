@@ -24,9 +24,10 @@ type Company = Database["public"]["Tables"]["companies"]["Row"];
 interface Props {
   company: Company;
   onCompanyUpdated?: () => void;
+  canEditCompany: boolean;
 }
 
-export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
+export default function AquaDockCard({ company, onCompanyUpdated, canEditCompany }: Props) {
   const t = useT("companies");
   const router = useRouter();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -203,25 +204,29 @@ export default function AquaDockCard({ company, onCompanyUpdated }: Props) {
               {t("detailSectionAquadock")}
             </CardTitle>
             <div className="flex items-center gap-1">
-              {canGeocode ? (
-                geocodeButton
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-block">{geocodeButton}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("geocodeDetailIncompleteAddressTooltip")}</TooltipContent>
-                </Tooltip>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                aria-label={t("dialogEditAquadockTitle")}
-                onClick={() => setEditDialogOpen(true)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              {canEditCompany ? (
+                <>
+                  {canGeocode ? (
+                    geocodeButton
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-block">{geocodeButton}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>{t("geocodeDetailIncompleteAddressTooltip")}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label={t("dialogEditAquadockTitle")}
+                    onClick={() => setEditDialogOpen(true)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : null}
             </div>
           </div>
         </CardHeader>

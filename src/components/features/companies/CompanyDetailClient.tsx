@@ -43,6 +43,8 @@ export interface CompanyDetailClientProps {
   initialAiEnrichOpen?: boolean;
   /** List-only query string from the server (no `?`); mirrors URL when opened from /companies */
   initialCompaniesListSearch?: string;
+  /** Server-computed: matches RLS owner/admin write rules */
+  canEditCompany: boolean;
 }
 
 function CompanyDetailShell({
@@ -50,6 +52,7 @@ function CompanyDetailShell({
   ownerDisplayLine = null,
   initialAiEnrichOpen = false,
   initialCompaniesListSearch = "",
+  canEditCompany,
 }: CompanyDetailClientProps) {
   const tCompanies = useT("companies");
   const tTimeline = useT("timeline");
@@ -86,8 +89,16 @@ function CompanyDetailShell({
 
   const [editCompanyDialogOpen, setEditCompanyDialogOpen] = useState(false);
   const [addTimelineDialogOpen, setAddTimelineDialogOpen] = useState(false);
-  const [aiModalOpen, setAiModalOpen] = useState(initialAiEnrichOpen);
+  const [aiModalOpen, setAiModalOpen] = useState(() => initialAiEnrichOpen && canEditCompany);
   const [aiPrefill, setAiPrefill] = useState<{ version: number; patch: Partial<CompanyForm> } | null>(null);
+
+  useEffect(() => {
+    if (!canEditCompany) {
+      setAiModalOpen(false);
+      setEditCompanyDialogOpen(false);
+      setAiPrefill(null);
+    }
+  }, [canEditCompany]);
 
   useEffect(() => {
     if (!initialAiEnrichOpen) {
@@ -104,6 +115,9 @@ function CompanyDetailShell({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!canEditCompany) {
+        return;
+      }
       if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "e") {
         return;
       }
@@ -120,7 +134,7 @@ function CompanyDetailShell({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [canEditCompany]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -195,6 +209,9 @@ function CompanyDetailShell({
   }, [company?.id, queryClient]);
 
   const handleAiApplyPatch = (patch: Partial<CompanyForm>) => {
+    if (!canEditCompany) {
+      return;
+    }
     setAiPrefill({ version: Date.now(), patch });
     setEditCompanyDialogOpen(true);
   };
@@ -211,15 +228,24 @@ function CompanyDetailShell({
         nextCompanyId={nextCompanyId}
         listNavIdsLoading={hasListNavContext && listNavIdsPending}
         ownerDisplayLine={ownerDisplayLine}
+        canEditCompany={canEditCompany}
         onAddTimeline={() => setAddTimelineDialogOpen(true)}
         onEdit={() => setEditCompanyDialogOpen(true)}
-        onAiEnrich={() => setAiModalOpen(true)}
+        onAiEnrich={canEditCompany ? () => setAiModalOpen(true) : undefined}
       />
       <CompanyKpiCards company={company} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-        <CompanyDetailsCard company={company} onCompanyUpdated={refreshCompanyDetail} />
-        <AquaDockCard company={company} onCompanyUpdated={refreshCompanyDetail} />
-        <CrmCard company={company} />
+        <CompanyDetailsCard
+          company={company}
+          onCompanyUpdated={refreshCompanyDetail}
+          canEditCompany={canEditCompany}
+        />
+        <AquaDockCard
+          company={company}
+          onCompanyUpdated={refreshCompanyDetail}
+          canEditCompany={canEditCompany}
+        />
+        <CrmCard company={company} canEditCompany={canEditCompany} onCompanyUpdated={refreshCompanyDetail} />
       </div>
       <LinkedContactsCard companyId={id} />
       <RemindersCard companyId={id} />

@@ -22,11 +22,13 @@ import { createCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { buildCompanyLandSelectOptions, DEFAULT_COMPANY_LAND_CODES } from "@/lib/countries/iso-land";
+import { useT } from "@/lib/i18n/use-translations";
 import { type CompanyFormValues, companySchema } from "@/lib/validations/company";
 
 export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => void }) {
   const queryClient = useQueryClient();
   const locale = useLocale();
+  const tCompanies = useT("companies");
   const distinctLandCodes = useDistinctCompanyLandCodes();
   const landSelectOptions = useMemo(
     () =>
@@ -116,7 +118,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select customer type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -140,7 +142,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select company type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -255,7 +257,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select country" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -298,7 +300,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select water type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -375,7 +377,7 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
                 <Select onValueChange={field.onChange} defaultValue={field.value ?? ""}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -426,10 +428,10 @@ export default function CompanyCreateForm({ onSuccess }: { onSuccess?: () => voi
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Abbrechen
+            {tCompanies("cancel")}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Speichert..." : "Speichern"}
+            {form.formState.isSubmitting ? tCompanies("createFormSaving") : tCompanies("createFormSubmit")}
           </Button>
         </div>
       </form>

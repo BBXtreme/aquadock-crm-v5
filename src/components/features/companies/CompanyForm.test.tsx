@@ -19,9 +19,20 @@ vi.mock("@/lib/actions/companies", () => ({
   createCompany: vi.fn(),
 }));
 
-vi.mock("next-intl", () => ({
-  useLocale: () => "de",
-}));
+vi.mock("next-intl", async () => {
+  const de = (await import("@/messages/de.json")).default;
+  return {
+    useLocale: () => "de",
+    useTranslations: (ns: string) => {
+      const table = de[ns as keyof typeof de];
+      if (!table || typeof table !== "object") {
+        return (key: string) => key;
+      }
+      const flat = table as Record<string, string>;
+      return (key: string) => (key in flat ? flat[key] : key);
+    },
+  };
+});
 
 vi.mock("@/components/features/companies/use-companies-list-queries", async () => {
   const actual = await vi.importActual<typeof import("@/components/features/companies/use-companies-list-queries")>(

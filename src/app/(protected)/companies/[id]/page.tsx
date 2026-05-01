@@ -7,6 +7,8 @@
 import { notFound, redirect } from "next/navigation";
 import CompanyDetailClient from "@/components/features/companies/CompanyDetailClient";
 import { resolveCompanyDetail } from "@/lib/actions/companies";
+import { getCrmUserContext } from "@/lib/auth/get-crm-user-context";
+import { canEditCompanyRecord } from "@/lib/companies/company-edit-permission";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { companiesListSearchStringFromPageSearchParams } from "@/lib/utils/company-filters-url-state";
@@ -38,6 +40,8 @@ export default async function CompanyDetailPage({
 
   const messages = getMessagesForLocale(resolveAppLocale(undefined));
   const responsibleLabel = messages.companies.responsibleLabel;
+  const { user: crmUser } = await getCrmUserContext();
+  const canEditCompany = canEditCompanyRecord(resolved.company, crmUser);
   let ownerDisplayLine: string | null = null;
   const uid = resolved.company.user_id;
   if (uid != null && uid !== "") {
@@ -55,6 +59,7 @@ export default async function CompanyDetailPage({
       ownerDisplayLine={ownerDisplayLine}
       initialAiEnrichOpen={initialAiEnrichOpen}
       initialCompaniesListSearch={initialCompaniesListSearch}
+      canEditCompany={canEditCompany}
     />
   );
 }

@@ -14,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
+import { useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -59,6 +60,7 @@ export default function FirmendatenEditForm({
   onSuccess?: () => void;
 }) {
   const queryClient = useQueryClient();
+  const t = useT("companies");
 
   const form = useForm<FirmendatenFormValues>({
     resolver: zodResolver(firmendatenSchema),
@@ -87,12 +89,12 @@ export default function FirmendatenEditForm({
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       queryClient.refetchQueries({ queryKey: ["contacts", company?.id] });
       queryClient.refetchQueries({ queryKey: ["reminders", company?.id] });
-      toast.success("Firmendaten updated successfully");
+      toast.success(t("toastUpdated"));
       onSuccess?.();
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "An unknown error occurred";
-      toast.error("Failed to update firmendaten", { description: message });
+      const message = error instanceof Error ? error.message : t("unknownError");
+      toast.error(t("toastUpdateFailed"), { description: message });
     },
   });
 
@@ -140,9 +142,12 @@ export default function FirmendatenEditForm({
               <FormItem>
                 <FormLabel>Kundentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ? field.value : undefined}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select customer type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {kundentypOptions.map((option) => (
@@ -164,9 +169,12 @@ export default function FirmendatenEditForm({
               <FormItem>
                 <FormLabel>Firmentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ? field.value : undefined}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select company type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {firmentypOptions.map((option) => (
@@ -224,10 +232,10 @@ export default function FirmendatenEditForm({
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            {form.formState.isSubmitting ? t("dialogFormSaving") : t("dialogFormSave")}
           </Button>
         </div>
       </form>

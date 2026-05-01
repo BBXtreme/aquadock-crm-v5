@@ -16,9 +16,10 @@ import type { Company } from "@/types/database.types";
 interface Props {
   company: Company;
   onCompanyUpdated?: () => void;
+  canEditCompany: boolean;
 }
 
-export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props) {
+export default function CompanyDetailsCard({ company, onCompanyUpdated, canEditCompany }: Props) {
   const t = useT("companies");
   const locale = useLocale();
   const [firmendatenEditOpen, setFirmendatenEditOpen] = useState(false);
@@ -78,9 +79,11 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
               <Building className="w-5 h-5" /> {t("detailSectionFirmendaten")}
             </CardTitle>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setFirmendatenEditOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" />
-              </Button>
+              {canEditCompany ? (
+                <Button variant="ghost" size="sm" onClick={() => setFirmendatenEditOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                </Button>
+              ) : null}
             </div>
           </div>
         </CardHeader>
@@ -125,9 +128,11 @@ export default function CompanyDetailsCard({ company, onCompanyUpdated }: Props)
               <Building className="w-5 h-5" /> {t("detailSectionAdresse")}
             </CardTitle>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
-                <Edit className="h-4 w-4 mr-2" /> 
-              </Button>
+              {canEditCompany ? (
+                <Button variant="ghost" size="sm" onClick={() => setAdresseEditOpen(true)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                </Button>
+              ) : null}
             </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 [&>div]:min-w-0">

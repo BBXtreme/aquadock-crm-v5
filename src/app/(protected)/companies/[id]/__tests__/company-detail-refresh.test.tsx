@@ -177,7 +177,7 @@ function Harness({ initial }: { initial: Company }) {
   }, []);
   return (
     <Suspense fallback={null}>
-      <CompanyDetailClient company={company} />
+      <CompanyDetailClient company={company} canEditCompany={true} />
     </Suspense>
   );
 }
@@ -237,7 +237,9 @@ describe("CompanyDetailClient refresh after inline edits", () => {
     const firmenname = within(dialog).getByRole("textbox", { name: /Firmenname/i });
     await user.clear(firmenname);
     await user.type(firmenname, "Neuer Firmenname GmbH");
-    await user.click(within(dialog).getByRole("button", { name: /Save Changes/i }));
+    await user.click(
+      within(dialog).getByRole("button", { name: deMessages.companies.dialogFormSave }),
+    );
 
     await waitFor(() => {
       expect(within(card).getByText("Neuer Firmenname GmbH")).toBeInTheDocument();
@@ -259,7 +261,9 @@ describe("CompanyDetailClient refresh after inline edits", () => {
     const strasse = within(dialog).getByRole("textbox", { name: /Strasse/i });
     await user.clear(strasse);
     await user.type(strasse, "Hafenstraße 9");
-    await user.click(within(dialog).getByRole("button", { name: /Save Changes/i }));
+    await user.click(
+      within(dialog).getByRole("button", { name: deMessages.companies.dialogFormSave }),
+    );
 
     await waitFor(() => {
       expect(within(card).getByText("Hafenstraße 9")).toBeInTheDocument();
@@ -313,7 +317,9 @@ describe("CompanyDetailClient refresh after inline edits", () => {
     const firmenname = within(dialog).getByRole("textbox", { name: /Firmenname/i });
     await user.clear(firmenname);
     await user.type(firmenname, "Globally Edited AG");
-    await user.click(within(dialog).getByRole("button", { name: /Save Changes/i }));
+    await user.click(
+      within(dialog).getByRole("button", { name: deMessages.companies.dialogFormSave }),
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Globally Edited AG" })).toBeInTheDocument();

@@ -40,6 +40,8 @@ interface Props {
   onAddTimeline: () => void;
   onEdit: () => void;
   onAiEnrich?: () => void;
+  /** When false, header edit/delete/AI actions are hidden (RLS owner/admin write model). */
+  canEditCompany: boolean;
 }
 
 export default function CompanyHeader({
@@ -55,6 +57,7 @@ export default function CompanyHeader({
   onAddTimeline,
   onEdit,
   onAiEnrich,
+  canEditCompany,
 }: Props) {
   const t = useT("companies");
   const tCommon = useT("common");
@@ -109,10 +112,12 @@ export default function CompanyHeader({
             <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
             {t("headerAddTimeline")}
           </Button>
-          <Button variant="outline" size="sm" type="button" onClick={onEdit}>
-            <Edit className="w-4 h-4" />
-          </Button>
-          {onAiEnrich ? (
+          {canEditCompany ? (
+            <Button variant="outline" size="sm" type="button" onClick={onEdit}>
+              <Edit className="w-4 h-4" />
+            </Button>
+          ) : null}
+          {canEditCompany && onAiEnrich ? (
             <Button
               variant="outline"
               size="icon-sm"
@@ -124,7 +129,8 @@ export default function CompanyHeader({
               <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
             </Button>
           ) : null}
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          {canEditCompany ? (
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" type="button">
                 <Trash className="w-4 h-4" />
@@ -163,6 +169,7 @@ export default function CompanyHeader({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          ) : null}
           {hasListNavContext ? (
             <>
               <Button

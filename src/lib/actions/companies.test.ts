@@ -59,6 +59,7 @@ function supabaseForUpdateCompany(priorUserId: string | null, newUserId: string 
     }
   }
   return {
+    rpc: vi.fn().mockResolvedValue({ data: true, error: null }),
     from: vi.fn((table: string) => {
       if (table === "profiles") {
         return {
@@ -182,5 +183,68 @@ describe("updateCompany (owner notification)", () => {
     expect(createTimelineEntry).toHaveBeenCalledTimes(1);
     const payload = createTimelineEntry.mock.calls[0]?.[0] as { title?: string };
     expect(payload?.title).toContain("→");
+  });
+});
+
+describe("updateCompany (permission guard)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
+  });
+
+  it("rejects non-owner when not admin before calling update", async () => {
+    const updateSingle = vi.fn();
+    createServerSupabaseClient.mockResolvedValue({
+      rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { user_id: OLD_OWNER, firmenname: "Acme GmbH" },
+              error: null,
+            }),
+          })),
+        })),
+        update: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: updateSingle,
+            })),
+          })),
+        })),
+      })),
+    } as never);
+
+    const { updateCompany } = await import("@/lib/actions/companies");
+    await expect(updateCompany(COMPANY_ID, { firmenname: "X" })).rejects.toThrow(/verantwortliche Person/);
+    expect(updateSingle).not.toHaveBeenCalled();
+  });
+
+  it("rejects unassigned company when not admin", async () => {
+    const updateSingle = vi.fn();
+    createServerSupabaseClient.mockResolvedValue({
+      rpc: vi.fn().mockResolvedValue({ data: false, error: null }),
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { user_id: null, firmenname: "Acme GmbH" },
+              error: null,
+            }),
+          })),
+        })),
+        update: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            select: vi.fn(() => ({
+              single: updateSingle,
+            })),
+          })),
+        })),
+      })),
+    } as never);
+
+    const { updateCompany } = await import("@/lib/actions/companies");
+    await expect(updateCompany(COMPANY_ID, { firmenname: "X" })).rejects.toThrow(/keine verantwortliche Person/);
+    expect(updateSingle).not.toHaveBeenCalled();
   });
 });

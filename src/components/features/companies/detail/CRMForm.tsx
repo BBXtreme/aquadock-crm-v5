@@ -54,10 +54,11 @@ const CRM_STATUS_VALUES = [
 
 interface Props {
   company: Company;
+  readOnly?: boolean;
   onSuccess: () => void;
 }
 
-export default function CRMForm({ company, onSuccess }: Props) {
+export default function CRMForm({ company, readOnly = false, onSuccess }: Props) {
   const t = useT("companies");
   const queryClient = useQueryClient();
 
@@ -79,6 +80,9 @@ export default function CRMForm({ company, onSuccess }: Props) {
   }, [company.status, company.value, company.notes, form]);
 
   const onSubmit = form.handleSubmit(async (data) => {
+    if (readOnly) {
+      return;
+    }
     try {
       const supabase = createClient();
       const { error } = await supabase.from("companies").update(data).eq("id", company.id);
@@ -101,7 +105,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("detailCrmLabelStatus")}</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value || ""}>
+              <Select onValueChange={field.onChange} value={field.value || ""} disabled={readOnly}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("detailCrmStatusPlaceholder")} />
@@ -129,6 +133,7 @@ export default function CRMForm({ company, onSuccess }: Props) {
                 <Input
                   type="number"
                   {...field}
+                  disabled={readOnly}
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
                 />
@@ -144,13 +149,13 @@ export default function CRMForm({ company, onSuccess }: Props) {
             <FormItem>
               <FormLabel>{t("detailCrmLabelNotes")}</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} disabled={readOnly} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">{t("detailCrmSaveButton")}</Button>
+        {readOnly ? null : <Button type="submit">{t("detailCrmSaveButton")}</Button>}
       </form>
     </Form>
   );

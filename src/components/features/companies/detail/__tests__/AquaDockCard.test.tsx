@@ -93,12 +93,12 @@ function mockCompany(overrides: Partial<Company> = {}): Company {
   };
 }
 
-async function renderCard(company: Company) {
+async function renderCard(company: Company, canEditCompany = true) {
   const { default: AquaDockCard } = await import("../AquaDockCard");
   return render(
     <NextIntlClientProvider locale="de" messages={deMessages}>
       <TooltipProvider>
-        <AquaDockCard company={company} />
+        <AquaDockCard company={company} canEditCompany={canEditCompany} />
       </TooltipProvider>
     </NextIntlClientProvider>,
   );
@@ -112,6 +112,16 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+});
+
+describe("AquaDockCard edit permissions", () => {
+  it("hides geocode and edit actions when canEditCompany is false", async () => {
+    await renderCard(mockCompany({ strasse: "X", plz: "1", stadt: "Y", lat: null, lon: null }), false);
+    expect(screen.queryByRole("button", { name: deMessages.companies.geocodeDetailFillLabel })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: deMessages.companies.dialogEditAquadockTitle }),
+    ).toBeNull();
+  });
 });
 
 describe("AquaDockCard coordinate display", () => {
@@ -319,6 +329,7 @@ describe("AquaDockCard geocode button", () => {
               lon: null,
             })}
             onCompanyUpdated={onCompanyUpdated}
+            canEditCompany
           />
         </TooltipProvider>
       </NextIntlClientProvider>,

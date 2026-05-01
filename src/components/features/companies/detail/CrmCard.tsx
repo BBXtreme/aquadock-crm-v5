@@ -7,9 +7,11 @@ import CRMForm from "./CRMForm";
 
 interface Props {
   company: Company;
+  canEditCompany: boolean;
+  onCompanyUpdated: () => void;
 }
 
-export default function CrmCard({ company }: Props) {
+export default function CrmCard({ company, canEditCompany, onCompanyUpdated }: Props) {
   const t = useT("companies");
   return (
     <Card>
@@ -24,9 +26,8 @@ export default function CrmCard({ company }: Props) {
       <CardContent>
         <CRMForm
           company={company}
-          onSuccess={() => {
-            /* parent invalidation handled in page.tsx */
-          }}
+          readOnly={!canEditCompany}
+          onSuccess={onCompanyUpdated}
         />
       </CardContent>
     </Card>

@@ -290,7 +290,7 @@ export default function CompanyEditForm({
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select customer type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {kundentypOptions.map((option) => (
@@ -312,9 +312,9 @@ export default function CompanyEditForm({
               <FormItem>
                 <FormLabel>Firmentyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select company type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {firmentypOptions.map((option) => (
@@ -440,7 +440,7 @@ export default function CompanyEditForm({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={LAND_SELECT_CLEAR_SENTINEL}>—</SelectItem>
@@ -481,9 +481,9 @@ export default function CompanyEditForm({
               <FormItem>
                 <FormLabel>Wassertyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                  <Select onValueChange={field.onChange} value={field.value || undefined}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select water type" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {wassertypOptions.map((option) => (
@@ -562,7 +562,7 @@ export default function CompanyEditForm({
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value ?? ""}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {statusOptions.map((option) => (
@@ -612,10 +612,12 @@ export default function CompanyEditForm({
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Cancel
+            {tCompanies("cancel")}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            {form.formState.isSubmitting
+              ? tCompanies("dialogFormSaving")
+              : tCompanies("dialogFormSave")}
           </Button>
         </div>
       </form>

@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
 import { buildCompanyLandSelectOptions, LAND_SELECT_CLEAR_SENTINEL } from "@/lib/countries/iso-land";
+import { useT } from "@/lib/i18n/use-translations";
 import { landFormSchema } from "@/lib/validations/company";
 import type { Company, CompanyUpdate } from "@/types/database.types";
 
@@ -45,6 +46,7 @@ export default function AdresseEditForm({
 }) {
   const queryClient = useQueryClient();
   const locale = useLocale();
+  const t = useT("companies");
   const distinctLandCodes = useDistinctCompanyLandCodes();
   const landSelectOptions = useMemo(
     () =>
@@ -181,7 +183,7 @@ export default function AdresseEditForm({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={LAND_SELECT_CLEAR_SENTINEL}>—</SelectItem>
@@ -201,10 +203,10 @@ export default function AdresseEditForm({
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            {form.formState.isSubmitting ? t("dialogFormSaving") : t("dialogFormSave")}
           </Button>
         </div>
       </form>

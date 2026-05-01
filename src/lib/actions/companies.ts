@@ -47,6 +47,29 @@ import type {
   TimelineEntryInsert,
 } from "@/types/database.types";
 
+/** Aligns with RLS `companies_update_owner_or_admin`: avoid PostgREST PGRST116 (0 rows) for clearer UX. */
+async function assertCanUpdateCompanyOrAdmin(
+  supabase: SupabaseClient,
+  actorId: string,
+  recordOwnerId: string | null,
+): Promise<void> {
+  const { data: isAdmin, error: rpcError } = await supabase.rpc("is_app_admin");
+  if (rpcError) throw handleSupabaseError(rpcError, "updateCompany");
+  if (isAdmin === true) {
+    return;
+  }
+  if (recordOwnerId == null || recordOwnerId === "") {
+    throw new Error(
+      "Keine Berechtigung: Diese Firma hat keine verantwortliche Person. Nur ein Administrator kann sie bearbeiten.",
+    );
+  }
+  if (recordOwnerId !== actorId) {
+    throw new Error(
+      "Keine Berechtigung: Nur die verantwortliche Person oder ein Administrator kann diese Firma bearbeiten.",
+    );
+  }
+}
+
 export type CompanyForOpenMap = Company & {
   contacts?: Contact[];
 };
@@ -399,12 +422,24 @@ export async function updateCompany(
   }
 
   const actor = await getCurrentUser();
-  const patch: CompanyUpdate =
-    actor != null ? { ...updates, updated_by: actor.id } : { ...updates };
+  if (actor == null) {
+    throw new Error("Unauthorized");
+  }
+
+  await assertCanUpdateCompanyOrAdmin(supabase, actor.id, priorRow.user_id);
+
+  const patch: CompanyUpdate = { ...updates, updated_by: actor.id };
 
   const { data, error } = await supabase.from("companies").update(patch).eq("id", id).select().single();
 
-  if (error) throw handleSupabaseError(error, "updateCompany");
+  if (error != null) {
+    if (typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "PGRST116") {
+      throw new Error(
+        "Die Aktualisierung hat keine Datenzeile geändert. Bitte Seite neu laden oder Administrator kontaktieren.",
+      );
+    }
+    throw handleSupabaseError(error, "updateCompany");
+  }
   const company = data as Company;
   if (shouldRegenerateCompanyEmbedding(updates)) {
     void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));

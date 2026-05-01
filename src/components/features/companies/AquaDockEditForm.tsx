@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateCompany } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
+import { useT } from "@/lib/i18n/use-translations";
 import type { Database } from "@/types/database.types";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -41,6 +42,7 @@ type AquaDockFormValues = z.infer<typeof aquadockSchema>;
 
 export default function AquaDockEditForm({ company, onSuccess }: { company: Company | null; onSuccess?: () => void }) {
   const queryClient = useQueryClient();
+  const t = useT("companies");
 
   // Live Overpass Validation State
   const [isValidating, setIsValidating] = useState(false);
@@ -184,9 +186,12 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
               <FormItem>
                 <FormLabel>Wassertyp</FormLabel>
                 <FormControl>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value ? field.value : undefined}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Wassertyp auswählen" />
+                      <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
                       {wassertypOptions.map((option) => (
@@ -316,10 +321,10 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
 
         <div className="flex justify-end gap-4 pt-6 border-t">
           <Button type="button" variant="outline" onClick={onSuccess}>
-            Abbrechen
+            {t("cancel")}
           </Button>
           <Button type="submit" disabled={updateMutation.isPending}>
-            {updateMutation.isPending ? "Wird gespeichert..." : "Änderungen speichern"}
+            {updateMutation.isPending ? t("dialogFormSaving") : t("dialogFormSave")}
           </Button>
         </div>
       </form>
