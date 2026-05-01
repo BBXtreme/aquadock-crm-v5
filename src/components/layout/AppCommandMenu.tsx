@@ -1,6 +1,6 @@
 "use client";
 
-import { Inbox, Settings, Sparkles, User } from "lucide-react";
+import { Inbox, ScrollText, Settings, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -162,13 +162,22 @@ export function AppCommandMenu({ open, onOpenChange }: AppCommandMenuProps) {
               {t("notificationsLinkAria")}
             </CommandItem>
             <CommandItem
-              value={`${tChangelog("commandPaletteLabel")} /changelog changelog neu release updates novosti`}
-              keywords={["changelog", "neu", "release", "updates", "novosti"]}
+              value={`${tChangelog("commandPaletteLabel")} /changelog changelog neu release updates novosti in-app änderungen promjene`}
+              keywords={[
+                "changelog",
+                "neu",
+                "release",
+                "updates",
+                "novosti",
+                "in-app",
+                "änderungen",
+                "promjene",
+              ]}
               onSelect={() => {
                 run("/changelog");
               }}
             >
-              <Sparkles className="text-muted-foreground" aria-hidden />
+              <ScrollText className="text-muted-foreground" aria-hidden />
               {tChangelog("commandPaletteLabel")}
             </CommandItem>
           </CommandGroup>

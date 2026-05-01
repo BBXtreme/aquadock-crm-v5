@@ -1334,7 +1334,7 @@
     "settingsCardTitle": "Novosti i promjene",
     "settingsCardDescription": "Pogledaj što je poboljšano u CRM-u.",
     "settingsLink": "Otvori dnevnik promjena",
-    "commandPaletteLabel": "Novosti",
+    "commandPaletteLabel": "Promjene u aplikaciji",
     "releasedOn": "Objavljeno {date}"
   },
   "feedback": {

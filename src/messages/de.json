@@ -1334,7 +1334,7 @@
     "settingsCardTitle": "Neuigkeiten & Änderungen",
     "settingsCardDescription": "Schau hier, was sich im CRM verbessert hat.",
     "settingsLink": "Zum Änderungsprotokoll",
-    "commandPaletteLabel": "Neuigkeiten",
+    "commandPaletteLabel": "In-App Änderungen",
     "releasedOn": "Veröffentlicht am {date}"
   },
   "feedback": {

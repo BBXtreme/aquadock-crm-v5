@@ -1334,7 +1334,7 @@
     "settingsCardTitle": "What’s new",
     "settingsCardDescription": "See what has improved in the CRM.",
     "settingsLink": "Open changelog",
-    "commandPaletteLabel": "What’s new",
+    "commandPaletteLabel": "In-app changes",
     "releasedOn": "Released on {date}"
   },
   "feedback": {
