@@ -53,45 +53,54 @@ export const TimelineLinkCombobox = React.forwardRef<HTMLDivElement, TimelineLin
 
     return (
       <div ref={ref} className="flex w-full min-w-0 gap-1">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={disabled}
-              aria-expanded={open}
-              className={cn("h-8 min-w-0 flex-1 justify-between gap-2 px-2.5 font-normal")}
-            >
-              <span className={cn("truncate", !displayLabel && "text-muted-foreground")}>
-                {displayLabel ?? placeholder}
-              </span>
-              <ChevronDownIcon className="size-4 shrink-0 opacity-60" aria-hidden />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-            <Command shouldFilter>
-              <CommandInput placeholder={searchPlaceholder} />
-              <CommandList>
-                <CommandEmpty>{emptyMessage}</CommandEmpty>
-                <CommandGroup>
-                  {items.map((item) => (
-                    <CommandItem
-                      key={item.id}
-                      value={item.id}
-                      keywords={item.keywords}
-                      onSelect={() => {
-                        onValueChange(item.id);
-                        setOpen(false);
-                      }}
-                    >
-                      {item.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+        <div className="min-w-0 flex-1">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={disabled}
+                aria-expanded={open}
+                className={cn(
+                  "h-8 w-full min-w-0 justify-between gap-2 overflow-hidden px-2.5 text-left font-normal whitespace-normal",
+                )}
+              >
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-left",
+                    !displayLabel && "text-muted-foreground",
+                  )}
+                >
+                  {displayLabel ?? placeholder}
+                </span>
+                <ChevronDownIcon className="size-4 shrink-0 opacity-60" aria-hidden />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+              <Command shouldFilter>
+                <CommandInput placeholder={searchPlaceholder} />
+                <CommandList>
+                  <CommandEmpty>{emptyMessage}</CommandEmpty>
+                  <CommandGroup>
+                    {items.map((item) => (
+                      <CommandItem
+                        key={item.id}
+                        value={item.id}
+                        keywords={item.keywords}
+                        onSelect={() => {
+                          onValueChange(item.id);
+                          setOpen(false);
+                        }}
+                      >
+                        {item.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
         {value ? (
           <Button
             type="button"
