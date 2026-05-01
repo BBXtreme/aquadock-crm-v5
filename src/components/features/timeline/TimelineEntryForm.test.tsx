@@ -38,7 +38,7 @@ describe("TimelineEntryForm", () => {
     await user.clear(titleInput);
     await user.type(titleInput, "Follow up");
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Create activity" }));
 
     expect(onSubmit).toHaveBeenCalled();
     const payload = onSubmit.mock.calls[0]?.[0];
@@ -72,7 +72,7 @@ describe("TimelineEntryForm", () => {
     await screen.findByPlaceholderText(/Search contacts/i);
     await user.click(screen.getByRole("option", { name: /Max Muster/i }));
 
-    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(screen.getByRole("button", { name: "Create activity" }));
 
     expect(onSubmit).toHaveBeenCalled();
     const payload = onSubmit.mock.calls[0]?.[0];

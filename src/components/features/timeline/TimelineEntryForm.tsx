@@ -307,7 +307,13 @@ export default function TimelineEntryForm({
             </Button>
           ) : null}
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("formSubmitting") : t("formSubmit")}
+            {isSubmitting
+              ? editEntry
+                ? t("formSubmitUpdating")
+                : t("formSubmitCreating")
+              : editEntry
+                ? t("formSubmitUpdate")
+                : t("formSubmitCreate")}
           </Button>
         </div>
       </form>

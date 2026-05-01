@@ -128,7 +128,7 @@ describe("CompanyCreateForm + companySchema", () => {
     expect(view.getByText("Kundentyp")).toBeInTheDocument();
     expect(view.getByText("Status")).toBeInTheDocument();
     expect(view.getByText("Strasse")).toBeInTheDocument();
-    expect(view.getByRole("button", { name: /Speichern/i })).toBeInTheDocument();
+    expect(view.getByRole("button", { name: /Unternehmen erstellen/i })).toBeInTheDocument();
   });
 
   it("submits valid data and calls createCompany with values compatible with toCompanyInsert", async () => {
@@ -141,7 +141,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.type(view.getByRole("textbox", { name: /^Plz$/i }), "27498");
     await user.type(view.getByRole("textbox", { name: /Stadt/i }), "Helgoland");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(mockedCreateCompany).toHaveBeenCalledTimes(1);
@@ -171,7 +171,7 @@ describe("CompanyCreateForm + companySchema", () => {
     const { container } = renderCompanyForm(<CompanyCreateForm />);
     const view = withinCompanyForm(container);
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Firmenname ist erforderlich")).toBeInTheDocument();
@@ -185,7 +185,7 @@ describe("CompanyCreateForm + companySchema", () => {
     const view = withinCompanyForm(container);
 
     await user.type(view.getByRole("textbox", { name: /Firmenname/i }), "   ");
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Firmenname ist erforderlich")).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.selectOptions(kundentypSelect, "hotel");
     await user.selectOptions(statusSelect, "kunde");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(mockedCreateCompany).toHaveBeenCalledTimes(1);
@@ -242,7 +242,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.type(view.getByRole("textbox", { name: /Firmenname/i }), "Valid Name GmbH");
     await user.type(view.getByRole("textbox", { name: /Website/i }), "not-a-valid-url");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Ungültige URL")).toBeInTheDocument();
@@ -258,7 +258,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.type(view.getByRole("textbox", { name: /Firmenname/i }), "Valid Name GmbH");
     await user.type(view.getByRole("textbox", { name: /^Osm$/i }), "bad-osm");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Ungültiges OSM Format")).toBeInTheDocument();
@@ -276,7 +276,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.clear(lat);
     await user.type(lat, "91");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Latitude muss zwischen -90 und 90 liegen")).toBeInTheDocument();
@@ -294,7 +294,7 @@ describe("CompanyCreateForm + companySchema", () => {
     await user.clear(lon);
     await user.type(lon, "200");
 
-    await user.click(view.getByRole("button", { name: /Speichern/i }));
+    await user.click(view.getByRole("button", { name: /Unternehmen erstellen/i }));
 
     await waitFor(() => {
       expect(view.getByText("Longitude muss zwischen -180 und 180 liegen")).toBeInTheDocument();
