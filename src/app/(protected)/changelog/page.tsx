@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Shield, Sparkles, Wrench, Zap } from "lucide-react";
+import { PlusCircle, Shield, Wrench, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageShell } from "@/components/ui/page-shell";
@@ -9,7 +9,7 @@ import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
 import type { AppLocale } from "@/lib/i18n/types";
 
 const TYPE_ICONS = {
-  feature: Sparkles,
+  feature: PlusCircle,
   improvement: Zap,
   fix: Wrench,
   security: Shield,
@@ -70,24 +70,40 @@ export default function ChangelogPage() {
         <p className="text-muted-foreground text-lg">{c.pageSubtitle}</p>
       </div>
 
-      <div className="relative mx-auto max-w-3xl border-l border-border pl-6">
-        {entries.map((release) => (
-          <section key={release.version} className="relative pb-12 last:pb-0">
-            <span
-              className="absolute top-1 -left-[calc(0.25rem+1px)] size-3 rounded-full border-2 border-background bg-primary"
-              aria-hidden
-            />
-            <div className="space-y-4">
-              <div>
-                <p className="text-muted-foreground text-sm font-medium">
+      <div className="mx-auto max-w-3xl">
+        {entries.map((release, index) => (
+          <section
+            key={release.version}
+            className="flex items-stretch gap-5 md:gap-8"
+          >
+            <div className="flex w-5 shrink-0 flex-col items-center self-stretch md:w-6">
+              <div
+                className="mt-2 size-3.5 rounded-full border-2 border-background bg-primary shadow-sm ring-4 ring-primary/15 md:size-4"
+                aria-hidden
+              />
+              {index < entries.length - 1 ? (
+                <div
+                  className="mt-5 w-px min-h-0 flex-1 bg-border"
+                  aria-hidden
+                />
+              ) : null}
+            </div>
+
+            <div
+              className={`min-w-0 flex-1 space-y-5 md:space-y-6 ${index < entries.length - 1 ? "pb-20 md:pb-28" : ""}`}
+            >
+              <div className="space-y-1.5">
+                <p className="text-muted-foreground text-sm font-medium leading-snug">
                   {c.releasedOn.replace("{date}", formatReleasedDateDisplay(release.releasedAt, locale))}
                 </p>
-                <h2 className="font-heading text-xl font-semibold text-foreground">{release.title}</h2>
+                <h2 className="font-heading text-xl font-semibold leading-snug text-foreground">
+                  {release.title}
+                </h2>
                 <p className="text-muted-foreground text-xs tabular-nums">v{release.version}</p>
               </div>
 
               <Card className="shadow-sm">
-                <CardContent className="space-y-4 pt-6">
+                <CardContent className="space-y-4 pt-6 md:pt-7">
                   {release.changes.map((change, changeIndex) => {
                     const Icon = TYPE_ICONS[change.type];
                     return (

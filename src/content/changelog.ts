@@ -35,19 +35,23 @@ const rawChangelogEntries: ChangelogRelease[] = [
   {
     version: "0.5.46",
     releasedAt: "2026-05-01",
-    title: "✨ Neu: Änderungen im Blick – weniger Überraschungen im Tagesgeschäft",
+    title: "🚀 Der neue In-App Changelog – Du siehst sofort, was sich verbessert hat",
     changes: [
       {
         type: "feature",
-        text: "In-App-Changelog: Sieh auf einen Blick, was neu ist und wie es Deinem Team an Liegeplatz, Rezeption oder Gastro Zeit spart.",
+        text: "Schöner, übersichtlicher Changelog mit allen Versionen und klaren Vorteilen für Deinen Alltag",
+      },
+      {
+        type: "feature",
+        text: "Intelligenter „Was ist neu?“-Spotlight – erscheint automatisch nach Versions-Updates und zeigt die wichtigsten Neuerungen",
       },
       {
         type: "improvement",
-        text: "Dashboard und Listen fühlen sich flotter an – weniger Warten zwischen Kundengespräch und nächstem Lead.",
+        text: "Direkter Zugriff über Sidebar, Command Palette (Cmd+K) und Einstellungen – immer nur einen Klick entfernt",
       },
       {
-        type: "fix",
-        text: "Zuverlässigere Sitzungen beim Wechseln zwischen Geräten – ideal für Teams zwischen Büro, Steg und Außendienst.",
+        type: "improvement",
+        text: "Semver-Vergleich und persistenter „Gesehen“-Status für eine saubere, unaufdringliche Nutzung",
       },
     ],
   },
