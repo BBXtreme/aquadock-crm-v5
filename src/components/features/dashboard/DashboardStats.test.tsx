@@ -12,55 +12,38 @@ import { Suspense } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardClient from "@/components/features/dashboard/DashboardClient";
 import { StatCard } from "@/components/ui/StatCard";
-import { createClient } from "@/lib/supabase/browser";
+import type { DashboardKpis } from "@/lib/services/dashboard-kpis";
 import { formatCurrency, safeDisplay } from "@/lib/utils/data-format";
-
-vi.mock("@/lib/supabase/browser", () => ({
-  createClient: vi.fn(),
-}));
 
 vi.mock("@/lib/i18n/use-translations", () => ({
   useT: () => dashboardTranslator,
   useNumberLocaleTag: () => "en-US",
 }));
 
-const mockedCreateClient = vi.mocked(createClient);
+const mockFetch = vi.hoisted(() => vi.fn());
 
-const recentIso = new Date().toISOString();
+/** Matches the legacy fixture totals: 4 companies, 3 contacts, 2 timeline, 2 leads, 1 won, €3,845 pipeline. */
+const initialKpisFixture: DashboardKpis = {
+  totalCompanies: 4,
+  totalContacts: 3,
+  totalActivities: 2,
+  companiesInPeriod: 4,
+  totalValue: 3845,
+  leads: 2,
+  won: 1,
+  period: "30d",
+};
 
-const companiesFixture = [
-  { status: "lead", value: 1_000, created_at: recentIso },
-  { status: "lead", value: 2_345, created_at: recentIso },
-  { status: "gewonnen", value: 500, created_at: recentIso },
-  { status: "kunde", value: null, created_at: recentIso },
-];
-
-const contactsFixture = [{ created_at: recentIso }, { created_at: recentIso }, { created_at: recentIso }];
-
-const timelineFixture = [{ created_at: recentIso }, { created_at: recentIso }];
-
-function tableData(table: string): unknown[] {
-  if (table === "companies") {
-    return companiesFixture;
-  }
-  if (table === "contacts") {
-    return contactsFixture;
-  }
-  if (table === "timeline") {
-    return timelineFixture;
-  }
-  return [];
-}
-
-function supabaseClientFromData(): ReturnType<typeof createClient> {
-  return {
-    from: (table: string) => ({
-      select: () => ({
-        is: async () => ({ data: tableData(table), error: null }),
-      }),
-    }),
-  } as unknown as ReturnType<typeof createClient>;
-}
+const emptyKpis: DashboardKpis = {
+  totalCompanies: 0,
+  totalContacts: 0,
+  totalActivities: 0,
+  companiesInPeriod: 0,
+  totalValue: 0,
+  leads: 0,
+  won: 0,
+  period: "30d",
+};
 
 function dashboardTranslator(key: string, values?: { count?: number }): string {
   const dict: Record<string, string> = {
@@ -98,13 +81,13 @@ function createTestQueryClient() {
   });
 }
 
-function renderDashboard() {
+function renderDashboard(initialKpis: DashboardKpis = initialKpisFixture) {
   const client = createTestQueryClient();
   return render(
     <QueryClientProvider client={client}>
       <div data-testid="dashboard-kpi-root">
         <Suspense fallback={<div data-testid="dashboard-suspense-fallback">Loading dashboard…</div>}>
-          <DashboardClient />
+          <DashboardClient initialKpis={initialKpis} />
         </Suspense>
       </div>
     </QueryClientProvider>,
@@ -208,7 +191,21 @@ describe("DashboardClient KPI statistics", () => {
     vi.clearAllMocks();
     ensureRadixSelectEnvironmentPolyfills();
     globalThis.ResizeObserver = TestResizeObserver;
-    mockedCreateClient.mockImplementation(() => supabaseClientFromData());
+    mockFetch.mockReset();
+    globalThis.fetch = mockFetch as unknown as typeof fetch;
+    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      const period = url.includes("period=7d") ? "7d" : url.includes("period=90d") ? "90d" : "30d";
+      const payload: DashboardKpis = {
+        ...initialKpisFixture,
+        period,
+        companiesInPeriod: period === "7d" ? 1 : period === "90d" ? 4 : 4,
+      };
+      return {
+        ok: true,
+        json: async () => payload,
+      } as Response;
+    });
   });
 
   it("renders total companies, active leads, won deals, and pipeline value with en-US number formatting", async () => {
@@ -219,7 +216,7 @@ describe("DashboardClient KPI statistics", () => {
       expect(within(root).getByText("Total companies")).toBeInTheDocument();
     });
 
-    const totalValue = companiesFixture.reduce((sum, c) => sum + (c.value ?? 0), 0);
+    const totalValue = initialKpisFixture.totalValue;
     const pipelineLabel = `€${totalValue.toLocaleString("en-US")}`;
 
     const companiesCard = within(root).getByText("Total companies").closest('[data-slot="card"]');
@@ -258,19 +255,8 @@ describe("DashboardClient KPI statistics", () => {
     expect(within(root).getAllByText("—").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("handles empty Supabase rows with zero KPI values and €0 pipeline", async () => {
-    mockedCreateClient.mockImplementation(
-      () =>
-        ({
-          from: () => ({
-            select: () => ({
-              is: async () => ({ data: [], error: null }),
-            }),
-          }),
-        }) as unknown as ReturnType<typeof createClient>,
-    );
-
-    renderDashboard();
+  it("handles empty KPI payload with zero values and €0 pipeline", async () => {
+    renderDashboard(emptyKpis);
 
     const root = kpiRoot();
     await waitFor(() => expect(within(root).getByText("Total companies")).toBeInTheDocument());
@@ -279,27 +265,42 @@ describe("DashboardClient KPI statistics", () => {
     expect(within(root).getByText("€0")).toBeInTheDocument();
   });
 
-  it("shows Suspense fallback until the stats query resolves", async () => {
+  it("shows Suspense fallback while a period refetch is in flight", async () => {
     let releaseGate: (() => void) | undefined;
     const gate = new Promise<void>((resolve) => {
       releaseGate = resolve;
     });
 
-    mockedCreateClient.mockImplementation(
-      () =>
-        ({
-          from: (table: string) => ({
-            select: () => ({
-              is: async () => {
-                await gate;
-                return { data: tableData(table), error: null };
-              },
-            }),
-          }),
-        }) as unknown as ReturnType<typeof createClient>,
-    );
+    mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes("period=7d")) {
+        await gate;
+        return {
+          ok: true,
+          json: async () => ({ ...initialKpisFixture, period: "7d" as const, companiesInPeriod: 1 }),
+        } as Response;
+      }
+      return {
+        ok: true,
+        json: async () => ({ ...initialKpisFixture, period: "30d" }),
+      } as Response;
+    });
 
+    const user = userEvent.setup();
     renderDashboard();
+
+    const root = kpiRoot();
+    await waitFor(() => expect(within(root).getByText("Total companies")).toBeInTheDocument());
+
+    const periodTrigger = getPeriodSelectTrigger(root);
+    await user.click(periodTrigger);
+    await waitFor(() => {
+      expect(screen.getByRole("option", { name: /Last 7 days/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      await user.click(screen.getByRole("option", { name: /Last 7 days/i }));
+    });
 
     expect(screen.getByTestId("dashboard-suspense-fallback")).toBeInTheDocument();
 

@@ -741,9 +741,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      companies_filter_buckets: { Args: never; Returns: Json }
       create_tournament_for_user: {
         Args: { p_name: string; p_starts_on: string }
         Returns: string
+      }
+      get_crm_user_context: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          pending_status: string
+          profile_exists: boolean
+          profile_role: string
+        }[]
+      }
+      get_dashboard_kpis: {
+        Args: { period_days?: number }
+        Returns: {
+          companies_in_period: number
+          leads: number
+          total_activities: number
+          total_companies: number
+          total_contacts: number
+          total_value: number
+          won: number
+        }[]
       }
       hybrid_company_search: {
         Args: {
@@ -762,6 +785,7 @@ export type Database = {
           vector_rank: number
         }[]
       }
+      is_app_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

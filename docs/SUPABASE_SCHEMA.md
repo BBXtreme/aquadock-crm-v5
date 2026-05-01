@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-04-30  
+**Last audited**: 2026-05-01  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`) and backup items in section 9 and deployment docs.
@@ -283,6 +283,8 @@ Do this next on your **staging project** or **DB branch**:
 2. [`src/sql/core-crm-rls-collaborative.sql`](../src/sql/core-crm-rls-collaborative.sql) — `companies`, `contacts`, `reminders`, `timeline`, `email_log`, `email_templates`; drops legacy `dev_allow_all_inserts` and replaces older policy names where present.
 3. [`src/sql/rls-profiles-settings-consolidate.sql`](../src/sql/rls-profiles-settings-consolidate.sql) — consolidated `profiles` / `user_settings` policies (fewer duplicate permissive policies).
 4. Comments chain: [`src/sql/comments-rls.sql`](../src/sql/comments-rls.sql) → [`src/sql/comments-trash-alignment.sql`](../src/sql/comments-trash-alignment.sql) → [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql).
+5. *(Optional but recommended)* [`src/sql/rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) — revoke/limit `EXECUTE` on internal helpers; lock down `search_path` where missing (see subsection *Post-deploy hardening*).
+6. *(Performance)* [`src/sql/rls-planner-subselect-wrap.sql`](../src/sql/rls-planner-subselect-wrap.sql) — scalar-subquery wrap for `auth.uid()` / `is_app_admin()` in policies (same semantics; details in *Order summary* step 6).
 
 ### Order summary
 
@@ -293,10 +295,29 @@ Staging or DB branch — **same sequence on production** after staging is green:
 3. `rls-profiles-settings-consolidate.sql`
 4. Comments chain: `comments-rls.sql` → `comments-trash-alignment.sql` → `comments-attachments-delete-policy.sql`
 5. *(Optional but recommended)* `rls-post-deploy-hardening.sql` — see Post-deploy hardening below
+6. *(Performance)* [`src/sql/rls-planner-subselect-wrap.sql`](../src/sql/rls-planner-subselect-wrap.sql) — rewrites core CRM + comments + profiles policies so `auth.uid()` and `public.is_app_admin()` appear as `(SELECT …)` scalar subqueries (planner-friendly; behavior unchanged). Safe to apply **after** the collaborative RLS scripts above. On hosted Supabase this may be recorded as several migrations (`rls_planner_subselect_wrap_core_crm`, `…_reminders_timeline_email`, `…_profiles_settings`, `…_comments_attachments`); the repo keeps one transactional SQL file as the canonical definition.
 
 **Historical:** [`src/sql/rls-setup.sql`](../src/sql/rls-setup.sql) is **superseded** (owner-only prototype); production uses `core-crm-rls-collaborative.sql`.
 
 **Post-deploy hardening:** [`src/sql/rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) — revoke `EXECUTE` on internal `SECURITY DEFINER` functions from `anon`/`authenticated`; set `search_path` where missing (adjust signatures to match `pg_proc`). Run **after** the main RLS scripts succeed on an environment: optionally on **staging** first to prove `REVOKE`/`ALTER FUNCTION` statements match your catalog; **then on production** immediately after the production SQL rollout (same day), once smoke checks pass.
+
+### Database linter snapshot (2026-05-01)
+
+Run **Supabase → Database → Advisors** regularly after DDL changes. Snapshot from the linked CRM project:
+
+**Security (representative)**
+
+- **ERROR — RLS disabled but policies exist:** `feedback`, `pending_users`, `user_notifications` — enable RLS and reconcile policies, or drop stray policies. Track against your rollout checklist ([remediation](https://supabase.com/docs/guides/database/database-linter?lint=0007_policy_exists_rls_disabled)).
+- **WARN — `SECURITY DEFINER` callable broadly:** several helpers (`get_crm_user_context`, `is_app_admin`, triggers, etc.) — align with [`rls-post-deploy-hardening.sql`](../src/sql/rls-post-deploy-hardening.sql) and role grants ([anon](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [authenticated](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable)).
+- **WARN — function `search_path` mutable:** e.g. `update_updated_at_column`, `hybrid_company_search`, comment triggers — fix with `SET search_path` per function ([guide](https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable)).
+- **WARN — Auth:** leaked-password protection, MFA breadth ([password security](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), [MFA](https://supabase.com/docs/guides/auth/auth-mfa)).
+
+**Performance (representative)**
+
+- **INFO — unindexed foreign keys:** common on audit columns (`*_created_by`, `*_updated_by`, …) and `comments.entity_id` — add covering indexes when advisors show sustained impact ([lint](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys)).
+- **INFO — unused indexes:** treat as **cold-cache / low-traffic** signal until measured after realistic load; do not drop without `EXPLAIN`/`pg_stat_user_indexes` review ([lint](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index)).
+
+**Hot-path `EXPLAIN`:** repeatable templates for dashboard RPCs live in [`docs/perf/hot-paths-explain.md`](perf/hot-paths-explain.md).
 
 ### Staging → production rollout
 

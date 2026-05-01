@@ -9,17 +9,21 @@ import DashboardClient from "@/components/features/dashboard/DashboardClient";
 import { DashboardContentSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
+import { loadDashboardKpis } from "@/lib/services/dashboard-kpis";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { DashboardPageHeader } from "./DashboardPageHeader";
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
+  const initialKpis = await loadDashboardKpis(supabase, "30d");
 
   return (
     <PageShell>
       <DashboardPageHeader displayName={user.display_name} />
 
       <Suspense fallback={<DashboardContentSkeleton />}>
-        <DashboardClient />
+        <DashboardClient initialKpis={initialKpis} />
       </Suspense>
     </PageShell>
   );
