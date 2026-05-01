@@ -83,7 +83,7 @@ Example explicit production entries (only if you prefer path-level entries inste
 - `https://<your-production-host>/access-denied`
 - `https://<your-production-host>/access-denied/**`
 
-- [ ] Unauthenticated users cannot access protected routes (`/dashboard`, `/companies`, `/contacts`, `/reminders`, `/timeline`, `/mass-email`, `/openmap`, `/settings`, `/profile`, `/brevo`, etc.).  
+- [ ] Unauthenticated users cannot access protected routes (`/dashboard`, `/companies`, `/contacts`, `/reminders`, `/timeline`, `/mass-email`, `/openmap`, `/settings`, `/profile`, `/admin`, `/brevo`, etc.).  
 
 ---
 

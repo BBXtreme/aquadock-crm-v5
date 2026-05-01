@@ -18,6 +18,7 @@ vi.mock("@/lib/actions/comments", () => ({
 
 import { registerCommentAttachment } from "@/lib/actions/comments";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { COMMENT_ATTACHMENT_MAX_BYTES } from "@/lib/services/comment-attachments";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { POST } from "./route";
 
@@ -68,6 +69,93 @@ describe("POST /api/comment-attachments/upload", () => {
 
     expect(res.status).toBe(401);
     expect(createAdminClientMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when commentId is missing", async () => {
+    const form = new FormData();
+    form.set("companyId", "00000000-0000-4000-8000-000000000001");
+    form.set("file", new File([new Uint8Array([1])], "a.txt"));
+
+    const res = await POST(
+      new Request("http://localhost/api/comment-attachments/upload", {
+        method: "POST",
+        body: form,
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("commentId");
+  });
+
+  it("returns 400 when multipart body cannot be parsed", async () => {
+    const res = await POST(
+      new Request("http://localhost/api/comment-attachments/upload", {
+        method: "POST",
+        headers: { "content-type": "multipart/form-data; boundary=----x" },
+        body: "not-valid-multipart",
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("multipart");
+  });
+
+  it("returns 400 when file field is not a File", async () => {
+    const form = new FormData();
+    form.set("companyId", "00000000-0000-4000-8000-000000000001");
+    form.set("commentId", "00000000-0000-4000-8000-000000000002");
+    form.set("file", "plain string");
+
+    const res = await POST(
+      new Request("http://localhost/api/comment-attachments/upload", {
+        method: "POST",
+        body: form,
+      }),
+    );
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain("file");
+  });
+
+  it("returns 413 when file exceeds max size", async () => {
+    const big = new Uint8Array(COMMENT_ATTACHMENT_MAX_BYTES + 1);
+    const form = new FormData();
+    form.set("companyId", "00000000-0000-4000-8000-000000000001");
+    form.set("commentId", "00000000-0000-4000-8000-000000000002");
+    form.set("file", new File([big], "huge.bin"));
+
+    const res = await POST(
+      new Request("http://localhost/api/comment-attachments/upload", {
+        method: "POST",
+        body: form,
+      }),
+    );
+
+    expect(res.status).toBe(413);
+  });
+
+  it("returns 500 when storage upload fails", async () => {
+    mockStorageUpload.mockResolvedValue({ error: { message: "bucket missing" } });
+
+    const form = new FormData();
+    form.set("companyId", "00000000-0000-4000-8000-000000000001");
+    form.set("commentId", "00000000-0000-4000-8000-000000000002");
+    form.set("file", new File([new Uint8Array([1])], "a.txt", { type: "text/plain" }));
+
+    const res = await POST(
+      new Request("http://localhost/api/comment-attachments/upload", {
+        method: "POST",
+        body: form,
+      }),
+    );
+
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body.error).toContain("bucket");
+    expect(registerCommentAttachmentMock).not.toHaveBeenCalled();
   });
 
   it("returns 400 when companyId is missing", async () => {

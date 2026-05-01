@@ -49,10 +49,10 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
       const formData = new FormData();
       formData.append("display_name", data.display_name);
       await updateDisplayName(formData);
-      toast.success("Display name updated successfully");
+      toast.success(t("toastDisplayNameUpdated"));
       form.reset({ display_name: data.display_name });
     } catch (_error) {
-      toast.error("Failed to update display name");
+      toast.error(t("toastDisplayNameUpdateFailed"));
     } finally {
       setIsPending(false);
     }
@@ -66,7 +66,7 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
           name="display_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium">
+              <FormLabel className="text-sm font-medium leading-none">
                 {t("displayNameLabel")}
               </FormLabel>
               <FormControl>

@@ -4,7 +4,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Settings, Sun, User } from "lucide-react";
+import { CalendarDays, Clock, Inbox, LogOut, Monitor, Moon, Settings, Shield, Sun, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -236,7 +236,11 @@ export default function Header({ user }: HeaderProps) {
             {t("commandPaletteSearchButtonTooltip")}
           </TooltipContent>
         </Tooltip>
-        <AppCommandMenu open={commandOpen} onOpenChange={setCommandOpen} />
+        <AppCommandMenu
+          open={commandOpen}
+          onOpenChange={setCommandOpen}
+          isAdmin={user.role === "admin"}
+        />
 
         <FeedbackButton userId={user.id} />
 
@@ -303,6 +307,14 @@ export default function Header({ user }: HeaderProps) {
                   {t("userMenuProfile")}
                 </Link>
               </DropdownMenuItem>
+              {user.role === "admin" ? (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/users">
+                    <Shield className="mr-2 h-4 w-4" />
+                    {t("adminArea")}
+                  </Link>
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <Settings className="mr-2 h-4 w-4" />

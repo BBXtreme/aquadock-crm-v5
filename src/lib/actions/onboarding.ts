@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { revalidateAdminUserManagement } from "@/lib/next-cache/revalidate-admin-user-management";
 import {
   sendNotificationHtmlEmail,
 } from "@/lib/services/smtp";
@@ -159,14 +159,14 @@ export async function submitAccessRequest(
       await sendNotificationHtmlEmail({
         to: recipients,
         subject: `[AquaDock CRM] New access request: ${input.email}`,
-        html: `<p>A new user requested access: <strong>${reqEmailHtml}</strong>.</p><p><a href="${origin}/profile">Review in User Management</a></p>`,
+        html: `<p>A new user requested access: <strong>${reqEmailHtml}</strong>.</p><p><a href="${origin}/admin/users">Review in User Management</a></p>`,
       });
     } catch (e) {
       console.error("[onboarding] admin notify email failed:", e);
     }
   }
 
-  revalidatePath("/profile");
+  revalidateAdminUserManagement();
   return { ok: true };
 }
 
@@ -365,7 +365,7 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
     admin,
   );
 
-  revalidatePath("/profile");
+  revalidateAdminUserManagement();
 }
 
 /** Soft block: mark declined only — do not delete `auth.users`. */
@@ -454,5 +454,5 @@ export async function declinePendingUser(formData: FormData): Promise<void> {
     admin,
   );
 
-  revalidatePath("/profile");
+  revalidateAdminUserManagement();
 }

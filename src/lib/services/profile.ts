@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { revalidateAdminUserManagement } from "@/lib/next-cache/revalidate-admin-user-management";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveAuthRedirectUrl } from "@/lib/utils/auth-recovery-redirect";
@@ -78,7 +79,7 @@ export async function updateUserDisplayName(formData: FormData) {
 
   if (error) throw new Error("Failed to update display name");
 
-  revalidatePath('/profile');
+  revalidateAdminUserManagement();
 }
 
 // Server Action - Change User Role (Admin only)
@@ -113,7 +114,7 @@ export async function changeUserRole(formData: FormData) {
 
   if (error) throw new Error("Failed to update user role");
 
-  revalidatePath('/profile');
+  revalidateAdminUserManagement();
 }
 
 export type TriggerPasswordResetResult = {
@@ -174,7 +175,7 @@ export async function triggerPasswordReset(
     throw new Error("Failed to send password reset email");
   }
 
-  revalidatePath('/profile');
+  revalidateAdminUserManagement();
 
   return { redirectTo };
 }
@@ -213,7 +214,7 @@ export async function deleteUser(formData: FormData) {
 
   if (authError) throw authError;
 
-  revalidatePath('/profile');
+  revalidateAdminUserManagement();
 }
 
 // Server Action - Create New User (Admin only)
@@ -294,7 +295,7 @@ export async function createUser(formData: FormData) {
     console.log("Password reset email sent successfully");
   }
 
-  revalidatePath('/profile');
+  revalidateAdminUserManagement();
 }
 
 // Server Action - Sign Out

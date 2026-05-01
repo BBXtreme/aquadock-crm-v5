@@ -4,11 +4,13 @@ import { NOTIFICATION_SETTING_KEYS, NOTIFICATION_UI } from "@/lib/constants/noti
 import { silenceHandleSupabaseErrorConsole } from "@/test/silence-handle-supabase-error-console";
 import type { Database } from "@/types/database.types";
 import {
+  fetchAdminInAppGlobalFeedEnabled,
   fetchNotificationPreferences,
   fetchTrashBinPreference,
   saveNotificationPreferencesFromInput,
   saveTrashBinPreferenceFromInput,
   TRASH_BIN_UI,
+  upsertAdminInAppGlobalFeedEnabled,
   upsertNotificationPreferences,
   upsertTrashBinPreference,
 } from "./user-settings";
@@ -20,6 +22,15 @@ function notificationPrefsChain(result: { data: unknown; error: unknown }) {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockResolvedValue(result),
+  };
+  return { from: vi.fn(() => chain) } as unknown as Client;
+}
+
+function adminFeedChain(result: { data: unknown; error: unknown }) {
+  const chain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue(result),
   };
   return { from: vi.fn(() => chain) } as unknown as Client;
 }
@@ -150,5 +161,46 @@ describe("user-settings (DB helpers)", () => {
     const out = await saveTrashBinPreferenceFromInput(client, "u1", { trashBinEnabled: false });
     expect(out).toEqual({ trashBinEnabled: false });
     expect(upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetchAdminInAppGlobalFeedEnabled throws on error", async () => {
+    const client = adminFeedChain({ data: null, error: { message: "nope" } });
+    await expect(fetchAdminInAppGlobalFeedEnabled(client, "u1")).rejects.toThrow("Database error");
+  });
+
+  it("fetchAdminInAppGlobalFeedEnabled defaults when row missing", async () => {
+    const client = adminFeedChain({ data: null, error: null });
+    await expect(fetchAdminInAppGlobalFeedEnabled(client, "u1")).resolves.toBe(false);
+  });
+
+  it("fetchAdminInAppGlobalFeedEnabled reads true string/boolean", async () => {
+    const clientTrue = adminFeedChain({ data: { value: "true" }, error: null });
+    await expect(fetchAdminInAppGlobalFeedEnabled(clientTrue, "u1")).resolves.toBe(true);
+    const clientBool = adminFeedChain({ data: { value: true }, error: null });
+    await expect(fetchAdminInAppGlobalFeedEnabled(clientBool, "u1")).resolves.toBe(true);
+  });
+
+  it("upsertAdminInAppGlobalFeedEnabled throws on error", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: { message: "fail" } });
+    const client = { from: vi.fn(() => ({ upsert })) } as unknown as Client;
+    await expect(upsertAdminInAppGlobalFeedEnabled(client, "u1", true)).rejects.toThrow("Database error");
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: "u1",
+        key: NOTIFICATION_SETTING_KEYS.adminGlobalInAppFeed,
+        value: true,
+      }),
+      { onConflict: "user_id,key" },
+    );
+  });
+
+  it("upsertAdminInAppGlobalFeedEnabled succeeds", async () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const client = { from: vi.fn(() => ({ upsert })) } as unknown as Client;
+    await expect(upsertAdminInAppGlobalFeedEnabled(client, "u1", false)).resolves.toBeUndefined();
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ value: false }),
+      { onConflict: "user_id,key" },
+    );
   });
 });
