@@ -110,7 +110,7 @@
     "@changesets/cli": "^2.30.0",
     "@next/env": "16.2.2",
     "@playwright/test": "^1.59.1",
-    "@tailwindcss/postcss": "4.2.2",
+    "@tailwindcss/postcss": "4.2.4",
     "@tanstack/react-query-devtools": "^5.96.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
