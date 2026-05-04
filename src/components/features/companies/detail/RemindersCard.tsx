@@ -4,8 +4,8 @@ import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-q
 import { Bell, Edit, Plus, Trash } from "lucide-react";
 import { Suspense, useState } from "react";
 import { toast } from "sonner";
-import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
-import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
+import ReminderCreateForm from "@/components/features/reminders/ReminderCreateForm";
+import ReminderEditForm from "@/components/features/reminders/ReminderEditForm";
 import {
   AlertDialog,
   AlertDialogAction,

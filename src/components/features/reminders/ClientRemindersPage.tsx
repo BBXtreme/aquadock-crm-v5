@@ -8,8 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import ReminderCreateForm from "@/components/features/reminder/ReminderCreateForm";
-import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
+import ReminderCreateForm from "@/components/features/reminders/ReminderCreateForm";
+import ReminderEditForm from "@/components/features/reminders/ReminderEditForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

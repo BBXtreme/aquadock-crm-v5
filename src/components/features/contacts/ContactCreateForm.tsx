@@ -10,7 +10,7 @@ import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
+import { ReminderCompanyCombobox } from "@/components/features/reminders/ReminderCompanyCombobox";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";

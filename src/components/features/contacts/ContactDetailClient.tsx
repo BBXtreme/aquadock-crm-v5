@@ -15,7 +15,7 @@ import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
-import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
+import { ReminderCompanyCombobox } from "@/components/features/reminders/ReminderCompanyCombobox";
 import {
   AlertDialog,
   AlertDialogAction,

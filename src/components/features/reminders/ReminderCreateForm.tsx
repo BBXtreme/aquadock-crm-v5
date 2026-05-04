@@ -1,28 +1,35 @@
-// src/components/features/reminder/ReminderEditForm.tsx
-// This component renders a form for editing company data (Firmendaten). It uses react-hook-form with zod for validation, and integrates with the Supabase backend to update company records. It also handles form state and displays success/error toasts.
+// src/components/features/reminders/ReminderCreateForm.tsx
+// This component renders a form for creating reminders. It uses react-hook-form with zod for validation, and integrates with the Supabase backend to create reminder records. It also handles form state and displays success/error toasts.
 
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { type Control, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod";
+import { z } from "zod";
 
-import { ReminderCompanyCombobox } from "@/components/features/reminder/ReminderCompanyCombobox";
+import { ReminderCompanyCombobox } from "@/components/features/reminders/ReminderCompanyCombobox";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { createReminderAction } from "@/lib/actions/create-reminder-action";
 import { priorityOptions, reminderStatusOptions } from "@/lib/constants/company-options";
 import { useT } from "@/lib/i18n/use-translations";
-import { updateReminder } from "@/lib/services/reminders";
 import { createClient } from "@/lib/supabase/browser";
-import { reminderSchema, toReminderUpdate } from "@/lib/validations/reminder";
-import type { Database, } from "@/types/database.types";
+import type { Database } from "@/types/database.types";
+
+const reminderSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  company_id: z.string().min(1, "Company is required"),
+  due_date: z.string().min(1, "Due date is required"),
+  priority: z.string().optional(),
+  status: z.string().optional(),
+  assigned_to: z.string().nullable().optional(),
+  description: z.string().optional(),
+});
 
 type ReminderFormValues = z.infer<typeof reminderSchema>;
 
@@ -37,67 +44,17 @@ const STATUS_LABEL_KEYS = {
   closed: "statusClosed",
 } as const;
 
-export default function ReminderEditForm({
-  reminder,
+export default function ReminderCreateForm({
   onSuccess,
   preselectedCompanyId,
-  user,
   onCancel,
 }: {
-  reminder?: Database["public"]["Tables"]["reminders"]["Row"] | null;
   onSuccess?: () => void;
   preselectedCompanyId?: string;
-  user?: { id: string } | null;
   onCancel?: () => void;
 }) {
   const t = useT("reminders");
   const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: async (data: ReminderFormValues) => {
-      if (reminder) {
-        return updateReminder(reminder.id, { ...toReminderUpdate(data), user_id: user?.id ?? null }, createClient());
-      }
-      return createReminderAction(data);
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["reminders"] });
-      if (data?.company_id) {
-        queryClient.invalidateQueries({ queryKey: ["reminders", data.company_id] });
-      }
-      toast.success(reminder ? t("toastUpdatedSuccess") : t("toastCreated"));
-      form.reset();
-      onSuccess?.();
-    },
-    onError: (err) => toast.error(t("toastOperationFailed"), { description: err.message }),
-  });
-
-  const form = useForm<ReminderFormValues>({
-    resolver: zodResolver(reminderSchema),
-    defaultValues: {
-      title: reminder?.title || "",
-      company_id: reminder?.company_id || preselectedCompanyId || "",
-      due_date: reminder?.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-      priority: (reminder?.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
-      status: (reminder?.status as "open" | "closed" | null) || "open",
-      assigned_to: reminder?.assigned_to || null,
-      description: reminder?.description || "",
-    },
-  });
-
-  useEffect(() => {
-    if (reminder) {
-      form.reset({
-        title: reminder.title || "",
-        company_id: reminder.company_id || "",
-        due_date: reminder.due_date ? new Date(reminder.due_date).toISOString().slice(0, 16) : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-        priority: (reminder.priority as "hoch" | "normal" | "niedrig" | null) || "normal",
-        status: (reminder.status as "open" | "closed" | null) || "open",
-        assigned_to: reminder.assigned_to || null,
-        description: reminder.description || "",
-      });
-    }
-  }, [reminder, form]);
 
   const { data: companies = [] } = useQuery({
     queryKey: ["companies"],
@@ -123,11 +80,35 @@ export default function ReminderEditForm({
     },
   });
 
+  const form = useForm<ReminderFormValues>({
+    resolver: zodResolver(reminderSchema),
+    defaultValues: {
+      title: "",
+      company_id: preselectedCompanyId || "",
+      due_date: "",
+      priority: "normal",
+      status: "open",
+      assigned_to: null,
+      description: "",
+    },
+  });
+
   useEffect(() => {
-    if (preselectedCompanyId && companies.length > 0 && !reminder) {
+    if (preselectedCompanyId) {
       form.setValue("company_id", preselectedCompanyId);
     }
-  }, [companies, preselectedCompanyId, form, reminder]);
+  }, [preselectedCompanyId, form]);
+
+  const mutation = useMutation<Database["public"]["Tables"]["reminders"]["Row"], Error, ReminderFormValues>({
+    mutationFn: (data: ReminderFormValues) => createReminderAction(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reminders"] });
+      toast.success(t("toastCreated"));
+      form.reset();
+      onSuccess?.();
+    },
+    onError: (err) => toast.error(t("toastCreateFailed"), { description: err.message }),
+  });
 
   const onSubmit = form.handleSubmit((data) => mutation.mutate(data));
 
@@ -135,7 +116,7 @@ export default function ReminderEditForm({
     <Form {...form}>
       <form onSubmit={onSubmit} className="space-y-4">
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
@@ -148,7 +129,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="company_id"
           render={({ field }) => (
             <FormItem>
@@ -169,7 +150,7 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="due_date"
           render={({ field }) => (
             <FormItem>
@@ -182,12 +163,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="priority"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formLabelPriority")}</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("formPlaceholderPriority")} />
@@ -209,12 +190,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="status"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formLabelStatus")}</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("formPlaceholderStatus")} />
@@ -236,15 +217,12 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="assigned_to"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formLabelAssignedTo")}</FormLabel>
-              <Select
-                onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)}
-                value={field.value ?? "unassigned"}
-              >
+              <Select onValueChange={(value) => field.onChange(value === "unassigned" ? null : value)} value={field.value ?? "unassigned"}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder={t("formPlaceholderAssignee")} />
@@ -264,13 +242,13 @@ export default function ReminderEditForm({
           )}
         />
         <FormField
-          control={form.control as Control<ReminderFormValues>}
+          control={form.control}
           name="description"
           render={({ field }) => (
             <FormItem>
               <FormLabel>{t("formLabelDescription")}</FormLabel>
               <FormControl>
-                <Textarea {...field} value={field.value ?? ""} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -283,13 +261,7 @@ export default function ReminderEditForm({
             </Button>
           ) : null}
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending
-              ? reminder
-                ? t("formSubmitUpdating")
-                : t("formSubmitCreating")
-              : reminder
-                ? t("formSubmitUpdate")
-                : t("formSubmitCreate")}
+            {mutation.isPending ? t("formSubmitCreating") : t("formSubmitCreate")}
           </Button>
         </div>
       </form>

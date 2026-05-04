@@ -48,7 +48,7 @@ export default defineConfig({
         "src/components/tables/TimelineTable.tsx",
         "src/components/features/timeline/TimelineEntryForm.tsx",
         "src/components/features/timeline/TimelineLinkCombobox.tsx",
-        "src/components/features/reminder/ReminderEditForm.tsx",
+        "src/components/features/reminders/ReminderEditForm.tsx",
         "src/components/ui/dialog.tsx",
         "src/components/ui/dropdown-menu.tsx",
         "src/components/ui/data-table.tsx",
@@ -69,7 +69,7 @@ export default defineConfig({
         "src/components/features/companies/AquaDockEditForm.tsx",
         "src/components/features/companies/CompanyEditForm.tsx",
         "src/components/features/contacts/ContactEditForm.tsx",
-        "src/components/features/reminder/ReminderCreateForm.tsx",
+        "src/components/features/reminders/ReminderCreateForm.tsx",
         // TanStack column factory + cell renderers: hundreds of branches; list behavior covered via E2E and API tests.
         "src/components/tables/CompaniesTable.tsx",
         // Static CSV documentation grid (no business logic); not worth a dedicated unit harness for coverage.

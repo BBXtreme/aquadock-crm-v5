@@ -1,5 +1,5 @@
 /**
- * Integration tests for {@link ../reminder/ReminderEditForm.tsx}: `useForm` + `zodResolver(reminderSchema)` from `@/lib/validations/reminder` and `toReminderInsert` / `toReminderUpdate`.
+ * Integration tests for {@link ./ReminderEditForm.tsx}: `useForm` + `zodResolver(reminderSchema)` from `@/lib/validations/reminder` and `toReminderInsert` / `toReminderUpdate`.
  * `ReminderCreateForm` uses a duplicate inline schema; this file targets the edit/create form that shares the canonical resolver and insert mapping.
  *
  * Mocks: `next/navigation` and a per-file `@/lib/supabase/browser` chain (companies/profiles queries + reminders insert). `sonner` toast.
@@ -17,7 +17,7 @@ import {
   toReminderInsert,
 } from "@/lib/validations/reminder";
 import enMessages from "@/messages/en.json";
-import ReminderEditForm from "../reminder/ReminderEditForm";
+import ReminderEditForm from "./ReminderEditForm";
 
 const { mockCreateClient, lastReminderInsert, COMPANY_ID, mockCreateReminderAction } = vi.hoisted(() => {
   const id = "550e8400-e29b-41d4-a716-446655440000";
