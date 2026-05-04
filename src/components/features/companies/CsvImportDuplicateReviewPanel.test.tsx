@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CsvImportDuplicateRowAnalysis } from "@/lib/companies/csv-import-dedupe";
 import type { ParsedCompanyRow } from "@/lib/utils/csv-import";
 import deMessages from "@/messages/de.json";
-import { CsvImportDuplicateReviewPanel } from "./CsvImportDuplicateReviewPanel";
+import { CsvImportDuplicateReviewPanel } from "./CSVImportDuplicateReviewPanel";
 
 const EXISTING = {
   id: "20000000-0000-4000-8000-000000000001",

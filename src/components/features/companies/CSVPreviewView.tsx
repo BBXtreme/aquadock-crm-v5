@@ -21,8 +21,8 @@ import {
   csvImportTabPanelClassName,
   csvImportTabPanelScrollClassName,
 } from "@/components/features/companies/CSVFieldGuide";
+import { CsvImportDuplicateReviewPanel } from "@/components/features/companies/CSVImportDuplicateReviewPanel";
 import { CsvImportAiEnrichmentReviewModal } from "@/components/features/companies/CsvImportAiEnrichmentReviewModal";
-import { CsvImportDuplicateReviewPanel } from "@/components/features/companies/CsvImportDuplicateReviewPanel";
 import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
