@@ -219,8 +219,8 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                     min="-90"
                     max="90"
                     {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -240,8 +240,8 @@ export default function AquaDockEditForm({ company, onSuccess }: { company: Comp
                     min="-180"
                     max="180"
                     {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />

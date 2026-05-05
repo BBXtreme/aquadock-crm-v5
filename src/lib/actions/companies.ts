@@ -3,7 +3,7 @@
 
 "use server";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
@@ -1008,6 +1008,68 @@ export async function geocodeCompanyBatch(input: unknown): Promise<GeocodeCompan
   }
 
   return { ok: true, previewOnly: true, results };
+}
+
+const geocodeOsmBatchInputSchema = z
+  .object({
+    items: z.array(z.object({ id: z.string(), osm: z.string() })).min(1).max(100),
+  })
+  .strict();
+
+export type GeocodeOsmBatchResult =
+  | { ok: true; updated: number }
+  | { ok: false; error: string };
+
+export async function geocodeOsmBatch(input: unknown): Promise<GeocodeOsmBatchResult> {
+  const parsed = geocodeOsmBatchInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: "Invalid input for OSM geocoding." };
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    return { ok: false, error: 'Missing required environment variables' };
+  }
+
+  const _supabase = createClient(supabaseUrl, supabaseKey);
+
+  let updated = 0;
+
+  for (const item of parsed.data.items) {
+    try {
+      const query = `[out:json][timeout:10];${item.osm};out center;`;
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: `data=${encodeURIComponent(query)}`,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      });
+
+      if (!res.ok) throw new Error("Overpass API error");
+
+      const data = await res.json();
+
+      if (data.elements && data.elements.length > 0) {
+        const element = data.elements[0];
+        const lat = element.center?.lat ?? element.lat;
+        const lon = element.center?.lon ?? element.lon;
+
+        if (lat && lon) {
+          await updateCompany(item.id, { lat: Number(lat), lon: Number(lon) });
+          updated++;
+        }
+      }
+
+      // Delay to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    } catch (_error) {
+      // Skip failed ones, continue
+    }
+  }
+
+  revalidatePath("/companies");
+  return { ok: true, updated };
 }
 
 const applyGeocodeItemSchema = z

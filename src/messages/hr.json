@@ -839,7 +839,18 @@
     "importFailedTitle": "Uvoz \"{name}\" nije uspio",
     "importNotes": "Uvezeno iz OSM-a {date}",
     "osmImportTimelineTitle": "Uvoz iz OpenStreetMapa",
-    "osmImportTimelineContent": "Uvezeno iz OpenStreetMapa. Ime, adresa i koordinate preuzeti.\n\nOSM: {osmUrl}"
+    "osmImportTimelineContent": "Uvezeno iz OpenStreetMapa. Ime, adresa i koordinate preuzeti.\n\nOSM: {osmUrl}",
+    "sidebarTitle": "Tvrtke bez lokacije",
+    "sidebarSubtitle": "{count} tvrtki bez lokacije • {eligible} spremno za geokodiranje",
+    "locationNotSet": "Lokacija nije postavljena • Klikni za uređivanje",
+    "allHaveCoordinates": "Sve tvrtke imaju važeće koordinate.",
+    "geocodeEligibleButton": "Geokodiraj {count} tvrtki",
+    "geocoding": "Geokodiranje…",
+    "geocodedSuccess": "{count} koordinata uspješno primijenjeno",
+    "noNewCoordinates": "Nije pronađena nova koordinata",
+    "bulkGeocodingFailed": "Geokodiranje nije uspjelo – provjerite adresu",
+    "noValidEntriesToApply": "Nema važećih unosa za primjenu",
+    "errorApplyingCoordinates": "Greška pri primjeni koordinata"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

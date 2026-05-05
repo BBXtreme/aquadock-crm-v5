@@ -1,4 +1,4 @@
-// Zod schemas for AI company enrichment — strict subset checks against companySchema.shape.*.
+// Zod schemas for AI company enrichment — strict subset checks against companyObjectSchema.shape.*.
 
 import { z } from "zod";
 import {
@@ -7,7 +7,7 @@ import {
   normalizeWassertypForEnrichment,
 } from "@/lib/ai/company-enrichment-closed-enums";
 import { normalizeLandInput } from "@/lib/countries/iso-land";
-import { type CompanyForm, companySchema } from "@/lib/validations/company";
+import { type CompanyForm, companyObjectSchema } from "@/lib/validations/company";
 
 function emptyStringToNull(val: string | null | undefined): string | null | undefined {
   return val === "" ? null : val;
@@ -177,7 +177,7 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
   }
 
   if (key === "wasserdistanz") {
-    const parsed = companySchema.shape.wasserdistanz.safeParse(raw);
+    const parsed = companyObjectSchema.shape.wasserdistanz.safeParse(raw);
     if (!parsed.success) return { ok: false };
     return { ok: true, value: parsed.data as CompanyForm[K] };
   }
@@ -190,7 +190,7 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
     if (normalized === null) {
       return { ok: false };
     }
-    const parsed = companySchema.shape[key].safeParse(normalized);
+    const parsed = companyObjectSchema.shape[key].safeParse(normalized);
     if (!parsed.success) return { ok: false };
     return { ok: true, value: parsed.data as CompanyForm[K] };
   }
@@ -204,7 +204,7 @@ function validateSuggestionValue<K extends EnrichmentFieldKey>(
     return { ok: false };
   }
 
-  const shape = companySchema.shape[key];
+  const shape = companyObjectSchema.shape[key];
   const parsed = shape.safeParse(value);
   if (!parsed.success) return { ok: false };
   return { ok: true, value: parsed.data as CompanyForm[K] };

@@ -16,19 +16,29 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { toast } from "sonner";
+import { geocodeCompanyBatch } from "@/lib/actions/companies";
 
 import "leaflet/dist/leaflet.css";
 import "./leaflet-popup-theme.css";
 
-import { Building, Info, Loader2, MapPin, RefreshCw, X } from "lucide-react";
-
+import { AlertTriangle, Building, Info, Loader2, Locate, MapPin, RefreshCw, X } from "lucide-react";
+import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import { Button } from "@/components/ui/button";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
-import type { CompanyForOpenMap } from "@/lib/actions/companies";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import type { CompanyForOpenMap, GeocodeBatchPreviewRow } from "@/lib/actions/companies";
+import { applyApprovedGeocodes } from "@/lib/actions/companies";
 import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
 import { resolveOpenmapUserPreferences } from "@/lib/constants/openmap-user-settings";
 import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
@@ -37,7 +47,7 @@ import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provi
 import { loadMapSettings } from "@/lib/services/map-settings";
 import { fetchOpenmapUserPreferenceRows } from "@/lib/services/openmap-user-preferences";
 import { cn } from "@/lib/utils";
-import { isWgs84Degrees, toFiniteLatLon } from "@/lib/utils/geo";
+import { isValidCoordinate, isWgs84Degrees, toFiniteLatLon } from "@/lib/utils/geo";
 import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
@@ -347,6 +357,10 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
   const [hasCentered, setHasCentered] = useState(false);
+  const [showInvalidSidebar, setShowInvalidSidebar] = useState(false);
+  const [isGeocoding, startGeocoding] = useTransition();
+  const [geocodePreviewRows, setGeocodePreviewRows] = useState<GeocodeBatchPreviewRow[]>([]);
+  const [geocodeModalOpen, setGeocodeModalOpen] = useState(false);
   const [googleSession, setGoogleSession] = useState<string | null>(null);
   const googleTilesCacheRef = useRef<{ cacheKey: string; session: string } | null>(null);
   const googleSessionRequestEpochRef = useRef(0);
@@ -470,9 +484,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     let query = supabase
       .from("companies")
       .select("*")
-      .is("deleted_at", null)
-      .not("lat", "is", null)
-      .not("lon", "is", null);
+      .is("deleted_at", null);
 
     query = query.order("firmenname", { ascending: true });
 
@@ -719,12 +731,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   );
 
   const validCompanies = useMemo(() => {
-    return companies.filter((c) => {
-      const lat = toFiniteLatLon(c.lat);
-      const lon = toFiniteLatLon(c.lon);
-      return lat !== null && lon !== null && isWgs84Degrees(lat, lon);
-    });
+    return companies.filter((c) => isValidCoordinate(c.lat, c.lon));
   }, [companies]);
+
+  const invalidCompanies = useMemo(() => {
+    return companies.filter((c) => !isValidCoordinate(c.lat, c.lon));
+  }, [companies]);
+
+  const eligibleCompanies = useMemo(() => {
+    return invalidCompanies.filter((c) => c.stadt && (c.strasse || c.plz));
+  }, [invalidCompanies]);
 
   const resetView = useCallback(() => {
     const map = mapRef.current;
@@ -854,6 +870,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </Button>
 
         <Button
+          variant={showInvalidSidebar ? "default" : "secondary"}
+          size="icon"
+          onClick={() => setShowInvalidSidebar(!showInvalidSidebar)}
+          className="bg-card border shadow-md"
+          title="Show companies without location"
+          type="button"
+        >
+          <AlertTriangle className="h-4 w-4 text-foreground" />
+        </Button>
+
+        <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
@@ -863,6 +890,146 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
           <Info className="h-4 w-4 text-foreground" />
         </Button>
       </div>
+
+      <Sheet open={showInvalidSidebar} onOpenChange={setShowInvalidSidebar}>
+        <SheetContent side="left" className="w-[90vw] max-w-80 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b">
+              <SheetTitle>{t("sidebarTitle")}</SheetTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("sidebarSubtitle", { count: invalidCompanies.length, eligible: eligibleCompanies.length })}
+              </p>
+          </SheetHeader>
+
+          {invalidCompanies.length > 0 ? (
+            <ScrollArea className="flex-1">
+              <div className="divide-y">
+                {invalidCompanies.map((company) => {
+                  const isEligible = eligibleCompanies.some(e => e.id === company.id);
+                  return (
+                    <a
+                      key={company.id}
+                      href={`/companies/${company.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium">{company.firmenname}</div>
+                        {isEligible && <Locate className="h-3 w-3 text-green-500" aria-label="Eligible for geocoding" />}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{t("locationNotSet")}</div>
+                    </a>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+              {t("allHaveCoordinates")}
+            </div>
+          )}
+
+          {eligibleCompanies.length > 0 && (
+            <div className="p-4 border-t">
+              <Button
+                onClick={() => startGeocoding(async () => {
+                  const chunkSize = 50;
+                  const chunks = [];
+                  for (let i = 0; i < eligibleCompanies.length; i += chunkSize) {
+                    chunks.push(eligibleCompanies.slice(i, i + chunkSize));
+                  }
+
+                  const allResults: GeocodeBatchPreviewRow[] = [];
+                  let hadError = false;
+
+                  for (const chunk of chunks) {
+                    const result = await geocodeCompanyBatch({
+                      items: chunk.map(c => ({
+                        rowId: c.id,
+                        companyId: c.id,
+                        firmenname: c.firmenname,
+                        strasse: c.strasse || null,
+                        stadt: c.stadt || null,
+                        plz: c.plz || null,
+                        land: c.land || null,
+                      }))
+                    });
+
+                    if (!result.ok) {
+                      hadError = true;
+                      toast.error(result.error || t("bulkGeocodingFailed"));
+                      break;
+                    }
+
+                    allResults.push(...result.results);
+
+                    if (chunks.length > 1) {
+                      await new Promise(res => setTimeout(res, 800));
+                    }
+                  }
+
+                  if (!hadError && allResults.length > 0) {
+                    setGeocodePreviewRows(allResults);
+                    setGeocodeModalOpen(true);
+                    setShowInvalidSidebar(false);
+                  } else if (!hadError) {
+                    toast.info(t("noNewCoordinates"));
+                  }
+                })}
+                disabled={isGeocoding}
+                className="w-full"
+              >
+                {isGeocoding ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Locate className="h-4 w-4 mr-2" />
+                )}
+                {isGeocoding ? t("geocoding") : t("geocodeEligibleButton", { count: eligibleCompanies.length })}
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <GeocodeReviewModal
+        open={geocodeModalOpen}
+        onOpenChange={setGeocodeModalOpen}
+        rows={geocodePreviewRows}
+        isApplying={false}
+        onApplySelected={async (selectedRowIds) => {
+          try {
+            const selectedRows = geocodePreviewRows.filter(r => selectedRowIds.includes(r.rowId));
+
+            const applyItems = selectedRows
+              .filter(row => row.companyId && row.suggestedLat !== null && row.suggestedLon !== null)
+              .map(row => ({
+                companyId: row.companyId as string,
+                suggestedLat: row.suggestedLat as number,
+                suggestedLon: row.suggestedLon as number,
+              }));
+
+            if (applyItems.length === 0) {
+              toast.error(t("noValidEntriesToApply"));
+              return;
+            }
+
+            const applyRes = await applyApprovedGeocodes({ items: applyItems });
+            
+            if (!applyRes.ok) {
+              toast.error(applyRes.error || t("errorApplyingCoordinates"));
+              return;
+            }
+
+            const appliedCount = applyRes.results.filter(r => r.ok).length;
+            toast.success(t("geocodedSuccess", { count: appliedCount }));
+            setGeocodeModalOpen(false);
+            setGeocodePreviewRows([]);
+            window.location.reload();
+          } catch (_error) {
+            toast.error(t("errorApplyingCoordinates"));
+          }
+        }}
+      />
 
       {showLegend && (
         <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">

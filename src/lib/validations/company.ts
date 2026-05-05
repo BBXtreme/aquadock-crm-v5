@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 import { normalizeLandInput } from "@/lib/countries/iso-land";
+import { isValidCoordinate } from "@/lib/utils/geo";
 import type { CompanyInsert, CompanyUpdate } from "@/types/database.types";
 
 export const landFormSchema = z
@@ -32,7 +33,7 @@ export const landFormSchema = z
     return normalized.ok ? normalized.code : null;
   });
 
-export const companySchema = z.object({
+export const companyObjectSchema = z.object({
   firmenname: z
     .string()
     .trim()
@@ -100,6 +101,16 @@ export const companySchema = z.object({
   value: z.number().nullable().optional(),
   notes: z.string().trim().max(2000, "Notizen dürfen maximal 2000 Zeichen lang sein").nullable().optional().transform(emptyStringToNull),
 }).strict();
+
+export const companySchema = companyObjectSchema.superRefine((data, ctx) => {
+  if (!isValidCoordinate(data.lat, data.lon)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Coordinates are invalid or missing - please enter valid location or use geocoding.",
+      path: ["lat"],
+    });
+  }
+});
 
 export type CompanyFormValues = z.infer<typeof companySchema>;
 

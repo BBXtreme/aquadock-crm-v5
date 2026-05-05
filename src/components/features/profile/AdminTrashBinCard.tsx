@@ -37,6 +37,7 @@ import {
   type AdminTrashedContact,
   type AdminTrashedReminder,
   type AdminTrashedTimeline,
+  type AdminTrashListPayload,
   bulkHardDeleteComments,
   bulkHardDeleteCompanies,
   bulkHardDeleteContacts,
@@ -138,19 +139,14 @@ export default function AdminTrashBinCard() {
 
   const trashEnabled = trashPref?.trashBinEnabled ?? TRASH_BIN_DEFAULT_ENABLED;
 
-  const { data: trashRows, isLoading: rowsLoading } = useQuery({
+  const { data: trashRows, isLoading: rowsLoading, isFetching: trashFetching } = useQuery({
     queryKey: ["admin-trash-rows"],
     enabled: trashEnabled,
     queryFn: () => listAdminTrashRows(),
   });
 
-  const invalidateTrash = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["admin-trash-rows"] });
-    void queryClient.invalidateQueries({ queryKey: ["companies"] });
-    void queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    void queryClient.invalidateQueries({ queryKey: ["reminders"] });
-    void queryClient.invalidateQueries({ queryKey: ["timeline"] });
-    void queryClient.invalidateQueries({ queryKey: ["comments"] });
+  const invalidateTrash = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["admin-trash-rows"] });
   }, [queryClient]);
 
   const restoreMutation = useMutation({
@@ -163,12 +159,34 @@ export default function AdminTrashBinCard() {
       else if (kind === "timeline") await bulkRestoreTimelineEntries(ids);
       else await bulkRestoreComments(ids);
     },
-    onSuccess: () => {
-      invalidateTrash();
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-trash-rows"] });
+      const previous = queryClient.getQueryData<AdminTrashListPayload>(["admin-trash-rows"]);
+      if (previous) {
+        const { kind, ids } = payload;
+        const idSet = new Set(ids);
+        const next: AdminTrashListPayload = {
+          ...previous,
+          companies: kind === "companies" ? previous.companies.filter((r: TrashedCompany) => !idSet.has(r.id)) : previous.companies,
+          contacts: kind === "contacts" ? previous.contacts.filter((r: TrashedContact) => !idSet.has(r.id)) : previous.contacts,
+          reminders: kind === "reminders" ? previous.reminders.filter((r: TrashedReminder) => !idSet.has(r.id)) : previous.reminders,
+          timeline: kind === "timeline" ? previous.timeline.filter((r: TrashedTimeline) => !idSet.has(r.id)) : previous.timeline,
+          comments: kind === "comments" ? previous.comments.filter((r: TrashedComment) => !idSet.has(r.id)) : previous.comments,
+        };
+        queryClient.setQueryData(["admin-trash-rows"], next);
+      }
+      setRowSelection({});
+      return { previous };
+    },
+    onSuccess: async () => {
+      await invalidateTrash();
       setRowSelection({});
       toast.success(t("trashToastRestored"));
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["admin-trash-rows"], context.previous);
+      }
       const message = err instanceof Error ? err.message : t("trashActionError");
       toast.error(t("trashActionError"), { description: message });
     },
@@ -184,12 +202,34 @@ export default function AdminTrashBinCard() {
       else if (kind === "timeline") await bulkHardDeleteTimelineEntries(ids);
       else await bulkHardDeleteComments(ids);
     },
-    onSuccess: () => {
-      invalidateTrash();
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: ["admin-trash-rows"] });
+      const previous = queryClient.getQueryData<AdminTrashListPayload>(["admin-trash-rows"]);
+      if (previous) {
+        const { kind, ids } = payload;
+        const idSet = new Set(ids);
+        const next: AdminTrashListPayload = {
+          ...previous,
+          companies: kind === "companies" ? previous.companies.filter((r: TrashedCompany) => !idSet.has(r.id)) : previous.companies,
+          contacts: kind === "contacts" ? previous.contacts.filter((r: TrashedContact) => !idSet.has(r.id)) : previous.contacts,
+          reminders: kind === "reminders" ? previous.reminders.filter((r: TrashedReminder) => !idSet.has(r.id)) : previous.reminders,
+          timeline: kind === "timeline" ? previous.timeline.filter((r: TrashedTimeline) => !idSet.has(r.id)) : previous.timeline,
+          comments: kind === "comments" ? previous.comments.filter((r: TrashedComment) => !idSet.has(r.id)) : previous.comments,
+        };
+        queryClient.setQueryData(["admin-trash-rows"], next);
+      }
+      setRowSelection({});
+      return { previous };
+    },
+    onSuccess: async () => {
+      await invalidateTrash();
       setRowSelection({});
       toast.success(t("trashToastHardDeleted"));
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _payload, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["admin-trash-rows"], context.previous);
+      }
       const message = err instanceof Error ? err.message : t("trashActionError");
       toast.error(t("trashActionError"), { description: message });
     },
@@ -542,7 +582,8 @@ export default function AdminTrashBinCard() {
   const selectedIds = activeTable.getFilteredSelectedRowModel().rows.map((r) => r.original.id);
   const selectedCount = selectedIds.length;
 
-  const isLoading = prefLoading || (trashEnabled && rowsLoading);
+  const isMutating = restoreMutation.isPending || hardDeleteMutation.isPending;
+  const isLoading = prefLoading || (trashEnabled && (rowsLoading || trashFetching)) || isMutating;
 
   return (
     <Card className="shadow-sm">
@@ -609,7 +650,12 @@ export default function AdminTrashBinCard() {
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>{t("trashHardDelete")}</AlertDialogTitle>
-                    <AlertDialogDescription>{t("trashConfirmHard")}</AlertDialogDescription>
+                    <AlertDialogDescription>
+                      {t("trashConfirmHard")}
+                      {tab === "companies" && selectedCount > 0
+                        ? ` (${selectedCount} companies and all related contacts, reminders & timeline entries will be permanently removed.)`
+                        : ""}
+                    </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel type="button">{t("cancel")}</AlertDialogCancel>

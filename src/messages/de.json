@@ -839,7 +839,18 @@
     "importFailedTitle": "Import von \"{name}\" fehlgeschlagen",
     "importNotes": "Importiert aus OSM am {date}",
     "osmImportTimelineTitle": "OpenStreetMap-Import",
-    "osmImportTimelineContent": "Aus OpenStreetMap importiert. Name, Adresse und Koordinaten übernommen.\n\nOSM: {osmUrl}"
+    "osmImportTimelineContent": "Aus OpenStreetMap importiert. Name, Adresse und Koordinaten übernommen.\n\nOSM: {osmUrl}",
+    "sidebarTitle": "Unternehmen ohne Standort",
+    "sidebarSubtitle": "{count} Firmen ohne Standort • {eligible} geocodierbar",
+    "locationNotSet": "Standort nicht gesetzt • Zum Bearbeiten klicken",
+    "allHaveCoordinates": "Alle Unternehmen haben gültige Koordinaten.",
+    "geocodeEligibleButton": "{count} geocodierbare Firmen geocodieren",
+    "geocoding": "Wird geocodiert…",
+    "geocodedSuccess": "{count} Koordinaten erfolgreich übernommen",
+    "noNewCoordinates": "Keine neuen Koordinaten gefunden",
+    "bulkGeocodingFailed": "Geocodierung fehlgeschlagen – Adressdaten prüfen",
+    "noValidEntriesToApply": "Keine gültigen Einträge zum Übernehmen",
+    "errorApplyingCoordinates": "Fehler beim Übernehmen der Koordinaten"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

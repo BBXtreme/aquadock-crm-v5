@@ -6,7 +6,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { type Control, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { AIEnrichButton } from "@/components/features/companies/ai-enrichment/AIEnrichButton";
@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { updateCompanyWithOwner } from "@/lib/actions/companies";
+import { geocodeCompanyBatch, updateCompanyWithOwner } from "@/lib/actions/companies";
 import { wassertypOptions } from "@/lib/constants";
 import { firmentypOptions, kundentypOptions, statusOptions } from "@/lib/constants/company-options";
 import { buildCompanyLandSelectOptions, LAND_SELECT_CLEAR_SENTINEL } from "@/lib/countries/iso-land";
@@ -135,6 +135,7 @@ export default function CompanyEditForm({
   const [localAiModalOpen, setLocalAiModalOpen] = useState(false);
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(() => company?.user_id ?? null);
   const [syncContactOwners, setSyncContactOwners] = useState(false);
+  const [isGeocoding, startGeocoding] = useTransition();
   const aiEnrichViaParent = onRequestAiEnrich !== undefined;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: One-shot merge when parent bumps `aiPrefill.version` only.
@@ -511,8 +512,8 @@ export default function CompanyEditForm({
                     min="-90"
                     max="90"
                     {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
@@ -532,14 +533,56 @@ export default function CompanyEditForm({
                     min="-180"
                     max="180"
                     {...field}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : null)}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {form.watch('lat') === 0 && form.watch('lon') === 0 && (
+            <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded border">
+              Coordinates appear to be placeholder values (0,0). Please enter accurate location or use geocoding from address.
+            </div>
+          )}
+
+          {(form.watch('stadt') && (form.watch('strasse') || form.watch('plz'))) && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => startGeocoding(async () => {
+                const result = await geocodeCompanyBatch({
+                  items: [{
+                    id: company?.id || '',
+                    strasse: (form.watch('strasse') as string) || '',
+                    stadt: (form.watch('stadt') as string) || '',
+                    plz: (form.watch('plz') as string) || '',
+                    bundesland: (form.watch('bundesland') as string) || '',
+                    land: (form.watch('land') as string) || '',
+                  }]
+                });
+                if (result.ok && result.results.length > 0) {
+                  const row = result.results[0];
+                  if (row?.ok && row.suggestedLat !== null && row.suggestedLon !== null) {
+                    form.setValue('lat', row.suggestedLat);
+                    form.setValue('lon', row.suggestedLon);
+                    toast.success("Coordinates updated from address");
+                  } else {
+                    toast.error("Geocoding failed - check address");
+                  }
+                } else {
+                  toast.error("Geocoding failed - check address");
+                }
+              })}
+              disabled={isGeocoding}
+              className="mt-2"
+            >
+              {isGeocoding ? "Geocoding..." : "Geocode from address"}
+            </Button>
+          )}
+
           <FormField
             control={form.control as Control<CompanyForm>}
             name="osm"

@@ -34,6 +34,29 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.48",
+    releasedAt: "2026-05-05",
+    title: "📍 Sidebar für ortslose Firmen & Geocoding-Verbesserungen",
+    changes: [
+      {
+        type: "feature",
+        text: "Sidebar für Unternehmen ohne Standort – schnell zugreifen, auch wenn die Adresse noch fehlt.",
+      },
+      {
+        type: "improvement",
+        text: "Geocoding-Verbesserungen in Formularen – präzisere Koordinaten für bessere Kartendarstellung.",
+      },
+      {
+        type: "improvement",
+        text: "Datenbereinigungs-Migrationen – saubere Datenbank für stabilere Abläufe.",
+      },
+      {
+        type: "security",
+        text: "Code-Sicherheitsverbesserungen – robusterer Code gegen potenzielle Probleme.",
+      },
+    ],
+  },
+  {
     version: "0.5.47",
     releasedAt: "2026-05-01",
     title: "✨ Verwaltung mit eigener Adresse & Profil zum Durchatmen",
