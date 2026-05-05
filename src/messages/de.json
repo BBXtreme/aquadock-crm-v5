@@ -797,7 +797,7 @@
     "titleFitAllCompanies": "Alle Firmen anzeigen",
     "titleClearCacheReload": "Cache leeren und POIs neu laden",
     "titleRefreshVisibleArea": "Sichtbares Gebiet aktualisieren",
-    "legendTitle": "Status-Legende",
+    "legendTitle": "Legende",
     "legendCloseAria": "Legende schließen",
     "googleNoApiKeyTitle": "Google-Karten: Kein API-Schlüssel",
     "googleNoApiKeyDescription": "Unter Einstellungen einen Schlüssel mit freigeschalteter Map Tiles API hinterlegen.",

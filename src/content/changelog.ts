@@ -40,6 +40,10 @@ const rawChangelogEntries: ChangelogRelease[] = [
     changes: [
       {
         type: "feature",
+        text: "OpenMap: Beim Klick auf „In OpenMap anzeigen“ aus der Firmendetailseite wird der jeweilige Marker jetzt elegant hervorgehoben – größer, mit sanftem Glow und 2,8-Sekunden-Pulse. Das Popup öffnet sich automatisch, und ein kleiner Fokus-Chip zeigt den Firmennamen. Der Marker wird nie geclustert und bleibt immer sichtbar.",
+      },
+      {
+        type: "feature",
         text: "Neue Sidebar: Siehst sofort, welche Firmen noch keinen Standort haben. Mit einem Klick öffnest du die Detailansicht in einem neuen Tab.",
       },
       {
@@ -55,8 +59,8 @@ const rawChangelogEntries: ChangelogRelease[] = [
         text: "Professionelles Design: Die Sidebar verwendet jetzt das bewährte Sheet-System – flüssige Animationen, perfektes Verhalten auf Mobilgeräten und volle Tastatursteuerung.",
       },
       {
-        type: "improvement",
-        text: "Mehrsprachigkeit: Alle neuen Texte sind in Deutsch, Englisch und Kroatisch verfügbar.",
+        type: "feature",
+        text: "Professionelle Kartensymbole: Firmen-Marker zeigen jetzt sowohl Kundentyp (farbiger Ring) als auch Kundenstatus (kleiner Buchstabe) in einem eleganten, mehrschichtigen Design – sofort erkennbar, ohne visuellen Overload.",
       },
     ],
   },

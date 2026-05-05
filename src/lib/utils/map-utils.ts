@@ -8,7 +8,10 @@
 import L from "leaflet";
 
 import { poiCategories } from "@/lib/constants/map-poi-config";
-import { statusColors } from "@/lib/constants/map-status-colors";
+import {
+  kundentypColors,
+  statusColors,
+} from "@/lib/constants/map-status-colors";
 import { OVERPASS_ENDPOINTS } from "@/lib/constants/overpass-endpoints";
 
 // ─────────────────────────────────────────────────────────────
@@ -31,6 +34,127 @@ export const getStatusIcon = (status?: string) => {
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -16],
+  });
+};
+
+export const getHighlightedStatusIcon = (status?: string, isDarkMode = false) => {
+  const color = statusColors[status?.toLowerCase() || "lead"] || statusColors.lead;
+  const ringColor = isDarkMode ? "#3b82f6" : "#2563eb";
+
+  return L.divIcon({
+    className: "custom-marker custom-marker--highlight",
+    html: `<div class="highlight-inner" style="background-color:${color};width:40px;height:40px;border-radius:50%;border:4px solid white;box-shadow:0 0 0 6px ${ringColor}30,0 4px 12px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:16px;">${(status?.charAt(0) || "?").toUpperCase()}</div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
+  });
+};
+
+/** Status letter(s) — first letter, or two letters when first letter would collide (exported for legend). */
+export const statusLetterMap: Record<string, string> = {
+  lead: "N", // Neu
+  interessant: "I",
+  qualifiziert: "Q",
+  akquise: "Ak",
+  angebot: "G",
+  gewonnen: "W",
+  verloren: "V",
+  kunde: "K",
+  partner: "P",
+  inaktiv: "—",
+};
+
+/**
+ * Professional dual-attribute marker for companies on OpenMap.
+ * Layered design (sophisticated & calm):
+ *   1. Thick outer ring = kundentyp color (primary, scannable)
+ *   2. Thin gray separator ring
+ *   3. Pure white center disc with emoji (clean, high contrast)
+ *   + Tiny status letter badge (bottom-right, no color)
+ * This creates a premium "medallion" look with excellent readability.
+ */
+export const getCompanyMarkerIcon = (
+  status?: string,
+  kundentyp?: string,
+  isHighlighted = false,
+  isDarkMode = false,
+) => {
+  const sKey = (status || "lead").toLowerCase();
+  const kKey = (kundentyp || "sonstige").toLowerCase();
+
+  const kundentypColor = kundentypColors[kKey] || kundentypColors.sonstige;
+
+  // Compact professional emoji/symbol map (sophisticated, not cluttered)
+  const kundentypSymbol: Record<string, string> = {
+    restaurant: "🍽",
+    hotel: "🏨",
+    marina: "⚓",
+    camping: "⛺",
+    bootsverleih: "🚤",
+    segelschule: "⛵",
+    resort: "🌴",
+    segelverein: "🏆",
+    neukunde: "🆕",
+    bestandskunde: "⭐",
+    interessent: "👁",
+    partner: "🤝",
+    sonstige: "·",
+  };
+  const symbol = kundentypSymbol[kKey] || kKey.charAt(0).toUpperCase();
+
+  const letter = statusLetterMap[sKey] || sKey.slice(0, 2).toUpperCase();
+
+  const size = isHighlighted ? 42 : 34;
+  const ringWidth = isHighlighted ? 5 : 3.5;
+  const highlightRing = isHighlighted
+    ? `0 0 0 5px ${kundentypColor}25, 0 0 0 10px ${isDarkMode ? "#3b82f620" : "#2563eb15"}`
+    : "";
+
+  const grayRing = "#ffffff";
+  const letterBg = isDarkMode ? "#111827" : "#1f2937";
+
+  const html = `
+    <div class="company-marker${isHighlighted ? " company-marker--highlight" : ""}" style="
+      width:${size}px;height:${size}px;border-radius:50%;
+      background:${isDarkMode ? "#1f2937" : "#ffffff"};
+      border:${ringWidth}px solid ${kundentypColor};
+      box-shadow:0 3px 8px rgba(0,0,0,0.28),${highlightRing};
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+    ">
+      <!-- Gray separator ring -->
+      <div style="
+        width:22px;height:22px;border-radius:50%;
+        border:2px solid ${grayRing};
+        display:flex;align-items:center;justify-content:center;
+      ">
+        <!-- Pure white center with icon -->
+        <div style="
+          width:18px;height:18px;border-radius:50%;
+          background:white;
+          display:flex;align-items:center;justify-content:center;
+          color:#374151;font-size:${isHighlighted ? 12 : 10.5}px;font-weight:600;
+          box-shadow:inset 0 1px 1px rgba(0,0,0,0.06);
+        ">${symbol}</div>
+      </div>
+
+      <!-- Status letter (no color) — elegant tiny badge (1 or 2 chars) -->
+      <div style="
+        position:absolute;bottom:1px;right:1px;min-width:${letter.length > 1 ? "15px" : "11px"};height:11px;
+        padding:0 ${letter.length > 1 ? "3.5px" : "2.5px"};border-radius:3px;background:${letterBg};
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-size:${letter.length > 1 ? "6.8px" : "7.5px"};font-weight:700;letter-spacing:-0.2px;
+        box-shadow:0 1px 2px rgba(0,0,0,0.4);
+      ">${letter}</div>
+    </div>
+  `.trim();
+
+  return L.divIcon({
+    className: `company-marker-wrapper${isHighlighted ? " company-marker-wrapper--highlight" : ""}`,
+    html,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2 - 2],
   });
 };
 

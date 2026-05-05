@@ -39,5 +39,27 @@ export const badgeColors: Record<string, string> = {
   bootsverleih: "#10b981",
   segelschule: "#14b8a6",
   resort: "#6366f1",
+  segelverein: "#0ea5e9",
+  neukunde: "#eab308",
+  bestandskunde: "#22c55e",
+  interessent: "#a855f7",
+  partner: "#6366f1",
+  sonstige: "#6b7280",
+};
+
+/** Dedicated professional palette for Kundentyp primary fill on markers (distinct, high-contrast). */
+export const kundentypColors: Record<string, string> = {
+  restaurant: "#f59e0b",
+  hotel: "#3b82f6",
+  marina: "#8b5cf6",
+  camping: "#22c55e",
+  bootsverleih: "#10b981",
+  segelschule: "#14b8a6",
+  resort: "#6366f1",
+  segelverein: "#0ea5e9",
+  neukunde: "#eab308",
+  bestandskunde: "#16a34a",
+  interessent: "#a855f7",
+  partner: "#6366f1",
   sonstige: "#6b7280",
 };
