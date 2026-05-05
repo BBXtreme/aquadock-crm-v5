@@ -38,6 +38,18 @@ describe("normalizeLandInput", () => {
     expect(normalizeLandInput("QQ")).toEqual({ ok: false });
     expect(normalizeLandInput("XYZ")).toEqual({ ok: false });
   });
+
+  it("handles Croatia synonyms", () => {
+    expect(normalizeLandInput("republika hrvatska")).toEqual({ ok: true, code: "HR" });
+    expect(normalizeLandInput("republic of croatia")).toEqual({ ok: true, code: "HR" });
+    expect(normalizeLandInput("croatia (hrvatska)")).toEqual({ ok: true, code: "HR" });
+  });
+
+  it("handles 3-letter codes", () => {
+    expect(normalizeLandInput("hrv")).toEqual({ ok: true, code: "HR" });
+    expect(normalizeLandInput("deu")).toEqual({ ok: true, code: "DE" });
+    expect(normalizeLandInput("aut")).toEqual({ ok: true, code: "AT" });
+  });
 });
 
 describe("getLandRegionDisplayName", () => {
