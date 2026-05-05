@@ -34,6 +34,37 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.48",
+    releasedAt: "2026-05-05",
+    title: "✨ OpenMap wird erwachsen – Standort-Management & smarte Geocodierung",
+    changes: [
+      {
+        type: "feature",
+        text: "OpenMap: Beim Klick auf „In OpenMap anzeigen“ aus der Firmendetailseite wird der jeweilige Marker jetzt elegant hervorgehoben – größer, mit sanftem Glow und 2,8-Sekunden-Pulse. Das Popup öffnet sich automatisch, und ein kleiner Fokus-Chip zeigt den Firmennamen. Der Marker wird nie geclustert und bleibt immer sichtbar.",
+      },
+      {
+        type: "feature",
+        text: "Neue Sidebar: Siehst sofort, welche Firmen noch keinen Standort haben. Mit einem Klick öffnest du die Detailansicht in einem neuen Tab.",
+      },
+      {
+        type: "feature",
+        text: "Bulk-Geocoding direkt aus der Karte: Markiere alle Firmen mit Adresse und lass dir die Vorschläge von Nominatim in einem übersichtlichen Review-Modal anzeigen. Nur was du auswählst, wird übernommen.",
+      },
+      {
+        type: "improvement",
+        text: "Intelligente Koordinaten-Validierung: Firmen mit 0,0 oder fehlenden Koordinaten erscheinen nicht mehr als Marker auf der Karte – sondern sauber in der „Unternehmen ohne Standort“-Liste.",
+      },
+      {
+        type: "improvement",
+        text: "Professionelles Design: Die Sidebar verwendet jetzt das bewährte Sheet-System – flüssige Animationen, perfektes Verhalten auf Mobilgeräten und volle Tastatursteuerung.",
+      },
+      {
+        type: "feature",
+        text: "Professionelle Kartensymbole: Firmen-Marker zeigen jetzt sowohl Kundentyp (farbiger Ring) als auch Kundenstatus (kleiner Buchstabe) in einem eleganten, mehrschichtigen Design – sofort erkennbar, ohne visuellen Overload.",
+      },
+    ],
+  },
+  {
     version: "0.5.47",
     releasedAt: "2026-05-01",
     title: "✨ Verwaltung mit eigener Adresse & Profil zum Durchatmen",

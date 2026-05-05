@@ -16,7 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type GeocodeAddressResult,
   geocodeAddress,
-  NOMINATIM_USER_AGENT,
+  NOMINATIM_USER_AGENT,type ReverseCountryResult, reverseGeocodeCountry 
 } from "./geocode-nominatim";
 
 type FetchSpy = ReturnType<typeof vi.fn>;
@@ -402,5 +402,38 @@ describe("geocodeAddress - request shape", () => {
     const url = new URL(rawUrl);
     expect(url.searchParams.get("countrycodes")).toBe("hr");
     expect(url.searchParams.get("country")).toBeNull();
+  });
+});
+
+describe("reverseGeocodeCountry", () => {
+  it("returns HR for Zagreb coordinates", async () => {
+    fetchMock.mockResolvedValueOnce(
+      makeResponse({ lat: "45.81", lon: "15.98", address: { country_code: "hr" } }),
+    );
+    const result = await reverseGeocodeCountry(45.8125, 15.977, new Map<string, ReverseCountryResult>());
+    expect(result.ok).toBe(true);
+    expect(result.code).toBe("HR");
+    expect(result.reason).toBe(null);
+  });
+  it("falls back to normalize on country name if no code", async () => {
+    fetchMock.mockResolvedValueOnce(
+      makeResponse({ lat: "45.81", lon: "15.98", address: { country: "Croatia" } }),
+    );
+    const result = await reverseGeocodeCountry(45.8125, 15.977, new Map<string, ReverseCountryResult>());
+    expect(result.ok).toBe(true);
+    expect(result.code).toBe("HR");
+  });
+  it("returns NO_RESULT on empty response", async () => {
+    fetchMock.mockResolvedValueOnce(makeResponse(null));
+    const result = await reverseGeocodeCountry(45.8125, 15.977, new Map<string, ReverseCountryResult>());
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe("NO_RESULT");
+  });
+  it("caches failure results", async () => {
+    fetchMock.mockResolvedValueOnce(makeResponse(null));
+    const cache = new Map<string, ReverseCountryResult>();
+    await reverseGeocodeCountry(45.8125, 15.977, cache);
+    const cached = cache.get("45.8125|15.9770");
+    expect(cached?.ok).toBe(false);
   });
 });

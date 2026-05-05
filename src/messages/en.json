@@ -839,7 +839,18 @@
     "importFailedTitle": "Failed to import \"{name}\"",
     "importNotes": "Imported from OSM on {date}",
     "osmImportTimelineTitle": "OpenStreetMap import",
-    "osmImportTimelineContent": "Imported from OpenStreetMap. Name, address, and coordinates were taken over.\n\nOSM: {osmUrl}"
+    "osmImportTimelineContent": "Imported from OpenStreetMap. Name, address, and coordinates were taken over.\n\nOSM: {osmUrl}",
+    "sidebarTitle": "Companies without location",
+    "sidebarSubtitle": "{count} companies without location • {eligible} eligible for geocoding",
+    "locationNotSet": "Location not set • Click to edit",
+    "allHaveCoordinates": "All companies have valid coordinates.",
+    "geocodeEligibleButton": "Geocode {count} eligible companies",
+    "geocoding": "Geocoding…",
+    "geocodedSuccess": "{count} coordinates successfully applied",
+    "noNewCoordinates": "No new coordinates found",
+    "bulkGeocodingFailed": "Geocoding failed – check address data",
+    "noValidEntriesToApply": "No valid entries to apply",
+    "errorApplyingCoordinates": "Error applying coordinates"
   },
   "brevo": {
     "pageBreadcrumb": "Marketing → Brevo",

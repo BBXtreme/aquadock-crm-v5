@@ -42,6 +42,8 @@ authDescribe("company create", () => {
 
     const uniqueName = `E2E-${Date.now()}`;
     await page.getByLabel("Firmenname").fill(uniqueName);
+    await page.getByLabel("Lat").fill("40.7128");
+    await page.getByLabel("Lon").fill("-74.0060");
     // CompanyCreateForm uses companies.createFormSubmit — not settings "Speichern".
     await page
       .getByRole("dialog")
@@ -64,6 +66,24 @@ authDescribe("company create", () => {
     await companyDetailLink.click();
     await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i, { timeout: 20_000 });
     await expect(page.getByRole("heading", { level: 1, name: uniqueName })).toBeVisible({ timeout: 20_000 });
+
+    // Manual cleanup: E2E companies need to be cleaned up manually to avoid polluting the database
+    /*
+    // Clean up: delete the test company to avoid polluting the database
+    // Click the delete button (destructive variant button with trash icon)
+    await page.locator('button:has(.lucide.lucide-trash)').click();
+
+    await expect(page.getByRole("dialog")).toBeVisible();
+    // Click the confirm delete button in the dialog
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /^(Delete|Löschen|Obriši)$/ })
+      .click();
+
+    // Wait for the company to be deleted and redirected back to companies list
+    await expect(page).toHaveURL(/\/companies/, { timeout: 30_000 });
+    await expect(page.getByText(uniqueName)).not.toBeVisible({ timeout: 10_000 });
+    */
   });
 
   test("opens create company dialog when ?create=true", async ({ page }) => {
