@@ -1,70 +1,23 @@
 {
   "$schema": "https://opencode.ai/config.json",
-
-  "instructions": [
-    "docs/AIDER-RULES.md",
-    ".opencode/instructions/architecture.md",
-    ".opencode/instructions/zod-shadcn.md",
-    ".opencode/instructions/supabase-rls.md",
-    ".opencode/instructions/quality-gate.md"
-  ],
-
-  "mcp": {
-    "context7": {
-      "type": "remote",
-      "url": "https://mcp.context7.com/mcp",
-      "enabled": true
-    },
-    "gh_grep": {
-      "type": "remote",
-      "url": "https://mcp.grep.app",
-      "enabled": true
-    },
-    "supabase": {
-      "type": "local",
-      "command": ["npx", "-y", "@supabase/mcp-server"],
-      "enabled": true,
-      "environment": {
-        "SUPABASE_URL": "{env:SUPABASE_URL}",
-        "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SERVICE_ROLE_KEY}"
-      }
-    }
-  },
-
-  "agent": {
-    "strict-reviewer": {
-      "description": "Strict quality-gate reviewer. Rejects any use of ! or as any. Requires pnpm typecheck && pnpm check:fix to pass with zero warnings before approving changes.",
-      "model": "anthropic/claude-haiku-4-5",
-      "prompt": "You are a ruthless senior reviewer for AquaDock CRM v5.\n\nCRITICAL RULES (never violate):\n- NEVER suggest code containing `!` non-null assertion or `as any` (or any explicit any).\n- Every proposed change MUST pass `pnpm typecheck && pnpm check:fix` with zero errors or warnings.\n- Follow docs/AIDER-RULES.md and .opencode/instructions/*.md exactly.\n- Hook-first pattern for all forms.\n- Zod schemas in src/lib/validations/ are single source of truth.\n- Server Components by default for data fetching.\n- If a suggestion would break the quality gate, refuse and explain exactly which rule is violated.\n\nYou are in review-only mode. You may read files and suggest, but do not write unless explicitly asked to apply a reviewed change.",
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": false
-      }
-    }
-  },
-
-  "default_agent": "build",
-
-  "tools": {
-    "bash": true,
-    "edit": true,
-    "write": true
-  },
-
+  "autoupdate": false,
   "permission": {
     "bash": "ask",
     "edit": "ask",
     "write": "ask"
   },
-
-  "formatter": true,
+  "model": "anthropic/claude-sonnet-4-5",
   "lsp": true,
-
-  "skills": {
-    "paths": [".agents/skills", ".opencode/skills"]
+  "mcp": {
+    "xai-docs": {
+      "type": "remote",
+      "url": "https://docs.x.ai/api/mcp",
+      "enabled": true
+    }
   },
-
-  "snapshot": true,
-  "autoupdate": false
+  "plugin": [
+    "opencode-vercel",
+    "opencode-github",
+    "opencode-changelog"
+  ]
 }
