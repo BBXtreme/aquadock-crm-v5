@@ -2,11 +2,8 @@
   "mcpServers": {
     "supabase": {
       "type": "remote",
-      "url": "https://mcp.supabase.com/mcp",
-      "enabled": true,
-      "headers": {
-        "X-Supabase-Project-Ref": "bqsdrmlyctqxxflhhqbr"
-      }
+      "url": "https://mcp.supabase.com/mcp?project_ref=bqsdrmlyctqxxflhhqbr",
+      "enabled": true
     },
     "xai-docs": {
       "type": "remote",

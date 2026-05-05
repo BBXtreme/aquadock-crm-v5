@@ -9,6 +9,11 @@
   "model": "anthropic/claude-sonnet-4-5",
   "lsp": true,
   "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=bqsdrmlyctqxxflhhqbr",
+      "enabled": true
+    },
     "xai-docs": {
       "type": "remote",
       "url": "https://docs.x.ai/api/mcp",
