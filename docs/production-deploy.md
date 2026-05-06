@@ -25,6 +25,27 @@ A committed template with placeholders lives at **`.env.example`** in the reposi
 | `AI_ENRICHMENT_XAI_API_KEY` | No | xAI BYOK so Grok usage can bill through your xAI account via the gateway |
 | `AI_ENRICHMENT_GROK_MODEL` | No | Override Gateway model id for the enrichment **fallback** structuring model (see `src/lib/ai/company-enrichment-gateway.ts`) |
 | `AI_ENRICHMENT_DAILY_LIMIT_DEFAULT` | No | Override the per-user default daily enrichment quota when a user has no `ai_enrichment` row in `user_settings` (see `src/lib/services/ai-enrichment-policy.ts`) |
+| `AI_ENRICHMENT_EXTRA_MODELS` | No | Optional JSON array of extra gateway models to merge into the registry (Phase 1 Dynamic Model Registry). Each object: `{ id, label, provider, qualityForCompanyResearch: 1-5, speed: "low"|"medium"|"high", cost: "low"|"medium"|"high", recommendedFor: ["company-research"], companyResearchBadge?: { text, variant } }`. Safe parse; warnings only, never crashes. |
+
+**Optional — semantic company search (embeddings + hybrid FTS/pgvector):**
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `AI_GATEWAY_API_KEY` | Yes for **gateway** and **xAI** embedding providers | Same key as enrichment when both features use Vercel AI Gateway; server only. Direct OpenAI embeddings use `OPENAI_API_KEY` instead (see `src/lib/services/semantic-search.ts`). |
+| `OPENAI_API_KEY` | Yes when `EMBEDDING_PROVIDER=openai` | Server only; `text-embedding-3-small` / `-large` via OpenAI SDK. |
+| `EMBEDDING_PROVIDER` | No | Default embedding provider when the user has no `embedding_provider` row: `gateway` \| `openai` \| `xai`. |
+| `EMBEDDING_MODEL` | No | Default model id when the user has no `embedding_model` row (e.g. `text-embedding-3-small`, `grok-embedding-small`). |
+| `XAI_API_KEY` | No | **Batch worker only** (future/async jobs hitting `api.x.ai` directly). Interactive search and enrichment use the gateway unless you add BYOK for embeddings separately. |
+| `CRON_SECRET` or `AI_BATCH_WORKER_SECRET` | No | Protects `POST /api/internal/ai-batch/worker` so only Vercel Cron or your operator can trigger batch polling. |
+
+**`user_settings` keys — semantic vs KI-Anreicherung (EAV, optional rows):**
+
+| Domain | Keys | Meaning |
+| --- | --- | --- |
+| **Semantic search** | `embedding_provider`, `embedding_model`, `semantic_search_enabled`, `auto_backfill_embeddings`, `show_semantic_badge`, `semantic_match_strictness` | Hybrid search + embeddings; `semantic_match_strictness` maps to vector distance gate (`strict` / `balanced` / `broad`). See `src/lib/constants/semantic-search-user-settings.ts`. |
+| **KI-Anreicherung** | `ai_enrichment_enabled`, `ai_enrichment_daily_limit`, `ai_enrichment_primary_model`, Perplexity fast keys, … | See `src/lib/constants/ai-enrichment-user-settings.ts` and [`src/lib/services/ai-enrichment-policy.ts`](../src/lib/services/ai-enrichment-policy.ts). |
+
+Precedence: **environment defaults** apply when a key is absent in `user_settings`; saved settings override per user.
 
 Add any other keys your fork uses — for Brevo: `BREVO_API_KEY` plus optional `BREVO_SENDER_NAME` / `BREVO_SENDER_EMAIL` (see [`BREVO_SDK.md`](BREVO_SDK.md)).
 

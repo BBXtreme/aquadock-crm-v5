@@ -1,6 +1,6 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.48",
+  "version": "0.5.49",
   "private": true,
   "packageManager": "pnpm@10.33.2",
   "engines": {
@@ -23,6 +23,7 @@
     "typecheck": "tsc --noEmit --pretty",
     "messages:validate": "node scripts/validate-message-keys.mjs",
     "backfill:user-id": "node scripts/backfill-user-id-from-created-by.mjs",
+    "seed:ai-models": "tsx scripts/seed-ai-models.ts",
     "prepare": "husky",
     "test": "vitest",
     "test:run": "vitest run",
@@ -132,6 +133,7 @@
     "lint-staged": "^15.5.2",
     "postcss": "^8.5.8",
     "tailwindcss": "4.2.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.3"
