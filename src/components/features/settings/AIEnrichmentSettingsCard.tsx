@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,43 +26,30 @@ import {
 } from "@/lib/actions/settings";
 import { getVercelAiCredits } from "@/lib/actions/vercel-ai-credits";
 import {
+  getAiEnrichmentModels,
   getCompanyResearchBadge,
   getEnrichmentGatewayModelMeta,
-  listEnrichmentGatewayModelsOrdered,
 } from "@/lib/constants/ai-models";
 import { VERCEL_AI_GATEWAY_DASHBOARD_HREF } from "@/lib/constants/vercel-ai-gateway";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
-import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
-
-type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
-
-const GROK_41_FAST_NON_REASONING: EnrichmentGatewayModelId = "xai/grok-4.1-fast-non-reasoning";
-
-function isEnrichmentGatewayModelId(value: string): value is EnrichmentGatewayModelId {
-  return (ENRICHMENT_GATEWAY_MODEL_ID_CHOICES as readonly string[]).includes(value);
-}
-
-function toEnrichmentGatewayModelChoice(value: string): EnrichmentGatewayModelId {
-  if (isEnrichmentGatewayModelId(value)) {
-    return value;
-  }
-  return ENRICHMENT_GATEWAY_MODEL_ID_CHOICES[0];
-}
 
 function EnrichmentModelSelectItemContent({
   modelId,
   xaiBillingContext,
   recommendedBadgeText,
+  labelOverride,
 }: {
-  modelId: EnrichmentGatewayModelId;
+  modelId: string;
   xaiBillingContext: boolean;
   recommendedBadgeText: string | null;
+  labelOverride?: string;
 }) {
   const meta = getEnrichmentGatewayModelMeta(modelId);
+  const displayLabel = labelOverride ?? meta?.label ?? modelId;
   const badge = getCompanyResearchBadge(modelId, { xaiBillingContext });
   return (
     <span className="flex max-w-[min(100vw-4rem,28rem)] flex-wrap items-center gap-2">
-      <span className="min-w-0 truncate font-medium">{meta?.label ?? modelId}</span>
+      <span className="min-w-0 truncate font-medium">{displayLabel}</span>
       {badge ? (
         <Badge variant={badge.variant} className={badge.className}>
           {badge.text}
@@ -107,9 +94,10 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
   const [addressFocusPrioritize, setAddressFocusPrioritize] = useState(
     initialSnapshot.addressFocusPrioritize,
   );
-  const [primaryGatewayModelId, setPrimaryGatewayModelId] = useState<EnrichmentGatewayModelId>(() =>
-    toEnrichmentGatewayModelChoice(initialSnapshot.primaryGatewayModelId),
-  );
+  const [primaryGatewayModelId, setPrimaryGatewayModelId] = useState<string>(() => {
+    // Fallback to empty until query loads; will be corrected in onSuccess if needed
+    return initialSnapshot.primaryGatewayModelId || "";
+  });
   const [perplexityFastMaxResults, setPerplexityFastMaxResults] = useState(
     () => initialSnapshot.perplexityFastMaxResults,
   );
@@ -148,6 +136,24 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
 
   const xaiBillingContextForBadges = primaryGatewayModelId.startsWith("xai/");
 
+  const modelsQuery = useQuery({
+    queryKey: ["ai-enrichment-available-models"],
+    queryFn: () => getAiEnrichmentModels(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const availableModels = (modelsQuery.data ?? []).filter((m) => !m.deprecated);
+
+  // Keep the selected model in sync with the current registry
+  useEffect(() => {
+    if (availableModels.length === 0) return;
+
+    const isValid = availableModels.some((m) => m.id === primaryGatewayModelId);
+    if (!isValid) {
+      setPrimaryGatewayModelId(availableModels[0]?.id ?? "");
+    }
+  }, [availableModels, primaryGatewayModelId]);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const n = Number.parseInt(dailyLimit.trim(), 10);
@@ -178,7 +184,10 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
         setEnabled(refreshed.data.enabled);
         setDailyLimit(String(refreshed.data.dailyLimit));
         setAddressFocusPrioritize(refreshed.data.addressFocusPrioritize);
-        setPrimaryGatewayModelId(toEnrichmentGatewayModelChoice(refreshed.data.primaryGatewayModelId));
+        const newModel = availableModels.some((m) => m.id === refreshed.data.primaryGatewayModelId)
+          ? refreshed.data.primaryGatewayModelId
+          : availableModels[0]?.id ?? primaryGatewayModelId;
+        setPrimaryGatewayModelId(newModel);
         setPerplexityFastMaxResults(refreshed.data.perplexityFastMaxResults);
         setPerplexityFastRecency(refreshed.data.perplexityFastRecency);
       } else {
@@ -297,28 +306,25 @@ export function AIEnrichmentSettingsCard({ initialSnapshot }: Props) {
           <Select
             value={primaryGatewayModelId}
             onValueChange={(v) => {
-              if (isEnrichmentGatewayModelId(v)) {
-                setPrimaryGatewayModelId(v);
-              }
+              setPrimaryGatewayModelId(v);
             }}
             disabled={saveMutation.isPending}
           >
             <SelectTrigger id="ai-enrich-gateway-model" className="w-full max-w-xl">
-              <SelectValue />
+              <SelectValue placeholder="Modell auswählen" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
-              {listEnrichmentGatewayModelsOrdered().map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  <EnrichmentModelSelectItemContent
-                    modelId={m.id}
-                    xaiBillingContext={xaiBillingContextForBadges}
-                    recommendedBadgeText={
-                      m.id === GROK_41_FAST_NON_REASONING ? t("aiEnrichment.recommendedXaiSubscription") : null
-                    }
-                  />
-                </SelectItem>
-              ))}
-            </SelectContent>
+               {availableModels.map((m) => (
+                 <SelectItem key={m.id} value={m.id}>
+                    <EnrichmentModelSelectItemContent
+                      modelId={m.id}
+                      xaiBillingContext={xaiBillingContextForBadges}
+                      recommendedBadgeText={null}
+                      labelOverride={m.label}
+                    />
+                 </SelectItem>
+               ))}
+             </SelectContent>
           </Select>
         </section>
 

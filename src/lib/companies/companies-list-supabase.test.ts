@@ -16,11 +16,15 @@ const mockCreateCompanySearchEmbedding = vi.hoisted(() => vi.fn());
 const mockHybridCompanySearch = vi.hoisted(() => vi.fn());
 const mockResolveSemanticSearchSettings = vi.hoisted(() => vi.fn());
 
-vi.mock("@/lib/services/semantic-search", () => ({
-  createCompanySearchEmbedding: (...args: unknown[]) => mockCreateCompanySearchEmbedding(...args),
-  hybridCompanySearch: (...args: unknown[]) => mockHybridCompanySearch(...args),
-  resolveSemanticSearchSettings: (...args: unknown[]) => mockResolveSemanticSearchSettings(...args),
-}));
+vi.mock("@/lib/services/semantic-search", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/services/semantic-search")>();
+  return {
+    ...actual,
+    createCompanySearchEmbedding: (...args: unknown[]) => mockCreateCompanySearchEmbedding(...args),
+    hybridCompanySearch: (...args: unknown[]) => mockHybridCompanySearch(...args),
+    resolveSemanticSearchSettings: (...args: unknown[]) => mockResolveSemanticSearchSettings(...args),
+  };
+});
 
 function makeFilterSlice(globalFilter = ""): CompaniesListFilterSlice {
   return {
@@ -104,6 +108,7 @@ describe("companies-list-supabase hybrid applier", () => {
       semanticSearchEnabled: true,
       autoBackfillEmbeddings: true,
       showSemanticBadge: true,
+      semanticMatchStrictness: "balanced",
     });
   });
 
@@ -332,6 +337,7 @@ describe("companies-list-supabase hybrid applier", () => {
       semanticSearchEnabled: false,
       autoBackfillEmbeddings: true,
       showSemanticBadge: true,
+      semanticMatchStrictness: "balanced",
     });
 
     const { applyFilters, globalSearchStrategy } = await buildCompaniesFilterApplier({} as never, filters);
@@ -364,6 +370,7 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
       semanticSearchEnabled: true,
       autoBackfillEmbeddings: true,
       showSemanticBadge: true,
+      semanticMatchStrictness: "balanced",
     });
   });
 

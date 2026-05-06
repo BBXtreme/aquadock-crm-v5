@@ -7,6 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   createCompanySearchEmbedding,
   hybridCompanySearch,
+  mapSemanticMatchStrictnessToMaxVectorDistance,
   resolveSemanticSearchSettings,
 } from "@/lib/services/semantic-search";
 import type { CompaniesListUrlState } from "@/lib/utils/company-filters-url-state";
@@ -232,10 +233,14 @@ export async function buildCompaniesFilterApplier(
       { text: trimmed, supabase },
       semanticSettings,
     );
+    const maxVectorDistance = mapSemanticMatchStrictnessToMaxVectorDistance(
+      semanticSettings.semanticMatchStrictness,
+    );
     const ranked = await hybridCompanySearch(supabase, {
       query: trimmed,
       queryEmbedding: embedding,
       matchCount: HYBRID_MATCH_COUNT,
+      maxVectorDistance,
     });
     const hybridIds = ranked.map((row) => row.companyId);
     const lexicalIds = await fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed);

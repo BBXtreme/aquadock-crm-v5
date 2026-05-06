@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { requireUser } from "@/lib/auth/require-user";
+import { createInAppNotification } from "@/lib/services/in-app-notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { handleSupabaseError } from "@/lib/supabase/db-error-utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -119,5 +120,79 @@ export async function deleteAdminFeedbackRow(rawId: unknown): Promise<void> {
     if (rmErr !== null) {
       console.warn("deleteAdminFeedbackRow: storage remove failed", rmErr);
     }
+  }
+}
+
+export async function updateAdminFeedbackRow(
+  rawId: unknown,
+  data: { topic?: string; body?: string; sentiment?: string },
+): Promise<void> {
+  await requireAdmin();
+  const parsed = feedbackIdSchema.safeParse(rawId);
+  if (!parsed.success) {
+    throw new Error("Invalid feedback id");
+  }
+  const id = parsed.data;
+  const admin = createAdminClient();
+
+  const updates: Partial<{ topic: string; body: string; sentiment: string }> = {};
+  if (typeof data.topic === "string" && data.topic.trim() !== "") updates.topic = data.topic.trim();
+  if (typeof data.body === "string" && data.body.trim() !== "") updates.body = data.body.trim();
+  if (typeof data.sentiment === "string" && data.sentiment.trim() !== "") updates.sentiment = data.sentiment.trim();
+
+  if (Object.keys(updates).length === 0) return;
+
+  const { error } = await admin.from("feedback").update(updates).eq("id", id);
+  if (error !== null) {
+    throw handleSupabaseError(error, "updateAdminFeedbackRow");
+  }
+}
+
+export async function answerAdminFeedbackRow(rawId: unknown, rawAnswer: unknown): Promise<void> {
+  await requireAdmin();
+  const parsed = feedbackIdSchema.safeParse(rawId);
+  if (!parsed.success) {
+    throw new Error("Invalid feedback id");
+  }
+  const id = parsed.data;
+  const answer = typeof rawAnswer === "string" ? rawAnswer.trim() : "";
+  if (!answer) throw new Error("Answer cannot be empty");
+
+  const admin = createAdminClient();
+
+  const { data: row, error: fetchErr } = await admin
+    .from("feedback")
+    .select("id, body, user_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchErr !== null) {
+    throw handleSupabaseError(fetchErr, "answerAdminFeedbackRow:select");
+  }
+  if (row === null) {
+    throw new Error("Feedback not found");
+  }
+
+  const newBody = `${row.body}\n\n— Admin answer —\n${answer}`;
+  const { error: updErr } = await admin.from("feedback").update({ body: newBody }).eq("id", id);
+  if (updErr !== null) {
+    throw handleSupabaseError(updErr, "answerAdminFeedbackRow:update");
+  }
+
+  // Notify the original feedback author (in-app + email if preference enabled)
+  try {
+    const adminUser = await requireAdmin();
+    await createInAppNotification({
+      type: "feedback_answered",
+      userId: row.user_id,
+      title: "Your feedback has been answered",
+      body: answer.length > 180 ? `${answer.slice(0, 177)}...` : answer,
+      actorUserId: adminUser.id,
+      payload: { feedbackId: id },
+      dedupeKey: `feedback_answered:${id}`,
+    });
+  } catch (notifyErr) {
+    console.error("[answerAdminFeedbackRow] failed to create notification", notifyErr);
+    // Do not fail the whole answer operation if notification fails
   }
 }

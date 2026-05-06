@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Trash2 } from "lucide-react";
+import { MessageSquareReply, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -26,9 +26,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -38,7 +41,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type AdminFeedbackListRow, deleteAdminFeedbackRow, listAdminFeedbackRows } from "@/lib/actions/feedback";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  type AdminFeedbackListRow,
+  answerAdminFeedbackRow,
+  deleteAdminFeedbackRow,
+  listAdminFeedbackRows,
+  updateAdminFeedbackRow,
+} from "@/lib/actions/feedback";
 import type { FeedbackTopicId } from "@/lib/constants/feedback-options";
 import { FEEDBACK_TOPIC_IDS } from "@/lib/constants/feedback-options";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
@@ -79,6 +89,12 @@ export default function FeedbackInboxCard() {
   const queryClient = useQueryClient();
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [pendingAnswerId, setPendingAnswerId] = useState<string | null>(null);
+  const [editTopic, setEditTopic] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editSentiment, setEditSentiment] = useState("");
+  const [answerText, setAnswerText] = useState("");
 
   const { data: rows, isLoading, isError } = useQuery({
     queryKey: ["admin-feedback-rows"],
@@ -98,8 +114,48 @@ export default function FeedbackInboxCard() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { topic?: string; body?: string; sentiment?: string } }) =>
+      updateAdminFeedbackRow(id, data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-feedback-rows"] });
+      toast.success(t("inboxEditSuccess"));
+      setPendingEditId(null);
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : t("inboxEditError");
+      toast.error(t("inboxEditError"), { description: msg });
+    },
+  });
+
+  const answerMutation = useMutation({
+    mutationFn: ({ id, answer }: { id: string; answer: string }) => answerAdminFeedbackRow(id, answer),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-feedback-rows"] });
+      toast.success(t("inboxAnswerSuccess"));
+      setPendingAnswerId(null);
+      setAnswerText("");
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : t("inboxAnswerError");
+      toast.error(t("inboxAnswerError"), { description: msg });
+    },
+  });
+
   const openDeleteDialog = useCallback((id: string) => {
     setPendingDeleteId(id);
+  }, []);
+
+  const openEditDialog = useCallback((row: AdminFeedbackListRow) => {
+    setPendingEditId(row.id);
+    setEditTopic(row.topic);
+    setEditBody(row.body);
+    setEditSentiment(row.sentiment);
+  }, []);
+
+  const openAnswerDialog = useCallback((id: string) => {
+    setPendingAnswerId(id);
+    setAnswerText("");
   }, []);
 
   const columns = useMemo(
@@ -201,23 +257,49 @@ export default function FeedbackInboxCard() {
           id: "actions",
           header: () => <span className="sr-only">{t("inboxColActions")}</span>,
           cell: ({ row }) => (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              aria-label={t("inboxDeleteAria")}
-              disabled={deleteMutation.isPending}
-              onClick={() => {
-                openDeleteDialog(row.original.id);
-              }}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("inboxEditAria")}
+                disabled={updateMutation.isPending || deleteMutation.isPending}
+                onClick={() => {
+                  openEditDialog(row.original);
+                }}
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("inboxAnswerAria")}
+                disabled={answerMutation.isPending || deleteMutation.isPending}
+                onClick={() => {
+                  openAnswerDialog(row.original.id);
+                }}
+              >
+                <MessageSquareReply className="h-4 w-4" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                aria-label={t("inboxDeleteAria")}
+                disabled={deleteMutation.isPending || updateMutation.isPending || answerMutation.isPending}
+                onClick={() => {
+                  openDeleteDialog(row.original.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </Button>
+            </div>
           ),
         },
       ] satisfies ColumnDef<AdminFeedbackListRow>[],
-    [t, localeTag, openDeleteDialog, deleteMutation.isPending],
+    [t, localeTag, openDeleteDialog, openEditDialog, openAnswerDialog, deleteMutation.isPending, updateMutation.isPending, answerMutation.isPending],
   );
 
   const table = useReactTable({
@@ -344,6 +426,122 @@ export default function FeedbackInboxCard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={pendingEditId !== null}
+        onOpenChange={(next) => {
+          if (!next) {
+            setPendingEditId(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("inboxEditTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-topic">{t("inboxEditTopicLabel")}</Label>
+              <Input
+                id="edit-topic"
+                value={editTopic}
+                onChange={(e) => setEditTopic(e.target.value)}
+                disabled={updateMutation.isPending}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-sentiment">{t("inboxEditSentimentLabel")}</Label>
+              <Input
+                id="edit-sentiment"
+                value={editSentiment}
+                onChange={(e) => setEditSentiment(e.target.value)}
+                disabled={updateMutation.isPending}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-body">{t("inboxEditBodyLabel")}</Label>
+              <Textarea
+                id="edit-body"
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value)}
+                rows={6}
+                disabled={updateMutation.isPending}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPendingEditId(null)}
+              disabled={updateMutation.isPending}
+            >
+              {t("inboxEditCancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                if (pendingEditId) {
+                  updateMutation.mutate({
+                    id: pendingEditId,
+                    data: { topic: editTopic, body: editBody, sentiment: editSentiment },
+                  });
+                }
+              }}
+              disabled={updateMutation.isPending || !pendingEditId}
+            >
+              {updateMutation.isPending ? t("inboxEditPending") : t("inboxEditSave")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingAnswerId !== null}
+        onOpenChange={(next) => {
+          if (!next) {
+            setPendingAnswerId(null);
+            setAnswerText("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("inboxAnswerTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 py-2">
+            <Label htmlFor="answer-text">{t("inboxAnswerLabel")}</Label>
+            <Textarea
+              id="answer-text"
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+              rows={5}
+              placeholder={t("inboxAnswerPlaceholder")}
+              disabled={answerMutation.isPending}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPendingAnswerId(null);
+                setAnswerText("");
+              }}
+              disabled={answerMutation.isPending}
+            >
+              {t("inboxAnswerCancel")}
+            </Button>
+            <Button
+              onClick={() => {
+                if (pendingAnswerId && answerText.trim()) {
+                  answerMutation.mutate({ id: pendingAnswerId, answer: answerText.trim() });
+                }
+              }}
+              disabled={answerMutation.isPending || !pendingAnswerId || !answerText.trim()}
+            >
+              {answerMutation.isPending ? t("inboxAnswerPending") : t("inboxAnswerSave")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={lightboxUrl !== null} onOpenChange={(o) => !o && setLightboxUrl(null)}>
         <DialogContent className="max-w-4xl border-border bg-background p-4">

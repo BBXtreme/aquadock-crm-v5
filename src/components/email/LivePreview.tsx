@@ -24,10 +24,17 @@ type LivePreviewProps = {
 // Enhanced sanitizer
 const sanitizeHtml = (html: string): string => {
   return html
-    .replace(/<script[^>]*>.*?<\/script>/gi, '')
-    .replace(/<(iframe|object|embed|form|input|button|style)[^>]*>.*?<\/\1>/gi, '')
-    .replace(/\s+(on\w+)="[^"]*"/gi, '')
-    .replace(/javascript:/gi, '');
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<script\b[^>]*\/?>/gi, "")
+    .replace(/<\/script>/gi, "")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<style\b[^>]*\/?>/gi, "")
+    .replace(/<\/style>/gi, "")
+    .replace(/<(iframe|object|embed|form|input|button)\b[^>]*>[\s\S]*?<\/\1>/gi, "")
+    .replace(/<(iframe|object|embed|form|input|button)\b[^>]*\/?>/gi, "")
+    .replace(/\s+(on\w+)="[^"]*"/gi, "")
+    .replace(/\s+(on\w+)='[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
 };
 
 // Safe HTML to React converter for basic tags
@@ -45,6 +52,20 @@ const htmlToReact = (html: string): React.ReactNode[] => {
       const element = node as Element;
       const tagName = element.tagName.toLowerCase();
       const props: Record<string, string> = {};
+
+      // Hard blocklist: never render potentially executable / interactive tags.
+      if (
+        tagName === "script" ||
+        tagName === "style" ||
+        tagName === "iframe" ||
+        tagName === "object" ||
+        tagName === "embed" ||
+        tagName === "form" ||
+        tagName === "input" ||
+        tagName === "button"
+      ) {
+        return null;
+      }
 
       // Only allow safe attributes for links
       if (tagName === 'a') {

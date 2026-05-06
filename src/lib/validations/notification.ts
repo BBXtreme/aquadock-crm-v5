@@ -12,6 +12,7 @@ export const IN_APP_NOTIFICATION_TYPES = [
   "comment_reply",
   "company_owner_assigned",
   "contact_assigned",
+  "feedback_answered",
 ] as const;
 
 export type InAppNotificationType = (typeof IN_APP_NOTIFICATION_TYPES)[number];
@@ -53,18 +54,26 @@ const payloadContactAssignedSchema = z
   })
   .strict();
 
+const payloadFeedbackAnsweredSchema = z
+  .object({
+    feedbackId: z.string().uuid(),
+  })
+  .strict();
+
 export type PayloadReminderAssigned = z.infer<typeof payloadReminderAssignedSchema>;
 export type PayloadTimelineOnCompany = z.infer<typeof payloadTimelineOnCompanySchema>;
 export type PayloadCommentReply = z.infer<typeof payloadCommentReplySchema>;
 export type PayloadCompanyOwnerAssigned = z.infer<typeof payloadCompanyOwnerAssignedSchema>;
 export type PayloadContactAssigned = z.infer<typeof payloadContactAssignedSchema>;
+export type PayloadFeedbackAnswered = z.infer<typeof payloadFeedbackAnsweredSchema>;
 
 export type InAppNotificationPayload =
   | PayloadReminderAssigned
   | PayloadTimelineOnCompany
   | PayloadCommentReply
   | PayloadCompanyOwnerAssigned
-  | PayloadContactAssigned;
+  | PayloadContactAssigned
+  | PayloadFeedbackAnswered;
 
 const optionalActor = z.preprocess(
   emptyStringToNull,
@@ -137,6 +146,17 @@ export const createInAppNotificationInputSchema = z.discriminatedUnion("type", [
       dedupeKey: optionalDedupe,
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("feedback_answered"),
+      userId: z.string().uuid(),
+      title: z.string().trim().min(1).max(500),
+      body: optionalBody,
+      payload: payloadFeedbackAnsweredSchema,
+      actorUserId: optionalActor,
+      dedupeKey: optionalDedupe,
+    })
+    .strict(),
 ]);
 
 export type CreateInAppNotificationInput = z.infer<typeof createInAppNotificationInputSchema>;
@@ -167,6 +187,10 @@ export function parseInAppNotificationPayload(
   }
   if (type === "contact_assigned") {
     const r = payloadContactAssignedSchema.safeParse(payload);
+    return r.success ? r.data : null;
+  }
+  if (type === "feedback_answered") {
+    const r = payloadFeedbackAnsweredSchema.safeParse(payload);
     return r.success ? r.data : null;
   }
   return null;
