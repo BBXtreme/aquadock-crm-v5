@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_available_models: {
+        Row: {
+          badge_text: string | null
+          badge_variant: string | null
+          cost_tier: string
+          created_at: string
+          created_by: string | null
+          gateway_id: string
+          id: string
+          is_enabled: boolean
+          label: string
+          provider: string
+          quality_score: number
+          recommended_for: Json
+          speed_tier: string
+          updated_at: string
+        }
+        Insert: {
+          badge_text?: string | null
+          badge_variant?: string | null
+          cost_tier: string
+          created_at?: string
+          created_by?: string | null
+          gateway_id: string
+          id?: string
+          is_enabled?: boolean
+          label: string
+          provider: string
+          quality_score: number
+          recommended_for?: Json
+          speed_tier: string
+          updated_at?: string
+        }
+        Update: {
+          badge_text?: string | null
+          badge_variant?: string | null
+          cost_tier?: string
+          created_at?: string
+          created_by?: string | null
+          gateway_id?: string
+          id?: string
+          is_enabled?: boolean
+          label?: string
+          provider?: string
+          quality_score?: number
+          recommended_for?: Json
+          speed_tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_batch_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          external_batch_id: string | null
+          id: string
+          job_type: string
+          payload: Json
+          progress: Json | null
+          result_summary: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          external_batch_id?: string | null
+          id?: string
+          job_type: string
+          payload?: Json
+          progress?: Json | null
+          result_summary?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          external_batch_id?: string | null
+          id?: string
+          job_type?: string
+          payload?: Json
+          progress?: Json | null
+          result_summary?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comment_attachments: {
         Row: {
           byte_size: number | null

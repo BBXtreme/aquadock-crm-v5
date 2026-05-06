@@ -6,12 +6,14 @@ const mockGetSession = vi.hoisted(() => vi.fn());
 const mockCreateServerClient = vi.hoisted(() => vi.fn());
 
 vi.mock("@supabase/ssr", () => ({
-  createServerClient: () => mockCreateServerClient(),
+  createServerClient: (...args: unknown[]) => mockCreateServerClient(...args),
 }));
+
+const mockCookieSet = vi.hoisted(() => vi.fn());
 
 vi.mock("next/server", () => ({
   NextResponse: {
-    next: () => ({ type: "next-response" }),
+    next: () => ({ type: "next-response", cookies: { set: mockCookieSet } }),
   },
 }));
 
@@ -31,13 +33,7 @@ describe("updateSession", () => {
     mockGetUser.mockReset();
     mockGetSession.mockReset();
     mockCreateServerClient.mockReset();
-    mockCreateServerClient.mockReturnValue({
-      auth: {
-        getClaims: mockGetClaims,
-        getUser: mockGetUser,
-        getSession: mockGetSession,
-      },
-    });
+    mockCookieSet.mockReset();
     process.env = {
       ...ORIGINAL_ENV,
       NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
@@ -46,6 +42,13 @@ describe("updateSession", () => {
   });
 
   it("uses getClaims() on the happy path and never calls getUser/getSession", async () => {
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, _options: unknown) => ({
+      auth: {
+        getClaims: mockGetClaims,
+        getUser: mockGetUser,
+        getSession: mockGetSession,
+      },
+    }));
     mockGetClaims.mockResolvedValue({
       data: { claims: { sub: "u1" }, header: {}, signature: new Uint8Array() },
       error: null,
@@ -61,6 +64,13 @@ describe("updateSession", () => {
   });
 
   it("returns hasSession=false without an extra Auth call when there is no JWT", async () => {
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, _options: unknown) => ({
+      auth: {
+        getClaims: mockGetClaims,
+        getUser: mockGetUser,
+        getSession: mockGetSession,
+      },
+    }));
     mockGetClaims.mockResolvedValue({ data: null, error: null });
 
     const { updateSession } = await import("./proxy");
@@ -72,6 +82,13 @@ describe("updateSession", () => {
   });
 
   it("falls back to getUser() (refresh path) when claims are invalid/expired", async () => {
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, _options: unknown) => ({
+      auth: {
+        getClaims: mockGetClaims,
+        getUser: mockGetUser,
+        getSession: mockGetSession,
+      },
+    }));
     mockGetClaims.mockResolvedValue({
       data: null,
       error: { name: "AuthApiError", message: "expired", status: 401 },
@@ -87,6 +104,13 @@ describe("updateSession", () => {
   });
 
   it("returns hasSession=false when the fallback getUser also reports no user", async () => {
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, _options: unknown) => ({
+      auth: {
+        getClaims: mockGetClaims,
+        getUser: mockGetUser,
+        getSession: mockGetSession,
+      },
+    }));
     mockGetClaims.mockResolvedValue({
       data: null,
       error: { name: "AuthApiError", message: "expired", status: 401 },
@@ -102,7 +126,47 @@ describe("updateSession", () => {
 
   it("throws when Supabase env vars are missing", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "";
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, _options: unknown) => ({
+      auth: {
+        getClaims: mockGetClaims,
+        getUser: mockGetUser,
+        getSession: mockGetSession,
+      },
+    }));
     const { updateSession } = await import("./proxy");
     await expect(updateSession(buildRequest())).rejects.toThrow(/Supabase environment variables/);
+  });
+
+  it("exposes a cookie sink that writes via response.cookies.set for each cookie", async () => {
+    let capturedCookies: null | { setAll: (cookiesToSet: unknown[]) => void } = null;
+    mockCreateServerClient.mockImplementation((_url: unknown, _anonKey: unknown, options: unknown) => {
+      capturedCookies = (options as { cookies?: { setAll: (cookiesToSet: unknown[]) => void } }).cookies ?? null;
+      return {
+        auth: {
+          getClaims: mockGetClaims,
+          getUser: mockGetUser,
+          getSession: mockGetSession,
+        },
+      };
+    });
+    mockGetClaims.mockResolvedValue({ data: null, error: null });
+
+    const { updateSession } = await import("./proxy");
+    const result = await updateSession(buildRequest());
+
+    expect(result.hasSession).toBe(false);
+    const cookies = capturedCookies as unknown as null | { setAll: (cookiesToSet: unknown[]) => void };
+    if (!cookies) {
+      throw new Error("capturedCookies unexpectedly null");
+    }
+
+    cookies.setAll([
+      { name: "sb-access-token", value: "v1", options: { path: "/", httpOnly: true } },
+      { name: "sb-refresh-token", value: "v2", options: { path: "/", httpOnly: true } },
+    ]);
+
+    expect(mockCookieSet).toHaveBeenCalledTimes(2);
+    expect(mockCookieSet).toHaveBeenCalledWith("sb-access-token", "v1", { path: "/", httpOnly: true });
+    expect(mockCookieSet).toHaveBeenCalledWith("sb-refresh-token", "v2", { path: "/", httpOnly: true });
   });
 });

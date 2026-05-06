@@ -14,6 +14,7 @@ const timelineId = "20000000-0000-4000-8000-000000000003";
 const commentId = "20000000-0000-4000-8000-000000000004";
 const parentCommentId = "20000000-0000-4000-8000-000000000005";
 const contactId = "20000000-0000-4000-8000-000000000006";
+const feedbackId = "20000000-0000-4000-8000-000000000007";
 
 describe("createInAppNotificationInputSchema", () => {
   it("accepts reminder_assigned with required fields", () => {
@@ -80,6 +81,16 @@ describe("createInAppNotificationInputSchema", () => {
         expect(out.type).toBe("contact_assigned");
         continue;
       }
+      if (type === "feedback_answered") {
+        const out = createInAppNotificationInputSchema.parse({
+          type: "feedback_answered",
+          userId,
+          title: "T",
+          payload: { feedbackId },
+        });
+        expect(out.type).toBe("feedback_answered");
+        continue;
+      }
       throw new Error(`unhandled notification type: ${String(type)}`);
     }
   });
@@ -137,6 +148,7 @@ describe("parseInAppNotificationPayload", () => {
       contactId,
       companyId,
     });
+    expect(parseInAppNotificationPayload("feedback_answered", { feedbackId })).toEqual({ feedbackId });
   });
 
   it("returns null for invalid payload or unknown type", () => {

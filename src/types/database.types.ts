@@ -23,6 +23,11 @@ export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
 export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
 export type UserNotification = Database["public"]["Tables"]["user_notifications"]["Row"];
+export type AiBatchJob = Database["public"]["Tables"]["ai_batch_jobs"]["Row"];
+
+export type AiAvailableModel = Database["public"]["Tables"]["ai_available_models"]["Row"];
+export type AiAvailableModelInsert = Database["public"]["Tables"]["ai_available_models"]["Insert"];
+export type AiAvailableModelUpdate = Database["public"]["Tables"]["ai_available_models"]["Update"];
 
 // =============================================================================
 // Insert & Update Types (Critical for forms and Server Actions)
@@ -60,6 +65,9 @@ export type UserSettingUpdate = Database["public"]["Tables"]["user_settings"]["U
 
 export type UserNotificationInsert = Database["public"]["Tables"]["user_notifications"]["Insert"];
 export type UserNotificationUpdate = Database["public"]["Tables"]["user_notifications"]["Update"];
+
+export type AiBatchJobInsert = Database["public"]["Tables"]["ai_batch_jobs"]["Insert"];
+export type AiBatchJobUpdate = Database["public"]["Tables"]["ai_batch_jobs"]["Update"];
 
 // =============================================================================
 // App-specific Extended / Joined Types

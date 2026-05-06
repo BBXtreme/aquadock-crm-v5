@@ -23,8 +23,7 @@ export const changelogReleaseSchema = z
           })
           .strict(),
       )
-      .min(1)
-      .max(6),
+      .min(1),
   })
   .strict();
 
@@ -33,6 +32,41 @@ export type ChangelogRelease = z.infer<typeof changelogReleaseSchema>;
 const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
+  {
+    version: "0.5.49",
+    releasedAt: "2026-05-06",
+    title: "🎯 Semantische Suche feiner steuern & KI-Einstellungen klarer",
+    changes: [
+      {
+        type: "improvement",
+        text: "Einstellungen: Semantische Trefferschärfe (streng, ausgewogen, weit) und klarer Hinweis, wann welcher API-Schlüssel für Embeddings nötig ist — bessere Kontrolle, ohne Technik-Buzzwords im Alltag.",
+      },
+      {
+        type: "feature",
+        text: "Wenn Du Embedding-Anbieter oder -Modell wechselst, erinnern wir Dich daran, Deine Firmen neu einzubetten — und bieten dafür einen Button direkt in den Einstellungen, damit die Suche zuverlässig bleibt.",
+      },
+      {
+        type: "improvement",
+        text: "KI-Anreicherung: Die Hilfetexte trennen jetzt klar Web-Recherche (Phase 1) und Strukturieren (Phase 2) — so weißt Du, was Dein Modell wirklich steuert.",
+      },
+      {
+        type: "improvement",
+        text: "Neu-Einbettung: In den Einstellungen siehst Du jetzt eine freundliche Kosten-Schätzung, die sich beim Wechsel von Anbieter oder Modell direkt aktualisiert.",
+      },
+      {
+        type: "feature",
+        text: "KI-Modell-Registry: Admins verwalten jetzt alle verfügbaren Modelle für die KI-Anreicherung zentral unter /admin/ai-models. Neue Modelle erscheinen sofort überall – inklusive Einstellungen und Modal.",
+      },
+      {
+        type: "improvement",
+        text: "KI-Anreicherung: Der Strukturierungsmodell-Selector zeigt jetzt immer die aktuelle Registry (inkl. selbst hinzugefügter Modelle). Veraltete Grok-Fast-Modelle werden ausgeblendet.",
+      },
+      {
+        type: "feature",
+        text: "Feedback-Inbox für Admins: Mit einem Klick bearbeitest Du jede Rückmeldung oder antwortest direkt – inklusive automatischer, mehrsprachiger Benachrichtigung an den Absender (In-App + E-Mail nur bei aktivierten Präferenzen). Saubere Icon-Buttons, professionelle Dialoge, sofort produktiv.",
+      },
+    ],
+  },
   {
     version: "0.5.48",
     releasedAt: "2026-05-05",

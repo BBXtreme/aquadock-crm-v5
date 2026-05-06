@@ -55,7 +55,7 @@ export async function fetchAdminUserDirectory(): Promise<AdminUserDirectory> {
           : profile.role,
       created_at: profile?.created_at ?? null,
       updated_at: profile?.updated_at ?? null,
-      last_sign_in_at: profile?.last_sign_in_at ?? null,
+      last_sign_in_at: u.last_sign_in_at ?? null,
     };
   });
 

@@ -21,6 +21,8 @@
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
+| ai_batch_jobs   | Async AI batch work (xAI Batch, future) | — | uuid | user_id         | Yes  | user_id, status (pending)    |
+| ai_available_models | Admin-managed AI Gateway models (Phase 2) | — | uuid | — | Yes (admin only) | gateway_id (unique), is_enabled |
 | user_notifications | In-app notification inbox | —  | uuid | user_id, actor_user_id    | Yes  | user_id, created_at, unread partial |
 | profiles        | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
 
@@ -205,7 +207,47 @@ Attachment rows per comment; binary payload lives in **Supabase Storage** bucket
 | created_at | timestamptz | true     | now()             | —                        | —             |
 | updated_at | timestamptz | true     | now()             | —                        | —             |
 
-**Known `key` values (EAV)**: `notification_push_enabled` / `notification_email_enabled` (boolean; see `NOTIFICATION_SETTING_KEYS` in `src/lib/constants/notifications.ts` — `notification_email_enabled` gates **transactional** CRM notification emails, not Brevo marketing), `notification_admin_global_in_app_feed` (boolean; **admin only** — when true, the server mirrors each primary in-app `user_notifications` row to this user’s inbox; absent ⇒ false), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled), **`smtp_config`** (JSON string: host, port, user, password, optional `fromName` / `secure` — per-user SMTP; used in Settings and by `getSystemSmtpConfigForNotifications` in `src/lib/services/smtp-delivery.ts`, see **Transactional email** under `user_notifications` below). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
+**Known `key` values (EAV)**: `notification_push_enabled` / `notification_email_enabled` (boolean; see `NOTIFICATION_SETTING_KEYS` in `src/lib/constants/notifications.ts` — `notification_email_enabled` gates **transactional** CRM notification emails, not Brevo marketing), `notification_admin_global_in_app_feed` (boolean; **admin only** — when true, the server mirrors each primary in-app `user_notifications` row to this user’s inbox; absent ⇒ false), `trash_bin_enabled` (JSON boolean; absent row ⇒ Papierkorb enabled), **`smtp_config`** (JSON string: host, port, user, password, optional `fromName` / `secure` — per-user SMTP; used in Settings and by `getSystemSmtpConfigForNotifications` in `src/lib/services/smtp-delivery.ts`, see **Transactional email** under `user_notifications` below). **Semantic search:** `embedding_provider`, `embedding_model`, `semantic_search_enabled`, `auto_backfill_embeddings`, `show_semantic_badge`, `semantic_match_strictness` — see `src/lib/constants/semantic-search-user-settings.ts` and `resolveSemanticSearchSettings`. **KI-Anreicherung:** keys in `src/lib/constants/ai-enrichment-user-settings.ts` (`ai_enrichment_*`). Soft-delete visibility is enforced in the **application** (PostgREST filters on `deleted_at`), not by additional RLS policies for this feature.
+
+### ai_batch_jobs
+
+| Column         | Type        | Nullable | Default           | Business Meaning        | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | ----------------------- | ------------- |
+| id             | uuid        | false    | gen_random_uuid() | Primary key             | PK            |
+| user_id        | uuid        | false    | —                 | Job owner               | FK → auth.users, indexed with `created_at` |
+| job_type       | text        | false    | —                 | App-defined job kind    | Validated in app (Zod) |
+| status         | text        | false    | `'queued'`        | Lifecycle               | `queued` \| `submitted` \| `processing` \| `completed` \| `failed` \| `cancelled` |
+| external_batch_id | text     | true     | —                 | Provider batch id       | e.g. xAI Batch id |
+| payload        | jsonb       | false    | `{}`              | Job input               | —             |
+| progress       | jsonb       | true     | —                 | Optional progress blob  | —             |
+| result_summary | jsonb       | true     | —                 | Optional outcome        | —             |
+| error_message  | text        | true     | —                 | Failure detail          | —             |
+| created_at     | timestamptz | false    | now()             | —                       | —             |
+| updated_at     | timestamptz | false    | now()             | —                       | Trigger       |
+
+**RLS:** `SELECT` and `INSERT` for `auth.uid() = user_id`. `UPDATE` only to **cancel** jobs still `queued` or `submitted` (transition to `cancelled`). Workers that advance status or write results use the **service role** (bypasses RLS). SQL mirror: [`src/sql/ai-batch-jobs.sql`](../src/sql/ai-batch-jobs.sql). Minimal worker route: `src/app/api/internal/ai-batch/worker/route.ts`.
+
+### ai_available_models (Phase 2 Dynamic Model Registry)
+
+Admin-only registry of selectable Vercel AI Gateway models for KI-Anreicherung. Regular users consume the list via the cached registry in `src/lib/constants/ai-models.ts`. Only rows with `is_enabled = true` are shown in selects.
+
+| Column            | Type        | Nullable | Default           | Business Meaning                  | Notes / Index |
+| ----------------- | ----------- | -------- | ----------------- | --------------------------------- | ------------- |
+| id                | uuid        | false    | gen_random_uuid() | Primary key                       | PK            |
+| gateway_id        | text        | false    | —                 | Unique gateway model id           | UNIQUE        |
+| label             | text        | false    | —                 | UI label (German audience)        | —             |
+| provider          | text        | false    | —                 | Provider name (Anthropic, xAI...) | —             |
+| quality_score     | smallint    | false    | —                 | 1–5 subjective research quality   | CHECK 1-5     |
+| speed_tier        | text        | false    | —                 | low / medium / high               | CHECK         |
+| cost_tier         | text        | false    | —                 | low / medium / high               | CHECK         |
+| badge_text        | text        | true     | —                 | Optional badge text               | —             |
+| badge_variant     | text        | true     | —                 | default / secondary / outline     | CHECK         |
+| recommended_for   | jsonb       | false    | `["company-research"]` | Tasks this model is recommended for | —          |
+| is_enabled        | boolean     | false    | true              | Shown in UI selects               | Partial index |
+| created_by        | uuid        | true     | —                 | Admin who created the row         | FK → profiles |
+| created_at / updated_at | timestamptz | false | now()          | Audit timestamps                  | —             |
+
+**RLS:** Full access only for `is_app_admin()`. No read for regular users (they go through the server-cached registry).
 
 ### user_notifications
 

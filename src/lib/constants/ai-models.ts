@@ -1,6 +1,9 @@
 // Central registry for AI Gateway models used in CRM enrichment UI (labels, tiers, task badges).
-// Keep in sync with `ENRICHMENT_GATEWAY_MODEL_ID_CHOICES` in `ai-enrichment-policy.ts`.
+// Dynamic Model Registry: DB (is_enabled=true) is the primary source, env extras override, hardcoded is fallback/seed.
+// All existing badges, xAI BYOK logic, and getCompanyResearchBadge remain unchanged.
 
+import { unstable_cache } from "next/cache";
+import { type AiAvailableModelRow, listAiModelsAction } from "@/lib/actions/ai-models";
 import { ENRICHMENT_GATEWAY_MODEL_ID_CHOICES } from "@/lib/services/ai-enrichment-policy";
 
 type EnrichmentGatewayModelId = (typeof ENRICHMENT_GATEWAY_MODEL_ID_CHOICES)[number];
@@ -38,6 +41,8 @@ export type AiEnrichmentGatewayModelMeta = {
   recommendedFor: readonly EnrichmentTaskId[];
   /** Task-specific recommendation chip for company web research. */
   companyResearchBadge?: CompanyResearchBadgePolicy;
+  /** Whether the model is deprecated and should no longer be used for new enrichments. */
+  deprecated?: boolean;
 };
 
 const _badge = (d: TaskBadgeDefinition): TaskBadgeDefinition => ({
@@ -139,53 +144,161 @@ const AI_ENRICHMENT_GATEWAY_MODEL_META = {
       default: _badge({ text: "Best Price/Performance", variant: "secondary" }),
     },
   },
-  "xai/grok-4.1-fast-non-reasoning": {
-    id: "xai/grok-4.1-fast-non-reasoning",
-    label: "Grok 4.1 Fast",
+  "xai/grok-4.3": {
+    id: "xai/grok-4.3",
+    label: "Grok 4.3",
     provider: "xAI",
-    qualityForCompanyResearch: 4,
-    speed: "high",
-    cost: "low",
-    recommendedFor: ["company-research"],
-    companyResearchBadge: {
-      default: _badge({ text: "Fast & Cheap", variant: "outline" }),
-      whenXaiByok: _badge({ text: "Best with xAI Subscription", variant: "secondary" }),
-    },
-  },
-  "xai/grok-4.1-fast-reasoning": {
-    id: "xai/grok-4.1-fast-reasoning",
-    label: "Grok 4.1 Fast (reasoning)",
-    provider: "xAI",
-    qualityForCompanyResearch: 4,
+    qualityForCompanyResearch: 5,
     speed: "medium",
     cost: "medium",
     recommendedFor: ["company-research"],
     companyResearchBadge: {
-      default: _badge({ text: "Fast & Cheap", variant: "outline" }),
+      default: _badge({ text: "Recommended", variant: "default" }),
       whenXaiByok: _badge({ text: "Best with xAI Subscription", variant: "secondary" }),
     },
   },
-  "xai/grok-4-fast-non-reasoning": {
-    id: "xai/grok-4-fast-non-reasoning",
-    label: "Grok 4 Fast",
-    provider: "xAI",
-    qualityForCompanyResearch: 3,
-    speed: "high",
-    cost: "low",
-    recommendedFor: ["company-research"],
-    companyResearchBadge: {
-      default: _badge({ text: "Fast & Cheap", variant: "outline" }),
-      whenXaiByok: _badge({ text: "Best with xAI Subscription", variant: "secondary" }),
-    },
-  },
-} as const satisfies Record<EnrichmentGatewayModelId, AiEnrichmentGatewayModelMeta>;
+} as const satisfies Record<string, AiEnrichmentGatewayModelMeta>;
 
-const META_BY_ID: ReadonlyMap<string, AiEnrichmentGatewayModelMeta> = new Map(
-  (Object.keys(AI_ENRICHMENT_GATEWAY_MODEL_META) as EnrichmentGatewayModelId[]).map((k) => [
-    k,
-    AI_ENRICHMENT_GATEWAY_MODEL_META[k],
-  ]),
+/** Parse optional AI_ENRICHMENT_EXTRA_MODELS (same shape as required in task). Never throws. */
+function parseExtraModels(): AiEnrichmentGatewayModelMeta[] {
+  const raw = process.env.AI_ENRICHMENT_EXTRA_MODELS?.trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      console.warn("[ai-models] AI_ENRICHMENT_EXTRA_MODELS must be a JSON array");
+      return [];
+    }
+    const extras: AiEnrichmentGatewayModelMeta[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== "object") {
+        console.warn("[ai-models] Skipping invalid extra model entry (not an object)");
+        continue;
+      }
+      const id = typeof item.id === "string" ? item.id.trim() : "";
+      if (!id) {
+        console.warn("[ai-models] Skipping extra model without valid id");
+        continue;
+      }
+      const label = typeof item.label === "string" ? item.label : id;
+      const provider = typeof item.provider === "string" ? item.provider : "Custom";
+      const quality = [1, 2, 3, 4, 5].includes(item.qualityForCompanyResearch) ? item.qualityForCompanyResearch : 3;
+      const speed = ["low", "medium", "high"].includes(item.speed) ? item.speed : "medium";
+      const cost = ["low", "medium", "high"].includes(item.cost) ? item.cost : "medium";
+      const recommendedFor: readonly EnrichmentTaskId[] = Array.isArray(item.recommendedFor) && item.recommendedFor.includes("company-research")
+        ? ["company-research"]
+        : ["company-research"];
+      const badge = item.companyResearchBadge && typeof item.companyResearchBadge === "object"
+        ? {
+            default: {
+              text: item.companyResearchBadge.text ?? "Custom",
+              variant: ["default", "secondary", "outline"].includes(item.companyResearchBadge.variant) ? item.companyResearchBadge.variant : "outline",
+            },
+          }
+        : undefined;
+
+      extras.push({
+        id,
+        label,
+        provider,
+        qualityForCompanyResearch: quality as 1 | 2 | 3 | 4 | 5,
+        speed: speed as ModelSpeedTier,
+        cost: cost as ModelCostTier,
+        recommendedFor,
+        ...(badge ? { companyResearchBadge: badge } : {}),
+      });
+    }
+    return extras;
+  } catch (err) {
+    console.warn("[ai-models] Failed to parse AI_ENRICHMENT_EXTRA_MODELS:", err);
+    return [];
+  }
+}
+
+const EXTRA_MODELS = parseExtraModels();
+
+/** Fetch enabled models from DB (cached + revalidated on admin CRUD). */
+const fetchDbModels = unstable_cache(
+  async (): Promise<AiEnrichmentGatewayModelMeta[]> => {
+    try {
+      const rows: AiAvailableModelRow[] = await listAiModelsAction();
+      return rows
+        .filter((r) => r.is_enabled)
+        .map((r) => ({
+          id: r.gateway_id as string,
+          label: r.label,
+          provider: r.provider,
+          qualityForCompanyResearch: r.quality_score as 1 | 2 | 3 | 4 | 5,
+          speed: r.speed_tier,
+          cost: r.cost_tier,
+          recommendedFor: ["company-research"],
+          ...(r.badge_text
+            ? {
+                companyResearchBadge: {
+                  default: {
+                    text: r.badge_text,
+                    variant: (r.badge_variant ?? "outline") as BadgeVariantName,
+                  },
+                },
+              }
+            : {}),
+        }));
+    } catch (err) {
+      // Table may not exist yet during rollout
+      console.warn("[ai-models] Failed to fetch DB models:", err);
+      return [];
+    }
+  },
+  ["ai-models-db"],
+  { tags: ["ai-models"], revalidate: 3600 },
 );
+
+/** Full dynamic getter: DB (enabled) → Env Extras → Hardcoded fallback.
+ *  Deprecated models are excluded from enrichment selectors.
+ */
+export async function getAiEnrichmentModels(): Promise<readonly AiEnrichmentGatewayModelMeta[]> {
+  const dbModels = await fetchDbModels();
+  const _base = new Map(Object.entries(AI_ENRICHMENT_GATEWAY_MODEL_META));
+  const seen = new Set<string>();
+
+  const result: AiEnrichmentGatewayModelMeta[] = [];
+
+  // DB first
+  for (const m of dbModels) {
+    if (!seen.has(m.id)) {
+      seen.add(m.id);
+      result.push(m);
+    }
+  }
+
+  // Env extras override
+  for (const extra of EXTRA_MODELS) {
+    if (!seen.has(extra.id)) {
+      seen.add(extra.id);
+      result.push(extra);
+    }
+  }
+
+  // Hardcoded fallback for any missing base models
+  for (const [, meta] of Object.entries(AI_ENRICHMENT_GATEWAY_MODEL_META)) {
+    if (!seen.has(meta.id)) {
+      seen.add(meta.id);
+      result.push(meta);
+    }
+  }
+
+  // Filter out deprecated models for enrichment use
+  return result.filter((m) => !m.deprecated);
+}
+
+/** Build final META_BY_ID for sync consumers (hardcoded + env). DB is loaded async via getAiEnrichmentModels. */
+const META_BY_ID: ReadonlyMap<string, AiEnrichmentGatewayModelMeta> = (() => {
+  const base = new Map<string, AiEnrichmentGatewayModelMeta>(Object.entries(AI_ENRICHMENT_GATEWAY_MODEL_META));
+  for (const extra of EXTRA_MODELS) {
+    base.set(extra.id, extra);
+  }
+  return base;
+})();
 
 function assertRegistryCoversPolicy(): void {
   for (const id of ENRICHMENT_GATEWAY_MODEL_ID_CHOICES) {
@@ -197,9 +310,24 @@ function assertRegistryCoversPolicy(): void {
 
 assertRegistryCoversPolicy();
 
-/** Ordered list for selects (matches policy / EAV validation order). */
+/** Ordered list for selects (base + extras appended, deduplicated by id). */
 export function listEnrichmentGatewayModelsOrdered(): readonly AiEnrichmentGatewayModelMeta[] {
-  return ENRICHMENT_GATEWAY_MODEL_ID_CHOICES.map((id) => META_BY_ID.get(id) as AiEnrichmentGatewayModelMeta);
+  const seen = new Set<string>();
+  const result: AiEnrichmentGatewayModelMeta[] = [];
+  for (const id of ENRICHMENT_GATEWAY_MODEL_ID_CHOICES) {
+    const meta = META_BY_ID.get(id);
+    if (meta && !seen.has(id)) {
+      seen.add(id);
+      result.push(meta);
+    }
+  }
+  for (const extra of EXTRA_MODELS) {
+    if (!seen.has(extra.id)) {
+      seen.add(extra.id);
+      result.push(extra);
+    }
+  }
+  return result;
 }
 
 export function getEnrichmentGatewayModelMeta(modelId: string): AiEnrichmentGatewayModelMeta | undefined {

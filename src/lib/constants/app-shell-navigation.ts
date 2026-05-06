@@ -2,6 +2,7 @@ import {
   ArchiveRestore,
   BarChart3,
   Bell,
+  Brain,
   Building2,
   History,
   ListPlus,
@@ -53,6 +54,13 @@ export const appShellAdminNav = [
     icon: MessageSquare,
     cmdkKeywords:
       "admin feedback inbox verwaltung verwaltungsbereich widget submissions povratne informacije",
+  },
+  {
+    messageKey: "adminAiModels",
+    href: "/admin/ai-models",
+    icon: Brain,
+    cmdkKeywords:
+      "admin ai models ki-modelle llm gateway enrichment verwaltung verwaltungsbereich ki anreicherung",
   },
 ] as const;
 

@@ -14,6 +14,17 @@ import { AppearanceTimezoneSelect } from "@/components/features/settings/Appeara
 import {
   applyAppearanceColorTokens,
 } from "@/components/theme/tailwind/ThemeProvider";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,9 +37,16 @@ import {
   saveAdminGlobalInAppFeedAction,
   saveNotificationPreferencesAction,
 } from "@/lib/actions/notifications";
+import {
+  getAllCompanyCountForReEmbedAction,
+  getOwnCompanyCountForReEmbedAction,
+  reEmbedAllCompaniesAction,
+  reEmbedOwnCompaniesAction,
+} from "@/lib/actions/semantic-embeddings";
 import { testEmbeddingConnectionAction } from "@/lib/actions/semantic-search";
 import type { AiEnrichmentSettingsSnapshot } from "@/lib/actions/settings";
 import { saveTrashBinPreferenceAction } from "@/lib/actions/trash-settings";
+import { estimateReEmbedCost } from "@/lib/ai/embedding-cost-estimate";
 import { poiCategories } from "@/lib/constants/map-poi-config";
 import { ADMIN_GLOBAL_IN_APP_FEED_DEFAULT, NOTIFICATION_DEFAULTS, NOTIFICATION_UI } from "@/lib/constants/notifications";
 import {
@@ -37,6 +55,7 @@ import {
   type OpenmapCacheTtlMinutes,
   type OpenmapMaxPoisMemory,
 } from "@/lib/constants/openmap-user-settings";
+import type { SemanticMatchStrictness } from "@/lib/constants/semantic-search-user-settings";
 import { APPEARANCE_COLOR_SCHEME_IDS, APPEARANCE_COLOR_SWATCH } from "@/lib/constants/theme";
 import { useFormat, useT } from "@/lib/i18n/use-translations";
 import { loadMapSettings, saveMapSettings } from "@/lib/services/map-settings";
@@ -114,6 +133,7 @@ const DEFAULT_SEMANTIC_SETTINGS = {
   semanticSearchEnabled: true,
   autoBackfillEmbeddings: true,
   showSemanticBadge: true,
+  semanticMatchStrictness: "balanced" satisfies SemanticMatchStrictness,
 } as const;
 
 type SemanticEmbeddingProvider = "gateway" | "openai" | "xai";
@@ -137,6 +157,13 @@ function parseEmbeddingModel(value: unknown): SemanticEmbeddingModel {
   if (value === "grok-embedding-small") return "grok-embedding-small";
   if (value === "text-embedding-3-large") return "text-embedding-3-large";
   return "text-embedding-3-small";
+}
+
+function parseSemanticMatchStrictness(value: unknown): SemanticMatchStrictness {
+  if (value === "strict" || value === "balanced" || value === "broad") {
+    return value;
+  }
+  return DEFAULT_SEMANTIC_SETTINGS.semanticMatchStrictness;
 }
 
 type ClientSettingsPageProps = {
@@ -190,7 +217,14 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
   const [showSemanticBadge, setShowSemanticBadge] = useState<boolean>(
     DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge,
   );
+  const [semanticMatchStrictness, setSemanticMatchStrictness] = useState<SemanticMatchStrictness>(
+    DEFAULT_SEMANTIC_SETTINGS.semanticMatchStrictness,
+  );
+  const [embeddingSaveDialogOpen, setEmbeddingSaveDialogOpen] = useState(false);
   const [semanticSettingsHydrated, setSemanticSettingsHydrated] = useState(false);
+  const embeddingBaselineRef = useRef<{ provider: SemanticEmbeddingProvider; model: SemanticEmbeddingModel } | null>(
+    null,
+  );
 
   const [mapProvider, setMapProvider] = useState<MapProviderId>("osm");
   const [googleMapsApiKey, setGoogleMapsApiKey] = useState("");
@@ -294,8 +328,19 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
     setShowSemanticBadge(
       parseBooleanSetting(settings.show_semantic_badge, DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge),
     );
+    setSemanticMatchStrictness(parseSemanticMatchStrictness(settings.semantic_match_strictness));
     setSemanticSettingsHydrated(true);
   }, [settings, settingsLoading]);
+
+  useEffect(() => {
+    if (!semanticSettingsHydrated || embeddingBaselineRef.current !== null) {
+      return;
+    }
+    embeddingBaselineRef.current = {
+      provider: embeddingProvider,
+      model: embeddingModel,
+    };
+  }, [semanticSettingsHydrated, embeddingProvider, embeddingModel]);
 
   const semanticConnectionQuery = useQuery({
     queryKey: [
@@ -318,6 +363,50 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
+
+  const ownCompanyCountQuery = useQuery({
+    queryKey: ["semantic-reembed-company-count"],
+    enabled: semanticSettingsHydrated && semanticSearchEnabled,
+    queryFn: async () => {
+      const res = await getOwnCompanyCountForReEmbedAction();
+      if (!res.ok) {
+        if (res.error === "UNAUTHORIZED") {
+          return 0;
+        }
+        throw new Error(res.error);
+      }
+      return res.total;
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const allCompanyCountQuery = useQuery({
+    queryKey: ["semantic-reembed-company-count", "all"],
+    enabled: semanticSettingsHydrated && semanticSearchEnabled && isAdmin,
+    queryFn: async () => {
+      const res = await getAllCompanyCountForReEmbedAction();
+      if (!res.ok) {
+        if (res.error === "UNAUTHORIZED" || res.error === "FORBIDDEN") {
+          return 0;
+        }
+        throw new Error(res.error);
+      }
+      return res.total;
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const reEmbedOwnCostEstimate = useMemo(() => {
+    const count = ownCompanyCountQuery.data ?? 0;
+    return estimateReEmbedCost(count, embeddingProvider, embeddingModel);
+  }, [ownCompanyCountQuery.data, embeddingProvider, embeddingModel]);
+
+  const reEmbedAllCostEstimate = useMemo(() => {
+    const count = allCompanyCountQuery.data ?? 0;
+    return estimateReEmbedCost(count, embeddingProvider, embeddingModel);
+  }, [allCompanyCountQuery.data, embeddingProvider, embeddingModel]);
 
   const semanticConnectionStatus: SemanticConnectionStatus = !semanticSettingsHydrated
     ? "checking"
@@ -350,6 +439,12 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
         : semanticConnectionStatus === "failed"
           ? "bg-red-500"
           : "bg-muted-foreground/50";
+
+  const embeddingConfigChanged =
+    semanticSearchEnabled &&
+    embeddingBaselineRef.current !== null &&
+    (embeddingBaselineRef.current.provider !== embeddingProvider ||
+      embeddingBaselineRef.current.model !== embeddingModel);
 
   const { data: mapProviderSettings, isLoading: mapProviderLoading } = useQuery({
     queryKey: ["map-provider-settings"],
@@ -661,6 +756,7 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
         { user_id: user.id, key: "semantic_search_enabled", value: semanticSearchEnabled },
         { user_id: user.id, key: "auto_backfill_embeddings", value: autoBackfillEmbeddings },
         { user_id: user.id, key: "show_semantic_badge", value: showSemanticBadge },
+        { user_id: user.id, key: "semantic_match_strictness", value: semanticMatchStrictness },
       ];
 
       for (const row of rows) {
@@ -669,6 +765,11 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
       }
     },
     onSuccess: async () => {
+      embeddingBaselineRef.current = {
+        provider: embeddingProvider,
+        model: embeddingModel,
+      };
+      setEmbeddingSaveDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["settings"] });
       await queryClient.invalidateQueries({ queryKey: ["companies-semantic-badge-setting"] });
       toast.success(t("semanticSearch.savedToast"), {
@@ -682,6 +783,96 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
         return;
       }
       toast.error(t("semanticSearch.saveErrorTitle"), { description: message });
+    },
+  });
+
+  const requestSemanticSettingsSave = useCallback(() => {
+    const baseline = embeddingBaselineRef.current;
+    const changed =
+      semanticSearchEnabled &&
+      baseline !== null &&
+      (baseline.provider !== embeddingProvider || baseline.model !== embeddingModel);
+    if (changed) {
+      setEmbeddingSaveDialogOpen(true);
+      return;
+    }
+    semanticSettingsMutation.mutate();
+  }, [embeddingModel, embeddingProvider, semanticSearchEnabled, semanticSettingsMutation]);
+
+  const reEmbedMutation = useMutation({
+    mutationFn: reEmbedOwnCompaniesAction,
+    onSuccess: (result) => {
+      if (result.ok) {
+        toast.success(t("semanticSearch.reEmbedToastSuccess"), {
+          description: t("semanticSearch.reEmbedToastSuccessDescription", {
+            processed: result.processed,
+            skipped: result.skipped,
+          }),
+        });
+        void queryClient.invalidateQueries({ queryKey: ["companies"] });
+        void ownCompanyCountQuery.refetch();
+        return;
+      }
+      if (result.error === "UNAUTHORIZED") {
+        toast.error(t("semanticSearch.reEmbedErrorUnauthorized"));
+        return;
+      }
+      if (result.error === "SEMANTIC_DISABLED") {
+        toast.error(t("semanticSearch.reEmbedErrorSemanticDisabled"));
+        return;
+      }
+      if (result.error === "NOT_CONFIGURED") {
+        toast.error(t("semanticSearch.reEmbedErrorNotConfigured"));
+        return;
+      }
+      if (result.error === "NO_COMPANIES") {
+        toast.error(t("semanticSearch.reEmbedErrorNoCompanies"));
+        return;
+      }
+      toast.error(t("semanticSearch.reEmbedErrorFailed"));
+    },
+    onError: () => {
+      toast.error(t("semanticSearch.reEmbedErrorFailed"));
+    },
+  });
+
+  const reEmbedAllMutation = useMutation({
+    mutationFn: reEmbedAllCompaniesAction,
+    onSuccess: (result) => {
+      if (result.ok) {
+        toast.success(t("semanticSearch.reEmbedAllToastSuccess"), {
+          description: t("semanticSearch.reEmbedAllToastSuccessDescription", {
+            processed: result.processed,
+            skipped: result.skipped,
+            total: result.total,
+          }),
+        });
+        return;
+      }
+      if (result.error === "UNAUTHORIZED") {
+        toast.error(t("semanticSearch.reEmbedAllErrorUnauthorized"));
+        return;
+      }
+      if (result.error === "FORBIDDEN") {
+        toast.error(t("semanticSearch.reEmbedAllErrorForbidden"));
+        return;
+      }
+      if (result.error === "SEMANTIC_DISABLED") {
+        toast.error(t("semanticSearch.reEmbedAllErrorSemanticDisabled"));
+        return;
+      }
+      if (result.error === "NOT_CONFIGURED") {
+        toast.error(t("semanticSearch.reEmbedAllErrorNotConfigured"));
+        return;
+      }
+      if (result.error === "NO_COMPANIES") {
+        toast.error(t("semanticSearch.reEmbedAllErrorNoCompanies"));
+        return;
+      }
+      toast.error(t("semanticSearch.reEmbedAllErrorFailed"));
+    },
+    onError: () => {
+      toast.error(t("semanticSearch.reEmbedAllErrorFailed"));
     },
   });
 
@@ -1081,6 +1272,17 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
                     {semanticConnectionLabel}
                   </span>
                 </div>
+                {embeddingProvider === "gateway" || embeddingProvider === "xai" ? (
+                  <p className="text-muted-foreground text-xs leading-relaxed">{t("semanticSearch.gatewayBillingHelp")}</p>
+                ) : null}
+                {embeddingConfigChanged ? (
+                  <div
+                    className="rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-foreground text-sm"
+                    role="status"
+                  >
+                    {t("semanticSearch.embeddingChangeInlineWarning")}
+                  </div>
+                ) : null}
                 <div className="space-y-2">
                   <Label htmlFor="semantic-embedding-provider">{t("semanticSearch.embeddingProviderLabel")}</Label>
                   <Select
@@ -1136,6 +1338,30 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
                     {t("semanticSearch.providerModelChangeHelp")}
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="semantic-match-strictness">{t("semanticSearch.semanticMatchStrictnessLabel")}</Label>
+                  <Select
+                    value={semanticMatchStrictness}
+                    onValueChange={(value) => {
+                      if (value === "strict" || value === "balanced" || value === "broad") {
+                        setSemanticMatchStrictness(value);
+                      }
+                    }}
+                    disabled={semanticSettingsMutation.isPending}
+                  >
+                    <SelectTrigger id="semantic-match-strictness" className="w-full max-w-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="strict">{t("semanticSearch.semanticMatchStrictnessStrict")}</SelectItem>
+                      <SelectItem value="balanced">{t("semanticSearch.semanticMatchStrictnessBalanced")}</SelectItem>
+                      <SelectItem value="broad">{t("semanticSearch.semanticMatchStrictnessBroad")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    {t("semanticSearch.semanticMatchStrictnessHelp")}
+                  </p>
+                </div>
               </>
             ) : null}
             {semanticSearchEnabled ? (
@@ -1172,15 +1398,98 @@ function ClientSettingsPage({ initialAiEnrichmentSnapshot, isAdmin }: ClientSett
                 </div>
               </>
             ) : null}
-            <Button
-              type="button"
-              onClick={() => semanticSettingsMutation.mutate()}
-              disabled={semanticSettingsMutation.isPending}
-            >
-              {semanticSettingsMutation.isPending ? t("common.saving") : t("common.save")}
-            </Button>
+            <div className="space-y-3 rounded-lg border border-border/40 bg-muted/15 px-4 py-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <span className="text-muted-foreground text-xs font-medium">
+                  {t("semanticSearch.costEstimateLabel")}
+                </span>
+                <div className="flex flex-col items-start gap-2 sm:items-end">
+                  <Badge variant="secondary" className="w-fit font-normal tabular-nums">
+                    {t("semanticSearch.costEstimateOwnLine", {
+                      companyCount: format.number(ownCompanyCountQuery.data ?? 0),
+                      cost: reEmbedOwnCostEstimate,
+                    })}
+                  </Badge>
+                  {isAdmin ? (
+                    <Badge variant="secondary" className="w-fit font-normal tabular-nums">
+                      {t("semanticSearch.costEstimateAllLine", {
+                        companyCount: format.number(allCompanyCountQuery.data ?? 0),
+                        cost: reEmbedAllCostEstimate,
+                      })}
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => reEmbedMutation.mutate()}
+                    disabled={
+                      !semanticSearchEnabled || semanticSettingsMutation.isPending || reEmbedMutation.isPending
+                    }
+                  >
+                    {reEmbedMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                        {t("semanticSearch.reEmbedPending")}
+                      </>
+                    ) : (
+                      t("semanticSearch.reEmbedButton")
+                    )}
+                  </Button>
+                  {isAdmin ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => reEmbedAllMutation.mutate()}
+                      disabled={
+                        !semanticSearchEnabled ||
+                        semanticSettingsMutation.isPending ||
+                        reEmbedMutation.isPending ||
+                        reEmbedAllMutation.isPending
+                      }
+                    >
+                      {reEmbedAllMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                          {t("semanticSearch.reEmbedAllPending")}
+                        </>
+                      ) : (
+                        t("semanticSearch.reEmbedAllButton")
+                      )}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Button
+                type="button"
+                onClick={requestSemanticSettingsSave}
+                disabled={semanticSettingsMutation.isPending}
+              >
+                {semanticSettingsMutation.isPending ? t("common.saving") : t("common.save")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
+
+        <AlertDialog open={embeddingSaveDialogOpen} onOpenChange={setEmbeddingSaveDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("semanticSearch.embeddingChangeDialogTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("semanticSearch.embeddingChangeDialogDescription")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("semanticSearch.embeddingChangeDialogCancel")}</AlertDialogCancel>
+              <AlertDialogAction type="button" onClick={() => semanticSettingsMutation.mutate()}>
+                {t("semanticSearch.embeddingChangeDialogConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <AIEnrichmentSettingsCard initialSnapshot={initialAiEnrichmentSnapshot} />
 
