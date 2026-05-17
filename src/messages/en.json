@@ -280,6 +280,12 @@
       "selectRolePlaceholder": "Select role",
       "roleUser": "User",
       "roleAdmin": "Admin",
+      "rolePartner": "Partner",
+      "rolesGroupAria": "Role selector",
+      "createRolesLabel": "Roles",
+      "saveRoles": "Save roles",
+      "cannotDeleteSelf": "You cannot delete yourself.",
+      "toastRolesEmpty": "At least one role is required.",
       "cardTitle": "User management",
       "newUserAccount": "New user account",
       "userCreateButtonLabel": "User",
@@ -287,6 +293,7 @@
       "colName": "Name",
       "colEmail": "Email",
       "colRole": "Role",
+      "colRoles": "Roles",
       "colCreatedAt": "Created",
       "colUpdatedAt": "Updated",
       "colLastSignIn": "Last sign-in",
@@ -317,6 +324,7 @@
       "accept": "Accept",
       "decline": "Decline",
       "roleOnAccept": "Role on accept",
+      "rolesOnAccept": "Roles on accept",
       "toastAcceptOk": "Access granted",
       "toastAcceptFail": "Could not accept request",
       "toastDeclineOk": "Request declined",
@@ -1511,6 +1519,8 @@
       "groupSales": "Sales",
       "groupMarketing": "Marketing",
       "groupAdmin": "Administration",
+      "groupPartner": "Partner portal",
+      "partnerPortal": "Open partner portal",
       "dashboard": "Dashboard",
       "reminders": "Reminders",
       "companies": "Companies",
@@ -1940,6 +1950,74 @@
     "supabaseClientInitTitle": "Sign-in is unavailable",
     "supabaseClientInitHint": "Supabase URL or anon key is missing in this build. For local runs, use pnpm dev or rebuild with NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY set (e.g. in .env.local) before pnpm build when using next start.",
     "applyForAccess": "Apply for access"
+  },
+  "partnerLogin": {
+    "heroEyebrow": "Aquadock Partner",
+    "heroTitle": "Paddle. Live. Enjoy.",
+    "heroTitleMobile": "Welcome to the water.",
+    "heroDescription": "Sign in to the Aquadock partner portal — built for marinas, hotels, camping resorts, and sales partners working with us on the waterfront.",
+    "benefit1": "Track bookings, utilization, and revenue for your station.",
+    "benefit2": "Always-up-to-date marketing and sales material.",
+    "benefit3": "Direct line to your dedicated Aquadock contact.",
+    "trustLine": "Aquadock — autonomous kayak and SUP stations for modern waterfronts.",
+    "formTitle": "Sign in to Aquadock Partner",
+    "formSubtitle": "Use the email we shared with you.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "your.name@partner.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rememberLabel": "Keep me signed in",
+    "forgotPassword": "Forgot your password?",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "toastSuccess": "Welcome back!",
+    "errorInvalidCredentials": "Email or password is incorrect.",
+    "errorValidation": "Please double-check the form.",
+    "errorUnexpected": "We could not sign you in right now. Please try again later.",
+    "errorNetwork": "No connection. Please check the network and try again.",
+    "footerTagline": "Aquadock Partner Portal · Paddle. Live. Enjoy.",
+    "footerLinkBecomePartner": "Become a partner",
+    "footerLinkContact": "Contact",
+    "footerLinkPrivacy": "Privacy"
+  },
+  "partnerShell": {
+    "guest": "Partner",
+    "signOut": "Sign out",
+    "signOutError": "Sign-out failed. Please try again.",
+    "nav": {
+      "ariaLabel": "Partner navigation",
+      "ariaLabelMobile": "Partner navigation (mobile)",
+      "dashboard": "Dashboard",
+      "resources": "Resources",
+      "support": "Support"
+    }
+  },
+  "partnerDashboard": {
+    "eyebrow": "Partner portal",
+    "titleWithName": "Welcome, {name}.",
+    "subtitle": "Your Aquadock data lives here — station performance, partner materials, and a direct line to your contact. We're building this portal step by step.",
+    "cards": {
+      "ariaLabel": "Partner overview",
+      "bookings": {
+        "title": "Bookings & utilization",
+        "body": "Coming soon: live bookings, utilization, and revenue for your station — straight from the Aquadock system."
+      },
+      "materials": {
+        "title": "Marketing & sales",
+        "body": "Coming soon: ready-to-print PDFs, imagery, and sales material — always on-brand."
+      },
+      "support": {
+        "title": "Support & contact",
+        "body": "Coming soon: a direct line to your Aquadock contact and frictionless ticketing."
+      }
+    },
+    "comingSoon": {
+      "title": "More is on the way.",
+      "body": "We build this portal together with our partners. Have an idea or need something urgently?",
+      "contactCta": "Drop us a quick note"
+    }
   },
   "onboarding": {
     "applyTitle": "Request access",

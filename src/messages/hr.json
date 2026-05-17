@@ -280,6 +280,12 @@
       "selectRolePlaceholder": "Odaberi ulogu",
       "roleUser": "Korisnik",
       "roleAdmin": "Administrator",
+      "rolePartner": "Partner",
+      "rolesGroupAria": "Odabir uloga",
+      "createRolesLabel": "Uloge",
+      "saveRoles": "Spremi uloge",
+      "cannotDeleteSelf": "Ne možeš obrisati samog sebe.",
+      "toastRolesEmpty": "Potrebna je barem jedna uloga.",
       "cardTitle": "Upravljanje korisnicima",
       "newUserAccount": "Novi korisnički račun",
       "userCreateButtonLabel": "Korisnik",
@@ -287,6 +293,7 @@
       "colName": "Ime",
       "colEmail": "E-pošta",
       "colRole": "Uloga",
+      "colRoles": "Uloge",
       "colCreatedAt": "Stvoreno",
       "colUpdatedAt": "Ažurirano",
       "colLastSignIn": "Zadnja prijava",
@@ -317,6 +324,7 @@
       "accept": "Prihvati",
       "decline": "Odbij",
       "roleOnAccept": "Uloga pri prihvatu",
+      "rolesOnAccept": "Uloge pri prihvatu",
       "toastAcceptOk": "Pristup odobren",
       "toastAcceptFail": "Zahtjev nije moguće prihvatiti",
       "toastDeclineOk": "Zahtjev odbijen",
@@ -1511,6 +1519,8 @@
       "groupSales": "Prodaja",
       "groupMarketing": "Marketing",
       "groupAdmin": "Administracija",
+      "groupPartner": "Partnerski portal",
+      "partnerPortal": "Otvori partnerski portal",
       "dashboard": "Nadzorna ploča",
       "reminders": "Podsjetnici",
       "companies": "Tvrtke",
@@ -1940,6 +1950,74 @@
     "supabaseClientInitTitle": "Prijava nije dostupna",
     "supabaseClientInitHint": "U ovom buildu nedostaju Supabase URL ili anon ključ. Lokalno: koristi pnpm dev ili ponovno izgradi s NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY (npr. u .env.local) prije next start.",
     "applyForAccess": "Zatraži pristup"
+  },
+  "partnerLogin": {
+    "heroEyebrow": "Aquadock Partner",
+    "heroTitle": "Paddle. Live. Enjoy.",
+    "heroTitleMobile": "Dobrodošli na vodu.",
+    "heroDescription": "Prijavi se u Aquadock partnerski portal — za marine, hotele, kampove i prodajne partnere koji s nama rade uz obalu.",
+    "benefit1": "Praćenje rezervacija, popunjenosti i prihoda Tvoje stanice.",
+    "benefit2": "Uvijek aktualni marketinški i prodajni materijali.",
+    "benefit3": "Izravna linija prema Tvojem Aquadock kontaktu.",
+    "trustLine": "Aquadock — autonomne kajak i SUP stanice za moderne obale.",
+    "formTitle": "Prijava u Aquadock Partner",
+    "formSubtitle": "Koristi email koji smo Ti poslali.",
+    "emailLabel": "E-mail adresa",
+    "emailPlaceholder": "tvoje.ime@partner.hr",
+    "passwordLabel": "Lozinka",
+    "passwordPlaceholder": "Najmanje 8 znakova",
+    "showPassword": "Prikaži lozinku",
+    "hidePassword": "Sakrij lozinku",
+    "rememberLabel": "Ostani prijavljen",
+    "forgotPassword": "Zaboravljena lozinka?",
+    "submit": "Prijava",
+    "submitting": "Prijavljujem…",
+    "toastSuccess": "Dobrodošli natrag!",
+    "errorInvalidCredentials": "E-mail ili lozinka nisu točni.",
+    "errorValidation": "Molimo provjeri unose.",
+    "errorUnexpected": "Trenutno nije moguće prijaviti se. Pokušaj kasnije.",
+    "errorNetwork": "Nema veze. Provjeri mrežu i pokušaj ponovno.",
+    "footerTagline": "Aquadock Partnerski portal · Paddle. Live. Enjoy.",
+    "footerLinkBecomePartner": "Postani partner",
+    "footerLinkContact": "Kontakt",
+    "footerLinkPrivacy": "Privatnost"
+  },
+  "partnerShell": {
+    "guest": "Partner",
+    "signOut": "Odjava",
+    "signOutError": "Odjava nije uspjela. Pokušaj ponovno.",
+    "nav": {
+      "ariaLabel": "Partnerska navigacija",
+      "ariaLabelMobile": "Partnerska navigacija (mobilno)",
+      "dashboard": "Nadzorna ploča",
+      "resources": "Materijali",
+      "support": "Podrška"
+    }
+  },
+  "partnerDashboard": {
+    "eyebrow": "Partnerski portal",
+    "titleWithName": "Dobrodošli, {name}.",
+    "subtitle": "Ovdje se spajaju Tvoji Aquadock podaci — stanice, materijali i izravna linija prema kontaktu. Portal gradimo korak po korak.",
+    "cards": {
+      "ariaLabel": "Partnerski pregled",
+      "bookings": {
+        "title": "Rezervacije i popunjenost",
+        "body": "Uskoro: rezervacije, popunjenost i prihodi Tvoje stanice — izravno iz Aquadock sustava."
+      },
+      "materials": {
+        "title": "Marketing i prodaja",
+        "body": "Uskoro: PDF-ovi spremni za tisak, fotografije i prodajni materijali — uvijek u brendu."
+      },
+      "support": {
+        "title": "Podrška i kontakt",
+        "body": "Uskoro: izravna linija prema Tvojem Aquadock kontaktu i brzo otvaranje tiketa."
+      }
+    },
+    "comingSoon": {
+      "title": "Slijedi još više.",
+      "body": "Portal razvijamo zajedno s partnerima. Imaš ideju ili nešto Ti hitno treba?",
+      "contactCta": "Javi nam u par rečenica"
+    }
   },
   "onboarding": {
     "applyTitle": "Zatraži pristup",

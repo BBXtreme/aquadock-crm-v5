@@ -26,7 +26,7 @@ CREATE POLICY "feedback_select_own_or_admin"
 ON public.feedback FOR SELECT
 USING (
   auth.uid() = user_id
-  OR EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
+  OR public.user_has_role('admin')
 );
 
 DROP POLICY IF EXISTS "feedback_insert_own" ON public.feedback;

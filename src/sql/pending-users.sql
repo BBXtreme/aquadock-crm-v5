@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.pending_users (
   email_confirmed_at timestamptz,
   reviewed_at timestamptz,
   reviewed_by uuid REFERENCES public.profiles (id),
-  chosen_role text CHECK (chosen_role IS NULL OR chosen_role IN ('user', 'admin')),
+  chosen_role text CHECK (chosen_role IS NULL OR chosen_role IN ('user', 'admin', 'partner')),
   decline_reason text,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -33,32 +33,23 @@ CREATE POLICY "pending_users_select_own_or_admin"
 ON public.pending_users FOR SELECT
 USING (
   auth.uid() = auth_user_id
-  OR EXISTS (
-    SELECT 1 FROM public.profiles p
-    WHERE p.id = auth.uid() AND p.role = 'admin'
-  )
+  OR public.user_has_role('admin')
 );
 
 DROP POLICY IF EXISTS "pending_users_insert_admin" ON public.pending_users;
 CREATE POLICY "pending_users_insert_admin"
 ON public.pending_users FOR INSERT
-WITH CHECK (
-  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
-);
+WITH CHECK (public.user_has_role('admin'));
 
 DROP POLICY IF EXISTS "pending_users_update_admin" ON public.pending_users;
 CREATE POLICY "pending_users_update_admin"
 ON public.pending_users FOR UPDATE
-USING (
-  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
-);
+USING (public.user_has_role('admin'));
 
 DROP POLICY IF EXISTS "pending_users_delete_admin" ON public.pending_users;
 CREATE POLICY "pending_users_delete_admin"
 ON public.pending_users FOR DELETE
-USING (
-  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'admin')
-);
+USING (public.user_has_role('admin'));
 
 CREATE OR REPLACE FUNCTION public.set_pending_users_updated_at()
 RETURNS TRIGGER

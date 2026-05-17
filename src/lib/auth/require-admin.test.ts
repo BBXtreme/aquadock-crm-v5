@@ -26,6 +26,7 @@ describe("requireAdmin", () => {
       email: "a@b.c",
       user_metadata: {},
       role: "user",
+      roles: ["user"],
       display_name: null,
       avatar_url: null,
     });
@@ -34,18 +35,35 @@ describe("requireAdmin", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/unauthorized");
   });
 
-  it("returns the user when admin", async () => {
+  it("returns the user when admin role is present in roles[]", async () => {
     const admin = {
       id: "a1",
       email: "admin@b.c",
       user_metadata: {},
       role: "admin" as const,
+      roles: ["admin"] as const,
       display_name: null,
       avatar_url: null,
     };
     mockRequireUser.mockResolvedValue(admin);
     const { requireAdmin } = await import("./require-admin");
     await expect(requireAdmin()).resolves.toEqual(admin);
+    expect(mockRedirect).not.toHaveBeenCalled();
+  });
+
+  it("returns the user when admin appears alongside other roles", async () => {
+    const adminPlusPartner = {
+      id: "ap1",
+      email: "ap@b.c",
+      user_metadata: {},
+      role: "admin" as const,
+      roles: ["admin", "partner"] as const,
+      display_name: null,
+      avatar_url: null,
+    };
+    mockRequireUser.mockResolvedValue(adminPlusPartner);
+    const { requireAdmin } = await import("./require-admin");
+    await expect(requireAdmin()).resolves.toEqual(adminPlusPartner);
     expect(mockRedirect).not.toHaveBeenCalled();
   });
 });
