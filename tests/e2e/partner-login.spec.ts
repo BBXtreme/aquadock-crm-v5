@@ -1,7 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-import { pinEnglishAppearance } from "./helpers/locale";
-
 /**
  * Smoke tests for the public partner login surface.
  *
@@ -12,10 +10,6 @@ import { pinEnglishAppearance } from "./helpers/locale";
  * `/auth/login` Route Handler.
  */
 test.describe("partner login page", () => {
-  test.beforeEach(async ({ page }) => {
-    await pinEnglishAppearance(page);
-  });
-
   test("renders the branded partner sign-in card", async ({ page }) => {
     await page.goto("/partner/login");
 
@@ -39,10 +33,15 @@ test.describe("partner login page", () => {
 
     await page.goto("/partner/login");
 
-    await page
-      .locator('input[type="email"]')
-      .fill("e2e-invalid-partner@example.invalid");
-    await page.locator('input[type="password"]').fill("not-a-real-password");
+    const form = page.locator("main form").first();
+    const emailInput = form.locator('input[type="email"]');
+    const passwordInput = form.locator('input[type="password"]');
+
+    await emailInput.fill("e2e-invalid-partner@example.invalid");
+    await expect(emailInput).toHaveValue("e2e-invalid-partner@example.invalid");
+
+    await passwordInput.fill("not-a-real-password");
+    await expect(passwordInput).toHaveValue("not-a-real-password");
 
     await page.getByRole("button", { name: /^(Sign in|Anmelden)$/i }).click();
 

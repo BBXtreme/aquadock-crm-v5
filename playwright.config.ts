@@ -1,9 +1,27 @@
 import { loadEnvConfig } from "@next/env";
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
 
 // Playwright does not read `.env.local` by default; Next.js does. Load repo env so
 // E2E_USER_EMAIL / E2E_USER_PASSWORD / E2E_BASE_URL work when running `pnpm e2e` locally.
 loadEnvConfig(process.cwd());
+
+const browsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH ?? "(unset)";
+const chromiumMainX64Path =
+  browsersPath === "(unset)" || browsersPath === "0"
+    ? null
+    : `${browsersPath}/chromium-1217/chrome-mac-x64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
+const chromiumMainArm64Path =
+  browsersPath === "(unset)" || browsersPath === "0"
+    ? null
+    : `${browsersPath}/chromium-1217/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing`;
+const forcedChromiumExecutablePath =
+  process.platform === "darwin" &&
+  chromiumMainArm64Path !== null &&
+  existsSync(chromiumMainArm64Path) &&
+  (chromiumMainX64Path === null || !existsSync(chromiumMainX64Path))
+    ? chromiumMainArm64Path
+    : undefined;
 
 // Prefer localhost over 127.0.0.1 (and LAN IPs like 192.168.x.x): one stable origin, fewer OS/firewall issues.
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
@@ -34,6 +52,8 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    launchOptions:
+      forcedChromiumExecutablePath === undefined ? undefined : { executablePath: forcedChromiumExecutablePath },
     ...devices["Desktop Chrome"],
   },
   webServer: {
