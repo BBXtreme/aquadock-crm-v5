@@ -280,6 +280,12 @@
       "selectRolePlaceholder": "Rolle wählen",
       "roleUser": "Benutzer",
       "roleAdmin": "Administrator",
+      "rolePartner": "Partner",
+      "rolesGroupAria": "Rollen-Auswahl",
+      "createRolesLabel": "Rollen",
+      "saveRoles": "Rollen speichern",
+      "cannotDeleteSelf": "Du kannst Dich nicht selbst löschen.",
+      "toastRolesEmpty": "Mindestens eine Rolle ist erforderlich.",
       "cardTitle": "Benutzerverwaltung",
       "newUserAccount": "Neues Benutzerkonto",
       "userCreateButtonLabel": "Benutzer",
@@ -287,6 +293,7 @@
       "colName": "Name",
       "colEmail": "E-Mail",
       "colRole": "Rolle",
+      "colRoles": "Rollen",
       "colCreatedAt": "Erstellt",
       "colUpdatedAt": "Aktualisiert",
       "colLastSignIn": "Zuletzt angemeldet",
@@ -317,6 +324,7 @@
       "accept": "Annehmen",
       "decline": "Ablehnen",
       "roleOnAccept": "Rolle bei Annahme",
+      "rolesOnAccept": "Rollen bei Annahme",
       "toastAcceptOk": "Zugriff gewährt",
       "toastAcceptFail": "Anfrage konnte nicht angenommen werden",
       "toastDeclineOk": "Anfrage abgelehnt",
@@ -1511,6 +1519,8 @@
       "groupSales": "Vertrieb",
       "groupMarketing": "Marketing",
       "groupAdmin": "Verwaltung",
+      "groupPartner": "Partnerportal",
+      "partnerPortal": "Zum Partnerportal",
       "dashboard": "Dashboard",
       "reminders": "Erinnerungen",
       "companies": "Unternehmen",
@@ -1940,6 +1950,74 @@
     "supabaseClientInitTitle": "Anmeldung nicht verfügbar",
     "supabaseClientInitHint": "In diesem Build fehlen Supabase-URL oder Anon-Key. Lokal: pnpm dev nutzen oder mit gesetzten NEXT_PUBLIC_SUPABASE_URL und NEXT_PUBLIC_SUPABASE_ANON_KEY (z. B. in .env.local) neu bauen, bevor Du next start verwendest.",
     "applyForAccess": "Zugang beantragen"
+  },
+  "partnerLogin": {
+    "heroEyebrow": "Aquadock Partner",
+    "heroTitle": "Paddle. Live. Enjoy.",
+    "heroTitleMobile": "Willkommen am Wasser.",
+    "heroDescription": "Dein Zugang zum Aquadock-Partnerportal — für Marinas, Hotels, Camping-Plätze und Vertriebspartner, die mit uns am Wasser arbeiten.",
+    "benefit1": "Buchungen, Auslastung und Umsätze Deiner Station im Blick.",
+    "benefit2": "Materialien für Verkauf und Marketing — immer aktuell.",
+    "benefit3": "Direkter Draht zu Deinem Aquadock-Ansprechpartner.",
+    "trustLine": "Aquadock — autonome Kajak- und SUP-Stationen für moderne Waterfronts.",
+    "formTitle": "Bei Aquadock Partner anmelden",
+    "formSubtitle": "Melde Dich mit Deiner Partner-E-Mail an.",
+    "emailLabel": "E-Mail-Adresse",
+    "emailPlaceholder": "dein.name@partner.de",
+    "passwordLabel": "Passwort",
+    "passwordPlaceholder": "Mindestens 8 Zeichen",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
+    "rememberLabel": "Angemeldet bleiben",
+    "forgotPassword": "Passwort vergessen?",
+    "submit": "Anmelden",
+    "submitting": "Wird angemeldet…",
+    "toastSuccess": "Willkommen zurück!",
+    "errorInvalidCredentials": "E-Mail oder Passwort ist nicht korrekt.",
+    "errorValidation": "Bitte prüfe Deine Eingaben.",
+    "errorUnexpected": "Anmeldung gerade nicht möglich. Bitte später noch einmal versuchen.",
+    "errorNetwork": "Keine Verbindung zum Server. Bitte Internet prüfen und erneut versuchen.",
+    "footerTagline": "Aquadock Partnerportal · Paddle. Live. Enjoy.",
+    "footerLinkBecomePartner": "Partner werden",
+    "footerLinkContact": "Kontakt",
+    "footerLinkPrivacy": "Datenschutz"
+  },
+  "partnerShell": {
+    "guest": "Partner",
+    "signOut": "Abmelden",
+    "signOutError": "Abmelden fehlgeschlagen. Bitte erneut versuchen.",
+    "nav": {
+      "ariaLabel": "Partner-Navigation",
+      "ariaLabelMobile": "Partner-Navigation (mobil)",
+      "dashboard": "Dashboard",
+      "resources": "Materialien",
+      "support": "Support"
+    }
+  },
+  "partnerDashboard": {
+    "eyebrow": "Partnerportal",
+    "titleWithName": "Willkommen, {name}.",
+    "subtitle": "Hier laufen Deine Aquadock-Daten zusammen: Stationen, Materialien und ein direkter Draht zu Deinem Ansprechpartner. Wir bauen das Portal Schritt für Schritt aus.",
+    "cards": {
+      "ariaLabel": "Partner-Übersicht",
+      "bookings": {
+        "title": "Buchungen & Auslastung",
+        "body": "Bald: Live-Buchungen, Auslastung und Umsätze Deiner Station — direkt aus dem Aquadock-System."
+      },
+      "materials": {
+        "title": "Marketing & Vertrieb",
+        "body": "Bald: druckfertige PDFs, Bildmaterial und Verkaufsunterlagen — immer in der aktuellen Brand-Sprache."
+      },
+      "support": {
+        "title": "Support & Kontakt",
+        "body": "Bald: direkter Draht zu Deinem Aquadock-Ansprechpartner und Tickets ohne Umwege."
+      }
+    },
+    "comingSoon": {
+      "title": "Mehr kommt bald.",
+      "body": "Wir entwickeln das Portal gemeinsam mit unseren Partnern. Du hast eine Idee oder brauchst etwas dringend?",
+      "contactCta": "Schreib uns kurz"
+    }
   },
   "onboarding": {
     "applyTitle": "Zugang beantragen",

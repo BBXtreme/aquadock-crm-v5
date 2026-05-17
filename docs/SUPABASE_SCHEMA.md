@@ -24,7 +24,8 @@
 | ai_batch_jobs   | Async AI batch work (xAI Batch, future) | — | uuid | user_id         | Yes  | user_id, status (pending)    |
 | ai_available_models | Admin-managed AI Gateway models (Phase 2) | — | uuid | — | Yes (admin only) | gateway_id (unique), is_enabled |
 | user_notifications | In-app notification inbox | —  | uuid | user_id, actor_user_id    | Yes  | user_id, created_at, unread partial |
-| profiles        | User profiles & roles     | 20    | uuid | → auth.users(id)          | Yes  | id                           |
+| profiles        | User profiles & legacy primary role (deprecated) | 20 | uuid | → auth.users(id)          | Yes  | id                           |
+| user_roles      | Canonical multi-role mapping (user / admin / partner) | — | (user_id, role) | → auth.users(id) ON DELETE CASCADE | Yes  | (role, user_id) |
 
 ## 2. Core Tables – Column Overview
 
@@ -518,7 +519,13 @@ All schemas use `.strict()`, trimming, length limits, and enum constraints match
 
 ## 8. Auth & Authorization
 
-Supabase Auth provides authentication with the `profiles` table as the single source of truth for user roles and display information. Roles are `user` or `admin`, enforced via RLS and server-side helpers (`requireUser()`, `requireAdmin()`). Authorization does not rely on `user_metadata` for roles; `display_name` and `avatar_url` are read from `profiles` in `getCurrentUser()` for the shell (sidebar, header) and profile page. `last_sign_in_at` on `profiles` is shown in admin user management when populated by the app.
+Supabase Auth provides authentication. As of the partner-role rollout (2026-05-17), **roles are canonical in `public.user_roles`** — a normalized junction table keyed by `(user_id, role)` supporting the three roles `user`, `admin`, and `partner`. The legacy `profiles.role` column is kept for backwards compatibility (marked **DEPRECATED**; planned for removal in v5.1) and is auto-synced to the highest-priority role from `ROLE_LANDING_ORDER` whenever roles are written through the admin Server Actions.
+
+Reads consume both via the single round-trip RPC `public.get_crm_user_context()`, which returns `roles text[]` (canonical) plus the legacy `profile_role` field. The server-side helpers `requireUser()`, `requireRole(['partner','admin'])`, and `requireAdmin()` read from that array. `display_name` and `avatar_url` are read from `profiles` for the shell (sidebar, header) and profile page. `last_sign_in_at` on `profiles` is shown in admin user management when populated by the app.
+
+**RLS helpers:** `public.user_has_role(target_role text)` (`SECURITY DEFINER`, fixed `search_path`, `EXECUTE` granted only to `authenticated`) is the canonical role check used by all admin-bypass policies on `profiles`, `pending_users`, `user_roles`, and `feedback`. `public.is_app_admin()` is preserved for compatibility but now delegates to `public.user_has_role('admin')`. Both helpers use `LANGUAGE plpgsql` so the body is validated at call time, decoupling the apply order between `rls-helpers.sql` and `user-roles-table.sql`.
+
+Apply order for fresh deploys: `rls-helpers.sql` → `profiles-table.sql` → `user-roles-table.sql` (creates the table, enables RLS, and backfills from `profiles.role`) → remaining table SQL.
 
 ## 9. Supabase Storage
 
@@ -571,6 +578,8 @@ Run in the Supabase SQL Editor (idempotent), in sensible order:
 - Without this bucket or policies, uploads to `comment-files` fail with `Bucket not found` or RLS denial.
 
 ## 10. Change Log
+
+2026-05-17 Added canonical `public.user_roles(user_id, role)` table (+`(role, user_id)` index, updated-at trigger, admin-bypass RLS via `public.user_has_role`), introduced the `partner` role, marked `profiles.role` as **DEPRECATED** (planned removal in v5.1), backfilled existing roles from `profiles.role`, rewrote `profiles`/`pending_users`/`feedback` admin policies to use the new helper, and extended `public.get_crm_user_context()` to return `roles text[]` alongside the legacy `profile_role`. SQL: `supabase/migrations/20260517103000_partner_user_roles.sql`, mirrored canonical sources `src/sql/user-roles-table.sql`, `rls-helpers.sql`, `profiles-table.sql`, `pending-users.sql`, `feedback-table.sql`, `get-crm-user-context.sql`.
 
 2026-03-20 Initial v5 snapshot
 2026-03-21 Refined documentation, added index overview

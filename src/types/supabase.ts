@@ -802,6 +802,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string | null
@@ -847,6 +868,7 @@ export type Database = {
           pending_status: string
           profile_exists: boolean
           profile_role: string
+          roles: string[]
         }[]
       }
       get_dashboard_kpis: {
@@ -879,6 +901,7 @@ export type Database = {
         }[]
       }
       is_app_admin: { Args: never; Returns: boolean }
+      user_has_role: { Args: { target_role: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

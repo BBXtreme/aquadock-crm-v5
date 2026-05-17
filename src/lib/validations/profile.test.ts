@@ -159,29 +159,43 @@ describe("adminDeleteUserSchema", () => {
 });
 
 describe("adminCreateUserSchema", () => {
-  it("maps empty display_name to null and defaults missing role to user", () => {
+  it("maps empty display_name to null and accepts a single role", () => {
     const r = adminCreateUserSchema.parse({
       email: "new@example.com",
       display_name: "   ",
-      role: "",
+      roles: ["user"],
     });
     expect(r.display_name).toBeNull();
-    expect(r.role).toBe("user");
+    expect(r.roles).toEqual(["user"]);
   });
 
-  it("keeps non-empty display name and explicit admin role", () => {
+  it("keeps non-empty display name and accepts multiple roles", () => {
     const r = adminCreateUserSchema.parse({
       email: "b@example.com",
       display_name: "  Bernd  ",
-      role: "admin",
+      roles: ["admin", "partner"],
     });
     expect(r.display_name).toBe("Bernd");
-    expect(r.role).toBe("admin");
+    expect(r.roles).toEqual(["admin", "partner"]);
   });
 
   it("rejects bad email", () => {
     expect(() =>
-      adminCreateUserSchema.parse({ email: "bad", display_name: "", role: "user" }),
+      adminCreateUserSchema.parse({
+        email: "bad",
+        display_name: "",
+        roles: ["user"],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects empty roles array", () => {
+    expect(() =>
+      adminCreateUserSchema.parse({
+        email: "ok@example.com",
+        display_name: "",
+        roles: [],
+      }),
     ).toThrow();
   });
 });

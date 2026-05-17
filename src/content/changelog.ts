@@ -33,6 +33,41 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.50",
+    releasedAt: "2026-05-17",
+    title: "🌊 Partner-Portal live: Multi-Rollen, Dual-Login und klare Trennung",
+    changes: [
+      {
+        type: "feature",
+        text: "Neu: Externes Partner-Login unter /partner/login mit eigener Markenwelt („Paddle. Live. Enjoy.“) — klar getrennt vom internen /login für Sales, Marketing und Admin.",
+      },
+      {
+        type: "feature",
+        text: "Ein gemeinsames Auth-Backend für beide Login-Flows: /auth/login verarbeitet JSON und FormData, erstellt dieselbe Supabase-Session und entscheidet das Ziel role-basiert.",
+      },
+      {
+        type: "feature",
+        text: "Multi-Rollen sind jetzt produktiv: Die neue Tabelle `user_roles` ist die kanonische Quelle (user, admin, partner). `profiles.role` bleibt nur als Legacy-Feld für die Übergangszeit erhalten.",
+      },
+      {
+        type: "improvement",
+        text: "Post-Login-Redirect mit klarer Priorität: Wenn ein Benutzer die Rolle `partner` hat, landet er zuerst im Partnerbereich (`/partner/dashboard`), sonst wie gewohnt im internen Dashboard.",
+      },
+      {
+        type: "improvement",
+        text: "Routen- und Sicherheitslogik erweitert: `/partner/*` ist geschützt, `/partner/login` bleibt öffentlich; Rollenprüfungen laufen konsistent über neue Role-Helper und aktualisierte RLS-Policies.",
+      },
+      {
+        type: "feature",
+        text: "Benutzerverwaltung für Admins unterstützt jetzt Mehrfachrollen inkl. Partner-Rolle — bei bestehenden Nutzern, neuen Benutzern und beim Freigeben von Zugangsanfragen.",
+      },
+      {
+        type: "improvement",
+        text: "Test- und Doku-Update: neue Vitest-Suiten für Redirect/Auth-Route, E2E-Smoke für Partner-Login sowie aktualisierte Architektur-, Schema- und Deploy-Dokumentation (inkl. `partner.aquadock.de`).",
+      },
+    ],
+  },
+  {
     version: "0.5.49",
     releasedAt: "2026-05-06",
     title: "🎯 Semantische Suche feiner steuern & KI-Einstellungen klarer",

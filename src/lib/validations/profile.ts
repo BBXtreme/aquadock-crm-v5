@@ -1,6 +1,9 @@
 // Zod schemas for profile / avatar – aligned with Supabase profiles.avatar_url
+// and the canonical multi-role table `public.user_roles`.
 
 import { z } from "zod";
+
+import { USER_ROLES } from "@/lib/auth/types";
 
 export const PROFILE_AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
@@ -129,14 +132,61 @@ export const adminUpdateUserDisplayNameSchema = z
 
 export type AdminUpdateUserDisplayNameInput = z.infer<typeof adminUpdateUserDisplayNameSchema>;
 
+/** Canonical role enum mirroring `public.user_roles.role`. */
+export const userRoleSchema = z.enum(USER_ROLES);
+
+/**
+ * Multi-role list for admin write paths. Always at least one role; duplicates
+ * collapsed; order normalized; admin must remain a subset of USER_ROLES.
+ */
+export const userRolesArraySchema = z
+  .array(userRoleSchema)
+  .min(1, "Mindestens eine Rolle ist erforderlich.")
+  .transform((roles) => Array.from(new Set(roles)).sort());
+
+/** FormData-friendly variant: accepts a JSON string OR repeated `roles` fields. */
+export const userRolesFromFormDataSchema = z
+  .preprocess((raw) => {
+    if (Array.isArray(raw)) {
+      return raw;
+    }
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith("[")) {
+        try {
+          const parsed: unknown = JSON.parse(trimmed);
+          return parsed;
+        } catch {
+          return [trimmed];
+        }
+      }
+      return [trimmed];
+    }
+    return [];
+  }, userRolesArraySchema);
+
+/**
+ * Legacy single-role change kept for backwards compatibility with callers that
+ * have not migrated to the multi-role flow (e.g. older Server Actions).
+ */
 export const adminChangeUserRoleSchema = z
   .object({
     userId: z.string().uuid(),
-    newRole: z.enum(["user", "admin"]),
+    newRole: userRoleSchema,
   })
   .strict();
 
 export type AdminChangeUserRoleInput = z.infer<typeof adminChangeUserRoleSchema>;
+
+/** Multi-role write: replace the user's roles with this exact set. */
+export const adminSetUserRolesSchema = z
+  .object({
+    userId: z.string().uuid(),
+    roles: userRolesArraySchema,
+  })
+  .strict();
+
+export type AdminSetUserRolesInput = z.infer<typeof adminSetUserRolesSchema>;
 
 export const adminDeleteUserSchema = z
   .object({
@@ -144,7 +194,7 @@ export const adminDeleteUserSchema = z
   })
   .strict();
 
-/** Admin-created user (FormData: email, display_name, role). */
+/** Admin-created user (FormData: email, display_name, roles). */
 export const adminCreateUserSchema = z
   .object({
     email: z.string().trim().min(1, "E-Mail ist erforderlich.").email("Ungültige E-Mail-Adresse."),
@@ -155,10 +205,7 @@ export const adminCreateUserSchema = z
         return t === "" ? null : t;
       })
       .pipe(z.union([z.null(), z.string().min(1).max(200)])),
-    role: z.preprocess(
-      (v) => (v === null || v === undefined || v === "" ? "user" : v),
-      z.enum(["user", "admin"]),
-    ),
+    roles: userRolesArraySchema,
   })
   .strict();
 

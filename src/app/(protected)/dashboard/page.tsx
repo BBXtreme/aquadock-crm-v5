@@ -4,17 +4,23 @@
 // It uses a client component (DashboardClient) to fetch and display the actual statistics and charts, while the server component handles authentication and provides a loading state during data fetching.
 // Protected dashboard with real KPI calculations and beautiful visualizations.
 
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import DashboardClient from "@/components/features/dashboard/DashboardClient";
 import { DashboardContentSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
+import { hasAnyRole } from "@/lib/auth/types";
 import { loadDashboardKpis } from "@/lib/services/dashboard-kpis";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { DashboardPageHeader } from "./DashboardPageHeader";
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const canAccessSalesDashboard = hasAnyRole(user, ["admin", "user"]);
+  if (!canAccessSalesDashboard) {
+    redirect("/partner/dashboard");
+  }
   const supabase = await createServerSupabaseClient();
   const initialKpis = await loadDashboardKpis(supabase, "30d");
 

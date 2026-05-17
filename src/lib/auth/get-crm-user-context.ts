@@ -4,12 +4,16 @@
 // to return the user's identity, profile, and pending-onboarding status in one
 // shot. Both `getCurrentUser()` and `requireCrmAccess()` delegate here so the
 // protected layout pays at most one Auth call + one Postgres RPC per request.
+//
+// The RPC now returns a canonical `roles text[]` payload sourced from
+// `public.user_roles`. The legacy `profile_role` field is retained for
+// backwards compatibility and used as a fallback when the array is empty.
 
 import { cache } from "react";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-import type { AuthUser, UserRole } from "./types";
+import { type AuthUser, isUserRole, type UserRole } from "./types";
 
 export type CrmUserContext = {
   user: AuthUser | null;
@@ -18,13 +22,10 @@ export type CrmUserContext = {
 
 type ProfileFields = {
   role: string | null;
+  roles: readonly string[];
   display_name: string | null;
   avatar_url: string | null;
 };
-
-function isUserRole(value: string | null | undefined): value is UserRole {
-  return value === "admin" || value === "user";
-}
 
 function toUserMetadata(value: unknown): { display_name?: string } {
   if (value === null || typeof value !== "object") return {};
@@ -35,16 +36,48 @@ function toUserMetadata(value: unknown): { display_name?: string } {
   return {};
 }
 
+function normalizeRoles(
+  rawRoles: readonly string[],
+  fallbackRole: string | null,
+): UserRole[] {
+  const seen = new Set<UserRole>();
+  for (const candidate of rawRoles) {
+    if (isUserRole(candidate)) {
+      seen.add(candidate);
+    }
+  }
+  if (seen.size === 0 && isUserRole(fallbackRole)) {
+    seen.add(fallbackRole);
+  }
+  return Array.from(seen);
+}
+
+function pickPrimaryRole(
+  roles: readonly UserRole[],
+  fallbackRole: string | null,
+): UserRole {
+  if (isUserRole(fallbackRole) && roles.includes(fallbackRole)) {
+    return fallbackRole;
+  }
+  const first = roles[0];
+  if (first !== undefined) {
+    return first;
+  }
+  return "user";
+}
+
 function buildAuthUser(
   identity: { id: string; email: string | null; userMetadata: { display_name?: string } },
   profile: ProfileFields | null,
 ): AuthUser {
-  const role: UserRole = isUserRole(profile?.role ?? null) ? (profile?.role as UserRole) : "user";
+  const roles = normalizeRoles(profile?.roles ?? [], profile?.role ?? null);
+  const role = pickPrimaryRole(roles, profile?.role ?? null);
   return {
     id: identity.id,
     email: identity.email,
     user_metadata: identity.userMetadata,
     role,
+    roles,
     display_name: profile?.display_name ?? null,
     avatar_url: profile?.avatar_url ?? null,
   };
@@ -56,7 +89,8 @@ function buildAuthUser(
  * Round-trip budget per request:
  *   - 1 × `getClaims()` (local JWT verify on asymmetric signing keys; falls back
  *     to a single `getUser()` HTTP call on HS256 — see Phase 1.4 doc).
- *   - 1 × `get_crm_user_context()` RPC (LEFT JOINs profiles + pending_users).
+ *   - 1 × `get_crm_user_context()` RPC (LEFT JOINs profiles + pending_users
+ *     plus an aggregated read of `public.user_roles`).
  *
  * Cached via React `cache()`: layout, page, and any helpers that re-call this
  * within the same RSC request resolve to a single network round-trip pair.
@@ -106,6 +140,7 @@ export const getCrmUserContext = cache(async (): Promise<CrmUserContext> => {
   const profile: ProfileFields | null = ctx?.profile_exists
     ? {
         role: ctx.profile_role ?? null,
+        roles: ctx.roles ?? [],
         display_name: ctx.display_name ?? null,
         avatar_url: ctx.avatar_url ?? null,
       }
