@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { ROLE_LANDING_ORDER } from "@/lib/auth/role-page-access";
 import { revalidateAdminUserManagement } from "@/lib/next-cache/revalidate-admin-user-management";
 import {
   sendNotificationHtmlEmail,
@@ -11,11 +12,16 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { resolveAuthRedirectUrl, resolveSiteOrigin } from "@/lib/utils/auth-recovery-redirect";
 import { safeDisplay } from "@/lib/utils/data-format";
 import { accessRequestSchema } from "@/lib/validations/access-request";
+import {
+  userRoleSchema,
+  userRolesFromFormDataSchema,
+} from "@/lib/validations/profile";
 
 const acceptSchema = z
   .object({
     pendingId: z.string().uuid(),
-    chosenRole: z.enum(["user", "admin"]),
+    chosenRole: userRoleSchema,
+    chosenRoles: z.array(userRoleSchema).min(1),
   })
   .strict();
 
@@ -234,9 +240,21 @@ export async function syncPendingEmailConfirmationIfNeeded(): Promise<void> {
 }
 
 export async function acceptPendingUser(formData: FormData): Promise<void> {
+  // Backwards-compat: callers may send `chosenRoles` (multi) and/or
+  // `chosenRole` (legacy single). Multi-role takes precedence; the single role
+  // mirrors the highest-priority role for `pending_users.chosen_role`.
+  const rawRoles = formData.get("chosenRoles");
+  const rolesCandidate =
+    rawRoles === null ? formData.get("chosenRole") : rawRoles;
+  const chosenRoles = userRolesFromFormDataSchema.parse(rolesCandidate);
+  const primaryChosenRole =
+    ROLE_LANDING_ORDER.find((role) => chosenRoles.includes(role)) ??
+    chosenRoles[0];
+
   const parsed = acceptSchema.safeParse({
     pendingId: formData.get("pendingId"),
-    chosenRole: formData.get("chosenRole"),
+    chosenRole: primaryChosenRole,
+    chosenRoles,
   });
   if (!parsed.success) {
     throw new Error("Invalid input");
@@ -272,6 +290,17 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
 
   if (profileErr !== null) {
     throw new Error(profileErr.message);
+  }
+
+  // Mirror the chosen roles into the canonical multi-role table.
+  const { error: userRolesErr } = await admin.from("user_roles").insert(
+    chosenRoles.map((role) => ({
+      user_id: pending.auth_user_id,
+      role,
+    })),
+  );
+  if (userRolesErr !== null) {
+    throw new Error(`Failed to assign roles: ${userRolesErr.message}`);
   }
 
   const actorName = safeDisplay(adminDisplayName ?? user.email ?? "Admin");
@@ -336,6 +365,7 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
     }
   }
 
+  const rolesLabel = chosenRoles.join(", ");
   try {
     const admins = await getAdminNotificationRecipientEmails();
     if (admins.length > 0) {
@@ -343,7 +373,7 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
         actingAdminUserId: user.id,
         to: admins,
         subject: `[AquaDock CRM] Access accepted: ${email}`,
-        html: `<p>${applicantNameHtml} (<strong>${emailHtml}</strong>) was approved by ${actorNameHtml} with role <strong>${chosenRole}</strong>.</p>`,
+        html: `<p>${applicantNameHtml} (<strong>${emailHtml}</strong>) was approved by ${actorNameHtml} with roles <strong>${escapeHtmlTextForEmail(rolesLabel)}</strong>.</p>`,
       });
     }
   } catch (e) {
@@ -352,7 +382,7 @@ export async function acceptPendingUser(formData: FormData): Promise<void> {
 
   await createTimelineEntry(
     {
-      title: `[Onboarding] Access accepted for ${email} (${chosenRole})`,
+      title: `[Onboarding] Access accepted for ${email} (${rolesLabel})`,
       activity_type: "other",
       content: `Approved by ${actorName}.`,
       company_id: null,

@@ -45,6 +45,18 @@ export default defineConfig({
         "src/types/database.types.ts",
         "src/types/brevo.ts",
         "src/**/login/page.tsx",
+        // Public partner login surfaces — markup-heavy branded UI; behaviour
+        // is covered by the route handler unit tests + partner-login E2E spec.
+        "src/app/partner/login/page.tsx",
+        "src/app/partner/login/layout.tsx",
+        "src/components/features/auth/PartnerLoginLayout.tsx",
+        "src/components/features/auth/PartnerLoginForm.tsx",
+        "src/components/features/auth/PartnerThemeProvider.tsx",
+        // Authenticated partner section in the unified CRM shell — composition + placeholder dashboard;
+        // covered by future partner E2E suites once real KPIs ship in v5.1.
+        "src/app/(protected)/partner/layout.tsx",
+        "src/app/(protected)/partner/dashboard/page.tsx",
+        "src/components/features/partner/PartnerDashboardWelcome.tsx",
         "src/components/tables/TimelineTable.tsx",
         "src/components/features/timeline/TimelineEntryForm.tsx",
         "src/components/features/timeline/TimelineLinkCombobox.tsx",

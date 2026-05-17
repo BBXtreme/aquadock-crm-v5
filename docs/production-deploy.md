@@ -134,6 +134,19 @@ Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live s
 2. Set DNS records exactly as Vercel shows (often `CNAME` for subdomains).  
 3. Wait for propagation; Vercel provisions **HTTPS** automatically.
 
+### Partner subdomain (`partner.aquadock.de`)
+
+The branded partner sign-in lives at `/partner/login` and the authenticated partner portal at `/partner/dashboard`. To make those reachable on a dedicated subdomain:
+
+1. In the Vercel project → **Domains**, add `partner.aquadock.de` to the **same** project (the partner UI is part of the same Next.js app, not a separate deployment).
+2. Set the DNS `CNAME` exactly as Vercel shows for the new subdomain.
+3. **Do not** add a path-based rewrite or redirect — the partner segments already serve under `/partner/*`. The marketing site can optionally redirect `partner.aquadock.de/` (root) to `/partner/login` via Vercel **Redirects** if a bare subdomain hit is expected.
+4. In **Supabase Auth** → *URL Configuration*, add the partner subdomain to the **Site URL allow list** and any **Redirect URLs** used for password recovery / magic links you intend to support on the partner surface. The recovery flow continues to redirect to `/login` for internal staff and `/partner/login` for partner-only users; both URLs must be present.
+5. Verify in **preview + production** that:
+   - `https://partner.aquadock.de/partner/login` renders the branded sign-in (no internal sidebar).
+   - Sign-in succeeds and lands on `/partner/dashboard` (partner role) or `/dashboard` (internal role) per `resolvePostLoginRedirect`.
+   - Sign-out from the partner shell returns to `/partner/login`.
+
 ---
 
 ## 5. Performance and monitoring

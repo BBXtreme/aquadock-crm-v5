@@ -1,7 +1,7 @@
 // src/components/layout/Sidebar.tsx
 "use client";
 
-import { ChevronDown, type LucideIcon, PanelLeft, PanelRight } from "lucide-react";
+import { ChevronDown, ExternalLink, type LucideIcon, PanelLeft, PanelRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CHANGELOG_LAST_SEEN_STORAGE_KEY, CHANGELOG_SEEN_EVENT } from "@/content/changelog";
+import { isUserRole, type UserRole } from "@/lib/auth/types";
 import { compareSemver } from "@/lib/changelog/compare-semver";
 import {
   type AppShellNavMessageKey,
@@ -84,7 +85,11 @@ function SidebarMenuItem({ className, ...props }: ComponentProps<"li">) {
 interface SidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
-  user: { role: string; display_name?: string | null };
+  user: {
+    role: string;
+    roles?: readonly UserRole[];
+    display_name?: string | null;
+  };
 }
 
 function SidebarChangelogVersionLink({ version }: { version: string }) {
@@ -159,7 +164,12 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const pathname = usePathname();
   const t = useT("layout.sidebar");
 
-  const isAdmin = user.role === "admin";
+  const roles: readonly UserRole[] =
+    user.roles ?? (isUserRole(user.role) ? [user.role] : []);
+  const isAdmin = roles.includes("admin");
+  const isUser = roles.includes("user");
+  const isPartner = isAdmin || roles.includes("partner");
+  const canAccessCrmNav = isAdmin || isUser;
 
   return (
     <div
@@ -181,22 +191,26 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
       </div>
 
       <nav className={cn("flex flex-1 flex-col gap-4 p-4 overflow-y-auto")} suppressHydrationWarning={true}>
-        <SidebarGroup className="gap-1">
-          {!isCollapsed ? <SidebarGroupLabel>{t("groupSales")}</SidebarGroupLabel> : null}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderNavItems(appShellSalesNav, pathname, isCollapsed, t)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup className="gap-1">
-          {!isCollapsed ? <SidebarGroupLabel>{t("groupMarketing")}</SidebarGroupLabel> : null}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {renderNavItems(appShellMarketingNav, pathname, isCollapsed, t)}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {canAccessCrmNav ? (
+          <SidebarGroup className="gap-1">
+            {!isCollapsed ? <SidebarGroupLabel>{t("groupSales")}</SidebarGroupLabel> : null}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderNavItems(appShellSalesNav, pathname, isCollapsed, t)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
+        {canAccessCrmNav ? (
+          <SidebarGroup className="gap-1">
+            {!isCollapsed ? <SidebarGroupLabel>{t("groupMarketing")}</SidebarGroupLabel> : null}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {renderNavItems(appShellMarketingNav, pathname, isCollapsed, t)}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
         {isAdmin ? (
           <SidebarGroup className="gap-1">
             {!isCollapsed ? <SidebarGroupLabel>{t("groupAdmin")}</SidebarGroupLabel> : null}
@@ -207,11 +221,41 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}
+        {isPartner ? (
+          <SidebarGroup className="gap-1">
+            {!isCollapsed ? (
+              <SidebarGroupLabel>{t("groupPartner")}</SidebarGroupLabel>
+            ) : null}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <Link href="/partner/dashboard">
+                    <Button
+                      variant="ghost"
+                      className={cn(
+                        "w-full h-10 transition-colors",
+                        isCollapsed ? "justify-center px-2" : "justify-start px-3",
+                      )}
+                      title={isCollapsed ? t("partnerPortal") : undefined}
+                    >
+                      <ExternalLink className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
+                      {!isCollapsed && (
+                        <span className="flex-1 text-left truncate">
+                          {t("partnerPortal")}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </nav>
 
       <div className="border-t shrink-0" />
 
-      {!isCollapsed && (
+      {!isCollapsed && canAccessCrmNav && (
         <div className="p-4 shrink-0">
           <Collapsible>
             <CollapsibleTrigger asChild>

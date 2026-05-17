@@ -48,6 +48,7 @@ describe("getCrmUserContext", () => {
       data: [
         {
           profile_role: "admin",
+          roles: ["admin"],
           display_name: "Alice Admin",
           avatar_url: "https://cdn/x.png",
           profile_exists: true,
@@ -68,6 +69,7 @@ describe("getCrmUserContext", () => {
         email: "u@example.com",
         user_metadata: { display_name: "Alice" },
         role: "admin",
+        roles: ["admin"],
         display_name: "Alice Admin",
         avatar_url: "https://cdn/x.png",
       },
@@ -93,6 +95,7 @@ describe("getCrmUserContext", () => {
       data: [
         {
           profile_role: "user",
+          roles: ["user"],
           display_name: null,
           avatar_url: null,
           profile_exists: true,
@@ -136,6 +139,7 @@ describe("getCrmUserContext", () => {
       data: [
         {
           profile_role: null,
+          roles: [],
           display_name: null,
           avatar_url: null,
           profile_exists: false,
@@ -149,6 +153,7 @@ describe("getCrmUserContext", () => {
     const ctx = await getCrmUserContext();
 
     expect(ctx.user?.role).toBe("user");
+    expect(ctx.user?.roles).toEqual([]);
     expect(ctx.pendingStatus).toBe("accepted");
   });
 
@@ -170,6 +175,7 @@ describe("getCrmUserContext", () => {
 
     expect(ctx.user?.id).toBe("user-4");
     expect(ctx.user?.role).toBe("user");
+    expect(ctx.user?.roles).toEqual([]);
     expect(ctx.pendingStatus).toBeNull();
     expect(errSpy).toHaveBeenCalled();
     errSpy.mockRestore();
