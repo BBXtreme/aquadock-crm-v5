@@ -3,7 +3,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-import ReminderEditForm from "@/components/features/reminder/ReminderEditForm";
+import ReminderEditForm from "@/components/features/reminders/ReminderEditForm";
 import {
   Breadcrumb,
   BreadcrumbItem,

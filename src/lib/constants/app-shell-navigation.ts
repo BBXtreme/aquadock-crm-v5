@@ -2,12 +2,15 @@ import {
   ArchiveRestore,
   BarChart3,
   Bell,
+  Brain,
   Building2,
   History,
+  LifeBuoy,
   ListPlus,
   Mail,
   MapPin,
   MessageSquare,
+  Sparkles,
   Target,
   UserPlus,
   Users,
@@ -54,6 +57,13 @@ export const appShellAdminNav = [
     cmdkKeywords:
       "admin feedback inbox verwaltung verwaltungsbereich widget submissions povratne informacije",
   },
+  {
+    messageKey: "adminAiModels",
+    href: "/admin/ai-models",
+    icon: Brain,
+    cmdkKeywords:
+      "admin ai models ki-modelle llm gateway enrichment verwaltung verwaltungsbereich ki anreicherung",
+  },
 ] as const;
 
 /**
@@ -99,3 +109,16 @@ export type AppShellNavMessageKey =
 export type AppShellAdminNavMessageKey = (typeof appShellAdminNav)[number]["messageKey"];
 
 export type AppShellQuickCreateMessageKey = (typeof appShellQuickCreate)[number]["messageKey"];
+
+/**
+ * Partner portal navigation rendered inside the unified CRM sidebar.
+ * Keys map
+ * to the `partnerShell.nav.*` namespace in `src/messages/*.json`.
+ */
+export const partnerPortalNav = [
+  { messageKey: "dashboard", href: "/partner/dashboard", icon: BarChart3 },
+  { messageKey: "resources", href: "/partner/resources", icon: Sparkles },
+  { messageKey: "support", href: "/partner/support", icon: LifeBuoy },
+] as const;
+
+export type PartnerPortalNavMessageKey = (typeof partnerPortalNav)[number]["messageKey"];

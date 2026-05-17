@@ -180,7 +180,7 @@ export default function AquaDockCard({ company, onCompanyUpdated, canEditCompany
       aria-disabled={!hasCoordinates}
       onClick={() => {
         if (!hasCoordinates) return;
-        router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13`);
+        router.push(`/openmap?lat=${company.lat}&lon=${company.lon}&zoom=13&highlight=${company.id}`);
       }}
       data-state={hasCoordinates ? "enabled" : "disabled"}
       // Keep the button focusable/hoverable when "disabled" so the tooltip

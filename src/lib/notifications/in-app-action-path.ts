@@ -13,5 +13,8 @@ export function getInAppNotificationActionPath(notification: UserNotification): 
   if ("contactId" in payload) {
     return `/contacts/${payload.contactId}`;
   }
+  if ("feedbackId" in payload) {
+    return "/dashboard";
+  }
   return `/companies/${payload.companyId}`;
 }

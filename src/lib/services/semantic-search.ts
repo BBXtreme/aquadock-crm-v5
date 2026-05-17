@@ -3,6 +3,11 @@ import { openai } from "@ai-sdk/openai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { embed } from "ai";
 
+import {
+  SEMANTIC_MATCH_STRICTNESS_KEY,
+  type SemanticMatchStrictness,
+} from "@/lib/constants/semantic-search-user-settings";
+
 export const COMPANY_SEARCH_EMBEDDING_DIMENSION = 1536 as const;
 export const COMPANY_SEARCH_EMBEDDING_MODEL = "text-embedding-3-small" as const;
 const EMBEDDINGS_TIMEOUT_MS = 12_000;
@@ -14,10 +19,11 @@ export const DEFAULT_SEMANTIC_SETTINGS = {
   semanticSearchEnabled: true,
   autoBackfillEmbeddings: true,
   showSemanticBadge: true,
+  semanticMatchStrictness: "balanced" satisfies SemanticMatchStrictness,
 } as const;
 
 type SemanticNullableText = string | null | undefined;
-type EmbeddingProvider = "gateway" | "openai" | "xai";
+export type EmbeddingProvider = "gateway" | "openai" | "xai";
 type UserSettingsRow = { key: string; value: unknown };
 type EmbeddingAttempt =
   | { kind: "openai-direct"; model: ReturnType<typeof openai.textEmbedding>; modelId: string }
@@ -33,6 +39,8 @@ export type SemanticSearchSettings = {
   semanticSearchEnabled: boolean;
   autoBackfillEmbeddings: boolean;
   showSemanticBadge: boolean;
+  /** Controls cosine-distance gate for vector leg of hybrid search (`p_max_vector_distance`). */
+  semanticMatchStrictness: SemanticMatchStrictness;
 };
 
 export type CompanySemanticDocumentInput = {
@@ -191,6 +199,13 @@ function hasProviderCredentials(provider: EmbeddingProvider): boolean {
   return false;
 }
 
+/** Exposed for Server Actions (e.g. re-embed) to fail fast with a clear condition. */
+export function hasEmbeddingProviderCredentials(
+  settings: Pick<SemanticSearchSettings, "embeddingProvider">,
+): boolean {
+  return hasProviderCredentials(settings.embeddingProvider);
+}
+
 function getGateway() {
   const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
   if (!apiKey) {
@@ -275,6 +290,7 @@ async function fetchCurrentUserSettings(
         "semantic_search_enabled",
         "auto_backfill_embeddings",
         "show_semantic_badge",
+        SEMANTIC_MATCH_STRICTNESS_KEY,
       ]);
     if (error) {
       return null;
@@ -297,6 +313,7 @@ export async function resolveSemanticSearchSettings(
     semanticSearchEnabled: DEFAULT_SEMANTIC_SETTINGS.semanticSearchEnabled,
     autoBackfillEmbeddings: DEFAULT_SEMANTIC_SETTINGS.autoBackfillEmbeddings,
     showSemanticBadge: DEFAULT_SEMANTIC_SETTINGS.showSemanticBadge,
+    semanticMatchStrictness: DEFAULT_SEMANTIC_SETTINGS.semanticMatchStrictness,
   };
 
   if (!supabase) {
@@ -313,6 +330,7 @@ export async function resolveSemanticSearchSettings(
   let semanticSearchEnabled = defaults.semanticSearchEnabled;
   let autoBackfillEmbeddings = defaults.autoBackfillEmbeddings;
   let showSemanticBadge = defaults.showSemanticBadge;
+  let semanticMatchStrictness = defaults.semanticMatchStrictness;
 
   for (const row of rows) {
     if (row.key === "embedding_provider") {
@@ -330,6 +348,9 @@ export async function resolveSemanticSearchSettings(
     if (row.key === "show_semantic_badge") {
       showSemanticBadge = parseBooleanSetting(row.value, defaults.showSemanticBadge);
     }
+    if (row.key === SEMANTIC_MATCH_STRICTNESS_KEY) {
+      semanticMatchStrictness = normalizeSemanticMatchStrictness(row.value, defaults.semanticMatchStrictness);
+    }
   }
 
   return {
@@ -338,7 +359,39 @@ export async function resolveSemanticSearchSettings(
     semanticSearchEnabled,
     autoBackfillEmbeddings,
     showSemanticBadge,
+    semanticMatchStrictness,
   };
+}
+
+function normalizeSemanticMatchStrictness(
+  value: unknown,
+  fallback: SemanticMatchStrictness,
+): SemanticMatchStrictness {
+  if (value === "strict" || value === "balanced" || value === "broad") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const t = value.trim();
+    if (t === "strict" || t === "balanced" || t === "broad") {
+      return t;
+    }
+  }
+  return fallback;
+}
+
+/**
+ * Maps product strictness to `hybrid_company_search` cosine-distance ceiling (pgvector `<=>`, 0..2).
+ * Stricter = smaller distance allowed = fewer vector-only matches (less noise).
+ */
+export function mapSemanticMatchStrictnessToMaxVectorDistance(strictness: SemanticMatchStrictness): number {
+  switch (strictness) {
+    case "strict":
+      return 0.35;
+    case "broad":
+      return 0.65;
+    default:
+      return 0.5;
+  }
 }
 
 export function buildCompanySemanticDocument(input: CompanySemanticDocumentInput): string {
@@ -472,6 +525,7 @@ export async function createXaiEmbedding(input: {
       semanticSearchEnabled: true,
       autoBackfillEmbeddings: true,
       showSemanticBadge: true,
+      semanticMatchStrictness: DEFAULT_SEMANTIC_SETTINGS.semanticMatchStrictness,
     },
   );
 }
@@ -497,6 +551,7 @@ export async function testEmbeddingConnection(
         embeddingProvider: settings.embeddingProvider,
         embeddingModel: settings.embeddingModel,
         semanticSearchEnabled: settings.semanticSearchEnabled,
+        semanticMatchStrictness: DEFAULT_SEMANTIC_SETTINGS.semanticMatchStrictness,
       },
     );
     return { ok: true, reason: "connected" };
@@ -572,37 +627,42 @@ export async function generateAndStoreCompanyEmbedding(
   companyId: string,
   input: CompanySemanticDocumentInput,
   signal?: AbortSignal,
+  options?: { force?: boolean },
 ): Promise<void> {
   try {
     const settings = await resolveSemanticSearchSettings(supabase);
-    if (!settings.semanticSearchEnabled) {
-      // Skip embedding generation entirely when semantic search is disabled.
-      return;
-    }
-    if (!settings.autoBackfillEmbeddings) {
-      return;
-    }
-
-    const text = buildCompanySemanticDocument(input);
-    if (text.length < 10) {
-      return;
-    }
-
-    const embedding = await createCompanySearchEmbedding(
-      { text, signal, supabase },
-      settings,
-    );
-    const pgVector = toPgVectorLiteral(embedding);
-
-    const { error } = await supabase
-      .from("companies")
-      .update({ search_embedding: pgVector })
-      .eq("id", companyId);
-
-    if (error) {
-      console.warn(`Failed to store embedding for company ${companyId}:`, error.message);
-    }
+    await generateAndStoreCompanyEmbeddingWithSettings(supabase, companyId, input, settings, signal, options);
   } catch (err) {
     console.warn(`Embedding generation failed for company ${companyId}:`, err);
+  }
+}
+
+export async function generateAndStoreCompanyEmbeddingWithSettings(
+  supabase: SupabaseClient,
+  companyId: string,
+  input: CompanySemanticDocumentInput,
+  settings: SemanticSearchSettings,
+  signal?: AbortSignal,
+  options?: { force?: boolean },
+): Promise<void> {
+  if (!settings.semanticSearchEnabled) {
+    // Skip embedding generation entirely when semantic search is disabled.
+    return;
+  }
+  if (!options?.force && !settings.autoBackfillEmbeddings) {
+    return;
+  }
+
+  const text = buildCompanySemanticDocument(input);
+  if (text.length < 10) {
+    return;
+  }
+
+  const embedding = await createCompanySearchEmbedding({ text, signal, supabase }, settings);
+  const pgVector = toPgVectorLiteral(embedding);
+
+  const { error } = await supabase.from("companies").update({ search_embedding: pgVector }).eq("id", companyId);
+  if (error) {
+    console.warn(`Failed to store embedding for company ${companyId}:`, error.message);
   }
 }

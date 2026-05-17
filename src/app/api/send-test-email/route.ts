@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const { recipient } = await request.json();
 
-    if (!recipient || !recipient.includes("@")) {
+    if (!recipient?.includes("@")) {
       return NextResponse.json({ error: "Invalid recipient email" }, { status: 400 });
     }
 

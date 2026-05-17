@@ -1,62 +1,105 @@
 // src/components/features/profile/UserManagementCard.tsx
-// Client Component for User Management
-// This component displays a table of all users (only visible to admins) and allows the admin to change user roles, trigger password resets, and delete users.
-// It uses buttons with loading states for each action and includes a confirmation dialog for deletions.
+//
+// Multi-role admin user management. Reads canonical roles from `public.user_roles`
+// (via `admin-user-directory.ts`) and writes them through the multi-role
+// Server Actions `setUserRoles` and `createUser`.
 
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Mail, Pencil, Plus, Shield, Trash2, Users } from "lucide-react";
+import { Loader2, Mail, Pencil, Plus, Save, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { acceptPendingUser, declinePendingUser } from "@/lib/actions/onboarding";
+import type { UserRole } from "@/lib/auth/types";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
-import { changeUserRole, createUser, deleteUser, triggerPasswordReset, updateUserDisplayName } from "@/lib/services/profile";
+import {
+  createUser,
+  deleteUser,
+  setUserRoles,
+  triggerPasswordReset,
+  updateUserDisplayName,
+} from "@/lib/services/profile";
 import { formatDateDistance, safeDisplay } from "@/lib/utils/data-format";
 import type { PendingUser } from "@/types/database.types";
+import { RoleMultiSelect } from "./RoleMultiSelect";
 
-// Client Component for User Management
+type AdminUserRow = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: string;
+  roles: UserRole[];
+  created_at: string | null;
+  updated_at: string | null;
+  last_sign_in_at: string | null;
+};
+
+interface UserManagementCardProps {
+  allUsers: AdminUserRow[];
+  pendingUsers: PendingUser[];
+  currentUserId: string;
+}
+
+function rolesEqual(a: readonly UserRole[], b: readonly UserRole[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((role, i) => role === sortedB[i]);
+}
+
 function UserManagementCard({
   allUsers,
   pendingUsers,
-}: {
-  allUsers: {
-    id: string;
-    email: string;
-    display_name: string | null;
-    role: string;
-    created_at: string | null;
-    updated_at: string | null;
-    last_sign_in_at: string | null;
-  }[];
-  pendingUsers: PendingUser[];
-}) {
+  currentUserId,
+}: UserManagementCardProps) {
   const t = useT("settings");
   const localeTag = useNumberLocaleTag();
-  const [loadingRole, setLoadingRole] = useState<string | null>(null);
+  const [loadingRoles, setLoadingRoles] = useState<string | null>(null);
   const [loadingReset, setLoadingReset] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState<string | null>(null);
   const [loadingEdit, setLoadingEdit] = useState<string | null>(null);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [editUserId, setEditUserId] = useState<string | null>(null);
-  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState("");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [createEmail, setCreateEmail] = useState('');
-  const [createDisplayName, setCreateDisplayName] = useState('');
-  const [createRole, setCreateRole] = useState<'user' | 'admin'>('user');
-  const [pendingRoleById, setPendingRoleById] = useState<
-    Record<string, "user" | "admin">
+  const [createEmail, setCreateEmail] = useState("");
+  const [createDisplayName, setCreateDisplayName] = useState("");
+  const [createRoles, setCreateRoles] = useState<UserRole[]>(["user"]);
+  const [rolesDraftByUser, setRolesDraftByUser] = useState<
+    Record<string, UserRole[]>
+  >({});
+  const [pendingRolesById, setPendingRolesById] = useState<
+    Record<string, UserRole[]>
   >({});
   const [loadingPendingAction, setLoadingPendingAction] = useState<
     string | null
@@ -64,24 +107,40 @@ function UserManagementCard({
   const queryClient = useQueryClient();
   const router = useRouter();
 
-  const roleForPending = (id: string): "user" | "admin" =>
-    pendingRoleById[id] ?? "user";
+  const rolesForRow = (user: AdminUserRow): UserRole[] =>
+    rolesDraftByUser[user.id] ?? user.roles;
 
-  const handleChangeRole = async (userId: string, currentRole: string) => {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    setLoadingRole(userId);
+  const rolesForPending = (pendingId: string): UserRole[] =>
+    pendingRolesById[pendingId] ?? ["user"];
+
+  const handleSaveRoles = async (user: AdminUserRow) => {
+    const nextRoles = rolesForRow(user);
+    if (nextRoles.length === 0) {
+      toast.error(t("userManagement.toastRolesEmpty"));
+      return;
+    }
+    setLoadingRoles(user.id);
     try {
       const formData = new FormData();
-      formData.append('userId', userId);
-      formData.append('newRole', newRole);
-      await changeUserRole(formData);
+      formData.append("userId", user.id);
+      formData.append("roles", JSON.stringify(nextRoles));
+      await setUserRoles(formData);
       toast.success(t("userManagement.toastRoleUpdated"));
+      setRolesDraftByUser((prev) => {
+        const next = { ...prev };
+        delete next[user.id];
+        return next;
+      });
       queryClient.invalidateQueries();
       router.refresh();
-    } catch (_error) {
-      toast.error(t("userManagement.toastRoleUpdateFailed"));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("userManagement.toastRoleUpdateFailed");
+      toast.error(message);
     } finally {
-      setLoadingRole(null);
+      setLoadingRoles(null);
     }
   };
 
@@ -111,8 +170,8 @@ function UserManagementCard({
     setLoadingEdit(editUserId);
     try {
       const formData = new FormData();
-      formData.append('userId', editUserId);
-      formData.append('display_name', editDisplayName);
+      formData.append("userId", editUserId);
+      formData.append("display_name", editDisplayName);
       await updateUserDisplayName(formData);
       toast.success(t("userManagement.toastDisplayNameUpdated"));
       setEditUserId(null);
@@ -126,18 +185,22 @@ function UserManagementCard({
   };
 
   const handleCreateUser = async () => {
+    if (createRoles.length === 0) {
+      toast.error(t("userManagement.toastRolesEmpty"));
+      return;
+    }
     setLoadingCreate(true);
     try {
       const formData = new FormData();
-      formData.append('email', createEmail);
-      formData.append('display_name', createDisplayName);
-      formData.append('role', createRole);
+      formData.append("email", createEmail);
+      formData.append("display_name", createDisplayName);
+      formData.append("roles", JSON.stringify(createRoles));
       await createUser(formData);
       toast.success(t("userManagement.toastUserCreated"));
       setCreateDialogOpen(false);
-      setCreateEmail('');
-      setCreateDisplayName('');
-      setCreateRole('user');
+      setCreateEmail("");
+      setCreateDisplayName("");
+      setCreateRoles(["user"]);
       queryClient.invalidateQueries();
       router.refresh();
     } catch (error) {
@@ -149,11 +212,16 @@ function UserManagementCard({
   };
 
   const handleAcceptPending = async (pendingId: string) => {
+    const chosenRoles = rolesForPending(pendingId);
+    if (chosenRoles.length === 0) {
+      toast.error(t("userManagement.toastRolesEmpty"));
+      return;
+    }
     setLoadingPendingAction(`accept-${pendingId}`);
     try {
       const formData = new FormData();
       formData.append("pendingId", pendingId);
-      formData.append("chosenRole", roleForPending(pendingId));
+      formData.append("chosenRoles", JSON.stringify(chosenRoles));
       await acceptPendingUser(formData);
       toast.success(t("userManagement.toastAcceptOk"));
       queryClient.invalidateQueries();
@@ -186,7 +254,7 @@ function UserManagementCard({
     setLoadingDelete(deleteUserId);
     try {
       const formData = new FormData();
-      formData.append('userId', deleteUserId);
+      formData.append("userId", deleteUserId);
       await deleteUser(formData);
       toast.success(t("userManagement.toastUserDeleted"));
       setDeleteUserId(null);
@@ -225,6 +293,7 @@ function UserManagementCard({
                 {t("userManagement.pendingTab")} ({pendingUsers.length})
               </TabsTrigger>
             </TabsList>
+
             <TabsContent value="pending" className="mt-0">
               <TooltipProvider>
                 <div className="overflow-x-auto">
@@ -235,14 +304,17 @@ function UserManagementCard({
                         <TableHead>{t("userManagement.pendingColName")}</TableHead>
                         <TableHead>{t("userManagement.pendingColStatus")}</TableHead>
                         <TableHead>{t("userManagement.pendingColRequested")}</TableHead>
-                        <TableHead>{t("userManagement.roleOnAccept")}</TableHead>
+                        <TableHead>{t("userManagement.rolesOnAccept")}</TableHead>
                         <TableHead>{t("userManagement.colActions")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {pendingUsers.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center text-muted-foreground"
+                          >
                             {t("userManagement.pendingEmpty")}
                           </TableCell>
                         </TableRow>
@@ -262,27 +334,27 @@ function UserManagementCard({
                             </TableCell>
                             <TableCell>
                               {p.requested_at
-                                ? new Date(p.requested_at).toLocaleString(localeTag)
+                                ? new Date(p.requested_at).toLocaleString(
+                                    localeTag,
+                                  )
                                 : t("userManagement.notAvailable")}
                             </TableCell>
                             <TableCell>
-                              <Select
-                                value={roleForPending(p.id)}
-                                onValueChange={(value: "user" | "admin") => {
-                                  setPendingRoleById((prev) => ({
+                              <RoleMultiSelect
+                                value={rolesForPending(p.id)}
+                                onChange={(next) =>
+                                  setPendingRolesById((prev) => ({
                                     ...prev,
-                                    [p.id]: value,
-                                  }));
-                                }}
-                              >
-                                <SelectTrigger className="w-[120px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="user">{t("userManagement.roleUser")}</SelectItem>
-                                  <SelectItem value="admin">{t("userManagement.roleAdmin")}</SelectItem>
-                                </SelectContent>
-                              </Select>
+                                    [p.id]: next,
+                                  }))
+                                }
+                                ariaLabel={t("userManagement.rolesOnAccept")}
+                                size="sm"
+                                disabled={
+                                  p.status !== "pending_review" ||
+                                  loadingPendingAction !== null
+                                }
+                              />
                             </TableCell>
                             <TableCell>
                               <div className="flex flex-wrap gap-2">
@@ -327,108 +399,157 @@ function UserManagementCard({
                 </div>
               </TooltipProvider>
             </TabsContent>
+
             <TabsContent value="users" className="mt-0">
-          <TooltipProvider>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("userManagement.colDisplayName")}</TableHead>
-                    <TableHead>{t("userManagement.colEmail")}</TableHead>
-                    <TableHead>{t("userManagement.colRole")}</TableHead>
-                    <TableHead>{t("userManagement.colCreatedAt")}</TableHead>
-                    <TableHead>{t("userManagement.colUpdatedAt")}</TableHead>
-                    <TableHead>{t("userManagement.colLastSignIn")}</TableHead>
-                    <TableHead>{t("userManagement.colActions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allUsers.map((u) => (
-                    <TableRow key={u.id}>
-                      <TableCell className="font-medium">
-                        {u.display_name || t("userManagement.noDisplayName")}
-                      </TableCell>
-                      <TableCell>{u.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="capitalize">
-                          {u.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {u.created_at ? new Date(u.created_at).toLocaleDateString(localeTag) : t("userManagement.notAvailable")}
-                      </TableCell>
-                      <TableCell>
-                        {u.updated_at ? new Date(u.updated_at).toLocaleDateString(localeTag) : t("userManagement.notAvailable")}
-                      </TableCell>
-                      <TableCell>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-default tabular-nums text-muted-foreground">
-                              {formatDateDistance(u.last_sign_in_at)}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {u.last_sign_in_at
-                              ? new Date(u.last_sign_in_at).toLocaleString(localeTag, {
-                                  dateStyle: "medium",
-                                  timeStyle: "short",
-                                })
-                              : safeDisplay(u.last_sign_in_at)}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableCell>
-                      <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => { setEditUserId(u.id); setEditDisplayName(u.display_name || ''); }}
-                          disabled={loadingEdit === u.id}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleChangeRole(u.id, u.role)}
-                          disabled={loadingRole === u.id}
-                        >
-                          {loadingRole === u.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Shield className="h-4 w-4 mr-1" />
-                          )}
-                          {u.role === "admin" ? t("userManagement.demote") : t("userManagement.promote")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handlePasswordReset(u.id)}
-                          disabled={loadingReset === u.id}
-                        >
-                          {loadingReset === u.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Mail className="h-4 w-4 mr-1" />
-                          )}
-                          {t("userManagement.resetPassword")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => setDeleteUserId(u.id)}
-                          disabled={loadingDelete === u.id}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </TooltipProvider>
+              <TooltipProvider>
+                <div className="overflow-x-auto rounded-md border">
+                  <Table className="min-w-[980px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky left-0 z-20 bg-card">
+                          {t("userManagement.colDisplayName")}
+                        </TableHead>
+                        <TableHead>{t("userManagement.colEmail")}</TableHead>
+                        <TableHead>{t("userManagement.colRoles")}</TableHead>
+                        <TableHead>{t("userManagement.colCreatedAt")}</TableHead>
+                        <TableHead>{t("userManagement.colUpdatedAt")}</TableHead>
+                        <TableHead>{t("userManagement.colLastSignIn")}</TableHead>
+                        <TableHead>{t("userManagement.colActions")}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allUsers.map((u) => {
+                        const isSelf = u.id === currentUserId;
+                        const draftRoles = rolesForRow(u);
+                        const isDirty = !rolesEqual(draftRoles, u.roles);
+                        const rowDisplayName =
+                          u.display_name ?? t("userManagement.noDisplayName");
+                        return (
+                          <TableRow key={u.id} className="group align-top">
+                            <TableCell className="sticky left-0 z-10 bg-card font-medium group-hover:bg-muted/30">
+                              {rowDisplayName}
+                            </TableCell>
+                            <TableCell>{u.email}</TableCell>
+                            <TableCell>
+                              <div className="flex min-w-[18rem] flex-col gap-2 rounded-lg border bg-muted/20 p-3">
+                                <p className="text-xs font-medium text-muted-foreground">
+                                  {rowDisplayName}
+                                </p>
+                                <RoleMultiSelect
+                                  value={draftRoles}
+                                  onChange={(next) =>
+                                    setRolesDraftByUser((prev) => ({
+                                      ...prev,
+                                      [u.id]: next,
+                                    }))
+                                  }
+                                  disabled={loadingRoles === u.id}
+                                  pinnedRole={isSelf ? "admin" : undefined}
+                                  ariaLabel={t("userManagement.rolesGroupAria")}
+                                  layout="block"
+                                  size="sm"
+                                />
+                                {isDirty ? (
+                                  <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    type="button"
+                                    onClick={() => void handleSaveRoles(u)}
+                                    disabled={loadingRoles === u.id}
+                                    className="w-fit"
+                                  >
+                                    {loadingRoles === u.id ? (
+                                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <Save className="mr-1 h-3.5 w-3.5" />
+                                    )}
+                                    {t("userManagement.saveRoles")}
+                                  </Button>
+                                ) : null}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {u.created_at
+                                ? new Date(u.created_at).toLocaleDateString(
+                                    localeTag,
+                                  )
+                                : t("userManagement.notAvailable")}
+                            </TableCell>
+                            <TableCell>
+                              {u.updated_at
+                                ? new Date(u.updated_at).toLocaleDateString(
+                                    localeTag,
+                                  )
+                                : t("userManagement.notAvailable")}
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="cursor-default tabular-nums text-muted-foreground">
+                                    {formatDateDistance(u.last_sign_in_at)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {u.last_sign_in_at
+                                    ? new Date(u.last_sign_in_at).toLocaleString(
+                                        localeTag,
+                                        {
+                                          dateStyle: "medium",
+                                          timeStyle: "short",
+                                        },
+                                      )
+                                    : safeDisplay(u.last_sign_in_at)}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditUserId(u.id);
+                                    setEditDisplayName(u.display_name || "");
+                                  }}
+                                  disabled={loadingEdit === u.id}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handlePasswordReset(u.id)}
+                                  disabled={loadingReset === u.id}
+                                >
+                                  {loadingReset === u.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Mail className="mr-1 h-4 w-4" />
+                                  )}
+                                  {t("userManagement.resetPassword")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => setDeleteUserId(u.id)}
+                                  disabled={loadingDelete === u.id || isSelf}
+                                  title={
+                                    isSelf
+                                      ? t("userManagement.cannotDeleteSelf")
+                                      : undefined
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TooltipProvider>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -438,7 +559,9 @@ function UserManagementCard({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("userManagement.createDialogTitle")}</DialogTitle>
-            <DialogDescription>{t("userManagement.createDialogDescription")}</DialogDescription>
+            <DialogDescription>
+              {t("userManagement.createDialogDescription")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -452,26 +575,24 @@ function UserManagementCard({
               onChange={(e) => setCreateDisplayName(e.target.value)}
               placeholder={t("userManagement.displayNamePlaceholder")}
             />
-            <Select value={createRole} onValueChange={(value: 'user' | 'admin') => setCreateRole(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("userManagement.selectRolePlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">{t("userManagement.roleUser")}</SelectItem>
-                <SelectItem value="admin">{t("userManagement.roleAdmin")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">
+                {t("userManagement.createRolesLabel")}
+              </p>
+              <RoleMultiSelect
+                value={createRoles}
+                onChange={setCreateRoles}
+                ariaLabel={t("userManagement.createRolesLabel")}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
               {t("userManagement.cancel")}
             </Button>
-            <Button
-              onClick={handleCreateUser}
-              disabled={loadingCreate}
-            >
+            <Button onClick={handleCreateUser} disabled={loadingCreate}>
               {loadingCreate ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               {t("userManagement.createUser")}
             </Button>
@@ -479,11 +600,18 @@ function UserManagementCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editUserId !== null} onOpenChange={() => setEditUserId(null)}>
+      <Dialog
+        open={editUserId !== null}
+        onOpenChange={() => setEditUserId(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("userManagement.editDisplayNameTitle")}</DialogTitle>
-            <DialogDescription>{t("userManagement.editDisplayNameDescription")}</DialogDescription>
+            <DialogTitle>
+              {t("userManagement.editDisplayNameTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("userManagement.editDisplayNameDescription")}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
@@ -501,7 +629,7 @@ function UserManagementCard({
               disabled={loadingEdit === editUserId}
             >
               {loadingEdit === editUserId ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               {t("userManagement.save")}
             </Button>
@@ -509,11 +637,18 @@ function UserManagementCard({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
+      <Dialog
+        open={deleteUserId !== null}
+        onOpenChange={() => setDeleteUserId(null)}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("userManagement.deleteConfirmTitle")}</DialogTitle>
-            <DialogDescription>{t("userManagement.deleteConfirmDescription")}</DialogDescription>
+            <DialogTitle>
+              {t("userManagement.deleteConfirmTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("userManagement.deleteConfirmDescription")}
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteUserId(null)}>
@@ -525,7 +660,7 @@ function UserManagementCard({
               disabled={loadingDelete === deleteUserId}
             >
               {loadingDelete === deleteUserId ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : null}
               {t("userManagement.delete")}
             </Button>

@@ -16,20 +16,30 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import { toast } from "sonner";
+import { geocodeCompanyBatch } from "@/lib/actions/companies";
 
 import "leaflet/dist/leaflet.css";
 import "./leaflet-popup-theme.css";
 
-import { Building, Info, Loader2, MapPin, RefreshCw, X } from "lucide-react";
-
+import { AlertTriangle, Building, Info, Loader2, Locate, MapPin, RefreshCw, X } from "lucide-react";
+import { GeocodeReviewModal } from "@/components/features/companies/GeocodeReviewModal";
 import { Button } from "@/components/ui/button";
 import { OpenMapViewSkeleton } from "@/components/ui/page-list-skeleton";
-import type { CompanyForOpenMap } from "@/lib/actions/companies";
-import { statusColors, statusLabels } from "@/lib/constants/map-status-colors";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import type { CompanyForOpenMap, GeocodeBatchPreviewRow } from "@/lib/actions/companies";
+import { applyApprovedGeocodes } from "@/lib/actions/companies";
+import { kundentypColors, statusLabels } from "@/lib/constants/map-status-colors";
 import { resolveOpenmapUserPreferences } from "@/lib/constants/openmap-user-settings";
 import { getOpenmapStatusMsgKey } from "@/lib/i18n/openmap-status";
 import { useT } from "@/lib/i18n/use-translations";
@@ -37,8 +47,9 @@ import { createGoogleMapTilesSession, resolveBasemap } from "@/lib/map/map-provi
 import { loadMapSettings } from "@/lib/services/map-settings";
 import { fetchOpenmapUserPreferenceRows } from "@/lib/services/openmap-user-preferences";
 import { cn } from "@/lib/utils";
-import { isWgs84Degrees, toFiniteLatLon } from "@/lib/utils/geo";
-import { fetchOsmPois, getOsmPoiIcon, getStatusIcon } from "@/lib/utils/map-utils";
+import { isValidCoordinate, isWgs84Degrees, toFiniteLatLon } from "@/lib/utils/geo";
+import { fetchOsmPois, getCompanyMarkerIcon, getOsmPoiIcon, statusLetterMap } from "@/lib/utils/map-utils";
+
 
 import CompanyMarkerPopup from "./CompanyMarkerPopup";
 import OsmPoiMarkerPopup from "./OsmPoiMarkerPopup";
@@ -228,7 +239,7 @@ function MapRefBinder({ mapRef }: { mapRef: MutableRefObject<L.Map | null> }) {
   return null;
 }
 
-const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => {
+  const MapEventHandler = ({ onBoundsChange }: { onBoundsChange: () => void }) => {
   useMapEvents({
     moveend: onBoundsChange,
     zoomend: onBoundsChange,
@@ -247,6 +258,8 @@ type OpenMapLeafletCoreProps = {
   onBoundsDebounced: () => void;
   onShellReady: () => void;
   onOpenCompanyDetail: (companyId: string) => void;
+  highlightedCompanyId: string | null;
+  markerRefs: MutableRefObject<Record<string, L.Marker>>;
 };
 
 /**
@@ -262,6 +275,8 @@ const OpenMapLeafletCore = memo(function OpenMapLeafletCore({
   onBoundsDebounced,
   onShellReady,
   onOpenCompanyDetail,
+  highlightedCompanyId,
+  markerRefs,
 }: OpenMapLeafletCoreProps) {
   return (
     <MapContainer
@@ -280,18 +295,52 @@ const OpenMapLeafletCore = memo(function OpenMapLeafletCore({
 
       <MapRefBinder mapRef={mapRef} />
 
-      {validCompanies.map((company) => {
-        const lat = toFiniteLatLon(company.lat);
-        const lon = toFiniteLatLon(company.lon);
-        if (lat === null || lon === null) return null;
-        return (
-          <Marker key={company.id} position={[lat, lon]} icon={getStatusIcon(company.status)}>
-            <Popup>
-              <CompanyMarkerPopup company={company} onOpenDetail={onOpenCompanyDetail} />
-            </Popup>
-          </Marker>
-        );
-      })}
+      {/* Highlighted company rendered individually (never clustered) */}
+      {validCompanies
+        .filter((c) => c.id === highlightedCompanyId)
+        .map((company) => {
+          const lat = toFiniteLatLon(company.lat);
+          const lon = toFiniteLatLon(company.lon);
+          if (lat === null || lon === null) return null;
+          return (
+              <Marker
+              key={`highlight-${company.id}`}
+              position={[lat, lon]}
+              icon={getCompanyMarkerIcon(company.status, company.kundentyp, true, isDarkMode)}
+              ref={(marker) => {
+                if (marker) markerRefs.current[company.id] = marker;
+              }}
+            >
+              <Popup>
+                <CompanyMarkerPopup company={company} onOpenDetail={onOpenCompanyDetail} />
+              </Popup>
+            </Marker>
+
+          );
+        })}
+
+      {/* All other companies (clustered) */}
+      {validCompanies
+        .filter((c) => c.id !== highlightedCompanyId)
+        .map((company) => {
+          const lat = toFiniteLatLon(company.lat);
+          const lon = toFiniteLatLon(company.lon);
+          if (lat === null || lon === null) return null;
+          return (
+            <Marker
+              key={company.id}
+              position={[lat, lon]}
+              icon={getCompanyMarkerIcon(company.status, company.kundentyp, false, isDarkMode)}
+              ref={(marker) => {
+                if (marker) markerRefs.current[company.id] = marker;
+              }}
+            >
+              <Popup>
+                <CompanyMarkerPopup company={company} onOpenDetail={onOpenCompanyDetail} />
+              </Popup>
+            </Marker>
+          );
+        })}
 
       <MapEventHandler onBoundsChange={onBoundsDebounced} />
 
@@ -347,10 +396,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   const [autoLoadPois, setAutoLoadPois] = useState(true);
   const [companies, setCompanies] = useState<CompanyForOpenMap[]>(initialCompanies);
   const [hasCentered, setHasCentered] = useState(false);
+  const [showInvalidSidebar, setShowInvalidSidebar] = useState(false);
+  const [highlightedCompanyId, setHighlightedCompanyId] = useState<string | null>(null);
+  const [showFocusChip, setShowFocusChip] = useState(false);
+  const [isGeocoding, startGeocoding] = useTransition();
+  const [geocodePreviewRows, setGeocodePreviewRows] = useState<GeocodeBatchPreviewRow[]>([]);
+  const [geocodeModalOpen, setGeocodeModalOpen] = useState(false);
   const [googleSession, setGoogleSession] = useState<string | null>(null);
   const googleTilesCacheRef = useRef<{ cacheKey: string; session: string } | null>(null);
   const googleSessionRequestEpochRef = useRef(0);
   const didInitialCompanyFitRef = useRef(false);
+  const markerRefs = useRef<Record<string, L.Marker>>({});
 
   const searchParams = useSearchParams();
 
@@ -470,9 +526,7 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     let query = supabase
       .from("companies")
       .select("*")
-      .is("deleted_at", null)
-      .not("lat", "is", null)
-      .not("lon", "is", null);
+      .is("deleted_at", null);
 
     query = query.order("firmenname", { ascending: true });
 
@@ -591,6 +645,12 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
     const lat = searchParams.get("lat");
     const lon = searchParams.get("lon");
     const zoom = searchParams.get("zoom");
+    const highlight = searchParams.get("highlight");
+
+    if (highlight) {
+      setHighlightedCompanyId(highlight);
+      setShowFocusChip(true);
+    }
 
     if (lat && lon) {
       const latNum = parseFloat(lat);
@@ -611,6 +671,20 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
 
     setHasCentered(true);
   }, [mapReady, searchParams, companies]);
+
+  // Auto-open popup for highlighted company after view is set
+  useEffect(() => {
+    if (!mapReady || !highlightedCompanyId || !mapRef.current) return;
+
+    const timer = setTimeout(() => {
+      const marker = markerRefs.current[highlightedCompanyId];
+      if (marker?.openPopup) {
+        marker.openPopup();
+      }
+    }, 650); // give flyTo a moment to finish
+
+    return () => clearTimeout(timer);
+  }, [mapReady, highlightedCompanyId]);
 
   // Main POI load: never clears `osmPois` until a successful merge in `.then`; prune only after merge if over cap.
   const handleLoad = useCallback(() => {
@@ -697,8 +771,13 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   // Debounced map events
   const debounced = useCallback(() => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    // Clear highlight on first user interaction with the map
+    if (highlightedCompanyId) {
+      setShowFocusChip(false);
+      setHighlightedCompanyId(null);
+    }
     debounceTimeout.current = setTimeout(handleLoad, 800);
-  }, [handleLoad]);
+  }, [handleLoad, highlightedCompanyId]);
 
   // Initial load
   useEffect(() => {
@@ -719,12 +798,16 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
   );
 
   const validCompanies = useMemo(() => {
-    return companies.filter((c) => {
-      const lat = toFiniteLatLon(c.lat);
-      const lon = toFiniteLatLon(c.lon);
-      return lat !== null && lon !== null && isWgs84Degrees(lat, lon);
-    });
+    return companies.filter((c) => isValidCoordinate(c.lat, c.lon));
   }, [companies]);
+
+  const invalidCompanies = useMemo(() => {
+    return companies.filter((c) => !isValidCoordinate(c.lat, c.lon));
+  }, [companies]);
+
+  const eligibleCompanies = useMemo(() => {
+    return invalidCompanies.filter((c) => c.stadt && (c.strasse || c.plz));
+  }, [invalidCompanies]);
 
   const resetView = useCallback(() => {
     const map = mapRef.current;
@@ -786,6 +869,8 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         onBoundsDebounced={debounced}
         onShellReady={handleMapShellReady}
         onOpenCompanyDetail={stableOpenCompanyDetail}
+        highlightedCompanyId={highlightedCompanyId}
+        markerRefs={markerRefs}
       />
 
       {basemap.showAppleBasemapNotice && (
@@ -826,6 +911,30 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </div>
       )}
 
+      {/* Focus chip for highlighted company (temporary elegant indicator) */}
+      {showFocusChip && highlightedCompanyId && (
+        <div className="absolute top-4 left-1/2 z-[1000] -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full border bg-card/95 px-3 py-1 shadow-sm backdrop-blur">
+            <span className="text-xs font-medium text-foreground">
+              {validCompanies.find((c) => c.id === highlightedCompanyId)?.firmenname ?? "Focus"}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="h-5 w-5 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setShowFocusChip(false);
+                setHighlightedCompanyId(null);
+              }}
+              aria-label="Clear focus"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <Button
@@ -854,6 +963,17 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </Button>
 
         <Button
+          variant={showInvalidSidebar ? "default" : "secondary"}
+          size="icon"
+          onClick={() => setShowInvalidSidebar(!showInvalidSidebar)}
+          className="bg-card border shadow-md"
+          title="Show companies without location"
+          type="button"
+        >
+          <AlertTriangle className="h-4 w-4 text-foreground" />
+        </Button>
+
+        <Button
           variant={showLegend ? "default" : "secondary"}
           size="icon"
           onClick={() => setShowLegend(!showLegend)}
@@ -864,8 +984,148 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
         </Button>
       </div>
 
+      <Sheet open={showInvalidSidebar} onOpenChange={setShowInvalidSidebar}>
+        <SheetContent side="left" className="w-[90vw] max-w-80 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b">
+              <SheetTitle>{t("sidebarTitle")}</SheetTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("sidebarSubtitle", { count: invalidCompanies.length, eligible: eligibleCompanies.length })}
+              </p>
+          </SheetHeader>
+
+          {invalidCompanies.length > 0 ? (
+            <ScrollArea className="flex-1">
+              <div className="divide-y">
+                {invalidCompanies.map((company) => {
+                  const isEligible = eligibleCompanies.some(e => e.id === company.id);
+                  return (
+                    <a
+                      key={company.id}
+                      href={`/companies/${company.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium">{company.firmenname}</div>
+                        {isEligible && <Locate className="h-3 w-3 text-green-500" aria-label="Eligible for geocoding" />}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{t("locationNotSet")}</div>
+                    </a>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex-1 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
+              {t("allHaveCoordinates")}
+            </div>
+          )}
+
+          {eligibleCompanies.length > 0 && (
+            <div className="p-4 border-t">
+              <Button
+                onClick={() => startGeocoding(async () => {
+                  const chunkSize = 50;
+                  const chunks = [];
+                  for (let i = 0; i < eligibleCompanies.length; i += chunkSize) {
+                    chunks.push(eligibleCompanies.slice(i, i + chunkSize));
+                  }
+
+                  const allResults: GeocodeBatchPreviewRow[] = [];
+                  let hadError = false;
+
+                  for (const chunk of chunks) {
+                    const result = await geocodeCompanyBatch({
+                      items: chunk.map(c => ({
+                        rowId: c.id,
+                        companyId: c.id,
+                        firmenname: c.firmenname,
+                        strasse: c.strasse || null,
+                        stadt: c.stadt || null,
+                        plz: c.plz || null,
+                        land: c.land || null,
+                      }))
+                    });
+
+                    if (!result.ok) {
+                      hadError = true;
+                      toast.error(result.error || t("bulkGeocodingFailed"));
+                      break;
+                    }
+
+                    allResults.push(...result.results);
+
+                    if (chunks.length > 1) {
+                      await new Promise(res => setTimeout(res, 800));
+                    }
+                  }
+
+                  if (!hadError && allResults.length > 0) {
+                    setGeocodePreviewRows(allResults);
+                    setGeocodeModalOpen(true);
+                    setShowInvalidSidebar(false);
+                  } else if (!hadError) {
+                    toast.info(t("noNewCoordinates"));
+                  }
+                })}
+                disabled={isGeocoding}
+                className="w-full"
+              >
+                {isGeocoding ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Locate className="h-4 w-4 mr-2" />
+                )}
+                {isGeocoding ? t("geocoding") : t("geocodeEligibleButton", { count: eligibleCompanies.length })}
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <GeocodeReviewModal
+        open={geocodeModalOpen}
+        onOpenChange={setGeocodeModalOpen}
+        rows={geocodePreviewRows}
+        isApplying={false}
+        onApplySelected={async (selectedRowIds) => {
+          try {
+            const selectedRows = geocodePreviewRows.filter(r => selectedRowIds.includes(r.rowId));
+
+            const applyItems = selectedRows
+              .filter(row => row.companyId && row.suggestedLat !== null && row.suggestedLon !== null)
+              .map(row => ({
+                companyId: row.companyId as string,
+                suggestedLat: row.suggestedLat as number,
+                suggestedLon: row.suggestedLon as number,
+              }));
+
+            if (applyItems.length === 0) {
+              toast.error(t("noValidEntriesToApply"));
+              return;
+            }
+
+            const applyRes = await applyApprovedGeocodes({ items: applyItems });
+            
+            if (!applyRes.ok) {
+              toast.error(applyRes.error || t("errorApplyingCoordinates"));
+              return;
+            }
+
+            const appliedCount = applyRes.results.filter(r => r.ok).length;
+            toast.success(t("geocodedSuccess", { count: appliedCount }));
+            setGeocodeModalOpen(false);
+            setGeocodePreviewRows([]);
+            window.location.reload();
+          } catch (_error) {
+            toast.error(t("errorApplyingCoordinates"));
+          }
+        }}
+      />
+
       {showLegend && (
-        <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[220px]">
+        <div className="absolute top-28 right-4 z-[1000] bg-card border p-4 rounded-lg shadow-md text-sm max-w-[260px]">
           <div className="font-medium mb-3 flex items-center justify-between">
             {t("legendTitle")}
             <Button
@@ -879,13 +1139,38 @@ export default function OpenMapView({ initialCompanies }: { initialCompanies: Co
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="space-y-2">
-            {Object.keys(statusLabels).map((key) => (
-              <div key={key} className="flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: statusColors[key] || "#6b7280" }} />
-                <span>{t(getOpenmapStatusMsgKey(key))}</span>
-              </div>
-            ))}
+
+          {/* Status (letter only, no color) */}
+          <div className="mb-3">
+            <div className="text-[10px] font-semibold tracking-[0.5px] text-muted-foreground mb-1.5 uppercase">Kundenstatus</div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+              {Object.keys(statusLabels).map((key) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] font-semibold text-foreground/80 w-4 text-center tabular-nums">
+                    {statusLetterMap[key] || key.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="truncate">{t(getOpenmapStatusMsgKey(key))}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Kundentyp (primary) */}
+          <div>
+            <div className="text-[10px] font-semibold tracking-[0.5px] text-muted-foreground mb-1.5 uppercase">Kundentyp</div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+              {[
+                ["restaurant", "Restaurant"], ["hotel", "Hotel"], ["marina", "Marina"], ["camping", "Camping"],
+                ["bootsverleih", "Bootsverleih"], ["segelschule", "Segelschule"], ["resort", "Resort"],
+                ["segelverein", "Segelverein"], ["neukunde", "Neukunde"], ["bestandskunde", "Bestandskunde"],
+                ["interessent", "Interessent"], ["partner", "Partner"], ["sonstige", "Sonstige"],
+              ].map(([key, label]) => (
+                <div key={key} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: kundentypColors[key as keyof typeof kundentypColors] || "#6b7280" }} />
+                  <span className="truncate">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

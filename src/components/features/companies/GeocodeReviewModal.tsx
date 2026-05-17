@@ -167,7 +167,7 @@ export function GeocodeReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-hidden sm:max-w-4xl">
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col overflow-hidden sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>Geocoding prüfen</DialogTitle>
           <DialogDescription>

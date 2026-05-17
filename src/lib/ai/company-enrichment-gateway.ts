@@ -100,10 +100,10 @@ ${digest}`;
 }
 
 export const COMPANY_ENRICHMENT_PRIMARY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
-export const COMPANY_ENRICHMENT_FALLBACK_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+export const COMPANY_ENRICHMENT_FALLBACK_MODEL: GatewayModelId = "xai/grok-4.3";
 
 /**
- * Optional override via `AI_ENRICHMENT_GROK_MODEL` (Gateway model id, e.g. `xai/grok-4.1-fast-non-reasoning`)
+ * Optional override via `AI_ENRICHMENT_GROK_MODEL` (Gateway model id, e.g. `xai/grok-4.3`)
  * for the enrichment **secondary** (fallback) model. BYOK for xAI remains `AI_ENRICHMENT_XAI_API_KEY`.
  */
 export function resolveEnrichmentGrokGatewayModelId(): GatewayModelId {

@@ -32,6 +32,7 @@ import {
   DEFAULT_SEMANTIC_SETTINGS,
   generateAndStoreCompanyEmbedding,
   hybridCompanySearch,
+  mapSemanticMatchStrictnessToMaxVectorDistance,
   resolveSemanticSearchSettings,
   testEmbeddingConnection,
 } from "./semantic-search";
@@ -55,6 +56,12 @@ describe("semantic-search service", () => {
     delete process.env.EMBEDDING_MODEL;
     delete process.env.AI_GATEWAY_API_KEY;
     delete process.env.OPENAI_API_KEY;
+  });
+
+  it("mapSemanticMatchStrictnessToMaxVectorDistance returns expected cosine ceilings", () => {
+    expect(mapSemanticMatchStrictnessToMaxVectorDistance("strict")).toBe(0.35);
+    expect(mapSemanticMatchStrictnessToMaxVectorDistance("balanced")).toBe(0.5);
+    expect(mapSemanticMatchStrictnessToMaxVectorDistance("broad")).toBe(0.65);
   });
 
   it("buildCompanySemanticDocument includes non-empty labeled fields only", () => {
@@ -118,11 +125,9 @@ describe("semantic-search service", () => {
       createCompanySearchEmbedding(
         { text: "query" },
         {
+          ...DEFAULT_SEMANTIC_SETTINGS,
           embeddingProvider: "xai",
           embeddingModel: "grok-embedding-small",
-          semanticSearchEnabled: true,
-          autoBackfillEmbeddings: true,
-          showSemanticBadge: true,
         },
       ),
     ).resolves.toHaveLength(COMPANY_SEARCH_EMBEDDING_DIMENSION);
@@ -134,11 +139,9 @@ describe("semantic-search service", () => {
     await createCompanySearchEmbedding(
       { text: "query" },
       {
+        ...DEFAULT_SEMANTIC_SETTINGS,
         embeddingProvider: "xai",
         embeddingModel: "other-model",
-        semanticSearchEnabled: true,
-        autoBackfillEmbeddings: true,
-        showSemanticBadge: true,
       },
     );
     expect(mockGatewayModel).toHaveBeenCalledWith("xai/grok-embedding-small");
@@ -151,11 +154,9 @@ describe("semantic-search service", () => {
     await createCompanySearchEmbedding(
       { text: "query" },
       {
+        ...DEFAULT_SEMANTIC_SETTINGS,
         embeddingProvider: "openai",
         embeddingModel: "text-embedding-3-small",
-        semanticSearchEnabled: true,
-        autoBackfillEmbeddings: true,
-        showSemanticBadge: true,
       },
     );
     expect(mockOpenaiTextEmbedding).toHaveBeenCalledWith("text-embedding-3-small");
@@ -169,11 +170,9 @@ describe("semantic-search service", () => {
     await createCompanySearchEmbedding(
       { text: "query" },
       {
+        ...DEFAULT_SEMANTIC_SETTINGS,
         embeddingProvider: "openai",
         embeddingModel: "text-embedding-3-large",
-        semanticSearchEnabled: true,
-        autoBackfillEmbeddings: true,
-        showSemanticBadge: true,
       },
     );
     expect(mockOpenaiTextEmbedding).toHaveBeenCalledWith("text-embedding-3-large");
@@ -187,11 +186,9 @@ describe("semantic-search service", () => {
     await createCompanySearchEmbedding(
       { text: "query" },
       {
+        ...DEFAULT_SEMANTIC_SETTINGS,
         embeddingProvider: "openai",
         embeddingModel: "custom-embedding",
-        semanticSearchEnabled: true,
-        autoBackfillEmbeddings: true,
-        showSemanticBadge: true,
       },
     );
     expect(mockOpenaiTextEmbedding).toHaveBeenCalledWith("text-embedding-3-small");
@@ -224,11 +221,9 @@ describe("semantic-search service", () => {
       createCompanySearchEmbedding(
         { text: "query" },
         {
+          ...DEFAULT_SEMANTIC_SETTINGS,
           embeddingProvider: "openai",
           embeddingModel: "text-embedding-3-small",
-          semanticSearchEnabled: true,
-          autoBackfillEmbeddings: true,
-          showSemanticBadge: true,
         },
       ),
     ).rejects.toThrow('Missing credentials for embedding provider "openai".');
@@ -459,6 +454,7 @@ describe("semantic-search service", () => {
     expect(settings.showSemanticBadge).toBe(true);
     expect(settings.embeddingProvider).toBe("gateway");
     expect(settings.embeddingModel).toBe("text-embedding-3-small");
+    expect(settings.semanticMatchStrictness).toBe("balanced");
   });
 
   it("resolveSemanticSearchSettings applies user rows over defaults", async () => {
@@ -487,6 +483,7 @@ describe("semantic-search service", () => {
       semanticSearchEnabled: false,
       autoBackfillEmbeddings: false,
       showSemanticBadge: false,
+      semanticMatchStrictness: "balanced",
     });
   });
 
@@ -675,6 +672,37 @@ describe("semantic-search service", () => {
 
     await generateAndStoreCompanyEmbedding(supabase, "company-id", { firmenname: "AquaDock" });
     expect(mockEmbed).not.toHaveBeenCalled();
+  });
+
+  it("generateAndStoreCompanyEmbedding runs when auto_backfill is false but force is true", async () => {
+    mockEmbed.mockResolvedValue({ embedding: VECTOR });
+    const eq = vi.fn().mockResolvedValue({ error: null });
+    const update = vi.fn(() => ({ eq }));
+    const from = vi
+      .fn()
+      .mockImplementationOnce(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({
+          data: [{ key: "auto_backfill_embeddings", value: false }],
+          error: null,
+        }),
+      }))
+      .mockImplementationOnce(() => ({ update }));
+
+    const supabase = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "u1" } }, error: null }) },
+      from,
+    } as unknown as SupabaseClient;
+
+    await generateAndStoreCompanyEmbedding(
+      supabase,
+      "company-id",
+      { firmenname: "AquaDock GmbH with enough text" },
+      undefined,
+      { force: true },
+    );
+    expect(mockEmbed).toHaveBeenCalled();
   });
 
   it("generateAndStoreCompanyEmbedding swallows update errors (best effort)", async () => {

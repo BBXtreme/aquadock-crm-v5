@@ -3,9 +3,10 @@
 // Throttling is enforced by the caller (sequential delay in server actions).
 // The `cache` Map is per server-action invocation only. For cross-invocation caching, use Redis/Upstash.
 
-import { normalizeLandInput } from "@/lib/countries/iso-land";
+import { type Iso3166Alpha2, isIso3166Alpha2, normalizeLandInput } from "@/lib/countries/iso-land";
 
 const NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/search";
+const NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse";
 
 /** Exact User-Agent required by OSM Nominatim usage policy. */
 export const NOMINATIM_USER_AGENT = "AquaDockCRMv5-Geocoder/2026.04 (+https://crm.aquadock.de)";
@@ -35,11 +36,21 @@ export type GeocodeAddressResult = {
   reason: GeocodeFailureReason | null;
 };
 
+export type ReverseCountryResult = {
+  ok: boolean;
+  code: Iso3166Alpha2 | null;
+  reason: "NO_RESULT" | "INVALID_COORDINATE" | "NETWORK_ERROR" | null;
+};
+
 type NominatimJsonResult = {
   lat?: string;
   lon?: string;
   importance?: number | string;
   display_name?: string;
+  address?: {
+    country_code?: string;
+    country?: string;
+  };
 };
 
 function trimOrEmpty(value: string | null | undefined): string {
@@ -229,4 +240,82 @@ export async function geocodeAddress(
   };
   cache.set(key, success);
   return success;
+}
+
+export async function reverseGeocodeCountry(
+  lat: number,
+  lon: number,
+  cache: Map<string, ReverseCountryResult>,
+): Promise<ReverseCountryResult> {
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    return { ok: false, code: null, reason: "INVALID_COORDINATE" };
+  }
+  const key = `${lat.toFixed(4)}|${lon.toFixed(4)}`;
+  const cached = cache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const params = new URLSearchParams();
+  params.set("lat", String(lat));
+  params.set("lon", String(lon));
+  params.set("format", "jsonv2");
+  params.set("addressdetails", "1");
+  params.set("accept-language", "de");
+  const url = `${NOMINATIM_REVERSE_URL}?${params.toString()}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        "User-Agent": NOMINATIM_USER_AGENT,
+        "Accept-Language": "de",
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  } catch {
+    const failure = { ok: false, code: null, reason: "NETWORK_ERROR" as const };
+    cache.set(key, failure);
+    return failure;
+  }
+  if (!response.ok) {
+    const failure = { ok: false, code: null, reason: "NETWORK_ERROR" as const };
+    cache.set(key, failure);
+    return failure;
+  }
+  let parsedJson: unknown;
+  try {
+    parsedJson = await response.json();
+  } catch {
+    const failure = { ok: false, code: null, reason: "NETWORK_ERROR" as const };
+    cache.set(key, failure);
+    return failure;
+  }
+  const hit = parsedJson as NominatimJsonResult;
+  if (hit === null || typeof hit.lat !== "string") {
+    const failure = { ok: false, code: null, reason: "NO_RESULT" as const };
+    cache.set(key, failure);
+    return failure;
+  }
+  const codeRaw = hit.address?.country_code;
+  if (typeof codeRaw === "string" && codeRaw.length === 2) {
+    const code = codeRaw.toUpperCase() as Iso3166Alpha2;
+    if (isIso3166Alpha2(code)) {
+      const success = { ok: true, code, reason: null };
+      cache.set(key, success);
+      return success;
+    }
+  }
+  // Fallback to normalize on country name if no code
+  const countryName = hit.address?.country;
+  if (typeof countryName === "string") {
+    const normalized = normalizeLandInput(countryName);
+    if (normalized.ok) {
+      const success = { ok: true, code: normalized.code, reason: null };
+      cache.set(key, success);
+      return success;
+    }
+  }
+  const failure = { ok: false, code: null, reason: "NO_RESULT" as const };
+  cache.set(key, failure);
+  return failure;
 }

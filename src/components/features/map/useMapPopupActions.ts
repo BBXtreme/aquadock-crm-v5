@@ -11,10 +11,11 @@ import { toast } from "sonner";
 import { COMPANY_IMPORT_SOURCE_HEADER, COMPANY_IMPORT_SOURCE_OSM_POI } from "@/lib/constants/company-import-source";
 import { determineFirmentyp, determineKundentyp } from "@/lib/constants/map-kundentyp";
 import { determineWassertyp } from "@/lib/constants/wassertyp";
-import { DEFAULT_COMPANY_LAND_CODES, normalizeLandInput } from "@/lib/countries/iso-land";
+import { normalizeLandInput } from "@/lib/countries/iso-land";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
+import { reverseGeocodeCountry } from "@/lib/utils/geocode-nominatim";
 
 import type { OsmPoi } from "./types";
 
@@ -46,13 +47,24 @@ async function createCompanyFromOsmPoi(poi: OsmPoi, userId: string | null, displ
     strasse: poi.tags?.["addr:street"] || "",
     plz: poi.tags?.["addr:postcode"] || "",
     stadt: poi.tags?.["addr:city"] || "",
-    land: (() => {
+    land: await (async () => {
       const raw = poi.tags?.["addr:country"];
-      if (raw === undefined || raw === "") {
-        return DEFAULT_COMPANY_LAND_CODES[0] ?? "DE";
+      const lat = poi.lat || poi.center?.lat;
+      const lon = poi.lon || poi.center?.lon;
+      if (raw?.trim()) {
+        const n = normalizeLandInput(String(raw));
+        if (n.ok) return n.code;
+        if (lat && lon) {
+          const rev = await reverseGeocodeCountry(lat, lon, new Map());
+          if (rev.ok && rev.code) return rev.code;
+        }
+        return null;
       }
-      const n = normalizeLandInput(String(raw));
-      return n.ok ? n.code : DEFAULT_COMPANY_LAND_CODES[0] ?? "DE";
+      if (lat && lon) {
+        const rev = await reverseGeocodeCountry(lat, lon, new Map());
+        return rev.ok && rev.code ? rev.code : null;
+      }
+      return null;
     })(),
     telefon: poi.tags?.phone || poi.tags?.["contact:phone"] || "",
     website: poi.tags?.website || poi.tags?.["contact:website"] || "",

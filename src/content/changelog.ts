@@ -23,8 +23,7 @@ export const changelogReleaseSchema = z
           })
           .strict(),
       )
-      .min(1)
-      .max(6),
+      .min(1),
   })
   .strict();
 
@@ -33,6 +32,107 @@ export type ChangelogRelease = z.infer<typeof changelogReleaseSchema>;
 const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
+  {
+    version: "0.5.50",
+    releasedAt: "2026-05-17",
+    title: "🌊 Partner-Portal live: Multi-Rollen, Dual-Login und klare Trennung",
+    changes: [
+      {
+        type: "feature",
+        text: "Neu: Externes Partner-Login unter /partner/login mit eigener Markenwelt („Paddle. Live. Enjoy.“) — klar getrennt vom internen /login für Sales, Marketing und Admin.",
+      },
+      {
+        type: "feature",
+        text: "Ein gemeinsames Auth-Backend für beide Login-Flows: /auth/login verarbeitet JSON und FormData, erstellt dieselbe Supabase-Session und entscheidet das Ziel role-basiert.",
+      },
+      {
+        type: "feature",
+        text: "Multi-Rollen sind jetzt produktiv: Die neue Tabelle `user_roles` ist die kanonische Quelle (user, admin, partner). `profiles.role` bleibt nur als Legacy-Feld für die Übergangszeit erhalten.",
+      },
+      {
+        type: "improvement",
+        text: "Post-Login-Redirect mit klarer Priorität: Wenn ein Benutzer die Rolle `partner` hat, landet er zuerst im Partnerbereich (`/partner/dashboard`), sonst wie gewohnt im internen Dashboard.",
+      },
+      {
+        type: "improvement",
+        text: "Routen- und Sicherheitslogik erweitert: `/partner/*` ist geschützt, `/partner/login` bleibt öffentlich; Rollenprüfungen laufen konsistent über neue Role-Helper und aktualisierte RLS-Policies.",
+      },
+      {
+        type: "feature",
+        text: "Benutzerverwaltung für Admins unterstützt jetzt Mehrfachrollen inkl. Partner-Rolle — bei bestehenden Nutzern, neuen Benutzern und beim Freigeben von Zugangsanfragen.",
+      },
+      {
+        type: "improvement",
+        text: "Test- und Doku-Update: neue Vitest-Suiten für Redirect/Auth-Route, E2E-Smoke für Partner-Login sowie aktualisierte Architektur-, Schema- und Deploy-Dokumentation (inkl. `partner.aquadock.de`).",
+      },
+    ],
+  },
+  {
+    version: "0.5.49",
+    releasedAt: "2026-05-06",
+    title: "🎯 Semantische Suche feiner steuern & KI-Einstellungen klarer",
+    changes: [
+      {
+        type: "improvement",
+        text: "Einstellungen: Semantische Trefferschärfe (streng, ausgewogen, weit) und klarer Hinweis, wann welcher API-Schlüssel für Embeddings nötig ist — bessere Kontrolle, ohne Technik-Buzzwords im Alltag.",
+      },
+      {
+        type: "feature",
+        text: "Wenn Du Embedding-Anbieter oder -Modell wechselst, erinnern wir Dich daran, Deine Firmen neu einzubetten — und bieten dafür einen Button direkt in den Einstellungen, damit die Suche zuverlässig bleibt.",
+      },
+      {
+        type: "improvement",
+        text: "KI-Anreicherung: Die Hilfetexte trennen jetzt klar Web-Recherche (Phase 1) und Strukturieren (Phase 2) — so weißt Du, was Dein Modell wirklich steuert.",
+      },
+      {
+        type: "improvement",
+        text: "Neu-Einbettung: In den Einstellungen siehst Du jetzt eine freundliche Kosten-Schätzung, die sich beim Wechsel von Anbieter oder Modell direkt aktualisiert.",
+      },
+      {
+        type: "feature",
+        text: "KI-Modell-Registry: Admins verwalten jetzt alle verfügbaren Modelle für die KI-Anreicherung zentral unter /admin/ai-models. Neue Modelle erscheinen sofort überall – inklusive Einstellungen und Modal.",
+      },
+      {
+        type: "improvement",
+        text: "KI-Anreicherung: Der Strukturierungsmodell-Selector zeigt jetzt immer die aktuelle Registry (inkl. selbst hinzugefügter Modelle). Veraltete Grok-Fast-Modelle werden ausgeblendet.",
+      },
+      {
+        type: "feature",
+        text: "Feedback-Inbox für Admins: Mit einem Klick bearbeitest Du jede Rückmeldung oder antwortest direkt – inklusive automatischer, mehrsprachiger Benachrichtigung an den Absender (In-App + E-Mail nur bei aktivierten Präferenzen). Saubere Icon-Buttons, professionelle Dialoge, sofort produktiv.",
+      },
+    ],
+  },
+  {
+    version: "0.5.48",
+    releasedAt: "2026-05-05",
+    title: "✨ OpenMap wird erwachsen – Standort-Management & smarte Geocodierung",
+    changes: [
+      {
+        type: "feature",
+        text: "OpenMap: Beim Klick auf „In OpenMap anzeigen“ aus der Firmendetailseite wird der jeweilige Marker jetzt elegant hervorgehoben – größer, mit sanftem Glow und 2,8-Sekunden-Pulse. Das Popup öffnet sich automatisch, und ein kleiner Fokus-Chip zeigt den Firmennamen. Der Marker wird nie geclustert und bleibt immer sichtbar.",
+      },
+      {
+        type: "feature",
+        text: "Neue Sidebar: Siehst sofort, welche Firmen noch keinen Standort haben. Mit einem Klick öffnest du die Detailansicht in einem neuen Tab.",
+      },
+      {
+        type: "feature",
+        text: "Bulk-Geocoding direkt aus der Karte: Markiere alle Firmen mit Adresse und lass dir die Vorschläge von Nominatim in einem übersichtlichen Review-Modal anzeigen. Nur was du auswählst, wird übernommen.",
+      },
+      {
+        type: "improvement",
+        text: "Intelligente Koordinaten-Validierung: Firmen mit 0,0 oder fehlenden Koordinaten erscheinen nicht mehr als Marker auf der Karte – sondern sauber in der „Unternehmen ohne Standort“-Liste.",
+      },
+      {
+        type: "improvement",
+        text: "Professionelles Design: Die Sidebar verwendet jetzt das bewährte Sheet-System – flüssige Animationen, perfektes Verhalten auf Mobilgeräten und volle Tastatursteuerung.",
+      },
+      {
+        type: "feature",
+        text: "Professionelle Kartensymbole: Firmen-Marker zeigen jetzt sowohl Kundentyp (farbiger Ring) als auch Kundenstatus (kleiner Buchstabe) in einem eleganten, mehrschichtigen Design – sofort erkennbar, ohne visuellen Overload.",
+      },
+    ],
+  },
   {
     version: "0.5.47",
     releasedAt: "2026-05-01",

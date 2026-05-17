@@ -12,6 +12,8 @@ import { determineWassertyp } from "@/lib/constants/wassertyp";
 import { calculateWaterDistance } from "@/lib/utils/calculateWaterDistance";
 import {
   fetchOsmPois,
+  getCompanyMarkerIcon,
+  getHighlightedStatusIcon,
   getOpenStreetMapUrl,
   getOsmPoiIcon,
   getStatusIcon,
@@ -107,6 +109,40 @@ describe("getOsmPoiIcon", () => {
     const icon = getOsmPoiIcon(false, true);
     const html = typeof icon.options.html === "string" ? icon.options.html : "";
     expect(html).toContain("osm-poi-inner--enter");
+  });
+});
+
+describe("getHighlightedStatusIcon", () => {
+  it("uses a lighter ring in light mode", () => {
+    const icon = getHighlightedStatusIcon("lead", false);
+    const html = typeof icon.options.html === "string" ? icon.options.html : "";
+    expect(html).toContain(statusColors.lead);
+    expect(html).toContain("#2563eb");
+  });
+
+  it("uses a different ring color in dark mode", () => {
+    const icon = getHighlightedStatusIcon("lead", true);
+    const html = typeof icon.options.html === "string" ? icon.options.html : "";
+    expect(html).toContain(statusColors.lead);
+    expect(html).toContain("#3b82f6");
+  });
+});
+
+describe("getCompanyMarkerIcon", () => {
+  it("renders a highlighted marker with kundentyp ring + status badge", () => {
+    const icon = getCompanyMarkerIcon("akquise", "marina", true, false);
+    const html = typeof icon.options.html === "string" ? icon.options.html : "";
+    expect(html).toContain("company-marker--highlight");
+    expect(html).toContain("⚓");
+    expect(html).toContain(">Ak<");
+  });
+
+  it("falls back to derived letters for unknown status and kundentyp", () => {
+    const icon = getCompanyMarkerIcon("xstatus", "xkundentyp", false, true);
+    const html = typeof icon.options.html === "string" ? icon.options.html : "";
+    expect(html).toContain(">XS</div>"); // slice(0,2).toUpperCase() for xstatus => XS
+    expect(html).toContain(">X</div>"); // kundentyp symbol falls back to first letter
+    expect(html).toContain("background:#1f2937"); // dark background
   });
 });
 

@@ -45,10 +45,22 @@ export default defineConfig({
         "src/types/database.types.ts",
         "src/types/brevo.ts",
         "src/**/login/page.tsx",
+        // Public partner login surfaces — markup-heavy branded UI; behaviour
+        // is covered by the route handler unit tests + partner-login E2E spec.
+        "src/app/partner/login/page.tsx",
+        "src/app/partner/login/layout.tsx",
+        "src/components/features/auth/PartnerLoginLayout.tsx",
+        "src/components/features/auth/PartnerLoginForm.tsx",
+        "src/components/features/auth/PartnerThemeProvider.tsx",
+        // Authenticated partner section in the unified CRM shell — composition + placeholder dashboard;
+        // covered by future partner E2E suites once real KPIs ship in v5.1.
+        "src/app/(protected)/partner/layout.tsx",
+        "src/app/(protected)/partner/dashboard/page.tsx",
+        "src/components/features/partner/PartnerDashboardWelcome.tsx",
         "src/components/tables/TimelineTable.tsx",
         "src/components/features/timeline/TimelineEntryForm.tsx",
         "src/components/features/timeline/TimelineLinkCombobox.tsx",
-        "src/components/features/reminder/ReminderEditForm.tsx",
+        "src/components/features/reminders/ReminderEditForm.tsx",
         "src/components/ui/dialog.tsx",
         "src/components/ui/dropdown-menu.tsx",
         "src/components/ui/data-table.tsx",
@@ -69,7 +81,7 @@ export default defineConfig({
         "src/components/features/companies/AquaDockEditForm.tsx",
         "src/components/features/companies/CompanyEditForm.tsx",
         "src/components/features/contacts/ContactEditForm.tsx",
-        "src/components/features/reminder/ReminderCreateForm.tsx",
+        "src/components/features/reminders/ReminderCreateForm.tsx",
         // TanStack column factory + cell renderers: hundreds of branches; list behavior covered via E2E and API tests.
         "src/components/tables/CompaniesTable.tsx",
         // Static CSV documentation grid (no business logic); not worth a dedicated unit harness for coverage.

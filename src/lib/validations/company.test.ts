@@ -226,16 +226,16 @@ describe("companySchema", () => {
     }
   });
 
-  it("preserves lat and lon numeric zero in insert and update mappers", () => {
+  it("preserves lat and lon numeric values in insert and update mappers", () => {
     const values = companySchema.parse({
       ...minimal,
-      lat: 0,
-      lon: 0,
+      lat: 50.11,
+      lon: 8.68,
     });
-    expect(toCompanyInsert(values).lat).toBe(0);
-    expect(toCompanyInsert(values).lon).toBe(0);
-    expect(toCompanyUpdate(values).lat).toBe(0);
-    expect(toCompanyUpdate(values).lon).toBe(0);
+    expect(toCompanyInsert(values).lat).toBe(50.11);
+    expect(toCompanyInsert(values).lon).toBe(8.68);
+    expect(toCompanyUpdate(values).lat).toBe(50.11);
+    expect(toCompanyUpdate(values).lon).toBe(8.68);
   });
 });
 

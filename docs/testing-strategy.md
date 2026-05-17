@@ -2,7 +2,18 @@
 
 **Purpose:** Decide *where* to add tests and *how* coverage exclusions relate to E2E so new work stays consistent. The **quality gate** is `vitest.config.ts` (thresholds + `coverage.exclude`); this document explains the intent.
 
-**Last updated:** May 1, 2026
+**Last updated:** May 17, 2026
+
+## Partner role + dual login (2026-05-17)
+
+- **Vitest (logic + mocked auth):**
+  - [`post-login-redirect.test.ts`](../src/lib/auth/post-login-redirect.test.ts) — role-priority precedence (`partner` > `admin` > `user`), safe-redirect sanitisation, partner-route authorisation, fallback to `/dashboard`.
+  - [`route.test.ts`](../src/app/auth/login/route.test.ts) — shared `/auth/login` Route Handler: JSON + FormData parsing, Zod rejection (400), invalid credentials (401), unsupported content type (415), happy-path role redirect for partner vs internal users.
+  - [`get-crm-user-context.test.ts`](../src/lib/auth/get-crm-user-context.test.ts) — updated to assert the new `roles: UserRole[]` field; defaults to `[]` for users without a profile and degrades gracefully when the RPC fails.
+  - [`profile.test.ts`](../src/lib/validations/profile.test.ts) — `adminCreateUserSchema` / `adminSetUserRolesSchema` accept multi-role arrays; empty arrays rejected.
+- **Playwright (real browser, no real partner credentials needed):**
+  - [`partner-login.spec.ts`](../tests/e2e/partner-login.spec.ts) — `/partner/login` renders the branded card, exposes the email/password/Sign in controls, and shows an inline error on invalid credentials. End-to-end partner sign-in with real Supabase users is not part of CI to keep the test database lean; the route-handler unit tests cover the redirect contract.
+- **Coverage exclusions added** in `vitest.config.ts` for the branded partner UI (`PartnerLoginLayout`, `PartnerLoginForm`, `PartnerThemeProvider`, `PartnerDashboardWelcome`, and partner page files) — these are markup-heavy presentational surfaces; behaviour is covered by the unit + E2E pair above. Each entry carries a rationale comment.
 
 ---
 
@@ -52,6 +63,8 @@
 **Playwright web server:** Non-CI runs start **`next dev --webpack`** when Playwright must spawn the app (port 3000 free). Turbopack’s default `next dev` can panic under parallel E2E workers; Webpack dev avoids that and still supports the app; **CI** uses **`next start`** after `pnpm build`. If you keep `pnpm dev` running on :3000, Playwright **reuses** it—prefer stopping it so the Webpack instance is used, or accept possible instability with Turbopack.
 
 **Playwright workers:** `playwright.config.ts` sets **`workers: 1`** (local and CI). A single Next dev server cannot reliably serve **multiple parallel browsers** hitting protected routes; you will see **`net::ERR_ABORTED`** / navigation timeouts. Serial E2E is slower but matches what CI does.
+
+**Import-time crashes in E2E helpers:** E2E specs may import shared “content” modules (e.g. changelog entries for locale smoke). If a Zod schema is too strict for authored content, the module can throw during import and tests will fail before the first `page.goto()` (often surfacing as `net::ERR_ABORTED` / missing headings). Prefer keeping content validation strict enough for safety but not so strict that it blocks runtime.
 
 **Translations in E2E-facing copy:** Mass-email and similar UIs that show literal `{{field}}` tokens in `src/messages/*.json` must use **ICU quoting** (`'{{vorname}}'` in the JSON string) so `t('key')` does not throw `INVALID_MESSAGE` / `MALFORMED_ARGUMENT`. See [next-intl escaping](https://next-intl.dev/docs/usage/messages#escaping).
 

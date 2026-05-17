@@ -26,10 +26,35 @@ import type { Json } from "@/types/supabase";
 const APPEARANCE_LOCALE_USER_SETTINGS_KEY = "appearance_locale" as const;
 
 const DEFAULT_PRIMARY_GATEWAY_MODEL: GatewayModelId = "anthropic/claude-sonnet-4.6";
-const DEFAULT_SECONDARY_GATEWAY_MODEL: GatewayModelId = "xai/grok-4.1-fast-non-reasoning";
+const DEFAULT_SECONDARY_GATEWAY_MODEL: GatewayModelId = "xai/grok-4.3";
 
-/** Vercel AI Gateway ids selectable in CRM settings (validated EAV). */
-export const ENRICHMENT_GATEWAY_MODEL_ID_CHOICES = [
+/** Safely parse optional AI_ENRICHMENT_EXTRA_MODELS env var (never throws). */
+function parseExtraModelsFromEnv(): readonly string[] {
+  const raw = process.env.AI_ENRICHMENT_EXTRA_MODELS?.trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      console.warn("[ai-enrichment-policy] AI_ENRICHMENT_EXTRA_MODELS must be a JSON array");
+      return [];
+    }
+    const ids: string[] = [];
+    for (const item of parsed) {
+      if (item && typeof item === "object" && typeof item.id === "string" && item.id.trim().length > 0) {
+        ids.push(item.id.trim());
+      } else {
+        console.warn("[ai-enrichment-policy] Skipping invalid extra model entry (missing id)");
+      }
+    }
+    return ids;
+  } catch (err) {
+    console.warn("[ai-enrichment-policy] Failed to parse AI_ENRICHMENT_EXTRA_MODELS as JSON:", err);
+    return [];
+  }
+}
+
+/** Base hardcoded gateway model ids (Phase 1: extended by AI_ENRICHMENT_EXTRA_MODELS). */
+const BASE_ENRICHMENT_GATEWAY_MODEL_ID_CHOICES = [
   "anthropic/claude-sonnet-4.6",
   "anthropic/claude-opus-4.6",
   "anthropic/claude-haiku-4.5",
@@ -39,9 +64,16 @@ export const ENRICHMENT_GATEWAY_MODEL_ID_CHOICES = [
   "google/gemini-2.5-flash",
   "google/gemini-2.5-pro",
   "google/gemini-3-flash",
-  "xai/grok-4.1-fast-non-reasoning",
-  "xai/grok-4.1-fast-reasoning",
-  "xai/grok-4-fast-non-reasoning",
+  "xai/grok-4.3",
+] as const;
+
+const BASE_SET = new Set<string>(BASE_ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
+const EXTRA_ENRICHMENT_GATEWAY_MODEL_IDS = parseExtraModelsFromEnv();
+
+/** Final merged list (base + extras, deduplicated by id). */
+export const ENRICHMENT_GATEWAY_MODEL_ID_CHOICES = [
+  ...BASE_ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
+  ...EXTRA_ENRICHMENT_GATEWAY_MODEL_IDS.filter((id: string) => !BASE_SET.has(id)),
 ] as const;
 
 const ALLOWED_GATEWAY_MODEL_SET = new Set<string>(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);

@@ -151,7 +151,7 @@ describe("AquaDockCard Open Map button", () => {
 
     await user.click(screen.getByRole("button", { name: deMessages.companies.detailOpenMapButton }));
 
-    expect(pushMock).toHaveBeenCalledWith("/openmap?lat=0&lon=0&zoom=13");
+    expect(pushMock).toHaveBeenCalledWith("/openmap?lat=0&lon=0&zoom=13&highlight=test-id");
   });
 
   it("does NOT navigate when lat/lon are null and marks the button as aria-disabled", async () => {

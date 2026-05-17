@@ -11,15 +11,15 @@ import {
   AI_ENRICHMENT_PRIMARY_MODEL_KEY,
   AI_ENRICHMENT_SECONDARY_MODEL_KEY,
 } from "@/lib/constants/ai-enrichment-user-settings";
+import { getAiEnrichmentModels } from "@/lib/constants/ai-models";
 import {
   type AiEnrichmentPolicy,
   DEFAULT_SECONDARY_GATEWAY_MODEL,
-  ENRICHMENT_GATEWAY_MODEL_ID_CHOICES,
   fetchAiEnrichmentPolicy,
 } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-const gatewayModelIdSchema = z.enum(ENRICHMENT_GATEWAY_MODEL_ID_CHOICES);
+
 
 /** Single user-selected gateway model; server persists auto + default secondary for Server Action merge compatibility. */
 const perplexityFastRecencySchema = z.enum(["month", "year"]);
@@ -28,7 +28,7 @@ const aiEnrichmentSettingsUpdateSchema = z
   .object({
     enabled: z.boolean(),
     dailyLimit: z.number().int().min(1).max(500),
-    primaryGatewayModelId: gatewayModelIdSchema,
+    primaryGatewayModelId: z.string().min(1),
     addressFocusPrioritize: z.boolean(),
     perplexityFastMaxResults: z.number().int().min(1).max(8),
     perplexityFastRecency: perplexityFastRecencySchema,
@@ -93,6 +93,13 @@ export async function updateAiEnrichmentSettings(
   }
   const parsed = aiEnrichmentSettingsUpdateSchema.safeParse(input);
   if (!parsed.success) {
+    return { ok: false, error: "INVALID_INPUT" };
+  }
+
+  // Validate that the selected model exists in the current registry (DB + env + fallback)
+  const availableModels = await getAiEnrichmentModels();
+  const isValidModel = availableModels.some((m) => m.id === parsed.data.primaryGatewayModelId);
+  if (!isValidModel) {
     return { ok: false, error: "INVALID_INPUT" };
   }
 

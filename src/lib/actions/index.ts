@@ -18,6 +18,7 @@ export * from "./onboarding";
 export * from "./profile";
 export * from "./reminders";
 export * from "./resolve-detail";
+export * from "./semantic-embeddings";
 export * from "./semantic-search";
 export * from "./settings";
 export * from "./timeline";

@@ -127,9 +127,16 @@ For **where to place new files** (thin `app/` routes, `features/` vs legacy fold
 
 ## Route groups and layout
 
-- **`(auth)`** — Public routes (e.g. login); no full app chrome.  
-- **`(protected)`** — Authenticated CRM: sidebar, header, and pages under routes like `/dashboard`, `/companies`, `/openmap`.  
-- The **`(protected)/layout.tsx`** layout calls `requireCrmAccess()` once per segment tree (session + pending-user gates); individual pages use `requireUser()` or stricter checks as needed. Admin-only UI uses `requireAdmin()` inside the relevant Server Actions or pages.
+- **`(auth)`** — Public internal-staff login (`/login`); no full app chrome. **Unchanged** by the partner rollout.
+- **`partner/login`** — Public **partner sign-in** (no route group). Branded "Paddle. Live. Enjoy." UI (`PartnerLoginLayout` + `PartnerLoginForm` + `PartnerThemeProvider`) that POSTs to the **shared backend** at `src/app/auth/login/route.ts`. The shared handler accepts both `application/json` (used by the partner form) and `multipart/form-data` / `application/x-www-form-urlencoded`, then returns `{ ok, redirectTo }` so the client navigates via `router.replace`.
+- **`(protected)`** — Authenticated internal CRM (sidebar, header, `/dashboard`, `/companies`, `/openmap`, …). Layout calls `requireCrmAccess()` once per segment tree.
+- **`(protected)/partner/*`** — Authenticated partner subpages inside the **same CRM shell** (same sidebar + header as sales/marketing). `src/app/(protected)/partner/layout.tsx` enforces `requireRole(PARTNER_ALLOWED_ROLES)` so **partner or admin** can access `/partner/*`.
+
+### Roles and post-login redirect
+
+- Roles are canonical in `public.user_roles`; `requireUser()`, `requireRole(roles)`, and `requireAdmin()` read `AuthUser.roles` (always populated even for legacy single-role users). See [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §Auth.
+- After a successful sign-in, **both** `/login` and `/partner/login` call `resolvePostLoginRedirect({ roles, redirectTo })` (`src/lib/auth/post-login-redirect.ts`). Priority order (in-code mapping at `src/lib/auth/role-page-access.ts`, ready for a future `role_page_access` table): **partner → admin → user**, so users with the `partner` role land on `/partner/dashboard`, internal users on `/dashboard`. A safe `redirectTo` query param is honoured **only** when the user is authorised for the destination (partner-only paths require partner or admin role).
+- The proxy (`src/proxy.ts`) protects `/partner/:path*` (except `/partner/login`) with an explicit `PUBLIC_PATHS` guard. Unauthenticated visits to `/partner/dashboard` redirect to `/partner/login` (not `/login`), preserving the requested `redirectTo`.
 
 ---
 

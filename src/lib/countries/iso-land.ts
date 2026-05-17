@@ -30,6 +30,17 @@ export const LAND_SELECT_CLEAR_SENTINEL = "__land_none__" as const;
 const REGION_INDICATOR_A = 0x1f1e6;
 const ASCII_UPPER_A = 0x41;
 
+const THREE_LETTER_TO_ALPHA2: Record<string, Iso3166Alpha2> = {
+  HRV: "HR",
+  DEU: "DE",
+  AUT: "AT",
+  CHE: "CH",
+  ITA: "IT",
+  FRA: "FR",
+  ESP: "ES",
+  SVN: "SI",
+};
+
 /**
  * Synonyms and legacy CRM labels (German UI strings) → ISO alpha-2.
  * Keys must be lowercase ASCII for lookup.
@@ -84,6 +95,9 @@ const SYNONYM_TO_ISO: Record<string, Iso3166Alpha2> = {
   croatia: "HR",
   hrvatska: "HR",
   hr: "HR",
+  "republika hrvatska": "HR",
+  "republic of croatia": "HR",
+  "croatia (hrvatska)": "HR",
 };
 
 function trimOrEmpty(value: string | null | undefined): string {
@@ -136,6 +150,13 @@ export function normalizeLandInput(raw: string | null | undefined): NormalizeLan
     const upper = compactLettersOnly.toUpperCase();
     if (isAssignedRegion(upper)) {
       return { ok: true, code: upper };
+    }
+  }
+
+  if (compactLettersOnly.length === 3) {
+    const mapped = THREE_LETTER_TO_ALPHA2[compactLettersOnly.toUpperCase()];
+    if (mapped !== undefined && isAssignedRegion(mapped)) {
+      return { ok: true, code: mapped };
     }
   }
 
