@@ -1056,8 +1056,9 @@ export function StandortanalyseWizard({
         accent
       >
         <div className="space-y-4">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+            <div className="space-y-2 rounded-xl border bg-linear-to-b from-background to-muted/30 p-4 shadow-xs">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Empfänger</p>
               <Label className="flex items-center gap-2" htmlFor="share-recipient-email">
                 <Mail className="h-4 w-4" />
                 Empfänger-E-Mail
@@ -1074,12 +1075,17 @@ export function StandortanalyseWizard({
                 }}
                 placeholder="kunde@beispiel.de"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="max-w-xl text-xs text-muted-foreground">
                 Wird aus den Stammdaten übernommen, sobald eine gültige E-Mail hinterlegt ist.
               </p>
             </div>
-            <div className="flex items-end">
-              <div className="flex w-full items-center gap-3 rounded-md border p-3">
+
+            <div className="space-y-2 rounded-xl border bg-linear-to-b from-background to-muted/30 p-4 shadow-xs">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Versand</p>
+              <Label htmlFor="send-invite-by-email" className="text-sm font-medium">
+                E-Mail-Versand
+              </Label>
+              <div className="flex items-center gap-3">
                 <Switch
                   id="send-invite-by-email"
                   checked={sendInviteByEmail}
@@ -1093,49 +1099,61 @@ export function StandortanalyseWizard({
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-4">
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <LockKeyhole className="h-4 w-4" />
-                Passwortschutz
-              </Label>
-              <Input
-                type="password"
-                value={shareGenerationPassword}
-                onChange={(event) => setShareGenerationPassword(event.target.value)}
-                placeholder="Optional, mindestens 8 Zeichen"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Gültigkeit</Label>
-              <Select
-                value={String(shareExpiresHours)}
-                onValueChange={(value) => setShareExpiresHours(Number.parseInt(value, 10))}
+          <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+            <div className="space-y-4 rounded-xl border bg-linear-to-b from-background to-muted/30 p-4 shadow-xs">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sicherheit & Link</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <LockKeyhole className="h-4 w-4" />
+                    Passwortschutz
+                  </Label>
+                  <Input
+                    type="password"
+                    value={shareGenerationPassword}
+                    onChange={(event) => setShareGenerationPassword(event.target.value)}
+                    placeholder="Optional, mindestens 8 Zeichen"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Gültigkeit</Label>
+                  <Select
+                    value={String(shareExpiresHours)}
+                    onValueChange={(value) => setShareExpiresHours(Number.parseInt(value, 10))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Bitte auswählen" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="24">24 Stunden</SelectItem>
+                      <SelectItem value="72">72 Stunden</SelectItem>
+                      <SelectItem value="168">7 Tage</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button
+                type="button"
+                className="w-full shadow-sm md:w-auto md:min-w-[260px]"
+                onClick={handleGenerateShareLink}
+                disabled={isGeneratingShare}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Bitte auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="24">24 Stunden</SelectItem>
-                  <SelectItem value="72">72 Stunden</SelectItem>
-                  <SelectItem value="168">7 Tage</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-end">
-              <Button type="button" className="w-full" onClick={handleGenerateShareLink} disabled={isGeneratingShare}>
                 {isGeneratingShare
                   ? "Erstelle Link..."
                   : sendInviteByEmail
-                    ? "Erstellen und per E-Mail senden"
+                    ? "Link erstellen & per E-Mail senden"
                     : "Einladungslink erstellen"}
               </Button>
             </div>
-            <div className="space-y-2">
+
+            <div className="space-y-2 rounded-xl border border-dashed bg-linear-to-b from-background to-muted/30 p-4 shadow-xs">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Link-Regeln</p>
               <Label htmlFor="revoke-older-links">Neuen Link erzwingen</Label>
-              <div className="flex items-center gap-3 rounded-md border p-3">
+              <div className="flex items-center gap-3">
                 <Switch id="revoke-older-links" checked={revokeOlderLinks} onCheckedChange={setRevokeOlderLinks} />
-                <p className="text-xs text-muted-foreground">Ältere aktive Links dieser Analyse deaktivieren</p>
+                <p className="max-w-xs text-xs text-muted-foreground">
+                  Ältere aktive Links dieser Analyse deaktivieren
+                </p>
               </div>
             </div>
           </div>
