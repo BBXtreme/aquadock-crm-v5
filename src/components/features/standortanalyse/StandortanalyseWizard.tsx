@@ -12,6 +12,7 @@ import {
   FileText,
   Link2,
   LockKeyhole,
+  Mail,
   MapPinned,
   Sparkles,
 } from "lucide-react";
@@ -45,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getStandortLandOptions } from "@/lib/standortanalyse/countries";
 import { standortKriterien } from "@/lib/standortanalyse/criteria";
+import { isPlaceholderInviteEmail } from "@/lib/standortanalyse/share-invite-email";
 import { calculateStandortScore } from "@/lib/standortanalyse/scoring";
 import { cn } from "@/lib/utils";
 import { type StandortanalyseForm, standortanalyseFormSchema } from "@/lib/validations/standortanalyse";
@@ -82,6 +84,8 @@ type ShareApiResponse = {
   shareUrl: string;
   expiresAt: string;
   maxUses: number;
+  emailSent?: boolean;
+  emailError?: string | null;
 };
 
 type LastShareLinkMeta = {
@@ -325,6 +329,9 @@ export function StandortanalyseWizard({
   const [loadingAnalysisId, setLoadingAnalysisId] = useState<string | null>(null);
   const [shareGenerationPassword, setShareGenerationPassword] = useState("");
   const [shareExpiresHours, setShareExpiresHours] = useState(24);
+  const [shareRecipientEmail, setShareRecipientEmail] = useState("");
+  const [shareRecipientTouched, setShareRecipientTouched] = useState(false);
+  const [sendInviteByEmail, setSendInviteByEmail] = useState(true);
   const [shareLink, setShareLink] = useState<ShareApiResponse | null>(null);
   const [lastShareLinkMeta, setLastShareLinkMeta] = useState<LastShareLinkMeta | null>(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
@@ -362,7 +369,28 @@ export function StandortanalyseWizard({
   });
 
   const currentValues = form.watch();
+  const kontaktEmail = form.watch("kontakt.email");
+  const kontaktVorname = form.watch("kontakt.vorname");
+  const kontaktName = form.watch("kontakt.name");
   const currentScore = useMemo(() => calculateStandortScore(currentValues.kriterien), [currentValues.kriterien]);
+
+  const shareRecipientEmailValid = useMemo(() => {
+    const email = shareRecipientEmail.trim();
+    if (email.length === 0 || isPlaceholderInviteEmail(email)) {
+      return false;
+    }
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }, [shareRecipientEmail]);
+
+  useEffect(() => {
+    if (shareRecipientTouched) {
+      return;
+    }
+    const email = kontaktEmail.trim();
+    if (email.length > 0 && !isPlaceholderInviteEmail(email)) {
+      setShareRecipientEmail(email);
+    }
+  }, [kontaktEmail, shareRecipientTouched]);
 
   const analysesQuery = useQuery({
     queryKey: ["standortanalysen", mode],
@@ -688,8 +716,18 @@ export function StandortanalyseWizard({
   });
 
   const handleGenerateShareLink = async () => {
+    if (sendInviteByEmail && !shareRecipientEmailValid) {
+      toast.error("Bitte eine gültige Empfänger-E-Mail angeben oder den E-Mail-Versand deaktivieren.");
+      return;
+    }
+
     setIsGeneratingShare(true);
     setShareLink(null);
+
+    const recipientName = [kontaktVorname, kontaktName]
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+      .join(" ");
 
     try {
       const response = await fetch("/api/standortanalyse/share", {
@@ -701,12 +739,19 @@ export function StandortanalyseWizard({
           expiresInHours: shareExpiresHours,
           maxUses: 1,
           revokeOlderLinks,
+          sendInviteEmail: sendInviteByEmail,
+          recipientEmail: sendInviteByEmail ? shareRecipientEmail.trim() : undefined,
+          recipientName: recipientName.length > 0 ? recipientName : undefined,
         }),
       });
 
-      const payload = (await response.json()) as ShareApiResponse & { error?: string };
+      const payload = (await response.json()) as ShareApiResponse & {
+        error?: string;
+        issues?: { fieldErrors?: Record<string, string[]> };
+      };
       if (!response.ok) {
-        throw new Error(payload.error ?? "Share-Link konnte nicht erstellt werden");
+        const fieldError = payload.issues?.fieldErrors?.recipientEmail?.[0];
+        throw new Error(fieldError ?? payload.error ?? "Share-Link konnte nicht erstellt werden");
       }
       setAnalysisId(payload.analysisId);
       setShareLink(payload);
@@ -732,7 +777,17 @@ export function StandortanalyseWizard({
         } satisfies LastShareLinkMeta),
       );
       void queryClient.invalidateQueries({ queryKey: ["standortanalysen", mode] });
-      toast.success("Share-Link erstellt");
+      if (payload.emailSent) {
+        toast.success("Einladungslink erstellt und per E-Mail gesendet");
+      } else if (sendInviteByEmail) {
+        toast.warning(
+          payload.emailError != null && payload.emailError !== ""
+            ? `Link erstellt. E-Mail konnte nicht gesendet werden: ${payload.emailError}`
+            : "Link erstellt. E-Mail konnte nicht gesendet werden.",
+        );
+      } else {
+        toast.success("Einladungslink erstellt");
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Share-Link konnte nicht erstellt werden";
       toast.error(message);
@@ -934,7 +989,7 @@ export function StandortanalyseWizard({
         onOpenChange={(next) => toggleSection("share", next)}
         icon={<Link2 className="h-4 w-4" />}
         title="Kunden-Einladungslink"
-        description="Sicheren Link erzeugen und an potenzielle Kunden senden, damit sie die Analyse selbst befüllen."
+        description="Sicheren Link erzeugen und optional direkt per E-Mail an den Kunden senden (SMTP in den Einstellungen erforderlich)."
         badge={lastShareLinkMeta?.isActive ? <Badge variant="outline">Aktiv</Badge> : null}
         meta={
           lastShareLinkMeta
@@ -944,6 +999,43 @@ export function StandortanalyseWizard({
         accent
       >
         <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2" htmlFor="share-recipient-email">
+                <Mail className="h-4 w-4" />
+                Empfänger-E-Mail
+              </Label>
+              <Input
+                id="share-recipient-email"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                value={shareRecipientEmail}
+                onChange={(event) => {
+                  setShareRecipientTouched(true);
+                  setShareRecipientEmail(event.target.value);
+                }}
+                placeholder="kunde@beispiel.de"
+              />
+              <p className="text-xs text-muted-foreground">
+                Wird aus den Stammdaten übernommen, sobald eine gültige E-Mail hinterlegt ist.
+              </p>
+            </div>
+            <div className="flex items-end">
+              <div className="flex w-full items-center gap-3 rounded-md border p-3">
+                <Switch
+                  id="send-invite-by-email"
+                  checked={sendInviteByEmail}
+                  onCheckedChange={setSendInviteByEmail}
+                  disabled={!shareRecipientEmailValid}
+                />
+                <Label htmlFor="send-invite-by-email" className="cursor-pointer text-sm font-normal leading-snug">
+                  Einladung per E-Mail senden
+                </Label>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
@@ -975,7 +1067,11 @@ export function StandortanalyseWizard({
             </div>
             <div className="flex items-end">
               <Button type="button" className="w-full" onClick={handleGenerateShareLink} disabled={isGeneratingShare}>
-                {isGeneratingShare ? "Erstelle Link..." : "Einladungslink erstellen"}
+                {isGeneratingShare
+                  ? "Erstelle Link..."
+                  : sendInviteByEmail
+                    ? "Erstellen und per E-Mail senden"
+                    : "Einladungslink erstellen"}
               </Button>
             </div>
             <div className="space-y-2">
@@ -1009,6 +1105,11 @@ export function StandortanalyseWizard({
                 <span className="text-xs text-muted-foreground">
                   Gültig bis {new Date(shareLink.expiresAt).toLocaleString("de-DE")}
                 </span>
+                {shareLink.emailSent ? (
+                  <Badge variant="outline" className="w-fit">
+                    E-Mail gesendet
+                  </Badge>
+                ) : null}
               </div>
             </div>
           ) : lastShareLinkMeta ? (

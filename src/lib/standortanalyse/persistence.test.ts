@@ -62,13 +62,18 @@ describe("standortanalyse/persistence", () => {
     expect(updatePayload.recommendation).toBe(score.recommendation.label);
   });
 
-  it("keeps gewaesserart selection lossless in score rows", () => {
+  it("keeps gewaesserart selection lossless in score rows without violating DB status check", () => {
     const score = calculateStandortScore(baseForm.kriterien);
     const scoreRows = toStandortanalyseScoresInsert("analysis-1", score, baseForm);
     const infoRow = scoreRows.find((row) => row.criterion_key === "gewaesserart");
+    const allowedStatuses = new Set(["Gut", "Mittel", "Kritisch"]);
 
-    expect(infoRow?.status).toBe("Fluss");
+    expect(infoRow?.status).toBeNull();
+    expect(infoRow?.points).toBe(1);
     expect(infoRow?.criterion_type).toBe("info");
+    for (const row of scoreRows) {
+      expect(row.status == null || allowedStatuses.has(row.status)).toBe(true);
+    }
   });
 
   it("restores form data from analysis and score rows", () => {

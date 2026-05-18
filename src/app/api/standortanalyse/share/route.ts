@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  getSystemSmtpConfigForNotifications,
+  sendNotificationHtmlEmail,
+} from "@/lib/services/smtp-delivery";
 import { createInviteDraftPayload } from "@/lib/standortanalyse/persistence";
+import {
+  buildStandortanalyseInviteEmailContent,
+  isPlaceholderInviteEmail,
+} from "@/lib/standortanalyse/share-invite-email";
 import { generateShareToken, hashSharePassword, hashShareToken } from "@/lib/standortanalyse/share";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -12,8 +20,36 @@ const createShareSchema = z
     expiresInHours: z.number().int().min(1).max(168).default(24),
     maxUses: z.number().int().min(1).max(25).default(1),
     revokeOlderLinks: z.boolean().default(false),
+    sendInviteEmail: z.boolean().default(false),
+    recipientEmail: z
+      .string()
+      .trim()
+      .email("Ungültige E-Mail-Adresse")
+      .max(320, "E-Mail darf maximal 320 Zeichen lang sein")
+      .optional(),
+    recipientName: z.string().trim().max(240, "Name darf maximal 240 Zeichen lang sein").optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (!value.sendInviteEmail) {
+      return;
+    }
+    if (value.recipientEmail == null || value.recipientEmail.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Empfänger-E-Mail ist erforderlich, wenn die Einladung per E-Mail versendet werden soll",
+        path: ["recipientEmail"],
+      });
+      return;
+    }
+    if (isPlaceholderInviteEmail(value.recipientEmail)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Bitte eine gültige Kunden-E-Mail-Adresse angeben",
+        path: ["recipientEmail"],
+      });
+    }
+  });
 
 export async function GET(request: Request) {
   const supabase = await createServerSupabaseClient();
@@ -180,11 +216,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
+  let emailSent = false;
+  let emailError: string | null = null;
+
+  if (parsed.data.sendInviteEmail && parsed.data.recipientEmail != null) {
+    const recipientEmail = parsed.data.recipientEmail.trim();
+    const mailContent = buildStandortanalyseInviteEmailContent({
+      shareUrl,
+      expiresAt,
+      passwordProtected: passwordHash !== null,
+      recipientName: parsed.data.recipientName ?? null,
+    });
+
+    const smtp = await getSystemSmtpConfigForNotifications(user.id);
+    if (smtp === null) {
+      emailError = "SMTP ist nicht konfiguriert (Einstellungen → SMTP).";
+    } else {
+      try {
+        await sendNotificationHtmlEmail({
+          actingAdminUserId: user.id,
+          to: [recipientEmail],
+          subject: mailContent.subject,
+          html: mailContent.html,
+          text: mailContent.text,
+        });
+        emailSent = true;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "E-Mail konnte nicht gesendet werden";
+        console.error("[standortanalyse/share] invite email failed:", error);
+        emailError = message;
+      }
+    }
+  }
+
   return NextResponse.json({
     analysisId,
     shareUrl,
     expiresAt,
     maxUses: parsed.data.maxUses,
     passwordProtected: passwordHash !== null,
+    emailSent,
+    emailError,
   });
 }
