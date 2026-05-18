@@ -6,6 +6,7 @@ import {
   toStandortanalyseScoresInsert,
   toStandortanalyseUpdate,
 } from "@/lib/standortanalyse/persistence";
+import { buildStandortanalyseSubmissionConfirmationEmailContent } from "@/lib/standortanalyse/share-invite-email";
 import { calculateStandortScore } from "@/lib/standortanalyse/scoring";
 import { hashShareToken, verifySharePassword } from "@/lib/standortanalyse/share";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -315,12 +316,15 @@ export async function POST(
 
   const externalEmail = parsed.data.formData.kontakt.email;
   if (externalEmail.trim() !== "") {
+    const confirmationEmail = buildStandortanalyseSubmissionConfirmationEmailContent({
+      analysisId: shareLink.analysis_id,
+    });
     await sendNotificationHtmlEmail({
       actingAdminUserId: ownerUserId,
       to: [externalEmail],
-      subject: "AquaDock Standortanalyse eingereicht",
-      html: `<p>Vielen Dank für die Übermittlung Ihrer Standortanalyse-Daten.</p><p>Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich mit der fachlichen Auswertung bei Ihnen.</p><p>Referenz: <strong>${shareLink.analysis_id}</strong></p>`,
-      text: `Vielen Dank für die Übermittlung Ihrer Standortanalyse-Daten. Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich mit der fachlichen Auswertung bei Ihnen. Referenz: ${shareLink.analysis_id}`,
+      subject: confirmationEmail.subject,
+      html: confirmationEmail.html,
+      text: confirmationEmail.text,
     });
   }
 

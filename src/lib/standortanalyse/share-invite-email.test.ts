@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildStandortanalyseSubmissionConfirmationEmailContent,
   buildStandortanalyseInviteEmailContent,
   isPlaceholderInviteEmail,
 } from "@/lib/standortanalyse/share-invite-email";
@@ -30,5 +31,17 @@ describe("buildStandortanalyseInviteEmailContent", () => {
     expect(content.html).toContain("https://crm.example/standortanalyse/share/abc");
     expect(content.html).toContain("passwortgeschützt");
     expect(content.text).toContain("Max Mustermann");
+  });
+});
+
+describe("buildStandortanalyseSubmissionConfirmationEmailContent", () => {
+  it("returns structured confirmation content with analysis reference", () => {
+    const content = buildStandortanalyseSubmissionConfirmationEmailContent({
+      analysisId: "analysis-123",
+    });
+
+    expect(content.subject).toContain("Standortanalyse");
+    expect(content.html).toContain("analysis-123");
+    expect(content.text).toContain("analysis-123");
   });
 });

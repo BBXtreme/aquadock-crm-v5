@@ -657,6 +657,10 @@ export function StandortanalyseWizard({
 
   const handleSubmit = form.handleSubmit((data) => {
     const submit = async () => {
+      if (mode === "public" && publicRequiresPassword && publicSubmitPassword.trim() === "") {
+        toast.error("Bitte gib das Passwort ein, bevor Du die Daten sendest.");
+        return;
+      }
       setIsSubmittingAnalysis(true);
       try {
         if (mode === "public" && shareToken != null) {
@@ -672,6 +676,11 @@ export function StandortanalyseWizard({
 
           const payload = (await response.json()) as { error?: string; analysisId?: string };
           if (!response.ok) {
+            if (response.status === 401) {
+              throw new Error(
+                "Das eingegebene Passwort ist nicht korrekt. Pruefe die Einladungsdaten oder kontaktiere Deinen Ansprechpartner.",
+              );
+            }
             throw new Error(payload.error ?? "Öffentliche Einreichung fehlgeschlagen");
           }
           if (typeof payload.analysisId === "string") {
@@ -886,25 +895,27 @@ export function StandortanalyseWizard({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Vielen Dank für Ihre Anfrage</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-primary" />
+              Vielen Dank fuer Deine Anfrage
+            </CardTitle>
             <CardDescription>
-              Ihre Standortanalyse-Daten wurden erfolgreich an AquaDock übermittelt. Sie erhalten eine
-              Bestätigungs-E-Mail, und unser Team meldet sich schnellstmöglich mit der fachlichen Auswertung bei
-              Ihnen.
+              Deine Standortanalyse wurde erfolgreich an AquaDock uebermittelt. Du erhaeltst eine
+              Bestaetigungs-E-Mail, und unser Team meldet sich zeitnah mit der fachlichen Auswertung bei Dir.
             </CardDescription>
           </CardHeader>
         </Card>
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-base">Was passiert als Nächstes?</CardTitle>
-            <CardDescription>Transparenter Ablauf für Ihre Standortbewertung.</CardDescription>
+            <CardTitle className="text-base">Was passiert als Naechstes?</CardTitle>
+            <CardDescription>Transparenter Ablauf fuer Deine Standortbewertung.</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>1. Wir prüfen Ihre Angaben intern und ergänzen die technische Standortbewertung.</li>
-              <li>2. Sie erhalten in der Regel innerhalb von 1-2 Werktagen eine erste Rückmeldung.</li>
-              <li>3. Bei Rückfragen oder fehlenden Angaben kontaktieren wir Sie per E-Mail oder Telefon.</li>
-              <li>4. Die finale Empfehlung und nächsten Schritte besprechen wir persönlich mit Ihnen.</li>
+              <li>1. Wir pruefen Deine Angaben intern und ergaenzen die technische Standortbewertung.</li>
+              <li>2. Du erhaeltst in der Regel innerhalb von 1-2 Werktagen eine erste Rueckmeldung.</li>
+              <li>3. Bei Rueckfragen oder fehlenden Angaben kontaktieren wir Dich per E-Mail oder Telefon.</li>
+              <li>4. Die finale Empfehlung und naechsten Schritte besprechen wir persoenlich mit Dir.</li>
             </ul>
           </CardContent>
         </Card>
@@ -1669,8 +1680,15 @@ export function StandortanalyseWizard({
           {step === 3 ? (
             <Card>
               <CardHeader>
-                <CardTitle>Zusammenfassung</CardTitle>
-                <CardDescription>Review aller Angaben vor der finalen Auswertung.</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  {mode === "public" ? <ClipboardList className="h-4 w-4 text-primary" /> : null}
+                  Zusammenfassung
+                </CardTitle>
+                <CardDescription>
+                  {mode === "public"
+                    ? "Prüfe Deine Angaben vor dem Versand an das AquaDock-Team."
+                    : "Review aller Angaben vor der finalen Auswertung."}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {mode === "internal" ? (
@@ -1705,18 +1723,75 @@ export function StandortanalyseWizard({
                     </Table>
                   </>
                 ) : (
-                  <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                    Bitte prüfen Sie Ihre Eingaben sorgfältig. Die fachliche Auswertung und Ergebnisinterpretation
-                    erfolgt ausschließlich intern durch das AquaDock-Team.
+                  <div className="space-y-4">
+                    <div className="rounded-xl border bg-linear-to-br from-background to-muted/40 p-5">
+                      <p className="text-sm font-medium text-foreground">
+                        Bitte prüfe Deine Angaben jetzt in Ruhe. Nach dem Versand erhältst Du eine Bestätigung per
+                        E-Mail.
+                      </p>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Die fachliche Bewertung und Ergebnisinterpretation erfolgt ausschließlich intern durch das
+                        AquaDock-Team.
+                      </p>
+                    </div>
+                    <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                      <div className="rounded-lg border bg-background p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Kontakt</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p className="font-medium text-foreground">
+                            {currentValues.kontakt.vorname} {currentValues.kontakt.name}
+                          </p>
+                          <p className="text-muted-foreground">{currentValues.kontakt.email}</p>
+                          {currentValues.kontakt.telefon != null && currentValues.kontakt.telefon !== "" ? (
+                            <p className="text-muted-foreground">{currentValues.kontakt.telefon}</p>
+                          ) : null}
+                          {currentValues.kontakt.firma != null && currentValues.kontakt.firma !== "" ? (
+                            <p className="text-muted-foreground">{currentValues.kontakt.firma}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="rounded-lg border bg-background p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Standort</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p className="font-medium text-foreground">
+                            {currentValues.standort.plz} {currentValues.standort.ort}
+                          </p>
+                          {currentValues.standort.strasse != null && currentValues.standort.strasse !== "" ? (
+                            <p className="text-muted-foreground">{currentValues.standort.strasse}</p>
+                          ) : null}
+                          <p className="text-muted-foreground">
+                            {landOptions.find((option) => option.value === currentValues.standort.land)?.label ??
+                              currentValues.standort.land}
+                          </p>
+                          <p className="text-muted-foreground">
+                            Datum:{" "}
+                            {new Date(currentValues.standort.datum).toLocaleDateString("de-DE", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border bg-primary/5 p-4">
+                      <p className="text-sm font-medium text-foreground">Transparenter Ablauf nach dem Versand</p>
+                      <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                        <li>1. Dein Datensatz wird intern auf Vollständigkeit und Plausibilität geprüft.</li>
+                        <li>2. Das Team erstellt die Standortempfehlung inklusive nächster Schritte.</li>
+                        <li>3. Du erhältst zeitnah die persönliche Rückmeldung von AquaDock.</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
 
                 {mode === "public" && publicRequiresPassword ? (
-                  <Card className="bg-muted/40">
+                  <Card className="border-primary/20 bg-primary/5">
                     <CardHeader>
-                      <CardTitle className="text-base">Passwortprüfung</CardTitle>
+                      <CardTitle className="text-base">Passwort erforderlich</CardTitle>
                       <CardDescription>
-                        Dieser Link ist passwortgeschützt. Bitte Passwort vor dem Absenden eingeben.
+                        Dieser Link ist passwortgeschuetzt. Gib das von AquaDock bereitgestellte Passwort ein, bevor Du
+                        Deine Angaben sendest.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
