@@ -21,15 +21,15 @@ const submitSharedAnalysisSchema = z
 
 async function maybeCreateOrUpdateContactForOwner(args: {
   ownerUserId: string;
-  analysisId: string;
   formData: z.infer<typeof standortanalyseFormSchema>;
+  companyId: string | null;
 }) {
   const admin = createAdminClient();
   const email = args.formData.kontakt.email.trim().toLowerCase();
 
   const { data: existingContact, error: existingError } = await admin
     .from("contacts")
-    .select("id")
+    .select("id,company_id")
     .eq("user_id", args.ownerUserId)
     .eq("email", email)
     .is("deleted_at", null)
@@ -40,21 +40,26 @@ async function maybeCreateOrUpdateContactForOwner(args: {
   }
 
   if (existingContact == null) {
-    const { error: insertError } = await admin.from("contacts").insert({
-      user_id: args.ownerUserId,
-      vorname: args.formData.kontakt.vorname,
-      nachname: args.formData.kontakt.name,
-      email,
-      telefon: args.formData.kontakt.telefon ?? null,
-      notes: `Erstellt über öffentlichen Standortanalyse-Link (${args.analysisId})`,
-      created_by: args.ownerUserId,
-      updated_by: args.ownerUserId,
-    });
+    const { data: insertedContact, error: insertError } = await admin
+      .from("contacts")
+      .insert({
+        user_id: args.ownerUserId,
+        company_id: args.companyId,
+        vorname: args.formData.kontakt.vorname,
+        nachname: args.formData.kontakt.name,
+        email,
+        telefon: args.formData.kontakt.telefon ?? null,
+        notes: "Erstellt über öffentliche Standortanalyse",
+        created_by: args.ownerUserId,
+        updated_by: args.ownerUserId,
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
-      throw new Error(insertError.message);
+    if (insertError || insertedContact == null) {
+      throw new Error(insertError?.message ?? "Kontakt konnte nicht erstellt werden");
     }
-    return;
+    return insertedContact.id;
   }
 
   const { error: updateError } = await admin
@@ -63,6 +68,7 @@ async function maybeCreateOrUpdateContactForOwner(args: {
       vorname: args.formData.kontakt.vorname,
       nachname: args.formData.kontakt.name,
       telefon: args.formData.kontakt.telefon ?? null,
+      company_id: args.companyId ?? existingContact.company_id ?? null,
       updated_by: args.ownerUserId,
     })
     .eq("id", existingContact.id);
@@ -70,6 +76,108 @@ async function maybeCreateOrUpdateContactForOwner(args: {
   if (updateError) {
     throw new Error(updateError.message);
   }
+  return existingContact.id;
+}
+
+async function maybeCreateOrUpdateCompanyForOwner(args: {
+  ownerUserId: string;
+  formData: z.infer<typeof standortanalyseFormSchema>;
+}) {
+  const companyName = args.formData.kontakt.firma?.trim() ?? "";
+  if (companyName.length === 0) {
+    return null;
+  }
+
+  const admin = createAdminClient();
+  const { data: existingCompanies, error: existingError } = await admin
+    .from("companies")
+    .select("id")
+    .eq("user_id", args.ownerUserId)
+    .ilike("firmenname", companyName)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  const existingCompanyId = existingCompanies?.[0]?.id;
+  if (existingCompanyId == null) {
+    const { data: insertedCompany, error: insertError } = await admin
+      .from("companies")
+      .insert({
+        user_id: args.ownerUserId,
+        firmenname: companyName,
+        email: args.formData.kontakt.email,
+        telefon: args.formData.kontakt.telefon ?? null,
+        strasse: args.formData.standort.strasse ?? null,
+        plz: args.formData.standort.plz,
+        stadt: args.formData.standort.ort,
+        land: args.formData.standort.land,
+        notes: "Erstellt über öffentliche Standortanalyse",
+        created_by: args.ownerUserId,
+        updated_by: args.ownerUserId,
+      })
+      .select("id")
+      .single();
+
+    if (insertError || insertedCompany == null) {
+      throw new Error(insertError?.message ?? "Firma konnte nicht erstellt werden");
+    }
+    return insertedCompany.id;
+  }
+
+  const { error: updateError } = await admin
+    .from("companies")
+    .update({
+      firmenname: companyName,
+      email: args.formData.kontakt.email,
+      telefon: args.formData.kontakt.telefon ?? null,
+      strasse: args.formData.standort.strasse ?? null,
+      plz: args.formData.standort.plz,
+      stadt: args.formData.standort.ort,
+      land: args.formData.standort.land,
+      updated_by: args.ownerUserId,
+    })
+    .eq("id", existingCompanyId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  return existingCompanyId;
+}
+
+async function syncCrmEntitiesForOwner(args: {
+  ownerUserId: string;
+  analysisId: string;
+  formData: z.infer<typeof standortanalyseFormSchema>;
+}) {
+  const companyId = await maybeCreateOrUpdateCompanyForOwner({
+    ownerUserId: args.ownerUserId,
+    formData: args.formData,
+  });
+  const contactId = await maybeCreateOrUpdateContactForOwner({
+    ownerUserId: args.ownerUserId,
+    formData: args.formData,
+    companyId,
+  });
+
+  const admin = createAdminClient();
+  const { error: linkError } = await admin
+    .from("standortanalysen")
+    .update({
+      contact_id: contactId,
+      company_id: companyId,
+    })
+    .eq("id", args.analysisId);
+
+  if (linkError) {
+    throw new Error(linkError.message);
+  }
+
+  return { contactId, companyId };
 }
 
 export async function POST(
@@ -198,7 +306,7 @@ export async function POST(
   }
 
   if (parsed.data.createOrUpdateContact) {
-    await maybeCreateOrUpdateContactForOwner({
+    await syncCrmEntitiesForOwner({
       ownerUserId,
       analysisId: shareLink.analysis_id,
       formData: parsed.data.formData,

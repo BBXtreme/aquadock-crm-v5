@@ -109,6 +109,21 @@ export default function ContactDetailClient({ contact: initialContact, companies
     },
     enabled: !!contact?.company_id,
   });
+  const { data: relatedStandortanalysen = [] } = useQuery({
+    queryKey: ["standortanalysen", "by-contact", id],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("standortanalysen")
+        .select("id,status,updated_at,total_points,recommendation")
+        .eq("contact_id", id)
+        .order("updated_at", { ascending: false })
+        .limit(8);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: contact != null,
+  });
 
   const responsibleUserId = contact?.user_id;
   const { data: responsibleProfile } = useQuery({
@@ -525,6 +540,32 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 {t("detailLinkCompany")}
               </Button>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Verknüpfte Standortanalysen</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {relatedStandortanalysen.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine verknüpften Standortanalysen gefunden.</p>
+          ) : (
+            relatedStandortanalysen.map((analysis) => (
+              <div key={analysis.id} className="flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">{analysis.recommendation}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Status: {analysis.status} · Punkte: {analysis.total_points} · Aktualisiert:{" "}
+                    {new Date(analysis.updated_at).toLocaleString(localeTag)}
+                  </p>
+                </div>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/standortanalyse?analysisId=${analysis.id}`}>Öffnen</Link>
+                </Button>
+              </div>
+            ))
           )}
         </CardContent>
       </Card>

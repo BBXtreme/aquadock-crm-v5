@@ -129,7 +129,8 @@ export function toStandortanalyseScoresInsert(
         criterion_type: definition.type,
         points: selectedOption.points,
         max_points: 0,
-        status: null,
+        // Preserve info-choice label (e.g. See/Fluss/Küste) for lossless roundtrip.
+        status: selectedOption.label,
         is_unknown: false,
       });
       continue;
@@ -239,7 +240,11 @@ export function toStandortanalyseFormFromRows(args: {
     }
     if (row.criterion_key === "gewaesserart") {
       const definition = standortKriterien.find((criterion) => criterion.id === "gewaesserart");
-      const matchedOption = definition?.options.find((option) => option.points === row.points);
+      const statusLabel = typeof row.status === "string" ? row.status : null;
+      const matchedByStatus = statusLabel == null
+        ? undefined
+        : definition?.options.find((option) => option.label === statusLabel);
+      const matchedOption = matchedByStatus ?? definition?.options.find((option) => option.points === row.points);
       const label = matchedOption?.label ?? definition?.options[0]?.label ?? "See";
       base.kriterien.gewaesserart = label as StandortanalyseForm["kriterien"]["gewaesserart"];
       continue;

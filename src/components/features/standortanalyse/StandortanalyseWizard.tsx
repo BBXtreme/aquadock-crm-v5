@@ -15,7 +15,7 @@ import {
   MapPinned,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import {
@@ -309,7 +309,15 @@ const GUIDING_QUESTIONS = [
   "Sind Ergänzungsinvestitionen nötig?",
 ] as const;
 
-export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?: WizardMode; shareToken?: string }) {
+export function StandortanalyseWizard({
+  mode = "internal",
+  shareToken,
+  initialAnalysisId,
+}: {
+  mode?: WizardMode;
+  shareToken?: string;
+  initialAnalysisId?: string;
+}) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [submittedData, setSubmittedData] = useState<StandortanalyseForm | null>(null);
@@ -334,6 +342,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string | null>(null);
   const [mapInfo, setMapInfo] = useState<string>("");
   const [mapError, setMapError] = useState<string | null>(null);
+  const initialAutoLoadDone = useRef(false);
 
   const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>(() => ({
     context: false,
@@ -342,9 +351,9 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     workspace: false,
   }));
 
-  const toggleSection = (id: SectionId, next: boolean) => {
+  const toggleSection = useCallback((id: SectionId, next: boolean) => {
     setOpenSections((prev) => ({ ...prev, [id]: next }));
-  };
+  }, []);
 
   const form = useForm<StandortanalyseForm>({
     resolver: zodResolver(standortanalyseFormSchema),
@@ -437,6 +446,53 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Entwurf konnte nicht gespeichert werden");
+    },
+  });
+
+  const syncCrmMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/standortanalyse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisId: analysisId ?? undefined,
+          submit: false,
+          createOrUpdateContact: true,
+          syncCrmEntities: true,
+          formData: toPersistableDraftForm(form.getValues()),
+        }),
+      });
+      const payload = (await response.json()) as {
+        analysisId?: string;
+        error?: string;
+        crm?: { contactId?: string | null; companyId?: string | null };
+      };
+      if (!response.ok || typeof payload.analysisId !== "string") {
+        throw new Error(payload.error ?? "CRM-Einträge konnten nicht erstellt werden");
+      }
+      return payload;
+    },
+    onSuccess: (payload) => {
+      setAnalysisId(payload.analysisId ?? null);
+      void queryClient.invalidateQueries({ queryKey: ["standortanalysen", mode] });
+      const hasContact = payload.crm?.contactId != null;
+      const hasCompany = payload.crm?.companyId != null;
+      if (hasContact && hasCompany) {
+        toast.success("Kontakt und Firma wurden mit der Analyse verknüpft");
+        return;
+      }
+      if (hasContact) {
+        toast.success("Kontakt wurde mit der Analyse verknüpft");
+        return;
+      }
+      if (hasCompany) {
+        toast.success("Firma wurde mit der Analyse verknüpft");
+        return;
+      }
+      toast.success("Analyse wurde im CRM synchronisiert");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "CRM-Synchronisierung fehlgeschlagen");
     },
   });
 
@@ -698,7 +754,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     toast.success("Formular zurückgesetzt");
   };
 
-  const handleLoadAnalysis = async (id: string) => {
+  const handleLoadAnalysis = useCallback(async (id: string) => {
     setLoadingAnalysisId(id);
     try {
       const response = await fetch(`/api/standortanalyse/${id}`);
@@ -729,7 +785,18 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     } finally {
       setLoadingAnalysisId(null);
     }
-  };
+  }, [form, toggleSection]);
+
+  useEffect(() => {
+    if (mode !== "internal" || initialAnalysisId == null || analysisId != null || loadingAnalysisId != null) {
+      return;
+    }
+    if (initialAutoLoadDone.current) {
+      return;
+    }
+    initialAutoLoadDone.current = true;
+    void handleLoadAnalysis(initialAnalysisId);
+  }, [analysisId, handleLoadAnalysis, initialAnalysisId, loadingAnalysisId, mode]);
 
   const handleCopyShareLink = async () => {
     if (shareLink == null) {
@@ -996,6 +1063,15 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
               className="w-full sm:w-auto"
             >
               {saveDraftMutation.isPending ? "Speichere..." : "Entwurf speichern"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => syncCrmMutation.mutate()}
+              disabled={syncCrmMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {syncCrmMutation.isPending ? "Synchronisiere..." : "Im CRM übernehmen"}
             </Button>
             <Button type="button" variant="outline" onClick={handleResetForm} className="w-full sm:w-auto">
               Neu starten

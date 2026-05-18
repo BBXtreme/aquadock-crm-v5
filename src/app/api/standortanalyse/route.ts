@@ -15,21 +15,92 @@ const upsertStandortanalyseSchema = z
     analysisId: z.string().uuid("Ungültige Analyse-ID").optional(),
     submit: z.boolean().default(false),
     createOrUpdateContact: z.boolean().default(false),
+    syncCrmEntities: z.boolean().default(false),
     formData: standortanalyseFormSchema,
   })
   .strict();
 
+async function maybeCreateOrUpdateCompany(args: {
+  userId: string;
+  formData: z.infer<typeof standortanalyseFormSchema>;
+}) {
+  const companyName = args.formData.kontakt.firma?.trim() ?? "";
+  if (companyName.length === 0) {
+    return null;
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data: existingCompanies, error: existingError } = await supabase
+    .from("companies")
+    .select("id")
+    .eq("user_id", args.userId)
+    .ilike("firmenname", companyName)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  const existingCompanyId = existingCompanies?.[0]?.id;
+  if (existingCompanyId == null) {
+    const { data: insertedCompany, error: insertError } = await supabase
+      .from("companies")
+      .insert({
+        user_id: args.userId,
+        firmenname: companyName,
+        email: args.formData.kontakt.email,
+        telefon: args.formData.kontakt.telefon ?? null,
+        strasse: args.formData.standort.strasse ?? null,
+        plz: args.formData.standort.plz,
+        stadt: args.formData.standort.ort,
+        land: args.formData.standort.land,
+        notes: "Automatisch aus Standortanalyse erstellt",
+        created_by: args.userId,
+        updated_by: args.userId,
+      })
+      .select("id")
+      .single();
+
+    if (insertError || insertedCompany == null) {
+      throw new Error(insertError?.message ?? "Firma konnte nicht erstellt werden");
+    }
+    return insertedCompany.id;
+  }
+
+  const { error: updateError } = await supabase
+    .from("companies")
+    .update({
+      firmenname: companyName,
+      email: args.formData.kontakt.email,
+      telefon: args.formData.kontakt.telefon ?? null,
+      strasse: args.formData.standort.strasse ?? null,
+      plz: args.formData.standort.plz,
+      stadt: args.formData.standort.ort,
+      land: args.formData.standort.land,
+      updated_by: args.userId,
+    })
+    .eq("id", existingCompanyId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  return existingCompanyId;
+}
+
 async function maybeCreateOrUpdateContact(args: {
   userId: string;
-  analysisId: string;
   formData: z.infer<typeof standortanalyseFormSchema>;
+  companyId: string | null;
 }) {
   const supabase = await createServerSupabaseClient();
   const email = args.formData.kontakt.email.trim().toLowerCase();
 
   const { data: existingContact, error: existingError } = await supabase
     .from("contacts")
-    .select("id")
+    .select("id,company_id")
     .eq("user_id", args.userId)
     .eq("email", email)
     .is("deleted_at", null)
@@ -40,21 +111,26 @@ async function maybeCreateOrUpdateContact(args: {
   }
 
   if (existingContact == null) {
-    const { error: insertError } = await supabase.from("contacts").insert({
-      user_id: args.userId,
-      vorname: args.formData.kontakt.vorname,
-      nachname: args.formData.kontakt.name,
-      email,
-      telefon: args.formData.kontakt.telefon ?? null,
-      notes: `Automatisch erstellt aus Standortanalyse ${args.analysisId}`,
-      created_by: args.userId,
-      updated_by: args.userId,
-    });
+    const { data: insertedContact, error: insertError } = await supabase
+      .from("contacts")
+      .insert({
+        user_id: args.userId,
+        company_id: args.companyId,
+        vorname: args.formData.kontakt.vorname,
+        nachname: args.formData.kontakt.name,
+        email,
+        telefon: args.formData.kontakt.telefon ?? null,
+        notes: "Automatisch aus Standortanalyse erstellt",
+        created_by: args.userId,
+        updated_by: args.userId,
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
-      throw new Error(insertError.message);
+    if (insertError || insertedContact == null) {
+      throw new Error(insertError?.message ?? "Kontakt konnte nicht erstellt werden");
     }
-    return;
+    return insertedContact.id;
   }
 
   const { error: updateError } = await supabase
@@ -63,6 +139,7 @@ async function maybeCreateOrUpdateContact(args: {
       vorname: args.formData.kontakt.vorname,
       nachname: args.formData.kontakt.name,
       telefon: args.formData.kontakt.telefon ?? null,
+      company_id: args.companyId ?? existingContact.company_id ?? null,
       updated_by: args.userId,
     })
     .eq("id", existingContact.id);
@@ -70,6 +147,39 @@ async function maybeCreateOrUpdateContact(args: {
   if (updateError) {
     throw new Error(updateError.message);
   }
+  return existingContact.id;
+}
+
+async function syncCrmEntitiesForAnalysis(args: {
+  userId: string;
+  analysisId: string;
+  formData: z.infer<typeof standortanalyseFormSchema>;
+}) {
+  const companyId = await maybeCreateOrUpdateCompany({
+    userId: args.userId,
+    formData: args.formData,
+  });
+  const contactId = await maybeCreateOrUpdateContact({
+    userId: args.userId,
+    formData: args.formData,
+    companyId,
+  });
+
+  const supabase = await createServerSupabaseClient();
+  const { error: linkError } = await supabase
+    .from("standortanalysen")
+    .update({
+      contact_id: contactId,
+      company_id: companyId,
+    })
+    .eq("id", args.analysisId)
+    .eq("user_id", args.userId);
+
+  if (linkError) {
+    throw new Error(linkError.message);
+  }
+
+  return { contactId, companyId };
 }
 
 export async function GET(request: Request) {
@@ -138,6 +248,8 @@ export async function POST(request: Request) {
   const score = calculateStandortScore(parsed.data.formData.kriterien);
   const nowIso = new Date().toISOString();
   let analysisId = parsed.data.analysisId;
+  let linkedContactId: string | null = null;
+  let linkedCompanyId: string | null = null;
 
   if (analysisId == null) {
     const insertPayload = toStandortanalyseInsert(user.id, parsed.data.formData, score);
@@ -181,6 +293,17 @@ export async function POST(request: Request) {
     }
   }
 
+  const shouldSyncCrm = parsed.data.syncCrmEntities || (parsed.data.submit && parsed.data.createOrUpdateContact);
+  if (shouldSyncCrm) {
+    const crmResult = await syncCrmEntitiesForAnalysis({
+      userId: user.id,
+      analysisId,
+      formData: parsed.data.formData,
+    });
+    linkedContactId = crmResult.contactId;
+    linkedCompanyId = crmResult.companyId;
+  }
+
   if (parsed.data.submit) {
     const { error: submitError } = await supabase
       .from("standortanalysen")
@@ -190,14 +313,6 @@ export async function POST(request: Request) {
 
     if (submitError) {
       return NextResponse.json({ error: submitError.message }, { status: 500 });
-    }
-
-    if (parsed.data.createOrUpdateContact) {
-      await maybeCreateOrUpdateContact({
-        userId: user.id,
-        analysisId,
-        formData: parsed.data.formData,
-      });
     }
 
     const externalEmail = parsed.data.formData.kontakt.email;
@@ -231,5 +346,9 @@ export async function POST(request: Request) {
       unknownCount: score.unknownCount,
     },
     status: parsed.data.submit ? "submitted" : "draft",
+    crm: {
+      contactId: linkedContactId,
+      companyId: linkedCompanyId,
+    },
   });
 }
