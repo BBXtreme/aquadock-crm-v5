@@ -686,6 +686,196 @@ export type Database = {
           },
         ]
       }
+      standortanalyse_scores: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          criterion_key: string
+          criterion_type: string
+          is_unknown: boolean
+          max_points: number
+          points: number
+          status: string | null
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          criterion_key: string
+          criterion_type: string
+          is_unknown?: boolean
+          max_points?: number
+          points?: number
+          status?: string | null
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          criterion_key?: string
+          criterion_type?: string
+          is_unknown?: boolean
+          max_points?: number
+          points?: number
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standortanalyse_scores_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "standortanalysen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      standortanalyse_share_links: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          last_accessed_at: string | null
+          max_uses: number
+          password_hash: string | null
+          token_hash: string
+          used_count: number
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          created_by: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          max_uses?: number
+          password_hash?: string | null
+          token_hash: string
+          used_count?: number
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          max_uses?: number
+          password_hash?: string | null
+          token_hash?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standortanalyse_share_links_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "standortanalysen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      standortanalysen: {
+        Row: {
+          company_id: string | null
+          contact_id: string | null
+          created_at: string
+          erstellt_von: string | null
+          id: string
+          kontakt_email: string
+          kontakt_firma: string | null
+          kontakt_name: string
+          kontakt_ort: string | null
+          kontakt_plz: string | null
+          kontakt_strasse: string | null
+          kontakt_telefon: string | null
+          kontakt_vorname: string
+          notizen: string | null
+          recommendation: string
+          standort_datum: string
+          standort_land: string
+          standort_ort: string
+          standort_plz: string
+          standort_strasse: string | null
+          status: string
+          submitted_at: string | null
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          erstellt_von?: string | null
+          id?: string
+          kontakt_email: string
+          kontakt_firma?: string | null
+          kontakt_name: string
+          kontakt_ort?: string | null
+          kontakt_plz?: string | null
+          kontakt_strasse?: string | null
+          kontakt_telefon?: string | null
+          kontakt_vorname: string
+          notizen?: string | null
+          recommendation?: string
+          standort_datum?: string
+          standort_land: string
+          standort_ort: string
+          standort_plz: string
+          standort_strasse?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          contact_id?: string | null
+          created_at?: string
+          erstellt_von?: string | null
+          id?: string
+          kontakt_email?: string
+          kontakt_firma?: string | null
+          kontakt_name?: string
+          kontakt_ort?: string | null
+          kontakt_plz?: string | null
+          kontakt_strasse?: string | null
+          kontakt_telefon?: string | null
+          kontakt_vorname?: string
+          notizen?: string | null
+          recommendation?: string
+          standort_datum?: string
+          standort_land?: string
+          standort_ort?: string
+          standort_plz?: string
+          standort_strasse?: string | null
+          status?: string
+          submitted_at?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "standortanalysen_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "standortanalysen_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       timeline: {
         Row: {
           activity_type: string

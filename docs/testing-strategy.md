@@ -2,7 +2,20 @@
 
 **Purpose:** Decide *where* to add tests and *how* coverage exclusions relate to E2E so new work stays consistent. The **quality gate** is `vitest.config.ts` (thresholds + `coverage.exclude`); this document explains the intent.
 
-**Last updated:** May 17, 2026
+**Last updated:** May 18, 2026
+
+## Standortanalyse module (2026-05-18)
+
+- **Vitest (API + domain logic + table UI):**
+  - [`src/app/api/standortanalyse/route.test.ts`](../src/app/api/standortanalyse/route.test.ts) — draft/save/submit branches, CRM sync behavior, and validation.
+  - [`src/app/api/standortanalyse/[id]/route.test.ts`](../src/app/api/standortanalyse/[id]/route.test.ts) — owner-scoped load/delete handler behavior.
+  - [`src/app/api/standortanalyse/share/route.test.ts`](../src/app/api/standortanalyse/share/route.test.ts) — secure share-link creation + invite branch handling.
+  - [`src/app/api/standortanalyse/share/[token]/submit/route.test.ts`](../src/app/api/standortanalyse/share/[token]/submit/route.test.ts) — public submit endpoint, password checks, and side effects.
+  - [`src/components/tables/StandortanalysenTable.test.tsx`](../src/components/tables/StandortanalysenTable.test.tsx) — action icon rendering and `AlertDialog` confirmation coverage.
+  - [`src/lib/standortanalyse/*.test.ts`](../src/lib/standortanalyse) — scoring, persistence mapping, share utilities, and countries helper coverage.
+- **E2E recommendation:** Add one Playwright smoke that covers `/standortanalyse` accordion navigation + saved-analysis row actions whenever public/internal flow behavior changes materially (especially around form state loss and share submit UX).
+
+---
 
 ## Partner role + dual login (2026-05-17)
 

@@ -33,6 +33,37 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.51",
+    releasedAt: "2026-05-18",
+    title: "🚀 Standortanalyse ist jetzt voll im modernen CRM zuhause",
+    changes: [
+      {
+        type: "feature",
+        text: "Großer Schritt: Die Standortanalyse wurde aus dem veralteten Partner-Portal in die moderne, professionelle CRM-App migriert – mit deutlich besserer Orientierung und saubereren Abläufen.",
+      },
+      {
+        type: "improvement",
+        text: "Du arbeitest jetzt in einer klar strukturierten High-UX-Oberfläche mit Kontext, Formular, Einladungslink und gespeicherten Analysen – alles in einem konsistenten CRM-Workflow.",
+      },
+      {
+        type: "improvement",
+        text: "Gespeicherte Analysen sind professionell verwaltbar: schnelle Suche, smarte Tabellensteuerung und klare Aktionswege zum Ansehen, Bearbeiten, CRM-Übernehmen oder Löschen.",
+      },
+      {
+        type: "feature",
+        text: "Beim CRM-Import entscheidest Du flexibel, ob Kontakt, Firma oder beides erstellt/aktualisiert wird. Bei beidem werden die Datensätze automatisch sauber miteinander verknüpft.",
+      },
+      {
+        type: "feature",
+        text: "Neu für die externe Nutzung: Du kannst Standortanalyse-Links direkt an Kunden senden – optional mit Passwortschutz und klarer Zeitbegrenzung für sichere, kontrollierte Freigaben.",
+      },
+      {
+        type: "improvement",
+        text: "In Summe wirkt die gesamte Standortanalyse jetzt deutlich hochwertiger, schneller und verlässlicher – passend zum professionellen Anspruch der AquaDock CRM-Plattform.",
+      },
+    ],
+  },
+  {
     version: "0.5.50",
     releasedAt: "2026-05-17",
     title: "🌊 Partner-Portal live: Multi-Rollen, Dual-Login und klare Trennung",

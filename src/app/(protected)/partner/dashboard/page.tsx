@@ -11,7 +11,10 @@ export default async function PartnerDashboardPage() {
   const user = await requireRole(PARTNER_ALLOWED_ROLES);
   return (
     <PageShell>
-      <PartnerDashboardWelcome displayName={user.display_name ?? user.email ?? ""} />
+      <PartnerDashboardWelcome
+        displayName={user.display_name ?? user.email ?? ""}
+        userId={user.id}
+      />
     </PageShell>
   );
 }

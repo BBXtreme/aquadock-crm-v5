@@ -14,10 +14,10 @@ import { isUserRole, type UserRole } from "@/lib/auth/types";
 import { compareSemver } from "@/lib/changelog/compare-semver";
 import {
   type AppShellNavMessageKey,
-  appShellAdminNav,
   appShellMarketingNav,
   appShellQuickCreate,
   appShellSalesNav,
+  partnerPortalNav,
 } from "@/lib/constants/app-shell-navigation";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
@@ -168,8 +168,10 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
     user.roles ?? (isUserRole(user.role) ? [user.role] : []);
   const isAdmin = roles.includes("admin");
   const isUser = roles.includes("user");
-  const isPartner = isAdmin || roles.includes("partner");
+  const isPartner = isAdmin || isUser || roles.includes("partner");
   const canAccessCrmNav = isAdmin || isUser;
+  const standortanalyseNavItem = partnerPortalNav.find((item) => item.href === "/standortanalyse");
+  const StandortanalyseIcon = standortanalyseNavItem?.icon;
 
   return (
     <div
@@ -211,16 +213,6 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}
-        {isAdmin ? (
-          <SidebarGroup className="gap-1">
-            {!isCollapsed ? <SidebarGroupLabel>{t("groupAdmin")}</SidebarGroupLabel> : null}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {renderNavItems(appShellAdminNav, pathname, isCollapsed, t)}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
         {isPartner ? (
           <SidebarGroup className="gap-1">
             {!isCollapsed ? (
@@ -244,6 +236,23 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                           {t("partnerPortal")}
                         </span>
                       )}
+                    </Button>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/standortanalyse">
+                    <Button
+                      variant={pathname === "/standortanalyse" ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full h-10 transition-colors",
+                        isCollapsed ? "justify-center px-2" : "justify-start px-3",
+                      )}
+                      title={isCollapsed ? t("standortanalyse") : undefined}
+                    >
+                      {StandortanalyseIcon ? (
+                        <StandortanalyseIcon className={cn("h-4 w-4", !isCollapsed && "mr-3")} aria-hidden />
+                      ) : null}
+                      {!isCollapsed ? <span className="flex-1 text-left truncate">{t("standortanalyse")}</span> : null}
                     </Button>
                   </Link>
                 </SidebarMenuItem>
