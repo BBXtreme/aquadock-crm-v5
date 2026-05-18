@@ -762,6 +762,12 @@ export function StandortanalyseWizard({
       return;
     }
 
+    const trimmedSharePassword = shareGenerationPassword.trim();
+    if (trimmedSharePassword.length > 0 && trimmedSharePassword.length < 8) {
+      toast.error("Passwort muss mindestens 8 Zeichen lang sein");
+      return;
+    }
+
     setIsGeneratingShare(true);
     setShareLink(null);
 
@@ -771,19 +777,20 @@ export function StandortanalyseWizard({
       .join(" ");
 
     try {
+      const shareRequestBody = {
+        analysisId: analysisId ?? undefined,
+        password: trimmedSharePassword === "" ? undefined : trimmedSharePassword,
+        expiresInHours: shareExpiresHours,
+        maxUses: 1,
+        revokeOlderLinks,
+        sendInviteEmail: sendInviteByEmail,
+        recipientEmail: sendInviteByEmail ? shareRecipientEmail.trim() : undefined,
+        recipientName: recipientName.length > 0 ? recipientName : undefined,
+      };
       const response = await fetch("/api/standortanalyse/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          analysisId: analysisId ?? undefined,
-          password: shareGenerationPassword.trim() === "" ? undefined : shareGenerationPassword.trim(),
-          expiresInHours: shareExpiresHours,
-          maxUses: 1,
-          revokeOlderLinks,
-          sendInviteEmail: sendInviteByEmail,
-          recipientEmail: sendInviteByEmail ? shareRecipientEmail.trim() : undefined,
-          recipientName: recipientName.length > 0 ? recipientName : undefined,
-        }),
+        body: JSON.stringify(shareRequestBody),
       });
 
       const payload = (await response.json()) as ShareApiResponse & {
@@ -791,7 +798,12 @@ export function StandortanalyseWizard({
         issues?: { fieldErrors?: Record<string, string[]> };
       };
       if (!response.ok) {
-        const fieldError = payload.issues?.fieldErrors?.recipientEmail?.[0];
+        const fieldErrors = payload.issues?.fieldErrors;
+        const fieldError =
+          fieldErrors?.password?.[0] ??
+          fieldErrors?.recipientEmail?.[0] ??
+          fieldErrors?.analysisId?.[0] ??
+          fieldErrors?.expiresInHours?.[0];
         throw new Error(fieldError ?? payload.error ?? "Share-Link konnte nicht erstellt werden");
       }
       setAnalysisId(payload.analysisId);
