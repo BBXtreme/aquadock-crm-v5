@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, CircleHelp, Copy, Link2, LockKeyhole, MapPinned } from "lucide-react";
+import { BarChart3, Check, CircleHelp, Copy, Link2, LockKeyhole, MapPinned } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -25,8 +25,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -71,6 +73,17 @@ type ShareApiResponse = {
   maxUses: number;
 };
 
+type LastShareLinkMeta = {
+  analysisId: string;
+  shareUrl?: string;
+  expiresAt: string;
+  maxUses: number;
+  createdAt?: string;
+  usedCount?: number;
+  isActive?: boolean;
+  passwordProtected?: boolean;
+};
+
 type AnalyseListItem = {
   id: string;
   status: "draft" | "submitted" | "completed";
@@ -82,6 +95,8 @@ type AnalyseListItem = {
   kontakt_name: string;
   submitted_at: string | null;
 };
+
+type AnalyseFilter = "all" | "draft" | "submitted";
 
 const DEFAULT_FORM_VALUES: StandortanalyseForm = {
   kontakt: {
@@ -125,6 +140,31 @@ const DEFAULT_FORM_VALUES: StandortanalyseForm = {
   notizen: "",
 };
 
+function toPersistableDraftForm(values: StandortanalyseForm): StandortanalyseForm {
+  const now = new Date();
+  const safeEmail =
+    values.kontakt.email.trim().length > 0
+      ? values.kontakt.email
+      : `draft-${now.getTime()}@aquadock.invalid`;
+
+  return {
+    ...values,
+    kontakt: {
+      ...values.kontakt,
+      name: values.kontakt.name.trim().length > 0 ? values.kontakt.name : "Entwurf",
+      vorname: values.kontakt.vorname.trim().length > 0 ? values.kontakt.vorname : "Entwurf",
+      email: safeEmail,
+    },
+    standort: {
+      ...values.standort,
+      plz: values.standort.plz.trim().length > 0 ? values.standort.plz : "00000",
+      ort: values.standort.ort.trim().length > 0 ? values.standort.ort : "Offen",
+      land: values.standort.land.trim().length > 0 ? values.standort.land : "DE",
+      datum: values.standort.datum.trim().length > 0 ? values.standort.datum : now.toISOString().slice(0, 10),
+    },
+  };
+}
+
 export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?: WizardMode; shareToken?: string }) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -134,10 +174,16 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
   const [shareGenerationPassword, setShareGenerationPassword] = useState("");
   const [shareExpiresHours, setShareExpiresHours] = useState(24);
   const [shareLink, setShareLink] = useState<ShareApiResponse | null>(null);
+  const [lastShareLinkMeta, setLastShareLinkMeta] = useState<LastShareLinkMeta | null>(null);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
   const [isCopyingShareLink, setIsCopyingShareLink] = useState(false);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+  const [revokeOlderLinks, setRevokeOlderLinks] = useState(false);
   const [isSubmittingAnalysis, setIsSubmittingAnalysis] = useState(false);
   const [publicSubmitPassword, setPublicSubmitPassword] = useState("");
+  const [publicSubmissionDone, setPublicSubmissionDone] = useState(false);
+  const [analysisFilter, setAnalysisFilter] = useState<AnalyseFilter>("all");
+  const [analysisSearch, setAnalysisSearch] = useState("");
   const [publicLinkValid, setPublicLinkValid] = useState<boolean | null>(mode === "public" ? null : true);
   const [publicRequiresPassword, setPublicRequiresPassword] = useState(false);
   const [publicLinkMessage, setPublicLinkMessage] = useState<string | null>(null);
@@ -169,6 +215,42 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     },
     enabled: mode === "internal",
   });
+  const filteredAnalyses = useMemo(() => {
+    const normalizedQuery = analysisSearch.trim().toLowerCase();
+    return (analysesQuery.data ?? []).filter((analysis) => {
+      const matchesFilter =
+        analysisFilter === "all" ||
+        (analysisFilter === "draft" && analysis.status === "draft") ||
+        (analysisFilter === "submitted" && analysis.status !== "draft");
+      if (!matchesFilter) {
+        return false;
+      }
+      if (normalizedQuery === "") {
+        return true;
+      }
+      const haystack = `${analysis.kontakt_name} ${analysis.standort_ort}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [analysesQuery.data, analysisFilter, analysisSearch]);
+
+  const lastShareMetaQuery = useQuery({
+    queryKey: ["standortanalyse-last-share-meta", analysisId],
+    queryFn: async () => {
+      if (mode !== "internal" || analysisId == null) {
+        return null as LastShareLinkMeta | null;
+      }
+      const response = await fetch(`/api/standortanalyse/share?analysisId=${analysisId}`);
+      const payload = (await response.json()) as {
+        lastShareLink?: LastShareLinkMeta | null;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Letzter Share-Link konnte nicht geladen werden");
+      }
+      return payload.lastShareLink ?? null;
+    },
+    enabled: mode === "internal" && analysisId != null,
+  });
 
   const saveDraftMutation = useMutation({
     mutationFn: async () => {
@@ -179,7 +261,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           analysisId: analysisId ?? undefined,
           submit: false,
           createOrUpdateContact: false,
-          formData: form.getValues(),
+          formData: toPersistableDraftForm(form.getValues()),
         }),
       });
       const payload = (await response.json()) as { analysisId?: string; error?: string };
@@ -197,6 +279,39 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
       toast.error(error instanceof Error ? error.message : "Entwurf konnte nicht gespeichert werden");
     },
   });
+
+  useEffect(() => {
+    if (mode !== "internal" || analysisId == null) {
+      setLastShareLinkMeta(null);
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(`standortanalyse:last-share-link:${analysisId}`);
+      if (raw == null) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as LastShareLinkMeta;
+      if (parsed.analysisId === analysisId) {
+        setLastShareLinkMeta(parsed);
+      }
+    } catch {
+      // ignore invalid local cache
+    }
+  }, [analysisId, mode]);
+
+  useEffect(() => {
+    const meta = lastShareMetaQuery.data;
+    if (meta == null) {
+      return;
+    }
+    setLastShareLinkMeta((prev) => {
+      const preservedShareUrl = prev != null && prev.analysisId === meta.analysisId ? prev.shareUrl : undefined;
+      return {
+        ...meta,
+        shareUrl: preservedShareUrl,
+      };
+    });
+  }, [lastShareMetaQuery.data]);
 
   useEffect(() => {
     if (mode !== "public" || shareToken == null) {
@@ -232,7 +347,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
   }, [mode, shareToken]);
 
   useEffect(() => {
-    if (submittedData == null || step !== 4) {
+    if (mode !== "internal" || submittedData == null || step !== 4) {
       return;
     }
 
@@ -274,7 +389,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     });
 
     return () => controller.abort();
-  }, [step, submittedData]);
+  }, [mode, step, submittedData]);
 
   const landOptions = useMemo(() => getStandortLandOptions("de"), []);
   const progressPercent = (step / 4) * 100;
@@ -319,7 +434,11 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           if (typeof payload.analysisId === "string") {
             setAnalysisId(payload.analysisId);
           }
-        } else {
+          setPublicSubmissionDone(true);
+          setStep(4);
+          toast.success("Vielen Dank. Ihre Angaben wurden erfolgreich übermittelt.");
+          return;
+        }
           const response = await fetch("/api/standortanalyse", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -337,7 +456,6 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           if (typeof payload.analysisId === "string") {
             setAnalysisId(payload.analysisId);
           }
-        }
 
         setSubmittedData(data);
         setStep(4);
@@ -367,6 +485,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           password: shareGenerationPassword.trim() === "" ? undefined : shareGenerationPassword.trim(),
           expiresInHours: shareExpiresHours,
           maxUses: 1,
+          revokeOlderLinks,
         }),
       });
 
@@ -376,6 +495,27 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
       }
       setAnalysisId(payload.analysisId);
       setShareLink(payload);
+      setLastShareLinkMeta({
+        analysisId: payload.analysisId,
+        shareUrl: payload.shareUrl,
+        expiresAt: payload.expiresAt,
+        maxUses: payload.maxUses,
+        createdAt: new Date().toISOString(),
+        usedCount: 0,
+        isActive: true,
+      });
+      window.localStorage.setItem(
+        `standortanalyse:last-share-link:${payload.analysisId}`,
+        JSON.stringify({
+          analysisId: payload.analysisId,
+          shareUrl: payload.shareUrl,
+          expiresAt: payload.expiresAt,
+          maxUses: payload.maxUses,
+          createdAt: new Date().toISOString(),
+          usedCount: 0,
+          isActive: true,
+        } satisfies LastShareLinkMeta),
+      );
       void queryClient.invalidateQueries({ queryKey: ["standortanalysen", mode] });
       toast.success("Share-Link erstellt");
     } catch (error) {
@@ -395,6 +535,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     setMapEmbedUrl(null);
     setMapInfo("");
     setMapError(null);
+      setPublicSubmissionDone(false);
     toast.success("Formular zurückgesetzt");
   };
 
@@ -420,6 +561,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
         setSubmittedData(null);
         setStep(1);
       }
+      setPublicSubmissionDone(false);
       toast.success("Analyse geladen");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Analyse konnte nicht geladen werden");
@@ -435,6 +577,8 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     setIsCopyingShareLink(true);
     try {
       await navigator.clipboard.writeText(shareLink.shareUrl);
+      setCopiedShareLink(true);
+      window.setTimeout(() => setCopiedShareLink(false), 2000);
       toast.success("Share-Link in die Zwischenablage kopiert");
     } catch {
       toast.error("Kopieren fehlgeschlagen");
@@ -451,6 +595,44 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           <CardDescription>Bitte einen Moment warten.</CardDescription>
         </CardHeader>
       </Card>
+    );
+  }
+
+  if (mode === "public" && publicSubmissionDone) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Vielen Dank für Ihre Anfrage</CardTitle>
+            <CardDescription>
+              Ihre Standortanalyse-Daten wurden erfolgreich an AquaDock übermittelt. Sie erhalten eine Bestätigungs-E-Mail,
+              und unser Team meldet sich schnellstmöglich mit der fachlichen Auswertung bei Ihnen.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-base">Was passiert als Nächstes?</CardTitle>
+            <CardDescription>Transparenter Ablauf für Ihre Standortbewertung.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li>
+                1. Wir prüfen Ihre Angaben intern und ergänzen die technische Standortbewertung.
+              </li>
+              <li>
+                2. Sie erhalten in der Regel innerhalb von 1-2 Werktagen eine erste Rückmeldung.
+              </li>
+              <li>
+                3. Bei Rückfragen oder fehlenden Angaben kontaktieren wir Sie per E-Mail oder Telefon.
+              </li>
+              <li>
+                4. Die finale Empfehlung und nächsten Schritte besprechen wir persönlich mit Ihnen.
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -499,12 +681,12 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-4">
               <div className="space-y-2">
-                <FormLabel className="flex items-center gap-2">
+                <Label className="flex items-center gap-2">
                   <LockKeyhole className="h-4 w-4" />
                   Passwortschutz
-                </FormLabel>
+                </Label>
                 <Input
                   type="password"
                   value={shareGenerationPassword}
@@ -513,7 +695,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                 />
               </div>
               <div className="space-y-2">
-                <FormLabel>Gültigkeit</FormLabel>
+                <Label>Gültigkeit</Label>
                 <Select
                   value={String(shareExpiresHours)}
                   onValueChange={(value) => setShareExpiresHours(Number.parseInt(value, 10))}
@@ -533,6 +715,13 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   {isGeneratingShare ? "Erstelle Link..." : "Einladungslink erstellen"}
                 </Button>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="revoke-older-links">Neuen Link erzwingen</Label>
+                <div className="flex items-center gap-3 rounded-md border p-3">
+                  <Switch id="revoke-older-links" checked={revokeOlderLinks} onCheckedChange={setRevokeOlderLinks} />
+                  <p className="text-xs text-muted-foreground">Ältere aktive Links dieser Analyse deaktivieren</p>
+                </div>
+              </div>
             </div>
 
             {shareLink ? (
@@ -544,12 +733,33 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                 <p className="mt-2 break-all text-primary">{shareLink.shareUrl}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={handleCopyShareLink} disabled={isCopyingShareLink}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    {isCopyingShareLink ? "Kopiere..." : "Link kopieren"}
+                    {copiedShareLink ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                    {isCopyingShareLink ? "Kopiere..." : copiedShareLink ? "Kopiert" : "Link kopieren"}
                   </Button>
                   <span className="text-xs text-muted-foreground">
                     Gültig bis {new Date(shareLink.expiresAt).toLocaleString("de-DE")}
                   </span>
+                </div>
+              </div>
+            ) : lastShareLinkMeta ? (
+              <div className="rounded-lg border bg-background/90 p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">Zuletzt erstellter Link</p>
+                  <Badge variant="outline">{lastShareLinkMeta.isActive ? "Aktiv" : "Inaktiv"}</Badge>
+                </div>
+                <p className="mt-2 text-muted-foreground">
+                  {lastShareLinkMeta.shareUrl
+                    ? "Lokaler Verlauf verfügbar."
+                    : "Aus Sicherheitsgründen ist die URL nur direkt nach dem Erstellen sichtbar."}
+                </p>
+                {lastShareLinkMeta.shareUrl ? (
+                  <p className="mt-2 break-all text-primary">{lastShareLinkMeta.shareUrl}</p>
+                ) : null}
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span>Gültig bis {new Date(lastShareLinkMeta.expiresAt).toLocaleString("de-DE")}</span>
+                  {lastShareLinkMeta.createdAt ? (
+                    <span>Erstellt: {new Date(lastShareLinkMeta.createdAt).toLocaleString("de-DE")}</span>
+                  ) : null}
                 </div>
               </div>
             ) : (
@@ -584,6 +794,25 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
               </Button>
               {analysisId ? <Badge variant="outline">Aktive Analyse: {analysisId}</Badge> : null}
             </div>
+            <div className="grid gap-2 md:grid-cols-3">
+              <Select value={analysisFilter} onValueChange={(value) => setAnalysisFilter(value as AnalyseFilter)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle</SelectItem>
+                  <SelectItem value="draft">Nur Entwürfe</SelectItem>
+                  <SelectItem value="submitted">Nur abgeschlossen</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="md:col-span-2">
+                <Input
+                  value={analysisSearch}
+                  onChange={(event) => setAnalysisSearch(event.target.value)}
+                  placeholder="Suche nach Kontakt oder Ort"
+                />
+              </div>
+            </div>
 
             <div className="rounded-lg border">
               <Table>
@@ -598,7 +827,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(analysesQuery.data ?? []).slice(0, 8).map((analysis) => (
+                  {filteredAnalyses.slice(0, 12).map((analysis) => (
                     <TableRow key={analysis.id}>
                       <TableCell>
                         <Badge variant={analysis.status === "draft" ? "secondary" : "default"}>
@@ -622,7 +851,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                       </TableCell>
                     </TableRow>
                   ))}
-                  {(analysesQuery.data ?? []).length === 0 ? (
+                  {filteredAnalyses.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground">
                         Noch keine gespeicherten Standortanalysen vorhanden.
@@ -980,34 +1209,43 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                 <CardDescription>Review aller Angaben vor der finalen Auswertung.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
-                    {currentScore.recommendation.label}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">
-                    Zwischenstand: {currentScore.totalPoints} / {currentScore.maxPoints} Punkte
-                  </span>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kriterium</TableHead>
-                      <TableHead>Punkte</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentScore.criterionEvaluations.map((row) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.label}</TableCell>
-                        <TableCell>
-                          {row.points} / {row.maxPoints}
-                        </TableCell>
-                        <TableCell>{row.status}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                {mode === "internal" ? (
+                  <>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
+                        {currentScore.recommendation.label}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        Zwischenstand: {currentScore.totalPoints} / {currentScore.maxPoints} Punkte
+                      </span>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Kriterium</TableHead>
+                          <TableHead>Punkte</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentScore.criterionEvaluations.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell>{row.label}</TableCell>
+                            <TableCell>
+                              {row.points} / {row.maxPoints}
+                            </TableCell>
+                            <TableCell>{row.status}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </>
+                ) : (
+                  <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+                    Bitte prüfen Sie Ihre Eingaben sorgfältig. Die fachliche Auswertung und Ergebnisinterpretation
+                    erfolgt ausschließlich intern durch das AquaDock-Team.
+                  </div>
+                )}
 
                 {mode === "public" && publicRequiresPassword ? (
                   <Card className="bg-muted/40">
@@ -1032,13 +1270,13 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   Zurück
                 </Button>
                 <Button type="submit" disabled={isSubmittingAnalysis}>
-                  {isSubmittingAnalysis ? "Wird eingereicht..." : "Auswertung erstellen"}
+                  {isSubmittingAnalysis ? "Wird eingereicht..." : mode === "public" ? "Daten an AquaDock senden" : "Auswertung erstellen"}
                 </Button>
               </CardFooter>
             </Card>
           ) : null}
 
-          {step === 4 && submittedData != null ? (
+          {step === 4 && submittedData != null && mode === "internal" ? (
             <div className="grid gap-6">
               <Card>
                 <CardHeader>

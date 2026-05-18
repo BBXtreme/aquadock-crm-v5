@@ -211,8 +211,8 @@ export async function POST(
       actingAdminUserId: ownerUserId,
       to: [externalEmail],
       subject: "AquaDock Standortanalyse eingereicht",
-      html: `<p>Vielen Dank für Ihre Einreichung.</p><p>Referenz: <strong>${shareLink.analysis_id}</strong></p>`,
-      text: `Vielen Dank für Ihre Einreichung. Referenz: ${shareLink.analysis_id}`,
+      html: `<p>Vielen Dank für die Übermittlung Ihrer Standortanalyse-Daten.</p><p>Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich mit der fachlichen Auswertung bei Ihnen.</p><p>Referenz: <strong>${shareLink.analysis_id}</strong></p>`,
+      text: `Vielen Dank für die Übermittlung Ihrer Standortanalyse-Daten. Wir haben Ihre Anfrage erhalten und melden uns schnellstmöglich mit der fachlichen Auswertung bei Ihnen. Referenz: ${shareLink.analysis_id}`,
     });
   }
 
@@ -231,10 +231,5 @@ export async function POST(
   return NextResponse.json({
     success: true,
     analysisId: shareLink.analysis_id,
-    score: {
-      totalPoints: score.totalPoints,
-      recommendation: score.recommendation,
-      unknownCount: score.unknownCount,
-    },
   });
 }
