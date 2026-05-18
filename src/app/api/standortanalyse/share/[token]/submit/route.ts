@@ -6,9 +6,9 @@ import {
   toStandortanalyseScoresInsert,
   toStandortanalyseUpdate,
 } from "@/lib/standortanalyse/persistence";
-import { buildStandortanalyseSubmissionConfirmationEmailContent } from "@/lib/standortanalyse/share-invite-email";
 import { calculateStandortScore } from "@/lib/standortanalyse/scoring";
 import { hashShareToken, verifySharePassword } from "@/lib/standortanalyse/share";
+import { buildStandortanalyseSubmissionConfirmationEmailContent } from "@/lib/standortanalyse/share-invite-email";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { standortanalyseFormSchema } from "@/lib/validations/standortanalyse";
 

@@ -1,7 +1,7 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-05-01  
+**Last audited**: 2026-05-18  
 **Environment**: Supabase PostgreSQL 15+  
 
 **Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`) and backup items in section 9 and deployment docs.
@@ -18,6 +18,9 @@
 | timeline        | Activity log              | 2 800 | uuid | → companies.id (nullable) | Yes  | company_id, user_id          |
 | comments        | Threaded notes on companies | —   | uuid | → companies, self (parent), profiles | Yes | entity list, parent thread |
 | comment_attachments | File metadata per company comment (`storage_object_path` → `comment-files` bucket) | — | uuid | → comments, profiles | Yes | comment_id |
+| standortanalysen | Standortanalyse header/form snapshot | — | uuid | → contacts.id, companies.id | Yes | user_id + status + created_at |
+| standortanalyse_scores | Criterion-level score rows per analysis | — | (analysis_id, criterion_key) | → standortanalysen.id | Yes | analysis_id |
+| standortanalyse_share_links | Public share tokens and constraints | — | uuid | → standortanalysen.id | Yes | analysis_id + is_active + expires_at |
 | email_log       | Outgoing email tracking   | 1 900 | uuid | —                         | Yes  | —                            |
 | email_templates | Reusable email templates  | 18    | uuid | —                         | Yes  | name (unique)                |
 | user_settings   | User preferences          | 50    | uuid | user_id                   | Yes  | user_id, key                 |
@@ -129,6 +132,60 @@
 | deleted_at | timestamptz | true     | —                 | Soft-delete (Papierkorb) | Indexed       |
 | deleted_by | uuid        | true     | —                 | User who soft-deleted    | FK → auth.users |
 | created_at | timestamptz | true     | now()             | —                        | —             |
+
+### standortanalysen
+
+Top-level snapshot rows for the Standortanalyse wizard (internal and public submit flows). The app stores a normalized contact + location snapshot, aggregate score, and optional CRM links (`contact_id`, `company_id`) on this row.
+
+| Column         | Type        | Nullable | Default           | Business Meaning                 | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | -------------------------------- | ------------- |
+| id             | uuid        | false    | gen_random_uuid() | Primary key                      | PK            |
+| user_id        | uuid        | false    | —                 | Owner (`auth.uid()`)             | Indexed       |
+| contact_id     | uuid        | true     | —                 | Linked CRM contact               | FK → contacts |
+| company_id     | uuid        | true     | —                 | Linked CRM company               | FK → companies |
+| status         | text        | false    | `'draft'`         | draft / submitted / completed    | CHECK + indexed with user_id |
+| kontakt_*      | text fields | mixed    | —                 | Contact snapshot fields          | Stored denormalized for analysis history |
+| standort_*     | text/date   | mixed    | —                 | Location snapshot fields         | `standort_land` expects ISO-like codes from app |
+| total_points   | integer     | false    | `0`               | Aggregated score points          | CHECK `>= 0` |
+| recommendation | text        | false    | `'Unsicher'`      | Score recommendation label       | —             |
+| submitted_at   | timestamptz | true     | —                 | Submit timestamp                 | —             |
+| created_at     | timestamptz | false    | now()             | Created timestamp                | —             |
+| updated_at     | timestamptz | false    | now()             | Last update timestamp            | Trigger-updated |
+
+### standortanalyse_scores
+
+Per-criterion score breakdown for one `standortanalysen` row.
+
+| Column         | Type        | Nullable | Default           | Business Meaning                 | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | -------------------------------- | ------------- |
+| analysis_id    | uuid        | false    | —                 | Parent analysis id               | FK → standortanalysen, indexed |
+| criterion_key  | text        | false    | —                 | Stable criterion identifier      | Part of PK |
+| criterion_type | text        | false    | —                 | main / optional / info           | CHECK         |
+| points         | integer     | false    | `0`               | Criterion points                 | CHECK `>= 0` |
+| max_points     | integer     | false    | `0`               | Criterion max points             | CHECK `>= 0` |
+| status         | text        | true     | —                 | Gut / Mittel / Kritisch / null   | CHECK         |
+| is_unknown     | boolean     | false    | `false`           | "Unbekannt" flag for criterion   | —             |
+| created_at     | timestamptz | false    | now()             | Created timestamp                | —             |
+
+Primary key: `(analysis_id, criterion_key)`.
+
+### standortanalyse_share_links
+
+Public share-token records used for external submissions (`/standortanalyse/share/[token]`).
+
+| Column         | Type        | Nullable | Default           | Business Meaning                 | Notes / Index |
+| -------------- | ----------- | -------- | ----------------- | -------------------------------- | ------------- |
+| id             | uuid        | false    | gen_random_uuid() | Primary key                      | PK            |
+| analysis_id    | uuid        | false    | —                 | Parent analysis id               | FK → standortanalysen, indexed |
+| token_hash     | text        | false    | —                 | Hashed bearer token              | UNIQUE        |
+| password_hash  | text        | true     | —                 | Optional hashed password         | —             |
+| expires_at     | timestamptz | false    | —                 | Link expiration                  | Indexed with `analysis_id` + `is_active` |
+| max_uses       | integer     | false    | `1`               | Max submit uses                  | CHECK `> 0` |
+| used_count     | integer     | false    | `0`               | Current usage count              | CHECK `>= 0` |
+| is_active      | boolean     | false    | `true`            | Manual/automatic active flag     | Indexed with expiry |
+| created_by     | uuid        | false    | —                 | Creator (`auth.users.id`)        | —             |
+| created_at     | timestamptz | false    | now()             | Created timestamp                | —             |
+| last_accessed_at | timestamptz | true   | —                 | Last read/submit access          | —             |
 
 ### comments
 
@@ -303,6 +360,9 @@ Holds the **public** Storage URL of the user’s avatar, or `null` if none. The 
 - `companies.status` (Zod + UI): `'lead' | 'interessant' | 'qualifiziert' | 'akquise' | 'angebot' | 'gewonnen' | 'verloren' | 'kunde' | 'partner' | 'inaktiv'` — canonical labels in `src/lib/constants/company-options.ts` (`statusOptions`).
 - `reminders.priority`: `'hoch' | 'normal' | 'niedrig'`
 - `reminders.status`: `'open' | 'closed'`
+- `standortanalysen.status`: `'draft' | 'submitted' | 'completed'`
+- `standortanalyse_scores.criterion_type`: `'main' | 'optional' | 'info'`
+- `standortanalyse_scores.status`: `'Gut' | 'Mittel' | 'Kritisch' | null`
 
 ## 4. Row Level Security (RLS) – Summary
 
@@ -419,6 +479,8 @@ You should see **`relrowsecurity = true`** for those tables and **one row** for 
 | `reminders` | Active rows for everyone; owner, assignee (`assigned_to` compared to `auth.uid()::text`), admin | Owner, assignee, or admin as defined in SQL |
 | `timeline` | Same pattern as core entities | Owner or admin |
 | `email_log`, `email_templates` | Authenticated read per mass-email / templates UX | Owner or admin where `user_id` applies (`email_templates` has shared CRUD for authenticated in phase 1) |
+| `standortanalysen` | Owner (`user_id`) + admin via role helper | Owner or admin |
+| `standortanalyse_scores`, `standortanalyse_share_links` | Via parent `standortanalysen` ownership check (`EXISTS (...)`) | Owner or admin via parent ownership |
 | `comments` / `comment_attachments` | Threads on companies **visible like company SELECT** (active companies globally; trashed company rows for owner/admin) | **INSERT:** any authenticated user on an **active** company, `created_by = auth.uid()`. **UPDATE/DELETE:** **company record owner** (`companies.user_id`) or admin (moderation / trash); markdown edits remain author-only in [`src/lib/actions/comments.ts`](../src/lib/actions/comments.ts). **DELETE attachments:** author **or** company record owner **or** admin ([`comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql)). |
 
 The **service role** key bypasses RLS when used from trusted server code; it must never ship to the browser.
@@ -441,6 +503,9 @@ The **service role** key bypasses RLS when used from trusted server code; it mus
 - contacts: `company_id`, `user_id`, `(company_id + is_primary)`
 - reminders: `company_id`, `due_date`, `status`, `user_id`
 - timeline: `company_id`, `user_id`
+- standortanalysen: `(user_id, status, created_at DESC)`
+- standortanalyse_scores: `analysis_id`
+- standortanalyse_share_links: `(analysis_id, is_active, expires_at DESC)` + unique `token_hash`
 - user_settings: `user_id`, `key`
 - user_notifications: `(user_id, created_at DESC)`; partial `(user_id) WHERE read_at IS NULL` for unread lists — see [`user_notifications.sql`](../src/sql/user_notifications.sql)
 - Soft-delete: composite `(user_id, deleted_at, deleted_by)` (replaces former two-column index) and partial “trashed” `(user_id) WHERE deleted_at IS NOT NULL` on `companies`, `contacts`, `reminders`, `timeline` — run `src/sql/soft-delete-trash.sql` then `src/sql/deleted-by-audit.sql`

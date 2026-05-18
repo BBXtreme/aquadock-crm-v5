@@ -50,8 +50,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { getStandortLandOptions } from "@/lib/standortanalyse/countries";
 import { standortKriterien } from "@/lib/standortanalyse/criteria";
-import { isPlaceholderInviteEmail } from "@/lib/standortanalyse/share-invite-email";
 import { calculateStandortScore } from "@/lib/standortanalyse/scoring";
+import { isPlaceholderInviteEmail } from "@/lib/standortanalyse/share-invite-email";
 import { cn } from "@/lib/utils";
 import { type StandortanalyseForm, standortanalyseFormSchema } from "@/lib/validations/standortanalyse";
 

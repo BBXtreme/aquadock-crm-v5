@@ -75,14 +75,20 @@ function makePostRequest(body: unknown): Request {
   });
 }
 
-function listQueryChain(result: { data: unknown; error: unknown }) {
-  const chain = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    then: (resolve: (value: unknown) => void, reject?: (reason: unknown) => void) =>
-      Promise.resolve(result).then(resolve, reject),
-  };
+function listQueryChain(
+  result: { data: unknown; error: unknown },
+  options?: { eq?: ReturnType<typeof vi.fn> },
+) {
+  const base = Promise.resolve(result);
+  const eq = options?.eq ?? vi.fn();
+  const chain = Object.assign(base, {
+    select: vi.fn(),
+    eq,
+    order: vi.fn(),
+  });
+  chain.select.mockReturnValue(chain);
+  chain.eq.mockReturnValue(chain);
+  chain.order.mockReturnValue(chain);
   return chain;
 }
 
@@ -240,14 +246,8 @@ describe("GET /api/standortanalyse", () => {
   });
 
   it("applies status filter when provided", async () => {
-    const eq = vi.fn().mockReturnThis();
-    const chain = {
-      select: vi.fn().mockReturnThis(),
-      eq,
-      order: vi.fn().mockReturnThis(),
-      then: (resolve: (value: unknown) => void) =>
-        Promise.resolve({ data: [], error: null }).then(resolve),
-    };
+    const eq = vi.fn();
+    const chain = listQueryChain({ data: [], error: null }, { eq });
     mockCreateServer.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -426,5 +426,64 @@ describe("POST /api/standortanalyse", () => {
       contactId: CONTACT_ID,
       companyId: COMPANY_ID,
     });
+  });
+
+  it("syncs only company when createOrUpdateCompany is true", async () => {
+    mockCreateServer.mockResolvedValue(
+      createDraftPostClient({ existingCompanyId: null, existingContactId: null }),
+    );
+
+    const res = await POST(
+      makePostRequest({
+        formData: validFormData,
+        submit: false,
+        createOrUpdateCompany: true,
+        createOrUpdateContact: false,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.crm).toEqual({
+      contactId: null,
+      companyId: COMPANY_ID,
+    });
+  });
+
+  it("does not sync CRM on draft save without flags", async () => {
+    mockCreateServer.mockResolvedValue(createDraftPostClient());
+
+    const res = await POST(
+      makePostRequest({
+        formData: validFormData,
+        submit: false,
+        syncCrmEntities: false,
+        createOrUpdateContact: false,
+        createOrUpdateCompany: false,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).crm).toEqual({ contactId: null, companyId: null });
+  });
+
+  it("submits without customer email when kontakt email is empty", async () => {
+    mockCreateServer.mockResolvedValue(createDraftPostClient());
+    const formWithoutCustomerEmail = {
+      ...validFormData,
+      kontakt: { ...validFormData.kontakt, email: "noreply@example.com" },
+    };
+
+    const res = await POST(
+      makePostRequest({
+        formData: formWithoutCustomerEmail,
+        submit: true,
+        createOrUpdateContact: false,
+        createOrUpdateCompany: false,
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockSendEmail).toHaveBeenCalledTimes(2);
   });
 });

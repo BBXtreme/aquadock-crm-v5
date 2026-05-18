@@ -17,6 +17,7 @@ import {
   appShellMarketingNav,
   appShellQuickCreate,
   appShellSalesNav,
+  partnerPortalNav,
 } from "@/lib/constants/app-shell-navigation";
 import { useT } from "@/lib/i18n/use-translations";
 import { cn } from "@/lib/utils";
@@ -169,6 +170,8 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
   const isUser = roles.includes("user");
   const isPartner = isAdmin || isUser || roles.includes("partner");
   const canAccessCrmNav = isAdmin || isUser;
+  const standortanalyseNavItem = partnerPortalNav.find((item) => item.href === "/standortanalyse");
+  const StandortanalyseIcon = standortanalyseNavItem?.icon;
 
   return (
     <div
@@ -246,7 +249,9 @@ export default function Sidebar({ isCollapsed, onToggle, user }: SidebarProps) {
                       )}
                       title={isCollapsed ? t("standortanalyse") : undefined}
                     >
-                      <ExternalLink className={cn("h-4 w-4", !isCollapsed && "mr-3")} />
+                      {StandortanalyseIcon ? (
+                        <StandortanalyseIcon className={cn("h-4 w-4", !isCollapsed && "mr-3")} aria-hidden />
+                      ) : null}
                       {!isCollapsed ? <span className="flex-1 text-left truncate">{t("standortanalyse")}</span> : null}
                     </Button>
                   </Link>

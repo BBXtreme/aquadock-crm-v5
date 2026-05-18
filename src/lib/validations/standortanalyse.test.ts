@@ -103,4 +103,40 @@ describe("standortanalyseFormSchema", () => {
     } as Record<string, unknown>);
     expect(result.success).toBe(false);
   });
+
+  it("coerces numeric criterion values provided as strings", () => {
+    const result = standortanalyseFormSchema.safeParse({
+      ...validPayload,
+      kriterien: {
+        ...validPayload.kriterien,
+        standortfrequentierung: "25",
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.kriterien.standortfrequentierung).toBe(25);
+    }
+  });
+
+  it("rejects invalid numeric criterion values", () => {
+    const result = standortanalyseFormSchema.safeParse({
+      ...validPayload,
+      kriterien: {
+        ...validPayload.kriterien,
+        standortfrequentierung: 99,
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid gewaesserart values", () => {
+    const result = standortanalyseFormSchema.safeParse({
+      ...validPayload,
+      kriterien: {
+        ...validPayload.kriterien,
+        gewaesserart: "Ocean",
+      },
+    });
+    expect(result.success).toBe(false);
+  });
 });

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  buildStandortanalyseSubmissionConfirmationEmailContent,
   buildStandortanalyseInviteEmailContent,
+  buildStandortanalyseSubmissionConfirmationEmailContent,
   isPlaceholderInviteEmail,
 } from "@/lib/standortanalyse/share-invite-email";
 

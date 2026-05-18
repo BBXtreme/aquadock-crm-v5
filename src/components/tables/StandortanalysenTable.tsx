@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTable } from "@/components/ui/data-table";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -185,22 +186,28 @@ function StandortanalyseActionCell({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 rounded-md border bg-muted/40 p-3 text-sm">
-            <label className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <Checkbox
+                id={`sync-contact-${analysis.id}`}
                 checked={createContact}
                 onCheckedChange={(checked) => setCreateContact(checked === true)}
                 disabled={syncingId === analysis.id}
               />
-              <span>Kontakt erstellen/aktualisieren</span>
-            </label>
-            <label className="flex items-center gap-2">
+              <Label htmlFor={`sync-contact-${analysis.id}`} className="cursor-pointer font-normal">
+                Kontakt erstellen/aktualisieren
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
               <Checkbox
+                id={`sync-company-${analysis.id}`}
                 checked={createCompany}
                 onCheckedChange={(checked) => setCreateCompany(checked === true)}
                 disabled={syncingId === analysis.id}
               />
-              <span>Firma erstellen/aktualisieren</span>
-            </label>
+              <Label htmlFor={`sync-company-${analysis.id}`} className="cursor-pointer font-normal">
+                Firma erstellen/aktualisieren
+              </Label>
+            </div>
             <p className="text-xs text-muted-foreground">
               Wenn beide Optionen gewählt sind, werden Kontakt und Firma automatisch miteinander verknüpft.
             </p>
@@ -312,7 +319,7 @@ export default function StandortanalysenTable({
           ? "Keine Einträge."
           : `Zeilen ${from.toLocaleString(localeTag)}–${to.toLocaleString(localeTag)} von ${total.toLocaleString(localeTag)}`,
     }),
-    [localeTag],
+    [],
   );
 
   const columns = useMemo<ColumnDef<StandortanalyseListItem>[]>(
@@ -394,7 +401,7 @@ export default function StandortanalysenTable({
         ),
       }) as ColumnDef<StandortanalyseListItem>,
     ],
-    [deletingId, loadingId, localeTag, onDelete, onEdit, onSyncCrm, onView, syncingId],
+    [deletingId, loadingId, onDelete, onEdit, onSyncCrm, onView, syncingId],
   );
 
   return (

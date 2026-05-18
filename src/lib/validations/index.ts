@@ -9,6 +9,6 @@ export * from "./email-template";
 export * from "./profile";
 export * from "./reminder";
 export * from "./settings";
-export * from "./timeline";
 export * from "./standortanalyse";
+export * from "./timeline";
 export * from "./user-settings.test";

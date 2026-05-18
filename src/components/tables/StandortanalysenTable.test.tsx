@@ -72,4 +72,74 @@ describe("StandortanalysenTable", () => {
     await user.click(screen.getByLabelText("Analyse löschen"));
     expect(screen.getByRole("alertdialog")).toHaveTextContent("Analyse löschen?");
   });
+
+  it("confirms CRM sync with selected options", async () => {
+    const user = userEvent.setup();
+    const onSyncCrm = vi.fn();
+
+    render(
+      <StandortanalysenTable
+        analyses={[sampleAnalysis]}
+        statusFilter="all"
+        onStatusFilterChange={vi.fn()}
+        onView={vi.fn()}
+        onEdit={vi.fn()}
+        onSyncCrm={onSyncCrm}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Im CRM übernehmen"));
+    await user.click(screen.getByRole("checkbox", { name: "Firma erstellen/aktualisieren" }));
+    await user.click(screen.getByRole("button", { name: "Übernehmen" }));
+
+    expect(onSyncCrm).toHaveBeenCalledWith(sampleAnalysis.id, {
+      createContact: true,
+      createCompany: false,
+    });
+  });
+
+  it("disables CRM sync confirm when both options are unchecked", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <StandortanalysenTable
+        analyses={[sampleAnalysis]}
+        statusFilter="all"
+        onStatusFilterChange={vi.fn()}
+        onView={vi.fn()}
+        onEdit={vi.fn()}
+        onSyncCrm={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Im CRM übernehmen"));
+    await user.click(screen.getByRole("checkbox", { name: "Kontakt erstellen/aktualisieren" }));
+    await user.click(screen.getByRole("checkbox", { name: "Firma erstellen/aktualisieren" }));
+
+    expect(screen.getByRole("button", { name: "Übernehmen" })).toBeDisabled();
+  });
+
+  it("calls onEdit after confirming edit dialog", async () => {
+    const user = userEvent.setup();
+    const onEdit = vi.fn();
+
+    render(
+      <StandortanalysenTable
+        analyses={[sampleAnalysis]}
+        statusFilter="all"
+        onStatusFilterChange={vi.fn()}
+        onView={vi.fn()}
+        onEdit={onEdit}
+        onSyncCrm={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByLabelText("Analyse bearbeiten"));
+    await user.click(screen.getByRole("button", { name: "Bearbeiten" }));
+
+    expect(onEdit).toHaveBeenCalledWith(sampleAnalysis.id);
+  });
 });

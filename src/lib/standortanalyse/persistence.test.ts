@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Standortanalyse, StandortanalyseScore } from "@/types/database.types";
 import {
+  createInviteDraftPayload,
   toStandortanalyseFormFromRows,
   toStandortanalyseInsert,
   toStandortanalyseScoresInsert,
@@ -115,5 +116,109 @@ describe("standortanalyse/persistence", () => {
     expect(restored.kriterien.gewaesserart).toBe("Fluss");
     expect(restored.kriterien.standortfrequentierung).toBe(25);
     expect(restored.kontakt.email).toBe("max@example.com");
+  });
+
+  it("builds invite draft payload with placeholder contact email", () => {
+    const draft = createInviteDraftPayload("user-1");
+    expect(draft.analysisInsert.user_id).toBe("user-1");
+    expect(draft.analysisInsert.kontakt_email).toContain("@aquadock.invalid");
+    expect(draft.scoreRowsWithoutAnalysisId.length).toBeGreaterThan(0);
+    expect(draft.scoreRowsWithoutAnalysisId[0]).not.toHaveProperty("analysis_id");
+  });
+
+  it("restores gewaesserart from legacy status label on score row", () => {
+    const score = calculateStandortScore(baseForm.kriterien);
+    const analysisRow: Standortanalyse = {
+      id: "analysis-1",
+      user_id: "user-1",
+      contact_id: null,
+      company_id: null,
+      created_at: "2026-05-18T10:00:00.000Z",
+      updated_at: "2026-05-18T10:00:00.000Z",
+      submitted_at: null,
+      status: "draft",
+      total_points: score.totalPoints,
+      recommendation: score.recommendation.label,
+      kontakt_name: baseForm.kontakt.name,
+      kontakt_vorname: baseForm.kontakt.vorname,
+      kontakt_email: baseForm.kontakt.email,
+      kontakt_strasse: baseForm.kontakt.strasse,
+      kontakt_plz: baseForm.kontakt.plz,
+      kontakt_ort: baseForm.kontakt.ort,
+      kontakt_telefon: baseForm.kontakt.telefon,
+      kontakt_firma: baseForm.kontakt.firma,
+      standort_plz: baseForm.standort.plz,
+      standort_ort: baseForm.standort.ort,
+      standort_strasse: baseForm.standort.strasse,
+      standort_land: baseForm.standort.land,
+      standort_datum: baseForm.standort.datum,
+      erstellt_von: baseForm.standort.erstelltVon,
+      notizen: baseForm.notizen,
+    };
+
+    const restored = toStandortanalyseFormFromRows({
+      analysis: analysisRow,
+      scores: [
+        {
+          analysis_id: "analysis-1",
+          criterion_key: "gewaesserart",
+          criterion_type: "info",
+          points: 0,
+          max_points: 0,
+          status: "Fluss",
+          is_unknown: false,
+        } as StandortanalyseScore,
+      ],
+    });
+
+    expect(restored.kriterien.gewaesserart).toBe("Fluss");
+  });
+
+  it("ignores score rows with unknown criterion keys", () => {
+    const score = calculateStandortScore(baseForm.kriterien);
+    const analysisRow: Standortanalyse = {
+      id: "analysis-1",
+      user_id: "user-1",
+      contact_id: null,
+      company_id: null,
+      created_at: "2026-05-18T10:00:00.000Z",
+      updated_at: "2026-05-18T10:00:00.000Z",
+      submitted_at: null,
+      status: "draft",
+      total_points: score.totalPoints,
+      recommendation: score.recommendation.label,
+      kontakt_name: baseForm.kontakt.name,
+      kontakt_vorname: baseForm.kontakt.vorname,
+      kontakt_email: baseForm.kontakt.email,
+      kontakt_strasse: baseForm.kontakt.strasse,
+      kontakt_plz: baseForm.kontakt.plz,
+      kontakt_ort: baseForm.kontakt.ort,
+      kontakt_telefon: baseForm.kontakt.telefon,
+      kontakt_firma: baseForm.kontakt.firma,
+      standort_plz: baseForm.standort.plz,
+      standort_ort: baseForm.standort.ort,
+      standort_strasse: baseForm.standort.strasse,
+      standort_land: baseForm.standort.land,
+      standort_datum: baseForm.standort.datum,
+      erstellt_von: baseForm.standort.erstelltVon,
+      notizen: baseForm.notizen,
+    };
+
+    const restored = toStandortanalyseFormFromRows({
+      analysis: analysisRow,
+      scores: [
+        {
+          analysis_id: "analysis-1",
+          criterion_key: "unknown_key",
+          criterion_type: "main",
+          points: 99,
+          max_points: 25,
+          status: "Gut",
+          is_unknown: false,
+        } as StandortanalyseScore,
+      ],
+    });
+
+    expect(restored.kriterien.standortfrequentierung).toBe(1);
   });
 });

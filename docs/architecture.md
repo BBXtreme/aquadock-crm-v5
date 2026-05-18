@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** April 30, 2026  
+**Last updated:** May 18, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -114,6 +114,11 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 | `/api/send-test-email` | POST | Send test email (authenticated flows) |
 | `/api/test-smtp` | POST | Test SMTP user settings; `401` if session/auth error |
 | `/api/comment-attachments/upload` | POST | `multipart/form-data` (`companyId`, `commentId`, `file`): server upload to Storage (**service role**, bypasses Storage RLS quirks) + server action `registerCommentAttachment`; **`503`** if `SUPABASE_SERVICE_ROLE_KEY` is missing → UI falls back to browser Storage upload + register. **`SUPABASE_SERVICE_ROLE_KEY`** is also used server-side for preferred **signed download URLs** and **storage deletes** after attachment removal (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9). Open behavior: client **`openSignedStorageUrl`** — `window.open` for PDFs/images; **`fetch` → Blob → programmatic `<a download>`** for extensions like `.md`/Office so OS default apps receive a real file |
+| `/api/standortanalyse` | GET, POST | Standortanalyse list + upsert/submit flow; POST supports CRM sync flags (`createOrUpdateContact`, `createOrUpdateCompany`) |
+| `/api/standortanalyse/[id]` | GET, DELETE | Load one analysis (+ scores mapped to form) or delete owner-scoped row |
+| `/api/standortanalyse/share` | GET, POST | Share-link metadata lookup by `analysisId`; create secure share link (+ optional email invite) |
+| `/api/standortanalyse/share/[token]` | GET | Public token validation (`valid`, `requiresPassword`, usage/expiry metadata) |
+| `/api/standortanalyse/share/[token]/submit` | POST | Public submission endpoint (password check, rate limit, optional CRM sync) |
 
 **Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
 
@@ -122,6 +127,7 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 ## Folder layout (components, types, actions)
 
 For **where to place new files** (thin `app/` routes, `features/` vs legacy folders, types imports, actions naming), see **[`folder-conventions.md`](folder-conventions.md)**.
+For module-specific behavior of the Standortanalyse page (internal/public flow, table actions, CRM import options), see **[`standortanalyse.md`](standortanalyse.md)**.
 
 ---
 
@@ -131,6 +137,8 @@ For **where to place new files** (thin `app/` routes, `features/` vs legacy fold
 - **`partner/login`** — Public **partner sign-in** (no route group). Branded "Paddle. Live. Enjoy." UI (`PartnerLoginLayout` + `PartnerLoginForm` + `PartnerThemeProvider`) that POSTs to the **shared backend** at `src/app/auth/login/route.ts`. The shared handler accepts both `application/json` (used by the partner form) and `multipart/form-data` / `application/x-www-form-urlencoded`, then returns `{ ok, redirectTo }` so the client navigates via `router.replace`.
 - **`(protected)`** — Authenticated internal CRM (sidebar, header, `/dashboard`, `/companies`, `/openmap`, …). Layout calls `requireCrmAccess()` once per segment tree.
 - **`(protected)/partner/*`** — Authenticated partner subpages inside the **same CRM shell** (same sidebar + header as sales/marketing). `src/app/(protected)/partner/layout.tsx` enforces `requireRole(PARTNER_ALLOWED_ROLES)` so **partner or admin** can access `/partner/*`.
+- **`(protected)/standortanalyse`** — Internal Standortanalyse wizard route (`/standortanalyse`) with accordion workflow, share-link management, and saved-analyses table actions.
+- **`standortanalyse/share/[token]`** — Public standalone share route for external submissions (no protected shell). Password support and token validity checks are API-driven.
 
 ### Roles and post-login redirect
 
