@@ -54,6 +54,10 @@ const rawChangelogEntries: ChangelogRelease[] = [
         text: "Beim CRM-Import entscheidest Du flexibel, ob Kontakt, Firma oder beides erstellt/aktualisiert wird. Bei beidem werden die Datensätze automatisch sauber miteinander verknüpft.",
       },
       {
+        type: "feature",
+        text: "Neu für die externe Nutzung: Du kannst Standortanalyse-Links direkt an Kunden senden – optional mit Passwortschutz und klarer Zeitbegrenzung für sichere, kontrollierte Freigaben.",
+      },
+      {
         type: "improvement",
         text: "In Summe wirkt die gesamte Standortanalyse jetzt deutlich hochwertiger, schneller und verlässlicher – passend zum professionellen Anspruch der AquaDock CRM-Plattform.",
       },

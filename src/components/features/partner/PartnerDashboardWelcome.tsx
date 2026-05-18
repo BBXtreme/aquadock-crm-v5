@@ -6,7 +6,9 @@
 "use client";
 
 import { ArrowUpRight, Compass, LifeBuoy, Paintbrush } from "lucide-react";
+import { useState } from "react";
 
+import FeedbackModal from "@/components/features/feedback/FeedbackModal";
 import {
   Card,
   CardContent,
@@ -18,12 +20,16 @@ import { useT } from "@/lib/i18n/use-translations";
 
 interface PartnerDashboardWelcomeProps {
   displayName: string;
+  userId: string;
 }
 
 export function PartnerDashboardWelcome({
   displayName,
+  userId,
 }: PartnerDashboardWelcomeProps) {
   const t = useT("partnerDashboard");
+  const tFeedback = useT("feedback");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const cards = [
     {
       icon: Compass,
@@ -88,13 +94,22 @@ export function PartnerDashboardWelcome({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <a
-            href="https://aquadock.de/kontakt"
+          <button
+            type="button"
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-4 transition-colors hover:underline"
+            onClick={() => {
+              setFeedbackOpen(true);
+            }}
+            aria-label={tFeedback("triggerAriaLabel")}
           >
             {t("comingSoon.contactCta")}
             <ArrowUpRight className="size-4" aria-hidden />
-          </a>
+          </button>
+          <FeedbackModal
+            open={feedbackOpen}
+            onOpenChange={setFeedbackOpen}
+            userId={userId}
+          />
         </CardContent>
       </Card>
     </div>

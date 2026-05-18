@@ -10,12 +10,12 @@ const mockEnforceRateLimit = vi.hoisted(() =>
 const mockSendEmail = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/security/simple-rate-limit", () => ({
-  enforceSimpleRateLimit: (...args: unknown[]) => mockEnforceRateLimit(...args),
+  enforceSimpleRateLimit: mockEnforceRateLimit,
   getRequestIpAddress: vi.fn(() => "127.0.0.1"),
 }));
 
 vi.mock("@/lib/services/smtp-delivery", () => ({
-  sendNotificationHtmlEmail: (...args: unknown[]) => mockSendEmail(...args),
+  sendNotificationHtmlEmail: mockSendEmail,
 }));
 
 vi.mock("@/lib/standortanalyse/persistence", () => ({
