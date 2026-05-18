@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS ai_available_models (
 -- RLS: only app admins can manage the registry
 ALTER TABLE ai_available_models ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "ai_available_models_admin_all" ON ai_available_models;
 CREATE POLICY "ai_available_models_admin_all" ON ai_available_models
   FOR ALL
   USING (is_app_admin())

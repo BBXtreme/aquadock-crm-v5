@@ -4,6 +4,7 @@ import {
   Bell,
   Brain,
   Building2,
+  ClipboardCheck,
   History,
   LifeBuoy,
   ListPlus,
@@ -117,6 +118,7 @@ export type AppShellQuickCreateMessageKey = (typeof appShellQuickCreate)[number]
  */
 export const partnerPortalNav = [
   { messageKey: "dashboard", href: "/partner/dashboard", icon: BarChart3 },
+  { messageKey: "standortanalyse", href: "/standortanalyse", icon: ClipboardCheck },
   { messageKey: "resources", href: "/partner/resources", icon: Sparkles },
   { messageKey: "support", href: "/partner/support", icon: LifeBuoy },
 ] as const;

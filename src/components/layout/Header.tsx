@@ -168,6 +168,7 @@ export default function Header({ user }: HeaderProps) {
   const avatarSrc =
     user.avatar_url && user.avatar_url.length > 0 ? user.avatar_url : PLACEHOLDER_AVATAR_SRC;
   const avatarFallback = headerAvatarInitials(user.display_name, user.email);
+  const hasAdminAccess = user.role === "admin" || (user.roles?.includes("admin") ?? false);
 
   return (
     <header
@@ -307,7 +308,7 @@ export default function Header({ user }: HeaderProps) {
                   {t("userMenuProfile")}
                 </Link>
               </DropdownMenuItem>
-              {user.role === "admin" ? (
+              {hasAdminAccess ? (
                 <DropdownMenuItem asChild>
                   <Link href="/admin/users">
                     <Shield className="mr-2 h-4 w-4" />

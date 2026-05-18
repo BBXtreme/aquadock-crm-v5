@@ -24,6 +24,9 @@ export type TimelineEntry = Database["public"]["Tables"]["timeline"]["Row"];
 export type UserSetting = Database["public"]["Tables"]["user_settings"]["Row"];
 export type UserNotification = Database["public"]["Tables"]["user_notifications"]["Row"];
 export type AiBatchJob = Database["public"]["Tables"]["ai_batch_jobs"]["Row"];
+export type Standortanalyse = Database["public"]["Tables"]["standortanalysen"]["Row"];
+export type StandortanalyseScore = Database["public"]["Tables"]["standortanalyse_scores"]["Row"];
+export type StandortanalyseShareLink = Database["public"]["Tables"]["standortanalyse_share_links"]["Row"];
 
 export type AiAvailableModel = Database["public"]["Tables"]["ai_available_models"]["Row"];
 export type AiAvailableModelInsert = Database["public"]["Tables"]["ai_available_models"]["Insert"];
@@ -68,6 +71,12 @@ export type UserNotificationUpdate = Database["public"]["Tables"]["user_notifica
 
 export type AiBatchJobInsert = Database["public"]["Tables"]["ai_batch_jobs"]["Insert"];
 export type AiBatchJobUpdate = Database["public"]["Tables"]["ai_batch_jobs"]["Update"];
+export type StandortanalyseInsert = Database["public"]["Tables"]["standortanalysen"]["Insert"];
+export type StandortanalyseUpdate = Database["public"]["Tables"]["standortanalysen"]["Update"];
+export type StandortanalyseScoreInsert = Database["public"]["Tables"]["standortanalyse_scores"]["Insert"];
+export type StandortanalyseScoreUpdate = Database["public"]["Tables"]["standortanalyse_scores"]["Update"];
+export type StandortanalyseShareLinkInsert = Database["public"]["Tables"]["standortanalyse_share_links"]["Insert"];
+export type StandortanalyseShareLinkUpdate = Database["public"]["Tables"]["standortanalyse_share_links"]["Update"];
 
 // =============================================================================
 // App-specific Extended / Joined Types
