@@ -14,8 +14,9 @@ const upsertStandortanalyseSchema = z
   .object({
     analysisId: z.string().uuid("Ungültige Analyse-ID").optional(),
     submit: z.boolean().default(false),
-    createOrUpdateContact: z.boolean().default(false),
-    syncCrmEntities: z.boolean().default(false),
+    createOrUpdateContact: z.boolean().optional(),
+    createOrUpdateCompany: z.boolean().optional(),
+    syncCrmEntities: z.boolean().optional(),
     formData: standortanalyseFormSchema,
   })
   .strict();
@@ -154,24 +155,38 @@ async function syncCrmEntitiesForAnalysis(args: {
   userId: string;
   analysisId: string;
   formData: z.infer<typeof standortanalyseFormSchema>;
+  createOrUpdateContact: boolean;
+  createOrUpdateCompany: boolean;
 }) {
-  const companyId = await maybeCreateOrUpdateCompany({
-    userId: args.userId,
-    formData: args.formData,
-  });
-  const contactId = await maybeCreateOrUpdateContact({
-    userId: args.userId,
-    formData: args.formData,
-    companyId,
-  });
-
   const supabase = await createServerSupabaseClient();
+  let companyId: string | null = null;
+  if (args.createOrUpdateCompany) {
+    companyId = await maybeCreateOrUpdateCompany({
+      userId: args.userId,
+      formData: args.formData,
+    });
+  }
+
+  let contactId: string | null = null;
+  if (args.createOrUpdateContact) {
+    contactId = await maybeCreateOrUpdateContact({
+      userId: args.userId,
+      formData: args.formData,
+      companyId: args.createOrUpdateCompany ? companyId : null,
+    });
+  }
+
+  const analysisUpdate: { contact_id?: string | null; company_id?: string | null } = {};
+  if (args.createOrUpdateContact) {
+    analysisUpdate.contact_id = contactId;
+  }
+  if (args.createOrUpdateCompany) {
+    analysisUpdate.company_id = companyId;
+  }
+
   const { error: linkError } = await supabase
     .from("standortanalysen")
-    .update({
-      contact_id: contactId,
-      company_id: companyId,
-    })
+    .update(analysisUpdate)
     .eq("id", args.analysisId)
     .eq("user_id", args.userId);
 
@@ -293,12 +308,18 @@ export async function POST(request: Request) {
     }
   }
 
-  const shouldSyncCrm = parsed.data.syncCrmEntities || (parsed.data.submit && parsed.data.createOrUpdateContact);
+  const createOrUpdateContact =
+    parsed.data.createOrUpdateContact ?? parsed.data.syncCrmEntities ?? parsed.data.submit;
+  const createOrUpdateCompany =
+    parsed.data.createOrUpdateCompany ?? parsed.data.syncCrmEntities ?? parsed.data.submit;
+  const shouldSyncCrm = createOrUpdateContact || createOrUpdateCompany;
   if (shouldSyncCrm) {
     const crmResult = await syncCrmEntitiesForAnalysis({
       userId: user.id,
       analysisId,
       formData: parsed.data.formData,
+      createOrUpdateContact,
+      createOrUpdateCompany,
     });
     linkedContactId = crmResult.contactId;
     linkedCompanyId = crmResult.companyId;

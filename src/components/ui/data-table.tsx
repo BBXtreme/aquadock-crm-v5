@@ -83,6 +83,8 @@ interface DataTableProps<TData> {
   columnMenuLabel?: (columnId: string) => string;
   /** Toolbar & footer copy; defaults to English. */
   labels?: Partial<DataTableLabels>;
+  initialSorting?: SortingState;
+  initialColumnVisibility?: VisibilityState;
 }
 
 export function DataTable<TData>({
@@ -99,6 +101,8 @@ export function DataTable<TData>({
   skeletonRows,
   columnMenuLabel,
   labels: labelsProp,
+  initialSorting = [],
+  initialColumnVisibility = {},
 }: DataTableProps<TData>) {
   const labels = useMemo(() => ({ ...defaultLabels, ...labelsProp }), [labelsProp]);
 
@@ -108,9 +112,9 @@ export function DataTable<TData>({
     pageIndex: 0,
     pageSize,
   });
-  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const [internalSorting, setInternalSorting] = useState<SortingState>(initialSorting);
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
-  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({});
+  const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>(initialColumnVisibility);
 
   useEffect(() => {
     setInternalGlobalFilter(globalFilter);

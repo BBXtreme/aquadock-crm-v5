@@ -14,7 +14,7 @@ import {
   LockKeyhole,
   Mail,
   MapPinned,
-  Sparkles,
+  Signpost,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Control } from "react-hook-form";
@@ -32,6 +32,10 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 
+import StandortanalysenTable, {
+  type StandortanalyseListFilter,
+  type StandortanalyseListItem,
+} from "@/components/tables/StandortanalysenTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,20 +102,6 @@ type LastShareLinkMeta = {
   isActive?: boolean;
   passwordProtected?: boolean;
 };
-
-type AnalyseListItem = {
-  id: string;
-  status: "draft" | "submitted" | "completed";
-  created_at: string;
-  updated_at: string;
-  total_points: number;
-  recommendation: string;
-  standort_ort: string;
-  kontakt_name: string;
-  submitted_at: string | null;
-};
-
-type AnalyseFilter = "all" | "draft" | "submitted";
 
 type SectionId = "context" | "form" | "share" | "workspace";
 
@@ -341,8 +331,7 @@ export function StandortanalyseWizard({
   const [isSubmittingAnalysis, setIsSubmittingAnalysis] = useState(false);
   const [publicSubmitPassword, setPublicSubmitPassword] = useState("");
   const [publicSubmissionDone, setPublicSubmissionDone] = useState(false);
-  const [analysisFilter, setAnalysisFilter] = useState<AnalyseFilter>("all");
-  const [analysisSearch, setAnalysisSearch] = useState("");
+  const [analysisFilter, setAnalysisFilter] = useState<StandortanalyseListFilter>("all");
   const [publicLinkValid, setPublicLinkValid] = useState<boolean | null>(mode === "public" ? null : true);
   const [publicRequiresPassword, setPublicRequiresPassword] = useState(false);
   const [publicLinkMessage, setPublicLinkMessage] = useState<string | null>(null);
@@ -367,6 +356,18 @@ export function StandortanalyseWizard({
     defaultValues: DEFAULT_FORM_VALUES,
     mode: "onTouched",
   });
+
+  const clearActiveForm = useCallback(() => {
+    form.reset(DEFAULT_FORM_VALUES);
+    setStep(1);
+    setSubmittedData(null);
+    setAnalysisId(null);
+    setShareLink(null);
+    setMapEmbedUrl(null);
+    setMapInfo("");
+    setMapError(null);
+    setPublicSubmissionDone(false);
+  }, [form]);
 
   const currentValues = form.watch();
   const kontaktEmail = form.watch("kontakt.email");
@@ -396,10 +397,10 @@ export function StandortanalyseWizard({
     queryKey: ["standortanalysen", mode],
     queryFn: async () => {
       if (mode !== "internal") {
-        return [] as AnalyseListItem[];
+        return [] as StandortanalyseListItem[];
       }
       const response = await fetch("/api/standortanalyse");
-      const payload = (await response.json()) as { analyses?: AnalyseListItem[]; error?: string };
+      const payload = (await response.json()) as { analyses?: StandortanalyseListItem[]; error?: string };
       if (!response.ok) {
         throw new Error(payload.error ?? "Analysen konnten nicht geladen werden");
       }
@@ -408,22 +409,16 @@ export function StandortanalyseWizard({
     enabled: mode === "internal",
   });
   const filteredAnalyses = useMemo(() => {
-    const normalizedQuery = analysisSearch.trim().toLowerCase();
     return (analysesQuery.data ?? []).filter((analysis) => {
-      const matchesFilter =
-        analysisFilter === "all" ||
-        (analysisFilter === "draft" && analysis.status === "draft") ||
-        (analysisFilter === "submitted" && analysis.status !== "draft");
-      if (!matchesFilter) {
-        return false;
-      }
-      if (normalizedQuery === "") {
+      if (analysisFilter === "all") {
         return true;
       }
-      const haystack = `${analysis.kontakt_name} ${analysis.standort_ort}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
+      if (analysisFilter === "draft") {
+        return analysis.status === "draft";
+      }
+      return analysis.status !== "draft";
     });
-  }, [analysesQuery.data, analysisFilter, analysisSearch]);
+  }, [analysesQuery.data, analysisFilter]);
 
   const draftCount = useMemo(
     () => (analysesQuery.data ?? []).filter((analysis) => analysis.status === "draft").length,
@@ -478,16 +473,29 @@ export function StandortanalyseWizard({
   });
 
   const syncCrmMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (args: {
+      analysisId: string;
+      createContact: boolean;
+      createCompany: boolean;
+    }) => {
+      const loadResponse = await fetch(`/api/standortanalyse/${args.analysisId}`);
+      const loaded = (await loadResponse.json()) as {
+        error?: string;
+        formData?: StandortanalyseForm;
+      };
+      if (!loadResponse.ok || loaded.formData == null) {
+        throw new Error(loaded.error ?? "Analyse konnte nicht geladen werden");
+      }
+
       const response = await fetch("/api/standortanalyse", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          analysisId: analysisId ?? undefined,
+          analysisId: args.analysisId,
           submit: false,
-          createOrUpdateContact: true,
-          syncCrmEntities: true,
-          formData: toPersistableDraftForm(form.getValues()),
+          createOrUpdateContact: args.createContact,
+          createOrUpdateCompany: args.createCompany,
+          formData: loaded.formData,
         }),
       });
       const payload = (await response.json()) as {
@@ -501,7 +509,6 @@ export function StandortanalyseWizard({
       return payload;
     },
     onSuccess: (payload) => {
-      setAnalysisId(payload.analysisId ?? null);
       void queryClient.invalidateQueries({ queryKey: ["standortanalysen", mode] });
       const hasContact = payload.crm?.contactId != null;
       const hasCompany = payload.crm?.companyId != null;
@@ -521,6 +528,31 @@ export function StandortanalyseWizard({
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : "CRM-Synchronisierung fehlgeschlagen");
+    },
+  });
+
+  const deleteAnalysisMutation = useMutation({
+    mutationFn: async (targetAnalysisId: string) => {
+      const response = await fetch(`/api/standortanalyse/${targetAnalysisId}`, { method: "DELETE" });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Analyse konnte nicht gelöscht werden");
+      }
+      return targetAnalysisId;
+    },
+    onSuccess: (deletedAnalysisId) => {
+      setAnalysisId((activeId) => {
+        if (activeId === deletedAnalysisId) {
+          clearActiveForm();
+          return null;
+        }
+        return activeId;
+      });
+      void queryClient.invalidateQueries({ queryKey: ["standortanalysen", mode] });
+      toast.success("Analyse gelöscht");
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Analyse konnte nicht gelöscht werden");
     },
   });
 
@@ -806,50 +838,52 @@ export function StandortanalyseWizard({
   };
 
   const handleResetForm = () => {
-    form.reset(DEFAULT_FORM_VALUES);
-    setStep(1);
-    setSubmittedData(null);
-    setAnalysisId(null);
-    setShareLink(null);
-    setMapEmbedUrl(null);
-    setMapInfo("");
-    setMapError(null);
-    setPublicSubmissionDone(false);
+    clearActiveForm();
     toast.success("Formular zurückgesetzt");
   };
 
-  const handleLoadAnalysis = useCallback(async (id: string) => {
-    setLoadingAnalysisId(id);
-    try {
-      const response = await fetch(`/api/standortanalyse/${id}`);
-      const payload = (await response.json()) as {
-        error?: string;
-        formData?: StandortanalyseForm;
-        analysis?: { status?: string };
-      };
-      if (!response.ok || payload.formData == null) {
-        throw new Error(payload.error ?? "Analyse konnte nicht geladen werden");
+  const handleLoadAnalysis = useCallback(
+    async (id: string, intent: "view" | "edit") => {
+      setLoadingAnalysisId(id);
+      try {
+        const response = await fetch(`/api/standortanalyse/${id}`);
+        const payload = (await response.json()) as {
+          error?: string;
+          formData?: StandortanalyseForm;
+          analysis?: { status?: string };
+        };
+        if (!response.ok || payload.formData == null) {
+          throw new Error(payload.error ?? "Analyse konnte nicht geladen werden");
+        }
+        form.reset(payload.formData);
+        setAnalysisId(id);
+        setShareLink(null);
+        const isSubmitted =
+          payload.analysis?.status === "submitted" || payload.analysis?.status === "completed";
+
+        if (intent === "edit") {
+          setSubmittedData(null);
+          setStep(1);
+        } else if (isSubmitted) {
+          setSubmittedData(payload.formData);
+          setStep(4);
+        } else {
+          setSubmittedData(null);
+          setStep(3);
+        }
+
+        setPublicSubmissionDone(false);
+        toggleSection("form", true);
+        toggleSection("workspace", false);
+        toast.success(intent === "edit" ? "Analyse zum Bearbeiten geladen" : "Analyse angezeigt");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Analyse konnte nicht geladen werden");
+      } finally {
+        setLoadingAnalysisId(null);
       }
-      form.reset(payload.formData);
-      setAnalysisId(id);
-      setShareLink(null);
-      if (payload.analysis?.status === "submitted" || payload.analysis?.status === "completed") {
-        setSubmittedData(payload.formData);
-        setStep(4);
-      } else {
-        setSubmittedData(null);
-        setStep(1);
-      }
-      setPublicSubmissionDone(false);
-      toggleSection("form", true);
-      toggleSection("workspace", false);
-      toast.success("Analyse geladen");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Analyse konnte nicht geladen werden");
-    } finally {
-      setLoadingAnalysisId(null);
-    }
-  }, [form, toggleSection]);
+    },
+    [form, toggleSection],
+  );
 
   useEffect(() => {
     if (mode !== "internal" || initialAnalysisId == null || analysisId != null || loadingAnalysisId != null) {
@@ -859,7 +893,7 @@ export function StandortanalyseWizard({
       return;
     }
     initialAutoLoadDone.current = true;
-    void handleLoadAnalysis(initialAnalysisId);
+    void handleLoadAnalysis(initialAnalysisId, "view");
   }, [analysisId, handleLoadAnalysis, initialAnalysisId, loadingAnalysisId, mode]);
 
   const handleCopyShareLink = async () => {
@@ -955,7 +989,7 @@ export function StandortanalyseWizard({
       id="context"
       open={openSections.context}
       onOpenChange={(next) => toggleSection("context", next)}
-      icon={<Sparkles className="h-4 w-4" />}
+      icon={<Signpost className="h-4 w-4" />}
       title="Kontext & Ziel der Analyse"
       description="Standortqualität, Umfeld und Grundlagenbewertung im strukturierten Vorgehen."
       badge={<Badge variant="outline">Leitfragen</Badge>}
@@ -1160,103 +1194,29 @@ export function StandortanalyseWizard({
         open={openSections.workspace}
         onOpenChange={(next) => toggleSection("workspace", next)}
         icon={<ClipboardList className="h-4 w-4" />}
-        title="Arbeitsstand & gespeicherte Analysen"
-        description="Entwürfe speichern, weiterbearbeiten oder abgeschlossene Analysen erneut öffnen."
+        title="Gespeicherte Analysen"
+        description="Gespeicherte Entwürfe und abgeschlossene Analysen öffnen — getrennt vom aktuellen Formular."
         badge={draftCount > 0 ? <Badge variant="secondary">{draftCount} Entwürfe</Badge> : null}
-        meta={analysisId ? `Aktive Analyse: ${analysisId}` : undefined}
       >
-        <div className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => saveDraftMutation.mutate()}
-              disabled={saveDraftMutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {saveDraftMutation.isPending ? "Speichere..." : "Entwurf speichern"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => syncCrmMutation.mutate()}
-              disabled={syncCrmMutation.isPending}
-              className="w-full sm:w-auto"
-            >
-              {syncCrmMutation.isPending ? "Synchronisiere..." : "Im CRM übernehmen"}
-            </Button>
-            <Button type="button" variant="outline" onClick={handleResetForm} className="w-full sm:w-auto">
-              Neu starten
-            </Button>
-          </div>
-          <div className="grid gap-2 md:grid-cols-3">
-            <Select value={analysisFilter} onValueChange={(value) => setAnalysisFilter(value as AnalyseFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle</SelectItem>
-                <SelectItem value="draft">Nur Entwürfe</SelectItem>
-                <SelectItem value="submitted">Nur abgeschlossen</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="md:col-span-2">
-              <Input
-                value={analysisSearch}
-                onChange={(event) => setAnalysisSearch(event.target.value)}
-                placeholder="Suche nach Kontakt oder Ort"
-              />
-            </div>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Kontakt</TableHead>
-                  <TableHead>Ort</TableHead>
-                  <TableHead>Punkte</TableHead>
-                  <TableHead>Aktualisiert</TableHead>
-                  <TableHead className="text-right">Aktion</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAnalyses.slice(0, 12).map((analysis) => (
-                  <TableRow key={analysis.id}>
-                    <TableCell>
-                      <Badge variant={analysis.status === "draft" ? "secondary" : "default"}>
-                        {analysis.status === "draft" ? "Entwurf" : "Abgeschlossen"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{analysis.kontakt_name}</TableCell>
-                    <TableCell>{analysis.standort_ort}</TableCell>
-                    <TableCell>{analysis.total_points}</TableCell>
-                    <TableCell>{new Date(analysis.updated_at).toLocaleString("de-DE")}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleLoadAnalysis(analysis.id)}
-                        disabled={loadingAnalysisId === analysis.id}
-                      >
-                        {loadingAnalysisId === analysis.id ? "Lade..." : "Öffnen"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredAnalyses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Noch keine gespeicherten Standortanalysen vorhanden.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+        <StandortanalysenTable
+          analyses={filteredAnalyses}
+          loading={analysesQuery.isLoading}
+          statusFilter={analysisFilter}
+          onStatusFilterChange={setAnalysisFilter}
+          onView={(id) => void handleLoadAnalysis(id, "view")}
+          onEdit={(id) => void handleLoadAnalysis(id, "edit")}
+          onSyncCrm={(id, options) =>
+            syncCrmMutation.mutate({
+              analysisId: id,
+              createContact: options.createContact,
+              createCompany: options.createCompany,
+            })
+          }
+          onDelete={(id) => deleteAnalysisMutation.mutate(id)}
+          loadingId={loadingAnalysisId}
+          syncingId={syncCrmMutation.isPending ? (syncCrmMutation.variables?.analysisId ?? null) : null}
+          deletingId={deleteAnalysisMutation.isPending ? (deleteAnalysisMutation.variables ?? null) : null}
+        />
       </SectionCard>
     ) : null;
 
@@ -1268,10 +1228,27 @@ export function StandortanalyseWizard({
       icon={<FileText className="h-4 w-4" />}
       title="Analyse ausfüllen"
       description="Schrittweise: Stammdaten erfassen, Kriterien bewerten, Zusammenfassung prüfen."
+      meta={mode === "internal" && analysisId ? `Aktive Analyse: ${analysisId}` : undefined}
     >
       <Form {...form}>
         <form onSubmit={handleSubmit} className="space-y-6 pb-24 sm:pb-0">
           <WizardStepper step={step} mode={mode} />
+          {mode === "internal" ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => saveDraftMutation.mutate()}
+                disabled={saveDraftMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {saveDraftMutation.isPending ? "Speichere..." : "Entwurf speichern"}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleResetForm} className="w-full sm:w-auto">
+                Neu starten
+              </Button>
+            </div>
+          ) : null}
           {step === 1 ? (
             <Card>
               <CardHeader>
