@@ -4,6 +4,9 @@ function emptyStringToNull(value: string | null | undefined): string | null | un
   return value === "" ? null : value;
 }
 
+const postalCodeRegex = /^[A-Za-z0-9][A-Za-z0-9\s-]{1,11}$/;
+const phoneRegex = /^\+?[0-9()[\]\s./-]{6,50}$/;
+
 function parseNumericEnum(values: readonly number[], message: string) {
   return z.preprocess(
     (value) => {
@@ -15,6 +18,14 @@ function parseNumericEnum(values: readonly number[], message: string) {
     },
     z.number().refine((value) => values.includes(value), message),
   );
+}
+
+function isValidDateInput(value: string): boolean {
+  const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(timestamp)) {
+    return false;
+  }
+  return new Date(timestamp).toISOString().slice(0, 10) === value;
 }
 
 const contactSchema = z
@@ -32,20 +43,52 @@ const contactSchema = z
       .email("Ungültige E-Mail-Adresse")
       .max(320, "E-Mail darf maximal 320 Zeichen lang sein"),
     strasse: z.string().trim().max(200, "Straße darf maximal 200 Zeichen lang sein").nullable().optional(),
-    plz: z.string().trim().max(12, "PLZ darf maximal 12 Zeichen lang sein").nullable().optional(),
+    plz: z
+      .string()
+      .trim()
+      .max(12, "PLZ darf maximal 12 Zeichen lang sein")
+      .nullable()
+      .optional()
+      .refine(
+        (value) => value == null || value.length === 0 || postalCodeRegex.test(value),
+        "PLZ darf nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten",
+      ),
     ort: z.string().trim().max(120, "Ort darf maximal 120 Zeichen lang sein").nullable().optional(),
-    telefon: z.string().trim().max(50, "Telefon darf maximal 50 Zeichen lang sein").nullable().optional(),
+    telefon: z
+      .string()
+      .trim()
+      .max(50, "Telefon darf maximal 50 Zeichen lang sein")
+      .nullable()
+      .optional()
+      .refine(
+        (value) => value == null || value.length === 0 || (phoneRegex.test(value) && /\d/.test(value)),
+        "Telefonnummer hat ein ungültiges Format",
+      ),
     firma: z.string().trim().max(180, "Firma darf maximal 180 Zeichen lang sein").nullable().optional(),
   })
   .strict();
 
 const standortSchema = z
   .object({
-    plz: z.string().trim().min(1, "PLZ ist erforderlich").max(12, "PLZ darf maximal 12 Zeichen lang sein"),
+    plz: z
+      .string()
+      .trim()
+      .min(1, "PLZ ist erforderlich")
+      .max(12, "PLZ darf maximal 12 Zeichen lang sein")
+      .regex(postalCodeRegex, "PLZ darf nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten"),
     ort: z.string().trim().min(1, "Ort ist erforderlich").max(120, "Ort darf maximal 120 Zeichen lang sein"),
     strasse: z.string().trim().max(200, "Straße darf maximal 200 Zeichen lang sein").nullable().optional(),
-    land: z.string().trim().length(2, "Land muss als ISO-Code gespeichert werden"),
-    datum: z.string().trim().min(1, "Datum ist erforderlich"),
+    land: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{2}$/, "Land muss als ISO-2-Code gespeichert werden"),
+    datum: z
+      .string()
+      .trim()
+      .min(1, "Datum ist erforderlich")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Ungültiges Datumsformat (technisch: JJJJ-MM-TT)")
+      .refine((value) => isValidDateInput(value), "Ungültiges Datum"),
     erstelltVon: z.string().trim().max(120, "Erstellt von darf maximal 120 Zeichen lang sein").nullable().optional(),
   })
   .strict();

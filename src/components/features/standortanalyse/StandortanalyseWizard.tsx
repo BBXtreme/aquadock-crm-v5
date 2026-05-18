@@ -1101,7 +1101,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nachname eingeben" {...field} />
+                            <Input autoComplete="family-name" placeholder="Nachname eingeben" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1114,7 +1114,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Vorname</FormLabel>
                           <FormControl>
-                            <Input placeholder="Vorname eingeben" {...field} />
+                            <Input autoComplete="given-name" placeholder="Vorname eingeben" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1129,7 +1129,13 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>E-Mail</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="E-Mail-Adresse" {...field} />
+                            <Input
+                              type="email"
+                              inputMode="email"
+                              autoComplete="email"
+                              placeholder="E-Mail-Adresse"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1142,7 +1148,15 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Telefon</FormLabel>
                           <FormControl>
-                            <Input placeholder="Telefonnummer" {...field} value={field.value ?? ""} />
+                            <Input
+                              type="tel"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              maxLength={50}
+                              placeholder="+49 171 1234567"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1157,7 +1171,12 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Straße und Hausnummer</FormLabel>
                           <FormControl>
-                            <Input placeholder="Straße und Hausnummer" {...field} value={field.value ?? ""} />
+                            <Input
+                              autoComplete="street-address"
+                              placeholder="Straße und Hausnummer"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1170,7 +1189,47 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Firma</FormLabel>
                           <FormControl>
-                            <Input placeholder="Firmenname" {...field} value={field.value ?? ""} />
+                            <Input autoComplete="organization" placeholder="Firmenname" {...field} value={field.value ?? ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control as Control<StandortanalyseForm>}
+                      name="kontakt.plz"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>PLZ (Kontakt, optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              inputMode="text"
+                              autoComplete="postal-code"
+                              maxLength={12}
+                              placeholder="z. B. 10115"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control as Control<StandortanalyseForm>}
+                      name="kontakt.ort"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ort (Kontakt, optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              autoComplete="address-level2"
+                              placeholder="z. B. Berlin"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1189,7 +1248,13 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>PLZ</FormLabel>
                           <FormControl>
-                            <Input placeholder="PLZ" {...field} />
+                            <Input
+                              inputMode="text"
+                              autoComplete="postal-code"
+                              maxLength={12}
+                              placeholder="z. B. 10115"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1202,7 +1267,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Ort</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ort" {...field} />
+                            <Input autoComplete="address-level2" placeholder="Ort" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1217,7 +1282,12 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                         <FormItem>
                           <FormLabel>Straße</FormLabel>
                           <FormControl>
-                            <Input placeholder="Straße und Hausnummer" {...field} value={field.value ?? ""} />
+                            <Input
+                              autoComplete="street-address"
+                              placeholder="Straße und Hausnummer"
+                              {...field}
+                              value={field.value ?? ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -1229,7 +1299,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Land</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Land auswählen" />
