@@ -2,7 +2,19 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Check, CircleHelp, Copy, Link2, LockKeyhole, MapPinned } from "lucide-react";
+import {
+  BarChart3,
+  Check,
+  ChevronDown,
+  CircleHelp,
+  ClipboardList,
+  Copy,
+  FileText,
+  Link2,
+  LockKeyhole,
+  MapPinned,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { Control } from "react-hook-form";
 import { useForm } from "react-hook-form";
@@ -26,7 +38,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -98,6 +109,8 @@ type AnalyseListItem = {
 
 type AnalyseFilter = "all" | "draft" | "submitted";
 
+type SectionId = "context" | "form" | "share" | "workspace";
+
 const DEFAULT_FORM_VALUES: StandortanalyseForm = {
   kontakt: {
     name: "",
@@ -165,6 +178,137 @@ function toPersistableDraftForm(values: StandortanalyseForm): StandortanalyseFor
   };
 }
 
+type SectionCardProps = {
+  id: SectionId;
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+  icon: React.ReactNode;
+  title: string;
+  description?: string;
+  badge?: React.ReactNode;
+  meta?: React.ReactNode;
+  children: React.ReactNode;
+  accent?: boolean;
+};
+
+function SectionCard({ id, open, onOpenChange, icon, title, description, badge, meta, children, accent }: SectionCardProps) {
+  const sectionLabel = `${id}-section`;
+  return (
+    <Card className={cn(accent === true ? "border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background" : undefined)}>
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        aria-expanded={open}
+        aria-controls={sectionLabel}
+        className="flex w-full items-start gap-3 px-4 py-5 text-left sm:px-6"
+      >
+        <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-background text-primary">
+          {icon}
+        </span>
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-base font-semibold tracking-tight">{title}</span>
+            {badge}
+          </div>
+          {description ? (
+            <span className="text-sm text-muted-foreground">{description}</span>
+          ) : null}
+          {meta ? <div className="break-words pt-1 text-xs text-muted-foreground">{meta}</div> : null}
+        </div>
+        <ChevronDown
+          className={cn(
+            "mt-2 h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            open ? "rotate-180" : "rotate-0",
+          )}
+        />
+      </button>
+      {open ? (
+        <div id={sectionLabel} className="border-t bg-background/60 px-4 py-6 sm:px-6">
+          {children}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+type WizardStep = { id: 1 | 2 | 3 | 4; label: string };
+
+function WizardStepper({ step, mode }: { step: number; mode: WizardMode }) {
+  const steps: WizardStep[] = [
+    { id: 1, label: "Stammdaten" },
+    { id: 2, label: "Kriterien" },
+    { id: 3, label: "Zusammenfassung" },
+    { id: 4, label: mode === "public" ? "Bestätigung" : "Auswertung" },
+  ];
+
+  const current = steps.find((s) => s.id === step) ?? steps[0];
+  const currentLabel = current?.label ?? steps[0]?.label ?? "";
+
+  return (
+    <div className="rounded-lg border bg-muted/30 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Schritt {step} von {steps.length}
+        </p>
+        <p className="text-sm font-medium text-foreground">{currentLabel}</p>
+      </div>
+      <ol className="flex items-center gap-2 overflow-hidden" aria-label="Wizard-Fortschritt">
+        {steps.map((s, index) => {
+          const isComplete = step > s.id;
+          const isCurrent = step === s.id;
+          return (
+            <li key={s.id} className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={cn(
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all",
+                    isComplete && "bg-primary text-primary-foreground shadow-sm",
+                    isCurrent &&
+                      !isComplete &&
+                      "border-2 border-primary bg-background text-primary ring-4 ring-primary/15",
+                    !isComplete &&
+                      !isCurrent &&
+                      "border border-border bg-background text-muted-foreground",
+                  )}
+                >
+                  {isComplete ? <Check className="h-3.5 w-3.5" /> : s.id}
+                </span>
+                <span
+                  className={cn(
+                    "hidden max-w-[8rem] truncate text-sm lg:inline",
+                    isCurrent && "font-medium text-foreground",
+                    isComplete && "text-muted-foreground",
+                    !isCurrent && !isComplete && "text-muted-foreground",
+                  )}
+                >
+                  {s.label}
+                </span>
+              </div>
+              {index < steps.length - 1 ? (
+                <div
+                  aria-hidden="true"
+                  className={cn(
+                    "h-px flex-1 transition-colors",
+                    step > s.id ? "bg-primary" : "bg-border",
+                  )}
+                />
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+const GUIDING_QUESTIONS = [
+  "Ist der Standort generell für eine Station geeignet?",
+  "Welche Faktoren müssen bei einer Realisierung besonders beachtet werden?",
+  "Welche Annahmen sind für eine Erfolgsberechnung realistisch?",
+  "Sind Ergänzungsinvestitionen nötig?",
+] as const;
+
 export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?: WizardMode; shareToken?: string }) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -190,6 +334,17 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string | null>(null);
   const [mapInfo, setMapInfo] = useState<string>("");
   const [mapError, setMapError] = useState<string | null>(null);
+
+  const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>(() => ({
+    context: false,
+    form: true,
+    share: false,
+    workspace: false,
+  }));
+
+  const toggleSection = (id: SectionId, next: boolean) => {
+    setOpenSections((prev) => ({ ...prev, [id]: next }));
+  };
 
   const form = useForm<StandortanalyseForm>({
     resolver: zodResolver(standortanalyseFormSchema),
@@ -232,6 +387,11 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
       return haystack.includes(normalizedQuery);
     });
   }, [analysesQuery.data, analysisFilter, analysisSearch]);
+
+  const draftCount = useMemo(
+    () => (analysesQuery.data ?? []).filter((analysis) => analysis.status === "draft").length,
+    [analysesQuery.data],
+  );
 
   const lastShareMetaQuery = useQuery({
     queryKey: ["standortanalyse-last-share-meta", analysisId],
@@ -392,7 +552,6 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
   }, [mode, step, submittedData]);
 
   const landOptions = useMemo(() => getStandortLandOptions("de"), []);
-  const progressPercent = (step / 4) * 100;
 
   const handleNextFromStep1 = async () => {
     const isValid = await form.trigger(stepTriggerFields[1]);
@@ -439,23 +598,23 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           toast.success("Vielen Dank. Ihre Angaben wurden erfolgreich übermittelt.");
           return;
         }
-          const response = await fetch("/api/standortanalyse", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              analysisId: analysisId ?? undefined,
-              submit: true,
-              createOrUpdateContact: true,
-              formData: data,
-            }),
-          });
-          const payload = (await response.json()) as { error?: string; analysisId?: string };
-          if (!response.ok) {
-            throw new Error(payload.error ?? "Einreichung fehlgeschlagen");
-          }
-          if (typeof payload.analysisId === "string") {
-            setAnalysisId(payload.analysisId);
-          }
+        const response = await fetch("/api/standortanalyse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            analysisId: analysisId ?? undefined,
+            submit: true,
+            createOrUpdateContact: true,
+            formData: data,
+          }),
+        });
+        const payload = (await response.json()) as { error?: string; analysisId?: string };
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Einreichung fehlgeschlagen");
+        }
+        if (typeof payload.analysisId === "string") {
+          setAnalysisId(payload.analysisId);
+        }
 
         setSubmittedData(data);
         setStep(4);
@@ -535,7 +694,7 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     setMapEmbedUrl(null);
     setMapInfo("");
     setMapError(null);
-      setPublicSubmissionDone(false);
+    setPublicSubmissionDone(false);
     toast.success("Formular zurückgesetzt");
   };
 
@@ -562,6 +721,8 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
         setStep(1);
       }
       setPublicSubmissionDone(false);
+      toggleSection("form", true);
+      toggleSection("workspace", false);
       toast.success("Analyse geladen");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Analyse konnte nicht geladen werden");
@@ -605,8 +766,9 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           <CardHeader>
             <CardTitle>Vielen Dank für Ihre Anfrage</CardTitle>
             <CardDescription>
-              Ihre Standortanalyse-Daten wurden erfolgreich an AquaDock übermittelt. Sie erhalten eine Bestätigungs-E-Mail,
-              und unser Team meldet sich schnellstmöglich mit der fachlichen Auswertung bei Ihnen.
+              Ihre Standortanalyse-Daten wurden erfolgreich an AquaDock übermittelt. Sie erhalten eine
+              Bestätigungs-E-Mail, und unser Team meldet sich schnellstmöglich mit der fachlichen Auswertung bei
+              Ihnen.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -617,18 +779,10 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
           </CardHeader>
           <CardContent>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                1. Wir prüfen Ihre Angaben intern und ergänzen die technische Standortbewertung.
-              </li>
-              <li>
-                2. Sie erhalten in der Regel innerhalb von 1-2 Werktagen eine erste Rückmeldung.
-              </li>
-              <li>
-                3. Bei Rückfragen oder fehlenden Angaben kontaktieren wir Sie per E-Mail oder Telefon.
-              </li>
-              <li>
-                4. Die finale Empfehlung und nächsten Schritte besprechen wir persönlich mit Ihnen.
-              </li>
+              <li>1. Wir prüfen Ihre Angaben intern und ergänzen die technische Standortbewertung.</li>
+              <li>2. Sie erhalten in der Regel innerhalb von 1-2 Werktagen eine erste Rückmeldung.</li>
+              <li>3. Bei Rückfragen oder fehlenden Angaben kontaktieren wir Sie per E-Mail oder Telefon.</li>
+              <li>4. Die finale Empfehlung und nächsten Schritte besprechen wir persönlich mit Ihnen.</li>
             </ul>
           </CardContent>
         </Card>
@@ -647,226 +801,289 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <Card className="border-dashed">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-3xl text-primary">Standortanalyse</CardTitle>
-          <CardDescription>
-            Standortqualität, Umfeld und Grundlagenbewertung mit CRM-Integration für interne und externe Partner.
-          </CardDescription>
-          {mode === "public" && shareToken ? (
-            <Badge variant="outline" className="w-fit">
-              Öffentlicher Zugangslink: {shareToken}
-            </Badge>
-          ) : null}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Progress value={progressPercent} className="h-3" />
-          <p className="text-xs text-muted-foreground">
-            Schritt {step} von 4, Fortschritt {Math.round(progressPercent)}%
+  const headerCard = (
+    <Card className="border-dashed">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-3xl text-primary">Standortanalyse</CardTitle>
+        <CardDescription>
+          Standortqualität, Umfeld und Grundlagenbewertung mit CRM-Integration für interne und externe Partner.
+        </CardDescription>
+        {mode === "public" && shareToken ? (
+          <Badge variant="outline" className="w-fit max-w-full break-all">
+            Öffentlicher Zugangslink: {shareToken}
+          </Badge>
+        ) : null}
+      </CardHeader>
+    </Card>
+  );
+
+  const contextSection = (
+    <SectionCard
+      id="context"
+      open={openSections.context}
+      onOpenChange={(next) => toggleSection("context", next)}
+      icon={<Sparkles className="h-4 w-4" />}
+      title="Kontext & Ziel der Analyse"
+      description="Standortqualität, Umfeld und Grundlagenbewertung im strukturierten Vorgehen."
+      badge={<Badge variant="outline">Leitfragen</Badge>}
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Die Standortanalyse beantwortet die wesentlichen Fragen, bevor in eine Realisierung investiert wird, und
+            schafft eine belastbare Grundlage für die nächsten Entscheidungen.
           </p>
-        </CardContent>
-      </Card>
+          <ul className="space-y-2 text-sm">
+            {GUIDING_QUESTIONS.map((question) => (
+              <li key={question} className="flex items-start gap-2">
+                <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{question}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+          {mode === "public" ? (
+            <p>
+              Ihre Angaben werden vertraulich behandelt. Die fachliche Auswertung und Ergebnisinterpretation erfolgen
+              ausschließlich durch das AquaDock-Team. Sie erhalten anschließend persönlich eine fundierte Einschätzung.
+            </p>
+          ) : (
+            <p>
+              Hinweis: Externe Personen können diese Analyse über einen sicheren Einladungslink ausfüllen, sehen aber
+              keine Ergebnisse. Die Auswertung verbleibt vollständig im CRM.
+            </p>
+          )}
+        </div>
+      </div>
+    </SectionCard>
+  );
 
-      {mode === "internal" ? (
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Link2 className="h-4 w-4 text-primary" />
-              Kunden-Einladungslink
-            </CardTitle>
-            <CardDescription>
-              Jederzeit verfügbar: Link erstellen und direkt an potenzielle Kunden senden, damit sie die Standortanalyse selbst ausfüllen.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <LockKeyhole className="h-4 w-4" />
-                  Passwortschutz
-                </Label>
-                <Input
-                  type="password"
-                  value={shareGenerationPassword}
-                  onChange={(event) => setShareGenerationPassword(event.target.value)}
-                  placeholder="Optional, mindestens 8 Zeichen"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gültigkeit</Label>
-                <Select
-                  value={String(shareExpiresHours)}
-                  onValueChange={(value) => setShareExpiresHours(Number.parseInt(value, 10))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Bitte auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="24">24 Stunden</SelectItem>
-                    <SelectItem value="72">72 Stunden</SelectItem>
-                    <SelectItem value="168">7 Tage</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button type="button" className="w-full" onClick={handleGenerateShareLink} disabled={isGeneratingShare}>
-                  {isGeneratingShare ? "Erstelle Link..." : "Einladungslink erstellen"}
-                </Button>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="revoke-older-links">Neuen Link erzwingen</Label>
-                <div className="flex items-center gap-3 rounded-md border p-3">
-                  <Switch id="revoke-older-links" checked={revokeOlderLinks} onCheckedChange={setRevokeOlderLinks} />
-                  <p className="text-xs text-muted-foreground">Ältere aktive Links dieser Analyse deaktivieren</p>
-                </div>
-              </div>
+  const shareSection =
+    mode === "internal" ? (
+      <SectionCard
+        id="share"
+        open={openSections.share}
+        onOpenChange={(next) => toggleSection("share", next)}
+        icon={<Link2 className="h-4 w-4" />}
+        title="Kunden-Einladungslink"
+        description="Sicheren Link erzeugen und an potenzielle Kunden senden, damit sie die Analyse selbst befüllen."
+        badge={lastShareLinkMeta?.isActive ? <Badge variant="outline">Aktiv</Badge> : null}
+        meta={
+          lastShareLinkMeta
+            ? `Letzter Link: gültig bis ${new Date(lastShareLinkMeta.expiresAt).toLocaleString("de-DE")}`
+            : "Noch kein Link erzeugt"
+        }
+        accent
+      >
+        <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <LockKeyhole className="h-4 w-4" />
+                Passwortschutz
+              </Label>
+              <Input
+                type="password"
+                value={shareGenerationPassword}
+                onChange={(event) => setShareGenerationPassword(event.target.value)}
+                placeholder="Optional, mindestens 8 Zeichen"
+              />
             </div>
-
-            {shareLink ? (
-              <div className="rounded-lg border bg-background/90 p-4 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium">Aktiver Einladungslink</p>
-                  <Badge variant="outline">Einmal verwendbar</Badge>
-                </div>
-                <p className="mt-2 break-all text-primary">{shareLink.shareUrl}</p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={handleCopyShareLink} disabled={isCopyingShareLink}>
-                    {copiedShareLink ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                    {isCopyingShareLink ? "Kopiere..." : copiedShareLink ? "Kopiert" : "Link kopieren"}
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Gültig bis {new Date(shareLink.expiresAt).toLocaleString("de-DE")}
-                  </span>
-                </div>
-              </div>
-            ) : lastShareLinkMeta ? (
-              <div className="rounded-lg border bg-background/90 p-4 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium">Zuletzt erstellter Link</p>
-                  <Badge variant="outline">{lastShareLinkMeta.isActive ? "Aktiv" : "Inaktiv"}</Badge>
-                </div>
-                <p className="mt-2 text-muted-foreground">
-                  {lastShareLinkMeta.shareUrl
-                    ? "Lokaler Verlauf verfügbar."
-                    : "Aus Sicherheitsgründen ist die URL nur direkt nach dem Erstellen sichtbar."}
-                </p>
-                {lastShareLinkMeta.shareUrl ? (
-                  <p className="mt-2 break-all text-primary">{lastShareLinkMeta.shareUrl}</p>
-                ) : null}
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span>Gültig bis {new Date(lastShareLinkMeta.expiresAt).toLocaleString("de-DE")}</span>
-                  {lastShareLinkMeta.createdAt ? (
-                    <span>Erstellt: {new Date(lastShareLinkMeta.createdAt).toLocaleString("de-DE")}</span>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Noch kein Einladungslink erzeugt. Nach dem Erstellen kann der Kunde sofort starten.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {mode === "internal" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Arbeitsstand</CardTitle>
-            <CardDescription>
-              Entwürfe speichern, später weiterbearbeiten oder abgeschlossene Analysen erneut öffnen.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => saveDraftMutation.mutate()}
-                disabled={saveDraftMutation.isPending}
+            <div className="space-y-2">
+              <Label>Gültigkeit</Label>
+              <Select
+                value={String(shareExpiresHours)}
+                onValueChange={(value) => setShareExpiresHours(Number.parseInt(value, 10))}
               >
-                {saveDraftMutation.isPending ? "Speichere..." : "Entwurf speichern"}
-              </Button>
-              <Button type="button" variant="outline" onClick={handleResetForm}>
-                Neu starten
-              </Button>
-              {analysisId ? <Badge variant="outline">Aktive Analyse: {analysisId}</Badge> : null}
-            </div>
-            <div className="grid gap-2 md:grid-cols-3">
-              <Select value={analysisFilter} onValueChange={(value) => setAnalysisFilter(value as AnalyseFilter)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status filtern" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Bitte auswählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle</SelectItem>
-                  <SelectItem value="draft">Nur Entwürfe</SelectItem>
-                  <SelectItem value="submitted">Nur abgeschlossen</SelectItem>
+                  <SelectItem value="24">24 Stunden</SelectItem>
+                  <SelectItem value="72">72 Stunden</SelectItem>
+                  <SelectItem value="168">7 Tage</SelectItem>
                 </SelectContent>
               </Select>
-              <div className="md:col-span-2">
-                <Input
-                  value={analysisSearch}
-                  onChange={(event) => setAnalysisSearch(event.target.value)}
-                  placeholder="Suche nach Kontakt oder Ort"
-                />
+            </div>
+            <div className="flex items-end">
+              <Button type="button" className="w-full" onClick={handleGenerateShareLink} disabled={isGeneratingShare}>
+                {isGeneratingShare ? "Erstelle Link..." : "Einladungslink erstellen"}
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="revoke-older-links">Neuen Link erzwingen</Label>
+              <div className="flex items-center gap-3 rounded-md border p-3">
+                <Switch id="revoke-older-links" checked={revokeOlderLinks} onCheckedChange={setRevokeOlderLinks} />
+                <p className="text-xs text-muted-foreground">Ältere aktive Links dieser Analyse deaktivieren</p>
               </div>
             </div>
+          </div>
 
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Kontakt</TableHead>
-                    <TableHead>Ort</TableHead>
-                    <TableHead>Punkte</TableHead>
-                    <TableHead>Aktualisiert</TableHead>
-                    <TableHead className="text-right">Aktion</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAnalyses.slice(0, 12).map((analysis) => (
-                    <TableRow key={analysis.id}>
-                      <TableCell>
-                        <Badge variant={analysis.status === "draft" ? "secondary" : "default"}>
-                          {analysis.status === "draft" ? "Entwurf" : "Abgeschlossen"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{analysis.kontakt_name}</TableCell>
-                      <TableCell>{analysis.standort_ort}</TableCell>
-                      <TableCell>{analysis.total_points}</TableCell>
-                      <TableCell>{new Date(analysis.updated_at).toLocaleString("de-DE")}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleLoadAnalysis(analysis.id)}
-                          disabled={loadingAnalysisId === analysis.id}
-                        >
-                          {loadingAnalysisId === analysis.id ? "Lade..." : "Öffnen"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredAnalyses.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        Noch keine gespeicherten Standortanalysen vorhanden.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
+          {shareLink ? (
+            <div className="rounded-lg border bg-background/90 p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">Aktiver Einladungslink</p>
+                <Badge variant="outline">Einmal verwendbar</Badge>
+              </div>
+              <p className="mt-2 break-all text-primary">{shareLink.shareUrl}</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyShareLink}
+                  disabled={isCopyingShareLink}
+                  className="w-full sm:w-auto"
+                >
+                  {copiedShareLink ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                  {isCopyingShareLink ? "Kopiere..." : copiedShareLink ? "Kopiert" : "Link kopieren"}
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Gültig bis {new Date(shareLink.expiresAt).toLocaleString("de-DE")}
+                </span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      ) : null}
+          ) : lastShareLinkMeta ? (
+            <div className="rounded-lg border bg-background/90 p-4 text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">Zuletzt erstellter Link</p>
+                <Badge variant="outline">{lastShareLinkMeta.isActive ? "Aktiv" : "Inaktiv"}</Badge>
+              </div>
+              <p className="mt-2 text-muted-foreground">
+                {lastShareLinkMeta.shareUrl
+                  ? "Lokaler Verlauf verfügbar."
+                  : "Aus Sicherheitsgründen ist die URL nur direkt nach dem Erstellen sichtbar."}
+              </p>
+              {lastShareLinkMeta.shareUrl ? (
+                <p className="mt-2 break-all text-primary">{lastShareLinkMeta.shareUrl}</p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>Gültig bis {new Date(lastShareLinkMeta.expiresAt).toLocaleString("de-DE")}</span>
+                {lastShareLinkMeta.createdAt ? (
+                  <span>Erstellt: {new Date(lastShareLinkMeta.createdAt).toLocaleString("de-DE")}</span>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Noch kein Einladungslink erzeugt. Nach dem Erstellen kann der Kunde sofort starten.
+            </p>
+          )}
+        </div>
+      </SectionCard>
+    ) : null;
 
+  const workspaceSection =
+    mode === "internal" ? (
+      <SectionCard
+        id="workspace"
+        open={openSections.workspace}
+        onOpenChange={(next) => toggleSection("workspace", next)}
+        icon={<ClipboardList className="h-4 w-4" />}
+        title="Arbeitsstand & gespeicherte Analysen"
+        description="Entwürfe speichern, weiterbearbeiten oder abgeschlossene Analysen erneut öffnen."
+        badge={draftCount > 0 ? <Badge variant="secondary">{draftCount} Entwürfe</Badge> : null}
+        meta={analysisId ? `Aktive Analyse: ${analysisId}` : undefined}
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => saveDraftMutation.mutate()}
+              disabled={saveDraftMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              {saveDraftMutation.isPending ? "Speichere..." : "Entwurf speichern"}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleResetForm} className="w-full sm:w-auto">
+              Neu starten
+            </Button>
+          </div>
+          <div className="grid gap-2 md:grid-cols-3">
+            <Select value={analysisFilter} onValueChange={(value) => setAnalysisFilter(value as AnalyseFilter)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="draft">Nur Entwürfe</SelectItem>
+                <SelectItem value="submitted">Nur abgeschlossen</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="md:col-span-2">
+              <Input
+                value={analysisSearch}
+                onChange={(event) => setAnalysisSearch(event.target.value)}
+                placeholder="Suche nach Kontakt oder Ort"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Kontakt</TableHead>
+                  <TableHead>Ort</TableHead>
+                  <TableHead>Punkte</TableHead>
+                  <TableHead>Aktualisiert</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAnalyses.slice(0, 12).map((analysis) => (
+                  <TableRow key={analysis.id}>
+                    <TableCell>
+                      <Badge variant={analysis.status === "draft" ? "secondary" : "default"}>
+                        {analysis.status === "draft" ? "Entwurf" : "Abgeschlossen"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{analysis.kontakt_name}</TableCell>
+                    <TableCell>{analysis.standort_ort}</TableCell>
+                    <TableCell>{analysis.total_points}</TableCell>
+                    <TableCell>{new Date(analysis.updated_at).toLocaleString("de-DE")}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleLoadAnalysis(analysis.id)}
+                        disabled={loadingAnalysisId === analysis.id}
+                      >
+                        {loadingAnalysisId === analysis.id ? "Lade..." : "Öffnen"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredAnalyses.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      Noch keine gespeicherten Standortanalysen vorhanden.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </SectionCard>
+    ) : null;
+
+  const formSection = (
+    <SectionCard
+      id="form"
+      open={openSections.form}
+      onOpenChange={(next) => toggleSection("form", next)}
+      icon={<FileText className="h-4 w-4" />}
+      title="Analyse ausfüllen"
+      description="Schrittweise: Stammdaten erfassen, Kriterien bewerten, Zusammenfassung prüfen."
+    >
       <Form {...form}>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 pb-24 sm:pb-0">
+          <WizardStepper step={step} mode={mode} />
           {step === 1 ? (
             <Card>
               <CardHeader>
@@ -1079,8 +1296,8 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   )}
                 />
               </CardContent>
-              <CardFooter className="justify-end">
-                <Button type="button" onClick={handleNextFromStep1}>
+              <CardFooter className="hidden sm:flex sm:justify-end">
+                <Button type="button" onClick={handleNextFromStep1} className="w-full sm:w-auto">
                   Weiter zu Standortkriterien
                 </Button>
               </CardFooter>
@@ -1191,11 +1408,11 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                     ))}
                 </div>
               </CardContent>
-              <CardFooter className="justify-between">
-                <Button type="button" variant="outline" onClick={() => setStep(1)}>
+              <CardFooter className="hidden sm:flex sm:justify-between">
+                <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-full sm:w-auto">
                   Zurück
                 </Button>
-                <Button type="button" onClick={handleNextFromStep2}>
+                <Button type="button" onClick={handleNextFromStep2} className="w-full sm:w-auto">
                   Weiter zur Zusammenfassung
                 </Button>
               </CardFooter>
@@ -1251,7 +1468,9 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   <Card className="bg-muted/40">
                     <CardHeader>
                       <CardTitle className="text-base">Passwortprüfung</CardTitle>
-                      <CardDescription>Dieser Link ist passwortgeschützt. Bitte Passwort vor dem Absenden eingeben.</CardDescription>
+                      <CardDescription>
+                        Dieser Link ist passwortgeschützt. Bitte Passwort vor dem Absenden eingeben.
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Input
@@ -1263,14 +1482,17 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                     </CardContent>
                   </Card>
                 ) : null}
-
               </CardContent>
-              <CardFooter className="justify-between">
-                <Button type="button" variant="outline" onClick={() => setStep(2)}>
+              <CardFooter className="hidden sm:flex sm:justify-between">
+                <Button type="button" variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto">
                   Zurück
                 </Button>
-                <Button type="submit" disabled={isSubmittingAnalysis}>
-                  {isSubmittingAnalysis ? "Wird eingereicht..." : mode === "public" ? "Daten an AquaDock senden" : "Auswertung erstellen"}
+                <Button type="submit" disabled={isSubmittingAnalysis} className="w-full sm:w-auto">
+                  {isSubmittingAnalysis
+                    ? "Wird eingereicht..."
+                    : mode === "public"
+                      ? "Daten an AquaDock senden"
+                      : "Auswertung erstellen"}
                 </Button>
               </CardFooter>
             </Card>
@@ -1403,15 +1625,88 @@ export function StandortanalyseWizard({ mode = "internal", shareToken }: { mode?
                   )}
                 </CardContent>
               </Card>
-              <div className="flex justify-end">
-                <Button type="button" variant="outline" onClick={() => setStep(3)}>
+              <div className="hidden sm:flex sm:justify-end">
+                <Button type="button" variant="outline" onClick={() => setStep(3)} className="w-full sm:w-auto">
                   Zurück zur Zusammenfassung
                 </Button>
               </div>
             </div>
           ) : null}
+
+          <div className="sticky bottom-3 z-20 sm:hidden">
+            <div className="rounded-xl border bg-background/95 p-2 shadow-lg backdrop-blur">
+              <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4].map((itemStep) => (
+                    <span
+                      key={itemStep}
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full transition-all",
+                        step === itemStep && "w-4 bg-primary",
+                        step > itemStep && "bg-primary/80",
+                        step < itemStep && "bg-muted-foreground/30",
+                      )}
+                    />
+                  ))}
+                </div>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  Schritt {step} von 4
+                </p>
+              </div>
+
+              {step === 1 ? (
+                <Button type="button" onClick={handleNextFromStep1} className="w-full">
+                  Weiter zu Standortkriterien
+                </Button>
+              ) : null}
+
+              {step === 2 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-full">
+                    Zurück
+                  </Button>
+                  <Button type="button" onClick={handleNextFromStep2} className="w-full">
+                    Weiter
+                  </Button>
+                </div>
+              ) : null}
+
+              {step === 3 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" variant="outline" onClick={() => setStep(2)} className="w-full">
+                    Zurück
+                  </Button>
+                  <Button type="submit" disabled={isSubmittingAnalysis} className="w-full">
+                    {isSubmittingAnalysis
+                      ? "Wird eingereicht..."
+                      : mode === "public"
+                        ? "Senden"
+                        : "Auswertung"}
+                  </Button>
+                </div>
+              ) : null}
+
+              {step === 4 && submittedData != null && mode === "internal" ? (
+                <Button type="button" variant="outline" onClick={() => setStep(3)} className="w-full">
+                  Zurück zur Zusammenfassung
+                </Button>
+              ) : null}
+            </div>
+          </div>
         </form>
       </Form>
+    </SectionCard>
+  );
+
+  return (
+    <div className="space-y-6">
+      {headerCard}
+      <div className="space-y-3">
+        {contextSection}
+        {formSection}
+        {shareSection}
+        {workspaceSection}
+      </div>
     </div>
   );
 }
