@@ -4,6 +4,8 @@
 
 This page documents the Standortanalyse feature shipped on branch `standort`: internal wizard workflow, public share flow, saved analyses table behavior, and CRM sync options.
 
+For non-negotiable scoring and persistence invariants, see [`standortanalyse-scoring-contract.md`](standortanalyse-scoring-contract.md).
+
 ## Routes
 
 - Internal page: `src/app/(protected)/standortanalyse/page.tsx` (`/standortanalyse`)

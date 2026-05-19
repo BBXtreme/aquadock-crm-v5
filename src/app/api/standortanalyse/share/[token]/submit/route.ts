@@ -116,6 +116,7 @@ async function maybeCreateOrUpdateCompanyForOwner(args: {
         plz: args.formData.standort.plz,
         stadt: args.formData.standort.ort,
         land: args.formData.standort.land,
+        wassertyp: args.formData.kriterien.gewaesserart,
         notes: "Erstellt über öffentliche Standortanalyse",
         created_by: args.ownerUserId,
         updated_by: args.ownerUserId,
@@ -139,6 +140,7 @@ async function maybeCreateOrUpdateCompanyForOwner(args: {
       plz: args.formData.standort.plz,
       stadt: args.formData.standort.ort,
       land: args.formData.standort.land,
+      wassertyp: args.formData.kriterien.gewaesserart,
       updated_by: args.ownerUserId,
     })
     .eq("id", existingCompanyId);

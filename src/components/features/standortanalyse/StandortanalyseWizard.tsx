@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Control } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import {
   Bar,
   BarChart,
@@ -63,6 +63,7 @@ const CRITERIA_COLORS: Record<string, string> = {
   Gut: "#16a34a",
   Mittel: "#f59e0b",
   Kritisch: "#dc2626",
+  Unbekannt: "#6b7280",
 };
 
 const scoreBadgeTone: Record<string, string> = {
@@ -296,6 +297,36 @@ function WizardStepper({ step, mode }: { step: number; mode: WizardMode }) {
   );
 }
 
+function AnalysisLoadingOverlay({ mode }: { mode: WizardMode }) {
+  const title = mode === "public" ? "Analyse wird verarbeitet" : "Auswertung wird erstellt";
+  const description =
+    mode === "public"
+      ? "Ihre Angaben werden sicher übermittelt und für die fachliche Bewertung vorbereitet."
+      : "Kriterien werden gewichtet, zusammengefasst und als Empfehlung aufbereitet.";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/90 p-6 shadow-2xl ring-1 ring-slate-200/60 dark:border-white/10 dark:bg-slate-900/90 dark:ring-slate-700/40">
+        <div className="relative mx-auto mb-5 flex h-24 w-24 items-center justify-center">
+          <span className="absolute h-24 w-24 rounded-full border border-primary/20" />
+          <span className="absolute h-20 w-20 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+          <span className="absolute h-14 w-14 animate-pulse rounded-full bg-primary/10" />
+          <span className="h-3 w-3 rounded-full bg-primary shadow-[0_0_18px_rgba(59,130,246,0.55)]" />
+        </div>
+        <div className="space-y-2 text-center">
+          <p className="text-lg font-semibold tracking-tight text-foreground">{title}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+        <div className="mt-5 grid grid-cols-3 gap-2">
+          <span className="h-1.5 animate-pulse rounded-full bg-primary/70 [animation-delay:0ms]" />
+          <span className="h-1.5 animate-pulse rounded-full bg-primary/60 [animation-delay:180ms]" />
+          <span className="h-1.5 animate-pulse rounded-full bg-primary/45 [animation-delay:360ms]" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const GUIDING_QUESTIONS = [
   "Ist der Standort generell für eine Station geeignet?",
   "Welche Faktoren müssen bei einer Realisierung besonders beachtet werden?",
@@ -335,6 +366,7 @@ export function StandortanalyseWizard({
   const [publicLinkValid, setPublicLinkValid] = useState<boolean | null>(mode === "public" ? null : true);
   const [publicRequiresPassword, setPublicRequiresPassword] = useState(false);
   const [publicLinkMessage, setPublicLinkMessage] = useState<string | null>(null);
+  const [touchedCriteria, setTouchedCriteria] = useState<Set<string>>(() => new Set());
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string | null>(null);
   const [mapInfo, setMapInfo] = useState<string>("");
   const [mapError, setMapError] = useState<string | null>(null);
@@ -366,14 +398,23 @@ export function StandortanalyseWizard({
     setMapEmbedUrl(null);
     setMapInfo("");
     setMapError(null);
+    setTouchedCriteria(new Set());
     setPublicSubmissionDone(false);
   }, [form]);
 
   const currentValues = form.watch();
+  const watchedKriterien = useWatch({
+    control: form.control,
+    name: "kriterien",
+  });
   const kontaktEmail = form.watch("kontakt.email");
   const kontaktVorname = form.watch("kontakt.vorname");
   const kontaktName = form.watch("kontakt.name");
-  const currentScore = useMemo(() => calculateStandortScore(currentValues.kriterien), [currentValues.kriterien]);
+  const currentScore = useMemo(() => calculateStandortScore(watchedKriterien), [watchedKriterien]);
+  const evaluationByKey = useMemo(
+    () => new Map(currentScore.criterionEvaluations.map((criterion) => [criterion.id, criterion])),
+    [currentScore.criterionEvaluations],
+  );
 
   const shareRecipientEmailValid = useMemo(() => {
     const email = shareRecipientEmail.trim();
@@ -680,11 +721,12 @@ export function StandortanalyseWizard({
 
   const handleNextFromStep2 = async () => {
     const isValid = await form.trigger(stepTriggerFields[2]);
-    if (isValid) {
+    const allCriteriaTouched = standortKriterien.every((criterion) => touchedCriteria.has(criterion.id));
+    if (isValid && allCriteriaTouched) {
       setStep(3);
       return;
     }
-    toast.error("Bitte wählen Sie für alle Kriterien eine Bewertung.");
+    toast.error("Bitte wählen Sie für alle Kriterien bewusst eine Bewertung aus.");
   };
 
   const handleSubmit = form.handleSubmit((data) => {
@@ -868,6 +910,7 @@ export function StandortanalyseWizard({
           throw new Error(payload.error ?? "Analyse konnte nicht geladen werden");
         }
         form.reset(payload.formData);
+        setTouchedCriteria(new Set(standortKriterien.map((criterion) => criterion.id)));
         setAnalysisId(id);
         setShareLink(null);
         const isSubmitted =
@@ -1599,9 +1642,14 @@ export function StandortanalyseWizard({
                               </Tooltip>
                             </FormLabel>
                             <Select
-                              onValueChange={(value) =>
-                                field.onChange(criterion.type === "info" ? value : Number.parseInt(value, 10))
-                              }
+                              onValueChange={(value) => {
+                                setTouchedCriteria((prev) => {
+                                  const next = new Set(prev);
+                                  next.add(criterion.id);
+                                  return next;
+                                });
+                                field.onChange(criterion.type === "info" ? value : Number.parseInt(value, 10));
+                              }}
                               value={String(field.value)}
                             >
                               <FormControl>
@@ -1650,7 +1698,14 @@ export function StandortanalyseWizard({
                               </Tooltip>
                             </FormLabel>
                             <Select
-                              onValueChange={(value) => field.onChange(Number.parseInt(value, 10))}
+                              onValueChange={(value) => {
+                                setTouchedCriteria((prev) => {
+                                  const next = new Set(prev);
+                                  next.add(criterion.id);
+                                  return next;
+                                });
+                                field.onChange(Number.parseInt(value, 10));
+                              }}
                               value={String(field.value)}
                             >
                               <FormControl>
@@ -1700,7 +1755,8 @@ export function StandortanalyseWizard({
               <CardContent className="space-y-6">
                 {mode === "internal" ? (
                   <>
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-muted/20 p-3">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Scoring-Überblick</span>
                       <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
                         {currentScore.recommendation.label}
                       </Badge>
@@ -1708,26 +1764,48 @@ export function StandortanalyseWizard({
                         Zwischenstand: {currentScore.totalPoints} / {currentScore.maxPoints} Punkte
                       </span>
                     </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Kriterium</TableHead>
-                          <TableHead>Punkte</TableHead>
-                          <TableHead>Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentScore.criterionEvaluations.map((row) => (
-                          <TableRow key={row.id}>
-                            <TableCell>{row.label}</TableCell>
-                            <TableCell>
-                              {row.points} / {row.maxPoints}
-                            </TableCell>
-                            <TableCell>{row.status}</TableCell>
+                    <div className="overflow-hidden rounded-xl border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Kriterium</TableHead>
+                            <TableHead>Ausprägung</TableHead>
+                            <TableHead>Punkte</TableHead>
+                            <TableHead>Status</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {standortKriterien.map((criterion) => {
+                            const evaluation = evaluationByKey.get(criterion.id);
+                            const selectedValue = currentValues.kriterien[criterion.id as KriterienKey];
+                            const selectedLabel =
+                              criterion.type === "info"
+                                ? typeof selectedValue === "string"
+                                  ? selectedValue
+                                  : "—"
+                                : criterion.options.find((option) => option.points === evaluation?.points)?.label ?? "—";
+
+                            return (
+                              <TableRow key={criterion.id}>
+                                <TableCell className="font-medium">{criterion.label}</TableCell>
+                                <TableCell>{selectedLabel}</TableCell>
+                                <TableCell>
+                                  {criterion.type === "info"
+                                    ? "-"
+                                    : `${evaluation?.points ?? 0} / ${evaluation?.maxPoints ?? criterion.maxPoints}`}
+                                </TableCell>
+                                <TableCell>{criterion.type === "info" ? "Info" : (evaluation?.displayStatus ?? "—")}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {currentScore.unknownCount > 0 ? (
+                      <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                        Achtung: {currentScore.unknownCount} Kriterium/Kriterien sind auf "Unbekannt" gesetzt.
+                      </div>
+                    ) : null}
                   </>
                 ) : (
                   <div className="space-y-4">
@@ -1852,7 +1930,7 @@ export function StandortanalyseWizard({
                     </RadialBarChart>
                   </ChartContainer>
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
                     <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
                       {currentScore.recommendation.label}
                     </Badge>
@@ -1873,6 +1951,7 @@ export function StandortanalyseWizard({
                     <BarChart3 className="h-4 w-4" />
                     Hauptkriterien
                   </CardTitle>
+                  <CardDescription>Gewichtung und Zielerreichung je Hauptkriterium.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -1886,8 +1965,7 @@ export function StandortanalyseWizard({
                       <ChartTooltip content={<ChartTooltipContent />} />
                       <Bar dataKey="punkte" radius={4}>
                         {currentScore.mainCriteriaChart.map((entry) => {
-                          const ratio = entry.maxPunkte > 0 ? entry.punkte / entry.maxPunkte : 0;
-                          const status = ratio >= 0.7 ? "Gut" : ratio >= 0.4 ? "Mittel" : "Kritisch";
+                          const status = evaluationByKey.get(entry.key)?.displayStatus ?? "Kritisch";
                           return <Cell key={entry.key} fill={CRITERIA_COLORS[status]} />;
                         })}
                       </Bar>
@@ -1899,9 +1977,11 @@ export function StandortanalyseWizard({
               <Card>
                 <CardHeader>
                   <CardTitle>Ampelübersicht</CardTitle>
+                  <CardDescription>Status je Kriterium inklusive Unbekannt-Markierungen.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  <div className="overflow-hidden rounded-xl border">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Kriterium</TableHead>
@@ -1920,15 +2000,16 @@ export function StandortanalyseWizard({
                             <span className="inline-flex items-center gap-2">
                               <span
                                 className="h-2.5 w-2.5 rounded-full"
-                                style={{ backgroundColor: CRITERIA_COLORS[criterion.status] }}
+                                style={{ backgroundColor: CRITERIA_COLORS[criterion.displayStatus] }}
                               />
-                              {criterion.status}
+                              {criterion.displayStatus}
                             </span>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1950,7 +2031,13 @@ export function StandortanalyseWizard({
                       loading="lazy"
                     />
                   ) : (
-                    <p className="text-sm text-muted-foreground">Karte wird geladen...</p>
+                    <div className="flex h-[220px] flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-muted/20">
+                      <div className="relative h-10 w-10">
+                        <span className="absolute inset-0 animate-spin rounded-full border-2 border-primary/25 border-t-primary" />
+                        <span className="absolute inset-2 animate-pulse rounded-full bg-primary/10" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">Karte wird geladen...</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -2024,6 +2111,7 @@ export function StandortanalyseWizard({
           </div>
         </form>
       </Form>
+      {isSubmittingAnalysis ? <AnalysisLoadingOverlay mode={mode} /> : null}
     </SectionCard>
   );
 

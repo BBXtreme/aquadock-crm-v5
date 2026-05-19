@@ -53,6 +53,53 @@ describe("calculateStandortScore", () => {
     expect(result.unknownCount).toBe(17);
     expect(result.recommendation.label).toBe("Unsicher");
     expect(result.criterionEvaluations.every((criterion) => criterion.isUnknown)).toBe(true);
+    expect(result.criterionEvaluations.every((criterion) => criterion.displayStatus === "Unbekannt")).toBe(true);
+  });
+
+  it("does not change score or recommendation when only gewaesserart changes", () => {
+    const byLake = calculateStandortScore({
+      gewaesserart: "See",
+      standortfrequentierung: 18,
+      gastronomie: 6,
+      bekanntheit: 10,
+      zugaenglichkeit: 7,
+      saisonlaenge: 7,
+      wassertemperatur: 3,
+      sonnenstunden: 3,
+      einwohner: 7,
+      besucherstatistiken: 3,
+      attraktivitaet: 9,
+      wettbewerb: 3,
+      wasserzugang: 3,
+      genehmigungslage: 3,
+      sichtbarkeit: 3,
+      erweiterbarkeit: 2,
+      lokalerPartner: 2,
+      marketingpotenzial: 2,
+    });
+    const byHarbor = calculateStandortScore({
+      gewaesserart: "Hafen",
+      standortfrequentierung: 18,
+      gastronomie: 6,
+      bekanntheit: 10,
+      zugaenglichkeit: 7,
+      saisonlaenge: 7,
+      wassertemperatur: 3,
+      sonnenstunden: 3,
+      einwohner: 7,
+      besucherstatistiken: 3,
+      attraktivitaet: 9,
+      wettbewerb: 3,
+      wasserzugang: 3,
+      genehmigungslage: 3,
+      sichtbarkeit: 3,
+      erweiterbarkeit: 2,
+      lokalerPartner: 2,
+      marketingpotenzial: 2,
+    });
+
+    expect(byLake.totalPoints).toBe(byHarbor.totalPoints);
+    expect(byLake.recommendation.label).toBe(byHarbor.recommendation.label);
   });
 
   it("maps threshold boundaries to the expected recommendation labels", () => {

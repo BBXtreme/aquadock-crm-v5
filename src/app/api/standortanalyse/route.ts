@@ -57,6 +57,7 @@ async function maybeCreateOrUpdateCompany(args: {
         plz: args.formData.standort.plz,
         stadt: args.formData.standort.ort,
         land: args.formData.standort.land,
+        wassertyp: args.formData.kriterien.gewaesserart,
         notes: "Automatisch aus Standortanalyse erstellt",
         created_by: args.userId,
         updated_by: args.userId,
@@ -80,6 +81,7 @@ async function maybeCreateOrUpdateCompany(args: {
       plz: args.formData.standort.plz,
       stadt: args.formData.standort.ort,
       land: args.formData.standort.land,
+      wassertyp: args.formData.kriterien.gewaesserart,
       updated_by: args.userId,
     })
     .eq("id", existingCompanyId);

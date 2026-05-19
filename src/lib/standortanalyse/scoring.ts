@@ -7,6 +7,7 @@ import {
 export type StandortKriterienScores = Record<string, number | string | null | undefined>;
 
 export type StandortCriterionStatus = "Gut" | "Mittel" | "Kritisch";
+export type StandortCriterionDisplayStatus = StandortCriterionStatus | "Unbekannt";
 
 export type StandortRecommendation = {
   label: string;
@@ -20,6 +21,7 @@ export type StandortCriterionEvaluation = {
   maxPoints: number;
   ratio: number;
   status: StandortCriterionStatus;
+  displayStatus: StandortCriterionDisplayStatus;
   isUnknown: boolean;
   type: "main" | "optional";
 };
@@ -92,6 +94,7 @@ export function calculateStandortScore(scores: StandortKriterienScores): Standor
       maxPoints: criterion.maxPoints,
       ratio,
       status: toStatus(ratio),
+      displayStatus: isUnknown ? "Unbekannt" : toStatus(ratio),
       isUnknown,
       type: criterion.type,
     };

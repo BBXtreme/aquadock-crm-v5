@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WASSERTYP_ALLOWED_VALUES } from "@/lib/constants/wassertyp";
 
 function emptyStringToNull(value: string | null | undefined): string | null | undefined {
   return value === "" ? null : value;
@@ -95,7 +96,9 @@ const standortSchema = z
 
 const kriterienSchema = z
   .object({
-    gewaesserart: z.enum(["See", "Fluss", "Küste"], { required_error: "Art des Gewässers ist erforderlich" }),
+    gewaesserart: z.enum(WASSERTYP_ALLOWED_VALUES, {
+      required_error: "Art des Gewässers ist erforderlich",
+    }),
     standortfrequentierung: parseNumericEnum([25, 18, 10, 0, 1], "Ungültige Frequentierung"),
     gastronomie: parseNumericEnum([10, 6, 3, 0, 1], "Ungültige Gastronomie"),
     bekanntheit: parseNumericEnum([15, 10, 5, 0, 1], "Ungültige Bekanntheit"),

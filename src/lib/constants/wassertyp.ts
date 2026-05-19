@@ -24,6 +24,27 @@ export const WASSERTYP_ALLOWED_VALUES = wassertypOptions.map((o) => o.value) as 
 
 export type WassertypAllowedValue = (typeof WASSERTYP_ALLOWED_VALUES)[number];
 
+/** Pre-CRM-unification Standortanalyse options (index order in `standortanalyse_scores.points`). */
+export const LEGACY_GEWAESSERART_BY_INDEX = ["See", "Fluss", "Küste"] as const;
+
+const LEGACY_GEWAESSERART_TO_CANONICAL: Readonly<Record<string, WassertypAllowedValue>> = {
+  Küste: "Küste / Meer",
+};
+
+/**
+ * Maps Standortanalyse `gewaesserart` / legacy score labels to a canonical {@link WassertypAllowedValue}.
+ */
+export function normalizeGewaesserartValue(raw: string | null | undefined): WassertypAllowedValue | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+  const legacy = LEGACY_GEWAESSERART_TO_CANONICAL[raw.trim()];
+  if (legacy !== undefined) {
+    return legacy;
+  }
+  return normalizeWassertypForEnrichment(raw);
+}
+
 const WASSERTYP_ENRICHMENT_GLOSS: Readonly<Record<string, WassertypAllowedValue>> = {
   sea: "Küste / Meer",
   coast: "Küste / Meer",

@@ -139,4 +139,18 @@ describe("standortanalyseFormSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts all canonical wassertyp values as gewaesserart", () => {
+    const result = standortanalyseFormSchema.safeParse({
+      ...validPayload,
+      kriterien: {
+        ...validPayload.kriterien,
+        gewaesserart: "Hafen",
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.kriterien.gewaesserart).toBe("Hafen");
+    }
+  });
 });

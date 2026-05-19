@@ -1,3 +1,8 @@
+import {
+  LEGACY_GEWAESSERART_BY_INDEX,
+  normalizeGewaesserartValue,
+  type WassertypAllowedValue,
+} from "@/lib/constants/wassertyp";
 import type { StandortanalyseForm } from "@/lib/validations/standortanalyse";
 import type {
   Standortanalyse,
@@ -11,6 +16,43 @@ import type { StandortAnalyseScoreResult } from "./scoring";
 import { calculateStandortScore } from "./scoring";
 
 const ALLOWED_SCORE_STATUSES = new Set(["Gut", "Mittel", "Kritisch"]);
+const INFO_ROW_STATUS_PLACEHOLDER = "Gut";
+
+function resolveGewaesserartFromScoreRow(args: {
+  points: number;
+  statusLabel: string | null;
+  options: readonly { label: string; points: number }[];
+}): WassertypAllowedValue {
+  if (args.statusLabel != null && !ALLOWED_SCORE_STATUSES.has(args.statusLabel)) {
+    const fromStatus = normalizeGewaesserartValue(args.statusLabel);
+    if (fromStatus != null) {
+      return fromStatus;
+    }
+  }
+
+  if (
+    args.statusLabel == null &&
+    args.points >= 0 &&
+    args.points < LEGACY_GEWAESSERART_BY_INDEX.length
+  ) {
+    const legacyLabel = LEGACY_GEWAESSERART_BY_INDEX[args.points];
+    const fromLegacy = normalizeGewaesserartValue(legacyLabel);
+    if (fromLegacy != null) {
+      return fromLegacy;
+    }
+  }
+
+  const fromCurrentIndex = args.options[args.points]?.label;
+  if (fromCurrentIndex != null) {
+    const normalized = normalizeGewaesserartValue(fromCurrentIndex);
+    if (normalized != null) {
+      return normalized;
+    }
+  }
+
+  const fallback = args.options[0]?.label ?? "See";
+  return normalizeGewaesserartValue(fallback) ?? "See";
+}
 
 function getInviteDraftFormTemplate(): StandortanalyseForm {
   const now = new Date();
@@ -122,16 +164,19 @@ export function toStandortanalyseScoresInsert(
     const selectedRaw = formData.kriterien[definition.id as keyof StandortanalyseForm["kriterien"]];
     if (definition.type === "info") {
       const selectedLabel = typeof selectedRaw === "string" ? selectedRaw : definition.options[0]?.label;
-      const optionIndex = definition.options.findIndex((option) => option.label === selectedLabel);
+      const canonicalLabel =
+        selectedLabel != null ? (normalizeGewaesserartValue(selectedLabel) ?? selectedLabel) : "See";
+      const optionIndex = definition.options.findIndex((option) => option.label === canonicalLabel);
       const resolvedIndex = optionIndex >= 0 ? optionIndex : 0;
       rows.push({
         analysis_id: analysisId,
         criterion_key: definition.id,
         criterion_type: definition.type,
-        // DB status only allows Gut|Mittel|Kritisch|null — store info choice by option index.
         points: resolvedIndex,
         max_points: 0,
-        status: null,
+        // Keep DB compatibility: older schemas restrict status to traffic-light enums.
+        // Info rows restore the selected water type from `points` index.
+        status: INFO_ROW_STATUS_PLACEHOLDER,
         is_unknown: false,
       });
       continue;
@@ -242,19 +287,12 @@ export function toStandortanalyseFormFromRows(args: {
     if (row.criterion_key === "gewaesserart") {
       const definition = standortKriterien.find((criterion) => criterion.id === "gewaesserart");
       const statusLabel = typeof row.status === "string" ? row.status : null;
-      const matchedByLegacyStatus =
-        statusLabel != null && !ALLOWED_SCORE_STATUSES.has(statusLabel)
-          ? definition?.options.find((option) => option.label === statusLabel)
-          : undefined;
-      const matchedByIndex =
-        definition?.options[row.points] ??
-        definition?.options.find((option) => option.points === row.points);
-      const label =
-        matchedByLegacyStatus?.label ??
-        matchedByIndex?.label ??
-        definition?.options[0]?.label ??
-        "See";
-      base.kriterien.gewaesserart = label as StandortanalyseForm["kriterien"]["gewaesserart"];
+      const options = definition?.options ?? [];
+      base.kriterien.gewaesserart = resolveGewaesserartFromScoreRow({
+        points: row.points,
+        statusLabel,
+        options,
+      });
       continue;
     }
     const mutable = base.kriterien as Record<string, number | string>;

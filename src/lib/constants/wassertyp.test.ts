@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { determineWassertyp, normalizeWassertypForEnrichment } from "@/lib/constants/wassertyp";
+import {
+  determineWassertyp,
+  normalizeGewaesserartValue,
+  normalizeWassertypForEnrichment,
+} from "@/lib/constants/wassertyp";
+
+describe("normalizeGewaesserartValue", () => {
+  it("maps legacy Küste to Küste / Meer", () => {
+    expect(normalizeGewaesserartValue("Küste")).toBe("Küste / Meer");
+  });
+
+  it("accepts canonical wassertyp values", () => {
+    expect(normalizeGewaesserartValue("Hafen")).toBe("Hafen");
+  });
+});
 
 describe("normalizeWassertypForEnrichment", () => {
   it("returns null for nullish and blank", () => {

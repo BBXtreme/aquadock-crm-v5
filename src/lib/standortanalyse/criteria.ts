@@ -1,3 +1,5 @@
+import { wassertypOptions } from "@/lib/constants/wassertyp";
+
 export type StandortKriteriumType = "info" | "main" | "optional";
 
 export type StandortKriteriumDefinition = {
@@ -29,11 +31,10 @@ export const standortKriterien = [
     type: "info",
     maxPoints: 0,
     tooltip: "Nur zur Einordnung, ohne Punktebewertung.",
-    options: [
-      { label: "See", points: 0 },
-      { label: "Fluss", points: 0 },
-      { label: "Küste", points: 0 },
-    ],
+    options: wassertypOptions.map((option) => ({
+      label: option.value,
+      points: 0,
+    })),
   },
   {
     id: "standortfrequentierung",

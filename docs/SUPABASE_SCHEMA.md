@@ -362,7 +362,7 @@ Holds the **public** Storage URL of the user’s avatar, or `null` if none. The 
 - `reminders.status`: `'open' | 'closed'`
 - `standortanalysen.status`: `'draft' | 'submitted' | 'completed'`
 - `standortanalyse_scores.criterion_type`: `'main' | 'optional' | 'info'`
-- `standortanalyse_scores.status`: `'Gut' | 'Mittel' | 'Kritisch' | null`
+- `standortanalyse_scores.status`: `null` or `'Gut' | 'Mittel' | 'Kritisch'`; for `criterion_type = 'info'` canonical `gewaesserart` labels may be stored for lossless roundtrip
 
 ## 4. Row Level Security (RLS) – Summary
 

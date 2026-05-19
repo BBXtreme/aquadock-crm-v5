@@ -63,16 +63,19 @@ describe("standortanalyse/persistence", () => {
     expect(updatePayload.recommendation).toBe(score.recommendation.label);
   });
 
-  it("keeps gewaesserart selection lossless in score rows without violating DB status check", () => {
+  it("keeps gewaesserart selection lossless in score rows while keeping DB-safe status values", () => {
     const score = calculateStandortScore(baseForm.kriterien);
     const scoreRows = toStandortanalyseScoresInsert("analysis-1", score, baseForm);
     const infoRow = scoreRows.find((row) => row.criterion_key === "gewaesserart");
     const allowedStatuses = new Set(["Gut", "Mittel", "Kritisch"]);
 
-    expect(infoRow?.status).toBeNull();
+    expect(infoRow?.status).toBe("Gut");
     expect(infoRow?.points).toBe(1);
     expect(infoRow?.criterion_type).toBe("info");
     for (const row of scoreRows) {
+      if (row.criterion_key === "gewaesserart") {
+        continue;
+      }
       expect(row.status == null || allowedStatuses.has(row.status)).toBe(true);
     }
   });
@@ -126,7 +129,7 @@ describe("standortanalyse/persistence", () => {
     expect(draft.scoreRowsWithoutAnalysisId[0]).not.toHaveProperty("analysis_id");
   });
 
-  it("restores gewaesserart from legacy status label on score row", () => {
+  it("restores gewaesserart from stored status label on score row", () => {
     const score = calculateStandortScore(baseForm.kriterien);
     const analysisRow: Standortanalyse = {
       id: "analysis-1",
@@ -172,6 +175,69 @@ describe("standortanalyse/persistence", () => {
     });
 
     expect(restored.kriterien.gewaesserart).toBe("Fluss");
+  });
+
+  it("restores gewaesserart from legacy index when status is null", () => {
+    const score = calculateStandortScore(baseForm.kriterien);
+    const analysisRow: Standortanalyse = {
+      id: "analysis-1",
+      user_id: "user-1",
+      contact_id: null,
+      company_id: null,
+      created_at: "2026-05-18T10:00:00.000Z",
+      updated_at: "2026-05-18T10:00:00.000Z",
+      submitted_at: null,
+      status: "draft",
+      total_points: score.totalPoints,
+      recommendation: score.recommendation.label,
+      kontakt_name: baseForm.kontakt.name,
+      kontakt_vorname: baseForm.kontakt.vorname,
+      kontakt_email: baseForm.kontakt.email,
+      kontakt_strasse: baseForm.kontakt.strasse,
+      kontakt_plz: baseForm.kontakt.plz,
+      kontakt_ort: baseForm.kontakt.ort,
+      kontakt_telefon: baseForm.kontakt.telefon,
+      kontakt_firma: baseForm.kontakt.firma,
+      standort_plz: baseForm.standort.plz,
+      standort_ort: baseForm.standort.ort,
+      standort_strasse: baseForm.standort.strasse,
+      standort_land: baseForm.standort.land,
+      standort_datum: baseForm.standort.datum,
+      erstellt_von: baseForm.standort.erstelltVon,
+      notizen: baseForm.notizen,
+    };
+
+    const restoredSee = toStandortanalyseFormFromRows({
+      analysis: analysisRow,
+      scores: [
+        {
+          analysis_id: "analysis-1",
+          criterion_key: "gewaesserart",
+          criterion_type: "info",
+          points: 0,
+          max_points: 0,
+          status: null,
+          is_unknown: false,
+        } as StandortanalyseScore,
+      ],
+    });
+    expect(restoredSee.kriterien.gewaesserart).toBe("See");
+
+    const restoredCoast = toStandortanalyseFormFromRows({
+      analysis: analysisRow,
+      scores: [
+        {
+          analysis_id: "analysis-1",
+          criterion_key: "gewaesserart",
+          criterion_type: "info",
+          points: 2,
+          max_points: 0,
+          status: null,
+          is_unknown: false,
+        } as StandortanalyseScore,
+      ],
+    });
+    expect(restoredCoast.kriterien.gewaesserart).toBe("Küste / Meer");
   });
 
   it("ignores score rows with unknown criterion keys", () => {
