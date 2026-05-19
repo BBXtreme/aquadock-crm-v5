@@ -7,4 +7,5 @@ ignoredBuiltDependencies:
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@swc/core'
+  - core-js
   - esbuild
