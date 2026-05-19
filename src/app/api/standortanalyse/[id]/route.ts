@@ -14,7 +14,7 @@ export async function GET(
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -72,7 +72,7 @@ export async function DELETE(
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   const { id } = await params;

@@ -17,16 +17,13 @@ import {
   Signpost,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Control } from "react-hook-form";
+import type { Control, DefaultValues } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  PolarAngleAxis,
-  RadialBar,
-  RadialBarChart,
   XAxis,
   YAxis,
 } from "recharts";
@@ -72,6 +69,64 @@ const scoreBadgeTone: Record<string, string> = {
   red: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
 };
 
+const RECOMMENDATION_DETAIL_COPY: Record<string, string> = {
+  "Premium-Standort": "Premium-Standort: Sofort umsetzbar und höchste Erfolgschance",
+  "Sehr guter Standort": "Sehr guter Standort: Hohe Erfolgschance - empfohlen",
+  "Guter Standort": "Guter Standort: Optimierung empfohlen - durchführbar",
+  "Bedingt geeignet": "Bedingt geeignet: kritisch prüfen - Risiken beachten",
+  Unsicher: "Unsicher: alternative Standorte suchen",
+};
+
+const RECOMMENDATION_CARD_COPY: Record<
+  string,
+  { title: string; text: string; boxClass: string; dotClass: string }
+> = {
+  "Premium-Standort": {
+    title: "Premium Standort",
+    text: "Sehr gute Voraussetzungen für einen erfolgreichen Betrieb. Hohe Nachfrage, gute Lage und klare Skalierungsmöglichkeiten ermöglichen einen sofortigen Start mit attraktivem Ertragspotenzial.",
+    boxClass: "border-emerald-300 bg-emerald-50/80 dark:border-emerald-500/40 dark:bg-emerald-500/10",
+    dotClass: "bg-emerald-500",
+  },
+  "Sehr guter Standort": {
+    title: "Sehr guter Standort",
+    text: "Solide Basis mit erkennbarem Wachstumspotenzial. Mit gezielten Optimierungen kann hier ein wirtschaftlich sehr erfolgreicher Betrieb aufgebaut werden.",
+    boxClass: "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10",
+    dotClass: "bg-amber-500",
+  },
+  "Guter Standort": {
+    title: "Guter Standort",
+    text: "Grundsätzlich geeigneter Standort mit Optimierungsbedarf. Durch gezielte Maßnahmen lässt sich die Attraktivität und Wirtschaftlichkeit deutlich steigern.",
+    boxClass: "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10",
+    dotClass: "bg-amber-500",
+  },
+  "Bedingt geeignet": {
+    title: "Bedingt geeigneter Standort",
+    text: "Der Standort ist nutzbar, erfordert jedoch ein durchdachtes Konzept und aktive Vermarktung, um erfolgreich betrieben zu werden.",
+    boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
+    dotClass: "bg-rose-500",
+  },
+  Unsicher: {
+    title: "Unsicher: alternative Standorte suchen",
+    text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
+    boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
+    dotClass: "bg-rose-500",
+  },
+};
+
+type RecommendationCardCopy = {
+  title: string;
+  text: string;
+  boxClass: string;
+  dotClass: string;
+};
+
+const DEFAULT_RECOMMENDATION_CARD: RecommendationCardCopy = {
+  title: "Unsicher: alternative Standorte suchen",
+  text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
+  boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
+  dotClass: "bg-rose-500",
+};
+
 const stepTriggerFields = {
   1: [
     "kontakt.name",
@@ -106,7 +161,7 @@ type LastShareLinkMeta = {
 
 type SectionId = "context" | "form" | "share" | "workspace";
 
-const DEFAULT_FORM_VALUES: StandortanalyseForm = {
+const DEFAULT_FORM_VALUES: DefaultValues<StandortanalyseForm> = {
   kontakt: {
     name: "",
     vorname: "",
@@ -126,24 +181,24 @@ const DEFAULT_FORM_VALUES: StandortanalyseForm = {
     erstelltVon: "",
   },
   kriterien: {
-    gewaesserart: "See",
-    standortfrequentierung: 1,
-    gastronomie: 1,
-    bekanntheit: 1,
-    zugaenglichkeit: 1,
-    saisonlaenge: 1,
-    wassertemperatur: 1,
-    sonnenstunden: 1,
-    einwohner: 1,
-    besucherstatistiken: 1,
-    attraktivitaet: 1,
-    wettbewerb: 1,
-    wasserzugang: 1,
-    genehmigungslage: 1,
-    sichtbarkeit: 1,
-    erweiterbarkeit: 1,
-    lokalerPartner: 1,
-    marketingpotenzial: 1,
+    gewaesserart: undefined,
+    standortfrequentierung: undefined,
+    gastronomie: undefined,
+    bekanntheit: undefined,
+    zugaenglichkeit: undefined,
+    saisonlaenge: undefined,
+    wassertemperatur: undefined,
+    sonnenstunden: undefined,
+    einwohner: undefined,
+    besucherstatistiken: undefined,
+    attraktivitaet: undefined,
+    wettbewerb: undefined,
+    wasserzugang: undefined,
+    genehmigungslage: undefined,
+    sichtbarkeit: undefined,
+    erweiterbarkeit: undefined,
+    lokalerPartner: undefined,
+    marketingpotenzial: undefined,
   },
   notizen: "",
 };
@@ -154,6 +209,17 @@ function toPersistableDraftForm(values: StandortanalyseForm): StandortanalyseFor
     values.kontakt.email.trim().length > 0
       ? values.kontakt.email
       : `draft-${now.getTime()}@aquadock.invalid`;
+  const kriterien = {} as StandortanalyseForm["kriterien"];
+  for (const criterion of standortKriterien) {
+    const key = criterion.id as KriterienKey;
+    const raw = values.kriterien[key];
+    if (criterion.type === "info") {
+      (kriterien as Record<string, number | string>)[key] =
+        typeof raw === "string" && raw.trim() !== "" ? raw : (criterion.options[0]?.label ?? "See");
+      continue;
+    }
+    (kriterien as Record<string, number | string>)[key] = typeof raw === "number" ? raw : 1;
+  }
 
   return {
     ...values,
@@ -170,6 +236,7 @@ function toPersistableDraftForm(values: StandortanalyseForm): StandortanalyseFor
       land: values.standort.land.trim().length > 0 ? values.standort.land : "DE",
       datum: values.standort.datum.trim().length > 0 ? values.standort.datum : now.toISOString().slice(0, 10),
     },
+    kriterien,
   };
 }
 
@@ -327,6 +394,64 @@ function AnalysisLoadingOverlay({ mode }: { mode: WizardMode }) {
   );
 }
 
+function LegacyStyleScoreGauge({
+  value,
+  max,
+  recommendationLabel,
+  recommendationTone,
+}: {
+  value: number;
+  max: number;
+  recommendationLabel: string;
+  recommendationTone: "green" | "yellow" | "red";
+}) {
+  const safeMax = Math.max(1, max);
+  const ratio = Math.min(1, Math.max(0, value / safeMax));
+  const angle = Math.PI - ratio * Math.PI;
+  const centerX = 130;
+  const centerY = 120;
+  const _radius = 92;
+  const needleLength = 70;
+  const needleX = centerX + needleLength * Math.cos(angle);
+  const needleY = centerY + needleLength * Math.sin(angle);
+
+  const recommendationColor =
+    recommendationTone === "green" ? "text-teal-600 dark:text-teal-400" : recommendationTone === "yellow" ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400";
+
+  return (
+    <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-3 rounded-2xl border bg-muted/10 px-4 py-6">
+      <svg
+        viewBox="0 0 260 165"
+        className="h-[170px] w-full"
+        role="img"
+        aria-label={`Gesamtbewertung: ${value} von ${max} Punkten`}
+      >
+        <title>Gesamtbewertung</title>
+        <defs>
+          <linearGradient id="scoreGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#dc2626" />
+            <stop offset="50%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#16a34a" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M 38 120 A 92 92 0 0 1 222 120"
+          fill="none"
+          stroke="url(#scoreGaugeGradient)"
+          strokeWidth="16"
+          strokeLinecap="round"
+        />
+        <line x1={centerX} y1={centerY} x2={needleX} y2={needleY} stroke="#111827" strokeWidth="3" strokeLinecap="round" />
+        <circle cx={centerX} cy={centerY} r="5.5" fill="#111827" />
+      </svg>
+      <p className="text-4xl font-semibold text-primary">{value} / {max} Punkte</p>
+      <p className={cn("text-center text-sm font-medium", recommendationColor)}>
+        {RECOMMENDATION_DETAIL_COPY[recommendationLabel] ?? recommendationLabel}
+      </p>
+    </div>
+  );
+}
+
 const GUIDING_QUESTIONS = [
   "Ist der Standort generell für eine Station geeignet?",
   "Welche Faktoren müssen bei einer Realisierung besonders beachtet werden?",
@@ -423,6 +548,9 @@ export function StandortanalyseWizard({
     }
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }, [shareRecipientEmail]);
+  const recommendationCard: RecommendationCardCopy = useMemo(() => {
+    return RECOMMENDATION_CARD_COPY[currentScore.recommendation.label] ?? DEFAULT_RECOMMENDATION_CARD;
+  }, [currentScore.recommendation.label]);
 
   useEffect(() => {
     if (shareRecipientTouched) {
@@ -1586,23 +1714,6 @@ export function StandortanalyseWizard({
                   </div>
                 </section>
 
-                <FormField
-                  control={form.control as Control<StandortanalyseForm>}
-                  name="notizen"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notizen</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Zusätzliche Hinweise, Risiken und Annahmen"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </CardContent>
               <CardFooter className="hidden sm:flex sm:justify-end">
                 <Button type="button" onClick={handleNextFromStep1} className="w-full sm:w-auto">
@@ -1616,7 +1727,9 @@ export function StandortanalyseWizard({
             <Card>
               <CardHeader>
                 <CardTitle>Standortkriterien</CardTitle>
-                <CardDescription>Alle Kriterien inkl. Tooltips bewerten. Unbekannt zählt immer 1 Punkt.</CardDescription>
+                <CardDescription>
+                  Bewerten Sie alle Kriterien sorgfältig und nutzen Sie die Tooltips als fachliche Orientierung.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -1650,7 +1763,7 @@ export function StandortanalyseWizard({
                                 });
                                 field.onChange(criterion.type === "info" ? value : Number.parseInt(value, 10));
                               }}
-                              value={String(field.value)}
+                              value={field.value == null ? undefined : String(field.value)}
                             >
                               <FormControl>
                                 <SelectTrigger className="w-full">
@@ -1676,7 +1789,7 @@ export function StandortanalyseWizard({
                     ))}
                 </div>
                 <div className="space-y-4">
-                  <h3 className="font-medium text-primary">Optionale Kriterien</h3>
+                  <h3 className="font-medium text-primary">Erweiterte Kriterien</h3>
                   {standortKriterien
                     .filter((criterion) => criterion.type === "optional")
                     .map((criterion) => (
@@ -1706,7 +1819,7 @@ export function StandortanalyseWizard({
                                 });
                                 field.onChange(Number.parseInt(value, 10));
                               }}
-                              value={String(field.value)}
+                              value={field.value == null ? undefined : String(field.value)}
                             >
                               <FormControl>
                                 <SelectTrigger className="w-full">
@@ -1726,6 +1839,25 @@ export function StandortanalyseWizard({
                         )}
                       />
                     ))}
+                </div>
+                <div className="rounded-xl border bg-muted/10 p-4">
+                  <FormField
+                    control={form.control as Control<StandortanalyseForm>}
+                    name="notizen"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notizen / Bemerkungen</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Hier können Sie zusätzliche Informationen, Besonderheiten oder Anmerkungen zum Standort eintragen..."
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </CardContent>
               <CardFooter className="hidden sm:flex sm:justify-between">
@@ -1912,35 +2044,36 @@ export function StandortanalyseWizard({
                   <CardTitle>Dashboard</CardTitle>
                   <CardDescription>Gesamtbewertung, Empfehlung und Kriterienstati.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-6 lg:grid-cols-2">
-                  <ChartContainer
-                    config={{ score: { label: "Score", color: "var(--chart-1)" } }}
-                    className="mx-auto h-[260px] w-full max-w-[360px]"
-                  >
-                    <RadialBarChart
-                      innerRadius={80}
-                      outerRadius={120}
-                      data={[{ name: "score", value: currentScore.totalPercent, fill: "var(--color-score)" }]}
-                      startAngle={180}
-                      endAngle={0}
-                    >
-                      <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                      <RadialBar dataKey="value" cornerRadius={10} />
-                      <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                    </RadialBarChart>
-                  </ChartContainer>
-
-                  <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+                <CardContent className="space-y-4">
+                  <LegacyStyleScoreGauge
+                    value={currentScore.totalPoints}
+                    max={currentScore.maxPoints}
+                    recommendationLabel={currentScore.recommendation.label}
+                    recommendationTone={currentScore.recommendation.tone}
+                  />
+                  <div className="flex flex-wrap items-center justify-center gap-2">
                     <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
                       {currentScore.recommendation.label}
                     </Badge>
-                    {analysisId ? <p className="text-xs text-muted-foreground">Analyse-ID: {analysisId}</p> : null}
-                    <p className="text-2xl font-semibold text-primary">
-                      {currentScore.totalPoints} / {currentScore.maxPoints} Punkte
-                    </p>
-                    <p className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       Unbekannt markierte Kriterien: {currentScore.unknownCount}
+                    </span>
+                    {analysisId ? <span className="text-xs text-muted-foreground">Analyse-ID: {analysisId}</span> : null}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Aquadock Empfehlung</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className={cn("rounded-xl border px-4 py-3", recommendationCard.boxClass)}>
+                    <p className="flex items-center gap-2 text-xl font-semibold text-primary">
+                      <span className={cn("h-3.5 w-3.5 rounded-full", recommendationCard.dotClass)} />
+                      {recommendationCard.title}
                     </p>
+                    <p className="mt-2 text-base text-muted-foreground">{recommendationCard.text}</p>
                   </div>
                 </CardContent>
               </Card>

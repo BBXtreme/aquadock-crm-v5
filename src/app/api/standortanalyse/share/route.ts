@@ -59,7 +59,7 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   const url = new URL(request.url);
@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: analysisError?.message ?? "Analyse nicht gefunden" }, { status: 404 });
   }
   if (analysis.user_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Nicht erlaubt" }, { status: 403 });
   }
 
   const { data: link, error: linkError } = await admin
@@ -118,21 +118,21 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   let rawBody: unknown;
   try {
     rawBody = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültiger JSON-Body" }, { status: 400 });
   }
 
   const parsed = createShareSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error: "Invalid request body",
+        error: "Ungültiger Request-Body",
         issues: parsed.error.flatten(),
       },
       { status: 400 },
@@ -157,11 +157,14 @@ export async function POST(request: Request) {
       .single();
 
     if (draftError || draftInsert == null) {
-      return NextResponse.json({ error: draftError?.message ?? "Draft konnte nicht erstellt werden" }, { status: 500 });
+      return NextResponse.json(
+        { error: draftError?.message ?? "Entwurf konnte nicht erstellt werden" },
+        { status: 500 },
+      );
     }
     const draftAnalysisId = draftInsert.id;
     if (draftAnalysisId == null) {
-      return NextResponse.json({ error: "Draft-ID fehlt" }, { status: 500 });
+      return NextResponse.json({ error: "Entwurfs-ID fehlt" }, { status: 500 });
     }
     analysisId = draftAnalysisId;
 
@@ -187,7 +190,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: analysisError?.message ?? "Analyse nicht gefunden" }, { status: 404 });
   }
   if (analysis.user_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "Nicht erlaubt" }, { status: 403 });
   }
 
   if (parsed.data.revokeOlderLinks) {

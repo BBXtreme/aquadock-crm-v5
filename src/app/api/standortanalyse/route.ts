@@ -207,7 +207,7 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   const url = new URL(request.url);
@@ -241,21 +241,21 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || user == null) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Nicht autorisiert" }, { status: 401 });
   }
 
   let rawBody: unknown;
   try {
     rawBody = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültiger JSON-Body" }, { status: 400 });
   }
 
   const parsed = upsertStandortanalyseSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error: "Invalid request body",
+        error: "Ungültiger Request-Body",
         issues: parsed.error.flatten(),
       },
       { status: 400 },
@@ -277,7 +277,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError || inserted == null) {
-      return NextResponse.json({ error: insertError?.message ?? "Insert failed" }, { status: 500 });
+      return NextResponse.json({ error: insertError?.message ?? "Analyse konnte nicht erstellt werden" }, { status: 500 });
     }
     analysisId = inserted.id;
   } else {

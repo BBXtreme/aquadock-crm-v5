@@ -30,7 +30,7 @@ export const standortKriterien = [
     label: "Art des Gewässers",
     type: "info",
     maxPoints: 0,
-    tooltip: "Nur zur Einordnung, ohne Punktebewertung.",
+    tooltip: "Zusatzinfo: Dieser Punkt fließt nicht in die Bewertung ein.",
     options: wassertypOptions.map((option) => ({
       label: option.value,
       points: 0,
@@ -41,7 +41,8 @@ export const standortKriterien = [
     label: "Standortfrequentierung",
     type: "main",
     maxPoints: 25,
-    tooltip: "Regelmäßige Besucherzahl am Standort.",
+    tooltip:
+      "Gibt an, wie viele Menschen den Standort regelmäßig passieren oder sich dort aufhalten.",
     options: [
       { label: "Sehr hoch", points: 25 },
       { label: "Hoch", points: 18 },
@@ -55,7 +56,7 @@ export const standortKriterien = [
     label: "Gastronomie",
     type: "main",
     maxPoints: 10,
-    tooltip: "Restaurants, Bars und Bewirtung in der Nähe.",
+    tooltip: "Bewertet, ob sich Restaurants oder Bars in fußläufiger Nähe befinden.",
     options: [
       { label: "Sehr gut", points: 10 },
       { label: "Gut", points: 6 },
@@ -69,7 +70,8 @@ export const standortKriterien = [
     label: "Bekanntheit",
     type: "main",
     maxPoints: 15,
-    tooltip: "Bekanntheit als Ausflugs- oder Freizeitstandort.",
+    tooltip:
+      "Beschreibt, wie bekannt der Standort über die unmittelbare Region hinaus ist.",
     options: [
       { label: "Überregional", points: 15 },
       { label: "Regional", points: 10 },
@@ -83,7 +85,8 @@ export const standortKriterien = [
     label: "Zugänglichkeit",
     type: "main",
     maxPoints: 10,
-    tooltip: "Erreichbarkeit mit Auto, ÖPNV und zu Fuß.",
+    tooltip:
+      "Beurteilt, wie einfach der Standort erreichbar und auffindbar ist (z.B. Strassenabindung, ÖPNV).",
     options: [
       { label: "Perfekt erreichbar", points: 10 },
       { label: "Gut erreichbar", points: 7 },
@@ -97,7 +100,7 @@ export const standortKriterien = [
     label: "Saisonlänge",
     type: "main",
     maxPoints: 10,
-    tooltip: "Nutzbare Monate pro Jahr.",
+    tooltip: "Gibt an, wie viele Monate im Jahr der Standort realistisch nutzbar ist.",
     options: [
       { label: "7 Monate oder mehr", points: 10 },
       { label: "5 bis 6 Monate", points: 7 },
@@ -111,7 +114,8 @@ export const standortKriterien = [
     label: "Wassertemperatur",
     type: "main",
     maxPoints: 5,
-    tooltip: "Durchschnittliche Wassertemperatur in der Saison.",
+    tooltip:
+      "Bewertet die durchschnittliche Wassertemperatur während der Saison.",
     options: [
       { label: "21°C oder mehr", points: 5 },
       { label: "18 bis 20°C", points: 3 },
@@ -124,7 +128,7 @@ export const standortKriterien = [
     label: "Sonnenstunden",
     type: "main",
     maxPoints: 5,
-    tooltip: "Jährliche Sonnenstunden für Wetterattraktivität.",
+    tooltip: "Zeigt, wie wetterbegünstigt der Standort ist.",
     options: [
       { label: "1900 Stunden oder mehr", points: 5 },
       { label: "1700 bis 1899 Stunden", points: 3 },
@@ -137,7 +141,8 @@ export const standortKriterien = [
     label: "Einwohner",
     type: "main",
     maxPoints: 10,
-    tooltip: "Einwohner im relevanten Einzugsgebiet.",
+    tooltip:
+      "Beschreibt die Anzahl potenzieller Nutzer im Umkreis von ca. 10 km.",
     options: [
       { label: "100.000 oder mehr", points: 10 },
       { label: "30.000 bis 99.999", points: 7 },
@@ -151,7 +156,7 @@ export const standortKriterien = [
     label: "Besucherstatistiken",
     type: "main",
     maxPoints: 5,
-    tooltip: "Verfügbarkeit belastbarer Besucherdaten.",
+    tooltip: "Gibt an, ob belastbare Zahlen zur Besucherfrequenz vorliegen.",
     options: [
       { label: "Konkrete Zahlen vorhanden", points: 5 },
       { label: "Teilweise vorhanden", points: 3 },
@@ -164,7 +169,8 @@ export const standortKriterien = [
     label: "Attraktivität Wasserstraße/Standort",
     type: "main",
     maxPoints: 12,
-    tooltip: "Visuelle und funktionale Attraktivität des Standorts.",
+    tooltip:
+      "Bewertet die visuelle und ästhetische Attraktivität des Standortes sowie die Wasserqualität.",
     options: [
       { label: "Sehr hoch", points: 12 },
       { label: "Hoch", points: 9 },
@@ -179,7 +185,7 @@ export const standortKriterien = [
     label: "Wettbewerb",
     type: "optional",
     maxPoints: 5,
-    tooltip: "Wettbewerbsdruck im Umfeld.",
+    tooltip: "Bewertet, wie viele vergleichbare Angebote im Umfeld existieren.",
     options: [
       { label: "Keine/Schwach", points: 5 },
       { label: "Wenig", points: 3 },
@@ -192,7 +198,7 @@ export const standortKriterien = [
     label: "Wasserzugang",
     type: "optional",
     maxPoints: 5,
-    tooltip: "Qualität und Sicherheit des Wasserzugangs.",
+    tooltip: "Beurteilt, wie einfach und sicher der Einstieg ins Wasser ist.",
     options: [
       { label: "Sehr gut", points: 5 },
       { label: "Gut", points: 3 },
@@ -205,7 +211,8 @@ export const standortKriterien = [
     label: "Genehmigungslage",
     type: "optional",
     maxPoints: 5,
-    tooltip: "Rechtliche Machbarkeit am Standort.",
+    tooltip:
+      "Beschreibt die rechtlichen Voraussetzungen für den Betrieb am Standort.",
     options: [
       { label: "Einfach", points: 5 },
       { label: "Moderat", points: 3 },
@@ -218,7 +225,8 @@ export const standortKriterien = [
     label: "Sichtbarkeit",
     type: "optional",
     maxPoints: 5,
-    tooltip: "Präsenz und Wahrnehmbarkeit im öffentlichen Raum.",
+    tooltip:
+      "Bewertet, wie gut der Standort im öffentlichen Raum wahrgenommen wird.",
     options: [
       { label: "Sehr hoch", points: 5 },
       { label: "Gut", points: 3 },
@@ -231,7 +239,8 @@ export const standortKriterien = [
     label: "Erweiterbarkeit",
     type: "optional",
     maxPoints: 3,
-    tooltip: "Potenzial für Ausbau und Skalierung.",
+    tooltip:
+      "Gibt an, ob der Standort künftig ausgebaut oder skaliert werden kann.",
     options: [
       { label: "Sehr gut", points: 3 },
       { label: "Bedingt", points: 2 },
@@ -244,7 +253,8 @@ export const standortKriterien = [
     label: "Lokaler Partner",
     type: "optional",
     maxPoints: 2,
-    tooltip: "Verfügbarkeit lokaler Unterstützungspartner.",
+    tooltip:
+      "Beschreibt, ob vor Ort ein Betreiber oder Kooperationspartner vorhanden ist.",
     options: [
       { label: "Aktiv vorhanden", points: 2 },
       { label: "Nicht vorhanden", points: 0 },
@@ -256,7 +266,8 @@ export const standortKriterien = [
     label: "Marketingpotenzial",
     type: "optional",
     maxPoints: 3,
-    tooltip: "Potenzial für lokale und digitale Vermarktung.",
+    tooltip:
+      "Bewertet, wie gut sich der Standort für Marketing und Social Media eignet.",
     options: [
       { label: "Sehr hoch", points: 3 },
       { label: "Gut", points: 2 },

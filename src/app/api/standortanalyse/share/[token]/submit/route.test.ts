@@ -370,7 +370,7 @@ describe("POST /api/standortanalyse/share/[token]/submit", () => {
     );
     const body = await response.json();
     expect(response.status).toBe(400);
-    expect(body.error).toBe("Invalid request body");
+    expect(body.error).toBe("Ungültiger Request-Body");
   });
 
   it("returns 404 when share link is missing", async () => {

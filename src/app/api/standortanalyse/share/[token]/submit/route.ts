@@ -197,7 +197,7 @@ export async function POST(
 
   if (!rate.allowed) {
     return NextResponse.json(
-      { error: "Too many requests. Please retry later." },
+      { error: "Zu viele Anfragen. Bitte später erneut versuchen." },
       {
         status: 429,
         headers: { "Retry-After": String(rate.retryAfterSeconds) },
@@ -209,14 +209,14 @@ export async function POST(
   try {
     rawBody = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json({ error: "Ungültiger JSON-Body" }, { status: 400 });
   }
 
   const parsed = submitSharedAnalysisSchema.safeParse(rawBody);
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error: "Invalid request body",
+        error: "Ungültiger Request-Body",
         issues: parsed.error.flatten(),
       },
       { status: 400 },

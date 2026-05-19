@@ -213,7 +213,7 @@ describe("GET /api/standortanalyse", () => {
 
     const res = await GET(makeGetRequest());
     expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({ error: "Unauthorized" });
+    expect(await res.json()).toEqual({ error: "Nicht autorisiert" });
   });
 
   it("returns analyses for authenticated user", async () => {
@@ -315,7 +315,7 @@ describe("POST /api/standortanalyse", () => {
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: "Invalid JSON body" });
+    expect(await res.json()).toEqual({ error: "Ungültiger JSON-Body" });
   });
 
   it("returns 400 when form data fails validation", async () => {
@@ -335,7 +335,7 @@ describe("POST /api/standortanalyse", () => {
     );
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe("Invalid request body");
+    expect(body.error).toBe("Ungültiger Request-Body");
     expect(body.issues).toBeDefined();
   });
 

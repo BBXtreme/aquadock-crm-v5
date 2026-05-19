@@ -341,7 +341,7 @@ describe("POST /api/standortanalyse/share", () => {
 
     expect(res.status).toBe(400);
     const body = await res.json();
-    expect(body.error).toBe("Invalid request body");
+    expect(body.error).toBe("Ungültiger Request-Body");
   });
 
   it("rejects placeholder invite email addresses", async () => {
