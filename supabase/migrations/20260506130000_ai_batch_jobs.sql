@@ -24,15 +24,11 @@ CREATE TABLE IF NOT EXISTS public.ai_batch_jobs (
     )
   )
 );
-
 CREATE INDEX IF NOT EXISTS idx_ai_batch_jobs_user_created ON public.ai_batch_jobs (user_id, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_ai_batch_jobs_pending ON public.ai_batch_jobs (status)
 WHERE
   status = ANY (ARRAY['queued'::text, 'submitted'::text, 'processing'::text]);
-
 COMMENT ON TABLE public.ai_batch_jobs IS 'Background AI jobs (xAI Batch, future batch re-embed). Inserts/updates from workers use service role.';
-
 CREATE OR REPLACE FUNCTION public.set_ai_batch_jobs_updated_at ()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -42,30 +38,21 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_ai_batch_jobs_updated_at ON public.ai_batch_jobs;
-
 CREATE TRIGGER trg_ai_batch_jobs_updated_at
 BEFORE UPDATE ON public.ai_batch_jobs
 FOR EACH ROW
 EXECUTE FUNCTION public.set_ai_batch_jobs_updated_at ();
-
 ALTER TABLE public.ai_batch_jobs ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS ai_batch_jobs_select_own ON public.ai_batch_jobs;
-
 CREATE POLICY ai_batch_jobs_select_own ON public.ai_batch_jobs
 FOR SELECT TO authenticated
 USING (user_id = auth.uid ());
-
 DROP POLICY IF EXISTS ai_batch_jobs_insert_own ON public.ai_batch_jobs;
-
 CREATE POLICY ai_batch_jobs_insert_own ON public.ai_batch_jobs
 FOR INSERT TO authenticated
 WITH CHECK (user_id = auth.uid ());
-
 DROP POLICY IF EXISTS ai_batch_jobs_update_cancel ON public.ai_batch_jobs;
-
 -- Users may only cancel jobs that are still queued or submitted (transition to cancelled).
 CREATE POLICY ai_batch_jobs_update_cancel ON public.ai_batch_jobs
 FOR UPDATE TO authenticated

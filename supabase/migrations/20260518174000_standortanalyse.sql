@@ -1,5 +1,4 @@
 BEGIN;
-
 CREATE TABLE IF NOT EXISTS public.standortanalysen (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
@@ -27,7 +26,6 @@ CREATE TABLE IF NOT EXISTS public.standortanalysen (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS public.standortanalyse_scores (
   analysis_id uuid NOT NULL REFERENCES public.standortanalysen (id) ON DELETE CASCADE,
   criterion_key text NOT NULL,
@@ -39,7 +37,6 @@ CREATE TABLE IF NOT EXISTS public.standortanalyse_scores (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (analysis_id, criterion_key)
 );
-
 CREATE TABLE IF NOT EXISTS public.standortanalyse_share_links (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   analysis_id uuid NOT NULL REFERENCES public.standortanalysen (id) ON DELETE CASCADE,
@@ -53,16 +50,12 @@ CREATE TABLE IF NOT EXISTS public.standortanalyse_share_links (
   created_at timestamptz NOT NULL DEFAULT now(),
   last_accessed_at timestamptz NULL
 );
-
 CREATE INDEX IF NOT EXISTS idx_standortanalysen_user_status
   ON public.standortanalysen (user_id, status, created_at DESC);
-
 CREATE INDEX IF NOT EXISTS idx_standortanalyse_scores_analysis
   ON public.standortanalyse_scores (analysis_id);
-
 CREATE INDEX IF NOT EXISTS idx_standortanalyse_share_links_analysis
   ON public.standortanalyse_share_links (analysis_id, is_active, expires_at DESC);
-
 CREATE OR REPLACE FUNCTION public.set_standortanalysen_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -72,38 +65,31 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS trg_standortanalysen_updated_at ON public.standortanalysen;
 CREATE TRIGGER trg_standortanalysen_updated_at
 BEFORE UPDATE ON public.standortanalysen
 FOR EACH ROW
 EXECUTE FUNCTION public.set_standortanalysen_updated_at();
-
 ALTER TABLE public.standortanalysen ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.standortanalyse_scores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.standortanalyse_share_links ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS standortanalysen_select_owner ON public.standortanalysen;
 CREATE POLICY standortanalysen_select_owner ON public.standortanalysen
 FOR SELECT TO authenticated
 USING (user_id = auth.uid() OR public.user_has_role('admin'));
-
 DROP POLICY IF EXISTS standortanalysen_insert_owner ON public.standortanalysen;
 CREATE POLICY standortanalysen_insert_owner ON public.standortanalysen
 FOR INSERT TO authenticated
 WITH CHECK (user_id = auth.uid() OR public.user_has_role('admin'));
-
 DROP POLICY IF EXISTS standortanalysen_update_owner ON public.standortanalysen;
 CREATE POLICY standortanalysen_update_owner ON public.standortanalysen
 FOR UPDATE TO authenticated
 USING (user_id = auth.uid() OR public.user_has_role('admin'))
 WITH CHECK (user_id = auth.uid() OR public.user_has_role('admin'));
-
 DROP POLICY IF EXISTS standortanalysen_delete_owner ON public.standortanalysen;
 CREATE POLICY standortanalysen_delete_owner ON public.standortanalysen
 FOR DELETE TO authenticated
 USING (user_id = auth.uid() OR public.user_has_role('admin'));
-
 DROP POLICY IF EXISTS standortanalyse_scores_select_owner ON public.standortanalyse_scores;
 CREATE POLICY standortanalyse_scores_select_owner ON public.standortanalyse_scores
 FOR SELECT TO authenticated
@@ -115,7 +101,6 @@ USING (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_scores_insert_owner ON public.standortanalyse_scores;
 CREATE POLICY standortanalyse_scores_insert_owner ON public.standortanalyse_scores
 FOR INSERT TO authenticated
@@ -127,7 +112,6 @@ WITH CHECK (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_scores_update_owner ON public.standortanalyse_scores;
 CREATE POLICY standortanalyse_scores_update_owner ON public.standortanalyse_scores
 FOR UPDATE TO authenticated
@@ -147,7 +131,6 @@ WITH CHECK (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_scores_delete_owner ON public.standortanalyse_scores;
 CREATE POLICY standortanalyse_scores_delete_owner ON public.standortanalyse_scores
 FOR DELETE TO authenticated
@@ -159,7 +142,6 @@ USING (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_share_links_select_owner ON public.standortanalyse_share_links;
 CREATE POLICY standortanalyse_share_links_select_owner ON public.standortanalyse_share_links
 FOR SELECT TO authenticated
@@ -171,7 +153,6 @@ USING (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_share_links_insert_owner ON public.standortanalyse_share_links;
 CREATE POLICY standortanalyse_share_links_insert_owner ON public.standortanalyse_share_links
 FOR INSERT TO authenticated
@@ -183,7 +164,6 @@ WITH CHECK (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_share_links_update_owner ON public.standortanalyse_share_links;
 CREATE POLICY standortanalyse_share_links_update_owner ON public.standortanalyse_share_links
 FOR UPDATE TO authenticated
@@ -203,7 +183,6 @@ WITH CHECK (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 DROP POLICY IF EXISTS standortanalyse_share_links_delete_owner ON public.standortanalyse_share_links;
 CREATE POLICY standortanalyse_share_links_delete_owner ON public.standortanalyse_share_links
 FOR DELETE TO authenticated
@@ -215,5 +194,4 @@ USING (
       AND (sa.user_id = auth.uid() OR public.user_has_role('admin'))
   )
 );
-
 COMMIT;

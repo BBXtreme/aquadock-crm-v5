@@ -17,16 +17,13 @@ CREATE TABLE IF NOT EXISTS ai_available_models (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
-
 -- RLS: only app admins can manage the registry
 ALTER TABLE ai_available_models ENABLE ROW LEVEL SECURITY;
-
 DROP POLICY IF EXISTS "ai_available_models_admin_all" ON ai_available_models;
 CREATE POLICY "ai_available_models_admin_all" ON ai_available_models
   FOR ALL
   USING (is_app_admin())
   WITH CHECK (is_app_admin());
-
 -- updated_at trigger (reuse existing pattern if present)
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER AS $$
@@ -35,11 +32,9 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 DROP TRIGGER IF EXISTS ai_available_models_set_updated_at ON ai_available_models;
 CREATE TRIGGER ai_available_models_set_updated_at
   BEFORE UPDATE ON ai_available_models
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-
 -- Helpful index for enabled models
 CREATE INDEX IF NOT EXISTS idx_ai_available_models_enabled ON ai_available_models (is_enabled) WHERE is_enabled = true;
