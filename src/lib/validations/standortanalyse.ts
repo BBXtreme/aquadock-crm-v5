@@ -17,7 +17,12 @@ function parseNumericEnum(values: readonly number[], message: string) {
       }
       return value;
     },
-    z.number().refine((value) => values.includes(value), message),
+    z
+      .number({
+        required_error: "Bitte eine Auswahl treffen",
+        invalid_type_error: "Bitte eine Auswahl treffen",
+      })
+      .refine((value) => values.includes(value), message),
   );
 }
 
@@ -98,6 +103,7 @@ const kriterienSchema = z
   .object({
     gewaesserart: z.enum(WASSERTYP_ALLOWED_VALUES, {
       required_error: "Art des Gewässers ist erforderlich",
+      invalid_type_error: "Art des Gewässers ist erforderlich",
     }),
     standortfrequentierung: parseNumericEnum([25, 18, 10, 0, 1], "Ungültige Frequentierung"),
     gastronomie: parseNumericEnum([10, 6, 3, 0, 1], "Ungültige Gastronomie"),

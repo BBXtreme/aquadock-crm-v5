@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  BarChart3,
   Check,
   ChevronDown,
   CircleHelp,
@@ -19,14 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, DefaultValues } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 import { toast } from "sonner";
 
 import StandortanalysenTable, {
@@ -36,11 +28,12 @@ import StandortanalysenTable, {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,10 +50,16 @@ type KriterienKey = keyof StandortanalyseForm["kriterien"] & string;
 type KriterienPath = `kriterien.${KriterienKey}`;
 
 const CRITERIA_COLORS: Record<string, string> = {
-  Gut: "#16a34a",
-  Mittel: "#f59e0b",
-  Kritisch: "#dc2626",
-  Unbekannt: "#6b7280",
+  Gut: "var(--score-success)",
+  Mittel: "var(--score-warning)",
+  Kritisch: "var(--score-critical)",
+  Unbekannt: "var(--score-unknown)",
+};
+
+const RECOMMENDATION_TONE_COLOR: Record<"green" | "yellow" | "red", string> = {
+  green: "var(--score-success)",
+  yellow: "var(--score-warning)",
+  red: "var(--score-critical)",
 };
 
 const scoreBadgeTone: Record<string, string> = {
@@ -77,54 +76,37 @@ const RECOMMENDATION_DETAIL_COPY: Record<string, string> = {
   Unsicher: "Unsicher: alternative Standorte suchen",
 };
 
-const RECOMMENDATION_CARD_COPY: Record<
-  string,
-  { title: string; text: string; boxClass: string; dotClass: string }
-> = {
+type RecommendationCardCopy = {
+  title: string;
+  text: string;
+};
+
+const RECOMMENDATION_CARD_COPY: Record<string, RecommendationCardCopy> = {
   "Premium-Standort": {
     title: "Premium Standort",
     text: "Sehr gute Voraussetzungen für einen erfolgreichen Betrieb. Hohe Nachfrage, gute Lage und klare Skalierungsmöglichkeiten ermöglichen einen sofortigen Start mit attraktivem Ertragspotenzial.",
-    boxClass: "border-emerald-300 bg-emerald-50/80 dark:border-emerald-500/40 dark:bg-emerald-500/10",
-    dotClass: "bg-emerald-500",
   },
   "Sehr guter Standort": {
     title: "Sehr guter Standort",
     text: "Solide Basis mit erkennbarem Wachstumspotenzial. Mit gezielten Optimierungen kann hier ein wirtschaftlich sehr erfolgreicher Betrieb aufgebaut werden.",
-    boxClass: "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10",
-    dotClass: "bg-amber-500",
   },
   "Guter Standort": {
     title: "Guter Standort",
     text: "Grundsätzlich geeigneter Standort mit Optimierungsbedarf. Durch gezielte Maßnahmen lässt sich die Attraktivität und Wirtschaftlichkeit deutlich steigern.",
-    boxClass: "border-amber-300 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-500/10",
-    dotClass: "bg-amber-500",
   },
   "Bedingt geeignet": {
     title: "Bedingt geeigneter Standort",
     text: "Der Standort ist nutzbar, erfordert jedoch ein durchdachtes Konzept und aktive Vermarktung, um erfolgreich betrieben zu werden.",
-    boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
-    dotClass: "bg-rose-500",
   },
   Unsicher: {
     title: "Unsicher: alternative Standorte suchen",
     text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
-    boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
-    dotClass: "bg-rose-500",
   },
-};
-
-type RecommendationCardCopy = {
-  title: string;
-  text: string;
-  boxClass: string;
-  dotClass: string;
 };
 
 const DEFAULT_RECOMMENDATION_CARD: RecommendationCardCopy = {
   title: "Unsicher: alternative Standorte suchen",
   text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
-  boxClass: "border-rose-300 bg-rose-50/80 dark:border-rose-500/40 dark:bg-rose-500/10",
-  dotClass: "bg-rose-500",
 };
 
 const stepTriggerFields = {
@@ -394,7 +376,7 @@ function AnalysisLoadingOverlay({ mode }: { mode: WizardMode }) {
   );
 }
 
-function LegacyStyleScoreGauge({
+function ScoreRingGauge({
   value,
   max,
   recommendationLabel,
@@ -407,47 +389,112 @@ function LegacyStyleScoreGauge({
 }) {
   const safeMax = Math.max(1, max);
   const ratio = Math.min(1, Math.max(0, value / safeMax));
-  const angle = Math.PI - ratio * Math.PI;
-  const centerX = 130;
-  const centerY = 120;
-  const _radius = 92;
-  const needleLength = 70;
-  const needleX = centerX + needleLength * Math.cos(angle);
-  const needleY = centerY + needleLength * Math.sin(angle);
+  const percent = Math.round(ratio * 100);
+  const ringColor = RECOMMENDATION_TONE_COLOR[recommendationTone];
 
-  const recommendationColor =
-    recommendationTone === "green" ? "text-teal-600 dark:text-teal-400" : recommendationTone === "yellow" ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400";
+  // Tone is communicated by the ring color + caption pill, never duplicated as
+  // a rainbow gradient. Single accent → single signal.
+  const chartData = [{ name: "score", value: percent, fill: ringColor }];
 
   return (
-    <div className="mx-auto flex w-full max-w-[360px] flex-col items-center gap-3 rounded-2xl border bg-muted/10 px-4 py-6">
-      <svg
-        viewBox="0 0 260 165"
-        className="h-[170px] w-full"
-        role="img"
-        aria-label={`Gesamtbewertung: ${value} von ${max} Punkten`}
-      >
-        <title>Gesamtbewertung</title>
-        <defs>
-          <linearGradient id="scoreGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#dc2626" />
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#16a34a" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M 38 120 A 92 92 0 0 1 222 120"
-          fill="none"
-          stroke="url(#scoreGaugeGradient)"
-          strokeWidth="16"
-          strokeLinecap="round"
-        />
-        <line x1={centerX} y1={centerY} x2={needleX} y2={needleY} stroke="#111827" strokeWidth="3" strokeLinecap="round" />
-        <circle cx={centerX} cy={centerY} r="5.5" fill="#111827" />
-      </svg>
-      <p className="text-4xl font-semibold text-primary">{value} / {max} Punkte</p>
-      <p className={cn("text-center text-sm font-medium", recommendationColor)}>
+    <div className="mx-auto flex w-full max-w-[320px] flex-col items-center">
+      <div className="relative aspect-square w-full">
+        <ChartContainer
+          config={{ score: { label: "Score" } }}
+          className="aspect-square w-full"
+          aria-hidden
+        >
+          <RadialBarChart
+            data={chartData}
+            startAngle={90}
+            endAngle={-270}
+            innerRadius="78%"
+            outerRadius="100%"
+            barSize={18}
+          >
+            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
+            <RadialBar
+              dataKey="value"
+              cornerRadius={999}
+              background
+              isAnimationActive
+              animationDuration={650}
+              animationEasing="ease-out"
+            />
+          </RadialBarChart>
+        </ChartContainer>
+        <div
+          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
+          role="img"
+          aria-label={`Gesamtbewertung: ${value} von ${max} Punkten (${percent} Prozent)`}
+        >
+          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Standort-Score
+          </span>
+          <span className="mt-1 text-5xl font-semibold tracking-tight tabular-nums text-foreground">
+            {value}
+          </span>
+          <span className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+            / {max} Punkte · {percent}%
+          </span>
+        </div>
+      </div>
+      <p className="mt-4 text-center text-sm font-medium text-foreground">
         {RECOMMENDATION_DETAIL_COPY[recommendationLabel] ?? recommendationLabel}
       </p>
+    </div>
+  );
+}
+
+function RecommendationPanel({
+  title,
+  text,
+  tone,
+  unknownCount,
+  analysisId,
+}: {
+  title: string;
+  text: string;
+  tone: "green" | "yellow" | "red";
+  unknownCount: number;
+  analysisId: string | null;
+}) {
+  const accent = RECOMMENDATION_TONE_COLOR[tone];
+  return (
+    <div
+      className="rounded-2xl border p-5 sm:p-6"
+      style={{
+        // Tinted surface from the score palette — no shadow, no card-in-card.
+        backgroundColor: `color-mix(in oklch, ${accent} 8%, var(--card))`,
+        borderColor: `color-mix(in oklch, ${accent} 28%, transparent)`,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className="h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: accent }}
+        />
+        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Aquadock Empfehlung
+        </span>
+      </div>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+        {title}
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
+      <dl className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <dt>Unbekannt markierte Kriterien</dt>
+          <dd className="font-medium tabular-nums text-foreground">{unknownCount}</dd>
+        </div>
+        {analysisId ? (
+          <div className="flex items-center gap-1.5">
+            <dt>Analyse-ID</dt>
+            <dd className="font-mono text-[11px] text-foreground/80">{analysisId}</dd>
+          </div>
+        ) : null}
+      </dl>
     </div>
   );
 }
@@ -490,6 +537,10 @@ export function StandortanalyseWizard({
   const [analysisFilter, setAnalysisFilter] = useState<StandortanalyseListFilter>("all");
   const [publicLinkValid, setPublicLinkValid] = useState<boolean | null>(mode === "public" ? null : true);
   const [publicRequiresPassword, setPublicRequiresPassword] = useState(false);
+  const [publicPasswordVerified, setPublicPasswordVerified] = useState(false);
+  const [publicPasswordInput, setPublicPasswordInput] = useState("");
+  const [publicPasswordError, setPublicPasswordError] = useState<string | null>(null);
+  const [isVerifyingPublicPassword, setIsVerifyingPublicPassword] = useState(false);
   const [publicLinkMessage, setPublicLinkMessage] = useState<string | null>(null);
   const [touchedCriteria, setTouchedCriteria] = useState<Set<string>>(() => new Set());
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string | null>(null);
@@ -535,6 +586,8 @@ export function StandortanalyseWizard({
   const kontaktEmail = form.watch("kontakt.email");
   const kontaktVorname = form.watch("kontakt.vorname");
   const kontaktName = form.watch("kontakt.name");
+  const notizenValue = form.watch("notizen");
+  const trimmedNotizen = (notizenValue ?? "").trim();
   const currentScore = useMemo(() => calculateStandortScore(watchedKriterien), [watchedKriterien]);
   const evaluationByKey = useMemo(
     () => new Map(currentScore.criterionEvaluations.map((criterion) => [criterion.id, criterion])),
@@ -838,6 +891,38 @@ export function StandortanalyseWizard({
 
   const landOptions = useMemo(() => getStandortLandOptions("de"), []);
 
+  const handlePublicPasswordSubmit = async () => {
+    if (shareToken == null) {
+      return;
+    }
+    const trimmed = publicPasswordInput.trim();
+    if (trimmed === "") {
+      setPublicPasswordError("Bitte gib das Passwort ein.");
+      return;
+    }
+    setIsVerifyingPublicPassword(true);
+    setPublicPasswordError(null);
+    try {
+      const response = await fetch(`/api/standortanalyse/share/${shareToken}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: trimmed }),
+      });
+      const payload = (await response.json()) as { valid?: boolean; error?: string };
+      if (!response.ok || payload.valid !== true) {
+        setPublicPasswordError(payload.error ?? "Passwort konnte nicht überprüft werden.");
+        return;
+      }
+      setPublicSubmitPassword(trimmed);
+      setPublicPasswordVerified(true);
+      setPublicPasswordInput("");
+    } catch {
+      setPublicPasswordError("Passwort konnte nicht überprüft werden. Bitte erneut versuchen.");
+    } finally {
+      setIsVerifyingPublicPassword(false);
+    }
+  };
+
   const handleNextFromStep1 = async () => {
     const isValid = await form.trigger(stepTriggerFields[1]);
     if (isValid) {
@@ -859,8 +944,8 @@ export function StandortanalyseWizard({
 
   const handleSubmit = form.handleSubmit((data) => {
     const submit = async () => {
-      if (mode === "public" && publicRequiresPassword && publicSubmitPassword.trim() === "") {
-        toast.error("Bitte gib das Passwort ein, bevor Du die Daten sendest.");
+      if (mode === "public" && publicRequiresPassword && !publicPasswordVerified) {
+        toast.error("Passwort erforderlich. Bitte Seite neu laden und Passwort eingeben.");
         return;
       }
       setIsSubmittingAnalysis(true);
@@ -1148,6 +1233,71 @@ export function StandortanalyseWizard({
           <CardDescription>{publicLinkMessage ?? "Dieser Link ist nicht mehr gültig."}</CardDescription>
         </CardHeader>
       </Card>
+    );
+  }
+
+  if (mode === "public" && publicRequiresPassword && !publicPasswordVerified) {
+    return (
+      <div className="mx-auto w-full max-w-md">
+        <Card>
+          <CardHeader className="space-y-2">
+            <CardTitle className="flex items-center gap-2">
+              <LockKeyhole className="h-5 w-5 text-primary" />
+              Passwort erforderlich
+            </CardTitle>
+            <CardDescription>
+              Dieser Standortanalyse-Link ist passwortgeschützt. Gib das von AquaDock bereitgestellte
+              Passwort ein, um das Formular zu öffnen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handlePublicPasswordSubmit();
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="public-share-password">Passwort</Label>
+                <Input
+                  id="public-share-password"
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  value={publicPasswordInput}
+                  onChange={(event) => {
+                    setPublicPasswordInput(event.target.value);
+                    if (publicPasswordError != null) {
+                      setPublicPasswordError(null);
+                    }
+                  }}
+                  placeholder="Passwort eingeben"
+                  disabled={isVerifyingPublicPassword}
+                  aria-invalid={publicPasswordError != null}
+                  aria-describedby={publicPasswordError != null ? "public-share-password-error" : undefined}
+                />
+                {publicPasswordError != null ? (
+                  <p
+                    id="public-share-password-error"
+                    className="text-sm text-destructive"
+                    role="alert"
+                  >
+                    {publicPasswordError}
+                  </p>
+                ) : null}
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isVerifyingPublicPassword || publicPasswordInput.trim() === ""}
+              >
+                {isVerifyingPublicPassword ? "Wird geprüft..." : "Formular öffnen"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -1777,7 +1927,9 @@ export function StandortanalyseWizard({
                                     value={criterion.type === "info" ? option.label : String(option.points)}
                                   >
                                     {option.label}
-                                    {criterion.type === "info" ? "" : ` (${option.points} Punkte)`}
+                                    {criterion.type !== "info" && mode === "internal"
+                                      ? ` (${option.points} Punkte)`
+                                      : ""}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1829,7 +1981,8 @@ export function StandortanalyseWizard({
                               <SelectContent>
                                 {criterion.options.map((option) => (
                                   <SelectItem key={`${criterion.id}-${option.label}`} value={String(option.points)}>
-                                    {option.label} ({option.points} Punkte)
+                                    {option.label}
+                                    {mode === "internal" ? ` (${option.points} Punkte)` : ""}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -2002,25 +2155,6 @@ export function StandortanalyseWizard({
                   </div>
                 )}
 
-                {mode === "public" && publicRequiresPassword ? (
-                  <Card className="border-primary/20 bg-primary/5">
-                    <CardHeader>
-                      <CardTitle className="text-base">Passwort erforderlich</CardTitle>
-                      <CardDescription>
-                        Dieser Link ist passwortgeschuetzt. Gib das von AquaDock bereitgestellte Passwort ein, bevor Du
-                        Deine Angaben sendest.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Input
-                        type="password"
-                        value={publicSubmitPassword}
-                        onChange={(event) => setPublicSubmitPassword(event.target.value)}
-                        placeholder="Passwort eingeben"
-                      />
-                    </CardContent>
-                  </Card>
-                ) : null}
               </CardContent>
               <CardFooter className="hidden sm:flex sm:justify-between">
                 <Button type="button" variant="outline" onClick={() => setStep(2)} className="w-full sm:w-auto">
@@ -2039,110 +2173,161 @@ export function StandortanalyseWizard({
 
           {step === 4 && submittedData != null && mode === "internal" ? (
             <div className="grid gap-6">
-              <Card>
+              <Card className="overflow-hidden">
                 <CardHeader>
-                  <CardTitle>Dashboard</CardTitle>
-                  <CardDescription>Gesamtbewertung, Empfehlung und Kriterienstati.</CardDescription>
+                  <CardTitle>Auswertung</CardTitle>
+                  <CardDescription>
+                    Gesamtbewertung, Empfehlung und Kriterienstati auf einen Blick.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <LegacyStyleScoreGauge
-                    value={currentScore.totalPoints}
-                    max={currentScore.maxPoints}
-                    recommendationLabel={currentScore.recommendation.label}
-                    recommendationTone={currentScore.recommendation.tone}
-                  />
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Badge className={cn("h-6", scoreBadgeTone[currentScore.recommendation.tone])}>
-                      {currentScore.recommendation.label}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Unbekannt markierte Kriterien: {currentScore.unknownCount}
-                    </span>
-                    {analysisId ? <span className="text-xs text-muted-foreground">Analyse-ID: {analysisId}</span> : null}
-                  </div>
-                </CardContent>
-              </Card>
+                <CardContent className="space-y-8 pt-2 sm:space-y-10">
+                  <section className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-10">
+                    <ScoreRingGauge
+                      value={currentScore.totalPoints}
+                      max={currentScore.maxPoints}
+                      recommendationLabel={currentScore.recommendation.label}
+                      recommendationTone={currentScore.recommendation.tone}
+                    />
+                    <RecommendationPanel
+                      title={recommendationCard.title}
+                      text={recommendationCard.text}
+                      tone={currentScore.recommendation.tone}
+                      unknownCount={currentScore.unknownCount}
+                      analysisId={analysisId}
+                    />
+                  </section>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aquadock Empfehlung</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className={cn("rounded-xl border px-4 py-3", recommendationCard.boxClass)}>
-                    <p className="flex items-center gap-2 text-xl font-semibold text-primary">
-                      <span className={cn("h-3.5 w-3.5 rounded-full", recommendationCard.dotClass)} />
-                      {recommendationCard.title}
-                    </p>
-                    <p className="mt-2 text-base text-muted-foreground">{recommendationCard.text}</p>
-                  </div>
-                </CardContent>
-              </Card>
+                  {trimmedNotizen.length > 0 ? (
+                    <>
+                      <Separator className="bg-border/60" />
+                      <section className="space-y-3">
+                        <header className="flex flex-wrap items-baseline justify-between gap-2">
+                          <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                            Notizen / Bemerkungen
+                          </h3>
+                          <span className="text-xs text-muted-foreground">
+                            Anmerkungen zum Standort
+                          </span>
+                        </header>
+                        <blockquote className="rounded-xl border-l-2 border-primary/40 bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                          {trimmedNotizen}
+                        </blockquote>
+                      </section>
+                    </>
+                  ) : null}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    Hauptkriterien
-                  </CardTitle>
-                  <CardDescription>Gewichtung und Zielerreichung je Hauptkriterium.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{ punkte: { label: "Punkte", color: "var(--chart-2)" } }}
-                    className="h-[420px] w-full"
-                  >
-                    <BarChart data={currentScore.mainCriteriaChart} layout="vertical" margin={{ left: 24, right: 24 }}>
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                      <XAxis type="number" />
-                      <YAxis dataKey="kriterium" type="category" width={220} tick={{ fontSize: 12 }} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar dataKey="punkte" radius={4}>
-                        {currentScore.mainCriteriaChart.map((entry) => {
-                          const status = evaluationByKey.get(entry.key)?.displayStatus ?? "Kritisch";
-                          return <Cell key={entry.key} fill={CRITERIA_COLORS[status]} />;
-                        })}
-                      </Bar>
-                    </BarChart>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                  <Separator className="bg-border/60" />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Ampelübersicht</CardTitle>
-                  <CardDescription>Status je Kriterium inklusive Unbekannt-Markierungen.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-hidden rounded-xl border">
+                  <section className="space-y-4">
+                    <header className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        Hauptkriterien
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        Zielerreichung je Hauptkriterium
+                      </span>
+                    </header>
+                    <ul className="divide-y divide-border/60">
+                      {currentScore.mainCriteriaChart.map((entry) => {
+                        const evaluation = evaluationByKey.get(entry.key);
+                        const status = evaluation?.displayStatus ?? "Kritisch";
+                        const safeMax = Math.max(1, entry.maxPunkte);
+                        const ratio = Math.min(1, Math.max(0, entry.punkte / safeMax));
+                        const percent = Math.round(ratio * 100);
+                        const statusColor = CRITERIA_COLORS[status];
+                        return (
+                          <li
+                            key={entry.key}
+                            className="grid grid-cols-[1fr_auto] items-center gap-4 py-3 first:pt-0 last:pb-0"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  aria-hidden="true"
+                                  className="h-2 w-2 shrink-0 rounded-full"
+                                  style={{ backgroundColor: statusColor }}
+                                />
+                                <span className="truncate text-sm font-medium text-foreground">
+                                  {entry.kriterium}
+                                </span>
+                              </div>
+                              <div
+                                className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                                role="progressbar"
+                                aria-valuenow={entry.punkte}
+                                aria-valuemin={0}
+                                aria-valuemax={entry.maxPunkte}
+                                aria-label={`${entry.kriterium}: ${entry.punkte} von ${entry.maxPunkte} Punkten`}
+                              >
+                                <div
+                                  className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                  style={{
+                                    width: `${percent}%`,
+                                    backgroundColor: statusColor,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <div className="text-right text-sm tabular-nums text-muted-foreground">
+                              <span className="font-semibold text-foreground">{entry.punkte}</span>
+                              <span className="mx-0.5">/</span>
+                              <span>{entry.maxPunkte}</span>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+
+                  <Separator className="bg-border/60" />
+
+                  <section className="space-y-4">
+                    <header className="flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                        Detailansicht
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        Status je Kriterium inkl. Unbekannt-Markierungen
+                      </span>
+                    </header>
                     <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Kriterium</TableHead>
-                        <TableHead>Punkte</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentScore.criterionEvaluations.map((criterion) => (
-                        <TableRow key={criterion.id}>
-                          <TableCell>{criterion.label}</TableCell>
-                          <TableCell>
-                            {criterion.points}/{criterion.maxPoints}
-                          </TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center gap-2">
-                              <span
-                                className="h-2.5 w-2.5 rounded-full"
-                                style={{ backgroundColor: CRITERIA_COLORS[criterion.displayStatus] }}
-                              />
-                              {criterion.displayStatus}
-                            </span>
-                          </TableCell>
+                      <TableHeader>
+                        <TableRow className="hover:bg-transparent">
+                          <TableHead>Kriterium</TableHead>
+                          <TableHead className="w-[120px]">Punkte</TableHead>
+                          <TableHead className="w-[140px]">Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
+                      </TableHeader>
+                      <TableBody>
+                        {currentScore.criterionEvaluations.map((criterion) => (
+                          <TableRow key={criterion.id}>
+                            <TableCell className="font-medium text-foreground">
+                              {criterion.label}
+                            </TableCell>
+                            <TableCell className="tabular-nums">
+                              <span className="font-semibold text-foreground">
+                                {criterion.points}
+                              </span>
+                              <span className="mx-0.5 text-muted-foreground">/</span>
+                              <span className="text-muted-foreground">{criterion.maxPoints}</span>
+                            </TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center gap-2 text-sm">
+                                <span
+                                  aria-hidden="true"
+                                  className="h-2 w-2 rounded-full"
+                                  style={{
+                                    backgroundColor: CRITERIA_COLORS[criterion.displayStatus],
+                                  }}
+                                />
+                                {criterion.displayStatus}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
                     </Table>
-                  </div>
+                  </section>
                 </CardContent>
               </Card>
 
