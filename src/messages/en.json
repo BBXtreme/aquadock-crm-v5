@@ -2038,5 +2038,13 @@
     "accessDeniedTitle": "Access declined",
     "accessDeniedDescription": "Your access request was not approved. You can still sign out and contact your administrator if you need help.",
     "signOut": "Sign out"
+  },
+  "standortanalyse": {
+    "exportPdf": "Download PDF",
+    "exportPrint": "Print",
+    "exportInProgress": "Generating PDF...",
+    "exportSuccess": "PDF exported successfully",
+    "exportFailed": "PDF export failed",
+    "reportFooter": "Standortanalyse report · © OpenStreetMap contributors"
   }
 }

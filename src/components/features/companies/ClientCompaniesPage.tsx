@@ -299,6 +299,7 @@ function ClientCompaniesPage() {
             </DialogHeader>
             <CompanyEditForm
               company={editingCompany}
+              onCancel={() => setEditingCompany(null)}
               onSuccess={() => {
                 setEditingCompany(null);
                 queryClient.invalidateQueries({ queryKey: ["companies"] });

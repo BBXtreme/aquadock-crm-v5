@@ -41,6 +41,23 @@ Per-row action icons (each with `AlertDialog` confirmation):
 - `Im CRM uebernehmen` (Contact icon): opens options dialog
 - `Loeschen` (Trash): deletes analysis row
 
+## PDF export (internal only)
+
+PDF export is available only in internal mode on step 4 (`Auswertung`) after either:
+
+- submitting a new analysis, or
+- opening an existing submitted analysis via `Ansehen`
+
+Implementation details:
+
+- The result layout is rendered by `src/components/features/standortanalyse/StandortanalyseReport.tsx`.
+- Action buttons are rendered by `src/components/features/standortanalyse/StandortanalyseReportActions.tsx`.
+- Export hook `src/lib/client/use-standortanalyse-report-export.ts` supports:
+  - `PDF herunterladen` (`html2canvas-pro` + `jspdf`)
+  - `Drucken` (`window.print`)
+- Static map image URL for export/print is generated via `src/lib/standortanalyse/static-map-url.ts`.
+- Public share flow intentionally has no export actions.
+
 ## CRM import options
 
 Inside `Im CRM uebernehmen`, users can choose:

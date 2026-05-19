@@ -2038,5 +2038,13 @@
     "accessDeniedTitle": "Zugang abgelehnt",
     "accessDeniedDescription": "Deine Zugangsanfrage wurde nicht genehmigt. Du kannst Dich abmelden und Dich bei Bedarf an Deinen Administrator wenden.",
     "signOut": "Abmelden"
+  },
+  "standortanalyse": {
+    "exportPdf": "PDF herunterladen",
+    "exportPrint": "Drucken",
+    "exportInProgress": "PDF wird erstellt...",
+    "exportSuccess": "PDF wurde erfolgreich exportiert",
+    "exportFailed": "PDF-Export fehlgeschlagen",
+    "reportFooter": "Standortanalyse-Report · © OpenStreetMap contributors"
   }
 }

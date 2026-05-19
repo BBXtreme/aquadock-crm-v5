@@ -12,15 +12,20 @@ import {
   Link2,
   LockKeyhole,
   Mail,
-  MapPinned,
   Signpost,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Control, DefaultValues } from "react-hook-form";
 import { useForm, useWatch } from "react-hook-form";
-import { PolarAngleAxis, RadialBar, RadialBarChart } from "recharts";
 import { toast } from "sonner";
 
+import { StandortanalyseReport } from "@/components/features/standortanalyse/StandortanalyseReport";
+import { StandortanalyseReportActions } from "@/components/features/standortanalyse/StandortanalyseReportActions";
+import {
+  DEFAULT_RECOMMENDATION_CARD,
+  RECOMMENDATION_CARD_COPY,
+  type RecommendationCardCopy,
+} from "@/components/features/standortanalyse/standortanalyse-report.constants";
 import StandortanalysenTable, {
   type StandortanalyseListFilter,
   type StandortanalyseListItem,
@@ -28,20 +33,20 @@ import StandortanalysenTable, {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer } from "@/components/ui/chart";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useStandortanalyseReportExport } from "@/lib/client/use-standortanalyse-report-export";
 import { getStandortLandOptions } from "@/lib/standortanalyse/countries";
 import { standortKriterien } from "@/lib/standortanalyse/criteria";
 import { calculateStandortScore } from "@/lib/standortanalyse/scoring";
 import { isPlaceholderInviteEmail } from "@/lib/standortanalyse/share-invite-email";
+import { buildStandortStaticMapUrl } from "@/lib/standortanalyse/static-map-url";
 import { cn } from "@/lib/utils";
 import { type StandortanalyseForm, standortanalyseFormSchema } from "@/lib/validations/standortanalyse";
 
@@ -49,64 +54,10 @@ type WizardMode = "internal" | "public";
 type KriterienKey = keyof StandortanalyseForm["kriterien"] & string;
 type KriterienPath = `kriterien.${KriterienKey}`;
 
-const CRITERIA_COLORS: Record<string, string> = {
-  Gut: "var(--score-success)",
-  Mittel: "var(--score-warning)",
-  Kritisch: "var(--score-critical)",
-  Unbekannt: "var(--score-unknown)",
-};
-
-const RECOMMENDATION_TONE_COLOR: Record<"green" | "yellow" | "red", string> = {
-  green: "var(--score-success)",
-  yellow: "var(--score-warning)",
-  red: "var(--score-critical)",
-};
-
 const scoreBadgeTone: Record<string, string> = {
   green: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   yellow: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   red: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
-};
-
-const RECOMMENDATION_DETAIL_COPY: Record<string, string> = {
-  "Premium-Standort": "Premium-Standort: Sofort umsetzbar und höchste Erfolgschance",
-  "Sehr guter Standort": "Sehr guter Standort: Hohe Erfolgschance - empfohlen",
-  "Guter Standort": "Guter Standort: Optimierung empfohlen - durchführbar",
-  "Bedingt geeignet": "Bedingt geeignet: kritisch prüfen - Risiken beachten",
-  Unsicher: "Unsicher: alternative Standorte suchen",
-};
-
-type RecommendationCardCopy = {
-  title: string;
-  text: string;
-};
-
-const RECOMMENDATION_CARD_COPY: Record<string, RecommendationCardCopy> = {
-  "Premium-Standort": {
-    title: "Premium Standort",
-    text: "Sehr gute Voraussetzungen für einen erfolgreichen Betrieb. Hohe Nachfrage, gute Lage und klare Skalierungsmöglichkeiten ermöglichen einen sofortigen Start mit attraktivem Ertragspotenzial.",
-  },
-  "Sehr guter Standort": {
-    title: "Sehr guter Standort",
-    text: "Solide Basis mit erkennbarem Wachstumspotenzial. Mit gezielten Optimierungen kann hier ein wirtschaftlich sehr erfolgreicher Betrieb aufgebaut werden.",
-  },
-  "Guter Standort": {
-    title: "Guter Standort",
-    text: "Grundsätzlich geeigneter Standort mit Optimierungsbedarf. Durch gezielte Maßnahmen lässt sich die Attraktivität und Wirtschaftlichkeit deutlich steigern.",
-  },
-  "Bedingt geeignet": {
-    title: "Bedingt geeigneter Standort",
-    text: "Der Standort ist nutzbar, erfordert jedoch ein durchdachtes Konzept und aktive Vermarktung, um erfolgreich betrieben zu werden.",
-  },
-  Unsicher: {
-    title: "Unsicher: alternative Standorte suchen",
-    text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
-  },
-};
-
-const DEFAULT_RECOMMENDATION_CARD: RecommendationCardCopy = {
-  title: "Unsicher: alternative Standorte suchen",
-  text: "Aktuell eingeschränkte Voraussetzungen für einen wirtschaftlichen Betrieb. Vor Umsetzung sind grundlegende Anpassungen oder Alternativen zu prüfen.",
 };
 
 const stepTriggerFields = {
@@ -376,129 +327,6 @@ function AnalysisLoadingOverlay({ mode }: { mode: WizardMode }) {
   );
 }
 
-function ScoreRingGauge({
-  value,
-  max,
-  recommendationLabel,
-  recommendationTone,
-}: {
-  value: number;
-  max: number;
-  recommendationLabel: string;
-  recommendationTone: "green" | "yellow" | "red";
-}) {
-  const safeMax = Math.max(1, max);
-  const ratio = Math.min(1, Math.max(0, value / safeMax));
-  const percent = Math.round(ratio * 100);
-  const ringColor = RECOMMENDATION_TONE_COLOR[recommendationTone];
-
-  // Tone is communicated by the ring color + caption pill, never duplicated as
-  // a rainbow gradient. Single accent → single signal.
-  const chartData = [{ name: "score", value: percent, fill: ringColor }];
-
-  return (
-    <div className="mx-auto flex w-full max-w-[320px] flex-col items-center">
-      <div className="relative aspect-square w-full">
-        <ChartContainer
-          config={{ score: { label: "Score" } }}
-          className="aspect-square w-full"
-          aria-hidden
-        >
-          <RadialBarChart
-            data={chartData}
-            startAngle={90}
-            endAngle={-270}
-            innerRadius="78%"
-            outerRadius="100%"
-            barSize={18}
-          >
-            <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-            <RadialBar
-              dataKey="value"
-              cornerRadius={999}
-              background
-              isAnimationActive
-              animationDuration={650}
-              animationEasing="ease-out"
-            />
-          </RadialBarChart>
-        </ChartContainer>
-        <div
-          className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center"
-          role="img"
-          aria-label={`Gesamtbewertung: ${value} von ${max} Punkten (${percent} Prozent)`}
-        >
-          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Standort-Score
-          </span>
-          <span className="mt-1 text-5xl font-semibold tracking-tight tabular-nums text-foreground">
-            {value}
-          </span>
-          <span className="mt-0.5 text-sm text-muted-foreground tabular-nums">
-            / {max} Punkte · {percent}%
-          </span>
-        </div>
-      </div>
-      <p className="mt-4 text-center text-sm font-medium text-foreground">
-        {RECOMMENDATION_DETAIL_COPY[recommendationLabel] ?? recommendationLabel}
-      </p>
-    </div>
-  );
-}
-
-function RecommendationPanel({
-  title,
-  text,
-  tone,
-  unknownCount,
-  analysisId,
-}: {
-  title: string;
-  text: string;
-  tone: "green" | "yellow" | "red";
-  unknownCount: number;
-  analysisId: string | null;
-}) {
-  const accent = RECOMMENDATION_TONE_COLOR[tone];
-  return (
-    <div
-      className="rounded-2xl border p-5 sm:p-6"
-      style={{
-        // Tinted surface from the score palette — no shadow, no card-in-card.
-        backgroundColor: `color-mix(in oklch, ${accent} 8%, var(--card))`,
-        borderColor: `color-mix(in oklch, ${accent} 28%, transparent)`,
-      }}
-    >
-      <div className="flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          className="h-1.5 w-1.5 rounded-full"
-          style={{ backgroundColor: accent }}
-        />
-        <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Aquadock Empfehlung
-        </span>
-      </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-        {title}
-      </p>
-      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
-      <dl className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <dt>Unbekannt markierte Kriterien</dt>
-          <dd className="font-medium tabular-nums text-foreground">{unknownCount}</dd>
-        </div>
-        {analysisId ? (
-          <div className="flex items-center gap-1.5">
-            <dt>Analyse-ID</dt>
-            <dd className="font-mono text-[11px] text-foreground/80">{analysisId}</dd>
-          </div>
-        ) : null}
-      </dl>
-    </div>
-  );
-}
-
 const GUIDING_QUESTIONS = [
   "Ist der Standort generell für eine Station geeignet?",
   "Welche Faktoren müssen bei einer Realisierung besonders beachtet werden?",
@@ -546,7 +374,10 @@ export function StandortanalyseWizard({
   const [mapEmbedUrl, setMapEmbedUrl] = useState<string | null>(null);
   const [mapInfo, setMapInfo] = useState<string>("");
   const [mapError, setMapError] = useState<string | null>(null);
+  const [staticMapUrl, setStaticMapUrl] = useState<string | null>(null);
   const initialAutoLoadDone = useRef(false);
+  const reportRef = useRef<HTMLDivElement | null>(null);
+  const exportReportRef = useRef<HTMLDivElement | null>(null);
 
   const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>(() => ({
     context: false,
@@ -564,6 +395,7 @@ export function StandortanalyseWizard({
     defaultValues: DEFAULT_FORM_VALUES,
     mode: "onTouched",
   });
+  const { downloadPdf, isExporting, printReport } = useStandortanalyseReportExport();
 
   const clearActiveForm = useCallback(() => {
     form.reset(DEFAULT_FORM_VALUES);
@@ -574,6 +406,7 @@ export function StandortanalyseWizard({
     setMapEmbedUrl(null);
     setMapInfo("");
     setMapError(null);
+    setStaticMapUrl(null);
     setTouchedCriteria(new Set());
     setPublicSubmissionDone(false);
   }, [form]);
@@ -586,8 +419,6 @@ export function StandortanalyseWizard({
   const kontaktEmail = form.watch("kontakt.email");
   const kontaktVorname = form.watch("kontakt.vorname");
   const kontaktName = form.watch("kontakt.name");
-  const notizenValue = form.watch("notizen");
-  const trimmedNotizen = (notizenValue ?? "").trim();
   const currentScore = useMemo(() => calculateStandortScore(watchedKriterien), [watchedKriterien]);
   const evaluationByKey = useMemo(
     () => new Map(currentScore.criterionEvaluations.map((criterion) => [criterion.id, criterion])),
@@ -604,6 +435,20 @@ export function StandortanalyseWizard({
   const recommendationCard: RecommendationCardCopy = useMemo(() => {
     return RECOMMENDATION_CARD_COPY[currentScore.recommendation.label] ?? DEFAULT_RECOMMENDATION_CARD;
   }, [currentScore.recommendation.label]);
+
+  const handleDownloadReport = useCallback(() => {
+    const captureTarget = exportReportRef.current ?? reportRef.current;
+    if (captureTarget == null || submittedData == null) {
+      return;
+    }
+    void downloadPdf(captureTarget, {
+      ort: submittedData.standort.ort,
+      analysisId,
+      standortAdresse: [submittedData.standort.strasse, `${submittedData.standort.plz} ${submittedData.standort.ort}`]
+        .filter((part) => part != null && part.trim() !== "")
+        .join(", "),
+    });
+  }, [analysisId, downloadPdf, submittedData]);
 
   useEffect(() => {
     if (shareRecipientTouched) {
@@ -853,6 +698,9 @@ export function StandortanalyseWizard({
     const query = [standort.strasse, `${standort.plz} ${standort.ort}`, standort.land].filter(Boolean).join(", ");
     if (query.length === 0) {
       setMapError("Adresse für Karte fehlt.");
+      setMapEmbedUrl(null);
+      setMapInfo("");
+      setStaticMapUrl(null);
       return;
     }
 
@@ -861,6 +709,7 @@ export function StandortanalyseWizard({
 
     async function loadMap() {
       setMapError(null);
+      setStaticMapUrl(null);
       const response = await fetch(url, { signal: controller.signal, headers: { Accept: "application/json" } });
       if (!response.ok) {
         throw new Error("Kartenservice nicht erreichbar");
@@ -876,6 +725,7 @@ export function StandortanalyseWizard({
       const bbox = [lon - 0.02, lat - 0.02, lon + 0.02, lat + 0.02];
       const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox.join(",")}&layer=mapnik&marker=${lat},${lon}`;
       setMapEmbedUrl(embedUrl);
+      setStaticMapUrl(buildStandortStaticMapUrl(lat, lon));
       setMapInfo(first.display_name);
     }
 
@@ -883,6 +733,9 @@ export function StandortanalyseWizard({
       if (error instanceof Error && error.name === "AbortError") {
         return;
       }
+      setMapEmbedUrl(null);
+      setMapInfo("");
+      setStaticMapUrl(null);
       setMapError(error instanceof Error ? error.message : "Karte konnte nicht geladen werden");
     });
 
@@ -2173,192 +2026,36 @@ export function StandortanalyseWizard({
 
           {step === 4 && submittedData != null && mode === "internal" ? (
             <div className="grid gap-6">
-              <Card className="overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Auswertung</CardTitle>
-                  <CardDescription>
-                    Gesamtbewertung, Empfehlung und Kriterienstati auf einen Blick.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-8 pt-2 sm:space-y-10">
-                  <section className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-10">
-                    <ScoreRingGauge
-                      value={currentScore.totalPoints}
-                      max={currentScore.maxPoints}
-                      recommendationLabel={currentScore.recommendation.label}
-                      recommendationTone={currentScore.recommendation.tone}
-                    />
-                    <RecommendationPanel
-                      title={recommendationCard.title}
-                      text={recommendationCard.text}
-                      tone={currentScore.recommendation.tone}
-                      unknownCount={currentScore.unknownCount}
-                      analysisId={analysisId}
-                    />
-                  </section>
-
-                  {trimmedNotizen.length > 0 ? (
-                    <>
-                      <Separator className="bg-border/60" />
-                      <section className="space-y-3">
-                        <header className="flex flex-wrap items-baseline justify-between gap-2">
-                          <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                            Notizen / Bemerkungen
-                          </h3>
-                          <span className="text-xs text-muted-foreground">
-                            Anmerkungen zum Standort
-                          </span>
-                        </header>
-                        <blockquote className="rounded-xl border-l-2 border-primary/40 bg-muted/40 px-4 py-3 text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap">
-                          {trimmedNotizen}
-                        </blockquote>
-                      </section>
-                    </>
-                  ) : null}
-
-                  <Separator className="bg-border/60" />
-
-                  <section className="space-y-4">
-                    <header className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        Hauptkriterien
-                      </h3>
-                      <span className="text-xs text-muted-foreground">
-                        Zielerreichung je Hauptkriterium
-                      </span>
-                    </header>
-                    <ul className="divide-y divide-border/60">
-                      {currentScore.mainCriteriaChart.map((entry) => {
-                        const evaluation = evaluationByKey.get(entry.key);
-                        const status = evaluation?.displayStatus ?? "Kritisch";
-                        const safeMax = Math.max(1, entry.maxPunkte);
-                        const ratio = Math.min(1, Math.max(0, entry.punkte / safeMax));
-                        const percent = Math.round(ratio * 100);
-                        const statusColor = CRITERIA_COLORS[status];
-                        return (
-                          <li
-                            key={entry.key}
-                            className="grid grid-cols-[1fr_auto] items-center gap-4 py-3 first:pt-0 last:pb-0"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  aria-hidden="true"
-                                  className="h-2 w-2 shrink-0 rounded-full"
-                                  style={{ backgroundColor: statusColor }}
-                                />
-                                <span className="truncate text-sm font-medium text-foreground">
-                                  {entry.kriterium}
-                                </span>
-                              </div>
-                              <div
-                                className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted"
-                                role="progressbar"
-                                aria-valuenow={entry.punkte}
-                                aria-valuemin={0}
-                                aria-valuemax={entry.maxPunkte}
-                                aria-label={`${entry.kriterium}: ${entry.punkte} von ${entry.maxPunkte} Punkten`}
-                              >
-                                <div
-                                  className="h-full rounded-full transition-[width] duration-500 ease-out"
-                                  style={{
-                                    width: `${percent}%`,
-                                    backgroundColor: statusColor,
-                                  }}
-                                />
-                              </div>
-                            </div>
-                            <div className="text-right text-sm tabular-nums text-muted-foreground">
-                              <span className="font-semibold text-foreground">{entry.punkte}</span>
-                              <span className="mx-0.5">/</span>
-                              <span>{entry.maxPunkte}</span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </section>
-
-                  <Separator className="bg-border/60" />
-
-                  <section className="space-y-4">
-                    <header className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                        Detailansicht
-                      </h3>
-                      <span className="text-xs text-muted-foreground">
-                        Status je Kriterium inkl. Unbekannt-Markierungen
-                      </span>
-                    </header>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead>Kriterium</TableHead>
-                          <TableHead className="w-[120px]">Punkte</TableHead>
-                          <TableHead className="w-[140px]">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {currentScore.criterionEvaluations.map((criterion) => (
-                          <TableRow key={criterion.id}>
-                            <TableCell className="font-medium text-foreground">
-                              {criterion.label}
-                            </TableCell>
-                            <TableCell className="tabular-nums">
-                              <span className="font-semibold text-foreground">
-                                {criterion.points}
-                              </span>
-                              <span className="mx-0.5 text-muted-foreground">/</span>
-                              <span className="text-muted-foreground">{criterion.maxPoints}</span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="inline-flex items-center gap-2 text-sm">
-                                <span
-                                  aria-hidden="true"
-                                  className="h-2 w-2 rounded-full"
-                                  style={{
-                                    backgroundColor: CRITERIA_COLORS[criterion.displayStatus],
-                                  }}
-                                />
-                                {criterion.displayStatus}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </section>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPinned className="h-4 w-4" />
-                    Standortkarte
-                  </CardTitle>
-                  {mapInfo.length > 0 ? <CardDescription>{mapInfo}</CardDescription> : null}
-                </CardHeader>
-                <CardContent>
-                  {mapError ? <p className="text-sm text-destructive">{mapError}</p> : null}
-                  {mapEmbedUrl ? (
-                    <iframe
-                      title="Standortkarte"
-                      src={mapEmbedUrl}
-                      className="h-[360px] w-full rounded-lg border"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="flex h-[220px] flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-muted/20">
-                      <div className="relative h-10 w-10">
-                        <span className="absolute inset-0 animate-spin rounded-full border-2 border-primary/25 border-t-primary" />
-                        <span className="absolute inset-2 animate-pulse rounded-full bg-primary/10" />
-                      </div>
-                      <p className="text-sm text-muted-foreground">Karte wird geladen...</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <StandortanalyseReport
+                ref={reportRef}
+                formValues={submittedData}
+                score={currentScore}
+                recommendationCard={recommendationCard}
+                analysisId={analysisId}
+                mapEmbedUrl={mapEmbedUrl}
+                mapInfo={mapInfo}
+                mapError={mapError}
+                staticMapUrl={staticMapUrl}
+              />
+              <div className="pointer-events-none fixed -left-[99999px] top-0 w-[1024px] opacity-0 print:hidden">
+                <StandortanalyseReport
+                  ref={exportReportRef}
+                  formValues={submittedData}
+                  score={currentScore}
+                  recommendationCard={recommendationCard}
+                  analysisId={analysisId}
+                  mapEmbedUrl={null}
+                  mapInfo={mapInfo}
+                  mapError={mapError}
+                  staticMapUrl={staticMapUrl}
+                  variant="export"
+                />
+              </div>
+              <StandortanalyseReportActions
+                onDownload={handleDownloadReport}
+                onPrint={printReport}
+                isExporting={isExporting}
+              />
               <div className="hidden sm:flex sm:justify-end">
                 <Button type="button" variant="outline" onClick={() => setStep(3)} className="w-full sm:w-auto">
                   Zurück zur Zusammenfassung
@@ -2421,9 +2118,16 @@ export function StandortanalyseWizard({
               ) : null}
 
               {step === 4 && submittedData != null && mode === "internal" ? (
-                <Button type="button" variant="outline" onClick={() => setStep(3)} className="w-full">
-                  Zurück zur Zusammenfassung
-                </Button>
+                <div className="space-y-2">
+                  <StandortanalyseReportActions
+                    onDownload={handleDownloadReport}
+                    onPrint={printReport}
+                    isExporting={isExporting}
+                  />
+                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="w-full">
+                    Zurück zur Zusammenfassung
+                  </Button>
+                </div>
               ) : null}
             </div>
           </div>

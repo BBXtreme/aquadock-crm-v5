@@ -2038,5 +2038,13 @@
     "accessDeniedTitle": "Pristup odbijen",
     "accessDeniedDescription": "Tvoj zahtjev za pristup nije odobren. Možeš se odjaviti i po potrebi kontaktirati administratora.",
     "signOut": "Odjava"
+  },
+  "standortanalyse": {
+    "exportPdf": "Preuzmi PDF",
+    "exportPrint": "Ispis",
+    "exportInProgress": "Izrada PDF-a...",
+    "exportSuccess": "PDF je uspješno izvezen",
+    "exportFailed": "Izvoz PDF-a nije uspio",
+    "reportFooter": "Standortanalyse izvještaj · © OpenStreetMap contributors"
   }
 }

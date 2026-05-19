@@ -37,7 +37,8 @@ const RESPONSIBLE_NONE = "__none__" as const;
 
 type CompanyEditFormProps = {
   company: Company | null;
-  onSuccess?: () => void;
+  onSuccess?: (updated: Company) => void;
+  onCancel?: () => void;
   aiPrefill?: { version: number; patch: Partial<CompanyForm> } | null;
   onAiPrefillConsumed?: () => void;
   /** When set (company detail), AI research opens the parent modal instead of nesting a second dialog. */
@@ -47,6 +48,7 @@ type CompanyEditFormProps = {
 export default function CompanyEditForm({
   company,
   onSuccess,
+  onCancel,
   aiPrefill,
   onAiPrefillConsumed,
   onRequestAiEnrich,
@@ -113,7 +115,7 @@ export default function CompanyEditForm({
         sync_contact_owners: payload.syncContacts,
       });
     },
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.refetchQueries({ queryKey: ["companies"] });
       if (company) {
         queryClient.invalidateQueries({ queryKey: ["company", company.id] });
@@ -124,7 +126,7 @@ export default function CompanyEditForm({
       queryClient.invalidateQueries({ queryKey: ["reminders", company?.id] });
       queryClient.invalidateQueries({ queryKey: COMPANIES_FILTER_OPTIONS_QUERY_KEY });
       toast.success(tCompanies("toastUpdated"));
-      onSuccess?.();
+      onSuccess?.(updated);
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : "An unknown error occurred";
@@ -654,7 +656,7 @@ export default function CompanyEditForm({
         </div>
 
         <div className="flex justify-end gap-4 pt-6 border-t">
-          <Button type="button" variant="outline" onClick={onSuccess}>
+          <Button type="button" variant="outline" onClick={onCancel}>
             {tCompanies("cancel")}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting}>

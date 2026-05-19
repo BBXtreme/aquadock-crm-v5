@@ -1,0 +1,25 @@
+@media print {
+  .standortanalyse-report {
+    color-scheme: light;
+    max-width: 210mm;
+    margin: 0 auto;
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .standortanalyse-report .print-hidden {
+    display: none !important;
+  }
+
+  .standortanalyse-report section,
+  .standortanalyse-report .card,
+  .standortanalyse-report .rounded-xl {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .standortanalyse-report-map {
+    break-before: page;
+    page-break-before: always;
+  }
+}

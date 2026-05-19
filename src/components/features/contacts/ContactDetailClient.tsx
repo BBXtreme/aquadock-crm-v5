@@ -595,6 +595,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
           </DialogHeader>
           <CompanyEditForm
             company={linkedCompany || null}
+            onCancel={() => setEditCompanyDialog(false)}
             onSuccess={() => {
               setEditCompanyDialog(false);
               queryClient.invalidateQueries({ queryKey: ["contact", id] });

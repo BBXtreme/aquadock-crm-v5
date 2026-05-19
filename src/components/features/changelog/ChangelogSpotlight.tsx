@@ -81,13 +81,9 @@ export function ChangelogSpotlight({ appVersion }: ChangelogSpotlightProps) {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 sm:max-w-md"
-        aria-labelledby="changelog-spotlight-title"
-      >
+      <SheetContent side="right" className="flex w-full flex-col gap-0 sm:max-w-md">
         <SheetHeader className="text-left">
-          <SheetTitle id="changelog-spotlight-title">{t("spotlightTitle")}</SheetTitle>
+          <SheetTitle>{t("spotlightTitle")}</SheetTitle>
           <SheetDescription className="text-base font-medium text-foreground">
             {latest.title}
           </SheetDescription>

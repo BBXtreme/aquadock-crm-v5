@@ -6,7 +6,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { AIEnrichmentModal } from "@/components/features/companies/ai-enrichment/AIEnrichmentModal";
 import CompanyEditForm from "@/components/features/companies/CompanyEditForm";
 import AquaDockCard from "@/components/features/companies/detail/AquaDockCard";
@@ -63,8 +63,12 @@ function CompanyDetailShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
-  const [, startTransition] = useTransition();
   const id = company.id;
+  const [displayCompany, setDisplayCompany] = useState(company);
+
+  useEffect(() => {
+    setDisplayCompany(company);
+  }, [company]);
 
   const companiesListSearchParams = useMemo(() => {
     const fromUrl = extractCompaniesListSearchParamsString(searchParams);
@@ -86,9 +90,7 @@ function CompanyDetailShell({
   }, [companiesListSearchParams]);
 
   const refreshCompanyDetail = useCallback(() => {
-    startTransition(() => {
-      router.refresh();
-    });
+    router.refresh();
   }, [router]);
 
   const [editCompanyDialogOpen, setEditCompanyDialogOpen] = useState(false);
@@ -178,7 +180,7 @@ function CompanyDetailShell({
       if (error) throw error;
       return data ?? [];
     },
-    enabled: company != null,
+    enabled: displayCompany != null,
   });
 
   const { data: orderedNavIds = [], isPending: listNavIdsPending } = useQuery({
@@ -238,7 +240,7 @@ function CompanyDetailShell({
   return (
     <>
       <CompanyHeader
-        company={company}
+        company={displayCompany}
         id={id}
         router={router}
         companiesListSearchParams={companiesListSearchParams}
@@ -252,19 +254,19 @@ function CompanyDetailShell({
         onEdit={() => setEditCompanyDialogOpen(true)}
         onAiEnrich={canEditCompany ? () => setAiModalOpen(true) : undefined}
       />
-      <CompanyKpiCards company={company} />
+      <CompanyKpiCards company={displayCompany} />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
         <CompanyDetailsCard
-          company={company}
+          company={displayCompany}
           onCompanyUpdated={refreshCompanyDetail}
           canEditCompany={canEditCompany}
         />
         <AquaDockCard
-          company={company}
+          company={displayCompany}
           onCompanyUpdated={refreshCompanyDetail}
           canEditCompany={canEditCompany}
         />
-        <CrmCard company={company} canEditCompany={canEditCompany} onCompanyUpdated={refreshCompanyDetail} />
+        <CrmCard company={displayCompany} canEditCompany={canEditCompany} onCompanyUpdated={refreshCompanyDetail} />
       </div>
       <LinkedContactsCard companyId={id} />
       <Card>
@@ -300,7 +302,7 @@ function CompanyDetailShell({
       <TimelineCard companyId={id} />
 
       <AIEnrichmentModal
-        company={company}
+        company={displayCompany}
         open={aiModalOpen}
         onOpenChange={setAiModalOpen}
         onApplyPatch={handleAiApplyPatch}
@@ -312,11 +314,13 @@ function CompanyDetailShell({
             <DialogTitle>{tCompanies("editDialogTitle")}</DialogTitle>
           </DialogHeader>
           <CompanyEditForm
-            company={company}
+            company={displayCompany}
             aiPrefill={aiPrefill}
             onAiPrefillConsumed={() => setAiPrefill(null)}
             onRequestAiEnrich={() => setAiModalOpen(true)}
-            onSuccess={() => {
+            onCancel={() => setEditCompanyDialogOpen(false)}
+            onSuccess={(updated) => {
+              setDisplayCompany(updated);
               setEditCompanyDialogOpen(false);
               queryClient.invalidateQueries({ queryKey: ["company", id] });
               refreshCompanyDetail();
