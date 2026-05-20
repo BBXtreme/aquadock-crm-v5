@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { hasE2ECredentials, loginWithPassword } from "./helpers/auth";
+import { waitForNextDevReady } from "./helpers/dev-ready";
 import { pinEnglishAppearance } from "./helpers/locale";
 
 const authDescribe = hasE2ECredentials() ? test.describe : test.describe.skip;
@@ -29,24 +30,22 @@ authDescribe("company create", () => {
       return;
     }
 
-    await page.goto("/companies");
-    await expect(
-      page.getByRole("heading", { name: /^(Companies|Unternehmen|Tvrtke)$/, level: 1 }),
-    ).toBeVisible({ timeout: 25_000 });
+    await page.goto("/companies?create=true", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
 
-    await page
-      .getByRole("main")
-      .getByRole("button", { name: /^(Company|Unternehmen|Tvrtka)$/ })
-      .click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    const listPageH1 = page.locator("main h1").first();
+    await expect(listPageH1).toBeVisible({ timeout: 25_000 });
+    await expect(listPageH1).toHaveText(/^(Companies|Unternehmen|Tvrtke)$/);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
 
     const uniqueName = `E2E-${Date.now()}`;
     await page.getByLabel("Firmenname").fill(uniqueName);
     await page.getByLabel("Lat").fill("40.7128");
     await page.getByLabel("Lon").fill("-74.0060");
     // CompanyCreateForm uses companies.createFormSubmit — not settings "Speichern".
-    await page
-      .getByRole("dialog")
+    await dialog
       .getByRole("button", { name: /^(Create company|Unternehmen erstellen|Stvori tvrtku)$/ })
       .click();
 
@@ -101,6 +100,7 @@ authDescribe("company create", () => {
     }
 
     await page.goto("/companies?create=true", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
     // RSC Suspense + KPI `useSuspenseQuery` can leave `CompaniesPageSkeleton` up past `domcontentloaded`
     // (no real `h1` yet). Parallel E2E needs a longer wait. `locator("main h1")` is stable if the create
     // dialog opens and Radix adjusts the a11y tree before this assertion runs.

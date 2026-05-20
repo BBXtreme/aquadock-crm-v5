@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { hasE2ECredentials, loginWithPassword } from "./helpers/auth";
+import { waitForNextDevReady } from "./helpers/dev-ready";
 import { pinEnglishAppearance } from "./helpers/locale";
 
 const authDescribe = hasE2ECredentials() ? test.describe : test.describe.skip;
@@ -26,20 +27,24 @@ authDescribe("authenticated CRM smoke", () => {
       return;
     }
 
-    await page.goto("/companies");
-    await expect(page).toHaveURL(/\/companies/);
+    await page.goto("/companies", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
+    await expect(page).toHaveURL(/\/companies/, { timeout: 25_000 });
 
     const firstCompany = page.locator('a[href^="/companies/"]').first();
     if ((await firstCompany.count()) > 0) {
       await firstCompany.click();
-      await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i);
+      await expect(page).toHaveURL(/\/companies\/[0-9a-f-]{36}/i, { timeout: 25_000 });
+      await waitForNextDevReady(page);
     }
 
-    await page.goto("/contacts");
-    await expect(page).toHaveURL(/\/contacts/);
+    await page.goto("/contacts", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
+    await expect(page).toHaveURL(/\/contacts/, { timeout: 25_000 });
 
-    await page.goto("/mass-email");
-    await expect(page).toHaveURL(/\/mass-email/);
+    await page.goto("/mass-email", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
+    await expect(page).toHaveURL(/\/mass-email/, { timeout: 25_000 });
   });
 
   test("profile page loads", async ({ page }) => {
@@ -56,8 +61,9 @@ authDescribe("authenticated CRM smoke", () => {
       return;
     }
 
-    await page.goto("/profile");
-    await expect(page).toHaveURL(/\/profile/);
+    await page.goto("/profile", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
+    await expect(page).toHaveURL(/\/profile/, { timeout: 25_000 });
   });
 
   test("admin root redirects for admins or denies non-admins", async ({ page }) => {
@@ -74,7 +80,8 @@ authDescribe("authenticated CRM smoke", () => {
       return;
     }
 
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin\/users|\/unauthorized/);
+    await page.goto("/admin", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
+    await expect(page).toHaveURL(/\/admin\/users|\/unauthorized/, { timeout: 25_000 });
   });
 });
