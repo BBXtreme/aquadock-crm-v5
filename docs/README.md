@@ -16,5 +16,8 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [BREVO_SDK.md](BREVO_SDK.md) | Brevo REST client usage |
 | [README_OpenMap.md](README_OpenMap.md) | OpenMap, OSM, Overpass |
 | [react-table-v8-ts-tricks.md](react-table-v8-ts-tricks.md) | TanStack Table TypeScript patterns |
+| [perf/companies-search-phase1.md](perf/companies-search-phase1.md) | Phase 1 quick wins for companies list/search (embedding cache, two-phase hybrid, ranked-IDs cache, feature flags) |
+| [perf/hot-paths-explain.md](perf/hot-paths-explain.md) | Postgres `EXPLAIN` templates for the heaviest RPCs |
+| [perf/baseline-2026-05-01.md](perf/baseline-2026-05-01.md) | Pre-optimisation latency anchor for KPI comparisons |
 
-**Last updated:** May 18, 2026  
+**Last updated:** May 20, 2026  

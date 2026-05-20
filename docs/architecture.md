@@ -1,6 +1,6 @@
 # AquaDock CRM v5 — Architecture overview
 
-**Last updated:** May 18, 2026  
+**Last updated:** May 20, 2026  
 
 This document explains how the application is structured so developers (and technical stakeholders) can navigate the codebase safely. **Non-developers:** read the “Big picture” section only; the rest is implementation detail.
 
@@ -121,6 +121,25 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 | `/api/standortanalyse/share/[token]/submit` | POST | Public submission endpoint (password check, rate limit, optional CRM sync) |
 
 **Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
+
+### Companies search performance (Phase 1)
+
+`/api/companies/search` and `/api/companies/nav-ids` share an application-layer
+optimisation stack documented in
+[`perf/companies-search-phase1.md`](perf/companies-search-phase1.md):
+
+- Server-side embedding cache (`src/lib/services/semantic-search.ts`).
+- Shared ranked-IDs cache between search + nav-ids (`src/lib/companies/companies-list-supabase.ts`).
+- Two-phase hybrid fetch (rank IDs → fetch only the current page) in `src/lib/server/companies-search.ts`.
+- Lexical fast path for `< 3` char queries.
+
+All four are gated behind `COMPANIES_P1_*` env flags
+([`src/lib/companies/phase1-flags.ts`](../src/lib/companies/phase1-flags.ts)).
+Defaults are **ON** in development and **OFF** in production / Vitest until you
+opt in; rollback = flip the flag, no code revert. See
+[`perf/companies-search-phase1.md`](perf/companies-search-phase1.md) for KPIs,
+log tags, cache invalidation rules, and out-of-scope items reserved for Phase
+2.
 
 ---
 

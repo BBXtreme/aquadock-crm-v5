@@ -13,6 +13,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { fetchAllCompanyIdsForListNavigation } from "@/lib/companies/companies-list-supabase";
+import { logPhase1Perf } from "@/lib/companies/phase1-flags";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parseCompaniesListState } from "@/lib/utils/company-filters-url-state";
 
@@ -41,7 +42,15 @@ export async function POST(request: Request) {
     }
 
     const listState = parseCompaniesListState(new URLSearchParams(parsed.data.searchParams));
+    // Phase 1: ranked-ids cache inside `buildCompaniesFilterApplier` is shared
+    // with `/api/companies/search`, so a warm list view skips embedding + RPC.
+    const startedAt = Date.now();
     const ids = await fetchAllCompanyIdsForListNavigation(supabase, listState);
+    logPhase1Perf("nav-ids.done", {
+      idsCount: ids.length,
+      durationMs: Date.now() - startedAt,
+      globalFilterLength: listState.globalFilter.trim().length,
+    });
     return NextResponse.json({ ids });
   } catch (err: unknown) {
     console.error("[API POST /companies/nav-ids] Unexpected error:", err);

@@ -222,12 +222,13 @@ function CompanyDetailShell({
     };
   }, [hasListNavContext, orderedNavIds, id]);
 
-  useEffect(() => {
-    if (company?.id) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", company.id] });
-      queryClient.invalidateQueries({ queryKey: ["reminders", company.id] });
-    }
-  }, [company?.id, queryClient]);
+  // Phase 1 quick win: the mount-time invalidation of ["contacts", id] and
+  // ["reminders", id] was forcing a refetch on every prev/next navigation,
+  // even when those queries were still inside their 60s `staleTime`. The
+  // individual cards (LinkedContactsCard, RemindersCard, CompanyKpiCards)
+  // already invalidate after their own mutations and rely on `staleTime` for
+  // background freshness, so removing this effect avoids the extra round
+  // trips without changing UX when data changes.
 
   const handleAiApplyPatch = (patch: Partial<CompanyForm>) => {
     if (!canEditCompany) {

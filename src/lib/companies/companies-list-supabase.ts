@@ -4,11 +4,19 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { TtlCache } from "@/lib/cache/ttl-cache";
+import {
+  isLexicalFastpathEnabled,
+  isRankedIdsCacheEnabled,
+  logPhase1Perf,
+  PHASE1_DEFAULTS,
+} from "@/lib/companies/phase1-flags";
 import {
   createCompanySearchEmbedding,
   hybridCompanySearch,
   mapSemanticMatchStrictnessToMaxVectorDistance,
   resolveSemanticSearchSettings,
+  type SemanticSearchSettings,
 } from "@/lib/services/semantic-search";
 import type { CompaniesListUrlState } from "@/lib/utils/company-filters-url-state";
 import { companiesSortIdForQuery } from "@/lib/utils/company-filters-url-state";
@@ -21,13 +29,78 @@ export type CompaniesGlobalSearchStrategy =
   | "none"
   | "hybrid"
   | "keyword_semantic_disabled"
-  | "keyword_fallback";
+  | "keyword_fallback"
+  /**
+   * Phase 1 quick win: bypass embedding + hybrid RPC for very short / noisy
+   * queries (normalized length below `lexicalFastpathMinQueryLength`).
+   */
+  | "keyword_short_query_fastpath";
 
 const CHUNK = 1000;
 const HYBRID_MATCH_COUNT = 1000;
 /** Cap merged hybrid + lexical id lists (PostgREST `.in()` size + client work). */
 const HYBRID_LEXICAL_MERGED_ID_CAP = 1500;
 const HYBRID_EMPTY_RESULT_SENTINEL = "00000000-0000-0000-0000-000000000000";
+
+/**
+ * Phase 1 quick win: shared ranked-id cache for /companies search + nav-ids.
+ *
+ * `/api/companies/search` and `/api/companies/nav-ids` resolve the same hybrid
+ * pipeline (embedding + RPC + lexical merge). Without sharing, opening a
+ * company detail from the list re-runs that entire pipeline. Cache the
+ * `rankedIds` result keyed by a stable filter hash so the second caller hits
+ * memory instead of the embedding provider + RPC again.
+ */
+type CachedHybridRanking = {
+  rankedIds: string[];
+  /** Snapshot of settings + filter slice used so we can re-build the applier on hit. */
+  semanticSettings: SemanticSearchSettings;
+};
+
+const hybridRankedIdsCache = new TtlCache<string, CachedHybridRanking>(
+  PHASE1_DEFAULTS.rankedIdsCacheTtlMs,
+  PHASE1_DEFAULTS.rankedIdsCacheMaxEntries,
+);
+
+/** Exposed for tests + ops; clears the in-process ranked-ids cache. */
+export function clearHybridRankedIdsCacheForTests(): void {
+  hybridRankedIdsCache.clear();
+}
+
+function normalizeForRankedIdsKey(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function sortedSnapshot(values: string[]): string[] {
+  return [...values].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Stable hash for the ranked-ids cache. Includes everything that materially
+ * changes which company IDs would be returned by the hybrid pipeline:
+ * the normalised global query, every facet group (sorted), the water preset,
+ * and the semantic settings fingerprint (provider, model, strictness).
+ */
+function buildRankedIdsCacheKey(
+  filters: CompaniesListFilterSlice,
+  settings: SemanticSearchSettings,
+): string {
+  return JSON.stringify({
+    q: normalizeForRankedIdsKey(filters.globalFilter),
+    status: sortedSnapshot(filters.activeFilters.status),
+    kategorie: sortedSnapshot(filters.activeFilters.kategorie),
+    betriebstyp: sortedSnapshot(filters.activeFilters.betriebstyp),
+    land: sortedSnapshot(filters.activeFilters.land),
+    wassertyp: sortedSnapshot(filters.activeFilters.wassertyp),
+    water: filters.waterFilter,
+    sem: {
+      p: settings.embeddingProvider,
+      m: settings.embeddingModel,
+      s: settings.semanticMatchStrictness,
+      e: settings.semanticSearchEnabled,
+    },
+  });
+}
 
 function applyLexicalGlobalFilter(
   // biome-ignore lint/suspicious/noExplicitAny: PostgREST filter builder from supabase-js is not exported as a stable public type
@@ -207,6 +280,19 @@ export type BuildCompaniesFilterApplierResult = {
   rankedIds?: string[];
 };
 
+function buildHybridApplier(
+  filters: CompaniesListFilterSlice,
+  rankedIds: string[],
+): CompaniesFilterApplier {
+  return (query) => {
+    const base = applyNonGlobalCompaniesFilters(query, filters);
+    if (rankedIds.length === 0) {
+      return base.eq("id", HYBRID_EMPTY_RESULT_SENTINEL);
+    }
+    return base.in("id", rankedIds);
+  };
+}
+
 export async function buildCompaniesFilterApplier(
   supabase: SupabaseClient<Database>,
   filters: CompaniesListFilterSlice,
@@ -228,6 +314,43 @@ export async function buildCompaniesFilterApplier(
     };
   }
 
+  // Phase 1 quick win: bypass embedding + RPC for very short queries. They
+  // rarely produce meaningful semantic results and dominate cold-cache cost.
+  if (
+    isLexicalFastpathEnabled() &&
+    normalizeForRankedIdsKey(trimmed).length < PHASE1_DEFAULTS.lexicalFastpathMinQueryLength
+  ) {
+    logPhase1Perf("filter.fastpath.short_query", {
+      length: normalizeForRankedIdsKey(trimmed).length,
+      threshold: PHASE1_DEFAULTS.lexicalFastpathMinQueryLength,
+    });
+    return {
+      applyFilters: (query) =>
+        applyLexicalGlobalFilter(applyNonGlobalCompaniesFilters(query, filters), trimmed),
+      globalSearchStrategy: "keyword_short_query_fastpath",
+    };
+  }
+
+  // Phase 1 quick win: shared ranked-ids cache between list + nav-ids.
+  const rankedCacheEnabled = isRankedIdsCacheEnabled();
+  const rankedCacheKey = rankedCacheEnabled
+    ? buildRankedIdsCacheKey(filters, semanticSettings)
+    : null;
+  if (rankedCacheKey !== null) {
+    const cached = hybridRankedIdsCache.get(rankedCacheKey);
+    if (cached !== undefined) {
+      logPhase1Perf("ranked-ids.cache.hit", {
+        size: cached.rankedIds.length,
+        stats: hybridRankedIdsCache.stats(),
+      });
+      return {
+        applyFilters: buildHybridApplier(filters, cached.rankedIds),
+        globalSearchStrategy: "hybrid",
+        rankedIds: cached.rankedIds,
+      };
+    }
+  }
+
   try {
     const embedding = await createCompanySearchEmbedding(
       { text: trimmed, supabase },
@@ -236,23 +359,35 @@ export async function buildCompaniesFilterApplier(
     const maxVectorDistance = mapSemanticMatchStrictnessToMaxVectorDistance(
       semanticSettings.semanticMatchStrictness,
     );
-    const ranked = await hybridCompanySearch(supabase, {
-      query: trimmed,
-      queryEmbedding: embedding,
-      matchCount: HYBRID_MATCH_COUNT,
-      maxVectorDistance,
-    });
+    // Hybrid RPC and the lexical-merge query don't depend on each other; run
+    // them concurrently to remove one network round-trip from the critical
+    // path. Behaviour matches the previous sequential flow.
+    const startedAt = Date.now();
+    const [ranked, lexicalIds] = await Promise.all([
+      hybridCompanySearch(supabase, {
+        query: trimmed,
+        queryEmbedding: embedding,
+        matchCount: HYBRID_MATCH_COUNT,
+        maxVectorDistance,
+      }),
+      fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed),
+    ]);
     const hybridIds = ranked.map((row) => row.companyId);
-    const lexicalIds = await fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed);
     const rankedIds = mergeHybridAndLexicalRankedIds(hybridIds, lexicalIds);
+    logPhase1Perf("ranked-ids.computed", {
+      hybridCount: hybridIds.length,
+      lexicalCount: lexicalIds.length,
+      mergedCount: rankedIds.length,
+      durationMs: Date.now() - startedAt,
+    });
+    if (rankedCacheKey !== null) {
+      hybridRankedIdsCache.set(rankedCacheKey, {
+        rankedIds,
+        semanticSettings,
+      });
+    }
     return {
-      applyFilters: (query) => {
-        const base = applyNonGlobalCompaniesFilters(query, filters);
-        if (rankedIds.length === 0) {
-          return base.eq("id", HYBRID_EMPTY_RESULT_SENTINEL);
-        }
-        return base.in("id", rankedIds);
-      },
+      applyFilters: buildHybridApplier(filters, rankedIds),
       globalSearchStrategy: "hybrid",
       rankedIds,
     };

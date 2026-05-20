@@ -13,6 +13,7 @@ import {
   buildCompaniesFilterApplier,
   type CompaniesGlobalSearchStrategy,
 } from "@/lib/companies/companies-list-supabase";
+import { isTwoPhaseHybridEnabled, logPhase1Perf } from "@/lib/companies/phase1-flags";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type CompaniesFilterGroup,
@@ -121,6 +122,7 @@ export async function searchCompaniesList(
 ): Promise<SearchCompaniesListResult> {
   const supabase = await createServerSupabaseClient();
 
+  const startedAt = Date.now();
   const { applyFilters, globalSearchStrategy, rankedIds } = await buildCompaniesFilterApplier(
     supabase,
     {
@@ -145,6 +147,87 @@ export async function searchCompaniesList(
       return { companies: [], totalCount: 0, globalSearchStrategy };
     }
 
+    const explicitSort = input.sortExplicit === true ? input.sorting[0] : undefined;
+
+    // Phase 1 quick win: two-phase hybrid fetch.
+    //
+    // Default RRF path (no explicit user sort) only needs the rows that
+    // appear on the current page. The previous behaviour fetched up to
+    // `rankedIds.length` rows (cap 1500) with the joined contacts payload
+    // and paginated in memory.
+    //
+    // New behaviour: phase A fetches only `id` for survivors (cheap), phase
+    // B fetches the full `*, contacts(...)` payload restricted to the page
+    // slice. Total count stays accurate because phase A returns the
+    // facet-filtered survivor set.
+    //
+    // Explicit column sort still needs the full survivor row set so the
+    // in-memory sort is correct; that branch keeps the original behaviour
+    // (still bounded by `rankedIds.length`).
+    if (!explicitSort && isTwoPhaseHybridEnabled()) {
+      const phaseAStarted = Date.now();
+      const survivorIdsQuery = applyFilters(supabase.from("companies").select("id"));
+      const { data: survivorRows, error: survivorError } = await survivorIdsQuery.limit(
+        rankedIds.length,
+      );
+      if (survivorError) {
+        throw survivorError;
+      }
+      const survivors = new Set(
+        (survivorRows ?? []).map((row: { id: string }) => row.id),
+      );
+      const orderedIds: string[] = [];
+      for (const id of rankedIds) {
+        if (survivors.has(id)) {
+          orderedIds.push(id);
+        }
+      }
+      const totalCount = orderedIds.length;
+      const from = input.pagination.pageIndex * input.pagination.pageSize;
+      const to = from + input.pagination.pageSize;
+      const pageIds = orderedIds.slice(from, to);
+      logPhase1Perf("hybrid.twoPhase.phaseA", {
+        rankedIdsCount: rankedIds.length,
+        survivorCount: survivors.size,
+        totalCount,
+        pageIdsCount: pageIds.length,
+        durationMs: Date.now() - phaseAStarted,
+      });
+      if (pageIds.length === 0) {
+        return { companies: [], totalCount, globalSearchStrategy };
+      }
+      const phaseBStarted = Date.now();
+      const { data: pageData, error: pageError } = await supabase
+        .from("companies")
+        .select(COMPANIES_SELECT)
+        .in("id", pageIds);
+      if (pageError) {
+        throw pageError;
+      }
+      const pageRowsRaw = (pageData ?? []) as CompanyWithContacts[];
+      const byId = new Map(pageRowsRaw.map((row) => [row.id, row]));
+      const orderedRows: CompanyWithContacts[] = [];
+      for (const id of pageIds) {
+        const row = byId.get(id);
+        if (row) {
+          orderedRows.push(row);
+        }
+      }
+      const stripped = stripDeletedContacts(orderedRows);
+      const companies = await attachOwnerProfiles(supabase, stripped);
+      logPhase1Perf("hybrid.twoPhase.phaseB", {
+        pageRows: companies.length,
+        durationMs: Date.now() - phaseBStarted,
+        totalDurationMs: Date.now() - startedAt,
+        strategy: globalSearchStrategy,
+      });
+      return {
+        companies,
+        totalCount,
+        globalSearchStrategy,
+      };
+    }
+
     const filteredQuery = applyFilters(supabase.from("companies").select(COMPANIES_SELECT));
     const { data, error } = await filteredQuery.limit(rankedIds.length);
     if (error) {
@@ -152,7 +235,6 @@ export async function searchCompaniesList(
     }
     const rows = (data ?? []) as CompanyWithContacts[];
 
-    const explicitSort = input.sortExplicit === true ? input.sorting[0] : undefined;
     let orderedRows: CompanyWithContacts[];
     if (explicitSort) {
       const sortKey = companiesSortIdForQuery(explicitSort.id) as keyof CompanyWithContacts;
@@ -183,6 +265,14 @@ export async function searchCompaniesList(
     const to = from + input.pagination.pageSize;
     const pageRows = orderedRows.slice(from, to);
     const stripped = stripDeletedContacts(pageRows);
+    logPhase1Perf("hybrid.singlePhase.done", {
+      explicitSort: explicitSort != null,
+      fetchedRows: rows.length,
+      pageRows: pageRows.length,
+      totalCount: orderedRows.length,
+      durationMs: Date.now() - startedAt,
+      strategy: globalSearchStrategy,
+    });
     return {
       companies: await attachOwnerProfiles(supabase, stripped),
       totalCount: orderedRows.length,
@@ -213,8 +303,15 @@ export async function searchCompaniesList(
   }
   const rows = (data ?? []) as CompanyWithContacts[];
   const stripped = stripDeletedContacts(rows);
+  const companies = await attachOwnerProfiles(supabase, stripped);
+  logPhase1Perf("nonHybrid.done", {
+    rows: rows.length,
+    totalCount: count ?? 0,
+    durationMs: Date.now() - startedAt,
+    strategy: globalSearchStrategy,
+  });
   return {
-    companies: await attachOwnerProfiles(supabase, stripped),
+    companies,
     totalCount: count ?? 0,
     globalSearchStrategy,
   };
