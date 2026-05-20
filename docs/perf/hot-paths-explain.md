@@ -2,6 +2,8 @@
 
 Use **Supabase SQL Editor** (or `psql`) as an **`authenticated`** session when checking plans so **RLS matches production**. Prefix heavy checks with `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` only on staging or during a quiet window — `ANALYZE` executes the query.
 
+> Application-layer perf work for `/api/companies/search` + `/api/companies/nav-ids` (embedding cache, two-phase hybrid fetch, shared ranked-IDs cache, lexical fast path) is documented in [`companies-search-phase1.md`](companies-search-phase1.md). Pair these `EXPLAIN` templates with the `[companies-p1]` log tags from that doc when comparing before/after.
+
 ## Dashboard KPIs
 
 Function: `public.get_dashboard_kpis(period_days integer default 30)` — defined in [`src/sql/dashboard-kpis.sql`](../../src/sql/dashboard-kpis.sql).

@@ -3,6 +3,12 @@ import { openai } from "@ai-sdk/openai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { embed } from "ai";
 
+import { TtlCache } from "@/lib/cache/ttl-cache";
+import {
+  isEmbedCacheEnabled,
+  logPhase1Perf,
+  PHASE1_DEFAULTS,
+} from "@/lib/companies/phase1-flags";
 import {
   SEMANTIC_MATCH_STRICTNESS_KEY,
   type SemanticMatchStrictness,
@@ -12,6 +18,42 @@ export const COMPANY_SEARCH_EMBEDDING_DIMENSION = 1536 as const;
 export const COMPANY_SEARCH_EMBEDDING_MODEL = "text-embedding-3-small" as const;
 const EMBEDDINGS_TIMEOUT_MS = 12_000;
 const XAI_EMBEDDING_MODEL = "grok-embedding-small" as const;
+
+/**
+ * Phase 1 quick win: server-side embedding cache.
+ *
+ * Eliminates the provider round-trip for repeated /companies search queries
+ * within the TTL window. Module-level singleton so the cache survives across
+ * route-handler invocations in the same Node worker (Next.js reuses workers).
+ * Key combines the normalised query text with a semantic-settings fingerprint
+ * so different providers / models / strictness levels do not collide.
+ */
+const queryEmbeddingCache = new TtlCache<string, number[]>(
+  PHASE1_DEFAULTS.embedCacheTtlMs,
+  PHASE1_DEFAULTS.embedCacheMaxEntries,
+);
+
+function normalizeQueryForEmbeddingCache(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function settingsFingerprintForEmbeddingCache(settings: SemanticSearchSettings): string {
+  return [
+    settings.embeddingProvider,
+    settings.embeddingModel,
+    settings.semanticMatchStrictness,
+    settings.semanticSearchEnabled ? "1" : "0",
+  ].join("|");
+}
+
+function embeddingCacheKey(normalizedQuery: string, settings: SemanticSearchSettings): string {
+  return `${settingsFingerprintForEmbeddingCache(settings)}::${normalizedQuery}`;
+}
+
+/** Exposed for tests + ops; clears the in-process embedding cache. */
+export function clearQueryEmbeddingCacheForTests(): void {
+  queryEmbeddingCache.clear();
+}
 
 export const DEFAULT_SEMANTIC_SETTINGS = {
   embeddingProvider: "gateway",
@@ -486,11 +528,27 @@ export async function createCompanySearchEmbedding(
     throw new Error(`Missing credentials for embedding provider "${settings.embeddingProvider}".`);
   }
 
+  // Phase 1 quick win: serve repeated queries from the in-process TTL cache.
+  // Flag is opt-in outside development to keep production rollout reversible.
+  const cacheEnabled = isEmbedCacheEnabled();
+  const cacheKey = cacheEnabled ? embeddingCacheKey(normalizeQueryForEmbeddingCache(text), settings) : null;
+  if (cacheKey !== null) {
+    const cached = queryEmbeddingCache.get(cacheKey);
+    if (cached !== undefined) {
+      logPhase1Perf("embed.cache.hit", {
+        ttlMs: PHASE1_DEFAULTS.embedCacheTtlMs,
+        stats: queryEmbeddingCache.stats(),
+      });
+      return cached;
+    }
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), EMBEDDINGS_TIMEOUT_MS);
   const onAbort = () => controller.abort();
   input.signal?.addEventListener("abort", onAbort);
 
+  const startedAt = Date.now();
   try {
     const attempt = buildSelectedProviderAttempt(settings);
     const result = await embed({
@@ -498,8 +556,23 @@ export async function createCompanySearchEmbedding(
       value: text,
       abortSignal: controller.signal,
     });
-    return parseEmbedding(result.embedding);
+    const embedding = parseEmbedding(result.embedding);
+    if (cacheKey !== null) {
+      queryEmbeddingCache.set(cacheKey, embedding);
+    }
+    logPhase1Perf("embed.provider.ok", {
+      provider: settings.embeddingProvider,
+      model: settings.embeddingModel,
+      durationMs: Date.now() - startedAt,
+      cached: false,
+    });
+    return embedding;
   } catch (err) {
+    logPhase1Perf("embed.provider.error", {
+      provider: settings.embeddingProvider,
+      model: settings.embeddingModel,
+      durationMs: Date.now() - startedAt,
+    });
     console.warn("[semantic-search] Embedding generation failed for selected provider. Falling back to lexical search.", err);
     throw err;
   } finally {
@@ -586,6 +659,7 @@ export async function hybridCompanySearch(
   const maxVectorDistance = asNonNegativeNumber(params.maxVectorDistance, 0.5);
   const queryEmbedding = toPgVectorLiteral(params.queryEmbedding);
 
+  const startedAt = Date.now();
   const { data, error } = await supabase.rpc("hybrid_company_search", {
     p_query: query,
     p_query_embedding: queryEmbedding,
@@ -597,8 +671,14 @@ export async function hybridCompanySearch(
   });
 
   if (error) {
+    logPhase1Perf("hybrid.rpc.error", { durationMs: Date.now() - startedAt });
     throw error;
   }
+  logPhase1Perf("hybrid.rpc.ok", {
+    durationMs: Date.now() - startedAt,
+    rows: Array.isArray(data) ? data.length : 0,
+    matchCount,
+  });
 
   const rows = (data ?? []) as HybridCompanySearchRpcRow[];
   return rows

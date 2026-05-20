@@ -19,12 +19,18 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient,
 }));
 
+const createInAppNotification = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/services/in-app-notifications", () => ({
+  createInAppNotification,
+}));
+
 describe("feedback admin actions", () => {
   silenceHandleSupabaseErrorConsole();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    requireAdmin.mockResolvedValue(undefined);
+    requireAdmin.mockResolvedValue({ id: "a0000000-0000-4000-8000-000000000099" });
+    createInAppNotification.mockResolvedValue({ id: "n1" } as never);
   });
 
   describe("listAdminFeedbackRows", () => {
@@ -167,6 +173,162 @@ describe("feedback admin actions", () => {
       await deleteAdminFeedbackRow(id);
       expect(fromStorage).toHaveBeenCalledWith("feedback-screenshots");
       expect(remove).toHaveBeenCalledWith([path]);
+    });
+  });
+
+  describe("updateAdminFeedbackRow", () => {
+    const id = "10000000-0000-4000-8000-000000000001";
+
+    it("throws on invalid id", async () => {
+      const { updateAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(updateAdminFeedbackRow("bad", { topic: "x" })).rejects.toThrow("Invalid feedback id");
+    });
+
+    it("returns early when no non-empty updates", async () => {
+      const updateEq = vi.fn();
+      const update = vi.fn(() => ({ eq: updateEq }));
+      createAdminClient.mockReturnValue({ from: vi.fn(() => ({ update })) } as never);
+
+      const { updateAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await updateAdminFeedbackRow(id, { topic: "   ", body: "", sentiment: "" });
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it("updates trimmed topic and body fields", async () => {
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const update = vi.fn(() => ({ eq: updateEq }));
+      createAdminClient.mockReturnValue({ from: vi.fn(() => ({ update })) } as never);
+
+      const { updateAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await updateAdminFeedbackRow(id, { topic: "  Bug  ", body: "  Details  " });
+      expect(update).toHaveBeenCalledWith({ topic: "Bug", body: "Details" });
+      expect(updateEq).toHaveBeenCalledWith("id", id);
+    });
+
+    it("throws when Supabase update fails", async () => {
+      const updateEq = vi.fn().mockResolvedValue({ error: { message: "db" } });
+      const update = vi.fn(() => ({ eq: updateEq }));
+      createAdminClient.mockReturnValue({ from: vi.fn(() => ({ update })) } as never);
+
+      const { updateAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(updateAdminFeedbackRow(id, { sentiment: "😐" })).rejects.toThrow(/Database error/);
+    });
+  });
+
+  describe("answerAdminFeedbackRow", () => {
+    const id = "10000000-0000-4000-8000-000000000001";
+    const authorId = "20000000-0000-4000-8000-000000000002";
+
+    it("throws on invalid id", async () => {
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(answerAdminFeedbackRow("nope", "hi")).rejects.toThrow("Invalid feedback id");
+    });
+
+    it("throws when answer is empty", async () => {
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(answerAdminFeedbackRow(id, "   ")).rejects.toThrow("Answer cannot be empty");
+    });
+
+    it("throws when feedback row not found", async () => {
+      const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+      const selectEq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq: selectEq }));
+      createAdminClient.mockReturnValue({ from: vi.fn(() => ({ select })) } as never);
+
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(answerAdminFeedbackRow(id, "Thanks")).rejects.toThrow("Feedback not found");
+    });
+
+    it("appends admin answer and notifies the author", async () => {
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const update = vi.fn(() => ({ eq: updateEq }));
+      const maybeSingle = vi.fn().mockResolvedValue({
+        data: { id, body: "Original", user_id: authorId },
+        error: null,
+      });
+      const selectEq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq: selectEq }));
+
+      let feedbackFromCalls = 0;
+      createAdminClient.mockReturnValue({
+        from: vi.fn(() => {
+          feedbackFromCalls += 1;
+          if (feedbackFromCalls === 1) return { select };
+          return { update };
+        }),
+      } as never);
+
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await answerAdminFeedbackRow(id, "We fixed it");
+
+      expect(update).toHaveBeenCalledWith({
+        body: "Original\n\n— Admin answer —\nWe fixed it",
+      });
+      expect(createInAppNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "feedback_answered",
+          userId: authorId,
+          dedupeKey: `feedback_answered:${id}`,
+        }),
+      );
+    });
+
+    it("truncates long answers in notification body", async () => {
+      const longAnswer = "x".repeat(200);
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const update = vi.fn(() => ({ eq: updateEq }));
+      const maybeSingle = vi.fn().mockResolvedValue({
+        data: { id, body: "Q", user_id: authorId },
+        error: null,
+      });
+      const selectEq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq: selectEq }));
+
+      let feedbackFromCalls = 0;
+      createAdminClient.mockReturnValue({
+        from: vi.fn(() => {
+          feedbackFromCalls += 1;
+          if (feedbackFromCalls === 1) return { select };
+          return { update };
+        }),
+      } as never);
+
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await answerAdminFeedbackRow(id, longAnswer);
+
+      expect(createInAppNotification).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: `${longAnswer.slice(0, 177)}...`,
+        }),
+      );
+    });
+
+    it("still succeeds when notification creation fails", async () => {
+      const updateEq = vi.fn().mockResolvedValue({ error: null });
+      const update = vi.fn(() => ({ eq: updateEq }));
+      const maybeSingle = vi.fn().mockResolvedValue({
+        data: { id, body: "Q", user_id: authorId },
+        error: null,
+      });
+      const selectEq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq: selectEq }));
+
+      let feedbackFromCalls = 0;
+      createAdminClient.mockReturnValue({
+        from: vi.fn(() => {
+          feedbackFromCalls += 1;
+          if (feedbackFromCalls === 1) return { select };
+          return { update };
+        }),
+      } as never);
+
+      createInAppNotification.mockRejectedValue(new Error("notify down"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      const { answerAdminFeedbackRow } = await import("@/lib/actions/feedback");
+      await expect(answerAdminFeedbackRow(id, "OK")).resolves.toBeUndefined();
+      expect(updateEq).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 });

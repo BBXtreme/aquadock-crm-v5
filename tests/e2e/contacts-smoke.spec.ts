@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { hasE2ECredentials, loginWithPassword } from "./helpers/auth";
+import { waitForNextDevReady } from "./helpers/dev-ready";
 import { pinEnglishAppearance } from "./helpers/locale";
 
 const authDescribe = hasE2ECredentials() ? test.describe : test.describe.skip;
@@ -26,15 +27,17 @@ authDescribe("contacts smoke", () => {
       return;
     }
 
-    await page.goto("/contacts");
-    await expect(
-      page.getByRole("heading", { name: /^(Contacts|Kontakte|Kontakti)$/, level: 1 }),
-    ).toBeVisible();
+    await page.goto("/contacts?create=true", { waitUntil: "domcontentloaded" });
+    await waitForNextDevReady(page);
 
-    await page.getByRole("main").getByRole("button", { name: /^(Contact|Kontakt)$/ }).click();
-    await expect(page.getByRole("dialog")).toBeVisible();
+    const listPageH1 = page.locator("main h1").first();
+    await expect(listPageH1).toBeVisible({ timeout: 25_000 });
+    await expect(listPageH1).toHaveText(/^(Contacts|Kontakte|Kontakti)$/);
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
     await expect(
-      page.getByRole("heading", {
+      dialog.getByRole("heading", {
         name: /^(Create new contact|Neuen Kontakt erstellen|Stvori novi kontakt)$/,
       }),
     ).toBeVisible();

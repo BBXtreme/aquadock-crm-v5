@@ -1,5 +1,13 @@
 "use client";
 
+// Phase 1 quick wins live on the server side (embedding cache, two-phase
+// hybrid fetch, shared ranked-ids cache between /api/companies/search and
+// /api/companies/nav-ids). This module's contract is intentionally kept stable
+// — its existing `globalSearchStrategyFromApi` value already surfaces the
+// strategy diagnostic ("hybrid" | "keyword_*"). Detail cleanup of duplicate
+// `["companies"]` / `["contacts"]` global lookups stays in Phase 2 to avoid
+// touching unrelated feature modules in this rollout.
+
 import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { WaterPreset } from "@/components/features/companies/client-companies-constants";
 import { companiesFilterBucketsFromRpcData } from "@/lib/companies/companies-filter-buckets";
