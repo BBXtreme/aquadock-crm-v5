@@ -4,7 +4,7 @@
 
 ## What gets emitted
 
-After Phase 2 §4.6 lands, every response from these two routes carries a `Server-Timing` header (gated by `COMPANIES_P2_READS_ENABLED`):
+Every response from these two routes carries a `Server-Timing` header:
 
 - `POST /api/companies/search`
 - `POST /api/companies/nav-ids`
@@ -21,9 +21,9 @@ The helper lives in [`src/lib/server/server-timing.ts`](../../src/lib/server/ser
 | `hybrid_rpc` | `hybrid_company_search` RPC duration | hybrid strategy |
 | `lexical_merge` | lexical merge query duration | hybrid strategy |
 | `ranked_ids_cache_hit` | duration `0` marker | ranked-IDs cache served the result |
-| `phase_a` | id-only survivor fetch | two-phase hybrid enabled (default RRF order) |
-| `phase_b` | page-row fetch | two-phase hybrid enabled |
-| `single_phase` | legacy single-phase fetch | sortExplicit or two-phase flag off |
+| `phase_a` | id-only survivor fetch | default RRF hybrid order (no explicit column sort) |
+| `phase_b` | page-row fetch | default RRF hybrid order |
+| `explicit_sort` | full survivor fetch + in-memory column sort | user clicked a column header (`sortExplicit`) |
 | `non_hybrid` | non-hybrid list query | `globalFilter` empty / semantic disabled / short-query fastpath |
 | `nav_ids` | nav-ids only — `fetchAllCompanyIdsForListNavigation` | always on `/api/companies/nav-ids` |
 | `total` | total handler duration | always |
@@ -96,6 +96,6 @@ Use these to split p95 by cohort in Speed Insights: e.g. compare `strategy=hybri
 **Related docs**
 
 - [`companies-search-phase1.md`](companies-search-phase1.md) — Phase 1 caching surface that these metrics observe.
-- [`phase2-entry-criteria.md`](phase2-entry-criteria.md) — gates that must be green before flipping flags.
+- [`phase2-entry-criteria.md`](phase2-entry-criteria.md) — historical rollout checklist (flags removed May 2026).
 - [`hot-paths-explain.md`](hot-paths-explain.md) — Postgres `EXPLAIN` templates.
 - [`baseline-2026-05-01.md`](baseline-2026-05-01.md) — pre-Phase-1 latency anchor.

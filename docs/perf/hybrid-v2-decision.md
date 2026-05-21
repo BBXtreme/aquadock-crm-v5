@@ -73,7 +73,7 @@ $$;
 
 ### App-side wiring
 
-1. Add a new internal flag bit inside `COMPANIES_P2_READS_ENABLED` (or a dedicated `COMPANIES_P2_HYBRID_V2_ENABLED` if we want independent rollback).
+1. Add a dedicated `COMPANIES_HYBRID_V2_ENABLED` env flag if independent rollback is needed (Phase 1/2 umbrella flags were removed in May 2026).
 2. In `src/lib/services/semantic-search.ts`, branch `hybridCompanySearch` to call either `hybrid_company_search` (v1) or `hybrid_company_search_v2` (v2) depending on the flag. Pass facet arrays through from `buildCompaniesFilterApplier`.
 3. In `src/lib/server/companies-search.ts`, when v2 is on, **skip Phase A** entirely — `rankedIds` from v2 already satisfies the facets. Phase B continues unchanged.
 4. Keep v1 callable for one release window. After 7 days of clean Speed Insights on v2, drop the v1 branch.

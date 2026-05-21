@@ -25,10 +25,12 @@ import {
   deleteReminderWithTrash,
   deleteTimelineEntryWithTrash,
 } from "@/lib/actions/crm-trash";
+import type { UserRole } from "@/lib/auth/types";
 import deMessages from "@/messages/de.json";
 import type { Contact, Reminder, TimelineEntryWithJoins } from "@/types/database.types";
 
 const COMPANY_ID = "550e8400-e29b-41d4-a716-446655440000";
+const ADMIN_VIEWER = { id: "user-1", roles: ["admin"] satisfies UserRole[] };
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
@@ -225,7 +227,14 @@ describe("LinkedContactsCard delete dialog", () => {
 
     const { default: LinkedContactsCard } = await import("../LinkedContactsCard");
 
-    render(<LinkedContactsCard companyId={COMPANY_ID} />, { wrapper: Wrapper });
+    render(
+      <LinkedContactsCard
+        companyId={COMPANY_ID}
+        editPermissionViewer={ADMIN_VIEWER}
+        canManageContacts={true}
+      />,
+      { wrapper: Wrapper },
+    );
 
     const row = await screen.findByRole("row", { name: /Anna Schmidt/ });
     const trashButton = within(row).getAllByRole("button").at(-1);
@@ -263,7 +272,14 @@ describe("LinkedContactsCard delete dialog", () => {
 
     const { default: LinkedContactsCard } = await import("../LinkedContactsCard");
 
-    render(<LinkedContactsCard companyId={COMPANY_ID} />, { wrapper: Wrapper });
+    render(
+      <LinkedContactsCard
+        companyId={COMPANY_ID}
+        editPermissionViewer={ADMIN_VIEWER}
+        canManageContacts={true}
+      />,
+      { wrapper: Wrapper },
+    );
 
     const row = await screen.findByRole("row", { name: /Bea Becker/ });
     const trashButton = within(row).getAllByRole("button").at(-1);
@@ -341,7 +357,14 @@ describe("RemindersCard delete dialog", () => {
 
     const { default: RemindersCard } = await import("../RemindersCard");
 
-    render(<RemindersCard companyId={COMPANY_ID} />, { wrapper: Wrapper });
+    render(
+      <RemindersCard
+        companyId={COMPANY_ID}
+        editPermissionViewer={ADMIN_VIEWER}
+        canManageReminders={true}
+      />,
+      { wrapper: Wrapper },
+    );
 
     const titleButton = await screen.findByRole("button", { name: "Follow up tomorrow" });
     const row = titleButton.closest("tr");

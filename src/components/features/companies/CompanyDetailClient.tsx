@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CompanyDetailPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
+import type { OwnerScopedEditViewer } from "@/lib/auth/owner-scoped-edit-permission";
 import { useT } from "@/lib/i18n/use-translations";
 import { createClient } from "@/lib/supabase/browser";
 import {
@@ -49,6 +50,8 @@ export interface CompanyDetailClientProps {
   initialCompaniesListSearch?: string;
   /** Server-computed: matches RLS owner/admin write rules */
   canEditCompany: boolean;
+  /** Viewer identity for per-record permission checks on child cards */
+  editPermissionViewer: OwnerScopedEditViewer;
 }
 
 function CompanyDetailShell({
@@ -57,6 +60,7 @@ function CompanyDetailShell({
   initialAiEnrichOpen = false,
   initialCompaniesListSearch = "",
   canEditCompany,
+  editPermissionViewer,
 }: CompanyDetailClientProps) {
   const tCompanies = useT("companies");
   const tTimeline = useT("timeline");
@@ -269,7 +273,11 @@ function CompanyDetailShell({
         />
         <CrmCard company={displayCompany} canEditCompany={canEditCompany} onCompanyUpdated={refreshCompanyDetail} />
       </div>
-      <LinkedContactsCard companyId={id} />
+      <LinkedContactsCard
+        companyId={id}
+        editPermissionViewer={editPermissionViewer}
+        canManageContacts={canEditCompany}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Verknüpfte Standortanalysen</CardTitle>
@@ -297,7 +305,11 @@ function CompanyDetailShell({
           )}
         </CardContent>
       </Card>
-      <RemindersCard companyId={id} />
+      <RemindersCard
+        companyId={id}
+        editPermissionViewer={editPermissionViewer}
+        canManageReminders={canEditCompany}
+      />
       <CompanyCommentsCard companyId={id} />
       <CompanyCommentAttachmentsCard companyId={id} />
       <TimelineCard companyId={id} />

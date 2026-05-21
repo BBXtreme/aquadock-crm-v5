@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { requireUser } from "@/lib/auth/require-user";
-import { bumpCompaniesGeneration } from "@/lib/companies/phase-cache-control";
+import { bumpCompaniesGeneration } from "@/lib/companies/companies-hot-path";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { logTrashAuditEvent } from "@/lib/server/delete-audit";
 import { fetchTrashBinPreference } from "@/lib/services/user-settings";

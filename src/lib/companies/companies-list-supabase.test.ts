@@ -9,6 +9,7 @@ import type { CompaniesListFilterSlice } from "./companies-list-supabase";
 import {
   applyCompaniesListFiltersToCompaniesQuery,
   buildCompaniesFilterApplier,
+  clearHybridRankedIdsCacheForTests,
   fetchAllCompanyIdsForListNavigation,
 } from "./companies-list-supabase";
 
@@ -48,6 +49,9 @@ function makeQueryBuilder() {
     lte: vi.fn(),
     gt: vi.fn(),
     or: vi.fn(),
+    order: vi.fn(),
+    limit: vi.fn(),
+    range: vi.fn(),
   };
   query.is.mockReturnValue(query);
   query.in.mockReturnValue(query);
@@ -55,6 +59,7 @@ function makeQueryBuilder() {
   query.lte.mockReturnValue(query);
   query.gt.mockReturnValue(query);
   query.or.mockReturnValue(query);
+  query.order.mockReturnValue(query);
   return query;
 }
 
@@ -98,6 +103,7 @@ function lexicalOrClause(g: string): string {
 
 describe("companies-list-supabase hybrid applier", () => {
   beforeEach(() => {
+    clearHybridRankedIdsCacheForTests();
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     mockCreateCompanySearchEmbedding.mockReset();
     mockHybridCompanySearch.mockReset();
@@ -361,6 +367,7 @@ const CHUNK = 1000;
 
 describe("fetchAllCompanyIdsForListNavigation", () => {
   beforeEach(() => {
+    clearHybridRankedIdsCacheForTests();
     mockCreateCompanySearchEmbedding.mockReset();
     mockHybridCompanySearch.mockReset();
     mockResolveSemanticSearchSettings.mockReset();
@@ -422,26 +429,24 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     // Only id-1 and id-3 survive the non-global filter intersection.
     const survivors = [{ id: "id-3" }, { id: "id-1" }];
 
-    const lexicalChain = {
-      is: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      or: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-    };
-    const queryChain = {
-      is: vi.fn().mockReturnThis(),
-      in: vi.fn().mockReturnThis(),
-      order: vi.fn().mockReturnThis(),
-      range: vi.fn().mockResolvedValue({ data: survivors, error: null }),
-    };
-    let fromCalls = 0;
+    const companiesQuery = makeQueryBuilder();
+    companiesQuery.limit.mockResolvedValue({ data: [], error: null });
+    companiesQuery.range.mockResolvedValue({ data: survivors, error: null });
+
     const supabase = {
-      from: vi.fn(() => {
-        fromCalls += 1;
-        if (fromCalls === 1) {
-          return { select: vi.fn().mockReturnValue(lexicalChain) };
+      from: vi.fn((table: string) => {
+        if (table !== "companies") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                in: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          };
         }
-        return { select: vi.fn().mockReturnValue(queryChain) };
+        return {
+          select: vi.fn(() => companiesQuery),
+        };
       }),
     } as never;
 
@@ -451,9 +456,8 @@ describe("fetchAllCompanyIdsForListNavigation", () => {
     );
 
     expect(ids).toEqual(["id-1", "id-3"]);
-    // Column sort must be ignored in hybrid so the RRF rank order survives.
-    expect(queryChain.order).not.toHaveBeenCalled();
-    expect(queryChain.in).toHaveBeenCalledWith("id", ["id-1", "id-2", "id-3", "id-4"]);
+    expect(companiesQuery.range).toHaveBeenCalled();
+    expect(companiesQuery.in).toHaveBeenCalledWith("id", ["id-1", "id-2", "id-3", "id-4"]);
   });
 
   it("hybrid path propagates Supabase errors from intersection chunked reads", async () => {

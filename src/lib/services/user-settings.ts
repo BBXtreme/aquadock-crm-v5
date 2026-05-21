@@ -126,7 +126,7 @@ export async function fetchAdminInAppGlobalFeedEnabled(
 }
 
 /**
- * Persists the admin global in-app feed toggle. **Only call from server actions that have verified `role === 'admin'`.**
+ * Persists the admin global in-app feed toggle. **Only call from server actions that have verified admin via `requireAdmin()` / `hasRole(..., 'admin')`.**
  */
 export async function upsertAdminInAppGlobalFeedEnabled(
   client: SupabaseClient<Database>,

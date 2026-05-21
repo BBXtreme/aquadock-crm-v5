@@ -1,6 +1,6 @@
 # Companies search — Phase 1 quick wins
 
-**Last updated:** May 20, 2026
+**Last updated:** May 21, 2026
 
 This doc explains the application-layer performance work that ships in Phase 1
 of the companies list/search optimization plan. The DB index baseline
@@ -16,8 +16,8 @@ The full plan lives at
 ## What changed
 
 Phase 1 wraps the existing hybrid + lexical pipeline with three caches and a
-two-phase fetch, all gated by env flags. Existing behaviour is byte-for-byte
-unchanged when every flag is `false` (the default outside `NODE_ENV=development`).
+two-phase fetch. These behaviours are always on in application code (feature
+flags removed May 2026).
 
 ### 1. Server-side embedding cache (`semantic-search.ts`)
 
@@ -53,14 +53,14 @@ does:
 - **Phase B** — `select('*, contacts(...)') .in('id', pageIds)` for the
   current page slice only (default page size 20).
 
-Explicit column sort (`sortExplicit: true`) still uses the original
-single-phase fetch because the in-memory sort needs the whole survivor set.
+Explicit column sort (`sortExplicit: true`) fetches the full hybrid survivor
+set once, sorts in memory, then paginates (Server-Timing metric: `explicit_sort`).
 
 ### 4. Lexical fast path (`companies-list-supabase.ts`)
 
 `buildCompaniesFilterApplier` returns the new strategy
 `keyword_short_query_fastpath` whenever the normalised query length is below
-`PHASE1_DEFAULTS.lexicalFastpathMinQueryLength` (**3**). This path runs the
+`COMPANIES_SEARCH_DEFAULTS.lexicalFastpathMinQueryLength` (**3**). This path runs the
 existing `ilike` OR against the indexed columns without ever calling the
 embedding provider or `hybrid_company_search`.
 
@@ -80,46 +80,26 @@ already invalidate after their own mutations.
 
 ---
 
-## Feature flags
+## Configuration (post flag cleanup)
 
-All flags follow the same resolution rule:
+Phase 1 behaviours (caches, two-phase fetch, lexical fastpath) are **always on**.
+Tuning defaults live in
+[`src/lib/companies/companies-hot-path.ts`](../../src/lib/companies/companies-hot-path.ts)
+as `COMPANIES_SEARCH_DEFAULTS`.
 
-- Env explicitly set to `"true"` / `"1"` → **ON**
-- Env explicitly set to `"false"` / `"0"` → **OFF**
-- Unset:
-  - `NODE_ENV === "development"` → **ON** (default-on locally)
-  - otherwise → **OFF** (production + Vitest tests are opt-in)
-
-| Env var | Effect when ON |
-| --- | --- |
-| `COMPANIES_P1_EMBED_CACHE_ENABLED` | Query-embedding TTL cache |
-| `COMPANIES_P1_TWO_PHASE_HYBRID_ENABLED` | Two-phase fetch for default RRF order |
-| `COMPANIES_P1_RANKED_IDS_CACHE_ENABLED` | Shared ranked-IDs cache between search + nav-ids |
-| `COMPANIES_P1_LEXICAL_FASTPATH_ENABLED` | Skip embedding + RPC for `< 3` char queries |
-| `COMPANIES_P1_PERF_LOGS_ENABLED` | Emit `[companies-p1] …` timing logs |
-
-Helpers + pinned defaults live in
-[`src/lib/companies/phase1-flags.ts`](../../src/lib/companies/phase1-flags.ts).
-
-### Rollback
-
-Set the offending flag to `false` (or remove the env var in production) and
-redeploy. No code revert is required — the pre-Phase-1 paths remain intact in
-the same files.
+Optional structured logs: set `COMPANIES_PERF_LOGS_ENABLED=true` (on by default
+in `NODE_ENV=development`).
 
 ---
 
 ## Cache invalidation rules
 
-Kept intentionally simple for Phase 1:
-
-- **Embedding cache** — TTL expiry only. The embedding only depends on the
-  query string + semantic settings, so row mutations cannot invalidate it.
-- **Ranked-IDs cache** — TTL expiry only. Bounded staleness (90 s) is the
-  trade-off for cheaper nav and repeated searches. Forced refresh requires a
-  TTL wait or process restart. A future safety hook to clear the cache on
-  company create/update/delete is noted in the plan but **out of scope** for
-  Phase 1.
+- **Embedding cache** — TTL expiry only (7 min). Keys include query text +
+  semantic settings; row mutations do not invalidate embeddings.
+- **Ranked-IDs cache** — TTL (90 s) plus a per-process **generation token**
+  (`bumpCompaniesGeneration()` on writes in [`companies-hot-path.ts`](../../src/lib/companies/companies-hot-path.ts)).
+  Same-instance writes invalidate immediately; cross-instance staleness is
+  bounded by the TTL (documented serverless limitation).
 
 `clearQueryEmbeddingCacheForTests()` and
 `clearHybridRankedIdsCacheForTests()` are exported for test cleanup and ad-hoc
@@ -129,7 +109,7 @@ ops scripts.
 
 ## Observability
 
-Set `COMPANIES_P1_PERF_LOGS_ENABLED=true` to surface structured one-liner logs
+Set `COMPANIES_PERF_LOGS_ENABLED=true` to surface structured one-liner logs
 prefixed with `[companies-p1]`. Tags emitted in this phase:
 
 | Tag | Where | Payload highlights |
@@ -144,12 +124,12 @@ prefixed with `[companies-p1]`. Tags emitted in this phase:
 | `ranked-ids.computed` | `companies-list-supabase.ts` | `hybridCount`, `lexicalCount`, `mergedCount`, `durationMs` |
 | `hybrid.twoPhase.phaseA` | `companies-search.ts` | `rankedIdsCount`, `survivorCount`, `totalCount`, `pageIdsCount`, `durationMs` |
 | `hybrid.twoPhase.phaseB` | `companies-search.ts` | `pageRows`, `durationMs`, `totalDurationMs`, `strategy` |
-| `hybrid.singlePhase.done` | `companies-search.ts` | fallback (sortExplicit / two-phase off) |
+| `hybrid.explicitSort.done` | `companies-search.ts` | explicit column sort over hybrid survivors |
 | `nonHybrid.done` | `companies-search.ts` | `rows`, `totalCount`, `durationMs` |
 | `nav-ids.done` | `nav-ids/route.ts` | `idsCount`, `durationMs`, `globalFilterLength` |
 
 These logs are intentionally low-noise; they fire once per request and are
-gated by the flag, so production stays quiet unless you flip the switch.
+gated by `COMPANIES_PERF_LOGS_ENABLED`, so production stays quiet unless you flip the switch.
 
 ---
 
@@ -173,20 +153,11 @@ after each deploy.
 
 ## Local development
 
-Phase 1 flags default to **ON** in `NODE_ENV=development` so contributors get
-the optimised paths without extra setup. To force the legacy path locally for
-A/B comparison:
+Optimised paths are always active. For server-side perf logging during a session:
 
 ```bash
-COMPANIES_P1_EMBED_CACHE_ENABLED=false \
-COMPANIES_P1_TWO_PHASE_HYBRID_ENABLED=false \
-COMPANIES_P1_RANKED_IDS_CACHE_ENABLED=false \
-COMPANIES_P1_LEXICAL_FASTPATH_ENABLED=false \
-pnpm dev
+COMPANIES_PERF_LOGS_ENABLED=true pnpm dev
 ```
-
-For server-side perf logging during a session, add
-`COMPANIES_P1_PERF_LOGS_ENABLED=true` to the same command.
 
 ---
 

@@ -15,7 +15,6 @@ import "server-only";
 
 import { track } from "@vercel/analytics/server";
 import type { CompaniesGlobalSearchStrategy } from "@/lib/companies/companies-list-supabase";
-import { isPhase2ReadsEnabled } from "@/lib/companies/phase-cache-control";
 import type { CompaniesFilterGroup } from "@/lib/utils/company-filters-url-state";
 
 /**
@@ -73,9 +72,6 @@ function countActiveFacets(input: CompaniesSearchEventInput): number {
 export async function trackCompaniesSearchEvent(
   input: CompaniesSearchEventInput,
 ): Promise<void> {
-  if (!isPhase2ReadsEnabled()) {
-    return;
-  }
   const payload: CompaniesSearchEventPayload = {
     strategy: input.strategy,
     embeddingCacheHit: "embed_cache_hit" in input.timingSnapshot,

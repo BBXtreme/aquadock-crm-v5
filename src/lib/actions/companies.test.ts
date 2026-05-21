@@ -94,6 +94,9 @@ function supabaseForUpdateCompany(priorUserId: string | null, newUserId: string 
 describe("updateCompany (owner notification)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    after.mockImplementation((cb: () => Promise<void> | void) => {
+      void cb();
+    });
     createInAppNotification.mockResolvedValue({ id: "n1" } as never);
     createTimelineEntry.mockResolvedValue({ id: "t1" } as never);
     getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
@@ -109,7 +112,9 @@ describe("updateCompany (owner notification)", () => {
     const { updateCompany } = await import("@/lib/actions/companies");
     await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
 
-    expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    });
     expect(createInAppNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "company_owner_assigned",
@@ -149,13 +154,15 @@ describe("updateCompany (owner notification)", () => {
     const { updateCompany } = await import("@/lib/actions/companies");
     await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
 
-    expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createInAppNotification).toHaveBeenCalledTimes(1);
+      expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    });
     expect(createInAppNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         dedupeKey: `company_owner_assigned:${COMPANY_ID}:${NEW_OWNER}:none`,
       }),
     );
-    expect(createTimelineEntry).toHaveBeenCalledTimes(1);
   });
 
   it("does not call createInAppNotification when user_id is unchanged", async () => {
@@ -185,7 +192,9 @@ describe("updateCompany (owner notification)", () => {
     await updateCompany(COMPANY_ID, { user_id: null });
 
     expect(createInAppNotification).not.toHaveBeenCalled();
-    expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    });
     const payload = createTimelineEntry.mock.calls[0]?.[0] as { title?: string };
     expect(payload?.title).toContain("→");
   });
@@ -204,21 +213,7 @@ describe("updateCompany (Phase 2 after() deferral)", () => {
     vi.unstubAllEnvs();
   });
 
-  it("when writes flag off, runs ownership side effects synchronously (no after())", async () => {
-    vi.stubEnv("COMPANIES_P2_WRITES_ENABLED", "false");
-    createServerSupabaseClient.mockResolvedValue(supabaseForUpdateCompany(OLD_OWNER, NEW_OWNER) as never);
-
-    const { updateCompany } = await import("@/lib/actions/companies");
-    await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
-
-    expect(after).not.toHaveBeenCalled();
-    // Side effects still ran (just synchronously).
-    expect(createTimelineEntry).toHaveBeenCalledTimes(1);
-    expect(createInAppNotification).toHaveBeenCalledTimes(1);
-  });
-
-  it("when writes flag on, defers ownership side effects via after()", async () => {
-    vi.stubEnv("COMPANIES_P2_WRITES_ENABLED", "true");
+  it("defers ownership side effects via after()", async () => {
     after.mockImplementation((cb: () => Promise<void> | void) => {
       // Run the deferred callback synchronously inside the test so we can
       // assert the same outcomes downstream.
@@ -239,7 +234,6 @@ describe("updateCompany (Phase 2 after() deferral)", () => {
   });
 
   it("structured log fires when after-deferred new-owner notification fails", async () => {
-    vi.stubEnv("COMPANIES_P2_WRITES_ENABLED", "true");
     after.mockImplementation((cb: () => Promise<void> | void) => {
       void cb();
     });

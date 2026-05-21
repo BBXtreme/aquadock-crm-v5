@@ -27,6 +27,7 @@ vi.mock("@ai-sdk/openai", () => ({
 import {
   buildCompanySemanticDocument,
   COMPANY_SEARCH_EMBEDDING_DIMENSION,
+  clearQueryEmbeddingCacheForTests,
   createCompanySearchEmbedding,
   createXaiEmbedding,
   DEFAULT_SEMANTIC_SETTINGS,
@@ -41,6 +42,7 @@ const VECTOR = Array.from({ length: COMPANY_SEARCH_EMBEDDING_DIMENSION }, (_, i)
 
 describe("semantic-search service", () => {
   beforeEach(() => {
+    clearQueryEmbeddingCacheForTests();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     process.env.AI_GATEWAY_API_KEY = "test-gateway-key";

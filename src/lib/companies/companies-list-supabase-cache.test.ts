@@ -16,7 +16,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bumpCompaniesGeneration,
   resetCompaniesGenerationForTests,
-} from "@/lib/companies/phase-cache-control";
+} from "@/lib/companies/companies-hot-path";
 import type { Database } from "@/types/database.types";
 
 import {
@@ -73,7 +73,7 @@ function makeSupabaseStub(lexicalRows: { id: string }[] = []) {
 describe("ranked-ids cache: generation-token invalidation", () => {
   beforeEach(() => {
     vi.unstubAllEnvs();
-    vi.stubEnv("NODE_ENV", "development"); // flag defaults ON
+    vi.stubEnv("NODE_ENV", "development");
     clearHybridRankedIdsCacheForTests();
     resetCompaniesGenerationForTests();
     mockCreateCompanySearchEmbedding.mockReset();
@@ -120,7 +120,6 @@ describe("ranked-ids cache: generation-token invalidation", () => {
   });
 
   it("recomputes when a write has bumped the generation counter", async () => {
-    vi.stubEnv("COMPANIES_P2_WRITES_ENABLED", "true");
     const filters = makeFilterSlice("marina");
     const supabase = makeSupabaseStub([]);
 
@@ -142,22 +141,4 @@ describe("ranked-ids cache: generation-token invalidation", () => {
     expect(mockHybridCompanySearch).toHaveBeenCalledTimes(2);
   });
 
-  it("does not bump generation when writes flag is disabled", async () => {
-    vi.stubEnv("COMPANIES_P2_WRITES_ENABLED", "false");
-    const filters = makeFilterSlice("marina");
-    const supabase = makeSupabaseStub([]);
-
-    mockCreateCompanySearchEmbedding.mockResolvedValue([1, 2, 3]);
-    mockHybridCompanySearch.mockResolvedValue([{ companyId: "id-1" }]);
-
-    await buildCompaniesFilterApplier(supabase, filters);
-    expect(mockHybridCompanySearch).toHaveBeenCalledTimes(1);
-
-    // Bump is a no-op when the writes flag is off; cache stays warm.
-    bumpCompaniesGeneration();
-    bumpCompaniesGeneration();
-
-    await buildCompaniesFilterApplier(supabase, filters);
-    expect(mockHybridCompanySearch).toHaveBeenCalledTimes(1);
-  });
 });

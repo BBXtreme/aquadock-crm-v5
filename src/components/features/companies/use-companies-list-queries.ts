@@ -1,17 +1,12 @@
 "use client";
 
-// Phase 1 quick wins live on the server side (embedding cache, two-phase
-// hybrid fetch, shared ranked-ids cache between /api/companies/search and
-// /api/companies/nav-ids). This module's contract is intentionally kept stable
-// — its existing `globalSearchStrategyFromApi` value already surfaces the
-// strategy diagnostic ("hybrid" | "keyword_*"). Detail cleanup of duplicate
-// `["companies"]` / `["contacts"]` global lookups stays in Phase 2 to avoid
-// touching unrelated feature modules in this rollout.
+// List-page queries: KPIs via `companies_stats()` RPC; table data via
+// `/api/companies/search`. Server-side caches and two-phase hybrid live in
+// companies-list-supabase / companies-search (see companies-hot-path.ts).
 
 import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { WaterPreset } from "@/components/features/companies/client-companies-constants";
 import { companiesFilterBucketsFromRpcData } from "@/lib/companies/companies-filter-buckets";
-import { isPhase2ReadsEnabled } from "@/lib/companies/phase-cache-control";
 import type { SearchCompaniesListResult } from "@/lib/server/companies-search";
 import { createClient } from "@/lib/supabase/browser";
 import type { CompaniesFilterGroup } from "@/lib/utils/company-filters-url-state";
@@ -33,41 +28,38 @@ export type CompaniesStatsResult = {
 };
 
 /**
- * Loads the four list-page KPIs (total / leads / won / value sum).
- *
- * Phase 2.1 path: `companies_stats()` SQL aggregate. RLS-scoped, single round
- * trip, no per-row payload. Gated by `COMPANIES_P2_READS_ENABLED` (and its
- * `NEXT_PUBLIC_` companion for client visibility).
- *
- * Legacy path: client-side full-table scan of `status, value` and per-row
- * filter loop. Retained for safe rollback while the flag is off and as an
- * implicit fallback if the RPC errors (e.g. before the migration has been
- * applied to a fresh database).
+ * Loads the four list-page KPIs (total / leads / won / value sum) via the
+ * RLS-scoped `companies_stats()` RPC. Falls back to a client scan only when
+ * the RPC errors (e.g. migration not yet applied).
  */
 export async function fetchCompaniesStats(
   supabase: ReturnType<typeof createClient>,
 ): Promise<CompaniesStatsResult> {
-  if (isPhase2ReadsEnabled()) {
-    const { data, error } = await supabase.rpc("companies_stats");
-    if (!error && data && data.length > 0) {
-      const row = data[0];
-      if (row) {
-        return {
-          total: Number(row.total ?? 0),
-          leads: Number(row.leads ?? 0),
-          won: Number(row.won ?? 0),
-          value: Number(row.value_sum ?? 0),
-        };
-      }
+  const { data, error } = await supabase.rpc("companies_stats");
+  if (!error && data && data.length > 0) {
+    const row = data[0];
+    if (row) {
+      return {
+        total: Number(row.total ?? 0),
+        leads: Number(row.leads ?? 0),
+        won: Number(row.won ?? 0),
+        value: Number(row.value_sum ?? 0),
+      };
     }
-    // Fall through to legacy path on RPC error or empty result.
   }
-  const { data } = await supabase.from("companies").select("status, value").is("deleted_at", null);
-  const rowCount = data?.length || 0;
-  const leads = data?.filter((c) => c.status === "lead").length || 0;
-  const won = data?.filter((c) => c.status === "gewonnen").length || 0;
-  const value = data?.reduce((sum, c) => sum + (c.value ?? 0), 0) || 0;
-  return { total: rowCount, leads, won, value };
+  if (!error && data) {
+    return { total: 0, leads: 0, won: 0, value: 0 };
+  }
+  console.warn("[companies-stats] rpc.fallback", error);
+  const { data: legacyRows } = await supabase
+    .from("companies")
+    .select("status, value")
+    .is("deleted_at", null);
+  const rows = legacyRows ?? [];
+  const leads = rows.filter((c) => c.status === "lead").length;
+  const won = rows.filter((c) => c.status === "gewonnen").length;
+  const value = rows.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  return { total: rows.length, leads, won, value };
 }
 
 /** Distinct ISO `companies.land` codes from active rows (sorted). Shares cache with list filter chips. */
@@ -191,12 +183,6 @@ export function useCompaniesListQueries(options: {
   const showSemanticBadge =
     (semanticBadgeData.data?.semanticSearchEnabled ?? true) && (semanticBadgeData.data?.showSemanticBadge ?? true);
 
-  // Phase 2.1: server-side `companies_stats()` RPC replaces the old client-side
-  // full-table scan that downloaded every active row to compute four KPI
-  // numbers. RLS-scoped (SECURITY INVOKER) so counts mirror what the calling
-  // user can see. Gated by `COMPANIES_P2_READS_ENABLED` for the same
-  // safe-rollback pattern Phase 1 used; legacy path stays callable until the
-  // flag flips on in production.
   const statsData = useSuspenseQuery({
     queryKey: ["companies-stats"],
     staleTime: 60 * 1000,

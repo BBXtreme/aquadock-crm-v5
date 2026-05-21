@@ -23,6 +23,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
+import type { OwnerScopedEditViewer } from "@/lib/auth/owner-scoped-edit-permission";
+import { canEditContactRecord } from "@/lib/contacts/contact-edit-permission";
 import { useT } from "@/lib/i18n/use-translations";
 import { companyKeys, contactKeys } from "@/lib/query/keys";
 import { updateContact } from "@/lib/services/contacts";
@@ -31,9 +33,16 @@ import type { Contact } from "@/types/database.types";
 
 interface Props {
   companyId: string;
+  editPermissionViewer: OwnerScopedEditViewer;
+  /** Company-level write (owner/admin); gates add-contact on this company */
+  canManageContacts: boolean;
 }
 
-export default function LinkedContactsCard({ companyId }: Props) {
+export default function LinkedContactsCard({
+  companyId,
+  editPermissionViewer,
+  canManageContacts,
+}: Props) {
   const t = useT("contacts");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -189,10 +198,12 @@ export default function LinkedContactsCard({ companyId }: Props) {
               <User className="w-5 h-5" />
               {t("detailLinkedTitle", { count: contacts.length })}
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAdd}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("createButtonLabel")}
-            </Button>
+            {canManageContacts ? (
+              <Button variant="outline" size="sm" onClick={handleAdd}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("createButtonLabel")}
+              </Button>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>
@@ -214,6 +225,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   </thead>
                   <tbody>
                     {contacts.map((contact) => {
+                      const canEditContact = canEditContactRecord(contact, editPermissionViewer);
                       const nameParts = [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
                         .filter(Boolean)
                         .join(" ");
@@ -252,6 +264,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           <td>{contact.is_primary && <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge>}</td>
                           <td className="text-right">
                             <div className="flex justify-end gap-1">
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -260,6 +273,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
+                              ) : null}
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -271,6 +286,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Unlink className="h-4 w-4" />
                               </Button>
+                              ) : null}
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -280,6 +297,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>
+                              ) : null}
                             </div>
                           </td>
                         </tr>

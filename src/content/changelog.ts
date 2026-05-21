@@ -33,6 +33,33 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.52",
+    releasedAt: "2026-05-21",
+    title: "⚡ Firmenliste & Suche: spürbar schneller, flüssiger im Alltag",
+    changes: [
+      {
+        type: "improvement",
+        text: "Die Firmenübersicht reagiert jetzt deutlich flotter – ob Du filterst, blätterst oder zwischen Ansichten wechselst. Weniger Warten, mehr Flow in Deinem Vertriebsalltag.",
+      },
+      {
+        type: "improvement",
+        text: "Die intelligente Suche findet relevante Firmen schneller und zuverlässiger – auch bei komplexeren Suchbegriffen und wenn mehrere Filter gleichzeitig aktiv sind.",
+      },
+      {
+        type: "improvement",
+        text: "Kennzahlen und Übersichtskarten auf der Firmendetailseite laden zügiger – Du behältst den Überblick über Kontakte, Erinnerungen und Aktivitäten ohne stockende Zwischenstopps.",
+      },
+      {
+        type: "improvement",
+        text: "Nach Änderungen an Firmen oder Kontakten wirkt die Liste konsistenter: Was Du gerade bearbeitet hast, spiegelt sich schneller wider – weniger manuelles Neuladen.",
+      },
+      {
+        type: "improvement",
+        text: "Unter der Haube haben wir Tempo und Stabilität für die gesamte Firmen-Welt weiter ausgebaut – AquaDock CRM fühlt sich insgesamt noch professioneller und verlässlicher an.",
+      },
+    ],
+  },
+  {
     version: "0.5.51",
     releasedAt: "2026-05-18",
     title: "🚀 Standortanalyse ist jetzt voll im modernen CRM zuhause",

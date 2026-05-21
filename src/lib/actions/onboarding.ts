@@ -73,15 +73,19 @@ async function requireAdmin() {
   if (user === null) {
     throw new Error("Not authenticated");
   }
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, display_name")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") {
+  const { data: isAdmin, error: adminError } = await supabase.rpc("is_app_admin");
+  if (adminError !== null) {
+    throw new Error(`Failed to verify admin role: ${adminError.message}`);
+  }
+  if (isAdmin !== true) {
     throw new Error("Only admins can perform this action");
   }
-  return { supabase, user, adminDisplayName: profile.display_name };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  return { supabase, user, adminDisplayName: profile?.display_name ?? null };
 }
 
 /**

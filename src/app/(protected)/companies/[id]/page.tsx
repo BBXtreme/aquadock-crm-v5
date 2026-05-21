@@ -53,6 +53,9 @@ export default async function CompanyDetailPage({
     ownerDisplayLine = `${responsibleLabel}: ${safeDisplay(ownerProfile?.display_name)}`;
   }
 
+  const editPermissionViewer =
+    crmUser === null ? null : { id: crmUser.id, roles: crmUser.roles };
+
   return (
     <CompanyDetailClient
       company={resolved.company}
@@ -60,6 +63,7 @@ export default async function CompanyDetailPage({
       initialAiEnrichOpen={initialAiEnrichOpen}
       initialCompaniesListSearch={initialCompaniesListSearch}
       canEditCompany={canEditCompany}
+      editPermissionViewer={editPermissionViewer}
     />
   );
 }

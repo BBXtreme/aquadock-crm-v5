@@ -16,6 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { StatCard } from "@/components/ui/StatCard";
 import { WideDialogContent } from "@/components/ui/wide-dialog";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
+import type { OwnerScopedEditViewer } from "@/lib/auth/owner-scoped-edit-permission";
+import { canEditContactRecord } from "@/lib/contacts/contact-edit-permission";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import { getContacts } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
@@ -34,7 +36,11 @@ import type { Contact } from "@/types/database.types";
 
 type ContactWithCompany = Contact & { companies?: { firmenname: string } | null };
 
-function ClientContactsPage() {
+type ClientContactsPageProps = {
+  editPermissionViewer: OwnerScopedEditViewer;
+};
+
+function ClientContactsPage({ editPermissionViewer }: ClientContactsPageProps) {
   const t = useT("contacts");
   const router = useRouter();
   const pathname = usePathname();
@@ -285,6 +291,7 @@ function ClientContactsPage() {
             totalFilteredCount={total}
             globalFilter={globalFilter}
             onGlobalFilterChange={setGlobalFilter}
+            canEditContact={(contact) => canEditContactRecord(contact, editPermissionViewer)}
             onEdit={handleEdit}
             onDelete={(id) => deleteMutation.mutate(id)}
             pageCount={pageCount}

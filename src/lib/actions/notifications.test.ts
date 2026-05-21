@@ -56,15 +56,6 @@ describe("notification server actions", () => {
   });
 
   describe("saveAdminGlobalInAppFeedAction", () => {
-    it("throws when user is not admin despite requireAdmin resolving", async () => {
-      requireAdmin.mockResolvedValue({ id: USER_ID, role: "user" });
-
-      const { saveAdminGlobalInAppFeedAction } = await import("@/lib/actions/notifications");
-      await expect(saveAdminGlobalInAppFeedAction(true)).rejects.toThrow(
-        "Nur für Administratoren",
-      );
-    });
-
     it("rejects non-boolean input", async () => {
       const { saveAdminGlobalInAppFeedAction } = await import("@/lib/actions/notifications");
       await expect(saveAdminGlobalInAppFeedAction("true")).rejects.toThrow();

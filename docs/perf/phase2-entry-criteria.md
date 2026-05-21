@@ -1,8 +1,10 @@
-# Phase 2 entry criteria — checklist & runbook
+# Phase 2 entry criteria — archived rollout checklist
 
-> Companion to [`companies-search-phase1.md`](companies-search-phase1.md). Phase 2 code lands behind two umbrella flags (`COMPANIES_P2_READS_ENABLED`, `COMPANIES_P2_WRITES_ENABLED`) that default **off** in production. Flip them on **only** after this checklist is fully green for at least **7 consecutive calendar days**.
+> **Status (May 2026):** All Phase 1 and Phase 2 optimisations are **always on** in application code. Feature flags (`COMPANIES_P1_*`, `COMPANIES_P2_*`) were removed; delete any leftover keys from Vercel. The only optional env var left is `COMPANIES_PERF_LOGS_ENABLED` (structured console logs).
 
-## Checklist
+> This document is **archived** — it records the gates used before rollout, not current operation.
+
+## Historical checklist (pre-rollout)
 
 | # | Criterion | How to verify | Pass condition |
 |---|---|---|---|
@@ -23,18 +25,13 @@
    - The Phase 1 baseline anchor in [`baseline-2026-05-01.md`](baseline-2026-05-01.md).
 3. Remediate, redeploy, then restart the 7-day observation window.
 
-## Flag flip sequence (once green)
+## Historical flag flip sequence (obsolete)
 
-Phase 2 flags flip independently after each PR stream lands and passes Vitest + Playwright + a manual staging smoke pass:
+During rollout, reads and writes shipped behind separate env flags. That mechanism was removed in May 2026.
 
-1. **Reads stream** (stats RPC, query-key factories, Server-Timing): set `COMPANIES_P2_READS_ENABLED=true` in Vercel production env.
-2. **Writes stream** (generation token, `after()`, CRMForm): set `COMPANIES_P2_WRITES_ENABLED=true` once the reads stream has run cleanly for at least 24 h.
-3. Confirm in Vercel Speed Insights that the per-route p95 trend for `/api/companies/search` and `/api/companies/nav-ids` has not regressed.
-4. Each flag becomes the default-on baseline only after **7 days of clean Speed Insights** and zero new error-budget burn.
+## Rollback today
 
-## Rollback
-
-Flipping any `COMPANIES_P2_*` flag back to `false` restores Phase 1 behaviour without a code revert. Both code paths remain intact for at least one release window.
+Use `git revert` on the offending deploy. Env-flag rollback no longer applies.
 
 ---
 

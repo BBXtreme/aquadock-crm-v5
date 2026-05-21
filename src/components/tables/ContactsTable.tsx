@@ -61,6 +61,7 @@ type ContactWithCompany = Contact & {
 
 interface ContactsTableProps {
   contacts: ContactWithCompany[];
+  canEditContact?: (contact: ContactWithCompany) => boolean;
   onEdit?: (contact: ContactWithCompany) => void;
   onDelete?: (id: string) => void;
   globalFilter?: string;
@@ -79,6 +80,7 @@ const columnHelper = createColumnHelper<ContactWithCompany>();
 
 export default function ContactsTable({
   contacts,
+  canEditContact,
   onEdit,
   onDelete,
   globalFilter: propGlobalFilter,
@@ -216,16 +218,21 @@ export default function ContactsTable({
       columnHelper.display({
         id: "actions",
         header: t("tableColActions"),
-        cell: (info) => (
+        cell: (info) => {
+          const rowCanEdit = canEditContact?.(info.row.original) ?? true;
+          return (
           <div className="flex space-x-2">
             <Link href={`/contacts/${info.row.original.id}`}>
               <Button variant="ghost" size="sm" type="button">
                 <Eye className="h-4 w-4" />
               </Button>
             </Link>
+            {rowCanEdit ? (
             <Button variant="ghost" size="sm" type="button" onClick={() => onEdit?.(info.row.original)}>
               <Edit className="h-4 w-4" />
             </Button>
+            ) : null}
+            {rowCanEdit ? (
             <AlertDialog open={deleteDialogOpen && contactToDelete?.id === info.row.original.id} onOpenChange={setDeleteDialogOpen}>
               <AlertDialogTrigger asChild>
                 <Button
@@ -266,12 +273,14 @@ export default function ContactsTable({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            ) : null}
           </div>
-        ),
+          );
+        },
         enableSorting: false,
       }) as ColumnDef<ContactWithCompany>,
     ],
-    [t, onEdit, onDelete, deleteDialogOpen, contactToDelete],
+    [t, canEditContact, onEdit, onDelete, deleteDialogOpen, contactToDelete],
   );
 
   const table = useReactTable<ContactWithCompany>({

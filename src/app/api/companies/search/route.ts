@@ -4,7 +4,7 @@
 // Using a Route Handler (instead of a Server Action) avoids the Next.js 16
 // restriction: "Server Functions cannot be called during initial render".
 //
-// Phase 2 §4.6: emits `Server-Timing` headers when `COMPANIES_P2_READS_ENABLED`
+// Emits `Server-Timing` headers on every response (see server-timing.ts).
 // is on (default-on locally, opt-in elsewhere). Speed Insights consumes these
 // automatically; DevTools shows them in the Network → Timing panel.
 

@@ -168,7 +168,7 @@ export default function Header({ user }: HeaderProps) {
   const avatarSrc =
     user.avatar_url && user.avatar_url.length > 0 ? user.avatar_url : PLACEHOLDER_AVATAR_SRC;
   const avatarFallback = headerAvatarInitials(user.display_name, user.email);
-  const hasAdminAccess = user.role === "admin" || (user.roles?.includes("admin") ?? false);
+  const hasAdminAccess = user.roles.includes("admin");
 
   return (
     <header
@@ -240,7 +240,7 @@ export default function Header({ user }: HeaderProps) {
         <AppCommandMenu
           open={commandOpen}
           onOpenChange={setCommandOpen}
-          isAdmin={user.role === "admin"}
+          isAdmin={hasAdminAccess}
         />
 
         <FeedbackButton userId={user.id} />

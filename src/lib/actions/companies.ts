@@ -9,6 +9,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { bumpCompaniesGeneration } from "@/lib/companies/companies-hot-path";
 import {
   analyzeInternalDuplicates,
   buildFirmennameOrFilter,
@@ -20,7 +21,6 @@ import {
   findDbDuplicateForRow,
   mergeDuplicateAnalyses,
 } from "@/lib/companies/csv-import-dedupe";
-import { bumpCompaniesGeneration, isPhase2WritesEnabled } from "@/lib/companies/phase-cache-control";
 import { syncContactUserIdsForCompany } from "@/lib/companies/sync-contact-user-ids";
 import { normalizeLandInput } from "@/lib/countries/iso-land";
 import { getMessagesForLocale, resolveAppLocale } from "@/lib/i18n/messages";
@@ -492,11 +492,7 @@ export async function updateCompany(
       }
     };
 
-    if (isPhase2WritesEnabled()) {
-      after(runOwnershipSideEffects);
-    } else {
-      await runOwnershipSideEffects();
-    }
+    after(runOwnershipSideEffects);
   }
 
   revalidatePath("/companies");

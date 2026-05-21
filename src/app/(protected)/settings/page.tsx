@@ -7,6 +7,7 @@ import ClientSettingsPage from "@/components/features/settings/ClientSettingsPag
 import { SettingsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
 import { requireUser } from "@/lib/auth/require-user";
+import { hasRole } from "@/lib/auth/types";
 import { fetchAiEnrichmentPolicy } from "@/lib/services/ai-enrichment-policy";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { SettingsPageHeader } from "./SettingsPageHeader";
@@ -35,7 +36,7 @@ export default async function SettingsPage() {
       <Suspense fallback={<SettingsPageSkeleton />}>
         <ClientSettingsPage
           initialAiEnrichmentSnapshot={initialAiEnrichmentSnapshot}
-          isAdmin={user.role === "admin"}
+          isAdmin={hasRole(user, "admin")}
         />
       </Suspense>
     </PageShell>

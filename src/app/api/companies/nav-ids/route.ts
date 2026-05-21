@@ -12,9 +12,8 @@
 // lexical search and silently produced wrong prev/next ordering.
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
+import { logPhase1Perf } from "@/lib/companies/companies-hot-path";
 import { fetchAllCompanyIdsForListNavigation } from "@/lib/companies/companies-list-supabase";
-import { logPhase1Perf } from "@/lib/companies/phase-cache-control";
 import { createServerTiming, serverTimingHeaders } from "@/lib/server/server-timing";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parseCompaniesListState } from "@/lib/utils/company-filters-url-state";

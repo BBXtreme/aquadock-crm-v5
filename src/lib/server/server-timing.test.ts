@@ -33,7 +33,6 @@ describe("ServerTiming", () => {
 
     const snap = t.snapshot();
     expect(snap.phase_a?.dur).toBe(18);
-    // Header has a single phase_a entry.
     expect(t.header().match(/phase_a;dur=/g)).toHaveLength(1);
   });
 
@@ -47,14 +46,7 @@ describe("ServerTiming", () => {
     expect(snap.embed_provider?.dur).toBeGreaterThanOrEqual(10);
   });
 
-  it("serverTimingHeaders returns undefined when reads flag is off", () => {
-    const t = createServerTiming();
-    t.mark("auth", 5);
-    expect(serverTimingHeaders(t)).toBeUndefined();
-  });
-
-  it("serverTimingHeaders returns Server-Timing header when reads flag is on", () => {
-    vi.stubEnv("COMPANIES_P2_READS_ENABLED", "true");
+  it("serverTimingHeaders returns Server-Timing header when marks exist", () => {
     const t = createServerTiming();
     t.mark("auth", 5);
     t.mark("total", 42);
@@ -65,8 +57,11 @@ describe("ServerTiming", () => {
   });
 
   it("serverTimingHeaders returns undefined when no marks have been recorded", () => {
-    vi.stubEnv("COMPANIES_P2_READS_ENABLED", "true");
     const t = createServerTiming();
     expect(serverTimingHeaders(t)).toBeUndefined();
+  });
+
+  it("ServerTiming.isEnabled is always true", () => {
+    expect(ServerTiming.isEnabled()).toBe(true);
   });
 });

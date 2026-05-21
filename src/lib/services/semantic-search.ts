@@ -5,10 +5,9 @@ import { embed } from "ai";
 
 import { TtlCache } from "@/lib/cache/ttl-cache";
 import {
-  isEmbedCacheEnabled,
+  COMPANIES_SEARCH_DEFAULTS,
   logPhase1Perf,
-  PHASE1_DEFAULTS,
-} from "@/lib/companies/phase-cache-control";
+} from "@/lib/companies/companies-hot-path";
 import {
   SEMANTIC_MATCH_STRICTNESS_KEY,
   type SemanticMatchStrictness,
@@ -21,7 +20,7 @@ const EMBEDDINGS_TIMEOUT_MS = 12_000;
 const XAI_EMBEDDING_MODEL = "grok-embedding-small" as const;
 
 /**
- * Phase 1 quick win: server-side embedding cache.
+ * Server-side embedding cache for repeated company search queries.
  *
  * Eliminates the provider round-trip for repeated /companies search queries
  * within the TTL window. Module-level singleton so the cache survives across
@@ -30,8 +29,8 @@ const XAI_EMBEDDING_MODEL = "grok-embedding-small" as const;
  * so different providers / models / strictness levels do not collide.
  */
 const queryEmbeddingCache = new TtlCache<string, number[]>(
-  PHASE1_DEFAULTS.embedCacheTtlMs,
-  PHASE1_DEFAULTS.embedCacheMaxEntries,
+  COMPANIES_SEARCH_DEFAULTS.embedCacheTtlMs,
+  COMPANIES_SEARCH_DEFAULTS.embedCacheMaxEntries,
 );
 
 function normalizeQueryForEmbeddingCache(text: string): string {
@@ -530,20 +529,15 @@ export async function createCompanySearchEmbedding(
     throw new Error(`Missing credentials for embedding provider "${settings.embeddingProvider}".`);
   }
 
-  // Phase 1 quick win: serve repeated queries from the in-process TTL cache.
-  // Flag is opt-in outside development to keep production rollout reversible.
-  const cacheEnabled = isEmbedCacheEnabled();
-  const cacheKey = cacheEnabled ? embeddingCacheKey(normalizeQueryForEmbeddingCache(text), settings) : null;
-  if (cacheKey !== null) {
-    const cached = queryEmbeddingCache.get(cacheKey);
-    if (cached !== undefined) {
-      logPhase1Perf("embed.cache.hit", {
-        ttlMs: PHASE1_DEFAULTS.embedCacheTtlMs,
-        stats: queryEmbeddingCache.stats(),
-      });
-      timing?.mark("embed_cache_hit", 0, "warm");
-      return cached;
-    }
+  const cacheKey = embeddingCacheKey(normalizeQueryForEmbeddingCache(text), settings);
+  const cached = queryEmbeddingCache.get(cacheKey);
+  if (cached !== undefined) {
+    logPhase1Perf("embed.cache.hit", {
+      ttlMs: COMPANIES_SEARCH_DEFAULTS.embedCacheTtlMs,
+      stats: queryEmbeddingCache.stats(),
+    });
+    timing?.mark("embed_cache_hit", 0, "warm");
+    return cached;
   }
 
   const controller = new AbortController();
@@ -561,9 +555,7 @@ export async function createCompanySearchEmbedding(
       abortSignal: controller.signal,
     });
     const embedding = parseEmbedding(result.embedding);
-    if (cacheKey !== null) {
-      queryEmbeddingCache.set(cacheKey, embedding);
-    }
+    queryEmbeddingCache.set(cacheKey, embedding);
     logPhase1Perf("embed.provider.ok", {
       provider: settings.embeddingProvider,
       model: settings.embeddingModel,

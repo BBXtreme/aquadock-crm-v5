@@ -9,15 +9,17 @@ import { Suspense } from "react";
 import ClientContactsPage from "@/components/features/contacts/ClientContactsPage";
 import { ContactsPageSkeleton } from "@/components/ui/page-list-skeleton";
 import { PageShell } from "@/components/ui/page-shell";
-import { requireUser } from "@/lib/auth/require-user";
+import { getCrmUserContext } from "@/lib/auth/get-crm-user-context";
 
 export default async function ContactsPage() {
-  const _user = await requireUser();
+  const { user: crmUser } = await getCrmUserContext();
+  const editPermissionViewer =
+    crmUser === null ? null : { id: crmUser.id, roles: crmUser.roles };
 
   return (
     <PageShell>
       <Suspense fallback={<ContactsPageSkeleton />}>
-        <ClientContactsPage />
+        <ClientContactsPage editPermissionViewer={editPermissionViewer} />
       </Suspense>
     </PageShell>
   );

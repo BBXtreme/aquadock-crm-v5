@@ -6,12 +6,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { TtlCache } from "@/lib/cache/ttl-cache";
 import {
+  COMPANIES_SEARCH_DEFAULTS,
   currentCompaniesGeneration,
-  isLexicalFastpathEnabled,
-  isRankedIdsCacheEnabled,
   logPhase1Perf,
-  PHASE1_DEFAULTS,
-} from "@/lib/companies/phase-cache-control";
+} from "@/lib/companies/companies-hot-path";
 import type { ServerTiming } from "@/lib/server/server-timing";
 import {
   createCompanySearchEmbedding,
@@ -61,15 +59,15 @@ type CachedHybridRanking = {
    * Phase 2 §4.2 — companies generation counter snapshot at write time. The
    * cache treats `generation < currentCompaniesGeneration()` as a miss so any
    * server-side company mutation invalidates entries deterministically within
-   * the same process. See `phase-cache-control.ts` for the per-process limit
+   * the same process. See `companies-hot-path.ts` for the per-process limit
    * and the 90 s TTL safety net for cross-instance staleness.
    */
   generation: number;
 };
 
 const hybridRankedIdsCache = new TtlCache<string, CachedHybridRanking>(
-  PHASE1_DEFAULTS.rankedIdsCacheTtlMs,
-  PHASE1_DEFAULTS.rankedIdsCacheMaxEntries,
+  COMPANIES_SEARCH_DEFAULTS.rankedIdsCacheTtlMs,
+  COMPANIES_SEARCH_DEFAULTS.rankedIdsCacheMaxEntries,
 );
 
 /** Exposed for tests + ops; clears the in-process ranked-ids cache. */
@@ -328,12 +326,12 @@ export async function buildCompaniesFilterApplier(
   // Phase 1 quick win: bypass embedding + RPC for very short queries. They
   // rarely produce meaningful semantic results and dominate cold-cache cost.
   if (
-    isLexicalFastpathEnabled() &&
-    normalizeForRankedIdsKey(trimmed).length < PHASE1_DEFAULTS.lexicalFastpathMinQueryLength
+    normalizeForRankedIdsKey(trimmed).length <
+    COMPANIES_SEARCH_DEFAULTS.lexicalFastpathMinQueryLength
   ) {
     logPhase1Perf("filter.fastpath.short_query", {
       length: normalizeForRankedIdsKey(trimmed).length,
-      threshold: PHASE1_DEFAULTS.lexicalFastpathMinQueryLength,
+      threshold: COMPANIES_SEARCH_DEFAULTS.lexicalFastpathMinQueryLength,
     });
     return {
       applyFilters: (query) =>
@@ -342,14 +340,9 @@ export async function buildCompaniesFilterApplier(
     };
   }
 
-  // Phase 1 quick win: shared ranked-ids cache between list + nav-ids.
-  const rankedCacheEnabled = isRankedIdsCacheEnabled();
-  const rankedCacheKey = rankedCacheEnabled
-    ? buildRankedIdsCacheKey(filters, semanticSettings)
-    : null;
-  if (rankedCacheKey !== null) {
-    const cached = hybridRankedIdsCache.get(rankedCacheKey);
-    if (cached !== undefined) {
+  const rankedCacheKey = buildRankedIdsCacheKey(filters, semanticSettings);
+  const cached = hybridRankedIdsCache.get(rankedCacheKey);
+  if (cached !== undefined) {
       // Phase 2 §4.2 — generation-token freshness check. If any company write
       // has bumped the counter since this entry was stored, treat as a miss
       // and force recompute. Same-instance writes propagate instantly here;
@@ -373,7 +366,6 @@ export async function buildCompaniesFilterApplier(
           rankedIds: cached.rankedIds,
         };
       }
-    }
   }
 
   try {
@@ -408,13 +400,11 @@ export async function buildCompaniesFilterApplier(
       mergedCount: rankedIds.length,
       durationMs: Date.now() - startedAt,
     });
-    if (rankedCacheKey !== null) {
-      hybridRankedIdsCache.set(rankedCacheKey, {
-        rankedIds,
-        semanticSettings,
-        generation: currentCompaniesGeneration(),
-      });
-    }
+    hybridRankedIdsCache.set(rankedCacheKey, {
+      rankedIds,
+      semanticSettings,
+      generation: currentCompaniesGeneration(),
+    });
     return {
       applyFilters: buildHybridApplier(filters, rankedIds),
       globalSearchStrategy: "hybrid",

@@ -16,8 +16,6 @@
 //     NOT add user-supplied strings to the metric name or `desc` field, which
 //     would risk leaking internals through response headers.
 
-import { isPhase2ReadsEnabled } from "@/lib/companies/phase-cache-control";
-
 type Mark = { dur: number; desc?: string };
 
 /**
@@ -33,7 +31,7 @@ export type CompaniesServerTimingMetric =
   | "ranked_ids_cache_hit"
   | "phase_a"
   | "phase_b"
-  | "single_phase"
+  | "explicit_sort"
   | "non_hybrid"
   | "nav_ids"
   | "total";
@@ -72,15 +70,14 @@ export class ServerTiming {
     return Object.fromEntries(this.marks);
   }
 
-  /** True when the consumer should attach headers to the response. */
+  /** Always true since May 2026 flag cleanup; kept for a stable call-site API. */
   static isEnabled(): boolean {
-    return isPhase2ReadsEnabled();
+    return true;
   }
 }
 
 /**
- * Convenience builder that returns a no-op `ServerTiming` when the Phase 2
- * reads flag is off. Lets call sites stay unconditional:
+ * Convenience builder for /companies hot paths. Call sites stay unconditional:
  *
  *   const timing = createServerTiming();
  *   const stop = timing.start("hybrid_rpc");
@@ -94,8 +91,7 @@ export function createServerTiming(): ServerTiming {
 
 /**
  * Returns a `headers` object suitable for `NextResponse.json(..., { headers })`.
- * Returns `undefined` when the flag is off so the consumer can keep its
- * happy-path response untouched.
+ * Returns `undefined` when no marks were recorded.
  */
 export function serverTimingHeaders(
   timing: ServerTiming,

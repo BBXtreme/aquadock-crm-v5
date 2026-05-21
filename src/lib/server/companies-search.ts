@@ -9,11 +9,11 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { logPhase1Perf } from "@/lib/companies/companies-hot-path";
 import {
   buildCompaniesFilterApplier,
   type CompaniesGlobalSearchStrategy,
 } from "@/lib/companies/companies-list-supabase";
-import { isTwoPhaseHybridEnabled, logPhase1Perf } from "@/lib/companies/phase-cache-control";
 import type { ServerTiming } from "@/lib/server/server-timing";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -139,12 +139,8 @@ export async function searchCompaniesList(
   //
   // Ordering rules:
   //  - Default (user hasn't clicked a column header while searching):
-  //    rows are returned in RRF-relevance order so the best semantic match
-  //    is always at the top.
-  //  - When the user explicitly clicks a column header (`sortExplicit` is
-  //    true), that sort wins — the hybrid-matched rows are re-sorted by
-  //    the chosen column. Relevance is only the *default* within the
-  //    hybrid-filtered set, not a lock.
+  //    two-phase fetch — phase A ids only, phase B page rows with contacts.
+  //  - Explicit column sort: fetch full survivor set, sort in memory, paginate.
   if (rankedIds !== undefined) {
     if (rankedIds.length === 0) {
       return { companies: [], totalCount: 0, globalSearchStrategy };
@@ -152,22 +148,7 @@ export async function searchCompaniesList(
 
     const explicitSort = input.sortExplicit === true ? input.sorting[0] : undefined;
 
-    // Phase 1 quick win: two-phase hybrid fetch.
-    //
-    // Default RRF path (no explicit user sort) only needs the rows that
-    // appear on the current page. The previous behaviour fetched up to
-    // `rankedIds.length` rows (cap 1500) with the joined contacts payload
-    // and paginated in memory.
-    //
-    // New behaviour: phase A fetches only `id` for survivors (cheap), phase
-    // B fetches the full `*, contacts(...)` payload restricted to the page
-    // slice. Total count stays accurate because phase A returns the
-    // facet-filtered survivor set.
-    //
-    // Explicit column sort still needs the full survivor row set so the
-    // in-memory sort is correct; that branch keeps the original behaviour
-    // (still bounded by `rankedIds.length`).
-    if (!explicitSort && isTwoPhaseHybridEnabled()) {
+    if (!explicitSort) {
       const phaseAStarted = Date.now();
       const stopPhaseA = timing?.start("phase_a");
       const survivorIdsQuery = applyFilters(supabase.from("companies").select("id"));
@@ -235,47 +216,33 @@ export async function searchCompaniesList(
       };
     }
 
-    const stopSinglePhase = timing?.start("single_phase");
+    const stopExplicitSort = timing?.start("explicit_sort");
     const filteredQuery = applyFilters(supabase.from("companies").select(COMPANIES_SELECT));
     const { data, error } = await filteredQuery.limit(rankedIds.length);
-    stopSinglePhase?.();
+    stopExplicitSort?.();
     if (error) {
       throw error;
     }
     const rows = (data ?? []) as CompanyWithContacts[];
-
-    let orderedRows: CompanyWithContacts[];
-    if (explicitSort) {
-      const sortKey = companiesSortIdForQuery(explicitSort.id) as keyof CompanyWithContacts;
-      const direction = explicitSort.desc ? -1 : 1;
-      orderedRows = [...rows].sort((a, b) => {
-        const av = a[sortKey];
-        const bv = b[sortKey];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        if (typeof av === "number" && typeof bv === "number") {
-          return (av - bv) * direction;
-        }
-        return String(av).localeCompare(String(bv), "de", { sensitivity: "base" }) * direction;
-      });
-    } else {
-      const byId = new Map(rows.map((row) => [row.id, row]));
-      orderedRows = [];
-      for (const id of rankedIds) {
-        const row = byId.get(id);
-        if (row) {
-          orderedRows.push(row);
-        }
+    const sortKey = companiesSortIdForQuery(explicitSort.id) as keyof CompanyWithContacts;
+    const direction = explicitSort.desc ? -1 : 1;
+    const orderedRows = [...rows].sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === "number" && typeof bv === "number") {
+        return (av - bv) * direction;
       }
-    }
+      return String(av).localeCompare(String(bv), "de", { sensitivity: "base" }) * direction;
+    });
 
     const from = input.pagination.pageIndex * input.pagination.pageSize;
     const to = from + input.pagination.pageSize;
     const pageRows = orderedRows.slice(from, to);
     const stripped = stripDeletedContacts(pageRows);
-    logPhase1Perf("hybrid.singlePhase.done", {
-      explicitSort: explicitSort != null,
+    logPhase1Perf("hybrid.explicitSort.done", {
       fetchedRows: rows.length,
       pageRows: pageRows.length,
       totalCount: orderedRows.length,
