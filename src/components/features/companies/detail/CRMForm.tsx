@@ -1,4 +1,12 @@
-// This component is responsible for rendering a form to update CRM-related information for a company. -  status, value, and notes. It uses react-hook-form for form state management and validation with zod. Upon submission, it updates the company data in the Supabase database and provides user feedback with toast notifications.
+// CRM card form (status, value, notes).
+// Phase 2 §4.5 — uses the `updateCompany` server action instead of a direct
+// browser Supabase call so the same downstream pipeline runs as for other
+// edit forms (FirmendatenEditForm / AquaDockEditForm):
+//   - Embedding regen via `generateAndStoreCompanyEmbedding`.
+//   - `revalidatePath("/companies")` + per-detail revalidate.
+//   - Ownership audit + new-owner notification (via after() in Phase 2).
+//   - Generation-token bump for the ranked-IDs cache.
+// Previously the browser path bypassed every one of those.
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,9 +21,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { updateCompany } from "@/lib/actions/companies";
 import { useT } from "@/lib/i18n/use-translations";
-import { createClient } from "@/lib/supabase/browser";
-import type { Company } from "@/types/database.types";
+import { companyKeys } from "@/lib/query/keys";
+import type { Company, CompanyUpdate } from "@/types/database.types";
 
 const crmSchema = z.object({
   status: z
@@ -84,10 +93,19 @@ export default function CRMForm({ company, readOnly = false, onSuccess }: Props)
       return;
     }
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("companies").update(data).eq("id", company.id);
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["company", company.id] });
+      // Phase 2 §4.5 — route through the server action so embedding regen,
+      // revalidatePath, ownership audit, and the generation-token bump all
+      // run consistently. The schema here is a strict subset (status / value
+      // / notes) of `CompanyUpdate`, so this cast is safe.
+      const patch: CompanyUpdate = {
+        status: data.status ?? undefined,
+        value: data.value,
+        notes: data.notes ?? null,
+      };
+      await updateCompany(company.id, patch);
+      queryClient.invalidateQueries({ queryKey: companyKeys.detail(company.id) });
+      queryClient.invalidateQueries({ queryKey: companyKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: companyKeys.stats() });
       toast.success(t("detailCrmToastSaved"));
       onSuccess();
     } catch (err) {

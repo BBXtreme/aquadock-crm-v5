@@ -6,11 +6,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { TtlCache } from "@/lib/cache/ttl-cache";
 import {
+  currentCompaniesGeneration,
   isLexicalFastpathEnabled,
   isRankedIdsCacheEnabled,
   logPhase1Perf,
   PHASE1_DEFAULTS,
-} from "@/lib/companies/phase1-flags";
+} from "@/lib/companies/phase-cache-control";
+import type { ServerTiming } from "@/lib/server/server-timing";
 import {
   createCompanySearchEmbedding,
   hybridCompanySearch,
@@ -55,6 +57,14 @@ type CachedHybridRanking = {
   rankedIds: string[];
   /** Snapshot of settings + filter slice used so we can re-build the applier on hit. */
   semanticSettings: SemanticSearchSettings;
+  /**
+   * Phase 2 §4.2 — companies generation counter snapshot at write time. The
+   * cache treats `generation < currentCompaniesGeneration()` as a miss so any
+   * server-side company mutation invalidates entries deterministically within
+   * the same process. See `phase-cache-control.ts` for the per-process limit
+   * and the 90 s TTL safety net for cross-instance staleness.
+   */
+  generation: number;
 };
 
 const hybridRankedIdsCache = new TtlCache<string, CachedHybridRanking>(
@@ -296,6 +306,7 @@ function buildHybridApplier(
 export async function buildCompaniesFilterApplier(
   supabase: SupabaseClient<Database>,
   filters: CompaniesListFilterSlice,
+  timing?: ServerTiming,
 ): Promise<BuildCompaniesFilterApplierResult> {
   const trimmed = filters.globalFilter.trim();
   if (trimmed.length === 0) {
@@ -339,15 +350,29 @@ export async function buildCompaniesFilterApplier(
   if (rankedCacheKey !== null) {
     const cached = hybridRankedIdsCache.get(rankedCacheKey);
     if (cached !== undefined) {
-      logPhase1Perf("ranked-ids.cache.hit", {
-        size: cached.rankedIds.length,
-        stats: hybridRankedIdsCache.stats(),
-      });
-      return {
-        applyFilters: buildHybridApplier(filters, cached.rankedIds),
-        globalSearchStrategy: "hybrid",
-        rankedIds: cached.rankedIds,
-      };
+      // Phase 2 §4.2 — generation-token freshness check. If any company write
+      // has bumped the counter since this entry was stored, treat as a miss
+      // and force recompute. Same-instance writes propagate instantly here;
+      // cross-instance staleness still relies on the 90 s TTL floor.
+      const currentGen = currentCompaniesGeneration();
+      if (cached.generation < currentGen) {
+        logPhase1Perf("ranked-ids.cache.stale", {
+          cachedGeneration: cached.generation,
+          currentGeneration: currentGen,
+        });
+      } else {
+        logPhase1Perf("ranked-ids.cache.hit", {
+          size: cached.rankedIds.length,
+          generation: cached.generation,
+          stats: hybridRankedIdsCache.stats(),
+        });
+        timing?.mark("ranked_ids_cache_hit", 0, "warm");
+        return {
+          applyFilters: buildHybridApplier(filters, cached.rankedIds),
+          globalSearchStrategy: "hybrid",
+          rankedIds: cached.rankedIds,
+        };
+      }
     }
   }
 
@@ -355,6 +380,7 @@ export async function buildCompaniesFilterApplier(
     const embedding = await createCompanySearchEmbedding(
       { text: trimmed, supabase },
       semanticSettings,
+      timing,
     );
     const maxVectorDistance = mapSemanticMatchStrictnessToMaxVectorDistance(
       semanticSettings.semanticMatchStrictness,
@@ -363,14 +389,16 @@ export async function buildCompaniesFilterApplier(
     // them concurrently to remove one network round-trip from the critical
     // path. Behaviour matches the previous sequential flow.
     const startedAt = Date.now();
+    const stopHybridRpc = timing?.start("hybrid_rpc");
+    const stopLexical = timing?.start("lexical_merge");
     const [ranked, lexicalIds] = await Promise.all([
       hybridCompanySearch(supabase, {
         query: trimmed,
         queryEmbedding: embedding,
         matchCount: HYBRID_MATCH_COUNT,
         maxVectorDistance,
-      }),
-      fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed),
+      }).finally(() => stopHybridRpc?.()),
+      fetchLexicalCompanyIdsForMerge(supabase, filters, trimmed).finally(() => stopLexical?.()),
     ]);
     const hybridIds = ranked.map((row) => row.companyId);
     const rankedIds = mergeHybridAndLexicalRankedIds(hybridIds, lexicalIds);
@@ -384,6 +412,7 @@ export async function buildCompaniesFilterApplier(
       hybridRankedIdsCache.set(rankedCacheKey, {
         rankedIds,
         semanticSettings,
+        generation: currentCompaniesGeneration(),
       });
     }
     return {
@@ -409,13 +438,14 @@ export async function buildCompaniesFilterApplier(
 export async function fetchAllCompanyIdsForListNavigation(
   supabase: SupabaseClient<Database>,
   listState: CompaniesListUrlState,
+  timing?: ServerTiming,
 ): Promise<string[]> {
   const filterSlice: CompaniesListFilterSlice = {
     globalFilter: listState.globalFilter,
     activeFilters: listState.activeFilters,
     waterFilter: listState.waterFilter,
   };
-  const { applyFilters, rankedIds } = await buildCompaniesFilterApplier(supabase, filterSlice);
+  const { applyFilters, rankedIds } = await buildCompaniesFilterApplier(supabase, filterSlice, timing);
   const sort = listState.sorting[0];
 
   // Hybrid path: matching ids are `rankedIds` intersected with non-global

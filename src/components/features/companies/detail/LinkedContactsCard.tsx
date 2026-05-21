@@ -24,6 +24,7 @@ import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
 import { useT } from "@/lib/i18n/use-translations";
+import { companyKeys, contactKeys } from "@/lib/query/keys";
 import { updateContact } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
@@ -40,19 +41,24 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const [contactToUnlink, setContactToUnlink] = useState<Contact | null>(null);
   const queryClient = useQueryClient();
 
+  // Phase 2 §4.3 — factory keys eliminate the `["contacts", id]` collision
+  // with `CompanyKpiCards`. `contactKeys.byCompany(id)` is the richer
+  // projection used here; KPI cards use `contactKeys.kpi(id)`.
   const invalidateContactQueries = (previousCompanyId: string | null) => {
-    queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    queryClient.invalidateQueries({ queryKey: contactKeys.byCompany(companyId) });
+    queryClient.invalidateQueries({ queryKey: contactKeys.kpi(companyId) });
+    queryClient.invalidateQueries({ queryKey: contactKeys.all });
+    queryClient.invalidateQueries({ queryKey: contactKeys.stats() });
+    queryClient.invalidateQueries({ queryKey: companyKeys.detail(companyId) });
     if (previousCompanyId && previousCompanyId !== companyId) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", previousCompanyId] });
-      queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+      queryClient.invalidateQueries({ queryKey: contactKeys.byCompany(previousCompanyId) });
+      queryClient.invalidateQueries({ queryKey: contactKeys.kpi(previousCompanyId) });
+      queryClient.invalidateQueries({ queryKey: companyKeys.detail(previousCompanyId) });
     }
   };
 
   const { data: contacts = [] } = useSuspenseQuery({
-    queryKey: ["contacts", companyId],
+    queryKey: contactKeys.byCompany(companyId),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -76,7 +82,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContactWithTrash(id),
     onMutate: async (id) => {
-      const queryKey = ["contacts", companyId];
+      const queryKey = contactKeys.byCompany(companyId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Contact[]>(queryKey);
       if (previous) {
@@ -96,19 +102,14 @@ export default function LinkedContactsCard({ companyId }: Props) {
       });
     },
     onSuccess: (mode, id) => {
-      queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+      invalidateContactQueries(null);
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
             label: "Rückgängig",
             onClick: () => {
               void restoreContactWithTrash(id).then(() => {
-                queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-                queryClient.invalidateQueries({ queryKey: ["contacts"] });
-                queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+                invalidateContactQueries(null);
                 toast.success(t("toastUpdated"));
               });
             },
@@ -123,7 +124,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const unlinkMutation = useMutation({
     mutationFn: (contact: Contact) => updateContact(contact.id, { company_id: null }),
     onMutate: async (contact) => {
-      const queryKey = ["contacts", companyId];
+      const queryKey = contactKeys.byCompany(companyId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Contact[]>(queryKey);
       if (previous) {
@@ -302,7 +303,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             contact={editContact}
             onCancel={() => setEditContact(null)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              invalidateContactQueries(null);
               toast.success(t("detailSavedToast"));
               setEditContact(null);
             }}
@@ -356,7 +357,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             preselectedCompanyId={companyId}
             onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              invalidateContactQueries(null);
               toast.success(t("detailSavedToast"));
               setAddDialogOpen(false);
             }}

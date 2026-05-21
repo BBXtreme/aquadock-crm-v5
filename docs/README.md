@@ -17,6 +17,9 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [README_OpenMap.md](README_OpenMap.md) | OpenMap, OSM, Overpass |
 | [react-table-v8-ts-tricks.md](react-table-v8-ts-tricks.md) | TanStack Table TypeScript patterns |
 | [perf/companies-search-phase1.md](perf/companies-search-phase1.md) | Phase 1 quick wins for companies list/search (embedding cache, two-phase hybrid, ranked-IDs cache, feature flags) |
+| [perf/phase2-entry-criteria.md](perf/phase2-entry-criteria.md) | Phase 2 entry criteria checklist + flag flip runbook |
+| [perf/server-timing-readme.md](perf/server-timing-readme.md) | How to read the Phase 2 `Server-Timing` headers in DevTools + Speed Insights |
+| [perf/hybrid-v2-decision.md](perf/hybrid-v2-decision.md) | Decision gate for shipping `hybrid_company_search_v2` (Phase 2 §4.7 conditional) |
 | [perf/hot-paths-explain.md](perf/hot-paths-explain.md) | Postgres `EXPLAIN` templates for the heaviest RPCs |
 | [perf/baseline-2026-05-01.md](perf/baseline-2026-05-01.md) | Pre-optimisation latency anchor for KPI comparisons |
 

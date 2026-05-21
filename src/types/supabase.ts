@@ -1046,6 +1046,15 @@ export type Database = {
     }
     Functions: {
       companies_filter_buckets: { Args: never; Returns: Json }
+      companies_stats: {
+        Args: never
+        Returns: {
+          leads: number
+          total: number
+          value_sum: number
+          won: number
+        }[]
+      }
       create_tournament_for_user: {
         Args: { p_name: string; p_starts_on: string }
         Returns: string

@@ -8,11 +8,12 @@ import {
   isEmbedCacheEnabled,
   logPhase1Perf,
   PHASE1_DEFAULTS,
-} from "@/lib/companies/phase1-flags";
+} from "@/lib/companies/phase-cache-control";
 import {
   SEMANTIC_MATCH_STRICTNESS_KEY,
   type SemanticMatchStrictness,
 } from "@/lib/constants/semantic-search-user-settings";
+import type { ServerTiming } from "@/lib/server/server-timing";
 
 export const COMPANY_SEARCH_EMBEDDING_DIMENSION = 1536 as const;
 export const COMPANY_SEARCH_EMBEDDING_MODEL = "text-embedding-3-small" as const;
@@ -512,6 +513,7 @@ export async function createCompanySearchEmbedding(
     supabase?: SupabaseClient;
   },
   settingsOverride?: SemanticSearchSettings,
+  timing?: ServerTiming,
 ): Promise<number[]> {
   const text = input.text.trim();
   if (text.length === 0) {
@@ -539,6 +541,7 @@ export async function createCompanySearchEmbedding(
         ttlMs: PHASE1_DEFAULTS.embedCacheTtlMs,
         stats: queryEmbeddingCache.stats(),
       });
+      timing?.mark("embed_cache_hit", 0, "warm");
       return cached;
     }
   }
@@ -549,6 +552,7 @@ export async function createCompanySearchEmbedding(
   input.signal?.addEventListener("abort", onAbort);
 
   const startedAt = Date.now();
+  const stopProvider = timing?.start("embed_provider");
   try {
     const attempt = buildSelectedProviderAttempt(settings);
     const result = await embed({
@@ -576,6 +580,7 @@ export async function createCompanySearchEmbedding(
     console.warn("[semantic-search] Embedding generation failed for selected provider. Falling back to lexical search.", err);
     throw err;
   } finally {
+    stopProvider?.();
     clearTimeout(timeout);
     input.signal?.removeEventListener("abort", onAbort);
   }

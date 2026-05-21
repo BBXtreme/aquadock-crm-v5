@@ -79,17 +79,21 @@ describe("searchCompaniesList", () => {
 
     const result = await searchCompaniesList(makeInput());
 
-    expect(mockBuildCompaniesFilterApplier).toHaveBeenCalledWith(supabase, {
-      globalFilter: "marina",
-      activeFilters: {
-        status: [],
-        kategorie: [],
-        betriebstyp: [],
-        land: [],
-        wassertyp: [],
+    expect(mockBuildCompaniesFilterApplier).toHaveBeenCalledWith(
+      supabase,
+      {
+        globalFilter: "marina",
+        activeFilters: {
+          status: [],
+          kategorie: [],
+          betriebstyp: [],
+          land: [],
+          wassertyp: [],
+        },
+        waterFilter: null,
       },
-      waterFilter: null,
-    });
+      undefined, // Phase 2 §4.6 — optional ServerTiming param; route handler passes one when reads flag on.
+    );
     expect(applyFilters).toHaveBeenCalledWith(query);
     expect(query.order).toHaveBeenCalledWith("stadt", { ascending: false });
     expect(query.range).toHaveBeenCalledWith(50, 74);

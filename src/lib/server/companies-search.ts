@@ -13,7 +13,8 @@ import {
   buildCompaniesFilterApplier,
   type CompaniesGlobalSearchStrategy,
 } from "@/lib/companies/companies-list-supabase";
-import { isTwoPhaseHybridEnabled, logPhase1Perf } from "@/lib/companies/phase1-flags";
+import { isTwoPhaseHybridEnabled, logPhase1Perf } from "@/lib/companies/phase-cache-control";
+import type { ServerTiming } from "@/lib/server/server-timing";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   type CompaniesFilterGroup,
@@ -119,6 +120,7 @@ async function attachOwnerProfiles(
 
 export async function searchCompaniesList(
   input: SearchCompaniesListInput,
+  timing?: ServerTiming,
 ): Promise<SearchCompaniesListResult> {
   const supabase = await createServerSupabaseClient();
 
@@ -130,6 +132,7 @@ export async function searchCompaniesList(
       activeFilters: input.activeFilters,
       waterFilter: input.waterFilter,
     },
+    timing,
   );
 
   // Hybrid path: matching rows = `rankedIds` ∩ non-global filters.
@@ -166,10 +169,12 @@ export async function searchCompaniesList(
     // (still bounded by `rankedIds.length`).
     if (!explicitSort && isTwoPhaseHybridEnabled()) {
       const phaseAStarted = Date.now();
+      const stopPhaseA = timing?.start("phase_a");
       const survivorIdsQuery = applyFilters(supabase.from("companies").select("id"));
       const { data: survivorRows, error: survivorError } = await survivorIdsQuery.limit(
         rankedIds.length,
       );
+      stopPhaseA?.();
       if (survivorError) {
         throw survivorError;
       }
@@ -197,10 +202,12 @@ export async function searchCompaniesList(
         return { companies: [], totalCount, globalSearchStrategy };
       }
       const phaseBStarted = Date.now();
+      const stopPhaseB = timing?.start("phase_b");
       const { data: pageData, error: pageError } = await supabase
         .from("companies")
         .select(COMPANIES_SELECT)
         .in("id", pageIds);
+      stopPhaseB?.();
       if (pageError) {
         throw pageError;
       }
@@ -228,8 +235,10 @@ export async function searchCompaniesList(
       };
     }
 
+    const stopSinglePhase = timing?.start("single_phase");
     const filteredQuery = applyFilters(supabase.from("companies").select(COMPANIES_SELECT));
     const { data, error } = await filteredQuery.limit(rankedIds.length);
+    stopSinglePhase?.();
     if (error) {
       throw error;
     }
@@ -297,7 +306,9 @@ export async function searchCompaniesList(
   const to = from + input.pagination.pageSize - 1;
   query = query.range(from, to);
 
+  const stopNonHybrid = timing?.start("non_hybrid");
   const { data, error, count } = await query;
+  stopNonHybrid?.();
   if (error) {
     throw error;
   }

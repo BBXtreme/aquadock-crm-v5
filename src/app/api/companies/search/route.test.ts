@@ -102,7 +102,9 @@ describe("POST /api/companies/search", () => {
     const res = await POST(req);
 
     expect(res.status).toBe(200);
-    expect(mockSearchCompaniesList).toHaveBeenCalledWith(parsed);
+    // Phase 2 §4.6 — route now passes an optional ServerTiming as the second
+    // arg so it can record `phase_a`/`phase_b`/etc. Mocks accept either shape.
+    expect(mockSearchCompaniesList).toHaveBeenCalledWith(parsed, expect.anything());
     expect(await res.json()).toEqual({
       companies: [{ id: "c1", firmenname: "Marina Hotel" }],
       totalCount: 1,
@@ -138,7 +140,10 @@ describe("POST /api/companies/search", () => {
     });
     await POST(req);
 
-    expect(mockSearchCompaniesList).toHaveBeenCalledWith(expect.objectContaining({ sortExplicit: true }));
+    expect(mockSearchCompaniesList).toHaveBeenCalledWith(
+      expect.objectContaining({ sortExplicit: true }),
+      expect.anything(),
+    );
   });
 
   it("returns 500 on unexpected errors", async () => {

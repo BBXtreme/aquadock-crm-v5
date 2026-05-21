@@ -24,6 +24,7 @@ import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { profileKeys, reminderKeys, userKeys } from "@/lib/query/keys";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
@@ -67,7 +68,7 @@ export default function RemindersCard({ companyId }: Props) {
   };
 
   const { data: user } = useSuspenseQuery({
-    queryKey: ["user"],
+    queryKey: userKeys.current(),
     queryFn: async () => {
       const supabase = createClient();
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -80,7 +81,7 @@ export default function RemindersCard({ companyId }: Props) {
   });
 
   const { data: profiles = [] } = useSuspenseQuery({
-    queryKey: ["profiles"],
+    queryKey: profileKeys.all,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("profiles").select("id, display_name");
@@ -89,8 +90,11 @@ export default function RemindersCard({ companyId }: Props) {
     },
   });
 
+  // Phase 2 §4.3 — `reminderKeys.byCompany(id)` is the user-scoped filter used
+  // here; `reminderKeys.kpi(id)` (in CompanyKpiCards) holds the unfiltered
+  // count projection. Pre-Phase-2 both lived under the same bare key.
   const { data: reminders = [] } = useSuspenseQuery({
-    queryKey: ["reminders", companyId],
+    queryKey: reminderKeys.byCompany(companyId),
     queryFn: async () => {
       const supabase = createClient();
       const userId = user?.id;  // <-- Add: Safe extraction of user.id
@@ -114,19 +118,26 @@ export default function RemindersCard({ companyId }: Props) {
     refetchOnReconnect: true,
   });
 
+  const invalidateReminderQueries = () => {
+    // Phase 2 §4.3 — invalidate the user-scoped card key + the unfiltered KPI
+    // key in lockstep so the count chip and the table stay aligned.
+    queryClient.invalidateQueries({ queryKey: reminderKeys.byCompany(companyId) });
+    queryClient.invalidateQueries({ queryKey: reminderKeys.kpi(companyId) });
+    queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+    queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => deleteReminderWithTrash(id),
     onSuccess: (mode, id) => {
-      queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-      queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+      invalidateReminderQueries();
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
             label: tCommon("undo"),
             onClick: () => {
               void restoreReminderWithTrash(id).then(() => {
-                queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+                invalidateReminderQueries();
                 toast.success(t("toastUpdated"));
               });
             },
@@ -268,9 +279,7 @@ export default function RemindersCard({ companyId }: Props) {
             reminder={editReminder}
             onCancel={() => setEditReminder(null)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              invalidateReminderQueries();
               toast.success(t("toastSaved"));
               setEditReminder(null);
             }}
@@ -287,9 +296,7 @@ export default function RemindersCard({ companyId }: Props) {
             preselectedCompanyId={companyId}
             onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              invalidateReminderQueries();
               toast.success(t("toastSaved"));
               setAddDialogOpen(false);
             }}
