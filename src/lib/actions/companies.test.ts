@@ -29,6 +29,11 @@ vi.mock("@/lib/services/semantic-search", () => ({
   generateAndStoreCompanyEmbedding: vi.fn(),
 }));
 
+const after = vi.hoisted(() => vi.fn());
+vi.mock("next/server", () => ({
+  after,
+}));
+
 const COMPANY_ID = "20000000-0000-4000-8000-000000000001";
 const OLD_OWNER = "10000000-0000-4000-8000-000000000001";
 const NEW_OWNER = "10000000-0000-4000-8000-000000000002";
@@ -89,6 +94,9 @@ function supabaseForUpdateCompany(priorUserId: string | null, newUserId: string 
 describe("updateCompany (owner notification)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    after.mockImplementation((cb: () => Promise<void> | void) => {
+      void cb();
+    });
     createInAppNotification.mockResolvedValue({ id: "n1" } as never);
     createTimelineEntry.mockResolvedValue({ id: "t1" } as never);
     getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
@@ -104,7 +112,9 @@ describe("updateCompany (owner notification)", () => {
     const { updateCompany } = await import("@/lib/actions/companies");
     await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
 
-    expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    });
     expect(createInAppNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "company_owner_assigned",
@@ -144,13 +154,15 @@ describe("updateCompany (owner notification)", () => {
     const { updateCompany } = await import("@/lib/actions/companies");
     await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
 
-    expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createInAppNotification).toHaveBeenCalledTimes(1);
+      expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    });
     expect(createInAppNotification).toHaveBeenCalledWith(
       expect.objectContaining({
         dedupeKey: `company_owner_assigned:${COMPANY_ID}:${NEW_OWNER}:none`,
       }),
     );
-    expect(createTimelineEntry).toHaveBeenCalledTimes(1);
   });
 
   it("does not call createInAppNotification when user_id is unchanged", async () => {
@@ -180,9 +192,68 @@ describe("updateCompany (owner notification)", () => {
     await updateCompany(COMPANY_ID, { user_id: null });
 
     expect(createInAppNotification).not.toHaveBeenCalled();
-    expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    await vi.waitFor(() => {
+      expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+    });
     const payload = createTimelineEntry.mock.calls[0]?.[0] as { title?: string };
     expect(payload?.title).toContain("→");
+  });
+});
+
+describe("updateCompany (Phase 2 after() deferral)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createInAppNotification.mockResolvedValue({ id: "n1" } as never);
+    createTimelineEntry.mockResolvedValue({ id: "t1" } as never);
+    getCurrentUser.mockResolvedValue({ id: ACTOR } as never);
+    vi.unstubAllEnvs();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("defers ownership side effects via after()", async () => {
+    after.mockImplementation((cb: () => Promise<void> | void) => {
+      // Run the deferred callback synchronously inside the test so we can
+      // assert the same outcomes downstream.
+      void cb();
+    });
+
+    createServerSupabaseClient.mockResolvedValue(supabaseForUpdateCompany(OLD_OWNER, NEW_OWNER) as never);
+
+    const { updateCompany } = await import("@/lib/actions/companies");
+    await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
+
+    expect(after).toHaveBeenCalledTimes(1);
+    // The deferred callback eventually triggers the same side effects.
+    await vi.waitFor(() => {
+      expect(createTimelineEntry).toHaveBeenCalledTimes(1);
+      expect(createInAppNotification).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("structured log fires when after-deferred new-owner notification fails", async () => {
+    after.mockImplementation((cb: () => Promise<void> | void) => {
+      void cb();
+    });
+    // Notification helper does NOT have its own try/catch, so the failure
+    // bubbles up to the outer `companies.after.failure` log.
+    createInAppNotification.mockRejectedValue(new Error("notification failed"));
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    createServerSupabaseClient.mockResolvedValue(supabaseForUpdateCompany(OLD_OWNER, NEW_OWNER) as never);
+
+    const { updateCompany } = await import("@/lib/actions/companies");
+    await updateCompany(COMPANY_ID, { user_id: NEW_OWNER });
+
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(
+        "[companies.after.failure] new-owner notification failed",
+        expect.any(Error),
+      );
+    });
+    errorSpy.mockRestore();
   });
 });
 

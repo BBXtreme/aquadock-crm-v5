@@ -8,14 +8,13 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import ContactDetailClient from "@/components/features/contacts/ContactDetailClient";
 import { LoadingState } from "@/components/ui/LoadingState";
-import { requireUser } from "@/lib/auth/require-user";
+import { getCrmUserContext } from "@/lib/auth/get-crm-user-context";
+import { canEditContactRecord } from "@/lib/contacts/contact-edit-permission";
 import { resolveContactDetail } from "@/lib/services/contacts";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-
-  const _user = await requireUser();
 
   const supabase = await createServerSupabaseClient();
   const resolved = await resolveContactDetail(id, supabase);
@@ -33,9 +32,16 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
     .select("id, firmenname")
     .is("deleted_at", null);
 
+  const { user: crmUser } = await getCrmUserContext();
+  const canEditContact = canEditContactRecord(resolved.contact, crmUser);
+
   return (
     <Suspense fallback={<LoadingState count={8} />}>
-      <ContactDetailClient contact={resolved.contact} companies={companies || []} />
+      <ContactDetailClient
+        contact={resolved.contact}
+        companies={companies || []}
+        canEditContact={canEditContact}
+      />
     </Suspense>
   );
 }

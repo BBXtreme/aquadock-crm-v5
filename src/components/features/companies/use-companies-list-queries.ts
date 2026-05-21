@@ -1,12 +1,8 @@
 "use client";
 
-// Phase 1 quick wins live on the server side (embedding cache, two-phase
-// hybrid fetch, shared ranked-ids cache between /api/companies/search and
-// /api/companies/nav-ids). This module's contract is intentionally kept stable
-// — its existing `globalSearchStrategyFromApi` value already surfaces the
-// strategy diagnostic ("hybrid" | "keyword_*"). Detail cleanup of duplicate
-// `["companies"]` / `["contacts"]` global lookups stays in Phase 2 to avoid
-// touching unrelated feature modules in this rollout.
+// List-page queries: KPIs via `companies_stats()` RPC; table data via
+// `/api/companies/search`. Server-side caches and two-phase hybrid live in
+// companies-list-supabase / companies-search (see companies-hot-path.ts).
 
 import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { WaterPreset } from "@/components/features/companies/client-companies-constants";
@@ -22,6 +18,48 @@ async function fetchCompaniesFilterOptions() {
   const { data, error } = await supabase.rpc("companies_filter_buckets");
   if (error) throw error;
   return companiesFilterBucketsFromRpcData(data);
+}
+
+export type CompaniesStatsResult = {
+  total: number;
+  leads: number;
+  won: number;
+  value: number;
+};
+
+/**
+ * Loads the four list-page KPIs (total / leads / won / value sum) via the
+ * RLS-scoped `companies_stats()` RPC. Falls back to a client scan only when
+ * the RPC errors (e.g. migration not yet applied).
+ */
+export async function fetchCompaniesStats(
+  supabase: ReturnType<typeof createClient>,
+): Promise<CompaniesStatsResult> {
+  const { data, error } = await supabase.rpc("companies_stats");
+  if (!error && data && data.length > 0) {
+    const row = data[0];
+    if (row) {
+      return {
+        total: Number(row.total ?? 0),
+        leads: Number(row.leads ?? 0),
+        won: Number(row.won ?? 0),
+        value: Number(row.value_sum ?? 0),
+      };
+    }
+  }
+  if (!error && data) {
+    return { total: 0, leads: 0, won: 0, value: 0 };
+  }
+  console.warn("[companies-stats] rpc.fallback", error);
+  const { data: legacyRows } = await supabase
+    .from("companies")
+    .select("status, value")
+    .is("deleted_at", null);
+  const rows = legacyRows ?? [];
+  const leads = rows.filter((c) => c.status === "lead").length;
+  const won = rows.filter((c) => c.status === "gewonnen").length;
+  const value = rows.reduce((sum, c) => sum + (c.value ?? 0), 0);
+  return { total: rows.length, leads, won, value };
 }
 
 /** Distinct ISO `companies.land` codes from active rows (sorted). Shares cache with list filter chips. */
@@ -150,15 +188,7 @@ export function useCompaniesListQueries(options: {
     staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    queryFn: async () => {
-      const supabase = createClient();
-      const { data } = await supabase.from("companies").select("status, value").is("deleted_at", null);
-      const rowCount = data?.length || 0;
-      const leads = data?.filter((c) => c.status === "lead").length || 0;
-      const won = data?.filter((c) => c.status === "gewonnen").length || 0;
-      const value = data?.reduce((sum, c) => sum + (c.value ?? 0), 0) || 0;
-      return { total: rowCount, leads, won, value };
-    },
+    queryFn: () => fetchCompaniesStats(createClient()),
   });
 
   return {

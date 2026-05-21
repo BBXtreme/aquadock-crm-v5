@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { hasRole } from "@/lib/auth/types";
 import {
   buildCompanySemanticDocument,
   type CompanySemanticDocumentInput,
@@ -63,7 +64,7 @@ export async function getAllCompanyCountForReEmbedAction(): Promise<AllCompanyCo
   if (!user) {
     return { ok: false, error: "UNAUTHORIZED" };
   }
-  if (user.role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return { ok: false, error: "FORBIDDEN" };
   }
 
@@ -175,7 +176,7 @@ export async function reEmbedAllCompaniesAction(): Promise<ReEmbedAllCompaniesRe
   if (!user) {
     return { ok: false, error: "UNAUTHORIZED" };
   }
-  if (user.role !== "admin") {
+  if (!hasRole(user, "admin")) {
     return { ok: false, error: "FORBIDDEN" };
   }
 

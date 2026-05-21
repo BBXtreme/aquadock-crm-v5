@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useT } from "@/lib/i18n/use-translations";
+import { contactKeys, reminderKeys } from "@/lib/query/keys";
 import { createClient } from "@/lib/supabase/browser";
 import type { Company } from "@/types/database.types";
 
@@ -11,8 +12,13 @@ interface Props {
 
 export default function CompanyKpiCards({ company }: Props) {
   const t = useT("companies");
+  // Phase 2 §4.3 — `contactKeys.kpi(id)` is intentionally distinct from
+  // `contactKeys.byCompany(id)` (used by LinkedContactsCard with a richer
+  // projection). Pre-Phase-2 the bare `["contacts", id]` collided across both
+  // call sites and silently produced wrong shapes in whichever cache wrote
+  // last.
   const { data: contacts = [] } = useQuery({
-    queryKey: ["contacts", company.id],
+    queryKey: contactKeys.kpi(company.id),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -25,8 +31,10 @@ export default function CompanyKpiCards({ company }: Props) {
     },
   });
 
+  // Same rationale as the contacts split: `reminderKeys.kpi(id)` !==
+  // `reminderKeys.byCompany(id)`.
   const { data: reminders = [] } = useQuery({
-    queryKey: ["reminders", company.id],
+    queryKey: reminderKeys.kpi(company.id),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase

@@ -15,6 +15,73 @@ vi.mock("@/lib/companies/companies-list-supabase", () => ({
   buildCompaniesFilterApplier: (...args: unknown[]) => mockBuildCompaniesFilterApplier(...args),
 }));
 
+type HybridRow = {
+  id: string;
+  firmenname?: string;
+  wasserdistanz?: number | null;
+  user_id?: string;
+  contacts: unknown[];
+};
+
+/** Supabase stub for default-RRF two-phase hybrid fetch in searchCompaniesList. */
+function makeTwoPhaseHybridSupabase(options: {
+  survivorIds: { id: string }[];
+  pageRows: HybridRow[];
+  profiles?: { data: { id: string; display_name: string | null }[]; error: Error | null };
+  phaseAError?: Error | null;
+  phaseBError?: Error | null;
+}) {
+  return {
+    from: vi.fn((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue(
+              options.profiles ?? { data: [], error: null },
+            ),
+          }),
+        };
+      }
+      return {
+        select: vi.fn((cols: string) => {
+          if (cols.trim() === "id") {
+            return {
+              limit: vi.fn().mockResolvedValue({
+                data: options.survivorIds,
+                error: options.phaseAError ?? null,
+              }),
+            };
+          }
+          return {
+            in: vi.fn().mockResolvedValue({
+              data: options.pageRows,
+              error: options.phaseBError ?? null,
+            }),
+          };
+        }),
+      };
+    }),
+  };
+}
+
+function makeExplicitSortHybridSupabase(rows: HybridRow[]) {
+  const filteredQuery = {
+    limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
+  };
+  return {
+    from: vi.fn((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        };
+      }
+      return { select: vi.fn().mockReturnValue(filteredQuery) };
+    }),
+  };
+}
+
 function makeInput(overrides?: Partial<SearchCompaniesListInput>): SearchCompaniesListInput {
   return {
     globalFilter: "marina",
@@ -79,17 +146,21 @@ describe("searchCompaniesList", () => {
 
     const result = await searchCompaniesList(makeInput());
 
-    expect(mockBuildCompaniesFilterApplier).toHaveBeenCalledWith(supabase, {
-      globalFilter: "marina",
-      activeFilters: {
-        status: [],
-        kategorie: [],
-        betriebstyp: [],
-        land: [],
-        wassertyp: [],
+    expect(mockBuildCompaniesFilterApplier).toHaveBeenCalledWith(
+      supabase,
+      {
+        globalFilter: "marina",
+        activeFilters: {
+          status: [],
+          kategorie: [],
+          betriebstyp: [],
+          land: [],
+          wassertyp: [],
+        },
+        waterFilter: null,
       },
-      waterFilter: null,
-    });
+      undefined, // optional ServerTiming param (route handler passes one in production)
+    );
     expect(applyFilters).toHaveBeenCalledWith(query);
     expect(query.order).toHaveBeenCalledWith("stadt", { ascending: false });
     expect(query.range).toHaveBeenCalledWith(50, 74);
@@ -106,29 +177,18 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid path orders the page by RRF rank and paginates in memory", async () => {
-    const rows = [
-      { id: "c3", firmenname: "Third match", contacts: [] },
+    const pageRows: HybridRow[] = [
       { id: "c1", firmenname: "First match", contacts: [] },
       { id: "c2", firmenname: "Second match", contacts: [{ id: "ct", deleted_at: null }] },
     ];
-
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-
-    const baseQuery = {
-      select: vi.fn().mockReturnValue(filteredQuery),
-    };
-
-    const supabase = {
-      from: vi.fn(() => baseQuery),
-    };
-
-    const applyFilters = vi.fn((q: unknown) => q);
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c1" }, { id: "c2" }, { id: "c3" }],
+      pageRows,
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
-      applyFilters,
+      applyFilters: (q: unknown) => q,
       globalSearchStrategy: "hybrid",
       rankedIds: ["c1", "c2", "c3"],
     });
@@ -140,27 +200,19 @@ describe("searchCompaniesList", () => {
       }),
     );
 
-    expect(applyFilters).toHaveBeenCalledWith(filteredQuery);
-    expect(filteredQuery.limit).toHaveBeenCalledWith(3);
     expect(result.totalCount).toBe(3);
     expect(result.globalSearchStrategy).toBe("hybrid");
     expect(result.companies.map((c) => c.id)).toEqual(["c1", "c2"]);
   });
 
   it("hybrid path honours user column sort when sortExplicit is true", async () => {
-    const rows = [
+    const rows: HybridRow[] = [
       { id: "c3", firmenname: "Charlie", contacts: [] },
       { id: "c1", firmenname: "Alpha", contacts: [] },
       { id: "c2", firmenname: "Bravo", contacts: [] },
     ];
 
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    const supabase = makeExplicitSortHybridSupabase(rows);
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -181,19 +233,10 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid path slices a later page by RRF rank", async () => {
-    const rows = [
-      { id: "c1", firmenname: "one", contacts: [] },
-      { id: "c2", firmenname: "two", contacts: [] },
-      { id: "c3", firmenname: "three", contacts: [] },
-    ];
-
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c1" }, { id: "c2" }, { id: "c3" }],
+      pageRows: [{ id: "c3", firmenname: "three", contacts: [] }],
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -233,13 +276,12 @@ describe("searchCompaniesList", () => {
     });
   });
 
-  it("hybrid path throws when limit returns an error", async () => {
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: null, error: new Error("limit failed") }),
-    };
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+  it("hybrid path throws when phase A limit returns an error", async () => {
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [],
+      pageRows: [],
+      phaseAError: new Error("limit failed"),
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -252,16 +294,13 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid RRF order skips ranked ids missing from the fetched row set", async () => {
-    const rows = [
-      { id: "c2", firmenname: "B", contacts: [] },
-      { id: "c1", firmenname: "A", contacts: [] },
-    ];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c2" }, { id: "c1" }],
+      pageRows: [
+        { id: "c1", firmenname: "A", contacts: [] },
+        { id: "c2", firmenname: "B", contacts: [] },
+      ],
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -278,17 +317,12 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid explicit sort uses numeric comparison for wasserdistanz", async () => {
-    const rows = [
+    const rows: HybridRow[] = [
       { id: "c-high", firmenname: "High", wasserdistanz: 300, contacts: [] },
       { id: "c-low", firmenname: "Low", wasserdistanz: 100, contacts: [] },
       { id: "c-mid", firmenname: "Mid", wasserdistanz: 200, contacts: [] },
     ];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    const supabase = makeExplicitSortHybridSupabase(rows);
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -309,16 +343,11 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid explicit sort places null wasserdistanz after numeric values ascending", async () => {
-    const rows = [
+    const rows: HybridRow[] = [
       { id: "c-null", firmenname: "Null dist", wasserdistanz: null, contacts: [] },
       { id: "c-num", firmenname: "Has dist", wasserdistanz: 50, contacts: [] },
     ];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    const supabase = makeExplicitSortHybridSupabase(rows);
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -339,32 +368,14 @@ describe("searchCompaniesList", () => {
   });
 
   it("attaches owner_profile when rows include user_id", async () => {
-    const rows = [
-      {
-        id: "c1",
-        firmenname: "Owned",
-        user_id: "user-1",
-        contacts: [],
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c1" }],
+      pageRows: [{ id: "c1", firmenname: "Owned", user_id: "user-1", contacts: [] }],
+      profiles: {
+        data: [{ id: "user-1", display_name: "Pat Owner" }],
+        error: null,
       },
-    ];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn((table: string) => {
-        if (table === "profiles") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [{ id: "user-1", display_name: "Pat Owner" }],
-                error: null,
-              }),
-            }),
-          };
-        }
-        return { select: vi.fn().mockReturnValue(filteredQuery) };
-      }),
-    };
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -379,25 +390,11 @@ describe("searchCompaniesList", () => {
   });
 
   it("throws when profiles lookup returns an error", async () => {
-    const rows = [{ id: "c1", firmenname: "Owned", user_id: "user-1", contacts: [] }];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn((table: string) => {
-        if (table === "profiles") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: null,
-                error: new Error("profiles failed"),
-              }),
-            }),
-          };
-        }
-        return { select: vi.fn().mockReturnValue(filteredQuery) };
-      }),
-    };
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c1" }],
+      pageRows: [{ id: "c1", firmenname: "Owned", user_id: "user-1", contacts: [] }],
+      profiles: { data: [], error: new Error("profiles failed") },
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -511,16 +508,10 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid explicit sort orders firmenname descending using string comparison", async () => {
-    const rows = [
+    const supabase = makeExplicitSortHybridSupabase([
       { id: "c1", firmenname: "Alpha", contacts: [] },
       { id: "c2", firmenname: "Bravo", contacts: [] },
-    ];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn(() => ({ select: vi.fn().mockReturnValue(filteredQuery) })),
-    };
+    ]);
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({
@@ -541,22 +532,11 @@ describe("searchCompaniesList", () => {
   });
 
   it("hybrid path sets owner_profile null when no profile matches user_id", async () => {
-    const rows = [{ id: "c1", firmenname: "Orphan", user_id: "u-missing", contacts: [] }];
-    const filteredQuery = {
-      limit: vi.fn().mockResolvedValue({ data: rows, error: null }),
-    };
-    const supabase = {
-      from: vi.fn((table: string) => {
-        if (table === "profiles") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          };
-        }
-        return { select: vi.fn().mockReturnValue(filteredQuery) };
-      }),
-    };
+    const supabase = makeTwoPhaseHybridSupabase({
+      survivorIds: [{ id: "c1" }],
+      pageRows: [{ id: "c1", firmenname: "Orphan", user_id: "u-missing", contacts: [] }],
+      profiles: { data: [], error: null },
+    });
 
     mockCreateServerSupabaseClient.mockResolvedValue(supabase);
     mockBuildCompaniesFilterApplier.mockResolvedValue({

@@ -64,9 +64,15 @@ import type { Contact } from "@/types/database.types";
 interface ContactDetailClientProps {
   contact: Contact;
   companies: { id: string; firmenname: string }[];
+  /** Server-computed: matches RLS owner/admin write rules */
+  canEditContact: boolean;
 }
 
-export default function ContactDetailClient({ contact: initialContact, companies }: ContactDetailClientProps) {
+export default function ContactDetailClient({
+  contact: initialContact,
+  companies,
+  canEditContact,
+}: ContactDetailClientProps) {
   const t = useT("contacts");
   const tCommon = useT("common");
   const tCompanies = useT("companies");
@@ -147,11 +153,14 @@ export default function ContactDetailClient({ contact: initialContact, companies
       : null;
 
   useEffect(() => {
+    if (!canEditContact) {
+      return;
+    }
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get("edit") === "true") {
       setEditDialog(true);
     }
-  }, []);
+  }, [canEditContact]);
 
   useEffect(() => {
     if (contact) {
@@ -286,26 +295,30 @@ export default function ContactDetailClient({ contact: initialContact, companies
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button onClick={() => setDeleteDialogOpen(true)} variant="destructive" size="sm">
-                <Trash className="w-4 h-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteContact}>{t("delete")}</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {canEditContact ? (
+            <Button onClick={() => setEditDialog(true)} variant="outline" size="sm">
+              <Edit className="w-4 h-4" />
+            </Button>
+          ) : null}
+          {canEditContact ? (
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button onClick={() => setDeleteDialogOpen(true)} variant="destructive" size="sm">
+                  <Trash className="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("tableDeleteConfirmTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("tableDeleteConfirmDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteContact}>{t("delete")}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : null}
           <Button onClick={() => router.push("/contacts")} size="sm">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -326,6 +339,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
             </span>
           )}
         </div>
+        {canEditContact ? (
         <div className="flex items-center gap-2">
           <Switch
             id="primary-contact"
@@ -345,6 +359,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
             {t("formIsPrimary")}
           </label>
         </div>
+        ) : null}
       </div>
 
       {/* Contact Details */}
@@ -431,9 +446,11 @@ export default function ContactDetailClient({ contact: initialContact, companies
             <div className="md:col-span-2">
               <div className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 {t("formNotes")}
+                {canEditContact ? (
                 <Button variant="ghost" size="sm" onClick={() => setEditingNotes(true)}>
                   <Edit className="h-4 w-4" />
                 </Button>
+                ) : null}
               </div>
               {editingNotes ? (
                 <div>
@@ -517,6 +534,7 @@ export default function ContactDetailClient({ contact: initialContact, companies
                 )}
               </div>
 
+              {canEditContact ? (
               <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
                   {t("detailChangeCompany")}
@@ -532,13 +550,16 @@ export default function ContactDetailClient({ contact: initialContact, companies
                   {t("unlinkConfirmAction")}
                 </Button>
               </div>
+              ) : null}
             </div>
           ) : (
             <div className="space-y-3">
               <p className="text-muted-foreground">{t("detailNoCompanyLinked")}</p>
+              {canEditContact ? (
               <Button variant="outline" size="sm" onClick={() => setChangeCompanyDialog(true)}>
                 {t("detailLinkCompany")}
               </Button>
+              ) : null}
             </div>
           )}
         </CardContent>

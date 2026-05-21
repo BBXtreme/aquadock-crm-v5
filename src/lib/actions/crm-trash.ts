@@ -3,6 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { requireUser } from "@/lib/auth/require-user";
+import { bumpCompaniesGeneration } from "@/lib/companies/companies-hot-path";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { logTrashAuditEvent } from "@/lib/server/delete-audit";
 import { fetchTrashBinPreference } from "@/lib/services/user-settings";
@@ -106,6 +107,8 @@ export async function deleteCompanyWithTrash(id: string): Promise<TrashDeleteMod
       userId: user.id,
       profileId: user.id,
     });
+    // Phase 2 §4.2 — deterministic invalidation hook for the ranked-IDs cache.
+    bumpCompaniesGeneration();
     return "soft";
   }
 
@@ -120,6 +123,8 @@ export async function deleteCompanyWithTrash(id: string): Promise<TrashDeleteMod
     userId: user.id,
     profileId: user.id,
   });
+  // Phase 2 §4.2 — deterministic invalidation hook for the ranked-IDs cache.
+  bumpCompaniesGeneration();
   return "hard";
 }
 
@@ -167,6 +172,9 @@ export async function restoreCompanyWithTrash(id: string): Promise<void> {
     userId: user.id,
     profileId: user.id,
   });
+  // Phase 2 §4.2 — restoring a trashed row changes the active list, so we
+  // bump the same generation counter the delete paths use.
+  bumpCompaniesGeneration();
 }
 
 export async function permanentlyDeleteCompany(id: string): Promise<void> {
@@ -198,6 +206,8 @@ export async function permanentlyDeleteCompany(id: string): Promise<void> {
     userId: user.id,
     profileId: user.id,
   });
+  // Phase 2 §4.2 — deterministic invalidation hook for the ranked-IDs cache.
+  bumpCompaniesGeneration();
 }
 
 /** Admin-only: restore any trashed company and its cascaded contacts/reminders. */

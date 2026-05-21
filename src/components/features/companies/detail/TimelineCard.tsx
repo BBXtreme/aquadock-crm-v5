@@ -26,6 +26,13 @@ import { getCurrentUserClient } from "@/lib/auth/get-current-user-client";
 import { timelineActivityBadgeClassName } from "@/lib/constants/timeline-activity-badge";
 import { TIMELINE_DELETE_NO_ACTIVE_ROW } from "@/lib/constants/timeline-delete";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import {
+  companyKeys,
+  contactKeys,
+  profileKeys,
+  timelineKeys,
+  userKeys,
+} from "@/lib/query/keys";
 import { createClient } from "@/lib/supabase/browser";
 import { cn } from "@/lib/utils";
 import {
@@ -109,7 +116,7 @@ export default function TimelineCard({ companyId }: Props) {
   };
 
   const { data: user } = useQuery({
-    queryKey: ["user"],
+    queryKey: userKeys.current(),
     queryFn: async () => {
       const user = await getCurrentUserClient();
       if (!user) {
@@ -120,8 +127,10 @@ export default function TimelineCard({ companyId }: Props) {
     },
   });
 
+  // Phase 2 §4.3 — `timelineKeys.byCompany(id)` is the per-company slice used
+  // here. Global timeline lists use `timelineKeys.list(filters)`.
   const { data: timeline = [] } = useSuspenseQuery({
-    queryKey: ["timeline", companyId],
+    queryKey: timelineKeys.byCompany(companyId),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -136,7 +145,7 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const { data: companies = [] } = useQuery({
-    queryKey: ["companies"],
+    queryKey: companyKeys.options(),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -149,7 +158,7 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const { data: contacts = [] } = useQuery({
-    queryKey: ["contacts"],
+    queryKey: contactKeys.all,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -162,7 +171,7 @@ export default function TimelineCard({ companyId }: Props) {
   });
 
   const { data: profiles = [] } = useQuery({
-    queryKey: ["profiles"],
+    queryKey: profileKeys.all,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("profiles").select("id, display_name");
@@ -171,19 +180,22 @@ export default function TimelineCard({ companyId }: Props) {
     },
   });
 
+  const invalidateTimelineQueries = () => {
+    queryClient.invalidateQueries({ queryKey: timelineKeys.byCompany(companyId) });
+    queryClient.invalidateQueries({ queryKey: timelineKeys.all });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => deleteTimelineEntryWithTrash(id),
     onSuccess: (mode, id) => {
-      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["timeline"] });
+      invalidateTimelineQueries();
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
             label: tCommon("undo"),
             onClick: () => {
               void restoreTimelineEntryWithTrash(id).then(() => {
-                queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
-                queryClient.invalidateQueries({ queryKey: ["timeline"] });
+                invalidateTimelineQueries();
                 toast.success(t("toastUpdated"));
               });
             },
@@ -228,8 +240,8 @@ export default function TimelineCard({ companyId }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
-      queryClient.refetchQueries({ queryKey: ["timeline", companyId] });
+      invalidateTimelineQueries();
+      queryClient.refetchQueries({ queryKey: timelineKeys.byCompany(companyId) });
       toast.success(t("toastUpdated"));
       setEditEntry(null);
     },
@@ -260,7 +272,7 @@ export default function TimelineCard({ companyId }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["timeline", companyId] });
+      invalidateTimelineQueries();
       toast.success(t("toastCreated"));
       setAddDialogOpen(false);
     },

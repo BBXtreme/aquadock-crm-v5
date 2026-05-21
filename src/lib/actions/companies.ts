@@ -5,9 +5,11 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { deleteCompanyWithTrash, type TrashDeleteMode } from "@/lib/actions/crm-trash";
 import { getCurrentUser } from "@/lib/auth/get-current-user";
+import { bumpCompaniesGeneration } from "@/lib/companies/companies-hot-path";
 import {
   analyzeInternalDuplicates,
   buildFirmennameOrFilter,
@@ -396,6 +398,8 @@ export async function createCompany(values: CompanyFormValues, supabase?: Supaba
 
   if (error) throw handleSupabaseError(error, "createCompany");
   const company = data as Company;
+  // Phase 2 §4.2 — deterministic invalidation hook for the ranked-IDs cache.
+  bumpCompaniesGeneration();
   void generateAndStoreCompanyEmbedding(client, company.id, toCompanySemanticInput(company));
   return company;
 }
@@ -441,30 +445,54 @@ export async function updateCompany(
     throw handleSupabaseError(error, "updateCompany");
   }
   const company = data as Company;
+  // Phase 2 §4.2 — deterministic invalidation hook for the ranked-IDs cache.
+  bumpCompaniesGeneration();
   if (shouldRegenerateCompanyEmbedding(updates)) {
     void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));
   }
 
+  // Phase 2 §4.4 — defer the ownership audit + new-owner notification so they
+  // run after the response is flushed. Both are best-effort by design:
+  //   - the timeline audit is informational,
+  //   - the notification has its own Brevo retry path.
+  // The user gets the optimistic UI update immediately; the audit row and
+  // notification land within ~100 ms after redirect. Failures inside `after()`
+  // log under tag `companies.after.failure` and do not surface to the user.
   if ("user_id" in updates && actor != null) {
     const nextUserId = updates.user_id ?? null;
-    await maybeAppendCompanyOwnershipTimelineAudit({
-      supabase,
-      companyId: id,
-      priorUserId: priorRow.user_id,
-      nextUserId,
-      actorUserId: actor.id,
-    });
-  }
+    const newOwnerId = updates.user_id;
+    const priorOwnerId = priorRow.user_id;
+    const companyName = company.firmenname;
+    const actorUserId = actor.id;
 
-  const newUserId = updates.user_id;
-  if (newUserId !== undefined && newUserId !== null && priorRow != null && actor != null) {
-    await maybeNotifyNewCompanyOwner({
-      companyId: id,
-      companyName: company.firmenname,
-      priorUserId: priorRow.user_id,
-      newUserId,
-      actorUserId: actor.id,
-    });
+    const runOwnershipSideEffects = async (): Promise<void> => {
+      try {
+        await maybeAppendCompanyOwnershipTimelineAudit({
+          supabase,
+          companyId: id,
+          priorUserId: priorOwnerId,
+          nextUserId,
+          actorUserId,
+        });
+      } catch (err) {
+        console.error("[companies.after.failure] ownership timeline audit failed", err);
+      }
+      if (newOwnerId !== undefined && newOwnerId !== null) {
+        try {
+          await maybeNotifyNewCompanyOwner({
+            companyId: id,
+            companyName,
+            priorUserId: priorOwnerId,
+            newUserId: newOwnerId,
+            actorUserId,
+          });
+        } catch (err) {
+          console.error("[companies.after.failure] new-owner notification failed", err);
+        }
+      }
+    };
+
+    after(runOwnershipSideEffects);
   }
 
   revalidatePath("/companies");
@@ -855,6 +883,12 @@ export async function importCompaniesFromCSV(
 
     const companyIds = (data ?? []).map((row) => row.id);
     const insertedCompanies = (data ?? []) as Company[];
+
+    // Phase 2 §4.2 — single bump per CSV batch (not per row) is intentional:
+    // the ranked-IDs cache only cares that "something changed", not how many.
+    if (insertedCompanies.length > 0) {
+      bumpCompaniesGeneration();
+    }
 
     for (const company of insertedCompanies) {
       void generateAndStoreCompanyEmbedding(supabase, company.id, toCompanySemanticInput(company));

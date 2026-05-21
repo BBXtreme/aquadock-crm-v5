@@ -1,6 +1,6 @@
 {
   "name": "aquadock-crm-v5",
-  "version": "0.5.51",
+  "version": "0.5.52",
   "private": true,
   "packageManager": "pnpm@10.33.2",
   "engines": {
@@ -20,6 +20,7 @@
     "check": "biome check",
     "check:fix": "biome check --write --unsafe",
     "check:quick": "biome check --write --max-diagnostics=50",
+    "check:query-keys": "node scripts/check-query-keys.mjs",
     "typecheck": "tsc --noEmit --pretty",
     "messages:validate": "node scripts/validate-message-keys.mjs",
     "backfill:user-id": "node scripts/backfill-user-id-from-created-by.mjs",
@@ -39,6 +40,9 @@
   "lint-staged": {
     "*.{js,ts,jsx,tsx,json,jsonc}": [
       "biome check --files-ignore-unknown=true --no-errors-on-unmatched --write"
+    ],
+    "*.{ts,tsx}": [
+      "node scripts/check-query-keys.mjs"
     ]
   },
   "dependencies": {

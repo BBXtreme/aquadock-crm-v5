@@ -177,7 +177,11 @@ function Harness({ initial }: { initial: Company }) {
   }, []);
   return (
     <Suspense fallback={null}>
-      <CompanyDetailClient company={company} canEditCompany={true} />
+      <CompanyDetailClient
+        company={company}
+        canEditCompany={true}
+        editPermissionViewer={{ id: "user-1", roles: ["admin"] }}
+      />
     </Suspense>
   );
 }

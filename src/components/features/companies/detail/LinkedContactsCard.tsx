@@ -23,16 +23,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteContactWithTrash, restoreContactWithTrash } from "@/lib/actions/crm-trash";
+import type { OwnerScopedEditViewer } from "@/lib/auth/owner-scoped-edit-permission";
+import { canEditContactRecord } from "@/lib/contacts/contact-edit-permission";
 import { useT } from "@/lib/i18n/use-translations";
+import { companyKeys, contactKeys } from "@/lib/query/keys";
 import { updateContact } from "@/lib/services/contacts";
 import { createClient } from "@/lib/supabase/browser";
 import type { Contact } from "@/types/database.types";
 
 interface Props {
   companyId: string;
+  editPermissionViewer: OwnerScopedEditViewer;
+  /** Company-level write (owner/admin); gates add-contact on this company */
+  canManageContacts: boolean;
 }
 
-export default function LinkedContactsCard({ companyId }: Props) {
+export default function LinkedContactsCard({
+  companyId,
+  editPermissionViewer,
+  canManageContacts,
+}: Props) {
   const t = useT("contacts");
   const [editContact, setEditContact] = useState<Contact | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -40,19 +50,24 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const [contactToUnlink, setContactToUnlink] = useState<Contact | null>(null);
   const queryClient = useQueryClient();
 
+  // Phase 2 §4.3 — factory keys eliminate the `["contacts", id]` collision
+  // with `CompanyKpiCards`. `contactKeys.byCompany(id)` is the richer
+  // projection used here; KPI cards use `contactKeys.kpi(id)`.
   const invalidateContactQueries = (previousCompanyId: string | null) => {
-    queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-    queryClient.invalidateQueries({ queryKey: ["contacts"] });
-    queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+    queryClient.invalidateQueries({ queryKey: contactKeys.byCompany(companyId) });
+    queryClient.invalidateQueries({ queryKey: contactKeys.kpi(companyId) });
+    queryClient.invalidateQueries({ queryKey: contactKeys.all });
+    queryClient.invalidateQueries({ queryKey: contactKeys.stats() });
+    queryClient.invalidateQueries({ queryKey: companyKeys.detail(companyId) });
     if (previousCompanyId && previousCompanyId !== companyId) {
-      queryClient.invalidateQueries({ queryKey: ["contacts", previousCompanyId] });
-      queryClient.invalidateQueries({ queryKey: ["company", previousCompanyId] });
+      queryClient.invalidateQueries({ queryKey: contactKeys.byCompany(previousCompanyId) });
+      queryClient.invalidateQueries({ queryKey: contactKeys.kpi(previousCompanyId) });
+      queryClient.invalidateQueries({ queryKey: companyKeys.detail(previousCompanyId) });
     }
   };
 
   const { data: contacts = [] } = useSuspenseQuery({
-    queryKey: ["contacts", companyId],
+    queryKey: contactKeys.byCompany(companyId),
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase
@@ -76,7 +91,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteContactWithTrash(id),
     onMutate: async (id) => {
-      const queryKey = ["contacts", companyId];
+      const queryKey = contactKeys.byCompany(companyId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Contact[]>(queryKey);
       if (previous) {
@@ -96,19 +111,14 @@ export default function LinkedContactsCard({ companyId }: Props) {
       });
     },
     onSuccess: (mode, id) => {
-      queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["company", companyId] });
+      invalidateContactQueries(null);
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
             label: "Rückgängig",
             onClick: () => {
               void restoreContactWithTrash(id).then(() => {
-                queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
-                queryClient.invalidateQueries({ queryKey: ["contacts"] });
-                queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+                invalidateContactQueries(null);
                 toast.success(t("toastUpdated"));
               });
             },
@@ -123,7 +133,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
   const unlinkMutation = useMutation({
     mutationFn: (contact: Contact) => updateContact(contact.id, { company_id: null }),
     onMutate: async (contact) => {
-      const queryKey = ["contacts", companyId];
+      const queryKey = contactKeys.byCompany(companyId);
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Contact[]>(queryKey);
       if (previous) {
@@ -188,10 +198,12 @@ export default function LinkedContactsCard({ companyId }: Props) {
               <User className="w-5 h-5" />
               {t("detailLinkedTitle", { count: contacts.length })}
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleAdd}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("createButtonLabel")}
-            </Button>
+            {canManageContacts ? (
+              <Button variant="outline" size="sm" onClick={handleAdd}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("createButtonLabel")}
+              </Button>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>
@@ -213,6 +225,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                   </thead>
                   <tbody>
                     {contacts.map((contact) => {
+                      const canEditContact = canEditContactRecord(contact, editPermissionViewer);
                       const nameParts = [contact.anrede?.trim(), contact.vorname?.trim(), contact.nachname?.trim()]
                         .filter(Boolean)
                         .join(" ");
@@ -251,6 +264,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                           <td>{contact.is_primary && <Badge variant="secondary">{t("tablePrimaryBadge")}</Badge>}</td>
                           <td className="text-right">
                             <div className="flex justify-end gap-1">
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -259,6 +273,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
+                              ) : null}
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -270,6 +286,8 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Unlink className="h-4 w-4" />
                               </Button>
+                              ) : null}
+                              {canEditContact ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -279,6 +297,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>
+                              ) : null}
                             </div>
                           </td>
                         </tr>
@@ -302,7 +321,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             contact={editContact}
             onCancel={() => setEditContact(null)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              invalidateContactQueries(null);
               toast.success(t("detailSavedToast"));
               setEditContact(null);
             }}
@@ -356,7 +375,7 @@ export default function LinkedContactsCard({ companyId }: Props) {
             preselectedCompanyId={companyId}
             onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["contacts", companyId] });
+              invalidateContactQueries(null);
               toast.success(t("detailSavedToast"));
               setAddDialogOpen(false);
             }}

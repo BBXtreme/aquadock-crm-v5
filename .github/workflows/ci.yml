@@ -44,6 +44,9 @@ jobs:
       - name: Biome check (fix)
         run: pnpm check:fix
 
+      - name: Query key guard (Phase 2 §4.3)
+        run: pnpm check:query-keys
+
       - name: Tests with coverage (CI)
         run: pnpm test:ci
 

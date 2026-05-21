@@ -19,9 +19,6 @@ export async function saveNotificationPreferencesAction(input: unknown): Promise
  */
 export async function saveAdminGlobalInAppFeedAction(input: unknown): Promise<void> {
   const user = await requireAdmin();
-  if (user.role !== "admin") {
-    throw new Error("Nur für Administratoren");
-  }
   const enabled = saveAdminGlobalInAppFeedInputSchema.parse(input);
   const supabase = await createServerSupabaseClient();
   await upsertAdminInAppGlobalFeedEnabled(supabase, user.id, enabled);

@@ -23,12 +23,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { DisplayOrDash, EmptyDash } from "@/components/ui/empty-dash";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { deleteReminderWithTrash, restoreReminderWithTrash } from "@/lib/actions/crm-trash";
+import type { OwnerScopedEditViewer } from "@/lib/auth/owner-scoped-edit-permission";
+import { hasRole } from "@/lib/auth/types";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
+import { profileKeys, reminderKeys, userKeys } from "@/lib/query/keys";
+import { canEditReminderRecord } from "@/lib/reminders/reminder-edit-permission";
 import { createClient } from "@/lib/supabase/browser";
 import type { Reminder } from "@/types/database.types";
 
 interface Props {
   companyId: string;
+  editPermissionViewer: OwnerScopedEditViewer;
+  /** Company owner/admin may add reminders on this company */
+  canManageReminders: boolean;
 }
 
 function priorityKey(p: string | null | undefined): "priorityHoch" | "priorityNormal" | "priorityNiedrig" {
@@ -46,7 +53,11 @@ function reminderStatusKey(s: string | null | undefined): "filterOpen" | "filter
   return s?.toLowerCase() === "closed" ? "filterClosed" : "filterOpen";
 }
 
-export default function RemindersCard({ companyId }: Props) {
+export default function RemindersCard({
+  companyId,
+  editPermissionViewer,
+  canManageReminders,
+}: Props) {
   const t = useT("reminders");
   const tCommon = useT("common");
   const localeTag = useNumberLocaleTag();
@@ -67,7 +78,7 @@ export default function RemindersCard({ companyId }: Props) {
   };
 
   const { data: user } = useSuspenseQuery({
-    queryKey: ["user"],
+    queryKey: userKeys.current(),
     queryFn: async () => {
       const supabase = createClient();
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -80,7 +91,7 @@ export default function RemindersCard({ companyId }: Props) {
   });
 
   const { data: profiles = [] } = useSuspenseQuery({
-    queryKey: ["profiles"],
+    queryKey: profileKeys.all,
     queryFn: async () => {
       const supabase = createClient();
       const { data, error } = await supabase.from("profiles").select("id, display_name");
@@ -89,17 +100,23 @@ export default function RemindersCard({ companyId }: Props) {
     },
   });
 
+  // Phase 2 §4.3 — `reminderKeys.byCompany(id)` is the user-scoped filter used
+  // here; `reminderKeys.kpi(id)` (in CompanyKpiCards) holds the unfiltered
+  // count projection. Pre-Phase-2 both lived under the same bare key.
+  const viewerIsAdmin =
+    editPermissionViewer != null && hasRole(editPermissionViewer, "admin");
+
   const { data: reminders = [] } = useSuspenseQuery({
-    queryKey: ["reminders", companyId],
+    queryKey: [...reminderKeys.byCompany(companyId), { viewerIsAdmin }] as const,
     queryFn: async () => {
       const supabase = createClient();
-      const userId = user?.id;  // <-- Add: Safe extraction of user.id
+      const userId = user?.id;
       let query = supabase
         .from("reminders")
         .select("*")
         .eq("company_id", companyId)
         .is("deleted_at", null);
-      if (userId) {  // <-- Add: Only add .or if userId exists
+      if (!viewerIsAdmin && userId) {
         query = query.or(`user_id.eq.${userId},assigned_to.eq.${userId}`);
       }
       const { data, error } = await query.order("due_date", { ascending: true });
@@ -114,19 +131,26 @@ export default function RemindersCard({ companyId }: Props) {
     refetchOnReconnect: true,
   });
 
+  const invalidateReminderQueries = () => {
+    // Phase 2 §4.3 — invalidate the user-scoped card key + the unfiltered KPI
+    // key in lockstep so the count chip and the table stay aligned.
+    queryClient.invalidateQueries({ queryKey: reminderKeys.byCompany(companyId) });
+    queryClient.invalidateQueries({ queryKey: reminderKeys.kpi(companyId) });
+    queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
+    queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => deleteReminderWithTrash(id),
     onSuccess: (mode, id) => {
-      queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-      queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-      queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+      invalidateReminderQueries();
       if (mode === "soft") {
         toast.success(t("toastDeleted"), {
           action: {
             label: tCommon("undo"),
             onClick: () => {
               void restoreReminderWithTrash(id).then(() => {
-                queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
+                invalidateReminderQueries();
                 toast.success(t("toastUpdated"));
               });
             },
@@ -160,10 +184,12 @@ export default function RemindersCard({ companyId }: Props) {
               <Bell className="w-5 h-5" />
               {t("cardTitle", { count: reminders.length })}
             </CardTitle>
-            <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t("createButtonLabel")}
-            </Button>
+            {canManageReminders ? (
+              <Button variant="outline" size="sm" type="button" onClick={handleAdd}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("createButtonLabel")}
+              </Button>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>
@@ -184,10 +210,13 @@ export default function RemindersCard({ companyId }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {reminders.map((reminder) => (
+                    {reminders.map((reminder) => {
+                      const canEditReminder = canEditReminderRecord(reminder, editPermissionViewer);
+                      return (
                       <tr key={reminder.id}>
                         <td className="font-medium">
                           <div>
+                            {canEditReminder ? (
                             <Button
                               type="button"
                               variant="link"
@@ -196,6 +225,9 @@ export default function RemindersCard({ companyId }: Props) {
                             >
                               <DisplayOrDash value={reminder.title} />
                             </Button>
+                            ) : (
+                              <DisplayOrDash value={reminder.title} />
+                            )}
                             {reminder.description && <div className="text-xs text-muted-foreground">{reminder.description}</div>}
                             <div className="text-xs text-muted-foreground">
                               {t("detailMetaLine", {
@@ -227,6 +259,7 @@ export default function RemindersCard({ companyId }: Props) {
                         <td>{profiles.find(p => p.id === reminder.assigned_to)?.display_name || t("unassigned")}</td>
                         <td className="text-right">
                           <div className="flex justify-end gap-1">
+                            {canEditReminder ? (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -236,6 +269,8 @@ export default function RemindersCard({ companyId }: Props) {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
+                            ) : null}
+                            {canEditReminder ? (
                             <Button
                               variant="ghost"
                               size="icon"
@@ -246,10 +281,12 @@ export default function RemindersCard({ companyId }: Props) {
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
+                            ) : null}
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -268,9 +305,7 @@ export default function RemindersCard({ companyId }: Props) {
             reminder={editReminder}
             onCancel={() => setEditReminder(null)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              invalidateReminderQueries();
               toast.success(t("toastSaved"));
               setEditReminder(null);
             }}
@@ -287,9 +322,7 @@ export default function RemindersCard({ companyId }: Props) {
             preselectedCompanyId={companyId}
             onCancel={() => setAddDialogOpen(false)}
             onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ["reminders", companyId] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-overdue"] });
-              queryClient.invalidateQueries({ queryKey: ["reminders-count-this-week"] });
+              invalidateReminderQueries();
               toast.success(t("toastSaved"));
               setAddDialogOpen(false);
             }}
