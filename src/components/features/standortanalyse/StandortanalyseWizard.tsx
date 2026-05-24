@@ -381,7 +381,7 @@ export function StandortanalyseWizard({
 
   const [openSections, setOpenSections] = useState<Record<SectionId, boolean>>(() => ({
     context: false,
-    form: true,
+    form: mode === "public",
     share: false,
     workspace: false,
   }));
