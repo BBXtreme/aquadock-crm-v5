@@ -1,13 +1,13 @@
 # AquaDock CRM v5 – OpenCode Agent Instructions
 
-**Primary rules:** Follow `docs/AIDER-RULES.md` on every change.
+**Primary rules:** Follow `docs/QUALITY_GATE.md` on every change.
 
-This project uses OpenCode with project-level configuration in `opencode.json`.
+This project inherits the global OpenCode baseline from `~/.config/opencode/`. The local `opencode.json` only declares the Supabase MCP for this specific database.
 
 ## Key OpenCode Files
-- `.opencode/instructions/` – adapted architecture, Zod, Supabase, and quality-gate rules (reference the Cursor `.cursor/rules/` originals)
-- `.opencode/agents/strict-reviewer.md` – custom strict reviewer agent that enforces the zero-tolerance quality gate
-- `opencode.json` – MCP servers (Context7, GitHub Grep, Supabase), agent definitions, instructions, permissions
+- Global baseline: `~/.config/opencode/` (plugins, LSP, xai-docs MCP, strict-reviewer, instructions, `QUALITY_GATE.md`, skills)
+- Local `opencode.json` – only the Supabase MCP for this project
+- `.opencode/instructions/` and `.opencode/agents/` – inherited from global (override locally only if needed)
 
 ## How to Use
 - Normal work: use the default `build` agent.
