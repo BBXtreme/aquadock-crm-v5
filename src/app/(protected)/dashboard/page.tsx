@@ -15,6 +15,8 @@ import { loadDashboardKpis } from "@/lib/services/dashboard-kpis";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { DashboardPageHeader } from "./DashboardPageHeader";
 
+export const revalidate = 60;
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const canAccessSalesDashboard = hasAnyRole(user, ["admin", "user"]);

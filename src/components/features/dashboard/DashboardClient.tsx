@@ -7,20 +7,10 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Building, DollarSign, TrendingUp, Trophy, Users } from "lucide-react";
+import { Building, DollarSign, Trophy, Users } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { useLayoutEffect, useMemo, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { StatCard } from "@/components/ui/StatCard";
 import {
   Select,
@@ -31,6 +21,12 @@ import {
 } from "@/components/ui/select";
 import { useNumberLocaleTag, useT } from "@/lib/i18n/use-translations";
 import type { DashboardKpis } from "@/lib/services/dashboard-kpis";
+import type { DashboardChartsProps } from "./DashboardCharts";
+
+const DashboardCharts = dynamic<DashboardChartsProps>(
+  () => import("./DashboardCharts").then((m) => m.default),
+  { ssr: false, loading: () => <div className="min-h-[300px] h-[320px] w-full animate-pulse bg-muted rounded" /> }
+);
 
 /** Light :root chart tokens from globals.css — SSR / first paint before computed styles run. */
 const CHART_FILLS_FALLBACK = [
@@ -109,9 +105,6 @@ function useChartFillsForSvg(): readonly [string, string, string, string, string
   return fills;
 }
 
-/** Recharts 3 defaults to -1×-1 until resize; avoids console noise and layout flash. */
-const CHART_INITIAL = { width: 640, height: 320 } as const;
-
 type DashboardClientProps = {
   initialKpis: DashboardKpis;
 };
@@ -146,7 +139,7 @@ export default function DashboardClient({ initialKpis }: DashboardClientProps) {
       data.funnelDataRaw.map((row, index) => ({
         ...row,
         stage: t(`funnel.${row.stageKey}`),
-        fill: chartFills[index % chartFills.length],
+        fill: chartFills[index % chartFills.length] ?? "#64748b",
       })),
     [chartFills, data.funnelDataRaw, t],
   );
@@ -183,74 +176,7 @@ export default function DashboardClient({ initialKpis }: DashboardClientProps) {
         />
       </div>
 
-      {/* Visualizations */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Funnel */}
-        <div className="bg-card rounded-(--radius) border border-border p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" /> {t("funnelTitle")}
-            </h3>
-            <span className="text-xs text-muted-foreground">{t("funnelSubtitle")}</span>
-          </div>
-          <div className="min-h-[300px] h-[320px] w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={CHART_INITIAL}>
-              <BarChart data={funnelData} layout="vertical" barCategoryGap={18}>
-                <XAxis type="number" hide />
-                <YAxis
-                  type="category"
-                  dataKey="stage"
-                  width={110}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 13 }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Bar dataKey="value" radius={8}>
-                  {funnelData.map((entry) => (
-                    <Cell key={entry.stageKey} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Status Distribution */}
-        <div className="bg-card rounded-(--radius) border border-border p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-primary" /> {t("statusTitle")}
-            </h3>
-          </div>
-          <div className="min-h-[300px] h-[320px] w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={CHART_INITIAL}>
-              <PieChart>
-                <Pie
-                  data={funnelData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={115}
-                  dataKey="value"
-                  animationDuration={800}
-                >
-                  {funnelData.map((entry) => (
-                    <Cell key={entry.stageKey} fill={entry.fill} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+      <DashboardCharts funnelData={funnelData} />
 
       {/* Period Selector */}
       <div className="flex justify-end">
