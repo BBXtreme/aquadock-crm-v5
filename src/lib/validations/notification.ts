@@ -13,6 +13,7 @@ export const IN_APP_NOTIFICATION_TYPES = [
   "company_owner_assigned",
   "contact_assigned",
   "feedback_answered",
+  "partner_application_received",
 ] as const;
 
 export type InAppNotificationType = (typeof IN_APP_NOTIFICATION_TYPES)[number];
@@ -60,12 +61,21 @@ const payloadFeedbackAnsweredSchema = z
   })
   .strict();
 
+const payloadPartnerApplicationReceivedSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+  })
+  .strict();
+
 export type PayloadReminderAssigned = z.infer<typeof payloadReminderAssignedSchema>;
 export type PayloadTimelineOnCompany = z.infer<typeof payloadTimelineOnCompanySchema>;
 export type PayloadCommentReply = z.infer<typeof payloadCommentReplySchema>;
 export type PayloadCompanyOwnerAssigned = z.infer<typeof payloadCompanyOwnerAssignedSchema>;
 export type PayloadContactAssigned = z.infer<typeof payloadContactAssignedSchema>;
 export type PayloadFeedbackAnswered = z.infer<typeof payloadFeedbackAnsweredSchema>;
+export type PayloadPartnerApplicationReceived = z.infer<
+  typeof payloadPartnerApplicationReceivedSchema
+>;
 
 export type InAppNotificationPayload =
   | PayloadReminderAssigned
@@ -73,7 +83,8 @@ export type InAppNotificationPayload =
   | PayloadCommentReply
   | PayloadCompanyOwnerAssigned
   | PayloadContactAssigned
-  | PayloadFeedbackAnswered;
+  | PayloadFeedbackAnswered
+  | PayloadPartnerApplicationReceived;
 
 const optionalActor = z.preprocess(
   emptyStringToNull,
@@ -157,6 +168,17 @@ export const createInAppNotificationInputSchema = z.discriminatedUnion("type", [
       dedupeKey: optionalDedupe,
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("partner_application_received"),
+      userId: z.string().uuid(),
+      title: z.string().trim().min(1).max(500),
+      body: optionalBody,
+      payload: payloadPartnerApplicationReceivedSchema,
+      actorUserId: optionalActor,
+      dedupeKey: optionalDedupe,
+    })
+    .strict(),
 ]);
 
 export type CreateInAppNotificationInput = z.infer<typeof createInAppNotificationInputSchema>;
@@ -191,6 +213,10 @@ export function parseInAppNotificationPayload(
   }
   if (type === "feedback_answered") {
     const r = payloadFeedbackAnsweredSchema.safeParse(payload);
+    return r.success ? r.data : null;
+  }
+  if (type === "partner_application_received") {
+    const r = payloadPartnerApplicationReceivedSchema.safeParse(payload);
     return r.success ? r.data : null;
   }
   return null;

@@ -12,7 +12,8 @@ Related: [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) (table + Storage bucket), [`
 | --- | --- | --- |
 | Admin inbox | `/admin/partner-applications` | `requireAdmin()` via `(protected)/admin/layout.tsx` |
 | Admin detail | `/admin/partner-applications/[id]` | Same |
-| Public upload URL | `POST /api/public/sales-partner-applications/upload-url` | CORS + rate limit; no session |
+| Public CV upload (preferred) | `POST /api/public/sales-partner-applications/upload` | CORS + rate limit; multipart `file` field |
+| Public signed upload URL (legacy) | `POST /api/public/sales-partner-applications/upload-url` | CORS + rate limit; browser PUT to Supabase (Storage CORS can block) |
 | Public submit | `POST /api/public/sales-partner-applications` | CORS + rate limit; no session |
 
 **Navigation:** Admin sidebar / sub-nav / ⌘K — key `adminPartnerApplications` in `src/lib/constants/app-shell-navigation.ts`.
@@ -27,12 +28,13 @@ Related: [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) (table + Storage bucket), [`
 ## Data flow (website → CRM)
 
 ```text
-1. aquadock.eu  POST /upload-url     → signed Supabase upload URL + cvUploadToken (HMAC)
-2. aquadock.eu  PUT  uploadUrl       → file in Storage tmp/{uuid}/…
-3. aquadock.eu  POST /sales-partner-applications  → Zod validate, verify token, insert row
+1. aquadock.eu  POST /upload (multipart file)  → CRM stores in tmp/{uuid}/… + cvUploadToken
+   (legacy: POST /upload-url → PUT to Supabase signed URL — often blocked by Storage CORS)
+2. aquadock.eu  POST /sales-partner-applications  → Zod validate, verify token, insert row
 4. CRM server   move tmp/… → applications/{applicationId}/…
 5. CRM server   emails → applicant (confirmation) + admin (notification + deep link)
-6. Admin        /admin/partner-applications       → review, status, download CV
+6. CRM server   in-app notification → every admin (`partner_application_received`)
+7. Admin        /admin/partner-applications       → review, status, download CV
 ```
 
 **Important:** Submit payloads use **`cvUploadToken`**, not a raw storage path. The token binds the tmp path server-side; paths are never trusted from the client.
@@ -60,7 +62,29 @@ Duplicate submissions from the same email are blocked for **30 days** while stat
 
 Both routes require a browser **`Origin`** header on `POST` (allowed origins below). `OPTIONS` returns CORS preflight headers.
 
-### 1. Request upload URL
+### 1. Upload CV (preferred — multipart proxy)
+
+```http
+POST /api/public/sales-partner-applications/upload
+Content-Type: multipart/form-data
+Origin: https://aquadock.eu
+
+file: (binary, field name must be "file")
+```
+
+**Response (200):**
+
+```json
+{
+  "ok": true,
+  "cvUploadToken": "…",
+  "expiresIn": 300
+}
+```
+
+No direct browser call to Supabase Storage is required.
+
+### 2. Upload CV (legacy — signed URL)
 
 ```http
 POST /api/public/sales-partner-applications/upload-url
@@ -85,9 +109,9 @@ Origin: https://aquadock.eu
 }
 ```
 
-Client uploads the file with `PUT` (or method Supabase signed URL expects) to `uploadUrl`.
+Client uploads the file with `PUT` to `uploadUrl` (may fail cross-origin due to Supabase Storage CORS — prefer **§1** above).
 
-### 2. Submit application
+### 3. Submit application
 
 ```http
 POST /api/public/sales-partner-applications
@@ -131,6 +155,8 @@ Origin: https://aquadock.eu
 
 Per-user SMTP from **Settings** is used for sending emails (`sendNotificationHtmlEmail`).
 
+**In-app:** After a successful submit, every user with role **`admin`** in `user_roles` receives a `partner_application_received` notification (bell + `/notifications`). Deep link: `/admin/partner-applications/{id}`. Respects per-user email notification preferences via the standard in-app notification email path.
+
 ## Code layout
 
 ```text
@@ -144,6 +170,7 @@ src/lib/partner-applications/
   persistence.ts              # insert, duplicate check
   confirmation-email.ts       # applicant email (de/en)
   admin-notification-email.ts # team email + deep link
+  admin-in-app-notification.ts # in-app notify all admins
 src/lib/validations/partner-application.ts
 src/lib/actions/partner-applications-admin.ts
 ```

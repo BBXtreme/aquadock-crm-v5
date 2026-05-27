@@ -6,6 +6,7 @@ import {
   getPartnerApplicationPrivacyUrl,
 } from "@/lib/partner-applications/admin-notification-email";
 import { buildApplicantConfirmationEmail } from "@/lib/partner-applications/confirmation-email";
+import { notifyAdminsOfNewPartnerApplication } from "@/lib/partner-applications/admin-in-app-notification";
 import { assertAllowedOrigin, corsHeaders } from "@/lib/partner-applications/cors";
 import { PartnerApplicationCvError } from "@/lib/partner-applications/cv-errors";
 import {
@@ -145,6 +146,15 @@ export async function POST(request: Request) {
       });
     } catch (e) {
       console.error("[partner-applications] admin email failed", e);
+    }
+
+    try {
+      await notifyAdminsOfNewPartnerApplication({
+        applicationId: id,
+        input: parsed.data,
+      });
+    } catch (e) {
+      console.error("[partner-applications] in-app admin notify failed", e);
     }
 
     return NextResponse.json({ ok: true, applicationId: id }, { headers });

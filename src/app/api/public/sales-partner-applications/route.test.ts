@@ -15,6 +15,7 @@ const mockInsert = vi.hoisted(() =>
 );
 const mockDuplicate = vi.hoisted(() => vi.fn(async () => false));
 const mockCvDownload = vi.hoisted(() => vi.fn(async () => "https://signed.example/cv.pdf"));
+const mockNotifyAdmins = vi.hoisted(() => vi.fn(async () => undefined));
 const mockVerifyToken = vi.hoisted(() =>
   vi.fn((token: string) =>
     token === "valid-token"
@@ -47,6 +48,10 @@ vi.mock("@/lib/partner-applications/storage", () => ({
 
 vi.mock("@/lib/partner-applications/upload-token", () => ({
   verifyCvUploadToken: mockVerifyToken,
+}));
+
+vi.mock("@/lib/partner-applications/admin-in-app-notification", () => ({
+  notifyAdminsOfNewPartnerApplication: mockNotifyAdmins,
 }));
 
 import { POST } from "./route";
@@ -115,6 +120,7 @@ describe("POST /api/public/sales-partner-applications", () => {
     expect(json.ok).toBe(true);
     expect(json.applicationId).toBeTruthy();
     expect(mockSendEmail).toHaveBeenCalledTimes(2);
+    expect(mockNotifyAdmins).toHaveBeenCalledTimes(1);
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         cvStoragePath: "tmp/abc/cv.pdf",

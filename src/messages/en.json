@@ -1477,7 +1477,8 @@
       "timeline_on_company": "New activity",
       "comment_reply": "Reply to note",
       "company_owner_assigned": "Company assigned",
-      "contact_assigned": "Contact assigned"
+      "contact_assigned": "Contact assigned",
+      "partner_application_received": "Sales partner application"
     },
     "typeUnknown": "Event",
     "markAllRead": "Mark all as read",

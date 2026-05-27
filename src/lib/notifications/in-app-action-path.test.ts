@@ -18,6 +18,7 @@ const reminderId = "20000000-0000-4000-8000-000000000003";
 const timelineId = "20000000-0000-4000-8000-000000000004";
 const commentId = "20000000-0000-4000-8000-000000000005";
 const parentCommentId = "20000000-0000-4000-8000-000000000006";
+const applicationId = "20000000-0000-4000-8000-000000000008";
 
 function row(overrides: Partial<UserNotification> & Pick<UserNotification, "type" | "title" | "payload">): UserNotification {
   return { ...base, ...overrides } as UserNotification;
@@ -82,6 +83,18 @@ describe("getInAppNotificationActionPath", () => {
         }),
       ),
     ).toBe(`/contacts/${contactId}`);
+  });
+
+  it("partner_application_received → admin application detail", () => {
+    expect(
+      getInAppNotificationActionPath(
+        row({
+          type: "partner_application_received",
+          title: "P",
+          payload: { applicationId },
+        }),
+      ),
+    ).toBe(`/admin/partner-applications/${applicationId}`);
   });
 
   it("invalid payload → dashboard", () => {

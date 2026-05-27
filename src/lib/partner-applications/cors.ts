@@ -26,15 +26,16 @@ export function resolveCorsOrigin(request: Request): string | null {
 
 export function corsHeaders(request: Request): HeadersInit {
   const origin = resolveCorsOrigin(request);
-  if (origin == null) {
-    return {};
+  const base: Record<string, string> = {};
+  if (origin != null) {
+    base["Access-Control-Allow-Origin"] = origin;
+    base.Vary = "Origin";
   }
   return {
-    "Access-Control-Allow-Origin": origin,
+    ...base,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Accept",
     "Access-Control-Max-Age": "86400",
-    Vary: "Origin",
   };
 }
 

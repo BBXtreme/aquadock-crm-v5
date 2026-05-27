@@ -1477,7 +1477,8 @@
       "timeline_on_company": "Nova aktivnost",
       "comment_reply": "Odgovor na bilješku",
       "company_owner_assigned": "Dodijeljena tvrtka",
-      "contact_assigned": "Dodijeljen kontakt"
+      "contact_assigned": "Dodijeljen kontakt",
+      "partner_application_received": "Prijava prodajnog partnera"
     },
     "typeUnknown": "Događaj",
     "markAllRead": "Označi sve kao pročitano",

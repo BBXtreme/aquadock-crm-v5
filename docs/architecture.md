@@ -119,7 +119,8 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 | `/api/standortanalyse/share` | GET, POST | Share-link metadata lookup by `analysisId`; create secure share link (+ optional email invite) |
 | `/api/standortanalyse/share/[token]` | GET | Public token validation (`valid`, `requiresPassword`, usage/expiry metadata) |
 | `/api/standortanalyse/share/[token]/submit` | POST | Public submission endpoint (password check, rate limit, optional CRM sync) |
-| `/api/public/sales-partner-applications/upload-url` | POST, OPTIONS | **Public** (CORS): signed CV upload URL + HMAC `cvUploadToken` for aquadock.eu; rate limited; **service role** for Storage |
+| `/api/public/sales-partner-applications/upload` | POST, OPTIONS | **Public** (CORS): **preferred** multipart CV upload via CRM proxy (service role); returns `cvUploadToken` |
+| `/api/public/sales-partner-applications/upload-url` | POST, OPTIONS | **Public** (CORS): legacy signed Supabase upload URL + `cvUploadToken` (browser PUT to Supabase — may hit Storage CORS) |
 | `/api/public/sales-partner-applications` | POST, OPTIONS | **Public** (CORS): submit partner application; verifies upload token, inserts `partner_applications`, moves CV, sends emails; **service role** |
 
 **Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).

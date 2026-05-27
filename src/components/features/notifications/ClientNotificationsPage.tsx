@@ -78,6 +78,8 @@ function notificationTypeLabel(kind: string, t: InAppT): string {
       return t("types.company_owner_assigned");
     case "contact_assigned":
       return t("types.contact_assigned");
+    case "partner_application_received":
+      return t("types.partner_application_received");
     default:
       return t("typeUnknown");
   }

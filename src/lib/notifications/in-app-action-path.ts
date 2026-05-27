@@ -10,6 +10,9 @@ export function getInAppNotificationActionPath(notification: UserNotification): 
   if (payload === null) {
     return "/dashboard";
   }
+  if ("applicationId" in payload) {
+    return `/admin/partner-applications/${payload.applicationId}`;
+  }
   if ("contactId" in payload) {
     return `/contacts/${payload.contactId}`;
   }

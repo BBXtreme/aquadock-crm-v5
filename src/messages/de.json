@@ -1477,7 +1477,8 @@
       "timeline_on_company": "Neue Aktivität",
       "comment_reply": "Antwort auf Notiz",
       "company_owner_assigned": "Firma zugewiesen",
-      "contact_assigned": "Kontakt zugewiesen"
+      "contact_assigned": "Kontakt zugewiesen",
+      "partner_application_received": "Vertriebspartner-Bewerbung"
     },
     "typeUnknown": "Ereignis",
     "markAllRead": "Alle als gelesen markieren",

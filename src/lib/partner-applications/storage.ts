@@ -39,25 +39,14 @@ export async function cvObjectExists(storagePath: string): Promise<boolean> {
     return false;
   }
 
-  const slash = path.lastIndexOf("/");
-  if (slash <= 0) {
-    return false;
-  }
-
-  const folder = path.slice(0, slash);
-  const filename = path.slice(slash + 1);
   const admin = createAdminClient();
-
-  const { data, error } = await admin.storage.from(PARTNER_APPLICATIONS_BUCKET).list(folder, {
-    limit: 100,
-    search: filename,
-  });
+  const { data, error } = await admin.storage.from(PARTNER_APPLICATIONS_BUCKET).download(path);
 
   if (error != null || data == null) {
     return false;
   }
 
-  return data.some((entry) => entry.name === filename && entry.id != null);
+  return (await data.arrayBuffer()).byteLength > 0;
 }
 
 export async function createCvUploadSignedUrl(args: {
