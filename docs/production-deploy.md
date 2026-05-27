@@ -110,7 +110,23 @@ If you use company comments, apply these **in order** in the Supabase SQL Editor
 Then run **`pnpm supabase:types`** so `src/types/supabase.ts` matches the live schema.
 
 - [ ] [`src/sql/comments-attachments-delete-policy.sql`](../src/sql/comments-attachments-delete-policy.sql) — **`DELETE`** on `comment_attachments` (author or company record owner or admin)
-- [ ] Server env **`SUPABASE_SERVICE_ROLE_KEY`** (Vercel/server only) — required for preferred **`POST /api/comment-attachments/upload`**, admin **signed URL** generation, and robust Storage cleanup on delete (see [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9).
+- [ ] Server env **`SUPABASE_SERVICE_ROLE_KEY`** (Vercel/server only) — required for preferred **`POST /api/comment-attachments/upload`**, admin **signed URL** generation, robust Storage cleanup on delete, and **sales-partner application** intake (public API insert + CV move/sign). See [`SUPABASE_SCHEMA.md`](SUPABASE_SCHEMA.md) §9 and [`partner-applications.md`](partner-applications.md).
+
+### Sales partner applications (website → CRM)
+
+If aquadock.eu submits Vertriebspartner-Bewerbungen to this CRM:
+
+- [ ] Apply migration [`supabase/migrations/20260527120000_partner_applications.sql`](../supabase/migrations/20260527120000_partner_applications.sql) (table + bucket).
+- [ ] Run **`pnpm supabase:types`** after migration.
+- [ ] Set **`SUPABASE_SERVICE_ROLE_KEY`** on Vercel (required for public submit + Storage).
+- [ ] Optional: **`PARTNER_APPLICATION_CORS_ORIGINS`** — comma-separated marketing-site origins (defaults include `https://aquadock.eu` and `http://localhost:3000`).
+- [ ] Optional: **`PARTNER_APPLICATION_NOTIFY_EMAIL`** — admin notification inbox (default `info@aquadock.de`).
+- [ ] Optional: **`CRM_PUBLIC_URL`** — base URL in admin notification deep links (e.g. `https://crm.aquadock.eu`).
+- [ ] Optional: **`PARTNER_APPLICATION_UPLOAD_SECRET`** — dedicated HMAC secret for CV upload tokens.
+- [ ] Configure **SMTP** under Settings for at least one admin (confirmation + notification emails).
+- [ ] Verify admin inbox: `/admin/partner-applications` (admin role only).
+
+Full API contract and data flow: [`partner-applications.md`](partner-applications.md).
 
 ### Operations
 

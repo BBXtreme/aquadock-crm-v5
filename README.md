@@ -96,6 +96,7 @@ Quick index: [`docs/README.md`](docs/README.md).
 | --- | --- | --- |
 | [testing-strategy.md](docs/testing-strategy.md) | Developers | **Vitest vs Playwright**, coverage exclusions, when to add which tests |
 | [architecture.md](docs/architecture.md) | Developers | Stack principles, Server Actions vs API routes, **HTTP route inventory**, validation, testing, a11y |
+| [partner-applications.md](docs/partner-applications.md) | Developers / marketing integrators | Website → CRM sales-partner applications, public API, admin inbox |
 | [SUPABASE_SCHEMA.md](docs/SUPABASE_SCHEMA.md) | Developers / DB admins | Tables, RLS, Storage `avatars`, Realtime, type generation, maintenance SQL |
 | [README_OpenMap.md](docs/README_OpenMap.md) | Developers / product | OpenMap: CRM markers, OSM POIs, Overpass, import flow |
 | [react-table-v8-ts-tricks.md](docs/react-table-v8-ts-tricks.md) | Developers | `ColumnDef` TypeScript patterns without `as any` |

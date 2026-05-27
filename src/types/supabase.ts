@@ -541,6 +541,96 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_applications: {
+        Row: {
+          admin_notes: string | null
+          city_region: string
+          company_name: string | null
+          country_code: string
+          created_at: string
+          cv_storage_path: string | null
+          email: string
+          first_name: string
+          gdpr_consent: boolean
+          gdpr_consent_at: string | null
+          handelsvertreter_ack: boolean
+          id: string
+          industry_experience: string[]
+          ip_hash: string | null
+          last_name: string
+          linkedin_url: string | null
+          locale: string
+          motivation: string
+          phone: string
+          proposed_territory: string
+          references_text: string | null
+          source: string
+          status: string
+          tax_id: string | null
+          updated_at: string
+          user_agent: string | null
+          years_sales_experience: number
+        }
+        Insert: {
+          admin_notes?: string | null
+          city_region: string
+          company_name?: string | null
+          country_code: string
+          created_at?: string
+          cv_storage_path?: string | null
+          email: string
+          first_name: string
+          gdpr_consent?: boolean
+          gdpr_consent_at?: string | null
+          handelsvertreter_ack?: boolean
+          id?: string
+          industry_experience?: string[]
+          ip_hash?: string | null
+          last_name: string
+          linkedin_url?: string | null
+          locale: string
+          motivation: string
+          phone: string
+          proposed_territory: string
+          references_text?: string | null
+          source?: string
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          years_sales_experience: number
+        }
+        Update: {
+          admin_notes?: string | null
+          city_region?: string
+          company_name?: string | null
+          country_code?: string
+          created_at?: string
+          cv_storage_path?: string | null
+          email?: string
+          first_name?: string
+          gdpr_consent?: boolean
+          gdpr_consent_at?: string | null
+          handelsvertreter_ack?: boolean
+          id?: string
+          industry_experience?: string[]
+          ip_hash?: string | null
+          last_name?: string
+          linkedin_url?: string | null
+          locale?: string
+          motivation?: string
+          phone?: string
+          proposed_territory?: string
+          references_text?: string | null
+          source?: string
+          status?: string
+          tax_id?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          years_sales_experience?: number
+        }
+        Relationships: []
+      }
       pending_users: {
         Row: {
           auth_user_id: string

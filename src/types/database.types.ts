@@ -17,6 +17,7 @@ export type Contact = Database["public"]["Tables"]["contacts"]["Row"];
 export type EmailLog = Database["public"]["Tables"]["email_log"]["Row"];
 export type EmailTemplate = Database["public"]["Tables"]["email_templates"]["Row"];
 export type Feedback = Database["public"]["Tables"]["feedback"]["Row"];
+export type PartnerApplication = Database["public"]["Tables"]["partner_applications"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type PendingUser = Database["public"]["Tables"]["pending_users"]["Row"];
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"];
@@ -53,6 +54,9 @@ export type EmailTemplateInsert = Database["public"]["Tables"]["email_templates"
 export type EmailTemplateUpdate = Database["public"]["Tables"]["email_templates"]["Update"];
 
 export type FeedbackInsert = Database["public"]["Tables"]["feedback"]["Insert"];
+
+export type PartnerApplicationInsert = Database["public"]["Tables"]["partner_applications"]["Insert"];
+export type PartnerApplicationUpdate = Database["public"]["Tables"]["partner_applications"]["Update"];
 
 export type PendingUserInsert = Database["public"]["Tables"]["pending_users"]["Insert"];
 export type PendingUserUpdate = Database["public"]["Tables"]["pending_users"]["Update"];

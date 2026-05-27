@@ -33,6 +33,29 @@ const changelogEntriesSchema = z.array(changelogReleaseSchema).min(1);
 
 const rawChangelogEntries: ChangelogRelease[] = [
   {
+    version: "0.5.53",
+    releasedAt: "2026-05-27",
+    title: "🤝 Vertriebspartner-Bewerbungen – direkt von der Website ins CRM",
+    changes: [
+      {
+        type: "feature",
+        text: "Neu im Admin-Bereich: Vertriebspartner-Bewerbungen von aquadock.eu landen automatisch in Deinem CRM – mit Übersicht, Detailansicht und Status-Workflow von „Neu“ bis „Freigegeben“.",
+      },
+      {
+        type: "feature",
+        text: "Bewerber können Lebensläufe sicher hochladen; Du lädst sie im CRM mit einem Klick herunter – ohne Umwege über E-Mail-Anhänge.",
+      },
+      {
+        type: "improvement",
+        text: "Bewerber erhalten nach dem Absenden automatisch eine Bestätigung per E-Mail – und Dein Team wird sofort benachrichtigt, inklusive Link zur Bewerbung im CRM.",
+      },
+      {
+        type: "improvement",
+        text: "Doppelte Bewerbungen und Missbrauch werden abgefangen – damit Dein Posteingang übersichtlich bleibt und Du Dich auf echte Kandidaten konzentrieren kannst.",
+      },
+    ],
+  },
+  {
     version: "0.5.52",
     releasedAt: "2026-05-21",
     title: "⚡ Firmenliste & Suche: spürbar schneller, flüssiger im Alltag",

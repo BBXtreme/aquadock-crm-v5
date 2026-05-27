@@ -2,7 +2,20 @@
 
 **Purpose:** Decide *where* to add tests and *how* coverage exclusions relate to E2E so new work stays consistent. The **quality gate** is `vitest.config.ts` (thresholds + `coverage.exclude`); this document explains the intent.
 
-**Last updated:** May 18, 2026
+**Last updated:** May 27, 2026
+
+## Sales partner applications (2026-05-27)
+
+- **Vitest (public API + domain logic):**
+  - [`src/app/api/public/sales-partner-applications/route.test.ts`](../src/app/api/public/sales-partner-applications/route.test.ts) — submit validation, CORS/origin, honeypot, duplicate, CV token errors.
+  - [`src/app/api/public/sales-partner-applications/upload-url/route.test.ts`](../src/app/api/public/sales-partner-applications/upload-url/route.test.ts) — signed upload payload + `cvUploadToken`.
+  - [`src/lib/partner-applications/upload-token.test.ts`](../src/lib/partner-applications/upload-token.test.ts) — HMAC round-trip, tamper, expiry.
+  - [`src/lib/partner-applications/storage.test.ts`](../src/lib/partner-applications/storage.test.ts) — CV path validation.
+  - [`src/lib/validations/partner-application.test.ts`](../src/lib/validations/partner-application.test.ts) — DACH CV/handelsvertreter rules.
+- **Admin UI:** Server actions mocked via route tests; inbox/detail components are thin wiring over `listPartnerApplications` / `updatePartnerApplicationStatus`. No Playwright spec yet — add smoke for `/admin/partner-applications` if the admin workflow changes materially.
+- **Module docs:** [`partner-applications.md`](partner-applications.md).
+
+---
 
 ## Standortanalyse module (2026-05-18)
 

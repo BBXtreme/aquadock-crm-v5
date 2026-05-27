@@ -6,6 +6,7 @@ export * from "./contact";
 export * from "./contact-enrichment";
 export * from "./csv-import";   
 export * from "./email-template";
+export * from "./partner-application";
 export * from "./profile";
 export * from "./reminder";
 export * from "./settings";

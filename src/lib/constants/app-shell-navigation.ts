@@ -3,6 +3,7 @@ import {
   BarChart3,
   Bell,
   Brain,
+  Briefcase,
   Building2,
   ClipboardCheck,
   History,
@@ -57,6 +58,13 @@ export const appShellAdminNav = [
     icon: MessageSquare,
     cmdkKeywords:
       "admin feedback inbox verwaltung verwaltungsbereich widget submissions povratne informacije",
+  },
+  {
+    messageKey: "adminPartnerApplications",
+    href: "/admin/partner-applications",
+    icon: Briefcase,
+    cmdkKeywords:
+      "admin partner applications vertriebspartner bewerbung sales partner applications verwaltung",
   },
   {
     messageKey: "adminAiModels",

@@ -1,10 +1,10 @@
 # AquaDock CRM – Supabase Schema v5
 
 **Version**: 5.0 (March 2026)  
-**Last audited**: 2026-05-18  
+**Last audited**: 2026-05-27  
 **Environment**: Supabase PostgreSQL 15+  
 
-**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`) and backup items in section 9 and deployment docs.
+**Reading guide:** **Business readers** — use section 1 for “what each table is for.” **Developers** — sections 2–6 for columns, RLS, and indexes; section 6–7 for type generation and Zod alignment. **Operations** — Storage (`avatars`, `comment-files`, `partner-applications`) and backup items in section 9 and deployment docs.
 
 **Tenancy:** RLS and `user_id` on records model **per-user** ownership (and admin override where policies allow), not **multi-tenant org / workspace** objects. A future “org” or deal-pipeline layer would be additive schema on top of this v5 design.
 
@@ -29,6 +29,7 @@
 | user_notifications | In-app notification inbox | —  | uuid | user_id, actor_user_id    | Yes  | user_id, created_at, unread partial |
 | profiles        | User profiles & legacy primary role (deprecated) | 20 | uuid | → auth.users(id)          | Yes  | id                           |
 | user_roles      | Canonical multi-role mapping (user / admin / partner) | — | (user_id, role) | → auth.users(id) ON DELETE CASCADE | Yes  | (role, user_id) |
+| partner_applications | Public sales-partner applications from aquadock.eu | — | uuid | — | Yes (admin only) | status, lower(email), created_at DESC |
 
 ## 2. Core Tables – Column Overview
 
@@ -354,6 +355,34 @@ In-app **notification feed** (bell / notifications page). One row per delivered 
 **`avatar_url` (profile pictures)**  
 Holds the **public** Storage URL of the user’s avatar, or `null` if none. The app uploads files with the **browser** Supabase client (`createClient()` from `@/lib/supabase/browser`) and persists the URL via the server action `updateProfileAvatar` in `@/lib/actions/profile.ts`, which validates that the URL belongs to the current user’s folder under the `avatars` bucket.
 
+### partner_applications
+
+**Migration:** [`supabase/migrations/20260527120000_partner_applications.sql`](../supabase/migrations/20260527120000_partner_applications.sql) — table, indexes, admin RLS, Storage bucket row.
+
+| Column | Type | Nullable | Business meaning |
+| --- | --- | --- | --- |
+| id | uuid | false | Primary key |
+| status | text | false | Pipeline: `new`, `reviewing`, `interview`, `approved`, `rejected`, `withdrawn` |
+| locale | text | false | Applicant UI language (`de`, `en`) |
+| first_name, last_name, email, phone | text | false | Applicant contact |
+| company_name | text | true | Optional company |
+| country_code, city_region, proposed_territory | text | false | Territory / location |
+| years_sales_experience | smallint | false | Sales experience (years) |
+| industry_experience | text[] | false | Enum keys: tourism, hospitality, water_sports, b2b_sales, municipal, other |
+| motivation | text | false | Free-text motivation |
+| cv_storage_path | text | true | Path in bucket `partner-applications` |
+| linkedin_url, references_text, tax_id | text | true | Optional profile fields |
+| handelsvertreter_ack, gdpr_consent | boolean | false | Legal acknowledgements |
+| gdpr_consent_at | timestamptz | true | Timestamp when GDPR accepted |
+| source | text | false | Default `website` |
+| ip_hash, user_agent | text | true | Abuse forensics (IP stored hashed) |
+| admin_notes | text | true | Internal admin notes |
+| created_at, updated_at | timestamptz | false | Audit timestamps |
+
+**RLS:** Admin-only (`user_has_role('admin')`). Public website inserts via CRM API + **service role** after validation — not via anon RLS.
+
+**App docs:** [`partner-applications.md`](partner-applications.md). **Zod:** `src/lib/validations/partner-application.ts`. **Admin UI:** `/admin/partner-applications`.
+
 ## 3. Important Enums & Constraints
 
 - `comments.entity_type`: currently only `'company'` (CHECK on table); reserved for future entity kinds.
@@ -642,7 +671,29 @@ Run in the Supabase SQL Editor (idempotent), in sensible order:
 - **Post-deploy patch (Apr 2026):** If browser uploads fail with Postgres `42501` / `"new row violates row-level security policy"` on **`storage.objects`**, re-run [`storage-comment-files-bucket.sql`](../src/sql/storage-comment-files-bucket.sql) (policies now use **`split_part(name::text, '/', 1)`**). Earlier drafts used `storage.foldername(name)[1]`, which does not resolve to **`companies.id`** for paths `companyId/commentId/file`.
 - Without this bucket or policies, uploads to `comment-files` fail with `Bucket not found` or RLS denial.
 
+### `partner-applications` bucket (website sales-partner CVs)
+
+Private bucket for CV uploads from the public **Vertriebspartner** form on aquadock.eu. The marketing site requests a signed upload URL from the CRM API, uploads to `tmp/{uuid}/…`, then submits the application with an HMAC **`cvUploadToken`** (server resolves the storage path — raw paths are not trusted on submit). On successful insert the CRM moves the object to `applications/{application_id}/…` via the **service role** client.
+
+| Item | Detail |
+|------|--------|
+| Bucket id | `partner-applications` |
+| Public | No |
+| Max size | 5 MiB |
+| MIME types | PDF, DOC, DOCX |
+| Object path | `tmp/{uuid}/{filename}` → `applications/{application_uuid}/{filename}` |
+| Table link | `partner_applications.cv_storage_path` |
+| RLS | **Admin-only** on `partner_applications`; Storage access via service role + signed URLs only |
+
+**Setup**  
+Migration [`supabase/migrations/20260527120000_partner_applications.sql`](../supabase/migrations/20260527120000_partner_applications.sql) creates the table, indexes, admin RLS policy, and bucket row.
+
+**Env (CRM)**  
+`PARTNER_APPLICATION_NOTIFY_EMAIL`, `PARTNER_APPLICATION_CORS_ORIGINS`, optional `PARTNER_APPLICATION_UPLOAD_SECRET` (HMAC for upload tokens; falls back to `SUPABASE_SERVICE_ROLE_KEY`), optional `CRM_PUBLIC_URL` for admin notification links.
+
 ## 10. Change Log
+
+2026-05-27 Added `public.partner_applications` (admin-only RLS) and private Storage bucket **`partner-applications`** for website sales-partner applications; public CRM API routes under `/api/public/sales-partner-applications` with CORS, rate limits, signed CV upload tokens, and admin inbox at `/admin/partner-applications`. SQL: `supabase/migrations/20260527120000_partner_applications.sql`. Zod: `src/lib/validations/partner-application.ts`.
 
 2026-05-17 Added canonical `public.user_roles(user_id, role)` table (+`(role, user_id)` index, updated-at trigger, admin-bypass RLS via `public.user_has_role`), introduced the `partner` role, marked `profiles.role` as **DEPRECATED** (planned removal in v5.1), backfilled existing roles from `profiles.role`, rewrote `profiles`/`pending_users`/`feedback` admin policies to use the new helper, and extended `public.get_crm_user_context()` to return `roles text[]` alongside the legacy `profile_role`. SQL: `supabase/migrations/20260517103000_partner_user_roles.sql`, mirrored canonical sources `src/sql/user-roles-table.sql`, `rls-helpers.sql`, `profiles-table.sql`, `pending-users.sql`, `feedback-table.sql`, `get-crm-user-context.sql`.
 

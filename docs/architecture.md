@@ -119,6 +119,8 @@ Hand-maintained; update when you add or remove a `route.ts`. All handlers use th
 | `/api/standortanalyse/share` | GET, POST | Share-link metadata lookup by `analysisId`; create secure share link (+ optional email invite) |
 | `/api/standortanalyse/share/[token]` | GET | Public token validation (`valid`, `requiresPassword`, usage/expiry metadata) |
 | `/api/standortanalyse/share/[token]/submit` | POST | Public submission endpoint (password check, rate limit, optional CRM sync) |
+| `/api/public/sales-partner-applications/upload-url` | POST, OPTIONS | **Public** (CORS): signed CV upload URL + HMAC `cvUploadToken` for aquadock.eu; rate limited; **service role** for Storage |
+| `/api/public/sales-partner-applications` | POST, OPTIONS | **Public** (CORS): submit partner application; verifies upload token, inserts `partner_applications`, moves CV, sends emails; **service role** |
 
 **Removed in v5 maintenance:** `POST` handlers under `/api/companies/create` and `/api/companies/[id]` (obsolete duplicates of Server Actions; use actions + `POST /api/companies` for JSON create).
 
@@ -147,6 +149,7 @@ Tuning defaults and optional `[companies-p1|p2]` console logs:
 
 For **where to place new files** (thin `app/` routes, `features/` vs legacy folders, types imports, actions naming), see **[`folder-conventions.md`](folder-conventions.md)**.
 For module-specific behavior of the Standortanalyse page (internal/public flow, table actions, CRM import options), see **[`standortanalyse.md`](standortanalyse.md)**.
+For website sales-partner application intake and the admin review inbox, see **[`partner-applications.md`](partner-applications.md)**.
 
 ---
 
@@ -156,6 +159,7 @@ For module-specific behavior of the Standortanalyse page (internal/public flow, 
 - **`partner/login`** — Public **partner sign-in** (no route group). Branded "Paddle. Live. Enjoy." UI (`PartnerLoginLayout` + `PartnerLoginForm` + `PartnerThemeProvider`) that POSTs to the **shared backend** at `src/app/auth/login/route.ts`. The shared handler accepts both `application/json` (used by the partner form) and `multipart/form-data` / `application/x-www-form-urlencoded`, then returns `{ ok, redirectTo }` so the client navigates via `router.replace`.
 - **`(protected)`** — Authenticated internal CRM (sidebar, header, `/dashboard`, `/companies`, `/openmap`, …). Layout calls `requireCrmAccess()` once per segment tree.
 - **`(protected)/partner/*`** — Authenticated partner subpages inside the **same CRM shell** (same sidebar + header as sales/marketing). `src/app/(protected)/partner/layout.tsx` enforces `requireRole(PARTNER_ALLOWED_ROLES)` so **partner or admin** can access `/partner/*`.
+- **`(protected)/admin/partner-applications`** — Admin inbox for **website** sales-partner applications (distinct from `/partner/*` portal users). See [`partner-applications.md`](partner-applications.md).
 - **`(protected)/standortanalyse`** — Internal Standortanalyse wizard route (`/standortanalyse`) with accordion workflow, share-link management, and saved-analyses table actions.
 - **`standortanalyse/share/[token]`** — Public standalone share route for external submissions (no protected shell). Password support and token validity checks are API-driven.
 

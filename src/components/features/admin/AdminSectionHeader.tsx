@@ -2,15 +2,30 @@
 
 import { useT } from "@/lib/i18n/use-translations";
 
-type AdminSection = "users" | "trash" | "feedback";
+type AdminSection = "users" | "trash" | "feedback" | "partnerApplications";
 
 const SECTION_KEYS: Record<
   AdminSection,
-  { descriptionKey: "feedbackDescription" | "trashDescription" | "usersDescription"; titleKey: "feedbackTitle" | "trashTitle" | "usersTitle" }
+  {
+    descriptionKey:
+      | "feedbackDescription"
+      | "trashDescription"
+      | "usersDescription"
+      | "partnerApplicationsDescription";
+    titleKey:
+      | "feedbackTitle"
+      | "trashTitle"
+      | "usersTitle"
+      | "partnerApplicationsTitle";
+  }
 > = {
   feedback: { titleKey: "feedbackTitle", descriptionKey: "feedbackDescription" },
   trash: { titleKey: "trashTitle", descriptionKey: "trashDescription" },
   users: { titleKey: "usersTitle", descriptionKey: "usersDescription" },
+  partnerApplications: {
+    titleKey: "partnerApplicationsTitle",
+    descriptionKey: "partnerApplicationsDescription",
+  },
 };
 
 export function AdminSectionHeader({ section }: { section: AdminSection }) {

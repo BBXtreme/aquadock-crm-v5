@@ -8,6 +8,7 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [folder-conventions.md](folder-conventions.md) | **Where to put new code** — `app/` vs `features/`, actions vs services, large list hooks |
 | [architecture.md](architecture.md) | How the app is layered, **HTTP API table**, Zod, testing, a11y |
 | [standortanalyse.md](standortanalyse.md) | Standortanalyse page flow (internal + public), saved analyses table actions, CRM import options |
+| [partner-applications.md](partner-applications.md) | Website sales-partner application intake, public API contract, admin inbox |
 | [AIDER-RULES.md](AIDER-RULES.md) | PR quality gate (all contributors) |
 | [aider.conventions.md](aider.conventions.md) | One-page convention table |
 | [SUPABASE_SCHEMA.md](SUPABASE_SCHEMA.md) | Tables, RLS, Storage, Realtime, SQL apply order |
@@ -23,4 +24,4 @@ Start with the [project README](../README.md) for install, stack, and commands. 
 | [perf/hot-paths-explain.md](perf/hot-paths-explain.md) | Postgres `EXPLAIN` templates for the heaviest RPCs |
 | [perf/baseline-2026-05-01.md](perf/baseline-2026-05-01.md) | Pre-optimisation latency anchor for KPI comparisons |
 
-**Last updated:** May 21, 2026  
+**Last updated:** May 27, 2026  
