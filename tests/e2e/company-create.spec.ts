@@ -41,9 +41,9 @@ authDescribe("company create", () => {
     await expect(dialog).toBeVisible({ timeout: 15_000 });
 
     const uniqueName = `E2E-${Date.now()}`;
-    await page.getByLabel("Firmenname").fill(uniqueName);
-    await page.getByLabel("Lat").fill("40.7128");
-    await page.getByLabel("Lon").fill("-74.0060");
+    await dialog.getByLabel("Firmenname").fill(uniqueName);
+    await dialog.getByRole("spinbutton", { name: "Lat" }).fill("40.7128");
+    await dialog.getByRole("spinbutton", { name: "Lon" }).fill("-74.0060");
     // CompanyCreateForm uses companies.createFormSubmit — not settings "Speichern".
     await dialog
       .getByRole("button", { name: /^(Create company|Unternehmen erstellen|Stvori tvrtku)$/ })
